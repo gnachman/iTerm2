@@ -22,7 +22,9 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSPopUpButton *_tabPosition;
 
     IBOutlet NSPopUpButton *_statusBarPosition;
-    
+
+    IBOutlet NSButton *_perPaneStatusBars;
+
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
@@ -107,7 +109,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyStatusBarPosition
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^{ [weakSelf postRefreshNotification]; };
-    
+    info = [self defineControl:_perPaneStatusBars
+                           key:kPreferenceKeySeparateStatusBarsPerPane
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{ [weakSelf postRefreshNotification]; };
+
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle
                           type:kPreferenceInfoTypePopup];

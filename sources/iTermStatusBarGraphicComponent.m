@@ -199,6 +199,10 @@
     [self updateViewIfNeeded];
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+    [self updateViewIfNeeded];
+}
+
 #pragma mark - Required overrides
 
 - (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {

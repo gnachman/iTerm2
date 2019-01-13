@@ -88,6 +88,7 @@ NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault = @"Disable
 NSString *const kPreferenceKeyEnableDivisionView = @"EnableDivisionView";
 NSString *const kPreferenceKeyEnableProxyIcon = @"EnableProxyIcon";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
+NSString *const kPreferenceKeySeparateStatusBarsPerPane = @"SeparateStatusBarsPerPane";
 
 NSString *const kPreferenceKeyControlRemapping = @"Control";
 NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
@@ -271,6 +272,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnableDivisionView: @YES,
                   kPreferenceKeyEnableProxyIcon: @NO,
                   kPreferenceKeyDimBackgroundWindows: @NO,
+                  kPreferenceKeySeparateStatusBarsPerPane: @NO,
 
                   kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),

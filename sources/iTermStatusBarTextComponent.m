@@ -231,6 +231,10 @@ NS_ASSUME_NONNULL_BEGIN
     [self updateTextFieldIfNeeded];
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+    [self updateTextFieldIfNeeded];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

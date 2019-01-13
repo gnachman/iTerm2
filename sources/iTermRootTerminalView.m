@@ -15,8 +15,10 @@
 #import "PTYWindow.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDragHandleView.h"
+#import "iTermGenericStatusBarContainer.h"
 #import "iTermPreferences.h"
 #import "iTermStandardWindowButtonsView.h"
+#import "iTermStatusBarViewController.h"
 #import "iTermStoplightHotbox.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
@@ -38,9 +40,15 @@ static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
+typedef struct {
+    CGFloat top;
+    CGFloat bottom;
+} iTermDecorationHeights;
+
 @interface iTermRootTerminalView()<
     iTermTabBarControlViewDelegate,
     iTermDragHandleViewDelegate,
+    iTermGenericStatusBarContainer,
     iTermStoplightHotboxDelegate>
 
 @property(nonatomic, strong) PTYTabView *tabView;
@@ -49,6 +57,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
 @property(nonatomic, strong) iTermDragHandleView *leftTabBarDragHandle;
 
+@end
+
+@interface iTermTabBarBacking : NSVisualEffectView
+@end
+
+@implementation iTermTabBarBacking
 @end
 
 @implementation iTermRootTerminalView {
@@ -61,7 +75,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     NSNumber *_windowNumber;
     NSTextField *_windowNumberLabel;
     NSTextField *_windowTitleLabel;
-    NSVisualEffectView *_tabBarBacking NS_AVAILABLE_MAC(10_14);
+    iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
+    iTermGenericStatusBarContainer *_statusBarContainer;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -95,7 +110,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         tabBarFrame.size.height = _tabBarControl.height;
 
         if (@available(macOS 10.14, *)) {
-            _tabBarBacking = [[NSVisualEffectView alloc] init];
+            _tabBarBacking = [[iTermTabBarBacking alloc] init];
             _tabBarBacking.autoresizesSubviews = YES;
             _tabBarBacking.blendingMode = NSVisualEffectBlendingModeWithinWindow;
             _tabBarBacking.material = NSVisualEffectMaterialTitlebar;
@@ -455,6 +470,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     _tabBarControlOnLoan = YES;
     if (@available(macOS 10.14, *)) {
         _tabBarBacking.hidden = YES;
+        [_tabBarControl removeFromSuperview];
+        // Fix size in case we just went from left-of to top-of since it's now going full-width.
+        _tabBarControl.frame = NSMakeRect(0, 0, _tabBarControl.frame.size.width, _tabBarControl.height);
+        _tabBarControl.hidden = NO;
     }
     return view;
 }
@@ -491,6 +510,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                               NSMaxY(tabViewFrame),
                                               self.bounds.size.width,
                                               kDivisionViewHeight);
+        if ([_delegate rootTerminalViewSharedStatusBarViewController] &&
+            [iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop) {
+            // Have a top status bar. Move the division view to sit above it.
+            divisionViewFrame.origin.y += iTermStatusBarHeight;
+        }
         if (!_divisionView) {
             Class theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
             _divisionView = [[theClass alloc] initWithFrame:divisionViewFrame];
@@ -646,23 +670,59 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     }
 }
 
+- (void)layoutSubviewsWithVisibleTabBarForWindow:(NSWindow *)thisWindow inlineToolbelt:(BOOL)showToolbeltInline {
+    assert(!_tabBarControlOnLoan);
+    // The tabBar control is visible.
+    DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
+    self.tabBarControl.hidden = NO;
+    [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
+
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab: {
+            // Place tabs at the top.
+            // Add 1px border
+            [self layoutSubviewsTopTabBarVisible:YES forWindow:thisWindow];
+            break;
+        }
+
+        case PSMTab_BottomTab: {
+            [self layoutSubviewsWithVisibleBottomTabBarForWindow:thisWindow];
+            break;
+        }
+
+        case PSMTab_LeftTab: {
+            [self layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:showToolbeltInline forWindow:thisWindow];
+        }
+    }
+}
+
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
+    if (!_tabBarControlOnLoan) {
+        self.tabBarControl.hidden = YES;
+    }
     if ([self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
         [self layoutSubviewsTopTabBarVisible:NO forWindow:thisWindow];
         return;
     }
 
     [self removeLeftTabBarDragHandle];
-    CGFloat yOrigin = [_delegate haveBottomBorder] ? 1 : 0;
-    CGFloat heightAdjustment = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0;
+    iTermDecorationHeights decorationHeights = {
+        .bottom = [_delegate haveBottomBorder] ? 1 : 0,
+        .top = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0
+    };
     if ([_delegate haveTopBorder]) {
-        heightAdjustment++;
+        decorationHeights.top++;
     }
+    const NSRect frame = NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
+                                    decorationHeights.top,
+                                    [self tabviewWidth],
+                                    [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
+    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
     NSRect tabViewFrame =
-    NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
-               yOrigin,
-               [self tabviewWidth],
-               [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
+        NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
+                   decorationHeights.bottom,
+                   [self tabviewWidth],
+                   [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
     [self.tabView setFrame:tabViewFrame];
     [self updateDivisionViewAndWindowNumberLabel];
@@ -674,35 +734,41 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
     [self removeLeftTabBarDragHandle];
-    CGFloat yOrigin = _delegate.haveBottomBorder ? 1 : 0;
-    CGFloat heightAdjustment = 0;
+    iTermDecorationHeights decorationHeights = {
+        .bottom = _delegate.haveBottomBorder ? 1 : 0,
+        .top = 0
+    };
     if (!_tabBarControlOnLoan) {
         if (!self.tabBarControl.flashing) {
-            heightAdjustment += _tabBarControl.height;
+            decorationHeights.top += _tabBarControl.height;
         }
     }
     if (_delegate.haveTopBorder) {
-        heightAdjustment += 1;
+        decorationHeights.top += 1;
     }
     if (_delegate.divisionViewShouldBeVisible) {
-        heightAdjustment += kDivisionViewHeight;
+        decorationHeights.top += kDivisionViewHeight;
     }
+    const NSRect frame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+                                    decorationHeights.bottom,
+                                    [self tabviewWidth],
+                                    [[thisWindow contentView] frame].size.height - decorationHeights.bottom - decorationHeights.top);
+    iTermDecorationHeights temp = decorationHeights;
+    [self layoutStatusBar:&temp window:thisWindow frame:frame];
 
-    NSRect tabViewFrame =
-    NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
-               yOrigin,
-               [self tabviewWidth],
-               [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
+    NSRect tabViewFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+                                     temp.bottom,
+                                     [self tabviewWidth],
+                                     [[thisWindow contentView] frame].size.height - temp.bottom - temp.top);
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
     [self.tabView setFrame:tabViewFrame];
 
-    if (_tabBarControlOnLoan) {
-        heightAdjustment = 0;
-    } else {
-        heightAdjustment = self.tabBarControl.flashing ? _tabBarControl.height : 0;
+    CGFloat tabBarOffset = 0;
+    if (!_tabBarControlOnLoan && self.tabBarControl.flashing) {
+        tabBarOffset = _tabBarControl.height;
     }
     NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
-                                    NSMaxY(tabViewFrame) - heightAdjustment,
+                                    NSMaxY(frame) - tabBarOffset,
                                     tabViewFrame.size.width,
                                     _tabBarControl.height);
 
@@ -736,22 +802,28 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     self.tabBarControl.insets = [self.delegate tabBarInsets];
     [self setTabBarFrame:tabBarFrame];
     [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
-
-    CGFloat heightAdjustment = self.tabBarControl.flashing ? 0 : tabBarFrame.origin.y + _tabBarControl.height;
+    iTermDecorationHeights decorationHeights = {
+        .top = 0,
+        .bottom = tabBarFrame.origin.y
+    };
     if (_delegate.haveTopBorder) {
-        heightAdjustment += 1;
+        decorationHeights.top += 1;
     }
     if (_delegate.divisionViewShouldBeVisible) {
-        heightAdjustment += kDivisionViewHeight;
+        decorationHeights.top += kDivisionViewHeight;
     }
-    CGFloat y = tabBarFrame.origin.y;
     if (!self.tabBarControl.flashing) {
-        y += _tabBarControl.height;
+        decorationHeights.bottom += _tabBarControl.height;
     }
+    NSRect frame = NSMakeRect(tabBarFrame.origin.x,
+                              decorationHeights.bottom,
+                              tabBarFrame.size.width,
+                              [thisWindow.contentView frame].size.height - decorationHeights.top - decorationHeights.bottom);
+    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
     NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
-                                     y,
+                                     decorationHeights.bottom,
                                      tabBarFrame.size.width,
-                                     [thisWindow.contentView frame].size.height - heightAdjustment);
+                                     [thisWindow.contentView frame].size.height - decorationHeights.top - decorationHeights.bottom);
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
     self.tabView.frame = tabViewFrame;
     [self updateDivisionViewAndWindowNumberLabel];
@@ -772,26 +844,30 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (void)layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
     assert(!_tabBarControlOnLoan);
     [self setLeftTabBarWidthFromPreferredWidth];
-    CGFloat heightAdjustment = 0;
+    iTermDecorationHeights decorationHeights = {
+        .top = 0,
+        .bottom = 0
+    };
     if (_delegate.haveBottomBorder) {
-        heightAdjustment += 1;
+        decorationHeights.bottom += 1;
     }
     if (_delegate.haveTopBorder) {
-        heightAdjustment += 1;
+        decorationHeights.top += 1;
     }
     if (_delegate.divisionViewShouldBeVisible) {
-        heightAdjustment += kDivisionViewHeight;
+        decorationHeights.top += kDivisionViewHeight;
     }
     NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
-                                    _delegate.haveBottomBorder ? 1 : 0,
+                                    decorationHeights.bottom,
                                     [self tabviewWidth],
-                                    [thisWindow.contentView frame].size.height - heightAdjustment);
+                                    [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
     self.tabBarControl.insets = [self.delegate tabBarInsets];
     [self setTabBarFrame:tabBarFrame];
     [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
 
     CGFloat widthAdjustment = 0;
     if (_delegate.haveLeftBorder) {
+#warning TODO: Shouldn't this also increment xOffset by 1?
         widthAdjustment += 1;
     }
     if (_delegate.haveRightBorder) {
@@ -802,10 +878,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         xOffset = -NSMaxX(tabBarFrame);
         widthAdjustment -= NSWidth(tabBarFrame);
     }
+    const NSRect frame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
+                                    decorationHeights.bottom,
+                                    [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
+                                    [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
+    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
     NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
-                                     NSMinY(tabBarFrame),
+                                     decorationHeights.bottom,
                                      [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
-                                     NSHeight(tabBarFrame));
+                                     [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
     if (showToolbeltInline) {
         tabViewFrame.size.width -= self.toolbeltFrame.size.width;
     }
@@ -826,17 +907,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     }
 }
 
-- (void)layoutSubviews {
-    DLog(@"layoutSubviews");
-
-    BOOL showToolbeltInline = self.shouldShowToolbelt;
-    NSWindow *thisWindow = _delegate.window;
-    if (!_tabBarControlOnLoan) {
-        self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
-    }
-
+- (void)layoutWindowPaneDecorations {
     _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+
     [self updateWindowNumberFont];
 
     if ([self.delegate enableStoplightHotbox]) {
@@ -867,41 +941,27 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     self.window.movableByWindowBackground = !hideWindowTitleLabel;
     _windowNumberLabel.hidden = ![self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible];
     _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
+}
+
+- (void)layoutSubviews {
+    DLog(@"layoutSubviews");
+
+    const BOOL showToolbeltInline = self.shouldShowToolbelt;
+    NSWindow *thisWindow = _delegate.window;
+    if (!_tabBarControlOnLoan) {
+        self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
+    }
+
+    [self layoutWindowPaneDecorations];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
     [self constrainToolbeltWidth];
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
-        // The tabBarControl should not be visible.
-        if (!_tabBarControlOnLoan) {
-            self.tabBarControl.hidden = YES;
-        }
         [self layoutSubviewsWithHiddenTabBarForWindow:thisWindow];
     } else {
-        assert(!_tabBarControlOnLoan);
-        // The tabBar control is visible.
-        DLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
-        self.tabBarControl.hidden = NO;
-        [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
-
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_TopTab: {
-                // Place tabs at the top.
-                // Add 1px border
-                [self layoutSubviewsTopTabBarVisible:YES forWindow:thisWindow];
-                break;
-            }
-
-            case PSMTab_BottomTab: {
-                [self layoutSubviewsWithVisibleBottomTabBarForWindow:thisWindow];
-                break;
-            }
-
-            case PSMTab_LeftTab: {
-                [self layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:showToolbeltInline forWindow:thisWindow];
-            }
-        }
+        [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
     }
 
     if (showToolbeltInline) {
@@ -957,6 +1017,76 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     // T <= C/2
     const CGFloat maximumWidth = self.bounds.size.width / 2;
     _leftTabBarWidth = MAX(MIN(maximumWidth, _leftTabBarPreferredWidth), minimumWidth);
+}
+
+#pragma mark - Status Bar Layout
+
+- (NSRect)frameForStatusBarInContainingFrame:(NSRect)containingFrame {
+    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+        case iTermStatusBarPositionTop:
+            return NSMakeRect(NSMinX(containingFrame),
+                              NSMaxY(containingFrame) - iTermStatusBarHeight,
+                              NSWidth(containingFrame),
+                              iTermStatusBarHeight);
+
+        case iTermStatusBarPositionBottom:
+            return NSMakeRect(NSMinX(containingFrame),
+                              NSMinY(containingFrame),
+                              NSWidth(containingFrame),
+                              iTermStatusBarHeight);
+    }
+    return NSZeroRect;
+}
+
+- (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {
+    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+        case iTermStatusBarPositionTop: {
+            decorationHeights->top += iTermStatusBarHeight;
+            break;
+        }
+        case iTermStatusBarPositionBottom:
+            decorationHeights->bottom += iTermStatusBarHeight;
+            break;
+    }
+}
+
+- (void)layoutIfStatusBarChanged {
+    iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
+    if (statusBarViewController != _statusBarViewController ||
+        _statusBarViewController.view != statusBarViewController.view ||
+        statusBarViewController.view.superview != _statusBarContainer) {
+        [self layoutSubviews];
+    }
+}
+
+- (void)layoutStatusBar:(iTermDecorationHeights *)decorationHeights
+                 window:(NSWindow *)thisWindow
+                  frame:(NSRect)containingFrame {
+    iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
+    NSRect statusBarFrame = [self frameForStatusBarInContainingFrame:containingFrame];
+    if (statusBarViewController) {
+        [self updateDecorationHeightsForStatusBar:decorationHeights];
+    }
+    if (_statusBarViewController.view != statusBarViewController.view ||
+        _statusBarViewController.view.superview != _statusBarContainer) {
+        if (!_statusBarContainer) {
+            _statusBarContainer = [[iTermGenericStatusBarContainer alloc] initWithFrame:statusBarFrame];
+            _statusBarContainer.autoresizesSubviews = YES;
+            _statusBarContainer.delegate = self;
+            [self addSubview:_statusBarContainer];
+        }
+        if (_statusBarViewController.view.superview == _statusBarContainer) {
+            [_statusBarViewController.view removeFromSuperview];
+        }
+        if (statusBarViewController.view.superview != _statusBarContainer) {
+            [_statusBarContainer addSubview:statusBarViewController.view];
+            statusBarViewController.view.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+            statusBarViewController.view.frame = _statusBarContainer.bounds;
+        }
+    }
+    _statusBarContainer.hidden = (statusBarViewController == nil);
+    _statusBarViewController = statusBarViewController;
+    _statusBarContainer.frame = statusBarFrame;
 }
 
 #pragma mark - iTermTabBarControlViewDelegate
@@ -1042,6 +1172,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (BOOL)stoplightHotboxCanDrag {
     return ([self.delegate iTermTabBarCanDragWindow] &&
             ![self.delegate iTermTabBarWindowIsFullScreen]);
+}
+
+#pragma mark - iTermGenericStatusBarContainer
+
+- (NSColor *)genericStatusBarContainerBackgroundColor {
+    return [self.delegate rootTerminalViewTabBarBackgroundColor];
 }
 
 @end

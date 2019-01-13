@@ -172,7 +172,7 @@ const int kColorMapAnsiBrightModifier = 8;
 // There is an issue where where the passed-in color can be in a different color space than the
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
-- (void)getComponents:(CGFloat *)result
++ (void)getComponents:(CGFloat *)result
     byAveragingComponents:(CGFloat *)rgb1
        withComponents:(CGFloat *)rgb2
                 alpha:(CGFloat)alpha {
@@ -221,20 +221,20 @@ const int kColorMapAnsiBrightModifier = 8;
     [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
 
     CGFloat mutedRgb[4];
-    [self getComponents:mutedRgb
-        byAveragingComponents:contrastingRgb
-               withComponents:defaultBackgroundComponents
-                        alpha:_mutingAmount];
+    [iTermColorMap getComponents:mutedRgb
+           byAveragingComponents:contrastingRgb
+                  withComponents:defaultBackgroundComponents
+                           alpha:_mutingAmount];
 
     CGFloat dimmedRgb[4];
     CGFloat grayRgb[] = { _backgroundBrightness, _backgroundBrightness, _backgroundBrightness };
     if (!_dimOnlyText) {
         grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
     }
-    [self getComponents:dimmedRgb
-        byAveragingComponents:mutedRgb
-               withComponents:grayRgb
-                        alpha:_dimmingAmount];
+    [iTermColorMap getComponents:dimmedRgb
+           byAveragingComponents:mutedRgb
+                  withComponents:grayRgb
+                           alpha:_dimmingAmount];
 
     // Premultiply alpha
     CGFloat alpha = textRgb[3];
@@ -292,15 +292,37 @@ const int kColorMapAnsiBrightModifier = 8;
     [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
 
     CGFloat mutedRgb[4];
-    [self getComponents:mutedRgb
-        byAveragingComponents:components
-               withComponents:defaultBackgroundComponents
-                        alpha:_mutingAmount];
+    [iTermColorMap getComponents:mutedRgb
+           byAveragingComponents:components
+                  withComponents:defaultBackgroundComponents
+                           alpha:_mutingAmount];
     mutedRgb[3] = components[3];
 
     return simd_make_float4(mutedRgb[0], mutedRgb[1], mutedRgb[2], components[3]);
 }
 
++ (NSColor *)dimmedTextColor:(NSColor *)color
+        backgroundBrightness:(CGFloat)backgroundBrightness
+               dimmingAmount:(CGFloat)dimmingAmount
+                 dimOnlyText:(BOOL)dimOnlyText {
+    CGFloat components[4];
+    [color getComponents:components];
+
+    CGFloat dimmedRgb[4];
+    CGFloat grayRgb[] = { backgroundBrightness, backgroundBrightness, backgroundBrightness };
+    if (!dimOnlyText) {
+        grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
+    }
+    [iTermColorMap getComponents:dimmedRgb
+           byAveragingComponents:components
+                  withComponents:grayRgb
+                           alpha:dimmingAmount];
+    dimmedRgb[3] = components[3];
+
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:dimmedRgb
+                                  count:4];
+}
 // There is an issue where where the passed-in color can be in a different color space than the
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
@@ -309,26 +331,13 @@ const int kColorMapAnsiBrightModifier = 8;
         return color;
     }
 
-    CGFloat components[4];
-    [color getComponents:components];
-
     CGFloat defaultBackgroundComponents[4];
     [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
 
-    CGFloat dimmedRgb[4];
-    CGFloat grayRgb[] = { _backgroundBrightness, _backgroundBrightness, _backgroundBrightness };
-    if (!_dimOnlyText) {
-        grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
-    }
-    [self getComponents:dimmedRgb
-      byAveragingComponents:components
-             withComponents:grayRgb
-                      alpha:_dimmingAmount];
-    dimmedRgb[3] = components[3];
-
-    return [NSColor colorWithColorSpace:color.colorSpace
-                             components:dimmedRgb
-                                  count:4];
+    return [iTermColorMap dimmedTextColor:color
+                     backgroundBrightness:_backgroundBrightness
+                            dimmingAmount:_dimmingAmount
+                              dimOnlyText:_dimOnlyText];
 }
 
 - (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor {
@@ -380,10 +389,10 @@ const int kColorMapAnsiBrightModifier = 8;
     [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
 
     CGFloat mutedRgb[4];
-    [self getComponents:mutedRgb
-        byAveragingComponents:backgroundRgb
-               withComponents:defaultBackgroundComponents
-                        alpha:_mutingAmount];
+    [iTermColorMap getComponents:mutedRgb
+           byAveragingComponents:backgroundRgb
+                  withComponents:defaultBackgroundComponents
+                           alpha:_mutingAmount];
 
     CGFloat dimmedRgb[4];
     CGFloat grayRgb[] = { 0.5, 0.5, 0.5 };
@@ -403,10 +412,10 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 
     if (shouldDim) {
-        [self getComponents:dimmedRgb
-      byAveragingComponents:mutedRgb
-             withComponents:grayRgb
-                      alpha:_dimmingAmount];
+        [iTermColorMap getComponents:dimmedRgb
+               byAveragingComponents:mutedRgb
+                      withComponents:grayRgb
+                               alpha:_dimmingAmount];
     } else {
         memmove(dimmedRgb, mutedRgb, sizeof(CGFloat) * 3);
     }

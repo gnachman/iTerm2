@@ -224,6 +224,9 @@ typedef enum {
 - (void)sessionDraggingExited:(PTYSession *)session;
 
 - (BOOL)sessionShouldSendWindowSizeIOCTL:(PTYSession *)session;
+
+- (void)sessionDidInvalidateStatusBar:(PTYSession *)session;
+
 @end
 
 @class SessionView;

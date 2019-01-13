@@ -10,6 +10,7 @@
 #import "SolidColorView.h"
 
 @class iTermRootTerminalView;
+@class iTermStatusBarViewController;
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
@@ -42,6 +43,7 @@
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
+- (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
@@ -89,6 +91,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 @property(nonatomic) BOOL useMetal;
 @property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
@@ -110,6 +113,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)shutdown;
 
 - (void)layoutSubviews;
+- (void)layoutIfStatusBarChanged;
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs;
 

@@ -113,6 +113,7 @@ extern NSString *const kPreferenceKeyDisableFullscreenTransparencyByDefault;
 extern NSString *const kPreferenceKeyEnableDivisionView;
 extern NSString *const kPreferenceKeyEnableProxyIcon;
 extern NSString *const kPreferenceKeyDimBackgroundWindows;
+extern NSString *const kPreferenceKeySeparateStatusBarsPerPane;
 
 // Keys
 extern NSString *const kPreferenceKeyControlRemapping;

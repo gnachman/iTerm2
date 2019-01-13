@@ -47,5 +47,6 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab;
 - (void)sessionBackgroundColorDidChangeInTab:(PTYTab *)tab;
 - (BOOL)tabAnyDragInProgress:(PTYTab *)tab;
+- (void)tabDidInvalidateStatusBar:(PTYTab *)tab;
 
 @end

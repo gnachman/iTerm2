@@ -3737,13 +3737,13 @@ ITERM_WEAKLY_REFERENCEABLE
                     _statusBarViewController.delegate = nil;
                     _statusBarViewController = nil;
                 }
-                [_view invalidateStatusBar];
+                [self invalidateStatusBar];
             }
         }
     } else {
         [_statusBarViewController release];
         _statusBarViewController = nil;
-        [_view invalidateStatusBar];
+        [self invalidateStatusBar];
     }
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
@@ -3778,6 +3778,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+}
+
+- (void)invalidateStatusBar {
+    [_view invalidateStatusBar];
+    [_delegate sessionDidInvalidateStatusBar:self];
 }
 
 - (void)setBadgeFormat:(NSString *)badgeFormat {
@@ -10207,6 +10212,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.variablesScope;
 }
 
+- (BOOL)sessionViewUseSeparateStatusBarsPerPane {
+    if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
+        return NO;
+    }
+    if (self.isTmuxClient) {
+        return NO;
+    }
+    return YES;
+}
+
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
@@ -10665,7 +10680,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSColor *)textColorForStatusBar {
     if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        return [self.view.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:nil];
+        NSColor *color = [self.view.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:nil];
+        return [_colorMap colorByDimmingTextColor:[color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]]];
     } else if (@available(macOS 10.14, *)) {
         return [NSColor labelColor];
     } else if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {

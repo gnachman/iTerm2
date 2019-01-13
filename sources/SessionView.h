@@ -137,6 +137,9 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController;
 
 - (iTermVariableScope *)sessionViewScope;
+
+- (BOOL)sessionViewUseSeparateStatusBarsPerPane;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

@@ -606,6 +606,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     [self _dimShadeToDimmingAmount:amount];
     [_title setDimmingAmount:amount];
+    iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
+    [statusBar updateColors];
 }
 
 - (void)updateColors {
@@ -875,6 +877,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         NSColor *color = [_delegate sessionViewBackgroundColor];
+        if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+            return color;
+        }
         if (inactive) {
             return [color colorDimmedBy:[self adjustedDimmingAmount]
                        towardsGrayLevel:0.5];
@@ -1210,7 +1215,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)invalidateStatusBar {
-    iTermStatusBarViewController *newVC = [self.delegate sessionViewStatusBarViewController];
+    iTermStatusBarViewController *newVC = nil;
+    if ([_delegate sessionViewUseSeparateStatusBarsPerPane]) {
+        newVC = [self.delegate sessionViewStatusBarViewController];
+    }
     BOOL statusBarChanged = NO;
     switch ((iTermStatusBarPosition)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:

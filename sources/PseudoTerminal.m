@@ -5002,6 +5002,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _contentView.color = [NSColor windowBackgroundColor];
     }
     [self updateProxyIcon];
+    [_contentView layoutIfStatusBarChanged];
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateWindowShadow:self.ptyWindow];
@@ -5276,6 +5277,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return viewImage;
 }
 
+- (BOOL)useSeparateStatusbarsPerPane {
+    if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
+        return NO;
+    }
+    if (self.currentTab.tmuxTab) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView {
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
     for (PTYSession* session in [self allSessions]) {
@@ -5305,11 +5316,12 @@ ITERM_WEAKLY_REFERENCEABLE
             // Update visibility of title bars.
             const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
             const BOOL statusBarsOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
+            const BOOL perPaneStatusBars = [self useSeparateStatusbarsPerPane];
             const BOOL haveMultipleSessions = firstTab.sessions.count > 1;
             for (PTYSession *session in firstTab.sessions) {
                 const BOOL sessionHasStatusBar = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
                 const BOOL showTitleBar = perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions);
-                const BOOL showTopStatusBar = statusBarsOnTop && sessionHasStatusBar;
+                const BOOL showTopStatusBar = statusBarsOnTop && perPaneStatusBars && sessionHasStatusBar;
                 [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
             }
         }
@@ -6782,6 +6794,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.tabBarControl setNeedsDisplay:YES];
     }
     [self updateWindowShadow:self.ptyWindow];
+    [_contentView layoutIfStatusBarChanged];
 }
 
 - (void)fitWindowToTabs {
@@ -7472,6 +7485,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return windowType_ == WINDOW_TYPE_COMPACT;
 }
 
+- (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController {
+    if ([self useSeparateStatusbarsPerPane]) {
+        return nil;
+    }
+    return self.currentSession.statusBarViewController;
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -7668,44 +7688,50 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)shouldPlaceStatusBarOutsideTabview {
+    return (![self useSeparateStatusbarsPerPane] &&
+            self.currentSession.statusBarViewController != nil);
+}
+
 // Returns the size of the stuff outside the tabview.
-- (NSSize)windowDecorationSize
-{
-    NSSize contentSize = NSZeroSize;
+- (NSSize)windowDecorationSize {
+    NSSize decorationSize = NSZeroSize;
 
     if (!_contentView.tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_BottomTab:
-                contentSize.height += _contentView.tabBarControl.height;
+                decorationSize.height += _contentView.tabBarControl.height;
                 break;
             case PSMTab_LeftTab:
-                contentSize.width += [self tabviewWidth];
+                decorationSize.width += [self tabviewWidth];
                 break;
         }
     } else if ([self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
-        contentSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
+        decorationSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
     }
 
     // Add 1px border
     if ([self haveLeftBorder]) {
-        ++contentSize.width;
+        ++decorationSize.width;
     }
     if ([self haveRightBorder]) {
-        ++contentSize.width;
+        ++decorationSize.width;
     }
     if ([self haveBottomBorder]) {
-        ++contentSize.height;
+        ++decorationSize.height;
     }
     if ([self haveTopBorder]) {
-        ++contentSize.height;
+        ++decorationSize.height;
     }
     if (self.divisionViewShouldBeVisible) {
-        ++contentSize.height;
+        ++decorationSize.height;
     }
-
-    return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
+    if ([self shouldPlaceStatusBarOutsideTabview]) {
+        decorationSize.height += iTermStatusBarHeight;
+    }
+    return [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
@@ -9104,6 +9130,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (tab == self.currentTab) {
         [self updateUseTransparency];
     }
+}
+
+- (void)tabDidInvalidateStatusBar:(PTYTab *)tab {
+    [_contentView layoutSubviews];
 }
 
 #pragma mark - Toolbelt
