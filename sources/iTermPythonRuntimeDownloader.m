@@ -267,10 +267,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = @"Python Runtime Unavailable";
                 if (pythonVersion) {
-                    alert.informativeText = [NSString stringWithFormat:@"An iTerm2 Python Runtime with Python version %@ must be downloaded to proceed. The download failed: %@",
+                    alert.informativeText = [NSString stringWithFormat:@"An iTerm2 Python Runtime with Python version %@ must be downloaded to proceed.\n\nThe download failed: %@",
                                              pythonVersion, lastPhase.error.localizedDescription];
                 } else {
-                    alert.informativeText = [NSString stringWithFormat:@"An iTerm2 Python Runtime must be downloaded to proceed. The download failed: %@",
+                    alert.informativeText = [NSString stringWithFormat:@"An iTerm2 Python Runtime must be downloaded to proceed.\n\nThe download failed: %@",
                                              lastPhase.error.localizedDescription];
                 }
                 [alert runModal];

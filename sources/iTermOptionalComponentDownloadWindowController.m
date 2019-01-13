@@ -311,8 +311,8 @@ didCompleteWithError:(nullable NSError *)error {
         _progressLabel.stringValue = @"Canceled";
         _titleLabel.stringValue = @"";
     } else {
-        _progressLabel.stringValue = @"";
-        _titleLabel.stringValue = error.localizedDescription;
+        _progressLabel.stringValue = error.localizedDescription;
+        _titleLabel.stringValue = @"Download Failed";
     }
     _progressIndicator.doubleValue = 0;
     iTermOptionalComponentDownloadPhase *phase = _currentPhase;
