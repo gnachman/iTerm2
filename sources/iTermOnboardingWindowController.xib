@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermOnboardingWindowController">
+            <connections>
+                <outlet property="_nextPageButton" destination="0Bv-Hm-lzS" id="VNM-wH-4zd"/>
+                <outlet property="_pageController" destination="ZmD-OR-Mfd" id="ale-Ef-VWs"/>
+                <outlet property="_pageIndicator1" destination="LCh-T0-GyK" id="PfH-mr-fIc"/>
+                <outlet property="_pageIndicator2" destination="GnW-FQ-AUA" id="9aH-rh-MPE"/>
+                <outlet property="_pageIndicator3" destination="Y7m-qf-MNv" id="6Q0-gt-XMx"/>
+                <outlet property="_pageIndicator4" destination="1qs-yK-5FQ" id="mbh-U3-pmw"/>
+                <outlet property="_previousPageButton" destination="x6w-fs-8dH" id="mAZ-mO-pvT"/>
+                <outlet property="_view1" destination="uKS-OK-cAN" id="yUS-DH-7Z4"/>
+                <outlet property="_view2" destination="Cc0-Vj-shB" id="ETf-Vr-guH"/>
+                <outlet property="_view3" destination="U46-lc-cJw" id="qVb-k2-swu"/>
+                <outlet property="_view4" destination="olY-Zn-0Bl" id="70J-C4-EE3"/>
+                <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" utility="YES" fullSizeContentView="YES"/>
+            <windowCollectionBehavior key="collectionBehavior" fullScreenNone="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="240" width="665" height="402"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <value key="minSize" type="size" width="665" height="402"/>
+            <value key="maxSize" type="size" width="665" height="437"/>
+            <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="iTermOnboardingView">
+                <rect key="frame" x="0.0" y="0.0" width="665" height="402"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fTJ-RA-Rgc">
+                        <rect key="frame" x="-30" y="20" width="725" height="343"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </customView>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Bv-Hm-lzS">
+                        <rect key="frame" x="615" y="199" width="30" height="33"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="&gt;" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="f8J-e6-gm5">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="systemThin" size="30"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="nextPage:" target="-2" id="NeA-d3-8Rr"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x6w-fs-8dH">
+                        <rect key="frame" x="20" y="199" width="30" height="33"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="&lt;" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="VdW-Ng-Wlh">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="systemThin" size="30"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="previousPage:" target="-2" id="vzs-nH-Ope"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LCh-T0-GyK">
+                        <rect key="frame" x="298" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="IHu-13-I9y">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="Thr-WP-HOE"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GnW-FQ-AUA">
+                        <rect key="frame" x="316" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="fum-rI-3gd">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="eyp-VP-Rua"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Y7m-qf-MNv">
+                        <rect key="frame" x="333" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="N2h-T9-zrt">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="Dwf-W5-qN6"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1qs-yK-5FQ">
+                        <rect key="frame" x="351" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="7s1-aT-qfO">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="wIO-Xd-Fz7"/>
+                        </connections>
+                    </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
+                        <rect key="frame" x="18" y="369" width="629" height="23"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="What’s New in Version 3.3" id="Dih-Go-912">
+                            <font key="font" metaFont="systemLight" size="16"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+            </connections>
+            <point key="canvasLocation" x="248.5" y="206"/>
+        </window>
+        <pagecontroller id="ZmD-OR-Mfd">
+            <connections>
+                <outlet property="delegate" destination="-2" id="1vG-D0-tfr"/>
+                <outlet property="view" destination="fTJ-RA-Rgc" id="sJ3-30-6Ba"/>
+            </connections>
+        </pagecontroller>
+        <customView id="uKS-OK-cAN" userLabel="Minimal Theme and Compact Style" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Minimal Theme &amp; Compact Style" id="LXN-RX-ZgC">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz">
+                    <rect key="frame" x="30" y="20" width="577" height="41"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" id="0Bk-78-p2L">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">The new “Minimal” theme offers a calming, peaceful environment to work in. The “Compact” window style saves space and brings a sassy new look.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jRF-f4-nke">
+                    <rect key="frame" x="24" y="28" width="577" height="275"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="CompactMinimalWindowScreenshot" id="Q5w-FO-7Jc"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="-175.5" y="-384.5"/>
+        </customView>
+        <customView id="Cc0-Vj-shB" userLabel="Status Bar" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Status Bar" id="hKz-h7-CcP">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u">
+                    <rect key="frame" x="30" y="20" width="577" height="41"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" id="Lvg-vI-G64">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">The status bar comes with a dozen built-in components. You can adjust the colors and layout, and you can even write your own custom components.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yrA-gS-7pH">
+                    <rect key="frame" x="24" y="25" width="577" height="275"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="StatusBar" id="Igz-7Y-Uwf"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="495" y="-385"/>
+        </customView>
+        <customView id="U46-lc-cJw" userLabel="Titles" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Titles" id="VcV-iJ-Nlq">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP">
+                    <rect key="frame" x="30" y="20" width="577" height="41"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" title="Pane, tab, and window titles offer greatly expanded customizability. Titles can now show an icon indicating the running app." id="d4H-cG-h3K">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GpA-wZ-e6o">
+                    <rect key="frame" x="24" y="25" width="577" height="275"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="CustomizableTitles" id="UR7-vx-L4E"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="1167" y="-386"/>
+        </customView>
+        <customView id="olY-Zn-0Bl" userLabel="Scripting" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Scripting" id="OAI-gn-AQ7">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu">
+                    <rect key="frame" x="30" y="20" width="577" height="41"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" id="a2B-NS-5LJ">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">A powerful new Python scripting interface allows you to customize iTerm2 in novel ways. You can do anything—the only limit is yourself.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vtE-pO-lEk">
+                    <rect key="frame" x="24" y="34" width="577" height="275"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="PythonLogo" id="5d4-4e-NgE"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="1867" y="-385"/>
+        </customView>
+    </objects>
+    <resources>
+        <image name="CompactMinimalWindowScreenshot" width="577" height="275"/>
+        <image name="CustomizableTitles" width="619" height="275"/>
+        <image name="PythonLogo" width="486" height="144"/>
+        <image name="StatusBar" width="1136" height="408"/>
+    </resources>
+</document>

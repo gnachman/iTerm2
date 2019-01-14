@@ -55,6 +55,7 @@
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
+#import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptImporter.h"

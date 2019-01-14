@@ -3203,6 +3203,14 @@
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
+		A6EC47BE21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */; };
+		A6EC47BF21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */; };
+		A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC47BC21EC623D000E1321 /* iTermOnboardingWindowController.m */; };
+		A6EC47C221EC623D000E1321 /* iTermOnboardingWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47BD21EC623D000E1321 /* iTermOnboardingWindowController.xib */; };
+		A6EC47C421EC682B000E1321 /* CompactMinimalWindowScreenshot.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C321EC682A000E1321 /* CompactMinimalWindowScreenshot.png */; };
+		A6EC47C621EC6D05000E1321 /* StatusBar.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C521EC6D04000E1321 /* StatusBar.png */; };
+		A6EC47C821EC723F000E1321 /* CustomizableTitles.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C721EC723E000E1321 /* CustomizableTitles.png */; };
+		A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C921EC73F5000E1321 /* PythonLogo.png */; };
 		A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6ECA5921D7535E700D19511 /* image_decoder.sb */; };
 		A6ECA59A1D76907400D19511 /* iTermImageDecoderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */; };
 		A6ECA59B1D76907400D19511 /* iTermImageDecoderDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */; };
@@ -5463,6 +5471,13 @@
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
 		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
+		A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOnboardingWindowController.h; sourceTree = "<group>"; };
+		A6EC47BC21EC623D000E1321 /* iTermOnboardingWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOnboardingWindowController.m; sourceTree = "<group>"; };
+		A6EC47BD21EC623D000E1321 /* iTermOnboardingWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOnboardingWindowController.xib; sourceTree = "<group>"; };
+		A6EC47C321EC682A000E1321 /* CompactMinimalWindowScreenshot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CompactMinimalWindowScreenshot.png; path = images/Onboarding/CompactMinimalWindowScreenshot.png; sourceTree = "<group>"; };
+		A6EC47C521EC6D04000E1321 /* StatusBar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBar.png; path = images/Onboarding/StatusBar.png; sourceTree = "<group>"; };
+		A6EC47C721EC723E000E1321 /* CustomizableTitles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CustomizableTitles.png; path = images/Onboarding/CustomizableTitles.png; sourceTree = "<group>"; };
+		A6EC47C921EC73F5000E1321 /* PythonLogo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PythonLogo.png; path = images/Onboarding/PythonLogo.png; sourceTree = "<group>"; };
 		A6ECA5921D7535E700D19511 /* image_decoder.sb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = image_decoder.sb; path = OtherResources/image_decoder.sb; sourceTree = "<group>"; };
 		A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageDecoderDriver.h; sourceTree = "<group>"; };
 		A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageDecoderDriver.m; sourceTree = "<group>"; };
@@ -6270,6 +6285,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC47C921EC73F5000E1321 /* PythonLogo.png */,
+				A6EC47C721EC723E000E1321 /* CustomizableTitles.png */,
+				A6EC47C521EC6D04000E1321 /* StatusBar.png */,
+				A6EC47C321EC682A000E1321 /* CompactMinimalWindowScreenshot.png */,
 				A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */,
 				A63F34D321E1EB1B000C9D52 /* StopStatusIcon@2x.png */,
 				53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */,
@@ -8137,6 +8156,9 @@
 				A6D1784121BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h */,
 				A6D1784221BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m */,
 				A6D1784321BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib */,
+				A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */,
+				A6EC47BC21EC623D000E1321 /* iTermOnboardingWindowController.m */,
+				A6EC47BD21EC623D000E1321 /* iTermOnboardingWindowController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -9060,6 +9082,7 @@
 				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
 				1D468BB91B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */,
 				A67F57B71B01A01800B4F135 /* iTermImageInfo.h in Headers */,
+				A6EC47BE21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
@@ -9544,6 +9567,7 @@
 				5365207921433F7A003C58FD /* iTermGitPoller.h in Headers */,
 				A6B41405211A579300D28207 /* iTermStoplightHotbox.h in Headers */,
 				530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */,
+				A6EC47BF21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */,
 				5370678521C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.h in Headers */,
 				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
@@ -10824,6 +10848,7 @@
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A67F61E7214395D50093940A /* graphic_yo@2x.png in Resources */,
+				A6EC47C621EC6D05000E1321 /* StatusBar.png in Resources */,
 				A6E7AE61214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
 				A6E7AEB5214394F600DE9F3B /* graphic_database@2x.png in Resources */,
 				A6E7AE6D214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
@@ -10845,6 +10870,7 @@
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
+				A6EC47C221EC623D000E1321 /* iTermOnboardingWindowController.xib in Resources */,
 				A6E7AE55214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A67D0D891A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
@@ -10855,6 +10881,7 @@
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
+				A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */,
 				A67F61CA214395C60093940A /* graphic_shell.png in Resources */,
 				A67D0D4A1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A66F52D32106F6F100571168 /* gitdown@2x.png in Resources */,
@@ -10963,6 +10990,7 @@
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
+				A6EC47C421EC682B000E1321 /* CompactMinimalWindowScreenshot.png in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
@@ -11120,6 +11148,7 @@
 				A6057C171883D12E004A60AF /* broken_image.png in Resources */,
 				A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */,
 				A67F6170214395990093940A /* graphic_mysql.png in Resources */,
+				A6EC47C821EC723F000E1321 /* CustomizableTitles.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
@@ -11686,6 +11715,7 @@
 				A69C93452121140100531438 /* iTermStatusBarLargeComposerViewController.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
+				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
 				A6A4867A20B67DFF00493302 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
