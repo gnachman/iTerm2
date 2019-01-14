@@ -51,7 +51,7 @@ def RPC(func):
 
     The decorated coroutine will have a `async_register` value that you must call to complete the registration. `async_register` takes one required argument, the :class:`~iterm2.connection.Connection`. It also takes one optional argument, which is a timeout. The `timeout` is a value in seconds. If not given, the default timeout will be used. When waiting for an RPC to return, iTerm2 will stop waiting for the RPC after the timeout elapses.
 
-    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `~iterm2.Reference("session.id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
+    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `~iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
 
     That's complicated, but an example will make it clearer:
 
@@ -62,7 +62,7 @@ def RPC(func):
           app = await iterm2.async_get_app(connection)
 
           @iterm2.RPC
-          async def split_current_session_n_times(session_id=iterm2.Reference("session.id"), n=1):
+          async def split_current_session_n_times(session_id=iterm2.Reference("id"), n=1):
               session = app.get_session_by_id(session_id)
               for i in range(n):
                   await session.async_split_pane()
@@ -107,7 +107,7 @@ def TitleProviderRPC(func):
       .. code-block:: python
 
           @iterm2.TitleProviderRPC
-          async def upper_case_title(auto_name=iterm2.Reference("session.autoName?")):
+          async def upper_case_title(auto_name=iterm2.Reference("autoName?")):
               if not auto_name:
                   return ""
               return auto_name.upper()
@@ -170,7 +170,7 @@ def StatusBarRPC(func):
           @iterm2.StatusBarRPC
           async def session_id_status_bar_coro(
                   knobs,
-                  session_id=iterm2.Reference("session.id")):
+                  session_id=iterm2.Reference("id")):
               # This status bar component shows the current session ID, which
               # is useful for debugging scripts.
               return session_id

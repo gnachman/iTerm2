@@ -30,7 +30,7 @@ class VariableMonitor:
           async with iterm2.VariableMonitor(
                   connection,
                   iterm2.VariableScopes.SESSION,
-                  "session.jobName",
+                  "jobName",
                   my_session.session_id) as mon:
               while True:
                   new_value = await mon.async_get()
