@@ -83,12 +83,12 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
 
         @iterm2.TitleProviderRPC
         async def georges_title(
-            pwd=iterm2.Reference("session.path?"),
-            hostname=iterm2.Reference("session.hostname?"),
+            pwd=iterm2.Reference("path?"),
+            hostname=iterm2.Reference("hostname?"),
             branch=iterm2.Reference("user.gitBranch?"),
-            auto_name=iterm2.Reference("session.autoName?"),
-            profile_name=iterm2.Reference("session.profileName?"),
-            tmux_title=iterm2.Reference("session.tmuxWindowTitle?"),
+            auto_name=iterm2.Reference("autoName?"),
+            profile_name=iterm2.Reference("profileName?"),
+            tmux_title=iterm2.Reference("tmuxWindowTitle?"),
             user_home=iterm2.Reference("user.home?")):
             if tmux_title:
                 return tmux_title

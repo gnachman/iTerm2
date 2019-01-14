@@ -14,8 +14,8 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
     async def main(connection):
         @iterm2.TitleProviderRPC
         async def badge_title(
-            badge=iterm2.Reference("session.badge?"),
-            auto_name=iterm2.Reference("session.autoName?")):
+            badge=iterm2.Reference("badge?"),
+            auto_name=iterm2.Reference("autoName?")):
             if badge and auto_name:
                 return auto_name + u" \u2014 " + badge
             elif auto_name:
@@ -42,8 +42,8 @@ but some users prefer to see the window title in both places.
     async def main(connection):
         @iterm2.TitleProviderRPC
         async def window_title_in_tab(
-            window_name=iterm2.Reference("session.terminalWindowName?"),
-            auto_name=iterm2.Reference("session.autoName?")):
+            window_name=iterm2.Reference("terminalWindowName?"),
+            auto_name=iterm2.Reference("autoName?")):
             if window_name:
                 return window_name
             elif auto_name:

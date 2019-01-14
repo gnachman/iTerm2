@@ -45,8 +45,8 @@ This script is a long-running daemon since the registered function gets called w
         # Defaults specify paths to external variables (like session.rows) and binds them to
         # arguments to the registered function (coro). When any of those variables' values
         # change the function gets called.
-        defaults = { "rows": "session.rows",
-                     "cols": "session.columns" }
+        defaults = { "rows": "rows",
+                     "cols": "columns" }
 
         # Register the component.
         await component.async_register(connection, coro, defaults=defaults)

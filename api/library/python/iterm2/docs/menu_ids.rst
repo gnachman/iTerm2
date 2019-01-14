@@ -21,6 +21,7 @@ iTerm2 > Check for Incompatible Software                                        
 iTerm2 > Check For Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      
+iTerm2 > Profile CPU Usage                                                              `Profile CPU Usage`                                                           
 iTerm2 > Capture GPU Frame                                                              `Capture Metal Frame`                                                         
 iTerm2 > Preferences...                                                                 `Preferences...`                                                              
 iTerm2 > Hide iTerm2                                                                    `Hide iTerm2`                                                                 
@@ -138,6 +139,7 @@ Session > Terminal State > Reset                                                
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
 Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
+Scripts > Manage > Manage Dependencies…                                                 `Manage Dependencies`                                                         
 Scripts > Manage > Install Python Runtime                                               `Install Python Runtime`                                                      
 Scripts > Manage > Reveal Scripts in Finder                                             `Reveal in Finder`                                                            
 Scripts > Manage > Import…                                                              `Import Script`                                                               

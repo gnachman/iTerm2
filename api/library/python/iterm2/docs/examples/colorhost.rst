@@ -28,14 +28,14 @@ Edit the `colormap` variable to specify the hostname to color preset mapping you
 
     async def MonitorSession(connection, session):
         """Called when a new session is created."""
-        hostname = await session.async_get_variable("session.hostname")
+        hostname = await session.async_get_variable("hostname")
         if hostname in colormap:
             await SetPresetInSession(connection, session, colormap[hostname])
 
         async with iterm2.VariableMonitor(
                 connection,
                 iterm2.VariableScopes.SESSION,
-                "session.hostname",
+                "hostname",
                 session.session_id) as mon:
             while True:
                 hostname = await mon.async_get()

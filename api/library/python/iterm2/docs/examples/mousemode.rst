@@ -38,7 +38,7 @@ folder.
         # Defaults specify paths to external variables (like session.rows) and binds them to
         # arguments to the registered function (coro). When any of those variables' values
         # change the function gets called.
-        defaults = { "reporting": "session.mouseReportingMode" }
+        defaults = { "reporting": "mouseReportingMode" }
 
         # Register the component.
         await component.async_register(connection, coro, defaults=defaults)

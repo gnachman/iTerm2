@@ -73,7 +73,7 @@ This script is a long-running daemon since it must continually update the status
         # may not always be defined (e.g., when a new session is created) it must be
         # labeled as optional with the trailing ? to prevent an exception.
         defaults = { "show_indicator": "user.showEscIndicator?",
-                     "session_id": "session.id" }
+                     "session_id": "id" }
 
         # Register the status bar component.
         await component.async_register(connection, coro, defaults=defaults)
