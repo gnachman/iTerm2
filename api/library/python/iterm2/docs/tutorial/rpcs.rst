@@ -65,7 +65,7 @@ the session ID in which an RPC was invoked. You could register it this way:
 .. code-block:: python
 
         @iterm2.RPC
-        async def clear_session(session_id=iterm2.Reference("session.id"):
+        async def clear_session(session_id=iterm2.Reference("id"):
             code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
             session = app.get_session_by_id(session_id)
             if session:
@@ -74,7 +74,7 @@ the session ID in which an RPC was invoked. You could register it this way:
 
 The function invocation will not be made if the reference cannot be resolved.
 If you'd prefer a value of `None` instead in such a case, use a question mark
-to indicate an optional value, like this: `Reference("session.id?")`.
+to indicate an optional value, like this: `Reference("id?")`.
 
 Invocation
 ----------

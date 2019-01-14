@@ -20,7 +20,7 @@ Here's a minimal example that takes the "auto name" of the session and converts 
 .. code-block:: python
 
     @iterm2.TitleProviderRPC
-    async def upper_case_title(auto_name=iterm2.Reference("session.autoName?")):
+    async def upper_case_title(auto_name=iterm2.Reference("autoName?")):
         if not auto_name:
             return ""
         return auto_name.upper()
@@ -71,7 +71,7 @@ import traceback
 
         @iterm2.TitleProviderRPC
         async def age_in_seconds_title(
-                session_id=iterm2.Reference("session.id"),
+                session_id=iterm2.Reference("id"),
                 age=iterm2.Reference("user.session_age_in_seconds?")):
             if session_id not in tasks:
                 wake_coro = redraw_title_provider_periodically(session_id)
