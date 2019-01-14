@@ -431,7 +431,6 @@ typedef enum {
 @property(nonatomic, readonly) NSMutableArray<NSString *> *directories;  // of NSString
 @property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
 
-// Has two children: session and user
 @property (nonatomic, readonly) iTermVariables *variables;
 @property (nonatomic, readonly) iTermVariableScope *variablesScope;
 

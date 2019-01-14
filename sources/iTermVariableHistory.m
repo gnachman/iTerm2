@@ -236,8 +236,8 @@
 }
 
 // Consume leading terminals from prefix beginning with candidate. For example, given the prefix
-// "session.tab.currentSession.session.tab.foo" in the context of a session and candidate
-// "session.tab", return "foo" in the context of a tab.
+// "tab.currentSession.tab.foo" in the context of a session and candidate
+// "tab", return "foo" in the context of a tab.
 + (NSString *)pathByConsumingNonterminalsInPath:(NSString *)prefix
                                       candidate:(NSString *)candidate
                                         context:(iTermVariablesSuggestionContext)context

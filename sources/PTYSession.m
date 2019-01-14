@@ -475,7 +475,6 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
 
-    iTermVariables *_sessionVariables;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
@@ -575,9 +574,8 @@ static const NSUInteger kMaxHosts = 100;
 
         _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession
                                                        owner:self];
-        _sessionVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
-                                                              owner:self];
-        [self.variablesScope setValue:_sessionVariables forVariableNamed:@"session"];
+        // Alias for legacy paths
+        [self.variablesScope setValue:_variables forVariableNamed:@"session" weak:YES];
         _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                            owner:self];
         [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
@@ -753,7 +751,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self recycleQueuedTokens];
     [_queuedTokens release];
     [_variables release];
-    [_sessionVariables release];
     [_userVariables release];
     [_program release];
     [_environment release];

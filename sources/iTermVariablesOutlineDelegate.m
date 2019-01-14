@@ -32,7 +32,7 @@
 @end
 
 @interface iTermVariablesWeakNonterminalProxy : NSObject<iTermVariablesProxy>
-- (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables;
+- (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables isAlias:(BOOL)isAlias;
 @end
 
 @interface iTermVariablesNonterminalProxy : NSObject<iTermVariablesProxy>
@@ -45,7 +45,7 @@
 - (instancetype)initWithScope:(iTermVariableScope *)scope;
 @end
 
-id iTermVariablesNewProxy(NSString *name, id value) {
+id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
     iTermVariables *nested = [iTermVariables castFrom:value];
     if (nested) {
         return [[iTermVariablesNonterminalProxy alloc] initWithName:name variables:nested];
@@ -55,7 +55,7 @@ id iTermVariablesNewProxy(NSString *name, id value) {
         if (!weak.variables) {
             return nil;
         }
-        return [[iTermVariablesWeakNonterminalProxy alloc] initWithName:name variables:weak.variables];
+        return [[iTermVariablesWeakNonterminalProxy alloc] initWithName:name variables:weak.variables isAlias:isAlias];
     }
 
     return [[iTermVariablesTerminalProxy alloc] initWithName:name value:value];
@@ -99,15 +99,17 @@ id iTermVariablesNewProxy(NSString *name, id value) {
 @implementation iTermVariablesWeakNonterminalProxy {
     NSString *_name;
     iTermVariables *_variables;
+    BOOL _isAlias;
 }
 
 @synthesize children = _children;
 
-- (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables {
+- (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables isAlias:(BOOL)isAlias {
     self = [super init];
     if (self) {
         _name = [name copy];
         _variables = variables;
+        _isAlias = isAlias;
     }
     return self;
 }
@@ -119,7 +121,8 @@ id iTermVariablesNewProxy(NSString *name, id value) {
     }
     _children = [_variables.allNames mapWithBlock:^id(NSString *name) {
         id value = [self->_variables rawValueForVariableName:name];
-        return iTermVariablesNewProxy(name, value);
+        const BOOL isAlias = [[iTermWeakVariables castFrom:value] variables] == self->_variables;
+        return iTermVariablesNewProxy(name, value, isAlias);
     }];
     return _children;
 }
@@ -133,7 +136,7 @@ id iTermVariablesNewProxy(NSString *name, id value) {
 }
 
 - (NSString *)value {
-    return @"⭫ Parent Object";
+    return _isAlias ? @"↶ Alias" : @"⭫ Parent Object";
 }
 
 @end
@@ -153,7 +156,7 @@ id iTermVariablesNewProxy(NSString *name, id value) {
         _variables = variables;
         _children = [variables.allNames mapWithBlock:^id(NSString *name) {
             id value = [variables rawValueForVariableName:name];
-            return iTermVariablesNewProxy(name, value);
+            return iTermVariablesNewProxy(name, value, NO);
         }];
     }
     return self;
@@ -186,7 +189,10 @@ id iTermVariablesNewProxy(NSString *name, id value) {
             } else {
                 return [tuple.secondObject.allNames mapWithBlock:^id(NSString *name) {
                     id value = [tuple.secondObject rawValueForVariableName:name];
-                    return iTermVariablesNewProxy(name, value);
+                    iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
+                    const BOOL isAlias = (tuple.firstObject == nil &&
+                                          tuple.secondObject == weakVariables.variables);
+                    return iTermVariablesNewProxy(name, value, isAlias);
                 }];
             }
         }] ?: @[];

@@ -115,7 +115,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
-    return [super initWithPath:@"session.hostname" configuration:configuration scope:scope];
+    return [super initWithPath:@"hostname" configuration:configuration scope:scope];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -156,7 +156,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
-    return [super initWithPath:@"session.username" configuration:configuration scope:scope];
+    return [super initWithPath:@"username" configuration:configuration scope:scope];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -200,7 +200,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
     _home = [NSHomeDirectory() copy];
-    return [super initWithPath:@"session.path" configuration:configuration scope:scope];
+    return [super initWithPath:@"path" configuration:configuration scope:scope];
 }
 
 - (NSString *)transformedValue:(NSString *)value {
