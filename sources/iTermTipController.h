@@ -18,9 +18,11 @@
 + (instancetype)sharedInstance;
 
 // Call this when the app finishes launching to show the initial card.
-- (void)applicationDidFinishLaunching;
+- (void)startWithPermissionPromptAllowed:(BOOL)permissionPromptAllowed notBefore:(NSDate *)notBeforeDate;
 
 // Show the last-seen tip (or first, if there is no last-seen) immediately.
 - (void)showTip;
+
+- (BOOL)willAskPermission;
 
 @end

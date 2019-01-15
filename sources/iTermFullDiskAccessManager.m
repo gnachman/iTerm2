@@ -36,8 +36,15 @@
     return NO;
 }
 
++ (BOOL)willRequestFullDiskAccess {
+    if (@available(macOS 10.14, *)) {
+        return ![self haveRequestedFullDiskAccess] && [self lacksFullDiskAccess];
+    }
+    return NO;
+}
+
 + (void)maybeRequestFullDiskAccess NS_AVAILABLE_MAC(10_14) {
-    if (![self haveRequestedFullDiskAccess] && [self lacksFullDiskAccess]) {
+    if ([self willRequestFullDiskAccess]) {
         [self reallyRequestFullDiskAccess];
     }
 }

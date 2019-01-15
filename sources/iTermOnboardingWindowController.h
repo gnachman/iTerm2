@@ -9,12 +9,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// Usage:
-//    iTermOnboardingWindowController *onboarding = [[iTermOnboardingWindowController alloc] initWithWindowNibName:@"iTermOnboardingWindowController"];
-//    [onboarding.window makeKeyAndOrderFront:nil];
-//    [onboarding.window center];
-
 @interface iTermOnboardingWindowController : NSWindowController
+
++ (BOOL)shouldBeShown;
++ (void)suppressFutureShowings;
++ (BOOL)previousLaunchVersionImpliesShouldBeShown;
 
 @end
 

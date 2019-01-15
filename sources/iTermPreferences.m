@@ -148,6 +148,10 @@ static NSString *sPreviousVersion;
 @implementation iTermPreferences
 
 + (NSString *)appVersionBeforeThisLaunch {
+    if (!sPreviousVersion) {
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        sPreviousVersion = [[userDefaults objectForKey:kPreferenceKeyAppVersion] copy];
+    }
     return sPreviousVersion;
 }
 
@@ -171,7 +175,8 @@ static NSString *sPreviousVersion;
 
     // Store the current app version in prefs
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    sPreviousVersion = [[userDefaults objectForKey:kPreferenceKeyAppVersion] copy];
+    // Force it to be lazy-loaded.
+    [self appVersionBeforeThisLaunch];
     [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
 
     // Disable under-titlebar mirror view.

@@ -27,11 +27,6 @@
                                     <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check for Incompatible Software" identifier="Check for Incompatible Software" id="SsR-0r-ksL">
-                                <connections>
-                                    <action selector="checkForIncompatibleSoftware:" target="201" id="0ur-zZ-jKd"/>
-                                </connections>
-                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="Dxk-DH-qzi">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

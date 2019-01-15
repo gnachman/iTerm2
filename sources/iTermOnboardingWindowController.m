@@ -6,6 +6,9 @@
 //
 
 #import "iTermOnboardingWindowController.h"
+#import "iTermPreferences.h"
+
+static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown";
 
 @interface iTermOnboardingView : NSView
 @end
@@ -41,6 +44,35 @@
     IBOutlet NSButton *_nextPageButton;
 }
 
++ (BOOL)hasBeenShown {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermOnboardingWindowControllerHasBeenShown];
+}
+
++ (void)suppressFutureShowings {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:iTermOnboardingWindowControllerHasBeenShown];
+}
+
++ (BOOL)previousLaunchVersionImpliesShouldBeShown {
+    NSString *lastVersion = [iTermPreferences appVersionBeforeThisLaunch];
+    if (!lastVersion) {
+        return NO;
+    }
+    NSArray<NSString *> *parts = [lastVersion componentsSeparatedByString:@"."];
+    if (parts.count < 2) {
+        return NO;
+    }
+    NSString *twoPartVersion = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@"."];
+    NSArray<NSString *> *versionsForAnnouncement = @[ @"3.1", @"3.2" ];
+    return [versionsForAnnouncement containsObject:twoPartVersion];
+}
+
++ (BOOL)shouldBeShown {
+    if ([self hasBeenShown]) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)awakeFromNib {
     _views = @[ [self wrap:_view1], [self wrap:_view2], [self wrap:_view3], [self wrap:_view4] ];
     _pageIndicators = @[ _pageIndicator1, _pageIndicator2, _pageIndicator3, _pageIndicator4 ];
@@ -52,6 +84,7 @@
         view.alphaValue = 0.25;
     }
     [self updateButtons];
+    [self.class suppressFutureShowings];
 }
 
 - (IBAction)previousPage:(id)sender {
@@ -90,15 +123,14 @@
 - (IBAction)pageIndicator:(id)sender {
     NSInteger index = [_pageIndicators indexOfObject:sender];
     if (index != NSNotFound) {
-        if (index == _pageController.selectedIndex + 1) {
+        if (index > _pageController.selectedIndex) {
             [_pageController navigateForward:nil];
             return;
         }
-        if (index + 1 == _pageController.selectedIndex) {
+        if (index < _pageController.selectedIndex) {
             [_pageController navigateBack:nil];
             return;
         }
-        [_pageController setSelectedIndex:index];
     }
 }
 

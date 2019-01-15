@@ -19,7 +19,6 @@ static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
 static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an advanced pref with the same name.
 static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
-static NSString *const kTimeOfFirstLaunchOfVersionWithTip = @"NoSyncTimeOfFirstLaunchOfVersionWithTip";
 static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPerDay;
 
@@ -70,14 +69,20 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
     [super dealloc];
 }
 
-- (void)applicationDidFinishLaunching {
-    // This must be done before the delay. If it's called at the wrong time while a window is
-    // becoming fullscreen, the app becomes unresponsive to mouse and keyboard events. Issue 4775.
-    [self askForPermissionIfNeeded];
+- (void)startWithPermissionPromptAllowed:(BOOL)permissionPromptAllowed notBefore:(NSDate *)notBeforeDate {
+    if (permissionPromptAllowed) {
+        // This must be done before the delay. If it's called at the wrong time while a window is
+        // becoming fullscreen, the app becomes unresponsive to mouse and keyboard events. Issue 4775.
+        [self askForPermissionIfNeeded];
+    } else if ([self willAskPermission]) {
+        // We'll never be able to show a prompt.
+        return;
+    }
 
     // Wait until startup activity has settled down so there's enough CPU for the animation to
     // look good.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
+    NSTimeInterval delay = MAX(0, [notBeforeDate timeIntervalSinceNow]) + 1;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
                    dispatch_get_main_queue(),
                    ^{
                        [self tryToShowTip];
@@ -89,19 +94,17 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
                    });
 }
 
+- (BOOL)willAskPermission {
+    if (![self haveAskedForPermission] &&
+        ![[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void)askForPermissionIfNeeded {
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    NSTimeInterval timeOfFirstLaunchOfVersionWithTip =
-        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchOfVersionWithTip];
-    if (!timeOfFirstLaunchOfVersionWithTip) {
-        [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
-                                                  forKey:kTimeOfFirstLaunchOfVersionWithTip];
-    } else {
-        if (![self haveAskedForPermission] &&
-            now - timeOfFirstLaunchOfVersionWithTip > kMinDelayBeforeAskingForPermission &&
-            ![[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
-            [self askForPermission];
-        }
+    if ([self willAskPermission]) {
+        [self askForPermission];
     }
 }
 

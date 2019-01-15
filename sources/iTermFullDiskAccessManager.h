@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermFullDiskAccessManager : NSObject
 
++ (BOOL)willRequestFullDiskAccess;
 + (void)maybeRequestFullDiskAccess NS_AVAILABLE_MAC(10_14);
 
 @end

@@ -3211,6 +3211,8 @@
 		A6EC47C621EC6D05000E1321 /* StatusBar.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C521EC6D04000E1321 /* StatusBar.png */; };
 		A6EC47C821EC723F000E1321 /* CustomizableTitles.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C721EC723E000E1321 /* CustomizableTitles.png */; };
 		A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EC47C921EC73F5000E1321 /* PythonLogo.png */; };
+		A6EC47CD21ED96F2000E1321 /* iTermLaunchExperienceController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC47CB21ED96F2000E1321 /* iTermLaunchExperienceController.h */; };
+		A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC47CC21ED96F2000E1321 /* iTermLaunchExperienceController.m */; };
 		A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6ECA5921D7535E700D19511 /* image_decoder.sb */; };
 		A6ECA59A1D76907400D19511 /* iTermImageDecoderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */; };
 		A6ECA59B1D76907400D19511 /* iTermImageDecoderDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */; };
@@ -5478,6 +5480,8 @@
 		A6EC47C521EC6D04000E1321 /* StatusBar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBar.png; path = images/Onboarding/StatusBar.png; sourceTree = "<group>"; };
 		A6EC47C721EC723E000E1321 /* CustomizableTitles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CustomizableTitles.png; path = images/Onboarding/CustomizableTitles.png; sourceTree = "<group>"; };
 		A6EC47C921EC73F5000E1321 /* PythonLogo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PythonLogo.png; path = images/Onboarding/PythonLogo.png; sourceTree = "<group>"; };
+		A6EC47CB21ED96F2000E1321 /* iTermLaunchExperienceController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLaunchExperienceController.h; sourceTree = "<group>"; };
+		A6EC47CC21ED96F2000E1321 /* iTermLaunchExperienceController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLaunchExperienceController.m; sourceTree = "<group>"; };
 		A6ECA5921D7535E700D19511 /* image_decoder.sb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = image_decoder.sb; path = OtherResources/image_decoder.sb; sourceTree = "<group>"; };
 		A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageDecoderDriver.h; sourceTree = "<group>"; };
 		A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageDecoderDriver.m; sourceTree = "<group>"; };
@@ -8060,6 +8064,8 @@
 				A65D3AE121D16FE200384015 /* iTermBacktraceFrame.m */,
 				A611272521D1B1E300E8C228 /* iTermCPUProfilerUI.h */,
 				A611272621D1B1E300E8C228 /* iTermCPUProfilerUI.m */,
+				A6EC47CB21ED96F2000E1321 /* iTermLaunchExperienceController.h */,
+				A6EC47CC21ED96F2000E1321 /* iTermLaunchExperienceController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9469,6 +9475,7 @@
 				A630117120E60DBF008114B7 /* iTermStatusBarView.h in Headers */,
 				A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */,
 				A667192E1DCE36C3000CE608 /* PSMLightHighContrastTabStyle.h in Headers */,
+				A6EC47CD21ED96F2000E1321 /* iTermLaunchExperienceController.h in Headers */,
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
 				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
@@ -11795,6 +11802,7 @@
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
+				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,

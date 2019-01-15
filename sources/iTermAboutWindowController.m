@@ -7,10 +7,14 @@
 //
 
 #import "iTermAboutWindowController.h"
+#import "iTermLaunchExperienceController.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
-@interface iTermAboutWindowContentView : NSView
+static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-new/";
+
+@interface iTermAboutWindowContentView : NSVisualEffectView
 @end
 
 @implementation iTermAboutWindowContentView {
@@ -25,6 +29,9 @@
     _bottomAlignedScrollView.frame = frame;
 }
 
+@end
+
+@interface iTermAboutWindowController()<NSTextViewDelegate>
 @end
 
 @implementation iTermAboutWindowController {
@@ -45,14 +52,19 @@
     self = [super initWithWindowNibName:@"AboutWindow"];
     if (self) {
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n",
-                                   myDict[(NSString *)kCFBundleVersionKey]];
+        NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
+        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
+        NSAttributedString *whatsNew = nil;
+        if ([versionNumber hasPrefix:@"3.3."]) {
+            whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
+                                                     title:@"What’s New in 3.3?\n"];
+        }
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"
-                                                                       title:@"Home Page\n"];
+                                                                       title:@"Home Page"];
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/bugs"
-                                              title:@"Report a bug\n"];
+                                              title:@"Report a bug"];
         NSAttributedString *creditsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
                                               title:@"Credits"];
@@ -61,12 +73,19 @@
         [self window];
 
         NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
+        NSAttributedString *bullet = [[[NSAttributedString alloc] initWithString:@" ∙ "
+                                                                      attributes:versionAttributes] autorelease];
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
         [[_dynamicText textStorage] deleteCharactersInRange:NSMakeRange(0, [[_dynamicText textStorage] length])];
         [[_dynamicText textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString
                                                                                             attributes:versionAttributes] autorelease]];
+        if (whatsNew) {
+            [[_dynamicText textStorage] appendAttributedString:whatsNew];
+        }
         [[_dynamicText textStorage] appendAttributedString:webAString];
+        [[_dynamicText textStorage] appendAttributedString:bullet];
         [[_dynamicText textStorage] appendAttributedString:bugsAString];
+        [[_dynamicText textStorage] appendAttributedString:bullet];
         [[_dynamicText textStorage] appendAttributedString:creditsAString];
         [_dynamicText setAlignment:NSTextAlignmentCenter
                              range:NSMakeRange(0, [[_dynamicText textStorage] length])];
@@ -161,6 +180,17 @@
     NSString *localizedTitle = title;
     return [[[NSAttributedString alloc] initWithString:localizedTitle
                                             attributes:linkAttributes] autorelease];
+}
+
+#pragma mark - NSTextViewDelegate
+
+- (BOOL)textView:(NSTextView *)textView clickedOnLink:(id)link atIndex:(NSUInteger)charIndex {
+    NSURL *url = [NSURL castFrom:link];
+    if ([url.absoluteString isEqualToString:iTermAboutWindowControllerWhatsNewURLString]) {
+        [iTermLaunchExperienceController forceShowWhatsNew];
+        return YES;
+    }
+    return NO;
 }
 
 @end
