@@ -47,7 +47,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Shows current memory utilization.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"3.1 GB ▂▃▃▅ RAM";
 }
 

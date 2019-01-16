@@ -44,7 +44,8 @@
     return @"Adds a text field for composing command lines.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"ls -l -R";
 }
 

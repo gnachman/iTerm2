@@ -184,7 +184,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
 }
 
 - (BOOL)shouldUpdateValue:(NSAttributedString *)proposed inField:(id<iTermTextFieldish>)textField {
@@ -286,6 +286,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSColor *)statusBarTextColor {
     return [self textColor];
+}
+
+- (NSColor *)statusBarBackgroundColor {
+    return [self backgroundColor];
 }
 
 - (void)save {

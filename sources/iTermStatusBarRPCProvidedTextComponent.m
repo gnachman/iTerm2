@@ -232,7 +232,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return [knobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.exemplar ?: @"";
 }
 

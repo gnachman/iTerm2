@@ -46,7 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Shows current CPU utilization.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"12% ▃▃▅▂ CPU";
 }
 

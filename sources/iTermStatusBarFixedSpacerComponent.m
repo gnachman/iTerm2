@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSView *_view;
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"";
 }
 

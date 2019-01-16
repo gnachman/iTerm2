@@ -73,7 +73,11 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
 - (NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
+}
+
+- (NSColor *)statusBarBackgroundColor {
+    return [self backgroundColor];
 }
 
 - (NSButton *)button {
@@ -107,7 +111,8 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     return @"Adds a button that invokes a script function with a user-provided invocation.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"foo(bar: \"baz\")";
 }
 

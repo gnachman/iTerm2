@@ -52,7 +52,8 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSwiftyStringComponentExpressionKey: @"" }];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     if (!_swiftyString.swiftyString.length) {
         return @"\\(expression)";
     } else {

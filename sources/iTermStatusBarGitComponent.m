@@ -106,7 +106,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [self clampedWidth:[super statusBarComponentPreferredWidth]];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"⎇ master";
 }
 

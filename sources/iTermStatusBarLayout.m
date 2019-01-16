@@ -142,7 +142,6 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
                iTermStatusBarLayoutKeyAdvancedConfiguration: [_advancedConfiguration dictionaryValue] ?: [NSNull null] } dictionaryByRemovingNullValues];
 }
 
-
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {

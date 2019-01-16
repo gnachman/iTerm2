@@ -64,7 +64,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     [self doesNotRecognizeSelector:_cmd];
     return @"";
 }
@@ -130,7 +131,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Current host name. Requires shell integration.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"example.com";
 }
 
@@ -171,7 +173,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Current user name. Requires shell integration.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return NSUserName();
 }
 
@@ -236,7 +239,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Current directory. Best with shell integration.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return NSHomeDirectory();
 }
 

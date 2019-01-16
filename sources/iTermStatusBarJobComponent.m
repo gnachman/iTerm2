@@ -68,7 +68,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Shows the currently running job. If space permits, parent process names are also shown.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"vim ◂ bash";
 }
 

@@ -23,7 +23,6 @@ extern NSString *const iTermStatusBarElementPasteboardType;
 // Model for an item in the status bar collection view.
 @interface iTermStatusBarSetupElement : NSObject<NSCopying, NSPasteboardWriting, NSPasteboardReading, NSCoding>
 
-@property (nonatomic, readonly) id exemplar;
 @property (nonatomic, readonly) NSString *shortDescription;
 @property (nonatomic, readonly) NSString *detailedDescription;
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;
@@ -33,6 +32,10 @@ extern NSString *const iTermStatusBarElementPasteboardType;
                                    knobs:(NSDictionary *)knobs;
 - (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
+
+- (NSAttributedString *)exemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor
+                                        defaultFont:(NSFont *)font;
 
 @end
 

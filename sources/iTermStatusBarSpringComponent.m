@@ -24,7 +24,8 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
                                                                   scope:nil];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"║┄┄║";
 }
 

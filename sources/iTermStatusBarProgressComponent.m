@@ -59,7 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @[];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     [self doesNotRecognizeSelector:_cmd];
     return @"[=== ]";
 }

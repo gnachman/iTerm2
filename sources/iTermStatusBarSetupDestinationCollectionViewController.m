@@ -122,6 +122,8 @@
 }
 
 - (void)setLayout:(iTermStatusBarLayout *)layout {
+    _advancedConfiguration = layout.advancedConfiguration;
+    [self->_elements removeAllObjects];
     [layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent>  _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermStatusBarSetupElement *element = [[iTermStatusBarSetupElement alloc] initWithComponent:component];
         element.delegate = self;
@@ -130,12 +132,12 @@
     [self.collectionView reloadData];
 }
 
-- (NSDictionary *)layoutDictionaryWithAdvancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration {
+- (NSDictionary *)layoutDictionary {
     NSArray<id<iTermStatusBarComponent>> *components = [_elements mapWithBlock:^id(iTermStatusBarSetupElement *element) {
         return element.component;
     }];
     iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithComponents:components
-                                                              advancedConfiguration:advancedConfiguration];
+                                                              advancedConfiguration:_advancedConfiguration];
     return layout.dictionaryValue;
 }
 
@@ -158,16 +160,17 @@
     return item;
 }
 
-- (void)initializeItem:(iTermStatusBarSetupCollectionViewItem *)item atIndexPath:(NSIndexPath *)indexPath {
+- (void)initializeItem:(iTermStatusBarSetupCollectionViewItem *)item
+           atIndexPath:(NSIndexPath *)indexPath {
     const NSInteger index = [indexPath indexAtPosition:1];
-    id exemplar = _elements[index].exemplar;
-    if ([exemplar isKindOfClass:[NSString class]]) {
-        item.textField.stringValue = exemplar;
-    } else {
-        item.textField.attributedStringValue = exemplar;
-    }
+    item.textField.attributedStringValue = [_elements[index] exemplarWithBackgroundColor:_advancedConfiguration.backgroundColor
+                                                                               textColor:_advancedConfiguration.defaultTextColor
+                                                                             defaultFont:_advancedConfiguration.font];
+
     item.hideDetail = YES;
     item.textField.toolTip = _elements[index].detailedDescription;
+    item.backgroundColor = _elements[index].component.statusBarBackgroundColor ?: _advancedConfiguration.backgroundColor;
+
 }
 
 - (NSCollectionViewItem *)collectionView:(NSCollectionView *)collectionView

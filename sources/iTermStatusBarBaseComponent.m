@@ -218,7 +218,8 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
               iTermStatusBarPriorityKey: @5 };
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     [self doesNotRecognizeSelector:_cmd];
     return @"BUG";
 }

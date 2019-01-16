@@ -125,6 +125,7 @@ NS_ASSUME_NONNULL_BEGIN
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;
 
+    _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
     [_destinationViewController setLayout:_layout];
 
     NSFont *font = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
@@ -168,7 +169,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)layoutDictionary {
-    return [_destinationViewController layoutDictionaryWithAdvancedConfiguration:_layout.advancedConfiguration];
+    return [_destinationViewController layoutDictionary];
 }
 
 - (IBAction)noop:(id)sender {
@@ -212,10 +213,16 @@ NS_ASSUME_NONNULL_BEGIN
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     NSFontPanel *fontPanel = [fontManager fontPanel:YES];
     [fontPanel close];
-    
+
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
+    _layout.delegate = nil;
+
+    _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];
+
+    [_destinationViewController setLayout:_layout];
+    [_collectionView reloadData];
 }
 
 - (void)endSheet {
@@ -240,14 +247,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeItem:(iTermStatusBarSetupCollectionViewItem *)item atIndexPath:(NSIndexPath *)indexPath {
     const NSInteger index = [indexPath indexAtPosition:1];
-    id exemplar = _elements[index].exemplar;
-    if ([exemplar isKindOfClass:[NSString class]]) {
-        item.textField.stringValue = exemplar;
-    } else {
-        item.textField.attributedStringValue = exemplar;
-    }
+    item.textField.attributedStringValue = [_elements[index] exemplarWithBackgroundColor:_layout.advancedConfiguration.backgroundColor
+                                                                               textColor:_layout.advancedConfiguration.defaultTextColor
+                                                                             defaultFont:_layout.advancedConfiguration.font];
     item.detailText = _elements[index].shortDescription;
     item.textField.toolTip = _elements[index].detailedDescription;
+    item.backgroundColor = _layout.advancedConfiguration.backgroundColor;
 }
 
 - (NSCollectionViewItem *)collectionView:(NSCollectionView *)collectionView

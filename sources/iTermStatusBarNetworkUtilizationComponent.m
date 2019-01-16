@@ -50,7 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Shows current network throughput.";
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"2 MB↓ ▃▃▅▂ 1 MB↑";
 }
 

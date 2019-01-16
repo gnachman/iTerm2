@@ -45,7 +45,8 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"M-dd h:mm" }];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return [[self dateFormatter] stringFromDate:[NSDate date]];
 }
 

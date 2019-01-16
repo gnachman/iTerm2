@@ -40,9 +40,27 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, NSStringFromClass(_component.class)];
 }
 
-- (id)exemplar {
-    return self.component.statusBarComponentExemplar;
+- (NSAttributedString *)exemplarWithBackgroundColor:(NSColor *)defaultBackgroundColor
+                                          textColor:(NSColor *)defaultTextColor
+                                        defaultFont:(NSFont *)defaultFont {
+    NSColor *backgroundColor = self.component.statusBarBackgroundColor ?: defaultBackgroundColor;
+    NSColor *textColor = self.component.statusBarTextColor;
+    if (textColor == [NSColor labelColor] || textColor == nil) {
+        textColor = defaultTextColor;
+    }
+    id object = [self.component statusBarComponentExemplarWithBackgroundColor:backgroundColor
+                                                                    textColor:textColor];
+    if ([object isKindOfClass:[NSAttributedString class]]) {
+        return object;
+    }
+
+    NSFont *font = defaultFont ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    NSDictionary *attributes = @{ NSFontAttributeName: font,
+                                  NSForegroundColorAttributeName: textColor ?: [NSColor labelColor],
+                                  NSBackgroundColorAttributeName: [NSColor clearColor] };
+    return [[NSAttributedString alloc] initWithString:object attributes:attributes];
 }
+
 
 #pragma mark - NSCopying
 
@@ -112,11 +130,17 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 }
 
 - (NSColor *)statusBarComponentDefaultTextColor {
-    return [NSColor blackColor];
+    return [NSColor labelColor];
 }
 
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component setHidden:(BOOL)hidden {
 }
+
+- (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component {
+    // Say no so that git components don't do work for no reason.
+    return NO;
+}
+
 
 @end
 

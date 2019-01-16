@@ -52,7 +52,8 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
     return @[];
 }
 
-- (id)statusBarComponentExemplar {
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
     return @"🔎 Search";
 }
 
