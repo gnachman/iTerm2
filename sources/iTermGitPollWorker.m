@@ -24,20 +24,26 @@ typedef void (^iTermGitCallback)(iTermGitState *);
     NSMutableArray<NSString *> *_queue;
     iTermGitCache *_cache;
     NSMutableDictionary<NSString *, NSMutableArray<iTermGitCallback> *> *_outstanding;
+    int _bucket;
 }
 
-+ (instancetype)sharedInstance {
-    static dispatch_once_t onceToken;
-    static id instance;
-    dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
++ (instancetype)instanceForPath:(NSString *)path {
+    // If one of the gets hung because of a network file system then it won't affect most of the
+    // others.
+    const int numberOfBuckets = 4;
+    static dispatch_once_t onceToken[numberOfBuckets];
+    static id instances[numberOfBuckets];
+    const int bucket = [path hash] % numberOfBuckets;
+    dispatch_once(&onceToken[bucket], ^{
+        instances[bucket] = [[self alloc] initWithBucket:bucket];
     });
-    return instance;
+    return instances[bucket];
 }
 
-- (instancetype)init {
+- (instancetype)initWithBucket:(int)bucket {
     self = [super init];
     if (self) {
+        _bucket = bucket;
         _readData = [NSMutableData data];
         _queue = [NSMutableArray array];
         _cache = [[iTermGitCache alloc] init];
@@ -56,6 +62,8 @@ typedef void (^iTermGitCallback)(iTermGitState *);
         completion(cached);
         return;
     }
+
+    DLog(@"git poll worker %d got request for path %@", _bucket, path);
 
     NSMutableArray<iTermGitCallback> *callbacks = _outstanding[path];
     if (callbacks) {

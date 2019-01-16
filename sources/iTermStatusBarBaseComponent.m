@@ -301,6 +301,9 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
                   preferredEdge:preferredEdge];
 }
 
+- (void)statusBarComponentDidMoveToWindow {
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {

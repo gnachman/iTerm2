@@ -27,6 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
 static NSString *const iTermStatusBarGitComponentPollingIntervalKey = @"iTermStatusBarGitComponentPollingIntervalKey";
 static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
+@interface iTermStatusBarGitComponent()<iTermGitPollerDelegate>
+@end
+
 @implementation iTermStatusBarGitComponent {
     iTermGitPoller *_gitPoller;
     iTermVariableReference *_pwdRef;
@@ -43,6 +46,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         iTermGitPoller *gitPoller = [[iTermGitPoller alloc] initWithCadence:cadence update:^{
             [weakSelf statusBarComponentUpdate];
         }];
+        gitPoller.delegate = self;
         _gitPoller = gitPoller;
         _pwdRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionPath scope:scope];
         _pwdRef.onChangeBlock = ^{
@@ -223,6 +227,17 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
     _gitPoller.cadence = [self cadenceInDictionary:knobValues];
     [super statusBarComponentSetKnobValues:knobValues];
+}
+
+- (void)statusBarComponentDidMoveToWindow {
+    [super statusBarComponentDidMoveToWindow];
+    [_gitPoller bump];
+}
+#pragma mark - iTermGitPollerDelegate
+
+- (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller {
+    return (![self.delegate statusBarComponentIsInSetupUI:self] &&
+            [self.delegate statusBarComponentIsVisible:self]);
 }
 
 @end

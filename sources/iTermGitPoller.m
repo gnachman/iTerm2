@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermGitPoller {
     iTermRateLimitedUpdate *_rateLimit;
     NSTimer *_timer;
-    BOOL _polling;
+    NSDate *_lastPollTime;
     void (^_update)(void);
 }
 
@@ -59,6 +59,21 @@ NS_ASSUME_NONNULL_BEGIN
                                                  repeats:YES];
 }
 
+- (void)bump {
+    DLog(@"Bump");
+    if ([self timeSinceLastPoll] > 1) {
+        [self poll];
+        // Restart the timer to avoid a double-tap
+        if (_timer) {
+            [self startTimer];
+        }
+    }
+}
+
+- (NSTimeInterval)timeSinceLastPoll {
+    return -[_lastPollTime timeIntervalSinceNow];
+}
+
 - (void)poll {
     DLog(@"poller running %@", self);
     if (!self.enabled) {
@@ -67,10 +82,18 @@ NS_ASSUME_NONNULL_BEGIN
     if (!self.currentDirectory.length) {
         return;
     }
+    if (![self.delegate gitPollerShouldPoll:self]) {
+        return;
+    }
+    _lastPollTime = [NSDate date];
     __weak __typeof(self) weakSelf = self;
-    [[iTermGitPollWorker sharedInstance] requestPath:self.currentDirectory completion:^(iTermGitState * state) {
-        weakSelf.state = state;
+    [[iTermGitPollWorker instanceForPath:self.currentDirectory] requestPath:self.currentDirectory completion:^(iTermGitState *state) {
+        [weakSelf didPollWithUpdatedState:state];
     }];
+}
+
+- (void)didPollWithUpdatedState:(iTermGitState *)state {
+    self.state = state;
 }
 
 - (void)setState:(iTermGitState *)state {
@@ -85,7 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     if (currentDirectory) {
         [_rateLimit performRateLimitedBlock:^{
-            [[iTermGitPollWorker sharedInstance] invalidateCacheForPath:currentDirectory];
+            [[iTermGitPollWorker instanceForPath:currentDirectory] invalidateCacheForPath:currentDirectory];
         }];
     }
     _currentDirectory = [currentDirectory copy];

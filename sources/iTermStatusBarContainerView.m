@@ -128,6 +128,10 @@ NS_ASSUME_NONNULL_BEGIN
                              viewHeight);
 }
 
+- (void)viewDidMoveToWindow {
+    [_component statusBarComponentDidMoveToWindow];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

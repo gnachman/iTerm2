@@ -423,6 +423,10 @@ const CGFloat iTermStatusBarHeight = 21;
     [self.view setNeedsLayout:YES];
 }
 
+- (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component {
+    return self.view.window != nil && !self.view.isHidden;
+}
+
 @end
 
 NS_ASSUME_NONNULL_END
