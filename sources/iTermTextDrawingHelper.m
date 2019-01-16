@@ -1407,6 +1407,9 @@ typedef struct iTermTextColorContext {
                                    font:attributes[NSFontAttributeName]
                                   block:
      ^(CGContextRef ctx) {
+         if (cheapString.length == 0) {
+             return;
+         }
          NSMutableDictionary *attrs = [[cheapString.attributes mutableCopy] autorelease];
          CGFloat components[2] = { 0, 1 };
          CGColorRef black = CGColorCreate(CGColorSpaceCreateDeviceGray(),
@@ -1415,7 +1418,7 @@ typedef struct iTermTextColorContext {
 
          iTermCheapAttributedString *blackCopy = [[cheapString copyWithAttributes:attrs] autorelease];
          [self drawFastPathStringWithoutUnderline:blackCopy
-                                          atPoint:NSMakePoint(0, 0)
+                                          atPoint:NSMakePoint(-stringPositions[0], 0)
                                            origin:VT100GridCoordMake(-1, -1)  // only needed by images
                                         positions:stringPositions
                                         inContext:[[NSGraphicsContext currentContext] graphicsPort]
