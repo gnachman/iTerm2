@@ -166,14 +166,16 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     static NSAttributedString *upImage;
     static NSAttributedString *downImage;
     static NSAttributedString *dirtyImage;
-    static NSAttributedString *space;
+    static NSAttributedString *enSpace;
+    static NSAttributedString *thinSpace;
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
         upImage = [self attributedStringWithImageNamed:@"gitup"];
         downImage = [self attributedStringWithImageNamed:@"gitdown"];
         dirtyImage = [self attributedStringWithImageNamed:@"gitdirty"];
-        space = [self attributedStringWithString:@"\u2003\u2003"];
+        enSpace = [self attributedStringWithString:@"\u2002"];
+        thinSpace = [self attributedStringWithString:@"\u2009"];
     });
 
     NSAttributedString *branch = _gitPoller.state.branch ? [self attributedStringWithString:_gitPoller.state.branch] : nil;
@@ -187,21 +189,21 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:branch];
 
+    if (_gitPoller.state.dirty) {
+        [result appendAttributedString:thinSpace];
+        [result appendAttributedString:dirtyImage];
+    }
+
     if (_gitPoller.state.pushArrow.integerValue > 0) {
-        [result appendAttributedString:space];
+        [result appendAttributedString:enSpace];
         [result appendAttributedString:upImage];
         [result appendAttributedString:upCount];
     }
 
     if (_gitPoller.state.pullArrow.integerValue > 0) {
-        [result appendAttributedString:space];
+        [result appendAttributedString:enSpace];
         [result appendAttributedString:downImage];
         [result appendAttributedString:downCount];
-    }
-
-    if (_gitPoller.state.dirty) {
-        [result appendAttributedString:space];
-        [result appendAttributedString:dirtyImage];
     }
 
     return result;
