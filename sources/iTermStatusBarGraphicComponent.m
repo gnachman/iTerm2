@@ -287,9 +287,9 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
         [bezierPath stroke];
     } else if (self.numberOfTimeSeries == 2) {
         if (timeSeriesIndex == 0) {
-            [[[NSColor blueColor] colorWithAlphaComponent:0.5] set];
+            [[[NSColor blueColor] colorWithAlphaComponent:1] set];
         } else {
-            [[[NSColor redColor] colorWithAlphaComponent:0.5] set];
+            [[[NSColor redColor] colorWithAlphaComponent:1] set];
         }
         [bezierPath stroke];
     }
