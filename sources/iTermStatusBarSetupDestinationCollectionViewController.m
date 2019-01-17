@@ -15,6 +15,7 @@
 #import "iTermStatusBarTextComponent.h"
 
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
@@ -110,6 +111,20 @@
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView deleteItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
+}
+
+- (void)autoRainbowWithDarkBackground:(BOOL)darkBackground {
+    __block CGFloat h = 0;
+    const CGFloat s = 0.3;
+    const CGFloat b = darkBackground ? 0.9 : 0.2;
+    const CGFloat stride = 1.0 / _elements.count;
+    [_elements enumerateObjectsUsingBlock:^(iTermStatusBarSetupElement * _Nonnull element, NSUInteger idx, BOOL * _Nonnull stop) {
+        id<iTermStatusBarComponent> component = element.component;
+        NSMutableDictionary *knobValues = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] mutableCopy];
+        knobValues[iTermStatusBarSharedTextColorKey] = [[NSColor colorWithHue:h saturation:s brightness:b alpha:1] dictionaryValue];
+        [component statusBarComponentSetKnobValues:knobValues];
+        h += stride;
+    }];
 }
 
 - (NSCollectionView *)collectionView {

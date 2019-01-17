@@ -10,6 +10,8 @@
 #import "ITAddressBookMgr.h"
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermWarning.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PreferencePanel.h"
@@ -237,10 +239,24 @@
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
+- (BOOL)allowRainbow {
+    if (@available(macOS 10.14, *)) {
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        const iTermWindowType windowType = [self intForKey:KEY_WINDOW_TYPE];
+        return (preferredStyle == TAB_STYLE_MINIMAL && windowType == WINDOW_TYPE_COMPACT);
+    } else {
+        return NO;
+    }
+}
+
 - (IBAction)configureStatusBar:(id)sender {
     NSDictionary *layoutDictionary = [NSDictionary castFrom:[self objectForKey:KEY_STATUS_BAR_LAYOUT]] ?: @{};
+    NSDictionary *colorDict = [NSDictionary castFrom:[self objectForKey:KEY_BACKGROUND_COLOR]];
+    const BOOL dark = [[colorDict colorValue] perceivedBrightness] < 0.5;
     _statusBarSetupViewController =
-        [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary];
+        [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary
+                                                             darkBackground:dark
+                                                               allowRainbow:[self allowRainbow]];
 
     _statusBarSetupWindow =
         [[iTermStatusBarSetupPanel alloc] initWithContentRect:_statusBarSetupViewController.view.frame

@@ -20,5 +20,6 @@
 - (NSDictionary *)layoutDictionary;
 
 - (void)deleteSelected;
+- (void)autoRainbowWithDarkBackground:(BOOL)darkBackground;
 
 @end

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarSetupViewController">
             <connections>
                 <outlet property="_advancedPanel" destination="E9x-dQ-Z2f" id="Xcc-8G-LRz"/>
+                <outlet property="_autoRainbow" destination="SxK-ao-7Z2" id="mQo-b7-5CR"/>
                 <outlet property="_backgroundColorWell" destination="o9w-yb-zqg" id="7GT-fU-v4b"/>
                 <outlet property="_collectionView" destination="jZn-RM-fbW" id="01b-Q8-r0D"/>
                 <outlet property="_defaultTextColorWell" destination="pvQ-Cs-gi6" id="sRX-Cp-7Gc"/>
@@ -27,7 +28,7 @@
                 <scrollView wantsLayer="YES" fixedFrame="YES" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Y5K-vs-8G6">
                     <rect key="frame" x="20" y="279" width="610" height="182"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <clipView key="contentView" ambiguous="YES" drawsBackground="NO" id="l3s-tl-SND">
+                    <clipView key="contentView" ambiguous="YES" id="l3s-tl-SND">
                         <rect key="frame" x="1" y="1" width="608" height="180"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -47,11 +48,11 @@
                         </subviews>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="Wxl-3S-wuj">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="Wxl-3S-wuj">
                         <rect key="frame" x="-100" y="-100" width="0.0" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="gta-Ks-xTk">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="gta-Ks-xTk">
                         <rect key="frame" x="423" y="1" width="16" height="145"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -77,7 +78,7 @@
                 <scrollView wantsLayer="YES" fixedFrame="YES" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4ux-sd-tUd">
                     <rect key="frame" x="20" y="61" width="610" height="182"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                    <clipView key="contentView" ambiguous="YES" drawsBackground="NO" id="5fH-o8-3BA">
+                    <clipView key="contentView" ambiguous="YES" id="5fH-o8-3BA">
                         <rect key="frame" x="1" y="1" width="608" height="180"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -97,11 +98,11 @@
                         </subviews>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="UmD-k0-Q4W">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="UmD-k0-Q4W">
                         <rect key="frame" x="-100" y="-100" width="438" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="AoP-pm-YhD">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="AoP-pm-YhD">
                         <rect key="frame" x="554" y="1" width="16" height="180"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -168,6 +169,17 @@ Gw
                         <action selector="advanced:" target="-2" id="032-Lm-XfB"/>
                     </connections>
                 </button>
+                <button hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SxK-ao-7Z2">
+                    <rect key="frame" x="188" y="13" width="149" height="32"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="🌈 Auto-Rainbow" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zvK-FU-ixt">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="autoRainbow:" target="-2" id="2Ld-HZ-XnU"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="362" y="155.5"/>
         </customView>
@@ -181,7 +193,7 @@ Gw
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="E9x-dQ-Z2f" customClass="iTermStatusBarAdvancedConfigurationPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="272" y="176" width="391" height="189"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1418"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="lY3-r0-LxD">
                 <rect key="frame" x="0.0" y="0.0" width="391" height="189"/>
                 <autoresizingMask key="autoresizingMask"/>

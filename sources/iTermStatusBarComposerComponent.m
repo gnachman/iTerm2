@@ -46,7 +46,7 @@
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"ls -l -R";
+    return @">_ [Command] 💬";
 }
 
 - (iTermsStatusBarComposerViewController *)viewController {

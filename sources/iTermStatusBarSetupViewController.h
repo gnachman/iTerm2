@@ -14,7 +14,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSDictionary *layoutDictionary;
 @property (nonatomic, readonly) BOOL ok;
 
-- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary
+                                   darkBackground:(BOOL)darkbackground
+                                     allowRainbow:(BOOL)allowRainbow NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithNibName:(nullable NSNibName)nibNameOrNil
                          bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;

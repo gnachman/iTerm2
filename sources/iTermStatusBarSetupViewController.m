@@ -62,19 +62,26 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet CPKColorWell *_separatorColorWell;
     IBOutlet CPKColorWell *_backgroundColorWell;
     IBOutlet CPKColorWell *_defaultTextColorWell;
+    IBOutlet NSButton *_autoRainbow;
     IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
     IBOutlet NSPopUpButton *_font;
     IBOutlet NSPopUpButton *_fontSize;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
+    BOOL _darkBackground;
+    BOOL _allowRainbow;
 }
 
-- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
+- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary
+                                   darkBackground:(BOOL)darkBackground
+                                     allowRainbow:(BOOL)allowRainbow {
     self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         _layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary
                                                              scope:nil];
+        _darkBackground = darkBackground;
+        _allowRainbow = allowRainbow;
     }
     return self;
 }
@@ -142,6 +149,7 @@ NS_ASSUME_NONNULL_BEGIN
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.defaultTextColor
                  alphaAllowed:NO];
+    _autoRainbow.hidden = !_allowRainbow;
 
     [super awakeFromNib];
 }
@@ -202,6 +210,10 @@ NS_ASSUME_NONNULL_BEGIN
     [self.view.window beginSheet:_advancedPanel completionHandler:^(NSModalResponse returnCode) {
         [weakSelf advancedPanelDidClose];
     }];
+}
+
+- (IBAction)autoRainbow:(id)sender {
+    [_destinationViewController autoRainbowWithDarkBackground:_darkBackground];
 }
 
 - (IBAction)advancedOK:(id)sender {
