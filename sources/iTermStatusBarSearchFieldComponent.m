@@ -8,6 +8,7 @@
 #import "iTermStatusBarSearchFieldComponent.h"
 
 #import "iTermMiniSearchFieldViewController.h"
+#import "iTermPreferences.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -58,7 +59,25 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 }
 
 - (NSView *)statusBarComponentCreateView {
+    [self updateForTerminalBackgroundColor];
     return self.statusBarComponentSearchViewController.view;
+}
+
+- (void)statusBarTerminalBackgroundColorDidChange {
+    [self updateForTerminalBackgroundColor];
+}
+
+- (void)updateForTerminalBackgroundColor {
+    NSView *view = self.statusBarComponentSearchViewController.view;
+    const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (@available(macOS 10.14, *)) {
+        if (tabStyle == TAB_STYLE_MINIMAL &&
+            [self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
+            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        } else {
+            view.appearance = nil;
+        }
+    }
 }
 
 - (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {

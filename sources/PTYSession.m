@@ -10715,6 +10715,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _textview.font;
 }
 
+- (NSColor *)statusBarTerminalBackgroundColor {
+    return [self processedBackgroundColor];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

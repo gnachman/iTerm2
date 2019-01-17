@@ -274,6 +274,9 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 - (void)statusBarDefaultTextColorDidChange {
 }
 
+- (void)statusBarTerminalBackgroundColorDidChange {
+}
+
 - (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size {
     WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:self];
     if (!webView) {

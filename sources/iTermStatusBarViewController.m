@@ -14,6 +14,7 @@
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarView.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSImageView+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
@@ -377,6 +378,7 @@ const CGFloat iTermStatusBarHeight = 21;
         [view.iconImageView it_setTintColor:[view.component statusBarTextColor] ?: [self statusBarComponentDefaultTextColor]];
         [view.component statusBarDefaultTextColorDidChange];
         [view setNeedsDisplay:YES];
+        [view.component statusBarTerminalBackgroundColorDidChange];
     }
     [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
     [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
@@ -429,6 +431,10 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component {
     return [self.delegate statusBarTerminalFont];
+}
+
+- (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component {
+    return [[self.delegate statusBarTerminalBackgroundColor] perceivedBrightness] < 0.5;
 }
 
 @end

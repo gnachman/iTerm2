@@ -8,6 +8,7 @@
 #import "iTermStatusBarComposerComponent.h"
 
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "iTermShellHistoryController.h"
 #import "iTermsStatusBarComposerViewController.h"
 #import "iTermVariableScope.h"
@@ -81,7 +82,25 @@
 }
 
 - (NSView *)statusBarComponentCreateView {
+    [self updateForTerminalBackgroundColor];
     return self.viewController.view;
+}
+
+- (void)statusBarTerminalBackgroundColorDidChange {
+    [self updateForTerminalBackgroundColor];
+}
+
+- (void)updateForTerminalBackgroundColor {
+    NSView *view = self.viewController.view;
+    const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (@available(macOS 10.14, *)) {
+        if (tabStyle == TAB_STYLE_MINIMAL &&
+            [self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
+            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        } else {
+            view.appearance = nil;
+        }
+    }
 }
 
 #pragma mark - iTermsStatusBarComposerViewControllerDelegate

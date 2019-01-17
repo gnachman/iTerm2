@@ -21,6 +21,7 @@ extern const CGFloat iTermStatusBarHeight;
 - (NSColor *)statusBarDefaultTextColor;
 - (NSColor *)statusBarSeparatorColor;
 - (NSColor *)statusBarBackgroundColor;
+- (NSColor *)statusBarTerminalBackgroundColor;
 - (NSFont *)statusBarTerminalFont;
 @end
 
