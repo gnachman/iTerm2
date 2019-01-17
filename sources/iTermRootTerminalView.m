@@ -500,6 +500,13 @@ typedef struct {
     _windowNumberLabel.stringValue = [iTermWindowShortcutLabelTitlebarAccessoryViewController stringForOrdinal:number.intValue deemphasized:&deemphasized];
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:YES];
+    [_statusBarContainer setNeedsDisplay:YES];
+    [_tabBarBacking setNeedsDisplay:YES];
+    [_tabBarControl setNeedsDisplay:YES];
+}
+
 #pragma mark - Division View
 
 - (void)updateDivisionViewAndWindowNumberLabel {

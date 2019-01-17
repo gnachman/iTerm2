@@ -7407,12 +7407,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSColor *)rootTerminalViewTabBarBackgroundColor {
-    // This is only called if there is 1 tab and the tab bar is not shown and we're drawing
-    // the background of the fake title bar.
+    // This is for the fake title bar and for the status bar background color.
     if (self.currentSession.tabColor) {
         return self.currentSession.tabColor;
     }
-    return [_contentView.tabBarControl.style backgroundColorSelected:NO highlightAmount:0];
+    return [_contentView.tabBarControl.style backgroundColorSelected:YES highlightAmount:0];
 }
 
 - (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
@@ -9105,10 +9104,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)tabAnyDragInProgress:(PTYTab *)tab {
     return [PSMTabBarControl isAnyDragInProgress];
-}
-
-- (void)sessionBackgroundColorDidChangeInTab:(PTYTab *)tab {
-    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
