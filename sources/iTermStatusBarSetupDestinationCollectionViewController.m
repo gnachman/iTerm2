@@ -115,8 +115,8 @@
 
 - (void)autoRainbowWithDarkBackground:(BOOL)darkBackground {
     __block CGFloat h = 0;
-    const CGFloat s = 0.3;
-    const CGFloat b = darkBackground ? 0.9 : 0.2;
+    const CGFloat s = darkBackground ? 0.3 : 0.5;
+    const CGFloat b = darkBackground ? 0.9 : 0.5;
     const CGFloat stride = 1.0 / _elements.count;
     [_elements enumerateObjectsUsingBlock:^(iTermStatusBarSetupElement * _Nonnull element, NSUInteger idx, BOOL * _Nonnull stop) {
         id<iTermStatusBarComponent> component = element.component;
