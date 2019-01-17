@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.3.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.3.2"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -20,7 +21,7 @@
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <comboBox verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Lx-8h-aAd">
-                    <rect key="frame" x="47" y="0.0" width="109" height="22"/>
+                    <rect key="frame" x="1" y="0.0" width="182" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Command" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="dNz-i8-KYx">
                         <font key="font" metaFont="smallSystem"/>
@@ -37,21 +38,10 @@
                         <outlet property="delegate" destination="-2" id="ir1-CA-oCg"/>
                     </connections>
                 </comboBox>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bbS-Ir-cDh">
-                    <rect key="frame" x="161" y="2" width="39" height="19"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="roundTextured" title="↪" bezelStyle="texturedRounded" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ige-fs-QBh">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="smallSystem"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="send:" target="-2" id="adP-hO-QSI"/>
-                    </connections>
-                </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hed-q1-qQm">
-                    <rect key="frame" x="0.0" y="2" width="39" height="19"/>
+                    <rect key="frame" x="180" y="2" width="20" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="roundTextured" title="⬆" bezelStyle="texturedRounded" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
+                    <buttonCell key="cell" type="roundTextured" title="💬" bezelStyle="texturedRounded" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -62,7 +52,11 @@
             </subviews>
             <point key="canvasLocation" x="-1" y="154"/>
         </customView>
-        <viewController id="hP2-aE-JJR" userLabel="Popover View Controller" customClass="iTermStatusBarLargeComposerViewController"/>
+        <viewController id="hP2-aE-JJR" userLabel="Popover View Controller" customClass="iTermStatusBarLargeComposerViewController">
+            <connections>
+                <outlet property="composerDelegate" destination="-2" id="5B9-gR-bQU"/>
+            </connections>
+        </viewController>
         <popover id="9Mb-Fy-zsB">
             <connections>
                 <outlet property="contentViewController" destination="hP2-aE-JJR" id="YWi-xg-6ad"/>

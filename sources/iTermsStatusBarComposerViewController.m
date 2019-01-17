@@ -9,7 +9,7 @@
 
 #import "iTermStatusBarLargeComposerViewController.h"
 
-@interface iTermsStatusBarComposerViewController ()<NSComboBoxDelegate, NSPopoverDelegate>
+@interface iTermsStatusBarComposerViewController ()<iTermComposerTextViewDelegate, NSComboBoxDelegate, NSPopoverDelegate>
 
 @end
 
@@ -42,6 +42,10 @@
 - (IBAction)showPopover:(id)sender {
     _popover.behavior = NSPopoverBehaviorSemitransient;
     _popover.delegate = self;
+    [_popoverVC view];
+    _popoverVC.textView.string = _comboBox.stringValue;
+    _popoverVC.textView.font = [self.delegate statusBarComposerFont:self];
+    _popoverVC.textView.composerDelegate = self;
     [_popover showRelativeToRect:_comboBox.frame
                           ofView:self.view
                    preferredEdge:NSRectEdgeMaxY];
@@ -69,7 +73,7 @@
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverDidClose:(NSNotification *)notification {
-    _comboBox.stringValue = _popoverVC.stringValue;
+    _comboBox.stringValue = _popoverVC.textView.string ?: @"";
 
 }
 
@@ -86,6 +90,14 @@ doCommandBySelector:(SEL)commandSelector {
     } else {
         return NO;
     }
+}
+
+#pragma mark - iTermComposerTextViewDelegate
+
+- (void)composerTextViewDidFinish {
+    _comboBox.stringValue = _popoverVC.textView.string ?: @"";
+    [self.delegate statusBarComposer:self sendCommand:_comboBox.stringValue];
+    _popoverVC.textView.string = @"";
 }
 
 @end

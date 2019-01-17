@@ -98,6 +98,10 @@
     return commands;
 }
 
+- (NSFont *)statusBarComposerFont:(iTermsStatusBarComposerViewController *)composer {
+    return [self.delegate statusBarComponentTerminalFont:self];
+}
+
 #pragma mark - Notifications
 
 - (void)commandHistoryDidChange:(NSNotification *)notification {

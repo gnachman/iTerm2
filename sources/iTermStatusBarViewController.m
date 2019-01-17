@@ -427,6 +427,10 @@ const CGFloat iTermStatusBarHeight = 21;
     return self.view.window != nil && !self.view.isHidden;
 }
 
+- (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component {
+    return [self.delegate statusBarTerminalFont];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -10711,6 +10711,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_statusBarViewController updateColors];
 }
 
+- (NSFont *)statusBarTerminalFont {
+    return _textview.font;
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

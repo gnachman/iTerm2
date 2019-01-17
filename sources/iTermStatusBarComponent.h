@@ -29,6 +29,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component setHidden:(BOOL)hidden;
 - (NSColor *)statusBarComponentDefaultTextColor;
 - (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component;
+- (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>

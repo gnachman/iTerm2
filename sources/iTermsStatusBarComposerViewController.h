@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
               sendCommand:(NSString *)command;
 
 - (NSArray<NSString *> *)statusBarComposerSuggestions:(iTermsStatusBarComposerViewController *)composer;
+- (NSFont *)statusBarComposerFont:(iTermsStatusBarComposerViewController *)composer;
 
 @end
 

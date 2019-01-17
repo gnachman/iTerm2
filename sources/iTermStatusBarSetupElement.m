@@ -141,6 +141,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return NO;
 }
 
+- (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component {
+    return [NSFont systemFontOfSize:[NSFont systemFontSize]];
+}
 
 @end
 
