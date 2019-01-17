@@ -1045,6 +1045,18 @@ typedef struct {
     return NSZeroRect;
 }
 
+- (NSAutoresizingMaskOptions)statusBarContainerAutoresizingMask {
+    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+        case iTermStatusBarPositionTop:
+            return NSViewWidthSizable | NSViewMinYMargin;
+
+        case iTermStatusBarPositionBottom:
+            return NSViewWidthSizable | NSViewMaxYMargin;
+    }
+
+    return NSViewWidthSizable | NSViewMinYMargin;
+}
+
 - (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {
     switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop: {
@@ -1091,6 +1103,7 @@ typedef struct {
             statusBarViewController.view.frame = _statusBarContainer.bounds;
         }
     }
+    _statusBarContainer.autoresizingMask = [self statusBarContainerAutoresizingMask];
     _statusBarContainer.hidden = (statusBarViewController == nil);
     _statusBarViewController = statusBarViewController;
     _statusBarContainer.frame = statusBarFrame;
