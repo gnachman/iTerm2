@@ -171,6 +171,16 @@ void OnHotKeyEvent(void);
 // Does a serialized fullscreening of the term's window. Slated for production in 3.1.
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term;
 
+typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
+    iTermSingleUseWindowOptionsNone = 0,
+    // Treat the session as short-lived: it will not post a notification when it ends and it can be closed while buried.
+    iTermSingleUseWindowOptionsShortLived = (1 << 0),
+    // Override the default profile's close on termination  setting to always close on termination.
+    iTermSingleUseWindowOptionsCloseOnTermination = (1 << 1),
+    // Bury it immediately?
+    iTermSingleUseWindowOptionsInitiallyBuried = (1 << 2),
+};
+
 - (void)openSingleUseWindowWithCommand:(NSString *)command;
 - (void)openSingleUseWindowWithCommand:(NSString *)command
                                 inject:(NSData *)injection
@@ -179,6 +189,11 @@ void OnHotKeyEvent(void);
                                 inject:(NSData *)injection
                            environment:(NSDictionary *)environment
                             completion:(void (^)(void))completion;
-
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment
+                                           pwd:(NSString *)initialPWD
+                               options:(iTermSingleUseWindowOptions)options
+                                    completion:(void (^)(void))completion;
 @end
 

@@ -205,6 +205,7 @@ static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dic
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
 static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
 static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
+static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Lived Single Use";  // BOOL
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1320,6 +1321,7 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
 
+    aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -2095,7 +2097,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
-    if (_exited) {
+    if (_exited && !_shortLivedSingleUse) {
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (self.tmuxMode == TMUX_CLIENT) {
@@ -2914,21 +2916,34 @@ ITERM_WEAKLY_REFERENCEABLE
         [_terminal resetByUserRequest:NO];
         [self appendBrokenPipeMessage:@"Session Restarted"];
         [self replaceTerminatedShellWithNewInstance];
-    } else if ([self autoClose] && [_delegate sessionShouldAutoClose:self]) {
+        return;
+    }
+
+    if (_shortLivedSingleUse) {
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
+        [self appendBrokenPipeMessage:@"Finished"];
+        [_delegate closeSession:self];
+        return;
+    }
+    if ([self autoClose] && [_delegate sessionShouldAutoClose:self]) {
         [self appendBrokenPipeMessage:@"Broken Pipe"];
         [_delegate closeSession:self];
-    } else {
-        // Offer to restart the session by rerunning its program.
-        [self appendBrokenPipeMessage:@"Broken Pipe"];
-        if ([self isRestartable]) {
-            [self queueRestartSessionAnnouncement];
-        }
-        [self updateDisplayBecause:@"broken pipe"];
+        return;
     }
+
+    // Offer to restart the session by rerunning its program.
+    [self appendBrokenPipeMessage:@"Broken Pipe"];
+    if ([self isRestartable]) {
+        [self queueRestartSessionAnnouncement];
+    }
+    [self updateDisplayBecause:@"broken pipe"];
 }
 
 - (void)queueRestartSessionAnnouncement {
     if ([iTermAdvancedSettingsModel suppressRestartAnnouncement]) {
+        return;
+    }
+    if (_shortLivedSingleUse) {
         return;
     }
     iTermAnnouncementViewController *announcement =
@@ -3295,6 +3310,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)shouldPostUserNotification {
     if (!_screen.postUserNotifications) {
+        return NO;
+    }
+    if (_shortLivedSingleUse) {
         return NO;
     }
     if (![_delegate sessionBelongsToVisibleTab]) {
@@ -4307,6 +4325,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
+    result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
 
     NSDictionary *shortcutDictionary = [[[iTermSessionHotkeyController sharedInstance] shortcutForSession:self] dictionaryValue];
     if (shortcutDictionary) {
@@ -8735,6 +8754,10 @@ ITERM_WEAKLY_REFERENCEABLE
             [_textview.indicatorsHelper beginFlashingFullScreen];
             break;
     }
+}
+
+- (void)screenDisinterSession {
+    [[iTermBuriedSessions sharedInstance] restoreSession:self];
 }
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {

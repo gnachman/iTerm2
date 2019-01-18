@@ -59,12 +59,27 @@ NS_ASSUME_NONNULL_BEGIN
                                                     userInfo:nil
                                                      repeats:YES];
         [component statusBarComponentUpdate];
+
+        if ([component statusBarComponentHandlesClicks]) {
+            NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(clickRecognized:)];
+            [_view addGestureRecognizer:recognizer];
+        }
     }
     return self;
 }
 
 - (void)dealloc {
     [_timer invalidate];
+}
+
+- (void)clickRecognized:(id)sender {
+    [_component statusBarComponentDidClickWithView:_view];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    if ([_component statusBarComponentHandlesClicks]) {
+        [_component statusBarComponentMouseDownWithView:_view];
+    }
 }
 
 - (CGFloat)minX {

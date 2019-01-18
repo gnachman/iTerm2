@@ -337,6 +337,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Signal the user that the terminal wants attention.
 - (void)terminalRequestAttention:(VT100AttentionRequestType)request;
 
+// Disinter a buried session
+- (void)terminalDisinterSession;
+
 // Set various colors.
 - (void)terminalSetForegroundColor:(NSColor *)color;
 - (void)terminalSetBackgroundColor:(NSColor *)color;

@@ -305,6 +305,19 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
                   preferredEdge:preferredEdge];
 }
 
+- (BOOL)statusBarComponentHandlesClicks {
+    return NO;
+}
+
+- (void)statusBarComponentDidClickWithView:(NSView *)view {
+    // You should have overridden this.
+    assert(NO);
+}
+
+- (void)statusBarComponentMouseDownWithView:(NSView *)view {
+    // You should have overridden this.
+    assert(NO);
+}
 - (void)statusBarComponentDidMoveToWindow {
 }
 

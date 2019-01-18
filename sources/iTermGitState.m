@@ -9,4 +9,13 @@
 
 @implementation iTermGitState
 
+- (id)copyWithZone:(NSZone *)zone {
+    iTermGitState *theCopy = [[iTermGitState alloc] init];
+    theCopy.pushArrow = self.pushArrow.copy;
+    theCopy.pullArrow = self.pullArrow.copy;
+    theCopy.branch = self.branch.copy;
+    theCopy.dirty = self.dirty;
+    return theCopy;
+}
+
 @end
