@@ -75,12 +75,12 @@ static NSString *const iTermRegularForegroundColor = @"iTermRegularForegroundCol
     }
     switch (backgroundStyle) {
         case NSBackgroundStyleLight:
-            self.textColor = [NSColor whiteColor];
+            self.textColor = [NSColor blackColor];
             [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
             break;
         case NSBackgroundStyleDark:
             [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
-            self.textColor = [NSColor blackColor];
+            self.textColor = [NSColor whiteColor];
             break;
 
         case NSBackgroundStyleRaised:
