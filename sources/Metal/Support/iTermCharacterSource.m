@@ -287,15 +287,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _context = context;
         CGContextRetain(context);
 
-        if ([string isEqualToString:@"G"]) {
-            string = @" ";
-        }
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
             _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
         }
         _log = [NSMutableString string];
-        [_log appendFormat:@"Initialized\n"];
+        [_log appendFormat:@"Initialized with string %@\n", string];
     }
     return self;
 }
