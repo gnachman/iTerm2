@@ -117,7 +117,7 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return self.statusBarComponentCreateView.frame.size.width;
+    return self.statusBarComponentView.frame.size.width;
 }
 
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
@@ -231,7 +231,7 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
     [self.delegate statusBarComponentKnobsDidChange:self];
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     [self doesNotRecognizeSelector:_cmd];
     return [[NSView alloc] init];
 }
@@ -288,7 +288,7 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
                                                                                         backupURL:nil];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
-    NSView *view = self.statusBarComponentCreateView;
+    NSView *view = self.statusBarComponentView;
     popover.behavior = NSPopoverBehaviorSemitransient;
     popover.delegate = self;
     NSRectEdge preferredEdge = NSRectEdgeMinY;

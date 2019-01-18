@@ -65,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
     return @"[=== ]";
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     if (!_viewController) {
         _viewController = [[PasteViewController alloc] initWithContext:self.pasteContext
                                                                 length:self.bufferLength

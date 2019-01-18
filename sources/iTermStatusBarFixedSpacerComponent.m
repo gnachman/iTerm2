@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     return @"Adds ten points of space";
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     if (!_view) {
         _view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.statusBarComponentMinimumWidth, 0)];
         _view.wantsLayer = YES;

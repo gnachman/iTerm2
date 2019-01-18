@@ -37,7 +37,7 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
     return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     if (!_view) {
         _view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.statusBarComponentMinimumWidth, 0)];
         _view.wantsLayer = YES;

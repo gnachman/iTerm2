@@ -223,7 +223,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - iTermStatusBarComponent
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     return self.textField;
 }
 

@@ -58,7 +58,7 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
     return @"🔎 Search";
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     [self updateForTerminalBackgroundColor];
     return self.statusBarComponentSearchViewController.view;
 }

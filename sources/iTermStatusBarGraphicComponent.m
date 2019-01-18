@@ -191,7 +191,7 @@
 
 #pragma mark - iTermStatusBarComponent
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     return self.view;
 }
 
