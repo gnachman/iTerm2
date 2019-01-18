@@ -7,6 +7,7 @@
 
 #import "PSMMinimalTabStyle.h"
 
+
 @implementation NSColor(PSMMinimalTabStyle)
 
 - (NSColor *)psm_nonSelectedColorWithDifference:(double)difference {
@@ -48,7 +49,9 @@
 }
 
 - (NSColor *)tabBarColor {
-    return [self.delegate minimalTabStyleBackgroundColor] ?: [NSColor blackColor];
+    NSColor *minimalStyleColor = [self.delegate minimalTabStyleBackgroundColor];
+    DLog(@"Computing tab bar color. delegate=%@ minimalStyleColor=%@", self.delegate, minimalStyleColor);
+    return minimalStyleColor ?: [NSColor blackColor];
 }
 
 - (BOOL)backgroundIsDark {
@@ -58,7 +61,9 @@
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
     CGFloat backgroundBrightness = backgroundColor ? backgroundColor.it_hspBrightness : self.tabBarColor.it_hspBrightness;
-    
+    if (!backgroundColor) {
+        DLog(@"Choose background brightness form tab bar color of %@", self.tabBarColor);
+    }
     const CGFloat delta = selected ? 0.85 : 0.5;
     CGFloat value;
     if (backgroundBrightness < 0.5) {
@@ -66,6 +71,7 @@
     } else {
         value = MAX(0, backgroundBrightness - delta);
     }
+    DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
     return [NSColor colorWithWhite:value alpha:1];
 }
 
@@ -114,7 +120,10 @@
 }
 
 - (NSColor *)accessoryTextColor {
-    return [self textColorDefaultSelected:YES backgroundColor:nil];
+    DLog(@"> begin Computing accessory color");
+    NSColor *result = [self textColorDefaultSelected:YES backgroundColor:nil];
+    DLog(@"< end Computing accessory color");
+    return result;
 }
 
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell

@@ -409,36 +409,49 @@
 }
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
+    DLog(@"cell=%@", cell);
     NSColor *textColor;
     const BOOL selected = (cell.state == NSOnState);
     if ([self anyTabHasColor]) {
+        DLog(@"anyTabHasColor. computing tab color brightness.");
         CGFloat cellBrightness = [self tabColorBrightness:cell];
+        DLog(@"brightness of %@ is %@", cell, @(cellBrightness));
         if (selected) {
+            DLog(@"is selected");
             // Select cell when any cell has a tab color
             if (cellBrightness > 0.5) {
+                DLog(@"is bright. USE BLACK TEXT COLOR");
                 // bright tab
                 textColor = [NSColor blackColor];
             } else {
+                DLog(@"is dark. Use white text");
                 // dark tab
                 textColor = [NSColor whiteColor];
             }
         } else {
+            DLog(@"Not selected");
             // Non-selected cell when any cell has a tab color
             CGFloat prominence = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredUnselectedTabTextProminence] doubleValue];
             CGFloat delta = prominence ?: 0.1;
+            DLog(@"prominence=%@ delta=%@", @(prominence), @(delta));
             if (cellBrightness > 0.5) {
+                DLog(@"Is light. use 0.5-delta");
                 // Light tab
                 return [NSColor colorWithWhite:0.5 - delta alpha:1];
             } else {
+                DLog(@"Is dark. Use 0.5+delta");
                 // Dark tab
                 return [NSColor colorWithWhite:0.5 + delta alpha:1];
             }
         }
     } else {
+        DLog(@"No tab has color");
         // No cell has a tab color
         if (selected) {
+            DLog(@"selected");
             return [self textColorDefaultSelected:YES backgroundColor:nil];
         } else {
+            DLog(@"not selected");
             textColor = [self textColorDefaultSelected:NO backgroundColor:nil];
         }
     }
@@ -460,6 +473,7 @@
     NSImage *graphic = [(id)[[cell representedObject] identifier] psmTabGraphic];
 
     NSFont *font = [NSFont systemFontOfSize:self.fontSize];
+    DLog(@"Computing text color for cell %@ with title %@", cell, cell.stringValue);
     NSDictionary *attributes = @{ NSFontAttributeName: font,
                                   NSForegroundColorAttributeName: [self textColorForCell:cell],
                                   NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
@@ -670,17 +684,25 @@
                                                selected:(BOOL)selected
                                         highlightAmount:(CGFloat)highlightAmount
                                                  window:(NSWindow *)window {
+    DLog(@"Computing effective background color for tab with color %@ selected=%@ highlight=%@", tabColor, @(selected), @(highlightAmount));
     NSColor *base = [[self backgroundColorSelected:selected highlightAmount:highlightAmount] it_srgbForColorInWindow:window];
+    DLog(@"base=%@", base);
     if (tabColor) {
-        NSColor *overcoat = [[self cellBackgroundColorForTabColor:tabColor selected:selected] it_srgbForColorInWindow:window];
+        NSColor *cellbg = [self cellBackgroundColorForTabColor:tabColor selected:selected];
+        DLog(@"cellbg=%@", cellbg);
+        NSColor *overcoat = [cellbg it_srgbForColorInWindow:window];
+        DLog(@"overcoat=%@", overcoat);
         const CGFloat a = overcoat.alphaComponent;
         const CGFloat q = 1-a;
         CGFloat r = q * base.redComponent + a * overcoat.redComponent;
         CGFloat g = q * base.greenComponent + a * overcoat.greenComponent;
         CGFloat b = q * base.blueComponent + a * overcoat.blueComponent;
         CGFloat components[4] = { r, g, b, 1 };
-        return [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
+        NSColor *result = [NSColor colorWithColorSpace:tabColor.colorSpace components:components count:4];
+        DLog(@"return %@", result);
+        return result;
     } else {
+        DLog(@"return base %@", base);
         return base;
     }
 }

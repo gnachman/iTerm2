@@ -10,6 +10,15 @@
 #import "PSMTabStyle.h"
 #import "PSMTabBarControl.h"
 
+extern BOOL gDebugLogging;
+int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+#define DLog(args...) \
+    do { \
+        if (gDebugLogging) { \
+            DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+        } \
+    } while (0)
+
 @interface NSColor (HSP)
 @property (nonatomic, readonly) CGFloat it_hspBrightness;
 @end
