@@ -1800,6 +1800,7 @@ class SetPropertyResponse(google___protobuf___message___Message):
     INVALID_TARGET = typing___cast(Status, 3)
     DEFERRED = typing___cast(Status, 4)
     IMPOSSIBLE = typing___cast(Status, 5)
+    FAILED = typing___cast(Status, 6)
 
     status = ... # type: SetPropertyResponse.Status
 

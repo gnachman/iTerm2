@@ -597,6 +597,9 @@ typedef GPB_ENUM(ITMSetPropertyResponse_Status) {
 
   /** Can't be done. For example, resizing a session in a full-screen window. */
   ITMSetPropertyResponse_Status_Impossible = 5,
+
+  /** Did our best and failed. For example, sometimes toggling full-screen fails if another window is also toggling. Maybe try again? */
+  ITMSetPropertyResponse_Status_Failed = 6,
 };
 
 GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void);

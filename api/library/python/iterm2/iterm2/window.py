@@ -303,7 +303,7 @@ class Window:
 
         :param fullscreen: Whether you wish the window to be full screen.
 
-        :raises: :class:`SetPropertyException` if something goes wrong.
+        :raises: :class:`SetPropertyException` if something goes wrong (such as that the fullscreen status could not be changed).
         """
         json_value = json.dumps(fullscreen)
         response = await iterm2.rpc.async_set_property(
@@ -311,9 +311,9 @@ class Window:
             "fullscreen",
             json_value,
             window_id=self.__window_id)
-        status = response.get_property_response.status
+        status = response.set_property_response.status
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
-            raise SetPropertyException(response.get_property_response.status)
+            raise SetPropertyException(response.set_property_response.status)
 
 
     async def async_activate(self) -> None:

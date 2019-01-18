@@ -397,6 +397,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     VT100GridSize _previousGridSize;
     // Have we started showing a transient title? If so, don't stop until time runs out.
     BOOL _lockTransientTitle;
+
+    NSMutableArray *_toggleFullScreenModeCompletionBlocks;
 }
 
 @synthesize scope = _scope;
@@ -595,6 +597,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
          screenNumber,
          @(hotkeyWindowType));
 
+    _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
     PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -978,6 +981,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_scope release];
     [_windowTitleOverrideSwiftyString release];
     [_initialProfile release];
+    [_toggleFullScreenModeCompletionBlocks release];
 
     [super dealloc];
 }
@@ -2992,6 +2996,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidClose"
                                                         object:nil
                                                       userInfo:nil];
+    [self didFinishFullScreenTransitionSuccessfully:NO];
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification {
@@ -4001,18 +4006,28 @@ ITERM_WEAKLY_REFERENCEABLE
     return togglingLionFullScreen_;
 }
 
-- (IBAction)toggleFullScreenMode:(id)sender
-{
+- (IBAction)toggleFullScreenMode:(id)sender {
+    [self toggleFullScreenMode:sender completion:nil];
+}
+
+- (void)toggleFullScreenMode:(id)sender
+                  completion:(void (^)(BOOL))completion {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen])) {
         [[self ptyWindow] toggleFullScreen:self];
+        if (completion) {
+            [_toggleFullScreenModeCompletionBlocks addObject:[[completion copy] autorelease]];
+        }
         return;
     }
 
     [self toggleTraditionalFullScreenMode];
+    if (completion) {
+        completion(YES);
+    }
 }
 
 - (void)delayedEnterFullscreen
@@ -4608,10 +4623,21 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow:self.ptyWindow];
+    [self didFinishFullScreenTransitionSuccessfully:YES];
+}
+
+- (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
+    DLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
+    NSArray *blocks = [[_toggleFullScreenModeCompletionBlocks copy] autorelease];
+    [_toggleFullScreenModeCompletionBlocks removeAllObjects];
+    for (void (^block)(BOOL) in blocks) {
+        block(success);
+    }
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
     DLog(@"windowDidFailToEnterFullScreen %@", self);
+    [self didFinishFullScreenTransitionSuccessfully:NO];
     if (!togglingLionFullScreen_) {
         DLog(@"It's ok though because togglingLionFullScreen is off");
         return;
@@ -4682,6 +4708,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView didChangeCompactness];
     [_contentView layoutSubviews];
     [self updateWindowShadow:self.ptyWindow];
+    [self didFinishFullScreenTransitionSuccessfully:YES];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
