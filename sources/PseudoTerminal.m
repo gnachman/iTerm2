@@ -1438,7 +1438,9 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
         PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
+        DLog(@"> begin Computing decoration color");
         return [style textColorDefaultSelected:YES backgroundColor:backgroundColor];
+        DLog(@"< end Computing decoration color");
     } else {
         CGFloat whiteLevel;
         switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
@@ -9229,6 +9231,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
+    DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.colorMap);
     return [self.currentSession.colorMap colorForKey:kColorMapBackground];
 }
 
