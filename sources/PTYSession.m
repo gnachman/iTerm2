@@ -1120,7 +1120,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
-        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
+        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]
+                                                      width:aSession.screen.width];
     }
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
         aSession.automaticProfileSwitcher =

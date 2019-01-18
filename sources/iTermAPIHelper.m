@@ -3160,7 +3160,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         if (mode == NSNotFound) {
             return nil;
         }
-        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode];
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode width:width];
         return sub;
     }];
 
