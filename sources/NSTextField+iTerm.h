@@ -10,7 +10,12 @@
 
 @interface NSTextField (iTerm)
 
+// NOTE: this one uses a small font
 + (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier;
+
+// NOTE: this uses the regular font
++ (instancetype)it_textFieldForTableView;
+
 + (instancetype)newLabelStyledTextField;
 
 - (BOOL)textFieldIsFirstResponder;
