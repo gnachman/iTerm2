@@ -5292,7 +5292,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection clearSelection];
     iTermSubSelection *sub =
         [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(range, 0, 0)
-                                            mode:kiTermSelectionModeCharacter];
+                                            mode:kiTermSelectionModeCharacter
+                                           width:_dataSource.width];
     [_selection addSubSelection:sub];
     if (!wrapped) {
         [self setNeedsDisplay:YES];

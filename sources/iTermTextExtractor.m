@@ -1680,8 +1680,14 @@ const NSInteger kLongMaximumWordLength = 100000;
     int width = [_dataSource width];
 
     int startx = VT100GridWindowedRangeStart(range).x;
+    if (startx < 0) {
+        startx = 0;
+    }
     int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
                                          : [_dataSource width];
+    if (endx > width) {
+        endx = width;
+    }
     int bound = [_dataSource numberOfLines] - 1;
     BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
                       range.columnWindow.length <= 0);
@@ -1715,7 +1721,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         }
 
         // Iterate over characters up to terminal nulls.
-        for (int x = MAX(range.columnWindow.location, startx); x < endx - numNulls; x++) {
+        for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
             ITAssertWithMessage(x >= 0 && x < width, @"Iterating terminal nulls. x=%@ range=%@ width=%@ numNulls=%@", @(x), VT100GridWindowedRangeDescription(range), @(width), @(numNulls));
             if (charBlock) {
                 if (charBlock(theLine, theLine[x], VT100GridCoordMake(x, y))) {
