@@ -287,9 +287,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _context = context;
         CGContextRetain(context);
 
-        if ([string isEqualToString:@"G"]) {
-            string = @" ";
-        }
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
             _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
@@ -378,9 +375,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             const BOOL ok = [_datas anyWithBlock:^BOOL(NSMutableData *data) {
 
                 unsigned char *bytes = data.mutableBytes;
-                for (NSInteger i = 0; i < data.length; i++) {
-                    if (bytes[i]) {
-                        return YES;
+                if (iTermTextIsMonochrome()) {
+                    for (NSInteger i = 0; i < data.length; i++) {
+                        if (bytes[i]) {
+                            return YES;
+                        }
+                    }
+                } else {
+                    for (NSInteger i = 0; i < data.length; i++) {
+                        if (bytes[i] != 0xff) {
+                            return YES;
+                        }
                     }
                 }
                 return NO;
