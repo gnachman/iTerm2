@@ -8,6 +8,7 @@
 #import "iTermsStatusBarComposerViewController.h"
 
 #import "iTermStatusBarLargeComposerViewController.h"
+#import "NSImage+iTerm.h"
 
 @interface iTermsStatusBarComposerViewController ()<iTermComposerTextViewDelegate, NSComboBoxDelegate, NSPopoverDelegate>
 
@@ -19,6 +20,7 @@
     IBOutlet NSComboBox *_comboBox;
     IBOutlet iTermStatusBarLargeComposerViewController *_popoverVC;
     IBOutlet NSPopover *_popover;
+    IBOutlet NSButton *_button;
 }
 
 - (void)setDelegate:(id)delegate {
@@ -34,6 +36,11 @@
     [self reallyReloadData];
 }
 
+- (void)setTintColor:(NSColor *)tintColor {
+    NSImage *image = [NSImage it_imageNamed:@"PopoverIcon" forClass:self.class];
+    _button.image = [image it_imageWithTintColor:tintColor];
+}
+
 #pragma mark - Private
 
 - (IBAction)send:(id)sender {
@@ -43,6 +50,15 @@
     _popover.behavior = NSPopoverBehaviorSemitransient;
     _popover.delegate = self;
     [_popoverVC view];
+    if ([self.delegate statusBarComposerShouldForceDarkAppearance:self]) {
+        if (@available(macOS 10.14, *)) {
+            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        } else {
+            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        }
+    } else {
+        _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    }
     _popoverVC.textView.string = _comboBox.stringValue;
     _popoverVC.textView.font = [self.delegate statusBarComposerFont:self];
     _popoverVC.textView.composerDelegate = self;

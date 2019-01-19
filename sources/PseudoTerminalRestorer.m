@@ -133,6 +133,7 @@ static BOOL gWaitingForFullScreen;
                 case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_RIGHT_PARTIAL:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
+                case WINDOW_TYPE_ACCESSORY:
                     break;
             }
 

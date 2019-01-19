@@ -23,12 +23,14 @@
 
 @end
 
-@implementation iTermComposerView
+@implementation iTermComposerView {
+    NSView *_backgroundView;
+}
 
 - (NSView *)newBackgroundViewWithFrame:(NSRect)frame {
     if (@available(macOS 10.14, *)) {
         NSVisualEffectView *myView = [[NSVisualEffectView alloc] initWithFrame:frame];
-        myView.material = NSVisualEffectMaterialContentBackground;
+        myView.appearance = self.appearance;
         return myView;
     }
 
@@ -38,13 +40,24 @@
 }
 
 - (void )viewDidMoveToWindow {
+    [self updateBackgroundView];
+}
+
+- (void)updateBackgroundView {
     NSView *privateView = [[self.window contentView] superview];
-    NSView *myView = [self newBackgroundViewWithFrame:privateView.bounds];
-    myView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [privateView addSubview:myView positioned:NSWindowBelow relativeTo:privateView];
+    [_backgroundView removeFromSuperview];
+    _backgroundView = [self newBackgroundViewWithFrame:privateView.bounds];
+    _backgroundView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [privateView addSubview:_backgroundView positioned:NSWindowBelow relativeTo:privateView];
     [super viewDidMoveToWindow];
 }
 
+- (void)setAppearance:(NSAppearance *)appearance {
+    if (appearance != self.appearance) {
+        [super setAppearance:appearance];
+        [self updateBackgroundView];
+    }
+}
 @end
 
 @interface iTermStatusBarLargeComposerViewController ()

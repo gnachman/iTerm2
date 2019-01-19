@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermsStatusBarComposerViewController">
             <connections>
+                <outlet property="_button" destination="Hed-q1-qQm" id="vGh-6A-kk8"/>
                 <outlet property="_comboBox" destination="4Lx-8h-aAd" id="vCT-pq-8Yh"/>
                 <outlet property="_popover" destination="9Mb-Fy-zsB" id="f3Z-N9-tIg"/>
                 <outlet property="_popoverVC" destination="hP2-aE-JJR" id="B0c-SD-inM"/>
@@ -21,7 +22,7 @@
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <comboBox verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Lx-8h-aAd">
-                    <rect key="frame" x="1" y="0.0" width="182" height="22"/>
+                    <rect key="frame" x="1" y="0.0" width="178" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Command" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="dNz-i8-KYx">
                         <font key="font" metaFont="smallSystem"/>
@@ -41,7 +42,7 @@
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hed-q1-qQm">
                     <rect key="frame" x="180" y="2" width="20" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="roundTextured" title="💬" bezelStyle="texturedRounded" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
+                    <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="PopoverIcon" imagePosition="only" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -63,4 +64,7 @@
             </connections>
         </popover>
     </objects>
+    <resources>
+        <image name="PopoverIcon" width="16" height="16"/>
+    </resources>
 </document>

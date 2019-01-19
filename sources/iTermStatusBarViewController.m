@@ -382,6 +382,7 @@ const CGFloat iTermStatusBarHeight = 21;
     }
     [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
     [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
+    [self.delegate statusBarDidUpdate];
 }
 
 - (nullable id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier {
@@ -435,6 +436,10 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component {
     return [[self.delegate statusBarTerminalBackgroundColor] perceivedBrightness] < 0.5;
+}
+
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
+    [self.delegate statusBarWriteString:string];
 }
 
 @end

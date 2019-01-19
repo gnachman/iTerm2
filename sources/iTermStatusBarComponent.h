@@ -31,6 +31,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component;
 - (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component;
 - (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
@@ -68,7 +69,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
                                           textColor:(NSColor *)textColor;
 
 // Returns a newly created view showing this component's content.
-- (NSView *)statusBarComponentCreateView;
+- (NSView *)statusBarComponentView;
 
 // Update the view's size.
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width;
@@ -125,5 +126,9 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size;
 
 - (void)statusBarComponentDidMoveToWindow;
+
+- (BOOL)statusBarComponentHandlesClicks;
+- (void)statusBarComponentDidClickWithView:(NSView *)view;
+- (void)statusBarComponentMouseDownWithView:(NSView *)view;
 
 @end

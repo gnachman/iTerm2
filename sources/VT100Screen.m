@@ -3978,6 +3978,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenRequestAttention:request];
 }
 
+- (void)terminalDisinterSession {
+    [delegate_ screenDisinterSession];
+}
+
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
     [delegate_ screenSetBackgroundImageFile:filename];
 }

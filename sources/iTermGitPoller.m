@@ -61,12 +61,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)bump {
     DLog(@"Bump");
-    if ([self timeSinceLastPoll] > 1) {
-        [self poll];
-        // Restart the timer to avoid a double-tap
-        if (_timer) {
-            [self startTimer];
-        }
+    [self poll];
+    // Restart the timer to avoid a double-tap
+    if (_timer) {
+        [self startTimer];
     }
 }
 

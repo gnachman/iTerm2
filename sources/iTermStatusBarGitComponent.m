@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermCommandRunner.h"
+#import "iTermController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState.h"
 #import "iTermLocalHostNameGuesser.h"
@@ -19,13 +20,30 @@
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
+#import "PTYSession.h"
+#import "PseudoTerminal.h"
 #import "RegexKitLite.h"
+
+@interface NSObject(BogusSelector)
+- (void)bogusSelector;
+@end
 
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarGitComponentPollingIntervalKey = @"iTermStatusBarGitComponentPollingIntervalKey";
 static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
+
+@interface iTermGitMenuItemContext : NSObject
+@property (nonatomic, copy) iTermGitState *state;
+@property (nonatomic, copy) NSString *directory;
+@property (nonatomic, strong) id userData;
+@end
+
+@implementation iTermGitMenuItemContext
+@end
 
 @interface iTermStatusBarGitComponent()<iTermGitPollerDelegate>
 @end
@@ -34,7 +52,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     iTermGitPoller *_gitPoller;
     iTermVariableReference *_pwdRef;
     iTermVariableReference *_hostRef;
+    iTermVariableReference *_lastCommandRef;
+    NSString *_status;
     BOOL _hidden;
+    PTYSession *_session;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -55,6 +76,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname scope:scope];
         _hostRef.onChangeBlock = ^{
             [weakSelf updatePollerEnabled];
+        };
+        _lastCommandRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionLastCommand scope:scope];
+        _lastCommandRef.onChangeBlock = ^{
+            [weakSelf bumpIfLastCommandWasGit];
         };
         gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
         [self updatePollerEnabled];
@@ -165,6 +190,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (nullable NSAttributedString *)attributedStringValue {
+    if (_status) {
+        return [self attributedStringWithString:_status];
+    }
     if (!self.pollerReady) {
         return nil;
     }
@@ -232,8 +260,230 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (void)statusBarComponentDidMoveToWindow {
     [super statusBarComponentDidMoveToWindow];
+    [self bump];
+}
+
+- (void)bump {
     [_gitPoller bump];
 }
+
+- (void)bumpIfLastCommandWasGit {
+    NSString *wholeCommand = _lastCommandRef.value;
+    NSInteger space = [wholeCommand rangeOfString:@" "].location;
+    if (space == NSNotFound) {
+        return;
+    }
+    NSString *command = [wholeCommand substringToIndex:space];
+    NSInteger lastSlash = [command rangeOfString:@"/" options:NSBackwardsSearch].location;
+    if (lastSlash != NSNotFound) {
+        command = [command substringFromIndex:lastSlash + 1];
+    }
+    if ([command isEqualToString:@"git"]) {
+        DLog(@"Bump because command %@ looks like git", wholeCommand);
+        [self bump];
+    }
+}
+- (BOOL)statusBarComponentHandlesClicks {
+    return YES;
+}
+
+- (void)killSession:(id)sender {
+    [[[iTermController sharedInstance] terminalWithSession:_session] closeSessionWithoutConfirmation:_session];
+}
+
+- (void)revealSession:(id)sender {
+    [_session reveal];
+}
+
+- (void)statusBarComponentDidClickWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (void)statusBarComponentMouseDownWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (void)openMenuWithView:(NSView *)view {
+    NSView *containingView = view.superview;
+    if (_session) {
+        NSMenu *menu = [[NSMenu alloc] init];
+        NSString *actionName = [_status stringByReplacingOccurrencesOfString:@"…" withString:@""];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Cancel %@", actionName] action:@selector(killSession:) keyEquivalent:@""];
+        item.target = self;
+        [menu addItem:item];
+
+        item = [[NSMenuItem alloc] initWithTitle:@"Reveal" action:@selector(revealSession:) keyEquivalent:@""];
+        item.target = self;
+        [menu addItem:item];
+        [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
+        return;
+    }
+
+    if (_gitPoller.state.branch.length == 0) {
+        return;
+    }
+    iTermGitState *state = _gitPoller.state.copy;
+    NSString *directory = _gitPoller.currentDirectory;
+    __weak __typeof(self) weakSelf = self;
+    [self fetchRecentBranchesWithTimeout:0.5 completion:^(NSArray<NSString *> *branches) {
+        NSMenu *menu = [[NSMenu alloc] init];
+        iTermGitMenuItemContext *(^addItem)(NSString *, SEL, BOOL) = ^iTermGitMenuItemContext *(NSString *title, SEL selector, BOOL enabled) {
+            NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
+                                                          action:enabled ? selector : @selector(bogusSelector)
+                                                   keyEquivalent:@""];
+            item.target = weakSelf;
+            iTermGitMenuItemContext *context = [[iTermGitMenuItemContext alloc] init];
+            context.state = state;
+            context.directory = directory;
+            item.representedObject = context;
+            [menu addItem:item];
+            return context;
+        };
+        addItem(@"Commit", @selector(commit:), state.dirty);
+        addItem(@"Add & Commit", @selector(addAndCommit:), state.dirty);
+        addItem(@"Stash", @selector(stash:), state.dirty);
+        addItem([NSString stringWithFormat:@"Push origin %@", state.branch], @selector(push:), state.pushArrow.intValue > 0);
+        addItem([NSString stringWithFormat:@"Pull origin %@", state.branch], @selector(pull:), !state.dirty);
+        [menu addItem:[NSMenuItem separatorItem]];
+        for (NSString *branch in [branches it_arrayByKeepingFirstN:7]) {
+            if (branch.length == 0) {
+                continue;
+            }
+            if ([branch isEqualToString:state.branch]) {
+                continue;
+            }
+            addItem([NSString stringWithFormat:@"Check out %@", branch], @selector(checkout:), YES).userData = branch;
+        }
+        [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
+    }];
+}
+
+- (void)runGitCommandWithArguments:(NSArray<NSString *> *)args
+                           timeout:(NSTimeInterval)timeout
+                        completion:(void (^)(NSString * _Nullable output, int status))completion {
+    iTermBufferedCommandRunner *runner = [[iTermBufferedCommandRunner alloc] initWithCommand:@"/usr/bin/git"
+                                                                               withArguments:args
+                                                                                        path:_gitPoller.currentDirectory];
+    __weak iTermBufferedCommandRunner *weakRunner = runner;
+    runner.completion = ^(int status) {
+        iTermBufferedCommandRunner *strongRunner = weakRunner;
+        if (!strongRunner) {
+            completion(nil, -1);
+        }
+        NSString *output = [[NSString alloc] initWithData:strongRunner.output  encoding:NSUTF8StringEncoding];
+        completion(output, status);
+    };
+    [runner runWithTimeout:timeout];
+}
+
+static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
+    NSArray<NSString *> *branches = [output componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    return [branches mapWithBlock:^id(NSString *branch) {
+        NSString *trimmed = [branch stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (trimmed.length == 0) {
+            return nil;
+        }
+        return trimmed;
+    }];
+}
+
+- (void)fetchRecentBranchesWithTimeout:(NSTimeInterval)timeout completion:(void (^)(NSArray<NSString *> *branches))completion {
+    NSArray *args = @[ @"for-each-ref",
+                       @"--count=30",
+                       @"--sort=-committerdate",
+                       @"refs/heads/",
+                       @"--format=%(refname:short)" ];
+    [self runGitCommandWithArguments:args
+                             timeout:timeout
+                          completion:
+     ^(NSString * _Nullable output, int status) {
+         if (status != 0 || output == nil) {
+             completion(@[]);
+             return;
+         }
+         completion(NonEmptyLinesInString(output));
+     }];
+}
+
+- (void)commit:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"commit" ] pwd:context.directory status:@"Committing…" bury:NO];
+}
+
+- (void)addAndCommit:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"commit", @"-a" ] pwd:context.directory status:@"Committing…" bury:NO];
+}
+
+- (void)stash:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"stash" ] pwd:context.directory status:@"Stashing…" bury:YES];
+}
+
+- (void)push:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"push", @"origin", context.state.branch ]
+                                  pwd:context.directory
+                               status:@"Pushing…"
+                                 bury:YES];
+}
+
+- (void)pull:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"pull", @"origin", context.state.branch ]
+                                  pwd:context.directory
+                               status:@"Pulling…"
+                                 bury:YES];
+}
+
+- (void)checkout:(id)sender {
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    [self runGitInWindowWithArguments:@[ @"checkout", context.userData ]
+                                  pwd:context.directory
+                               status:@"Checking out…"
+                                 bury:YES];
+}
+
+- (void)runGitInWindowWithArguments:(NSArray<NSString *> *)args pwd:(NSString *)pwd status:(NSString *)status bury:(BOOL)bury {
+    if (_status) {
+        return;
+    }
+    _status = status;
+    [self updateTextFieldIfNeeded];
+    NSArray<NSString *> *escaped = [args mapWithBlock:^id(NSString *arg) {
+        return [arg stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }];
+    NSString *gitWrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"iterm2_git_wrapper" ofType:@"sh"];
+    NSString *command = [NSString stringWithFormat:@"%@ %@", gitWrapper, [escaped componentsJoinedByString:@" "]];
+    __weak __typeof(self) weakSelf = self;
+    iTermSingleUseWindowOptions options = (iTermSingleUseWindowOptionsCloseOnTermination |
+                                           iTermSingleUseWindowOptionsShortLived);
+    if (bury) {
+        options |= iTermSingleUseWindowOptionsInitiallyBuried;
+    }
+    _session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                                         inject:nil
+                                                                    environment:nil
+                                                                            pwd:pwd
+                                                                        options:options
+                                                                     completion:^{
+                                                                         [weakSelf didFinishCommand];
+                                                                     }];
+}
+
+- (void)didFinishCommand {
+    _status = nil;
+    _session = nil;
+    [self bump];
+    [self updateTextFieldIfNeeded];
+}
+
 #pragma mark - iTermGitPollerDelegate
 
 - (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller {

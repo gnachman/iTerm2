@@ -216,6 +216,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
             return [self frameByMovingFrame:windowController.window.frame
                                  fromScreen:windowController.window.screen
                                    toScreen:screen];
@@ -257,6 +258,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
             return [self frameByMovingFrame:rect fromScreen:self.windowController.window.screen toScreen:screen].origin;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
@@ -383,6 +385,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_ACCESSORY:
             assert(false);
     }
 }
@@ -434,6 +437,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+            case WINDOW_TYPE_ACCESSORY:
                 [self moveToPreferredScreen];
                 [self fadeIn];
                 break;
@@ -483,6 +487,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
+            case WINDOW_TYPE_ACCESSORY:
                 [self fadeOut];
                 break;
 

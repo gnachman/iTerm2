@@ -2443,6 +2443,8 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalPushKeyLabels:value];
     } else if ([key isEqualToString:@"PopKeyLabels"]) {
         [delegate_ terminalPopKeyLabels:value];
+    } else if ([key isEqualToString:@"Disinter"]) {
+        [delegate_ terminalDisinterSession];
     } else if ([key isEqualToString:@"ReportVariable"]) {
         if ([delegate_ terminalShouldSendReport] && [delegate_ terminalIsTrusted]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];

@@ -218,6 +218,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (BOOL)hasHoverURL;
 - (void)reallyUpdateMetalViewFrame;
 - (void)invalidateStatusBar;
+- (void)updateFindDriver;
 
 - (void)addSubviewBelowFindView:(NSView *)aView;
 
