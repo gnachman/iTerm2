@@ -1278,7 +1278,6 @@
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
 		537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC320FFA5A40098C91F /* iTermStatusBarJobComponent.h */; };
-		537BFDC620FFA5A40098C91F /* iTermStatusBarJobComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC420FFA5A40098C91F /* iTermStatusBarJobComponent.m */; };
 		537BFDC920FFB2590098C91F /* iTermProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC720FFB2590098C91F /* iTermProcessCache.h */; };
 		537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC820FFB2590098C91F /* iTermProcessCache.m */; };
 		537BFDD12101AD9F0098C91F /* iTermCPUUtilization.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDCF2101AD9F0098C91F /* iTermCPUUtilization.h */; };
@@ -1448,6 +1447,11 @@
 		A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */; };
 		A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */; };
 		A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */; };
+		A6153D4B21F30A9C002976FC /* iTermJobTreeViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D4821F30A9C002976FC /* iTermJobTreeViewController.h */; };
+		A6153D4C21F30A9C002976FC /* iTermJobTreeViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D4821F30A9C002976FC /* iTermJobTreeViewController.h */; };
+		A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D4921F30A9C002976FC /* iTermJobTreeViewController.m */; };
+		A6153D4F21F30A9C002976FC /* iTermJobTreeViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6153D4A21F30A9C002976FC /* iTermJobTreeViewController.xib */; };
+		A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC420FFA5A40098C91F /* iTermStatusBarJobComponent.m */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -4371,6 +4375,9 @@
 		A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterBitmap.m; path = Metal/Infrastructure/iTermCharacterBitmap.m; sourceTree = "<group>"; };
 		A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterParts.h; path = Metal/Infrastructure/iTermCharacterParts.h; sourceTree = "<group>"; };
 		A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterParts.m; path = Metal/Infrastructure/iTermCharacterParts.m; sourceTree = "<group>"; };
+		A6153D4821F30A9C002976FC /* iTermJobTreeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermJobTreeViewController.h; sourceTree = "<group>"; };
+		A6153D4921F30A9C002976FC /* iTermJobTreeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermJobTreeViewController.m; sourceTree = "<group>"; };
+		A6153D4A21F30A9C002976FC /* iTermJobTreeViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermJobTreeViewController.xib; sourceTree = "<group>"; };
 		A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameState.h; sourceTree = "<group>"; };
 		A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalPerFrameState.m; sourceTree = "<group>"; };
 		A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameStateConfiguration.h; sourceTree = "<group>"; };
@@ -8180,6 +8187,9 @@
 				A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */,
 				A6EC47BC21EC623D000E1321 /* iTermOnboardingWindowController.m */,
 				A6EC47BD21EC623D000E1321 /* iTermOnboardingWindowController.xib */,
+				A6153D4821F30A9C002976FC /* iTermJobTreeViewController.h */,
+				A6153D4921F30A9C002976FC /* iTermJobTreeViewController.m */,
+				A6153D4A21F30A9C002976FC /* iTermJobTreeViewController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -9332,6 +9342,7 @@
 				1DB9D8F2183FE9EF0029F0B5 /* iTermHotKeyController.h in Headers */,
 				A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */,
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
+				A6153D4B21F30A9C002976FC /* iTermJobTreeViewController.h in Headers */,
 				A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */,
 				A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */,
 				A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */,
@@ -9410,6 +9421,7 @@
 				5337A315203E065300024BEA /* iTermPowerManager.h in Headers */,
 				A6588829201F06ED006F48DB /* iTermTexture.h in Headers */,
 				A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */,
+				A6153D4C21F30A9C002976FC /* iTermJobTreeViewController.h in Headers */,
 				5370678F21C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
@@ -11041,6 +11053,7 @@
 				A67F61F52143976F0093940A /* graphic_colors.json in Resources */,
 				A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
+				A6153D4F21F30A9C002976FC /* iTermJobTreeViewController.xib in Resources */,
 				A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */,
 				A6D1784821BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib in Resources */,
 				A65B72B11B33C07D00F947A7 /* NextTip.png in Resources */,
@@ -11664,6 +11677,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A67960D71F81FCBB008A42BC /* iTermTextRenderer.mm in Sources */,
@@ -11844,6 +11858,7 @@
 				5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
+				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
 				A6BC8ACC21C6EC5000796BF3 /* iTermBoxDrawingBezierCurveFactory.m in Sources */,
@@ -11946,7 +11961,6 @@
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				5365207221433ED2003C58FD /* iTermGitState.m in Sources */,
 				A630118E20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.m in Sources */,
-				537BFDC620FFA5A40098C91F /* iTermStatusBarJobComponent.m in Sources */,
 				A63011C920E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m in Sources */,
 				5370678E21C9D2780088D0F3 /* SIGIdentity.m in Sources */,
 				537BFDD22101AD9F0098C91F /* iTermCPUUtilization.m in Sources */,
