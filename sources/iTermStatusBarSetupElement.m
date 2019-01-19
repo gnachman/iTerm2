@@ -133,9 +133,6 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return [NSColor labelColor];
 }
 
-- (void)statusBarComponent:(id<iTermStatusBarComponent>)component setHidden:(BOOL)hidden {
-}
-
 - (BOOL)statusBarComponentIsVisible:(id<iTermStatusBarComponent>)component {
     // Say no so that git components don't do work for no reason.
     return NO;
@@ -144,6 +141,15 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 - (NSFont *)statusBarComponentTerminalFont:(id<iTermStatusBarComponent>)component {
     return [NSFont systemFontOfSize:[NSFont systemFontSize]];
 }
+
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
+}
+
+
+- (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component {
+    return NO;
+}
+
 
 @end
 

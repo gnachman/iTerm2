@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarLayoutAlgorithm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
