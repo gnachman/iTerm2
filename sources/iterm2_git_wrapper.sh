@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "cd $PWD"
-echo git "$@"
+echo "$ cd $PWD"
+echo "$ git" "$@"
 echo ""
 echo -n $'\e[m'
 echo -n $'\e]0;git '"$@"$'\e\\'

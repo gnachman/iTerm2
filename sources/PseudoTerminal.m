@@ -432,13 +432,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             break;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
             break;
 
         case WINDOW_TYPE_COMPACT:
             isCompact = YES;
-
-        default:
-            break;
     }
     myWindow.titlebarAppearsTransparent = isCompact;
 }
@@ -485,7 +485,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskResizable);
 
-        default:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_NORMAL:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
@@ -669,6 +671,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_ACCESSORY:
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
@@ -871,6 +874,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 - (NSWindowCollectionBehavior)desiredWindowCollectionBehavior {
     NSWindowCollectionBehavior result = self.window.collectionBehavior;
+    if (windowType_ == WINDOW_TYPE_ACCESSORY) {
+        return (NSWindowCollectionBehaviorFullScreenAuxiliary |
+                NSWindowCollectionBehaviorManaged |
+                NSWindowCollectionBehaviorParticipatesInCycle);
+    }
     if (_spaceSetting == iTermProfileJoinsAllSpaces) {
         result |= NSWindowCollectionBehaviorCanJoinAllSpaces;
     }
@@ -1190,7 +1198,11 @@ ITERM_WEAKLY_REFERENCEABLE
             savedWindowType = newWindowType = savedWindowType_;
             break;
 
-        default:
+        case WINDOW_TYPE_ACCESSORY:
+            savedWindowType = newWindowType = WINDOW_TYPE_ACCESSORY;
+            break;
+
+        case WINDOW_TYPE_NORMAL:
             savedWindowType = newWindowType = windowType_;
     }
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
@@ -1206,13 +1218,27 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[iTermController sharedInstance] addTerminalWindow:term];
 
-    if (newWindowType == WINDOW_TYPE_NORMAL ||
-        newWindowType == WINDOW_TYPE_NO_TITLE_BAR ||
-        newWindowType == WINDOW_TYPE_COMPACT) {
-        [[term window] setFrameOrigin:point];
-    } else if (newWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-        [[term window] makeKeyAndOrderFront:nil];
-        [term hideMenuBar];
+    switch (newWindowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            [[term window] setFrameOrigin:point];
+            break;
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            [[term window] makeKeyAndOrderFront:nil];
+            [term hideMenuBar];
+            break;
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            break;
     }
 
     return term;
@@ -1350,6 +1376,7 @@ ITERM_WEAKLY_REFERENCEABLE
         switch (windowType_) {
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_ACCESSORY:
                 DLog(@"Returning YES");
                 return YES;
             case WINDOW_TYPE_TOP:
@@ -2096,6 +2123,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -2648,6 +2676,7 @@ ITERM_WEAKLY_REFERENCEABLE
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
     if (windowType == WINDOW_TYPE_NORMAL ||
+        windowType == WINDOW_TYPE_ACCESSORY ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR ||
         windowType == WINDOW_TYPE_COMPACT) {
         // The window may have changed size while adding tab bars, etc.
@@ -3131,6 +3160,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_ACCESSORY:
             if ([self updateSessionScrollbars]) {
                 PtyLog(@"Fitting tabs to window because scrollbars changed.");
                 [self fitTabsToWindow];
@@ -3374,7 +3404,8 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, WINDOW_TYPE_COMPACT, or LION_FULL_SCREEN");
+        case WINDOW_TYPE_ACCESSORY:
+            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, WINDOW_TYPE_COMPACT, WINDOW_TYPE_ACCSSORY, or LION_FULL_SCREEN");
             return frame;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -3534,6 +3565,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
             return YES;
     }
 
@@ -4012,13 +4044,29 @@ ITERM_WEAKLY_REFERENCEABLE
     [self toggleFullScreenMode:sender completion:nil];
 }
 
+- (BOOL)toggleFullScreenShouldUseLionFullScreen {
+    if ([self lionFullScreen]) {
+        return YES;
+    }
+
+    if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+        windowType_ == WINDOW_TYPE_ACCESSORY) {
+        return NO;
+    }
+    if (self.isHotKeyWindow) {
+        // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)toggleFullScreenMode:(id)sender
                   completion:(void (^)(BOOL))completion {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
-    if ([self lionFullScreen] ||
-        (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-         !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen])) {
+    if (self.toggleFullScreenShouldUseLionFullScreen) {
         [[self ptyWindow] toggleFullScreen:self];
         if (completion) {
             [_toggleFullScreenModeCompletionBlocks addObject:[[completion copy] autorelease]];
@@ -4103,6 +4151,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
             return NO;
             break;
 
@@ -4121,7 +4170,7 @@ ITERM_WEAKLY_REFERENCEABLE
                windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
                      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                          initialFrame:(NSRect)initialFrame {
-    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
+    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) || (windowType == WINDOW_TYPE_ACCESSORY);
     const BOOL compact = [PseudoTerminal windowType:windowType shouldBeCompactWithSavedWindowType:savedWindowType];
     Class windowClass;
     if (panel) {
@@ -4386,6 +4435,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
             break;
     }
     if (@available(macOS 10.14, *)) {
@@ -5364,10 +5414,24 @@ ITERM_WEAKLY_REFERENCEABLE
             [firstTab setReportIdealSizeAsCurrent:NO];
 
             // fitWindowToTabs will detect the window changed sizes and do a bogus move of it in this case.
-            if (windowType_ == WINDOW_TYPE_NORMAL ||
-                windowType_ == WINDOW_TYPE_COMPACT ||
-                windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
-                [[self window] setFrameOrigin:originalOrigin];
+            switch (windowType_) {
+                case WINDOW_TYPE_NORMAL:
+                case WINDOW_TYPE_COMPACT:
+                case WINDOW_TYPE_NO_TITLE_BAR:
+                case WINDOW_TYPE_ACCESSORY:
+                    [[self window] setFrameOrigin:originalOrigin];
+                    break;
+                case WINDOW_TYPE_BOTTOM_PARTIAL:
+                case WINDOW_TYPE_RIGHT_PARTIAL:
+                case WINDOW_TYPE_LEFT_PARTIAL:
+                case WINDOW_TYPE_TOP_PARTIAL:
+                case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_RIGHT:
+                case WINDOW_TYPE_LEFT:
+                case WINDOW_TYPE_LION_FULL_SCREEN:
+                case WINDOW_TYPE_TOP:
+                case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                    break;
             }
         }
     }
@@ -5509,6 +5573,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case PSMTab_TopTab:
             switch ([term windowType]) {
                 case WINDOW_TYPE_COMPACT:
+                case WINDOW_TYPE_ACCESSORY:
                 case WINDOW_TYPE_NORMAL: {
                     CGFloat contentHeight = [term.window contentRectForFrameRect:NSMakeRect(0, 0, 100, 100)].size.height;
                     CGFloat titleBarHeight = 100 - contentHeight;
@@ -5544,6 +5609,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case PSMTab_BottomTab:
             switch ([term windowType]) {
                 case WINDOW_TYPE_NORMAL:
+                case WINDOW_TYPE_ACCESSORY:
                 case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_NO_TITLE_BAR:
                     if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
@@ -5573,6 +5639,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
                 }
 
+                case WINDOW_TYPE_ACCESSORY:
                 case WINDOW_TYPE_NORMAL: {
                     CGFloat contentHeight = [term.window contentRectForFrameRect:NSMakeRect(0, 0, 100, 100)].size.height;
                     CGFloat titleBarHeight = 100 - contentHeight;

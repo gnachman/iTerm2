@@ -1572,46 +1572,59 @@ static iTermController *gSharedInstance;
         windowProfile[KEY_WORKING_DIRECTORY] = initialPWD;
         windowProfile[KEY_CUSTOM_DIRECTORY] = @"Yes";
     }
-    PTYSession *session =
-    [self launchBookmark:windowProfile
-              inTerminal:nil
-                 withURL:nil
-        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                 makeKey:YES
-             canActivate:YES
-                 command:command
-                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-                       profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
-                       const BOOL closeSessionsOnEnd = !!(options & iTermSingleUseWindowOptionsCloseOnTermination);
-                       profile = [profile dictionaryBySettingObject:@(closeSessionsOnEnd) forKey:KEY_CLOSE_SESSIONS_ON_END];
-                       term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
-                       if (options & iTermSingleUseWindowOptionsShortLived) {
-                           profile = [profile dictionaryBySettingObject:@0 forKey:KEY_UNDO_TIMEOUT];
-                       }
-                       PTYSession *session = [term createTabWithProfile:profile withCommand:command environment:environment];
-                       if (options & iTermSingleUseWindowOptionsShortLived) {
-                           session.shortLivedSingleUse = YES;
-                       }
-                       session.isSingleUseSession = YES;
-                       if (injection) {
-                           [session injectData:injection];
-                       }
-                       if (completion) {
-                           __block BOOL completionBlockRun = NO;
-                           [[NSNotificationCenter defaultCenter] addObserverForName:PTYSessionTerminatedNotification
-                                                                             object:session
-                                                                              queue:nil
-                                                                         usingBlock:^(NSNotification * _Nonnull note) {
-                                                                             if (completionBlockRun) {
-                                                                                 return;
-                                                                             }
-                                                                             completionBlockRun = YES;
-                                                                             completion();
-                                                                         }];
-                       }
-                       return session;
-                   }];
-    if (options & iTermSingleUseWindowOptionsInitiallyBuried) {
+    const BOOL bury = !!(options & iTermSingleUseWindowOptionsInitiallyBuried);
+    const BOOL shortLived = !!(options & iTermSingleUseWindowOptionsShortLived);
+
+    PseudoTerminal *term = nil;
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                             windowType:WINDOW_TYPE_ACCESSORY
+                                        savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                 screen:-1
+                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                profile:windowProfile] autorelease];
+    [self addTerminalWindow:term];
+
+    PTYSession *(^makeSession)(Profile *, PseudoTerminal *) = ^PTYSession *(Profile *profile, PseudoTerminal *term)  {
+        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
+        const BOOL closeSessionsOnEnd = !!(options & iTermSingleUseWindowOptionsCloseOnTermination);
+        profile = [profile dictionaryBySettingObject:@(closeSessionsOnEnd) forKey:KEY_CLOSE_SESSIONS_ON_END];
+        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+        if (shortLived) {
+            profile = [profile dictionaryBySettingObject:@0 forKey:KEY_UNDO_TIMEOUT];
+        }
+        PTYSession *session = [term createTabWithProfile:profile withCommand:command environment:environment];
+        if (shortLived) {
+            session.shortLivedSingleUse = YES;
+        }
+        session.isSingleUseSession = YES;
+        if (injection) {
+            [session injectData:injection];
+        }
+        if (completion) {
+            __block BOOL completionBlockRun = NO;
+            [[NSNotificationCenter defaultCenter] addObserverForName:PTYSessionTerminatedNotification
+                                                              object:session
+                                                               queue:nil
+                                                          usingBlock:^(NSNotification * _Nonnull note) {
+                                                              if (completionBlockRun) {
+                                                                  return;
+                                                              }
+                                                              completionBlockRun = YES;
+                                                              completion();
+                                                          }];
+        }
+        return session;
+    };
+    PTYSession *session = [self launchBookmark:windowProfile
+                                    inTerminal:term
+                                       withURL:nil
+                              hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                       makeKey:YES
+                                   canActivate:YES
+                                       command:command
+                                         block:makeSession];
+
+    if (bury) {
         [session bury];
     }
     return session;
