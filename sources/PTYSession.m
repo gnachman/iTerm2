@@ -10747,6 +10747,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTask:string];
 }
 
+- (void)statusBarDidUpdate {
+    [_view updateFindDriver];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

@@ -1236,15 +1236,20 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             break;
     }
     if (statusBarChanged) {
-        if (newVC.searchViewController) {
-            _findDriver = iTermSessionViewFindDriverPermanentStatusBar;
-            _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:newVC.searchViewController];
-            _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
-        } else if (newVC) {
-            _findDriver = iTermSessionViewFindDriverTemporaryStatusBar;
-        } else {
-            _findDriver = iTermSessionViewFindDriverDropDown;
-        }
+        [self updateFindDriver];
+    }
+}
+
+- (void)updateFindDriver {
+    iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
+    if (statusBarViewController.searchViewController) {
+        _findDriver = iTermSessionViewFindDriverPermanentStatusBar;
+        _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController];
+        _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
+    } else if (statusBarViewController) {
+        _findDriver = iTermSessionViewFindDriverTemporaryStatusBar;
+    } else {
+        _findDriver = iTermSessionViewFindDriverDropDown;
     }
 }
 
