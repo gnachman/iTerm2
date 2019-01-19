@@ -437,6 +437,10 @@ const CGFloat iTermStatusBarHeight = 21;
     return [[self.delegate statusBarTerminalBackgroundColor] perceivedBrightness] < 0.5;
 }
 
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
+    [self.delegate statusBarWriteString:string];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

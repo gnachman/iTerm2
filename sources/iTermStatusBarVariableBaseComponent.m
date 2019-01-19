@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarVariableBaseComponent.h"
 
+#import "iTermShellHistoryController.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
@@ -14,6 +15,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "VT100RemoteHost.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -256,6 +258,53 @@ NS_ASSUME_NONNULL_BEGIN
     }
     parts[index] = replacement;
     return [parts componentsJoinedByString:@"/"];
+}
+
+- (BOOL)statusBarComponentHandlesClicks {
+    return YES;
+}
+
+- (void)statusBarComponentDidClickWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (void)statusBarComponentMouseDownWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (void)openMenuWithView:(NSView *)view {
+    NSMenu *menu = [[NSMenu alloc] init];
+    NSView *containingView = view.superview;
+
+    VT100RemoteHost *remoteHost = [self remoteHost];
+    for (iTermRecentDirectoryMO *directory in [[[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:remoteHost] it_arrayByKeepingFirstN:10]) {
+        NSString *title;
+        if (directory.starred.boolValue) {
+            title = [@"★ " stringByAppendingString:directory.path];
+        } else {
+            title = directory.path;
+        }
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(directorySelected:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = directory.path;
+        [menu addItem:item];
+    }
+    [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
+}
+
+- (void)directorySelected:(NSMenuItem *)sender {
+    NSString *path = sender.representedObject;
+    [self.delegate statusBarComponent:self
+                          writeString:[NSString stringWithFormat:@"cd %@", [path stringWithEscapedShellCharactersIncludingNewlines:YES]]];
+}
+
+- (VT100RemoteHost *)remoteHost {
+    VT100RemoteHost *result = [[VT100RemoteHost alloc] init];
+    result.hostname = [self.scope valueForVariableName:iTermVariableKeySessionHostname];
+    result.username = [self.scope valueForVariableName:iTermVariableKeySessionUsername];
+    return result;
 }
 
 @end

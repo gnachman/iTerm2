@@ -23,6 +23,7 @@ extern const CGFloat iTermStatusBarHeight;
 - (NSColor *)statusBarBackgroundColor;
 - (NSColor *)statusBarTerminalBackgroundColor;
 - (NSFont *)statusBarTerminalFont;
+- (void)statusBarWriteString:(NSString *)string;
 @end
 
 @protocol iTermStatusBarContainer<NSObject>

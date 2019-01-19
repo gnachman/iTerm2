@@ -10743,6 +10743,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self processedBackgroundColor];
 }
 
+- (void)statusBarWriteString:(NSString *)string {
+    [self writeTask:string];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {
