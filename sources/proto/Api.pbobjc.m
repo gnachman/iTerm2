@@ -6096,7 +6096,7 @@ GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000UnrecognizedName\000InvalidValue\000Invalid"
-        "Target\000Deferred\000Impossible\000";
+        "Target\000Deferred\000Impossible\000Failed\000";
     static const int32_t values[] = {
         ITMSetPropertyResponse_Status_Ok,
         ITMSetPropertyResponse_Status_UnrecognizedName,
@@ -6104,6 +6104,7 @@ GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void) {
         ITMSetPropertyResponse_Status_InvalidTarget,
         ITMSetPropertyResponse_Status_Deferred,
         ITMSetPropertyResponse_Status_Impossible,
+        ITMSetPropertyResponse_Status_Failed,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSetPropertyResponse_Status)
@@ -6126,6 +6127,7 @@ BOOL ITMSetPropertyResponse_Status_IsValidValue(int32_t value__) {
     case ITMSetPropertyResponse_Status_InvalidTarget:
     case ITMSetPropertyResponse_Status_Deferred:
     case ITMSetPropertyResponse_Status_Impossible:
+    case ITMSetPropertyResponse_Status_Failed:
       return YES;
     default:
       return NO;

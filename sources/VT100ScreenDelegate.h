@@ -176,6 +176,9 @@
 
 // Bounce the dock. Set request to false to cancel.
 - (void)screenRequestAttention:(VT100AttentionRequestType)request;
+
+- (void)screenDisinterSession;
+
 - (NSString *)screenCurrentWorkingDirectory;
 
 // Show/hide the cursor.

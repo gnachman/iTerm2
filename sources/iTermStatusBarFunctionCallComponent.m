@@ -122,7 +122,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
 #pragma mark - iTermStatusBarComponent
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     return self.button;
 }
 

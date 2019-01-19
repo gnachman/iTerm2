@@ -282,7 +282,7 @@ async def set_window_property(connection, args):
       frame = iterm2.Frame(iterm2.Point(int(parts[0]), int(parts[1])), iterm2.Size(int(parts[2]), int(parts[3])))
       await w.async_set_frame(frame)
     elif args.name == "fullscreen":
-      await w.async_set_fullscreen(connection, args.value == "true")
+      await w.async_set_fullscreen(args.value == "true")
 
 async def inject(connection, args):
   a = await iterm2.async_get_app(connection)

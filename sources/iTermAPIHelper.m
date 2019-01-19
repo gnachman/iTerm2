@@ -1902,8 +1902,7 @@ static id sAPIHelperInstance;
                 handler(response);
                 return;
             }
-            response.status = [self setPropertyInWindow:term name:request.name value:value];
-            handler(response);
+            [self setPropertyInWindow:term name:request.name value:value completion:handler];
             return;
         }
 
@@ -1931,9 +1930,12 @@ static id sAPIHelperInstance;
     handler(response);
 }
 
-- (ITMSetPropertyResponse_Status)setPropertyInWindow:(PseudoTerminal *)term name:(NSString *)name value:(id)value {
-    typedef ITMSetPropertyResponse_Status (^SetWindowPropertyBlock)(void);
-    SetWindowPropertyBlock setFrame = ^ITMSetPropertyResponse_Status {
+- (void)setPropertyInWindow:(PseudoTerminal *)term
+                       name:(NSString *)name
+                      value:(id)value
+                 completion:(void (^)(ITMSetPropertyResponse *))completion {
+    ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
+    void (^setFrame)(void) = ^{
         NSDictionary *dict = [NSDictionary castFrom:value];
         NSDictionary *origin = dict[@"origin"];
         NSDictionary *size = dict[@"size"];
@@ -1942,34 +1944,47 @@ static id sAPIHelperInstance;
         NSNumber *width = size[@"width"];
         NSNumber *height = size[@"height"];
         if (!x || !y || !width || !height) {
-            return ITMSetPropertyResponse_Status_InvalidValue;
+            response.status = ITMSetPropertyResponse_Status_InvalidValue;
+            completion(response);
         }
         NSRect rect = NSMakeRect(x.doubleValue, y.doubleValue, width.doubleValue, height.doubleValue);
         [term.window setFrame:rect display:YES];
-        return ITMSetPropertyResponse_Status_Ok;
+        response.status = ITMSetPropertyResponse_Status_Ok;
+        completion(response);
     };
 
-    SetWindowPropertyBlock setFullScreen = ^ITMSetPropertyResponse_Status {
+    void (^setFullScreen)(void) = ^{
         NSNumber *number = [NSNumber castFrom:value];
         if (!number) {
-            return ITMSetPropertyResponse_Status_InvalidValue;
+            response.status = ITMSetPropertyResponse_Status_InvalidValue;
+            completion(response);
+            return;
         }
         BOOL fullscreen = number.boolValue;
         if (!!term.anyFullScreen == !!fullscreen) {
-            return ITMSetPropertyResponse_Status_Ok;
-        } else {
-            [term toggleFullScreenMode:nil];
+            response.status = ITMSetPropertyResponse_Status_Ok;
+            completion(response);
+            return;
         }
-        return ITMSetPropertyResponse_Status_Ok;
+        [term toggleFullScreenMode:nil completion:^(BOOL ok) {
+            if (ok) {
+                response.status = ITMSetPropertyResponse_Status_Ok;
+            } else {
+                response.status = ITMSetPropertyResponse_Status_Failed;
+            }
+            completion(response);
+        }];
     };
-    NSDictionary<NSString *, SetWindowPropertyBlock> *handlers =
+    NSDictionary<NSString *, void (^)(void)> *handlers =
         @{ @"frame": setFrame,
            @"fullscreen": setFullScreen };
-    SetWindowPropertyBlock block = handlers[name];
+    void (^block)(void) = handlers[name];
     if (block) {
-        return block();
+        block();
     } else {
-        return ITMSetPropertyResponse_Status_UnrecognizedName;
+        response.status = ITMSetPropertyResponse_Status_UnrecognizedName;
+        completion(response);
+        return;
     }
 }
 
@@ -3145,7 +3160,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         if (mode == NSNotFound) {
             return nil;
         }
-        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode];
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode width:width];
         return sub;
     }];
 

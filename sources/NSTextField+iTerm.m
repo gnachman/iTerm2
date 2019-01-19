@@ -25,6 +25,17 @@
     return result;
 }
 
++ (instancetype)it_textFieldForTableView {
+    NSTextField *result = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
+    result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    result.bezeled = NO;
+    result.editable = NO;
+    result.selectable = NO;
+    result.drawsBackground = NO;
+    result.usesSingleLineMode = YES;
+    return result;
+}
+
 + (instancetype)newLabelStyledTextField {
     NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 22)];
     label.editable = NO;

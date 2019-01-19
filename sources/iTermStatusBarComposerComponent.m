@@ -99,7 +99,7 @@
     return [NSImage it_imageNamed:@"StatusBarIconComposer" forClass:[self class]];
 }
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     [self updateForTerminalBackgroundColor];
     return self.viewController.view;
 }

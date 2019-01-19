@@ -664,6 +664,7 @@ message SetPropertyResponse {
     INVALID_TARGET = 3;  // e.g., bogus window_id
     DEFERRED = 4;  // Operation can't be performed immediately. Will be tried later. For example, resizing a session during instant replay.
     IMPOSSIBLE = 5;  // Can't be done. For example, resizing a session in a full-screen window.
+    FAILED = 6;  // Did our best and failed. For example, sometimes toggling full-screen fails if another window is also toggling. Maybe try again?
   }
   optional Status status = 1;
 }

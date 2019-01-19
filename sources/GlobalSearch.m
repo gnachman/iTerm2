@@ -730,8 +730,10 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                     [theResult endX] + 1,
                                     [theResult endY]);
         iTermSubSelection *sub;
+        int width = tv.dataSource.width;
         sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                                                  mode:kiTermSelectionModeCharacter];
+                                                  mode:kiTermSelectionModeCharacter
+                                                 width:width];
         [tv.selection addSubSelection:sub];
         [tv scrollToSelection];
         session = [inst session];

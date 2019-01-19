@@ -333,7 +333,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - iTermStatusBarComponent
 
-- (NSView *)statusBarComponentCreateView {
+- (NSView *)statusBarComponentView {
     if (!_attributedStringView) {
         _attributedStringView = [[iTermAttributedStringView alloc] init];
         _attributedStringView.textColor = self.textColor;

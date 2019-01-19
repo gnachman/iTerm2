@@ -99,6 +99,8 @@
 - (ObjectType)maxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (ObjectType)minWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (NSArray<ObjectType> *)it_arrayByDroppingLastN:(NSUInteger)n;
+- (NSArray<ObjectType> *)it_arrayByKeepingFirstN:(NSUInteger)n;
+
 - (NSArray *)countedInstancesStrings;
 - (NSDictionary *)keyValuePairsWithBlock:(iTermTuple * (^)(ObjectType object))block;
 - (id)it_jsonSafeValue;

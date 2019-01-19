@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
         self.wantsLayer = YES;
         _component = component;
         _backgroundColor = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
-        _view = component.statusBarComponentCreateView;
+        _view = component.statusBarComponentView;
         [self addSubview:_view];
         const BOOL hasIcon = (icon != nil);
         const CGFloat x = self.minX;
@@ -59,12 +59,27 @@ NS_ASSUME_NONNULL_BEGIN
                                                     userInfo:nil
                                                      repeats:YES];
         [component statusBarComponentUpdate];
+
+        if ([component statusBarComponentHandlesClicks]) {
+            NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(clickRecognized:)];
+            [_view addGestureRecognizer:recognizer];
+        }
     }
     return self;
 }
 
 - (void)dealloc {
     [_timer invalidate];
+}
+
+- (void)clickRecognized:(id)sender {
+    [_component statusBarComponentDidClickWithView:_view];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    if ([_component statusBarComponentHandlesClicks]) {
+        [_component statusBarComponentMouseDownWithView:_view];
+    }
 }
 
 - (CGFloat)minX {

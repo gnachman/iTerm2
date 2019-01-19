@@ -168,6 +168,9 @@
 
 - (void)toggleFullScreenMode:(id)sender;
 
+- (void)toggleFullScreenMode:(id)sender
+                  completion:(void (^)(BOOL))completion;
+
 // Is the window title transient?
 - (void)clearTransientTitle;
 - (BOOL)isShowingTransientTitle;
