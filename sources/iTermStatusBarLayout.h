@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarLayoutAlgorithm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -27,6 +28,7 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 @property (nullable, nonatomic, strong) NSColor *backgroundColor;
 @property (nullable, nonatomic, strong) NSColor *defaultTextColor;
 @property (nullable, nonatomic, strong) NSFont *font;
+@property (nonatomic) iTermStatusBarLayoutAlgorithmSetting layoutAlgorithm;
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
 + (NSFont *)defaultFont;

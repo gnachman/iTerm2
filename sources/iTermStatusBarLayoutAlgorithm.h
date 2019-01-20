@@ -13,8 +13,18 @@ extern const CGFloat iTermStatusBarViewControllerMargin;
 
 @class iTermStatusBarContainerView;
 
+typedef NS_ENUM(NSUInteger, iTermStatusBarLayoutAlgorithmSetting) {
+    iTermStatusBarLayoutAlgorithmSettingStable = 0,
+    iTermStatusBarLayoutAlgorithmSettingStandard
+};
+
 @interface iTermStatusBarLayoutAlgorithm : NSObject
 
++ (instancetype)layoutAlgorithmWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                                   statusBarWidth:(CGFloat)statusBarWidth
+                                          setting:(iTermStatusBarLayoutAlgorithmSetting)setting;
+
+// This is for subclasses, not clients.
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
                         statusBarWidth:(CGFloat)statusBarWidth NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

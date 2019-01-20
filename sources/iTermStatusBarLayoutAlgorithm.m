@@ -19,12 +19,24 @@ const CGFloat iTermStatusBarViewControllerMargin = 10;
 @implementation iTermStatusBarLayoutAlgorithm
 
 + (instancetype)alloc {
-    if (self.class == [iTermStatusBarLayoutAlgorithm class]) {
-//        return [iTermStatusBarStandardLayoutAlgorithm alloc];
-        return [iTermStatusBarStableLayoutAlgorithm alloc];
-    } else {
-        return [super alloc];
+    if ([self class] == [iTermStatusBarLayoutAlgorithm class]) {
+        assert(NO);
     }
+    return [super alloc];
+}
+
++ (instancetype)layoutAlgorithmWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                                   statusBarWidth:(CGFloat)statusBarWidth
+                                          setting:(iTermStatusBarLayoutAlgorithmSetting)setting {
+    switch (setting) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return [[iTermStatusBarStableLayoutAlgorithm alloc] initWithContainerViews:containerViews
+                                                                        statusBarWidth:statusBarWidth];
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            return [[iTermStatusBarStandardLayoutAlgorithm alloc] initWithContainerViews:containerViews
+                                                                          statusBarWidth:statusBarWidth];
+    }
+    return nil;
 }
 
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews

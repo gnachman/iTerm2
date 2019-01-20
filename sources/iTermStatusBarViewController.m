@@ -63,8 +63,9 @@ const CGFloat iTermStatusBarHeight = 21;
 }
 
 - (iTermStatusBarLayoutAlgorithm *)layoutAlgorithm {
-    return [[iTermStatusBarLayoutAlgorithm alloc] initWithContainerViews:_containerViews
-                                                          statusBarWidth:self.view.frame.size.width];
+    return [iTermStatusBarLayoutAlgorithm layoutAlgorithmWithContainerViews:_containerViews
+                                                             statusBarWidth:self.view.frame.size.width
+                                                                    setting:_layout.advancedConfiguration.layoutAlgorithm];
 }
 
 - (void)viewWillLayout {

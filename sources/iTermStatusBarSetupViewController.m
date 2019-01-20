@@ -65,8 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSButton *_autoRainbow;
     IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
-    IBOutlet NSPopUpButton *_font;
-    IBOutlet NSPopUpButton *_fontSize;
+    IBOutlet NSButton *_tightPacking;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
     BOOL _darkBackground;
@@ -149,9 +148,21 @@ NS_ASSUME_NONNULL_BEGIN
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.defaultTextColor
                  alphaAllowed:NO];
+    [self initializeTightPacking];
     _autoRainbow.hidden = !_allowRainbow;
 
     [super awakeFromNib];
+}
+
+- (void)initializeTightPacking {
+    switch (_layout.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            _tightPacking.state = NO;
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            _tightPacking.state = YES;
+            break;
+    }
 }
 
 - (void)initializeColorWell:(CPKColorWell *)colorWell
@@ -229,6 +240,7 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
+    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingStandard : iTermStatusBarLayoutAlgorithmSettingStable;
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];
