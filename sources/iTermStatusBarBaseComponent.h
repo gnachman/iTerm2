@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const iTermStatusBarPriorityKey;
 extern NSString *const iTermStatusBarMaximumWidthKey;
 extern NSString *const iTermStatusBarMinimumWidthKey;
+extern const double iTermStatusBarBaseComponentDefaultPriority;
 
 @interface iTermStatusBarBaseComponent : NSObject<iTermStatusBarComponent, iTermWebViewDelegate>
 
@@ -35,6 +36,7 @@ extern NSString *const iTermStatusBarMinimumWidthKey;
 // Clamp width to min/max knobs' values.
 - (CGFloat)clampedWidth:(CGFloat)width;
 + (NSDictionary *)defaultMinMaxWidthKnobValues;
+- (iTermStatusBarComponentKnob *)newPriorityKnob;
 
 @end
 

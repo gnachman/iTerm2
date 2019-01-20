@@ -52,7 +52,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     return YES;
 }
 
-- (CGFloat)widthOfViews:(NSArray<iTermStatusBarContainerView *> *)views {
+- (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views {
     iTermStatusBarContainerView *viewWithLargestMinimumWidth = [self containerViewWithLargestMinimumWidthFromViews:views];
     const CGFloat largestMinimumSize = viewWithLargestMinimumWidth.component.statusBarComponentMinimumWidth;
     NSArray<iTermStatusBarContainerView *> *viewsExFixedSpacers = [self viewsExcludingFixedSpacers:views];
@@ -61,7 +61,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)visibleContainerViewsAllowingEqualSpacingFromViews:(NSArray<iTermStatusBarContainerView *> *)visibleContainerViews {
-    if (_statusBarWidth >= [self widthOfViews:visibleContainerViews]) {
+    if (_statusBarWidth >= [self minimumWidthOfContainerViews:visibleContainerViews]) {
         return visibleContainerViews;
     }
 
@@ -110,7 +110,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 
 - (CGFloat)widthOfFixedSpacersAmongViews:(NSArray<iTermStatusBarContainerView *> *)views {
     return [[views reduceWithFirstValue:@0 block:^id(NSNumber *partialSum, iTermStatusBarContainerView *view) {
-        if (![view isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
+        if (![view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
             return partialSum;
         }
         return @(partialSum.doubleValue + view.component.statusBarComponentMinimumWidth);
