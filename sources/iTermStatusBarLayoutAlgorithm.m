@@ -395,7 +395,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 
 - (NSArray<iTermStatusBarContainerView *> *)viewsExcludingFixedSpacers:(NSArray<iTermStatusBarContainerView *> *)views {
     return [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
-        return ![view isKindOfClass:[iTermStatusBarFixedSpacerComponent class]];
+        return ![view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]];
     }];
 }
 
@@ -408,15 +408,19 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     }] doubleValue];
 }
 
+- (double)sumOfSpringConstantsInViews:(NSArray<iTermStatusBarContainerView *> *)views {
+    return [[views reduceWithFirstValue:@0 block:^id(NSNumber *partialSum, iTermStatusBarContainerView *view) {
+        return @(partialSum.doubleValue + view.component.statusBarComponentSpringConstant);
+    }] doubleValue];
+}
+
 - (void)updateDesiredWidthsForViews:(NSArray<iTermStatusBarContainerView *> *)views {
     [self updateMargins:views];
     NSArray<iTermStatusBarContainerView *> *viewsExFixedSpacers = [self viewsExcludingFixedSpacers:views];
     const CGFloat widthOfAllFixedSpacers = [self widthOfFixedSpacersAmongViews:views];
     const CGFloat totalMarginWidth = [self totalMarginWidthForViews:views];
     const CGFloat availableWidth = _statusBarWidth - totalMarginWidth - widthOfAllFixedSpacers;
-    const double sumOfSpringConstants = [[viewsExFixedSpacers reduceWithFirstValue:@0 block:^id(NSNumber *partialSum, iTermStatusBarContainerView *view) {
-        return @(partialSum.doubleValue + view.component.statusBarComponentSpringConstant);
-    }] doubleValue];
+    const double sumOfSpringConstants = [self sumOfSpringConstantsInViews:viewsExFixedSpacers];
     const CGFloat apportionment = availableWidth / sumOfSpringConstants;
     DLog(@"updateDesiredWidthsForViews available=%@ apportionment=%@", @(availableWidth), @(apportionment));
     // Allocate minimum widths
