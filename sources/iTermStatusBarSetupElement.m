@@ -31,8 +31,10 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 }
 
 - (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory
+                         layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
                                    knobs:(NSDictionary *)knobs {
     return [self initWithComponent:[factory newComponentWithKnobs:knobs
+                                                  layoutAlgorithm:layoutAlgorithm
                                                             scope:nil]];
 }
 
@@ -66,7 +68,10 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 
 - (id)copyWithZone:(nullable NSZone *)zone {
     NSDictionary *knobs = _component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSDictionary *dict = _component.configuration[iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue];
+    iTermStatusBarAdvancedConfiguration *advancedConfiguration = [iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:dict];
     return [[iTermStatusBarSetupElement alloc] initWithComponent:[_component.statusBarComponentFactory newComponentWithKnobs:knobs
+                                                                                                             layoutAlgorithm:advancedConfiguration.layoutAlgorithm
                                                                                                                        scope:nil]];
 }
 
@@ -78,7 +83,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
         return nil;
     }
     NSDictionary *knobs = [aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"knobs"];
-    return [self initWithComponentFactory:factory knobs:knobs];
+    return [self initWithComponentFactory:factory
+                          layoutAlgorithm:[aDecoder decodeIntegerForKey:@"layoutAlgorithm"]
+                                    knobs:knobs];
 }
 
 
@@ -87,6 +94,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     NSDictionary *knobs = _component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{};
     [aCoder encodeObject:knobs
                   forKey:@"knobs"];
+    NSDictionary *dict = _component.configuration[iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue];
+    iTermStatusBarAdvancedConfiguration *advancedConfiguration = [iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:dict];
+    [aCoder encodeInteger:advancedConfiguration.layoutAlgorithm forKey:@"layoutAlgorithm"];
 }
 
 #pragma mark - NSPasteboardWriting

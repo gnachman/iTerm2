@@ -51,9 +51,14 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     }
     return self;
 }
+
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
+                                     layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
                                                scope:(iTermVariableScope *)scope {
-    return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs}
+    iTermStatusBarAdvancedConfiguration *advancedConfiguration = [[iTermStatusBarAdvancedConfiguration alloc] init];
+    advancedConfiguration.layoutAlgorithm = layoutAlgorithm;
+    return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs,
+                                                   iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue: advancedConfiguration.dictionaryValue }
                                            scope:scope];
 }
 

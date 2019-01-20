@@ -24,17 +24,36 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
                                                                   scope:nil];
 }
 
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration scope:(nullable iTermVariableScope *)scope {
+    return [super initWithConfiguration:configuration scope:scope];
+}
+
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"║┄┄║";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"       ";
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            return @"║〜〜║";
+    }
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Spring";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"Empty Space";
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            return @"Spring";
+    }
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"Empty space that draws only a background color.";
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+    }
 }
 
 - (NSView *)statusBarComponentView {

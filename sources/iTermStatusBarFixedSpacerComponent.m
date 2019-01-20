@@ -34,7 +34,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"";
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            return @"╠══╣";
+    }
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -49,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (!_view) {
         _view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.statusBarComponentMinimumWidth, 0)];
         _view.wantsLayer = YES;
-        _view.layer.backgroundColor = [self color].CGColor;
+        _view.layer.backgroundColor = [self statusBarBackgroundColor].CGColor;
     }
     return _view;
 }
@@ -58,9 +63,9 @@ NS_ASSUME_NONNULL_BEGIN
     return _width;
 }
 
-- (NSColor *)color {
+- (NSColor *)statusBarBackgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {

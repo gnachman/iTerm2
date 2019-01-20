@@ -90,10 +90,11 @@ NS_ASSUME_NONNULL_BEGIN
     iTermStatusBarRPCComponentFactory *factory =
         [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:request];
     return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                        layoutAlgorithm:_layout.advancedConfiguration.layoutAlgorithm
                                                                   knobs:factory.defaultKnobs];
 }
 
-- (void)awakeFromNib {
+- (void)loadElements {
     NSArray<Class> *classes = @[
                                  [iTermStatusBarCPUUtilizationComponent class],
                                  [iTermStatusBarMemoryUtilizationComponent class],
@@ -120,8 +121,13 @@ NS_ASSUME_NONNULL_BEGIN
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
         return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                            layoutAlgorithm:self->_layout.advancedConfiguration.layoutAlgorithm
                                                                       knobs:factory.defaultKnobs];
     }];
+}
+
+- (void)awakeFromNib {
+    [self loadElements];
     for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {
         iTermStatusBarSetupElement *element = [self newElementForProviderRegistrationRequest:request];
         if (element) {
@@ -286,6 +292,7 @@ NS_ASSUME_NONNULL_BEGIN
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];
 
     [_destinationViewController setLayout:_layout];
+    [self loadElements];
     [_collectionView reloadData];
 }
 
