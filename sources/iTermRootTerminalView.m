@@ -720,8 +720,12 @@ typedef struct {
     if ([_delegate haveTopBorder]) {
         decorationHeights.top++;
     }
+    if (_delegate.divisionViewShouldBeVisible) {
+        decorationHeights.top += kDivisionViewHeight;
+    }
+
     const NSRect frame = NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
-                                    decorationHeights.top,
+                                    decorationHeights.bottom,
                                     [self tabviewWidth],
                                     [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
     [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
