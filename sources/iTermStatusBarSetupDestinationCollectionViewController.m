@@ -136,8 +136,13 @@
     [self.collectionView reloadData];
 }
 
-- (void)setLayout:(iTermStatusBarLayout *)layout {
-    _advancedConfiguration = layout.advancedConfiguration;
+- (void)setAdvancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration {
+    _advancedConfiguration = advancedConfiguration;
+    iTermStatusBarLayout *temporaryLayout = [[iTermStatusBarLayout alloc] initWithDictionary:[self layoutDictionary] scope:nil];
+    [self loadElementsFromLayout:temporaryLayout];
+}
+
+- (void)loadElementsFromLayout:(iTermStatusBarLayout *)layout {
     [self->_elements removeAllObjects];
     [layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent>  _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermStatusBarSetupElement *element = [[iTermStatusBarSetupElement alloc] initWithComponent:component];
@@ -145,6 +150,11 @@
         [self->_elements addObject:element];
     }];
     [self.collectionView reloadData];
+}
+
+- (void)setLayout:(iTermStatusBarLayout *)layout {
+    _advancedConfiguration = layout.advancedConfiguration;
+    [self loadElementsFromLayout:layout];
 }
 
 - (NSDictionary *)layoutDictionary {

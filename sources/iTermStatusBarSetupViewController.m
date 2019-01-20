@@ -291,7 +291,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];
 
-    [_destinationViewController setLayout:_layout];
+    _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
     [self loadElements];
     [_collectionView reloadData];
 }
