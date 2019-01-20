@@ -8,6 +8,7 @@
 #import "iTermStatusBarSetupViewController.h"
 
 #import "iTermAPIHelper.h"
+#import "iTermFontPanel.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarCPUUtilizationComponent.h"
 #import "iTermStatusBarClockComponent.h"
@@ -134,8 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
     _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
     [_destinationViewController setLayout:_layout];
 
-    NSFont *font = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
-    _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
+    [self setFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
     [self initializeColorWell:_separatorColorWell
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.separatorColor
@@ -194,16 +194,56 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)noop:(id)sender {
 }
 
+- (NSView *)fontPanelAccessory {
+    NSButton *button = [[NSButton alloc] init];
+    button.title = @"Reset to System Font";
+    button.buttonType = NSMomentaryPushInButton;
+    button.bezelStyle = NSBezelStyleRounded;
+    button.target = self;
+    button.action = @selector(resetFont:);
+    button.autoresizingMask = (NSViewMinXMargin | NSViewMaxXMargin | NSViewMinYMargin | NSViewMaxYMargin);
+    [button sizeToFit];
+
+    NSView *wrapper = [[NSView alloc] init];
+    wrapper.frame = button.bounds;
+    [wrapper addSubview:button];
+    wrapper.autoresizesSubviews = YES;
+
+    return wrapper;
+}
+
 - (IBAction)openFontPanel:(id)sender {
     _advancedPanel.nextResponder = self;
-    NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSFontPanel *fontPanel = [fontManager fontPanel:YES];
-    [fontPanel orderFront:sender];
+    NSFontPanel *fontPanel = [[NSFontManager sharedFontManager] fontPanel:YES];
+    [fontPanel setAccessoryView:[self fontPanelAccessory]];
+    NSFont *theFont = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    [[NSFontManager sharedFontManager] setSelectedFont:theFont isMultiple:NO];
+    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
+#pragma clang diagnostic pop
+    return kValidModesForFontPanel;
+}
+
+- (IBAction)resetFont:(id)sender {
+    [self setFont:[iTermStatusBarAdvancedConfiguration defaultFont]];
 }
 
 - (void)changeFont:(nullable id)sender {
     NSFont *font = [sender convertFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
+    [self setFont:font];
+}
+
+- (void)setFont:(NSFont *)font {
     _layout.advancedConfiguration.font = font;
+
+    if ([font isEqual:[iTermStatusBarAdvancedConfiguration defaultFont]]) {
+        _fontLabel.stringValue = @"System Font";
+        return;
+    }
     _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
 }
 
