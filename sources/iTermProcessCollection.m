@@ -9,6 +9,7 @@
 #import "iTermLSOF.h"
 #import "iTermProcessCollection.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @interface iTermProcessInfo()
 @property(nonatomic, weak, readwrite) iTermProcessInfo *parent;
@@ -36,6 +37,13 @@
     return self;
 }
 
+- (BOOL)isEqual:(id)object {
+    iTermProcessInfo *other = [iTermProcessInfo castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return self.processID == other.processID && [self.name isEqualToString:other.name] && self.parentProcessID == self.parentProcessID;
+}
 - (NSString *)treeStringWithIndent:(NSString *)indent {
     NSString *children = [[_children mapWithBlock:^id(id anObject) {
         return [anObject treeStringWithIndent:[indent stringByAppendingString:@"  "]];
@@ -51,6 +59,12 @@
         _children = [NSMutableArray array];
     }
     return _children;
+}
+
+- (NSArray<iTermProcessInfo *> *)sortedChildren {
+    return [self.children sortedArrayUsingComparator:^NSComparisonResult(iTermProcessInfo *  _Nonnull obj1, iTermProcessInfo *  _Nonnull obj2) {
+        return [@(obj1.processID) compare:@(obj2.processID)];
+    }];
 }
 
 - (iTermProcessInfo *)deepestForegroundJob {

@@ -169,24 +169,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes];
 }
 
-- (BOOL)shouldBeHidden {
-    return !self.pollerReady || _gitPoller.state.branch.length == 0;
-}
-
 - (BOOL)pollerReady {
     return _gitPoller.state && _gitPoller.enabled;
-}
-
-- (void)statusBarComponentUpdate {
-    [super statusBarComponentUpdate];
-    if (self.delegate == nil) {
-        return;
-    }
-    const BOOL shouldBeHidden = self.shouldBeHidden;
-    if (shouldBeHidden != _hidden) {
-        _hidden = shouldBeHidden;
-        [self.delegate statusBarComponent:self setHidden:_hidden];
-    }
 }
 
 - (nullable NSAttributedString *)attributedStringValue {
