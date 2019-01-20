@@ -30,7 +30,11 @@
     CGFloat lastX = 0;
     CGFloat x = 0;
     for (iTermTuple<NSColor *, NSNumber *> *tuple in self.backgroundColors) {
-        x = tuple.secondObject.doubleValue;
+        if (tuple == self.backgroundColors.lastObject) {
+            x = self.bounds.size.width;
+        } else {
+            x = tuple.secondObject.doubleValue;
+        }
         if (tuple.firstObject) {
             [tuple.firstObject set];
             NSRectFill(NSMakeRect(lastX,
@@ -52,13 +56,6 @@
 
     [self drawBackgroundColorsInRect:dirtyRect];
     [self drawSeparatorsInRect:dirtyRect];
-
-    if (self.separatorColor) {
-        [self.separatorColor set];
-        [[NSColor colorWithWhite:0 alpha:0.1] set];
-        NSRect rect = NSMakeRect(0, 1, 1, dirtyRect.size.height - 1);
-        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
-    }
 }
 
 @end
