@@ -184,7 +184,7 @@
         [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:YES];
         [old.children insertObject:newChildren[n] atIndex:o + offset];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_outlineView expandItem:newChildren[n] expandChildren:YES];
+            [self->_outlineView expandItem:newChildren[n] expandChildren:YES];
         });
         offset += 1;
         n++;
@@ -194,7 +194,7 @@
         [_outlineView reloadItem:old reloadChildren:NO];
         if (old.children.count) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [_outlineView expandItem:old expandChildren:YES];
+                [self->_outlineView expandItem:old expandChildren:YES];
             });
         }
     }
