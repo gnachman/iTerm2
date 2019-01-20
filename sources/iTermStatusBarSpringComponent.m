@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermStatusBarSpringComponentSpringConstantKey";
+static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermStatusBarSpringComponentSizeMultipleKey";
 
 @implementation iTermStatusBarSpringComponent {
     NSView *_view;
@@ -82,12 +83,26 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    iTermStatusBarComponentKnob *springConstantKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
-                                                          type:iTermStatusBarComponentKnobTypeDouble
-                                                   placeholder:@""
-                                                  defaultValue:@0.01
-                                                           key:iTermStatusBarSpringComponentSpringConstantKey];
+    iTermStatusBarComponentKnob *springConstantKnob = nil;
+
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            springConstantKnob =
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+                                                              type:iTermStatusBarComponentKnobTypeDouble
+                                                       placeholder:@""
+                                                      defaultValue:@0.01
+                                                               key:iTermStatusBarSpringComponentSpringConstantKey];
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            springConstantKnob =
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Size Multiple:"
+                                                              type:iTermStatusBarComponentKnobTypeDouble
+                                                       placeholder:@""
+                                                      defaultValue:@1
+                                                               key:iTermStatusBarSpringComponentSizeMultipleKey];
+            break;
+    }
     iTermStatusBarComponentKnob *backgroundColorKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
                                                       type:iTermStatusBarComponentKnobTypeColor
@@ -99,12 +114,21 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
-    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSpringComponentSpringConstantKey: @0.01 }];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSpringComponentSpringConstantKey: @0.01,
+                                                       iTermStatusBarSpringComponentSizeMultipleKey: @1 }];
 }
 
 - (CGFloat)statusBarComponentSpringConstant {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    NSNumber *number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
+    NSNumber *number;
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStandard:
+            number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            number = knobValues[iTermStatusBarSpringComponentSizeMultipleKey];
+            break;
+    }
     return MAX(0.01, number ? number.doubleValue : 1);
 }
 

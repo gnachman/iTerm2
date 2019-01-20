@@ -207,8 +207,17 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *compressionResistanceKnob = nil;
     if ([self statusBarComponentCanStretch]) {
+        NSString *title;
+        switch (self.advancedConfiguration.layoutAlgorithm) {
+            case iTermStatusBarLayoutAlgorithmSettingStandard:
+                title = @"Compression Resistance";
+                break;
+            case iTermStatusBarLayoutAlgorithmSettingStable:
+                title = @"Size Multiple";
+                break;
+        }
         compressionResistanceKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:title
                                                           type:iTermStatusBarComponentKnobTypeDouble
                                                    placeholder:@""
                                                   defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarCompressionResistanceKey]

@@ -34,12 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    switch (self.advancedConfiguration.layoutAlgorithm) {
-        case iTermStatusBarLayoutAlgorithmSettingStable:
-            return @"";
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
-            return @"╠══╣";
-    }
+    return @"╠══╣";
 }
 
 - (NSString *)statusBarComponentShortDescription {
