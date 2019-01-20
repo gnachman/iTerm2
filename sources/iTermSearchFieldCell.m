@@ -99,6 +99,9 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)drawProgressBarInFrame:(NSRect)cellFrame path:(NSBezierPath *)fieldPath {
+    if (self.fraction < 0.01) {
+        return;
+    }
     [[NSGraphicsContext currentContext] saveGraphicsState];
     [fieldPath addClip];
 
