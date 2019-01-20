@@ -30,6 +30,7 @@
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermStatusBarVariableBaseComponent.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -382,7 +383,13 @@ writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     const CGFloat heightDifference = originalItem.view.frame.size.height - item.view.frame.size.height;
     *dragImageOffset = NSMakePoint(center.x - locationInItem.x,
                                    center.y - locationInItem.y + heightDifference / 2);
-    return item.view.snapshot;
+
+    NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:item.view.bounds];
+    [vev addSubview:item.view];
+    [self.view addSubview:vev];
+    NSImage *image = item.view.snapshot;
+    [vev removeFromSuperview];
+    return image;
 }
 
 @end
