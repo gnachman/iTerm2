@@ -15,7 +15,7 @@ extern const CGFloat iTermStatusBarViewControllerMargin;
 
 typedef NS_ENUM(NSUInteger, iTermStatusBarLayoutAlgorithmSetting) {
     iTermStatusBarLayoutAlgorithmSettingStable = 0,
-    iTermStatusBarLayoutAlgorithmSettingStandard
+    iTermStatusBarLayoutAlgorithmSettingTightlyPacked
 };
 
 @interface iTermStatusBarLayoutAlgorithm : NSObject

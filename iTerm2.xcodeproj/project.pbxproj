@@ -1454,8 +1454,8 @@
 		A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC420FFA5A40098C91F /* iTermStatusBarJobComponent.m */; };
 		A6153D5421F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5221F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h */; };
 		A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5321F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m */; };
-		A6153D5821F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5621F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.h */; };
-		A6153D5921F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5721F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.m */; };
+		A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5621F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h */; };
+		A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5721F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m */; };
 		A6153D5C21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5A21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.h */; };
 		A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */; };
 		A6153D6021F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */; };
@@ -4388,8 +4388,8 @@
 		A6153D4A21F30A9C002976FC /* iTermJobTreeViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermJobTreeViewController.xib; sourceTree = "<group>"; };
 		A6153D5221F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarLayoutAlgorithm.h; sourceTree = "<group>"; };
 		A6153D5321F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarLayoutAlgorithm.m; sourceTree = "<group>"; };
-		A6153D5621F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarStandardLayoutAlgorithm.h; sourceTree = "<group>"; };
-		A6153D5721F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarStandardLayoutAlgorithm.m; sourceTree = "<group>"; };
+		A6153D5621F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarTightlyPackedLayoutAlgorithm.h; sourceTree = "<group>"; };
+		A6153D5721F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarTightlyPackedLayoutAlgorithm.m; sourceTree = "<group>"; };
 		A6153D5A21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarBaseLayoutAlgorithm.h; sourceTree = "<group>"; };
 		A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarBaseLayoutAlgorithm.m; sourceTree = "<group>"; };
 		A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarStableLayoutAlgorithm.h; sourceTree = "<group>"; };
@@ -7328,8 +7328,8 @@
 				A6B1475F2133395500D0814F /* iTermStatusBarLayout+tmux.m */,
 				A6153D5221F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h */,
 				A6153D5321F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m */,
-				A6153D5621F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.h */,
-				A6153D5721F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.m */,
+				A6153D5621F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h */,
+				A6153D5721F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m */,
 				A6153D5A21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.h */,
 				A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */,
 				A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */,
@@ -9480,7 +9480,7 @@
 				A6D4C26621E18CB5009CF11B /* iTermScriptInspector.h in Headers */,
 				A65D3ADB21D163B800384015 /* iTermBacktrace.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
-				A6153D5821F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.h in Headers */,
+				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
 				A69C9337212108E900531438 /* iTermsStatusBarComposerViewController.h in Headers */,
 				530AB89620AFDF5000D2AA08 /* iTermScriptFunctionCall.h in Headers */,
 				A6FE8D12209528F400B5C648 /* iTermPythonRuntimeDownloader.h in Headers */,
@@ -11997,7 +11997,7 @@
 				537BFDD22101AD9F0098C91F /* iTermCPUUtilization.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
-				A6153D5921F4EF1A002976FC /* iTermStatusBarStandardLayoutAlgorithm.m in Sources */,
+				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
 				A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,

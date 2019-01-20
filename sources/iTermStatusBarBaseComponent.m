@@ -209,7 +209,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     if ([self statusBarComponentCanStretch]) {
         NSString *title;
         switch (self.advancedConfiguration.layoutAlgorithm) {
-            case iTermStatusBarLayoutAlgorithmSettingStandard:
+            case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
                 title = @"Compression Resistance";
                 break;
             case iTermStatusBarLayoutAlgorithmSettingStable:

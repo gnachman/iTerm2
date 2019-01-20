@@ -166,7 +166,7 @@ NS_ASSUME_NONNULL_BEGIN
         case iTermStatusBarLayoutAlgorithmSettingStable:
             _tightPacking.state = NO;
             break;
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             _tightPacking.state = YES;
             break;
     }
@@ -287,7 +287,7 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
-    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingStandard : iTermStatusBarLayoutAlgorithmSettingStable;
+    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];

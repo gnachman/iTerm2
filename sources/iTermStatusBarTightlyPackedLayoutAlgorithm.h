@@ -1,5 +1,5 @@
 //
-//  iTermStatusBarStandardLayoutAlgorithm.h
+//  iTermStatusBarTightlyPackedLayoutAlgorithm.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 1/20/19.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermStatusBarStandardLayoutAlgorithm : iTermStatusBarBaseLayoutAlgorithm
+@interface iTermStatusBarTightlyPackedLayoutAlgorithm : iTermStatusBarBaseLayoutAlgorithm
 @end
 
 NS_ASSUME_NONNULL_END

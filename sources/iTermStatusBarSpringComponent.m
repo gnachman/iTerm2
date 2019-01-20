@@ -34,7 +34,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
             return @"       ";
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             return @"║〜〜║";
     }
 }
@@ -43,7 +43,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
             return @"Empty Space";
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             return @"Spring";
     }
 }
@@ -52,7 +52,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
             return @"Empty space that draws only a background color.";
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
     }
 }
@@ -86,7 +86,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     iTermStatusBarComponentKnob *springConstantKnob = nil;
 
     switch (self.advancedConfiguration.layoutAlgorithm) {
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             springConstantKnob =
             [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
                                                               type:iTermStatusBarComponentKnobTypeDouble
@@ -122,7 +122,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     NSNumber *number;
     switch (self.advancedConfiguration.layoutAlgorithm) {
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
             break;
         case iTermStatusBarLayoutAlgorithmSettingStable:

@@ -1,18 +1,18 @@
 //
-//  iTermStatusBarStandardLayoutAlgorithm.m
+//  iTermStatusBarTightlyPackedLayoutAlgorithm.m
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 1/20/19.
 //
 
-#import "iTermStatusBarStandardLayoutAlgorithm.h"
+#import "iTermStatusBarTightlyPackedLayoutAlgorithm.h"
 
 #import "DebugLogging.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarContainerView.h"
 #import "NSArray+iTerm.h"
 
-@implementation iTermStatusBarStandardLayoutAlgorithm
+@implementation iTermStatusBarTightlyPackedLayoutAlgorithm
 
 - (double)totalGrowthAfterUpdatingDesiredWidthsForAvailableWidth:(CGFloat)availableWidth
                                             sumOfSpringConstants:(double)sumOfSpringConstants

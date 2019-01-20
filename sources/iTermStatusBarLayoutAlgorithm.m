@@ -11,7 +11,7 @@
 #import "iTermStatusBarContainerView.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "iTermStatusBarStandardLayoutAlgorithm.h"
+#import "iTermStatusBarTightlyPackedLayoutAlgorithm.h"
 #import "iTermStatusBarStableLayoutAlgorithm.h"
 
 const CGFloat iTermStatusBarViewControllerMargin = 10;
@@ -32,8 +32,8 @@ const CGFloat iTermStatusBarViewControllerMargin = 10;
         case iTermStatusBarLayoutAlgorithmSettingStable:
             return [[iTermStatusBarStableLayoutAlgorithm alloc] initWithContainerViews:containerViews
                                                                         statusBarWidth:statusBarWidth];
-        case iTermStatusBarLayoutAlgorithmSettingStandard:
-            return [[iTermStatusBarStandardLayoutAlgorithm alloc] initWithContainerViews:containerViews
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            return [[iTermStatusBarTightlyPackedLayoutAlgorithm alloc] initWithContainerViews:containerViews
                                                                           statusBarWidth:statusBarWidth];
     }
     return nil;
