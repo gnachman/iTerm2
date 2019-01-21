@@ -8,6 +8,7 @@
 #import "iTermStatusBarSetupViewController.h"
 
 #import "iTermAPIHelper.h"
+#import "iTermFontPanel.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarCPUUtilizationComponent.h"
 #import "iTermStatusBarClockComponent.h"
@@ -29,6 +30,7 @@
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermStatusBarVariableBaseComponent.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -65,8 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSButton *_autoRainbow;
     IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
-    IBOutlet NSPopUpButton *_font;
-    IBOutlet NSPopUpButton *_fontSize;
+    IBOutlet NSButton *_tightPacking;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
     BOOL _darkBackground;
@@ -90,10 +91,11 @@ NS_ASSUME_NONNULL_BEGIN
     iTermStatusBarRPCComponentFactory *factory =
         [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:request];
     return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                        layoutAlgorithm:_layout.advancedConfiguration.layoutAlgorithm
                                                                   knobs:factory.defaultKnobs];
 }
 
-- (void)awakeFromNib {
+- (void)loadElements {
     NSArray<Class> *classes = @[
                                  [iTermStatusBarCPUUtilizationComponent class],
                                  [iTermStatusBarMemoryUtilizationComponent class],
@@ -120,8 +122,13 @@ NS_ASSUME_NONNULL_BEGIN
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
         return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                            layoutAlgorithm:self->_layout.advancedConfiguration.layoutAlgorithm
                                                                       knobs:factory.defaultKnobs];
     }];
+}
+
+- (void)awakeFromNib {
+    [self loadElements];
     for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {
         iTermStatusBarSetupElement *element = [self newElementForProviderRegistrationRequest:request];
         if (element) {
@@ -135,8 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
     _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
     [_destinationViewController setLayout:_layout];
 
-    NSFont *font = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
-    _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
+    [self setFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
     [self initializeColorWell:_separatorColorWell
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.separatorColor
@@ -149,9 +155,21 @@ NS_ASSUME_NONNULL_BEGIN
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.defaultTextColor
                  alphaAllowed:NO];
+    [self initializeTightPacking];
     _autoRainbow.hidden = !_allowRainbow;
 
     [super awakeFromNib];
+}
+
+- (void)initializeTightPacking {
+    switch (_layout.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            _tightPacking.state = NO;
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            _tightPacking.state = YES;
+            break;
+    }
 }
 
 - (void)initializeColorWell:(CPKColorWell *)colorWell
@@ -183,16 +201,56 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)noop:(id)sender {
 }
 
+- (NSView *)fontPanelAccessory {
+    NSButton *button = [[NSButton alloc] init];
+    button.title = @"Reset to System Font";
+    button.buttonType = NSMomentaryPushInButton;
+    button.bezelStyle = NSBezelStyleRounded;
+    button.target = self;
+    button.action = @selector(resetFont:);
+    button.autoresizingMask = (NSViewMinXMargin | NSViewMaxXMargin | NSViewMinYMargin | NSViewMaxYMargin);
+    [button sizeToFit];
+
+    NSView *wrapper = [[NSView alloc] init];
+    wrapper.frame = button.bounds;
+    [wrapper addSubview:button];
+    wrapper.autoresizesSubviews = YES;
+
+    return wrapper;
+}
+
 - (IBAction)openFontPanel:(id)sender {
     _advancedPanel.nextResponder = self;
-    NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSFontPanel *fontPanel = [fontManager fontPanel:YES];
-    [fontPanel orderFront:sender];
+    NSFontPanel *fontPanel = [[NSFontManager sharedFontManager] fontPanel:YES];
+    [fontPanel setAccessoryView:[self fontPanelAccessory]];
+    NSFont *theFont = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    [[NSFontManager sharedFontManager] setSelectedFont:theFont isMultiple:NO];
+    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
+#pragma clang diagnostic pop
+    return kValidModesForFontPanel;
+}
+
+- (IBAction)resetFont:(id)sender {
+    [self setFont:[iTermStatusBarAdvancedConfiguration defaultFont]];
 }
 
 - (void)changeFont:(nullable id)sender {
     NSFont *font = [sender convertFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
+    [self setFont:font];
+}
+
+- (void)setFont:(NSFont *)font {
     _layout.advancedConfiguration.font = font;
+
+    if ([font isEqual:[iTermStatusBarAdvancedConfiguration defaultFont]]) {
+        _fontLabel.stringValue = @"System Font";
+        return;
+    }
     _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
 }
 
@@ -229,11 +287,13 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
+    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];
 
-    [_destinationViewController setLayout:_layout];
+    _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
+    [self loadElements];
     [_collectionView reloadData];
 }
 
@@ -323,7 +383,13 @@ writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     const CGFloat heightDifference = originalItem.view.frame.size.height - item.view.frame.size.height;
     *dragImageOffset = NSMakePoint(center.x - locationInItem.x,
                                    center.y - locationInItem.y + heightDifference / 2);
-    return item.view.snapshot;
+
+    NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:item.view.bounds];
+    [vev addSubview:item.view];
+    [self.view addSubview:vev];
+    NSImage *image = item.view.snapshot;
+    [vev removeFromSuperview];
+    return image;
 }
 
 @end

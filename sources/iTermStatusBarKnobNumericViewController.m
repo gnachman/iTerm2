@@ -31,7 +31,15 @@
 }
 
 - (void)controlTextDidChange:(NSNotification *)obj {
-    self.value = @([(NSControl *)obj.object doubleValue]);
+    NSString *string = [(NSControl *)obj.object stringValue];
+    NSNumber *safeValue = @(string.doubleValue);
+    _value = safeValue;
+    _stepper.doubleValue = safeValue.doubleValue;
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    NSControl *control = obj.object;
+    control.doubleValue = _value.doubleValue;
 }
 
 - (void)setDescription:(NSString *)description placeholder:(nonnull NSString *)placeholder {

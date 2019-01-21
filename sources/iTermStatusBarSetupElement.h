@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarLayout.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -29,6 +30,7 @@ extern NSString *const iTermStatusBarElementPasteboardType;
 @property (nonatomic, weak) id<iTermStatusBarSetupElementDelegate> delegate;
 
 - (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory
+                         layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
                                    knobs:(NSDictionary *)knobs;
 - (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

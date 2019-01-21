@@ -63,8 +63,67 @@ const CGFloat iTermStatusBarHeight = 21;
 }
 
 - (iTermStatusBarLayoutAlgorithm *)layoutAlgorithm {
-    return [[iTermStatusBarLayoutAlgorithm alloc] initWithContainerViews:_containerViews
-                                                          statusBarWidth:self.view.frame.size.width];
+    return [iTermStatusBarLayoutAlgorithm layoutAlgorithmWithContainerViews:_containerViews
+                                                             statusBarWidth:self.view.frame.size.width
+                                                                    setting:_layout.advancedConfiguration.layoutAlgorithm];
+}
+
+- (NSArray<NSNumber *> *)desiredSeparatorOffsets {
+    NSMutableArray<NSNumber *> *offsets = [NSMutableArray array];
+    BOOL haveFoundNonSpacer = NO;
+    NSNumber *lastFixedSpacerOffset = nil;
+    iTermStatusBarContainerView *previousObject = nil;
+    for (iTermStatusBarContainerView *anObject in [_visibleContainerViews it_arrayByDroppingLastN:1]) {
+        const BOOL isSpring = [anObject.component isKindOfClass:[iTermStatusBarSpringComponent class]];
+        const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
+        NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + margin);
+        if ([anObject.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
+            // Consecutive fixed spacers do not get separators. Rather than adding a separator
+            // just record that we saw a fixed spacer and add the separator if we see a
+            // subsequent non-spacer.
+            lastFixedSpacerOffset = offset;
+            previousObject = anObject;
+            continue;
+        }
+
+        if (lastFixedSpacerOffset && haveFoundNonSpacer) {
+            // This is a non-spacer following a spacer, but not the very first non-spacer.
+            // That second clause is to prevent adding a separator between the spacer and nonspacer
+            // in this example:
+            //     |[spacer][nonspacer]:[whatever]|
+            // While we do want separators here here (referring to the second separator, obvs):
+            //     |[nonspacer]:[spacer]:[nonspacer]
+            // Add a divider after the previous spacer.
+            [offsets addObject:lastFixedSpacerOffset];
+            previousObject.rightSeparatorOffset = lastFixedSpacerOffset.doubleValue;
+            lastFixedSpacerOffset = nil;
+
+            // And add a spacer after this object.
+            haveFoundNonSpacer = YES;
+            anObject.rightSeparatorOffset = offset.doubleValue;
+            previousObject = anObject;
+            [offsets addObject:offset];
+            continue;
+        }
+
+        // Normal case: add a separator after this component
+        haveFoundNonSpacer = YES;
+        anObject.rightSeparatorOffset = offset.doubleValue;
+        lastFixedSpacerOffset = nil;
+        previousObject = anObject;
+        return @[ offset ];
+    }
+    return [offsets uniq];
+}
+
+- (NSArray<iTermTuple<NSColor *, NSNumber *> *> *)desiredBackgroundColors {
+    return [_visibleContainerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
+        NSColor *color = containerView.backgroundColor;
+        const BOOL isSpring = [containerView.component isKindOfClass:[iTermStatusBarSpringComponent class]];
+        const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
+        NSNumber *offset = @(containerView.desiredOrigin + containerView.desiredWidth + margin + 0.5);
+        return [iTermTuple tupleWithObject:color andObject:offset];
+    }];
 }
 
 - (void)viewWillLayout {
@@ -98,55 +157,9 @@ const CGFloat iTermStatusBarHeight = 21;
         }
     }
     iTermStatusBarView *view = (iTermStatusBarView *)self.view;
-    __block BOOL haveFoundNonSpacer = NO;
-    __block NSColor *lastColor = nil;
-    __block NSNumber *lastFixedSpacerOffset = nil;
-    __block iTermStatusBarContainerView *previousObject = nil;
-    view.separatorOffsets = [[_visibleContainerViews flatMapWithBlock:^id(iTermStatusBarContainerView *anObject) {
-        const BOOL isSpring = [anObject.component isKindOfClass:[iTermStatusBarSpringComponent class]];
-        const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
-        NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + margin);
-        if ([anObject.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
-            lastFixedSpacerOffset = offset;
-            previousObject = anObject;
-            return nil;
-        } else if (lastFixedSpacerOffset && haveFoundNonSpacer) {
-            haveFoundNonSpacer = YES;
-            previousObject.rightSeparatorOffset = lastFixedSpacerOffset.doubleValue;
-            anObject.rightSeparatorOffset = offset.doubleValue;
-            previousObject = anObject;
-            NSArray *result = @[ lastFixedSpacerOffset, offset ];
-            lastFixedSpacerOffset = nil;
-            lastColor = nil;
-            return result;
-        } else {
-            haveFoundNonSpacer = YES;
-            anObject.rightSeparatorOffset = offset.doubleValue;
-            lastFixedSpacerOffset = nil;
-            previousObject = anObject;
-            lastColor = anObject.backgroundColor;
-            return @[ offset ];
-        }
-    }] uniqWithComparator:^BOOL(NSNumber *obj1, NSNumber *obj2) {
-        return [obj1 isEqual:obj2];
-    }];
+    view.separatorOffsets = [self desiredSeparatorOffsets];
 
-    lastColor = nil;
-    __block NSNumber *lastOffset = nil;
-    view.backgroundColors = [_visibleContainerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
-        NSColor *color = containerView.backgroundColor;
-        const BOOL isSpring = [containerView.component isKindOfClass:[iTermStatusBarSpringComponent class]];
-        const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
-        NSNumber *offset = @(containerView.desiredOrigin + containerView.desiredWidth + margin + 0.5);
-        iTermTuple *result = nil;
-        result = [iTermTuple tupleWithObject:lastColor andObject:lastOffset];
-        lastColor = color;
-        lastOffset = offset;
-        return result;
-    }];
-    if (lastColor) {
-        view.backgroundColors = [view.backgroundColors arrayByAddingObject:[iTermTuple tupleWithObject:lastColor andObject:lastOffset]];
-    }
+    view.backgroundColors = [self desiredBackgroundColors];
 
     [view setNeedsDisplay:YES];
     DLog(@"--- end status bar layout ---");

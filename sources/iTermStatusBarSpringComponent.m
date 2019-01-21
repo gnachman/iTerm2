@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermStatusBarSpringComponentSpringConstantKey";
+static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermStatusBarSpringComponentSizeMultipleKey";
 
 @implementation iTermStatusBarSpringComponent {
     NSView *_view;
@@ -24,17 +25,36 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
                                                                   scope:nil];
 }
 
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration scope:(nullable iTermVariableScope *)scope {
+    return [super initWithConfiguration:configuration scope:scope];
+}
+
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"║┄┄║";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"       ";
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            return @"║〜〜║";
+    }
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Spring";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"Empty Space";
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            return @"Spring";
+    }
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            return @"Empty space that draws only a background color.";
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+    }
 }
 
 - (NSView *)statusBarComponentView {
@@ -63,12 +83,26 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    iTermStatusBarComponentKnob *springConstantKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
-                                                          type:iTermStatusBarComponentKnobTypeDouble
-                                                   placeholder:@""
-                                                  defaultValue:@0.01
-                                                           key:iTermStatusBarSpringComponentSpringConstantKey];
+    iTermStatusBarComponentKnob *springConstantKnob = nil;
+
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            springConstantKnob =
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+                                                              type:iTermStatusBarComponentKnobTypeDouble
+                                                       placeholder:@""
+                                                      defaultValue:@0.01
+                                                               key:iTermStatusBarSpringComponentSpringConstantKey];
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            springConstantKnob =
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Size Multiple:"
+                                                              type:iTermStatusBarComponentKnobTypeDouble
+                                                       placeholder:@""
+                                                      defaultValue:@1
+                                                               key:iTermStatusBarSpringComponentSizeMultipleKey];
+            break;
+    }
     iTermStatusBarComponentKnob *backgroundColorKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
                                                       type:iTermStatusBarComponentKnobTypeColor
@@ -80,12 +114,21 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
-    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSpringComponentSpringConstantKey: @0.01 }];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSpringComponentSpringConstantKey: @0.01,
+                                                       iTermStatusBarSpringComponentSizeMultipleKey: @1 }];
 }
 
 - (CGFloat)statusBarComponentSpringConstant {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    NSNumber *number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
+    NSNumber *number;
+    switch (self.advancedConfiguration.layoutAlgorithm) {
+        case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
+            number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
+            break;
+        case iTermStatusBarLayoutAlgorithmSettingStable:
+            number = knobValues[iTermStatusBarSpringComponentSizeMultipleKey];
+            break;
+    }
     return MAX(0.01, number ? number.doubleValue : 1);
 }
 

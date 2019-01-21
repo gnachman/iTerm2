@@ -9,6 +9,7 @@
 
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponentKnob.h"
+#import "iTermStatusBarLayoutAlgorithm.h"
 
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
@@ -36,6 +37,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
+                                     layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
                                                scope:(iTermVariableScope *)scope;
 - (NSString *)componentDescription;
 - (NSDictionary *)defaultKnobs;

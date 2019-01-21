@@ -34,6 +34,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     configuration.separatorColor = [dict[@"separator color"] colorValue];
     configuration.backgroundColor = [dict[@"background color"] colorValue];
     configuration.defaultTextColor = [dict[@"default text color"] colorValue];
+    configuration.layoutAlgorithm = [dict[@"algorithm"] unsignedIntegerValue];
     configuration.font = [dict[@"font"] fontValue];
 
     return configuration;
@@ -45,6 +46,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         self.separatorColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"separator color"] colorValue];
         self.backgroundColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"background color"] colorValue];
         self.defaultTextColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"default text color"] colorValue];
+        self.layoutAlgorithm = [aDecoder decodeIntegerForKey:@"algorithm"];
         self.font = [[aDecoder decodeObjectOfClass:[NSString class] forKey:@"font"] fontValue];
     }
     return self;
@@ -54,6 +56,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     NSDictionary *dict = @{ @"separator color": [self.separatorColor dictionaryValue] ?: [NSNull null],
                             @"background color": [self.backgroundColor dictionaryValue] ?: [NSNull null],
                             @"default text color": [self.defaultTextColor dictionaryValue] ?: [NSNull null],
+                            @"algorithm": @(self.layoutAlgorithm),
                             @"font": [self.font stringValue] ?: [NSNull null] };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -66,6 +69,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     [aCoder encodeObject:[self.separatorColor dictionaryValue] forKey:@"separator color"];
     [aCoder encodeObject:[self.backgroundColor dictionaryValue] forKey:@"background color"];
     [aCoder encodeObject:[self.defaultTextColor dictionaryValue] forKey:@"default text color"];
+    [aCoder encodeInteger:self.layoutAlgorithm forKey:@"algorithm"];
     [aCoder encodeObject:[self.font stringValue] forKey:@"font"];
 }
 
