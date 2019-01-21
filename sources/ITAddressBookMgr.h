@@ -65,6 +65,11 @@
 #define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 #define KEY_TITLE_COMPONENTS            @"Title Components"
 #define KEY_TITLE_FUNC                  @"Title Function"  // Value is iTermTuple.plistValue of (display name, unique identifier); e.g. ("Hello world", "com.iterm2.example.title-provider")
+#define KEY_BADGE_TOP_MARGIN            @"Badge Top Margin"
+#define KEY_BADGE_RIGHT_MARGIN          @"Badge Right Margin"
+#define KEY_BADGE_MAX_WIDTH             @"Badge Max Width"
+#define KEY_BADGE_MAX_HEIGHT            @"Badge Max Height"
+#define KEY_BADGE_FONT                  @"Badge Font"
 
 // Advanced working directory settings
 #define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"

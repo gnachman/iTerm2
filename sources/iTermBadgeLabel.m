@@ -8,7 +8,6 @@
 
 #import "iTermBadgeLabel.h"
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "NSStringITerm.h"
 
 @interface iTermBadgeLabel()
@@ -26,6 +25,8 @@
         _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         _paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
         _paragraphStyle.alignment = NSTextAlignmentRight;
+        _minimumPointSize = 4;
+        _maximumPointSize = 100;
     }
     return self;
 }
@@ -139,20 +140,7 @@
 
 // Attributed string attributes for a given font point size.
 - (NSDictionary *)attributesWithPointSize:(CGFloat)pointSize {
-    NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSString *fontName = [iTermAdvancedSettingsModel badgeFont];
-    NSFont *font;
-
-    font = [NSFont fontWithName:fontName size:pointSize];
-    if (!font) {
-        font = [NSFont fontWithName:@"Helvetica" size:pointSize];
-    }
-    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
-      font = [fontManager convertFont:font
-                          toHaveTrait:NSBoldFontMask];
-    }
-
-    NSDictionary *attributes = @{ NSFontAttributeName: font,
+    NSDictionary *attributes = @{ NSFontAttributeName: [self.delegate badgeLabelFontOfSize:pointSize],
                                   NSForegroundColorAttributeName: _fillColor,
                                   NSParagraphStyleAttributeName: _paragraphStyle,
                                   NSStrokeWidthAttributeName: @-2 };
@@ -171,8 +159,9 @@
 
 // Max size of image in points within the containing view.
 - (NSSize)maxSize {
-    double maxWidth = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxWidthFraction]));
-    double maxHeight = MIN(1.0, MAX(0.0, [iTermAdvancedSettingsModel badgeMaxHeightFraction]));
+    const NSSize fractions = [self.delegate badgeLabelSizeFraction];
+    double maxWidth = MIN(1.0, MAX(0.01, fractions.width));
+    double maxHeight = MIN(1.0, MAX(0.0, fractions.height));
     NSSize maxSize = _viewSize;
     maxSize.width *= maxWidth;
     maxSize.height *= maxHeight;
@@ -184,8 +173,8 @@
     NSSize maxSize = self.maxSize;
 
     // Perform a binary search for the point size that best fits |maxSize|.
-    CGFloat min = 4;
-    CGFloat max = 100;
+    CGFloat min = self.minimumPointSize;
+    CGFloat max = self.maximumPointSize;
     int points = (min + max) / 2;
     int prevPoints = -1;
     NSSize sizeWithFont = NSZeroSize;

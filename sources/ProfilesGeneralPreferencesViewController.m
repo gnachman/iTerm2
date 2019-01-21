@@ -10,6 +10,7 @@
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
+#import "iTermBadgeConfigurationWindowController.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
 #import "iTermLaunchServices.h"
@@ -393,6 +394,29 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         item.tag = -1;
         [titleSettings.menu addItem:item];
     }
+}
+
+#pragma mark - Badge
+
+- (IBAction)configureBadge:(id)sender {
+    iTermBadgeConfigurationWindowController *badgeConfigurationWindowController =
+    [[iTermBadgeConfigurationWindowController alloc] initWithProfile:[self.delegate profilePreferencesCurrentProfile]];
+    [badgeConfigurationWindowController window];  // force the window to load
+    __weak typeof(self) weakSelf = self;
+    [self.view.window beginSheet:badgeConfigurationWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        if (!badgeConfigurationWindowController.ok) {
+            return;
+        }
+        NSDictionary *mutations = badgeConfigurationWindowController.profileMutations;
+        [mutations enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull value, BOOL * _Nonnull stop) {
+            [strongSelf setObject:value forKey:key];
+        }];
+        [badgeConfigurationWindowController.window close];
+    }];
 }
 
 #pragma mark - Copy current session to Profile

@@ -468,8 +468,8 @@ DEFINE_STRING(badgeFont, @"Helvetica", SECTION_BADGE @"Font to use for the badge
 DEFINE_BOOL(badgeFontIsBold, YES, SECTION_BADGE @"Should the badge render in bold type?");
 DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, SECTION_BADGE @"Maximum width of the badge\nAs a fraction of the width of the terminal, between 0 and 1.0.");
 DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, SECTION_BADGE @"Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
-DEFINE_INT(badgeRightMargin, 10, SECTION_BADGE @"Right Margin for the badge\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
-DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Top Margin for the badge\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
+DEFINE_INT(badgeRightMargin, 10, SECTION_BADGE @"Default value for right margin for the badge\nHow much space to leave between the right edge of the badge and the right edge of the terminal. Can be overridden by a profile setting.");
+DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin for the badge\nHow much space to leave between the top edge of the badge and the top edge of the terminal. Can be overridden by a profile setting.");
 
 #pragma mark - Experimental Features
 

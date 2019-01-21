@@ -1296,6 +1296,11 @@
 		53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */; };
 		53B93DE221F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */; };
 		53B93DE321F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */; };
+		53B93DFD21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 53B93DFA21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h */; };
+		53B93DFE21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 53B93DFB21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m */; };
+		53B93DFF21F640B9001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DFC21F640B0001EC59C /* iTermBadgeConfigurationWindowController.xib */; };
+		53B93E0021F640BB001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DFC21F640B0001EC59C /* iTermBadgeConfigurationWindowController.xib */; };
+		53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DFC21F640B0001EC59C /* iTermBadgeConfigurationWindowController.xib */; };
 		53BBA0F5214205200074D061 /* NSAlert+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BBA0F3214205200074D061 /* NSAlert+iTerm.h */; };
 		53BBA0F6214205200074D061 /* NSAlert+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BBA0F4214205200074D061 /* NSAlert+iTerm.m */; };
 		53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
@@ -4163,6 +4168,9 @@
 		53AFFC901DD38F1500E6CEC6 /* ToolWebView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolWebView.h; sourceTree = "<group>"; };
 		53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolWebView.m; sourceTree = "<group>"; };
 		53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_wrapper.sh; path = sources/iterm2_git_wrapper.sh; sourceTree = "<group>"; };
+		53B93DFA21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBadgeConfigurationWindowController.h; sourceTree = "<group>"; };
+		53B93DFB21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBadgeConfigurationWindowController.m; sourceTree = "<group>"; };
+		53B93DFC21F640B0001EC59C /* iTermBadgeConfigurationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermBadgeConfigurationWindowController.xib; sourceTree = "<group>"; };
 		53BBA0F3214205200074D061 /* NSAlert+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAlert+iTerm.h"; sourceTree = "<group>"; };
 		53BBA0F4214205200074D061 /* NSAlert+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+iTerm.m"; sourceTree = "<group>"; };
 		53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_poll.sh; path = sources/iterm2_git_poll.sh; sourceTree = "<group>"; };
@@ -8214,6 +8222,9 @@
 				A6153D4821F30A9C002976FC /* iTermJobTreeViewController.h */,
 				A6153D4921F30A9C002976FC /* iTermJobTreeViewController.m */,
 				A6153D4A21F30A9C002976FC /* iTermJobTreeViewController.xib */,
+				53B93DFA21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h */,
+				53B93DFB21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m */,
+				53B93DFC21F640B0001EC59C /* iTermBadgeConfigurationWindowController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -9584,6 +9595,7 @@
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
 				A67C44E7211E24F6004EDB1C /* PSMMinimalTabStyle.h in Headers */,
 				530AB7B420A615D900D2AA08 /* iTermPythonArgumentParser.h in Headers */,
+				53B93DFD21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h in Headers */,
 				A621DDA8211D01D50095A399 /* NSAppearance+iTerm.h in Headers */,
 				A63011A420E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.h in Headers */,
 				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
@@ -10117,6 +10129,7 @@
 				53B93DE321F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A67F6149214395870093940A /* graphic_less@2x.png in Resources */,
+				53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
@@ -10729,6 +10742,7 @@
 				1D44D0711CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndMinimumContrast.png in Resources */,
 				1D44D01C1CC7F5A600BE5630 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
 				A67F6135214395570093940A /* graphic_gulp.png in Resources */,
+				53B93E0021F640BB001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				1D44CFFF1CC7F5A600BE5630 /* PTYTextViewTest-golden-testBoxSelection.png in Resources */,
 				1D44CFC31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNonAsciiAntiAliasOnly.png in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
@@ -10969,6 +10983,7 @@
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */,
+				53B93DFF21F640B9001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
@@ -11725,6 +11740,7 @@
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
+				53B93DFE21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m in Sources */,
 				A67875DB21D80363005AB938 /* iTermKeyboardHandler.m in Sources */,
 				A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */,
 				A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */,

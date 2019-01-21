@@ -1949,7 +1949,7 @@ DQ
                     </connections>
                 </button>
                 <textField toolTip="The badge is text that appears in the top right of a session." verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="sa9-oD-SMc" userLabel="Name text field">
-                    <rect key="frame" x="146" y="363" width="393" height="22"/>
+                    <rect key="frame" x="146" y="363" width="337" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter Badge Text (Interpolated String)" drawsBackground="YES" id="M2Y-uM-p2q">
                         <font key="font" metaFont="system"/>
@@ -2068,6 +2068,17 @@ DQ
                         <outlet property="delegate" destination="dVg-Ac-SiZ" id="eoD-2Y-HxJ"/>
                     </connections>
                 </imageView>
+                <button verticalHuggingPriority="750" id="kmy-bS-CYF" userLabel="Edit advanced configuration push button">
+                    <rect key="frame" x="486" y="358" width="58" height="28"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="configureBadge:" target="dVg-Ac-SiZ" id="7dS-4S-7fF"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
             <point key="canvasLocation" x="977.5" y="-816"/>
@@ -4358,7 +4369,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -5869,11 +5880,11 @@ DQ
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="3" y="3" width="623" height="379"/>
+                        <rect key="frame" x="1" y="1" width="627" height="381"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="3" width="619" height="374"/>
+                                <rect key="frame" x="4" y="5" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>
