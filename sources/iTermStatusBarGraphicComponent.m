@@ -78,7 +78,7 @@
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *backgroundColorKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color:"
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil
@@ -86,7 +86,7 @@
     NSArray<iTermStatusBarComponentKnob *> *knobs = [@[ backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
     if (self.shouldHaveTextColorKnob) {
         iTermStatusBarComponentKnob *textColorKnob =
-            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color"
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color:"
                                                               type:iTermStatusBarComponentKnobTypeColor
                                                        placeholder:nil
                                                       defaultValue:nil
