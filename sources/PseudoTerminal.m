@@ -9032,11 +9032,19 @@ ITERM_WEAKLY_REFERENCEABLE
 // goes backwards and previous goes forwards.
 // Internally, next=forward and prev=backwards.
 - (IBAction)findPrevious:(id)sender {
-    [[self currentSession] searchNext];
+    if ([iTermAdvancedSettingsModel swapFindNextPrevious]) {
+        [[self currentSession] searchNext];
+    } else {
+        [[self currentSession] searchPrevious];
+    }
 }
 
 - (IBAction)findNext:(id)sender {
-    [[self currentSession] searchPrevious];
+    if ([iTermAdvancedSettingsModel swapFindNextPrevious]) {
+        [[self currentSession] searchPrevious];
+    } else {
+        [[self currentSession] searchNext];
+    }
 }
 
 - (IBAction)findWithSelection:(id)sender {

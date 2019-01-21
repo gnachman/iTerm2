@@ -4890,10 +4890,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view showFindUI];
 }
 
+// Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
     [_view.findDriver searchNext];
 }
 
+// Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
     [_view.findDriver searchPrevious];
 }
@@ -6614,10 +6616,12 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case KEY_FIND_AGAIN_DOWN:
+            // The UI exposes this as "find down" so it doesn't respect swapFindNextPrevious
             [self searchNext];
             break;
 
         case KEY_FIND_AGAIN_UP:
+            // The UI exposes this as "find up" so it doesn't respect swapFindNextPrevious
             [self searchPrevious];
             break;
 

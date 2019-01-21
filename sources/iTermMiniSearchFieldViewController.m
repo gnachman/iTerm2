@@ -8,6 +8,7 @@
 #import "iTermMiniSearchFieldViewController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermFindDriver+Internal.h"
 #import "iTermSearchFieldCell.h"
 #import "NSColor+iTerm.h"
@@ -246,14 +247,17 @@ doCommandBySelector:(SEL)commandSelector {
             // Focus lost
             [self.driver didLoseFocus];
             break;
-        case NSReturnTextMovement:
+        case NSReturnTextMovement: {
             // Return key
-            if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) {
+            const BOOL shiftPressed = ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+            const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
+            if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];
             } else {
                 [self.driver searchPrevious];
             }
             break;
+        }
     }
     return;
 }

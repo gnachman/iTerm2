@@ -312,6 +312,7 @@ DEFINE_STRING(fallbackLCCType, @"", SECTION_GENERAL @"Value to set LC_CTYPE to i
 // See issue 6994
 DEFINE_BOOL(useVirtualKeyCodesForDetectingDigits, NO, SECTION_GENERAL @"Treat the top row of keys like number keys on an English keyboard for the purposes of switching panes, tabs, and windows with modifier+number.\nFor example, AZERTY requires you to hold down Shift to enter a number. To switch tabs with ⌘+Number on an AZERTY keyboard, you must enable this setting. Then, for example, ⌘-& switches to tab 1. When this setting is enabled, some user-defined shortcuts may become unavailable because the tab/window/pane switching behavior takes precedence.");
 DEFINE_BOOL(hotkeyWindowsExcludedFromCycling, NO, SECTION_GENERAL @"Hotkey windows are excluded from Cycle Through Windows.");
+DEFINE_BOOL(swapFindNextPrevious, YES, SECTION_GENERAL @"Swap Find Next and Find Previous.\nIf enabled, Find Next will search up and Find Previous will search down (iTerm2's traditional behavior, which is a departure from macOS's standard). When disabled, search behaves like a normal macOS app.");
 
 #pragma mark - Drawing
 

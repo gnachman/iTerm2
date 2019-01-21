@@ -480,7 +480,7 @@ static NSString *gSearchString;
     // Search.
     [self setSearchDefaults];
     [self findSubString:theString
-       forwardDirection:NO
+       forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:_state.mode
              withOffset:-1];
 }
