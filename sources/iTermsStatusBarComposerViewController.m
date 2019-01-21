@@ -10,7 +10,21 @@
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "NSImage+iTerm.h"
 
+static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermComposerComboBoxDidBecomeFirstResponder";
+
 @interface iTermsStatusBarComposerViewController ()<iTermComposerTextViewDelegate, NSComboBoxDelegate, NSPopoverDelegate>
+@end
+
+@interface iTermComposerComboBox : NSComboBox
+@end
+
+@implementation iTermComposerComboBox
+
+- (BOOL)becomeFirstResponder {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermComposerComboBoxDidBecomeFirstResponder
+                                                        object:self];
+    return [super becomeFirstResponder];
+}
 
 @end
 
@@ -41,7 +55,17 @@
     _button.image = [image it_imageWithTintColor:tintColor];
 }
 
+- (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(comboBoxDidBecomeFirstResponder:)
+                                                 name:iTermComposerComboBoxDidBecomeFirstResponder
+                                               object:_comboBox];
+}
 #pragma mark - Private
+
+- (void)comboBoxDidBecomeFirstResponder:(NSNotification *)notification {
+    [_popover close];
+}
 
 - (IBAction)send:(id)sender {
 }

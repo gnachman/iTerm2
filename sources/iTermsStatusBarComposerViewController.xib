@@ -21,7 +21,7 @@
             <rect key="frame" x="0.0" y="0.0" width="200" height="22"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <comboBox verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Lx-8h-aAd">
+                <comboBox verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Lx-8h-aAd" customClass="iTermComposerComboBox">
                     <rect key="frame" x="1" y="0.0" width="178" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Command" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="dNz-i8-KYx">
@@ -53,11 +53,7 @@
             </subviews>
             <point key="canvasLocation" x="-1" y="154"/>
         </customView>
-        <viewController id="hP2-aE-JJR" userLabel="Popover View Controller" customClass="iTermStatusBarLargeComposerViewController">
-            <connections>
-                <outlet property="composerDelegate" destination="-2" id="5B9-gR-bQU"/>
-            </connections>
-        </viewController>
+        <viewController id="hP2-aE-JJR" userLabel="Popover View Controller" customClass="iTermStatusBarLargeComposerViewController"/>
         <popover id="9Mb-Fy-zsB">
             <connections>
                 <outlet property="contentViewController" destination="hP2-aE-JJR" id="YWi-xg-6ad"/>
