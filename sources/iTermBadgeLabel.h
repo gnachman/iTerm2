@@ -8,7 +8,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol iTermBadgeLabelDelegate<NSObject>
+- (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize;
+- (NSSize)badgeLabelSizeFraction;
+@end
+
 @interface iTermBadgeLabel : NSObject
+
+@property (nonatomic, weak) id<iTermBadgeLabelDelegate> delegate;
 
 // Color for badge text fill
 @property(nonatomic, retain) NSColor *fillColor;
@@ -28,5 +35,7 @@
 // If true then the inputs to |image| have changed. Set by other setters, and
 // can also be explicitly set to invalidate the image.
 @property(nonatomic, assign, getter=isDirty) BOOL dirty;
+@property(nonatomic) CGFloat minimumPointSize;
+@property(nonatomic) CGFloat maximumPointSize;
 
 @end

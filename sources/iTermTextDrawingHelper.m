@@ -629,9 +629,13 @@ typedef struct iTermTextColorContext {
 
 #pragma mark - Drawing: Accessories
 
+- (NSEdgeInsets)badgeMargins {
+    return NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin);
+}
+
 - (void)drawAccessoriesInRect:(NSRect)bgRect {
     VT100GridCoordRange coordRange = [self coordRangeForRect:bgRect];
-    [self drawBadgeInRect:bgRect];
+    [self drawBadgeInRect:bgRect margins:self.badgeMargins];
 
     // Draw red stripes in the background if sending input to all sessions
     if (_showStripes) {
@@ -830,12 +834,13 @@ typedef struct iTermTextColorContext {
                   destinationRect:(NSRect)rect
              destinationFrameSize:(NSSize)textViewSize
                       visibleSize:(NSSize)visibleSize
-                    sourceRectPtr:(NSRect *)sourceRectPtr {
+                    sourceRectPtr:(NSRect *)sourceRectPtr
+                          margins:(NSEdgeInsets)margins {
     if (NSEqualSizes(NSZeroSize, imageSize)) {
         return NSZeroRect;
     }
-    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeRightMargin],
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeTopMargin],
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - margins.right,
+                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + margins.top,
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
@@ -850,13 +855,14 @@ typedef struct iTermTextColorContext {
     return intersection;
 }
 
-- (NSSize)drawBadgeInRect:(NSRect)rect {
+- (NSSize)drawBadgeInRect:(NSRect)rect margins:(NSEdgeInsets)margins {
     NSRect source = NSZeroRect;
     NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
                                                           destinationRect:rect
                                                      destinationFrameSize:_frame.size
                                                               visibleSize:_scrollViewDocumentVisibleRect.size
-                                                            sourceRectPtr:&source];
+                                                            sourceRectPtr:&source
+                                                                  margins:NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin)];
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
@@ -868,7 +874,7 @@ typedef struct iTermTextColorContext {
                       hints:nil];
 
     NSSize imageSize = _badgeImage.size;
-    imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
+    imageSize.width += kBadgeMargin + margins.right;
 
     return imageSize;
 }

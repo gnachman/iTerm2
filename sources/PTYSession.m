@@ -13,6 +13,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBackgroundDrawingHelper.h"
+#import "iTermBadgeLabel.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermCacheableImage.h"
@@ -241,6 +242,7 @@ static const NSUInteger kMaxHosts = 100;
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
     iTermBackgroundDrawingHelperDelegate,
+    iTermBadgeLabelDelegate,
     iTermCoprocessDelegate,
     iTermHotKeyNavigableSession,
     iTermMetaFrustrationDetector,
@@ -3765,6 +3767,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
+    // forces the badge to update
+    _textview.badgeLabel = @"";
     [self updateBadgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
@@ -4890,10 +4894,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view showFindUI];
 }
 
+// Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
     [_view.findDriver searchNext];
 }
 
+// Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
     [_view.findDriver searchPrevious];
 }
@@ -6614,10 +6620,12 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case KEY_FIND_AGAIN_DOWN:
+            // The UI exposes this as "find down" so it doesn't respect swapFindNextPrevious
             [self searchNext];
             break;
 
         case KEY_FIND_AGAIN_UP:
+            // The UI exposes this as "find up" so it doesn't respect swapFindNextPrevious
             [self searchPrevious];
             break;
 
@@ -7800,6 +7808,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewResetTerminal {
     [_terminal gentleReset];
+}
+
+- (CGFloat)textViewBadgeTopMargin {
+    return [iTermProfilePreferences floatForKey:KEY_BADGE_TOP_MARGIN inProfile:self.profile];
+}
+
+- (CGFloat)textViewBadgeRightMargin {
+    return [iTermProfilePreferences floatForKey:KEY_BADGE_RIGHT_MARGIN inProfile:self.profile];
 }
 
 - (void)bury {
@@ -10877,6 +10893,30 @@ ITERM_WEAKLY_REFERENCEABLE
         .applicationKeypadMode = _terminal.output.keypadMode
     };
     termkeyKeyMaper.configuration = configuration;
+}
+
+#pragma mark - iTermBadgeLabelDelegate
+
+- (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSString *fontName = [iTermProfilePreferences stringForKey:KEY_BADGE_FONT inProfile:self.profile];
+    NSFont *font;
+
+    font = [NSFont fontWithName:fontName size:pointSize];
+    if (!font) {
+        font = [NSFont fontWithName:@"Helvetica" size:pointSize];
+    }
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
+        font = [fontManager convertFont:font
+                            toHaveTrait:NSBoldFontMask];
+    }
+    return font;
+}
+
+- (NSSize)badgeLabelSizeFraction {
+    const CGFloat width = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_WIDTH inProfile:self.profile];
+    const CGFloat height = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:self.profile];
+    return NSMakeSize(width, height);
 }
 
 @end

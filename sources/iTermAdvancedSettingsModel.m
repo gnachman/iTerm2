@@ -312,6 +312,7 @@ DEFINE_STRING(fallbackLCCType, @"", SECTION_GENERAL @"Value to set LC_CTYPE to i
 // See issue 6994
 DEFINE_BOOL(useVirtualKeyCodesForDetectingDigits, NO, SECTION_GENERAL @"Treat the top row of keys like number keys on an English keyboard for the purposes of switching panes, tabs, and windows with modifier+number.\nFor example, AZERTY requires you to hold down Shift to enter a number. To switch tabs with ⌘+Number on an AZERTY keyboard, you must enable this setting. Then, for example, ⌘-& switches to tab 1. When this setting is enabled, some user-defined shortcuts may become unavailable because the tab/window/pane switching behavior takes precedence.");
 DEFINE_BOOL(hotkeyWindowsExcludedFromCycling, NO, SECTION_GENERAL @"Hotkey windows are excluded from Cycle Through Windows.");
+DEFINE_BOOL(swapFindNextPrevious, YES, SECTION_GENERAL @"Swap Find Next and Find Previous.\nIf enabled, Find Next will search up and Find Previous will search down (iTerm2's traditional behavior, which is a departure from macOS's standard). When disabled, search behaves like a normal macOS app.");
 
 #pragma mark - Drawing
 
@@ -467,8 +468,8 @@ DEFINE_STRING(badgeFont, @"Helvetica", SECTION_BADGE @"Font to use for the badge
 DEFINE_BOOL(badgeFontIsBold, YES, SECTION_BADGE @"Should the badge render in bold type?");
 DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, SECTION_BADGE @"Maximum width of the badge\nAs a fraction of the width of the terminal, between 0 and 1.0.");
 DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, SECTION_BADGE @"Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
-DEFINE_INT(badgeRightMargin, 10, SECTION_BADGE @"Right Margin for the badge\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
-DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Top Margin for the badge\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
+DEFINE_INT(badgeRightMargin, 10, SECTION_BADGE @"Default value for right margin for the badge\nHow much space to leave between the right edge of the badge and the right edge of the terminal. Can be overridden by a profile setting.");
+DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin for the badge\nHow much space to leave between the top edge of the badge and the top edge of the terminal. Can be overridden by a profile setting.");
 
 #pragma mark - Experimental Features
 

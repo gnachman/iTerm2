@@ -98,6 +98,12 @@
     func(self, selector, object);
 }
 
+- (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object {
+    IMP imp = [self methodForSelector:selector];
+    id (*func)(id, SEL, id) = (void *)imp;
+    return func(self, selector, object);
+}
+
 - (BOOL)it_isSafeForPlist {
     if ([self isKindOfClass:[NSString class]]) {
         return YES;

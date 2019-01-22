@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermFindDriver.h"
 #import "iTermIndicatorsHelper.h"
@@ -69,7 +70,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
     kPTYTextViewSelectionExtensionUnitMark,
 };
 
-@protocol PTYTextViewDelegate <NSObject>
+@protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate>
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
 
@@ -207,6 +208,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewResetTerminal;
 - (CGRect)textViewRelativeFrame;
 - (CGSize)textViewContainerSize;
+- (CGFloat)textViewBadgeTopMargin;
+- (CGFloat)textViewBadgeRightMargin;
 @end
 
 @interface iTermHighlightedRow : NSObject

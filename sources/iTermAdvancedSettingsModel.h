@@ -210,6 +210,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
 + (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
 + (BOOL)suppressRestartAnnouncement;
++ (BOOL)swapFindNextPrevious;
 + (void)setSuppressRestartAnnouncement:(BOOL)value;
 + (double)tabAutoShowHoldTime;
 + (double)tabFlashAnimationDuration;

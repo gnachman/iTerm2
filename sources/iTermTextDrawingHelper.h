@@ -287,6 +287,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property (nonatomic, readonly, class) NSColor *errorMarkColor;
 @property (nonatomic, readonly, class) NSColor *otherMarkColor;
 @property (nonatomic) BOOL useNativePowerlineGlyphs;
+@property (nonatomic) CGFloat badgeTopMargin;
+@property (nonatomic) CGFloat badgeRightMargin;
 
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
@@ -299,7 +301,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                   destinationRect:(NSRect)destinationRect
              destinationFrameSize:(NSSize)destinationFrameSize
                       visibleSize:(NSSize)visibleSize
-                    sourceRectPtr:(NSRect *)sourceRectPtr;
+                    sourceRectPtr:(NSRect *)sourceRectPtr
+                          margins:(NSEdgeInsets)margins;
 
 // Indicates whether the cursor should take its color from the background (if YES) or text color (if NO).
 + (BOOL)cursorUsesBackgroundColorForScreenChar:(screen_char_t)screenChar

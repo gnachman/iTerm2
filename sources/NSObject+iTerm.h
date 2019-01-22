@@ -82,6 +82,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (id)it_associatedObjectForKey:(void *)key;
 
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
+- (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;
 - (NSString *)it_invalidPathInPlist;

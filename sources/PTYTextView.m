@@ -111,6 +111,7 @@ static const int kDragThreshold = 3;
 
 @interface PTYTextView () <
     iTermAltScreenMouseScrollInferrerDelegate,
+    iTermBadgeLabelDelegate,
     iTermTextViewAccessibilityHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
@@ -158,6 +159,7 @@ static const int kDragThreshold = 3;
     NSTimeInterval _timeOfLastBlink;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
+#warning This is not used. Did I break tracking?
     NSRect _trackingRect;
 
     // Helps with "selection scroll"
@@ -328,6 +330,7 @@ static const int kDragThreshold = 3;
         _accessibilityHelper.delegate = self;
 
         _badgeLabel = [[iTermBadgeLabel alloc] init];
+        _badgeLabel.delegate = self;
 
         _altScreenMouseScrollInferrer = [[iTermAltScreenMouseScrollInferrer alloc] init];
         _altScreenMouseScrollInferrer.delegate = self;
@@ -1142,6 +1145,8 @@ static const int kDragThreshold = 3;
                                     [_delegate textViewIsActiveSession] &&
                                     _delegate.textViewPasswordInput);
     _drawingHelper.useNativePowerlineGlyphs = self.useNativePowerlineGlyphs;
+    _drawingHelper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
+    _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
@@ -7302,6 +7307,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+#pragma mark - iTermBadgeLabelDelegate
+
+- (NSSize)badgeLabelSizeFraction {
+    return [self.delegate badgeLabelSizeFraction];
+}
+
+- (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
+    return [self.delegate badgeLabelFontOfSize:pointSize];
+}
 
 @end
 

@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermCursor.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarLayout.h"
@@ -238,6 +239,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",
                   KEY_BADGE_FORMAT: @"",
+
                   // Note: these defaults aren't used, except for link color and cursor guide color, because they are always specified.
                   KEY_FOREGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
                   KEY_BACKGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
@@ -428,7 +430,12 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
                   KEY_TITLE_COMPONENTS: PROFILE_BLOCK(titleComponents),
                   KEY_BACKGROUND_IMAGE_MODE: PROFILE_BLOCK(backgroundImageMode),
-                  KEY_STATUS_BAR_LAYOUT: PROFILE_BLOCK(statusBarLayout)
+                  KEY_STATUS_BAR_LAYOUT: PROFILE_BLOCK(statusBarLayout),
+                  KEY_BADGE_TOP_MARGIN: PROFILE_BLOCK(badgeTopMargin),
+                  KEY_BADGE_RIGHT_MARGIN: PROFILE_BLOCK(badgeRightMargin),
+                  KEY_BADGE_MAX_WIDTH: PROFILE_BLOCK(badgeMaxWidth),
+                  KEY_BADGE_MAX_HEIGHT: PROFILE_BLOCK(badgeMaxHeight),
+                  KEY_BADGE_FONT: PROFILE_BLOCK(badgeFont)
                 };
     }
     return dict;
@@ -533,6 +540,57 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         defaultValue = layout.dictionaryValue;
     });
     return defaultValue;
+}
+
++ (id)badgeTopMargin:(Profile *)profile {
+    id value = profile[KEY_BADGE_TOP_MARGIN];
+    if (value) {
+        return value;
+    }
+    return @([iTermAdvancedSettingsModel badgeTopMargin]);
+}
+
++ (id)badgeRightMargin:(Profile *)profile {
+    id value = profile[KEY_BADGE_RIGHT_MARGIN];
+    if (value) {
+        return value;
+    }
+    return @([iTermAdvancedSettingsModel badgeRightMargin]);
+}
+
++ (id)badgeMaxWidth:(Profile *)profile {
+    id value = profile[KEY_BADGE_MAX_WIDTH];
+    if (value) {
+        return value;
+    }
+    return @([iTermAdvancedSettingsModel badgeMaxWidthFraction]);
+}
+
++ (id)badgeMaxHeight:(Profile *)profile {
+    id value = profile[KEY_BADGE_MAX_HEIGHT];
+    if (value) {
+        return value;
+    }
+    return @([iTermAdvancedSettingsModel badgeMaxHeightFraction]);
+}
+
++ (id)badgeFont:(Profile *)profile {
+    id value = profile[KEY_BADGE_FONT];
+    if (value) {
+        return value;
+    }
+
+    NSString *baseFontName = [iTermAdvancedSettingsModel badgeFont];
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
+        NSFont *font = [NSFont fontWithName:baseFontName size:12] ?: [NSFont fontWithName:@"Helvetica" size:12] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        NSFont *boldFont = [[NSFontManager sharedFontManager] convertFont:font toHaveTrait:NSBoldFontMask];
+        if (boldFont) {
+            return boldFont.fontName;
+        }
+        return font.fontName;
+    }
+
+    return baseFontName;
 }
 
 + (id)titleComponents:(Profile *)profile {

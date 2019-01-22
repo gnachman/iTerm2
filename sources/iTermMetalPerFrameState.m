@@ -208,7 +208,11 @@ typedef struct {
                                                                 destinationRect:textView.enclosingScrollView.documentVisibleRect
                                                            destinationFrameSize:textView.frame.size
                                                                     visibleSize:textView.enclosingScrollView.documentVisibleRect.size
-                                                                  sourceRectPtr:&_badgeSourceRect];
+                                                                  sourceRectPtr:&_badgeSourceRect
+                                                                        margins:NSEdgeInsetsMake(drawingHelper.badgeTopMargin,
+                                                                                                 0,
+                                                                                                 0,
+                                                                                                 drawingHelper.badgeRightMargin)];
     }
 }
 

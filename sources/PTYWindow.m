@@ -76,7 +76,7 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
             return [super _titlebarHeight];
         }
     }
-    return 0;
+    return 1;
 }
 
 @end
