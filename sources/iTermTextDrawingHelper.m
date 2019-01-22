@@ -210,6 +210,7 @@ typedef struct iTermTextColorContext {
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
+    const NSTimeInterval startTime = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
 
@@ -295,7 +296,7 @@ typedef struct iTermTextColorContext {
     _lineRefCache = _replacementLineRefCache;
     _replacementLineRefCache = [[NSMutableDictionary alloc] init];
 
-    DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    DLog(@"end elapsed=%@ seconds drawRect:%@ in view %@", @([NSDate timeIntervalSinceReferenceDate] - startTime), [NSValue valueWithRect:rect], _delegate);
 }
 
 - (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays

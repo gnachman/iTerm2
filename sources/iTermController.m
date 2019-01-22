@@ -1184,6 +1184,7 @@ static iTermController *gSharedInstance;
                                          withURL:url
                                    forObjectType:objectType
                                 serverConnection:NULL];
+        DLog(@"Finished creating a new session %@", session);
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }

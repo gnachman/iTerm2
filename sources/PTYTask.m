@@ -369,12 +369,14 @@ static int MyForkPty(int *amaster,
     int slave;
 
     iTermFileDescriptorServerLog("Calling openpty");
+    DLog(@"Calling openpty");
     if (openpty(&master, &slave, name, termp, winp) == -1) {
         NSLog(@"openpty failed: %s", strerror(errno));
         return -1;
     }
 
     iTermFileDescriptorServerLog("Calling fork");
+    DLog(@"Calling fork");
     pid_t pid = fork();
     switch (pid) {
         case -1:
@@ -389,6 +391,7 @@ static int MyForkPty(int *amaster,
 
         default:
             // parent
+            DLog(@"fork returned");
             *amaster = master;
             close(slave);
             close(serverSocketFd);
@@ -552,7 +555,9 @@ static int MyForkPty(int *amaster,
         }
 
         // Begin listening on that path as a unix domain socket.
+        DLog(@"Calling iTermFileDescriptorServerSocketBindListen");
         int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);
+        DLog(@"Returned from iTermFileDescriptorServerSocketBindListen");
 
         // Get ready to run the server in a thread.
         __block int serverConnectionFd = -1;
@@ -563,6 +568,7 @@ static int MyForkPty(int *amaster,
         // accept is called if the main thread wins the race. accept will block
         // til connect is called if the background thread wins the race.
         iTermFileDescriptorServerLog("Kicking off a background job to accept() in the server");
+        DLog(@"Kicking off a background job to accept() in the server");
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             iTermFileDescriptorServerLog("Now running the accept queue block");
             serverConnectionFd = iTermFileDescriptorServerAccept(serverSocketFd);
@@ -570,6 +576,7 @@ static int MyForkPty(int *amaster,
             // Let the main thread go. This is necessary to ensure that
             // serverConnectionFd is written to before the main thread uses it.
             iTermFileDescriptorServerLog("Signal the semaphore");
+            DLog(@"Signal the semaphore");
             dispatch_semaphore_signal(semaphore);
         });
 
@@ -579,8 +586,10 @@ static int MyForkPty(int *amaster,
 
         // Wait for serverConnectionFd to be written to.
         iTermFileDescriptorServerLog("Waiting for the semaphore");
+        DLog(@"Waiting for the semaphore");
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
         iTermFileDescriptorServerLog("The semaphore was signaled");
+        DLog(@"The semaphore was signaled");
 
         dispatch_release(semaphore);
 
@@ -596,7 +605,9 @@ static int MyForkPty(int *amaster,
 
         // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
         iTermFileDescriptorServerLog("Calling MyForkPty");
+        DLog(@"Calling MyForkPty");
         pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd, deadMansPipe[1]);
+        DLog(@"Returned from MyForkPty");
         numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
     } else {
         pid = _childPid = forkpty(&fd, theTtyname, &term, &win);
@@ -657,12 +668,14 @@ static int MyForkPty(int *amaster,
         free(newEnviron);
         return;
     }
+    DLog(@"Cleaning up environment");
     for (int j = 0; newEnviron[j]; j++) {
         free(newEnviron[j]);
     }
     free(newEnviron);
 
     // Make sure the master side of the pty is closed on future exec() calls.
+    DLog(@"fcntl FD_CLOEXEC");
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
     if (connectionFd > 0) {
@@ -670,8 +683,10 @@ static int MyForkPty(int *amaster,
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
+        DLog(@"Calling iTermFileDescriptorClientRead");
         iTermFileDescriptorServerConnection serverConnection =
             iTermFileDescriptorClientRead(connectionFd, deadMansPipe[0]);
+        DLog(@"Returned from iTermFileDescriptorClientRead");
         close(deadMansPipe[0]);
         if (serverConnection.ok) {
             // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
@@ -686,10 +701,13 @@ static int MyForkPty(int *amaster,
             serverConnection.serverPid = pid;
 
             // Connect this task to the server's PIDs and file descriptor.
+            DLog(@"attach to server...");
             [self attachToServer:serverConnection];
+            DLog(@"attached");
 
             self.tty = [NSString stringWithUTF8String:theTtyname];
             fcntl(fd, F_SETFL, O_NONBLOCK);
+            DLog(@"Have set tty and O_NONBLOCK");
         } else {
             close(fd);
             NSLog(@"Server died immediately!");

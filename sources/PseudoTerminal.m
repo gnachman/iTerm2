@@ -6098,7 +6098,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]];
         return nil;
     }
-    PtyLog(@"--------- splitVertically -----------");
+    PtyLog(@"--------- splitVertically STARTING -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
         return nil;
@@ -6124,16 +6124,20 @@ ITERM_WEAKLY_REFERENCEABLE
         theBookmark = temp;
     }
     PTYSession* newSession = [[self newSessionWithBookmark:theBookmark] autorelease];
+    DLog(@"Creating split and session");
     [self splitVertically:isVertical
                    before:before
             addingSession:newSession
             targetSession:targetSession
              performSetup:YES];
+    DLog(@"Have created session %@, will now run command", newSession);
 
+    DLog(@"Calling runCommandInSession");
     if (![self runCommandInSession:newSession inCwd:oldCWD forObjectType:iTermPaneObject]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
     }
+    PtyLog(@"--------- splitVertically FINISHED -----------");
     return newSession;
 }
 

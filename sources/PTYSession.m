@@ -1700,6 +1700,7 @@ ITERM_WEAKLY_REFERENCEABLE
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions {
+    DLog(@"startProgram for session %@", self);
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
