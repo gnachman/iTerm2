@@ -2577,6 +2577,10 @@
 		A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8ACE21C7608B00796BF3 /* iTermImageCache.m */; };
 		A6BC9B1E214A2AE900F50C09 /* iTermVariableReference.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BC9B1C214A2AE900F50C09 /* iTermVariableReference.h */; };
 		A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC9B1D214A2AE900F50C09 /* iTermVariableReference.m */; };
+		A6BCAAD721F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */; };
+		A6BCAAD821F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */; };
+		A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */; };
+		A6BCAADB21F6F53E0000CD29 /* iTermTextPopoverViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */; };
 		A6BDB0511B45FC4300F511E6 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6BDB0521B45FC9E00F511E6 /* PTYTextViewTest-golden-test24BitColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1201ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png */; };
 		A6BDB0531B45FC9E00F511E6 /* PTYTextViewTest-golden-test256Colors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1211ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png */; };
@@ -5263,6 +5267,9 @@
 		A6BC9B1C214A2AE900F50C09 /* iTermVariableReference.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableReference.h; sourceTree = "<group>"; };
 		A6BC9B1D214A2AE900F50C09 /* iTermVariableReference.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariableReference.m; sourceTree = "<group>"; };
 		A6BC9B20214A395A00F50C09 /* iTermVariablesTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariablesTest.m; sourceTree = "<group>"; };
+		A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextPopoverViewController.h; sourceTree = "<group>"; };
+		A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTextPopoverViewController.m; sourceTree = "<group>"; };
+		A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermTextPopoverViewController.xib; sourceTree = "<group>"; };
 		A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParserTest.m; sourceTree = "<group>"; };
 		A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
@@ -7342,6 +7349,9 @@
 				A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */,
 				A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */,
 				A6153D5F21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m */,
+				A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */,
+				A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */,
+				A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9280,6 +9290,7 @@
 				A6E525E11A9C5730007B898E /* VT100State.h in Headers */,
 				A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */,
 				A6E7475C188C6731005355CF /* iTermExposeGridView.h in Headers */,
+				A6BCAAD721F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */,
 				1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */,
@@ -9461,6 +9472,7 @@
 				5370678F21C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
+				A6BCAAD821F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
 				A6587A4721D82B4200794775 /* iTermStandardKeyMapper.h in Headers */,
 				A6180D7821A883860073F219 /* iTermBroadcastPasswordHelper.h in Headers */,
@@ -10926,6 +10938,7 @@
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A6374A221DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png in Resources */,
+				A6BCAADB21F6F53E0000CD29 /* iTermTextPopoverViewController.xib in Resources */,
 				A6F7A71F213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
@@ -11849,6 +11862,7 @@
 				A6153D6121F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m in Sources */,
 				A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
+				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,
 				A60C036F2089B29700FE2F1F /* iTermScriptHistory.m in Sources */,
 				A65D3ADA21D163B800384015 /* iTermBacktrace.mm in Sources */,
 				A6E5D2101FA3C57900EDD002 /* iTermMetalFrameData.m in Sources */,

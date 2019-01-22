@@ -9,11 +9,13 @@
 #import "iTermStatusBarGitComponent.h"
 
 #import "DebugLogging.h"
+#import "FontSizeEstimator.h"
 #import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState.h"
 #import "iTermLocalHostNameGuesser.h"
+#import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
@@ -56,6 +58,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     NSString *_status;
     BOOL _hidden;
     PTYSession *_session;
+    iTermCommandRunner *_logRunner;
+    iTermTextPopoverViewController *_popoverVC;
+    NSView *_view;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -323,9 +328,15 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
             [menu addItem:item];
             return context;
         };
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_view = view;
         addItem(@"Commit", @selector(commit:), state.dirty);
         addItem(@"Add & Commit", @selector(addAndCommit:), state.dirty);
         addItem(@"Stash", @selector(stash:), state.dirty);
+        addItem(@"Log", @selector(log:), state.dirty);
         addItem([NSString stringWithFormat:@"Push origin %@", state.branch], @selector(push:), state.pushArrow.intValue > 0);
         addItem([NSString stringWithFormat:@"Pull origin %@", state.branch], @selector(pull:), !state.dirty);
         [menu addItem:[NSMenuItem separatorItem]];
@@ -389,6 +400,57 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
      }];
 }
 
+- (void)showPopover {
+    _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    _popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [_popoverVC view];
+    if ([self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
+        if (@available(macOS 10.14, *)) {
+            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        } else {
+            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        }
+    } else {
+        _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    }
+    _popoverVC.textView.font = [self.delegate statusBarComponentTerminalFont:self];
+    NSRect frame = _popoverVC.view.frame;
+    NSSize inset = _popoverVC.textView.textContainerInset;
+    frame.size.width = [FontSizeEstimator fontSizeEstimatorForFont:_popoverVC.textView.font].size.width * 60 + iTermTextPopoverViewControllerHorizontalMarginWidth * 2 + inset.width * 2;
+    _popoverVC.view.frame = frame;
+    [_popoverVC.popover showRelativeToRect:_view.bounds
+                                    ofView:_view
+                             preferredEdge:NSRectEdgeMaxY];
+}
+
+- (void)log:(id)sender {
+    if (_logRunner) {
+        [_logRunner terminate];
+    }
+
+    [self showPopover];
+    NSMenuItem *menuItem = sender;
+    iTermGitMenuItemContext *context = menuItem.representedObject;
+    _logRunner = [[iTermCommandRunner alloc] initWithCommand:@"/usr/bin/git"
+                                               withArguments:@[ @"log" ]
+                                                        path:context.directory];
+    iTermTextPopoverViewController *popoverVC = _popoverVC;
+    __weak __typeof(_logRunner) weakLogRunner = _logRunner;
+    __block BOOL stopped = NO;
+    _logRunner.outputHandler = ^(NSData *data) {
+        if (stopped) {
+            return;
+        }
+        [popoverVC appendString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+        if (popoverVC.textView.textStorage.length > 100000) {
+            stopped = YES;
+            [popoverVC appendString:@"\n[Truncated]\n"];
+            [weakLogRunner terminate];
+        }
+    };
+    [_logRunner runWithTimeout:5];
+}
 - (void)commit:(id)sender {
     NSMenuItem *menuItem = sender;
     iTermGitMenuItemContext *context = menuItem.representedObject;
