@@ -314,13 +314,15 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     }
 }
 
-- (BOOL)shouldAntialias:(NSFont *)font ligaturesEnabled:(BOOL)ligatures {
+- (BOOL)shouldAntialias:(NSFont *)font ligaturesEnabled:(BOOL)ligatures emphatic:(out BOOL *)emphatic {
+    *emphatic = NO;
     if (font.futureShouldAntialias) {
         return YES;
     }
     if (ligatures) {
         NSArray<NSString *> *brokenFamilies = @[ @"PragmataPro Mono Liga", @"PragmataPro Liga" ];
         if ([brokenFamilies containsObject:font.familyName]) {
+            *emphatic = YES;
             return YES;
         }
     }
@@ -328,8 +330,13 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 }
 
 - (void)updateWarnings {
-    [_normalFontWantsAntialiasing setHidden:![self shouldAntialias:self.normalFont ligaturesEnabled:_asciiLigatures.state == NSOnState]];
-    [_nonasciiFontWantsAntialiasing setHidden:![self shouldAntialias:self.nonAsciiFont ligaturesEnabled:_nonAsciiLigatures.state == NSOnState]];
+    BOOL emphatic;
+    [_normalFontWantsAntialiasing setHidden:![self shouldAntialias:self.normalFont ligaturesEnabled:_asciiLigatures.state == NSOnState
+                                                          emphatic:&emphatic]];
+    _normalFontWantsAntialiasing.stringValue = emphatic ? @"(strongly recommended for this font)" : @"(recommended for this font)";
+    [_nonasciiFontWantsAntialiasing setHidden:![self shouldAntialias:self.nonAsciiFont ligaturesEnabled:_nonAsciiLigatures.state == NSOnState
+                                                            emphatic:&emphatic]];
+    _nonasciiFontWantsAntialiasing.stringValue = emphatic ? @"(strongly recommended for this font)" : @"(recommended for this font)";
 }
 
 
