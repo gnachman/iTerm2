@@ -411,38 +411,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
 }
 
-- (void)updateDecorationsOfWindow:(NSWindow *)myWindow forType:(iTermWindowType)windowType {
-    [self updateWindowShadow:(NSWindow<PTYWindow> *)myWindow];
-    // Chrome doesn't change titleVisibility so neither do we.
-    // Some truly dreadful hacks are used instead. See PTYWindow.m.
-    BOOL isCompact = NO;
-    switch (windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                isCompact = YES;
-            }
-            break;
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_ACCESSORY:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-            break;
-
-        case WINDOW_TYPE_COMPACT:
-            isCompact = YES;
-    }
-    myWindow.titlebarAppearsTransparent = isCompact;
-}
-
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     NSInteger mask = 0;
@@ -4202,7 +4170,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    [self updateDecorationsOfWindow:myWindow forType:windowTypeForStyleMask];
+    [self updateWindowShadow:(NSWindow<PTYWindow> *)myWindow];
     [self setWindow:myWindow];
     if (@available(macOS 10.14, *)) {
         // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
@@ -4448,7 +4416,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didChangeCompactness {
-    [self updateDecorationsOfWindow:self.window forType:windowType_];
+    [self updateWindowShadow:(NSWindow<PTYWindow> *)self.window];
     [_contentView didChangeCompactness];
 }
 
@@ -4719,7 +4687,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
     }
     self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
-    [self updateDecorationsOfWindow:self.window forType:savedWindowType_];
+    [self updateWindowShadow:(NSWindow<PTYWindow> *)self.window];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
