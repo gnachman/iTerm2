@@ -119,11 +119,15 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_asciiLigatures
                     key:KEY_ASCII_LIGATURES
-                   type:kPreferenceInfoTypeCheckbox];
+                   type:kPreferenceInfoTypeCheckbox].observer = ^{
+        [weakSelf updateWarnings];
+    };
 
     [self defineControl:_nonAsciiLigatures
                     key:KEY_NON_ASCII_LIGATURES
-                   type:kPreferenceInfoTypeCheckbox];
+                   type:kPreferenceInfoTypeCheckbox].observer = ^{
+        [weakSelf updateWarnings];
+    };
 
     PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
                                            key:KEY_AMBIGUOUS_DOUBLE_WIDTH
@@ -310,9 +314,22 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     }
 }
 
+- (BOOL)shouldAntialias:(NSFont *)font ligaturesEnabled:(BOOL)ligatures {
+    if (font.futureShouldAntialias) {
+        return YES;
+    }
+    if (ligatures) {
+        NSArray<NSString *> *brokenFamilies = @[ @"PragmataPro Mono Liga", @"PragmataPro Liga" ];
+        if ([brokenFamilies containsObject:font.familyName]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)updateWarnings {
-    [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
-    [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
+    [_normalFontWantsAntialiasing setHidden:![self shouldAntialias:self.normalFont ligaturesEnabled:_asciiLigatures.state == NSOnState]];
+    [_nonasciiFontWantsAntialiasing setHidden:![self shouldAntialias:self.nonAsciiFont ligaturesEnabled:_nonAsciiLigatures.state == NSOnState]];
 }
 
 
