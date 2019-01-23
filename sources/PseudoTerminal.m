@@ -968,31 +968,43 @@ ITERM_WEAKLY_REFERENCEABLE
                         forKey:kPreferenceKeyDefaultToolbeltWidth];
 }
 
+- (BOOL)showToolbeltNotFullScreen {
+    BOOL didResizeWindow = NO;
+    // Tweak the window's frame to avoid shrinking content, if possible.
+    NSRect windowFrame = self.window.frame;
+    windowFrame.size.width += _contentView.toolbeltWidth;
+    NSRect screenFrame = self.window.screen.visibleFrame;
+    CGFloat rightLimit = NSMaxX(screenFrame);
+    CGFloat overage = NSMaxX(windowFrame) - rightLimit;
+    if (overage > 0) {
+        // Compensate by making the toolbelt a little smaller, unless that would make it too
+        // small.
+        if (_contentView.toolbeltWidth - overage > 100) {
+            windowFrame.size.width -= overage;
+            const NSSize decorationSize = [self windowDecorationSize];
+            const CGFloat viewWidth = windowFrame.size.width - decorationSize.width;
+            const CGFloat proposedToolbeltWidth = _contentView.toolbeltWidth - overage;
+            const CGFloat desiredNonToolbeltWidth = windowFrame.size.width - proposedToolbeltWidth;
+            _contentView.toolbeltWidth = MIN([_contentView maximumToolbeltWidthForViewWidth:viewWidth],
+                                             proposedToolbeltWidth);
+            windowFrame.size.width = desiredNonToolbeltWidth + _contentView.toolbeltWidth;
+            overage = 0;
+        }
+    }
+    if (overage <= 0 && !NSEqualRects(self.window.frame, windowFrame)) {
+        didResizeWindow = YES;
+        [self.window setFrame:windowFrame display:YES];
+    }
+    hidingToolbeltShouldResizeWindow_ = didResizeWindow;
+    return didResizeWindow;
+}
+
 - (IBAction)toggleToolbeltVisibility:(id)sender {
     _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
     if (_contentView.shouldShowToolbelt) {
         if (![self anyFullScreen]) {
-            // Tweak the window's frame to avoid shrinking content, if possible.
-            NSRect windowFrame = self.window.frame;
-            windowFrame.size.width += _contentView.toolbeltWidth;
-            NSRect screenFrame = self.window.screen.visibleFrame;
-            CGFloat rightLimit = NSMaxX(screenFrame);
-            CGFloat overage = NSMaxX(windowFrame) - rightLimit;
-            if (overage > 0) {
-                // Compensate by making the toolbelt a little smaller, unless that would make it too
-                // small.
-                if (_contentView.toolbeltWidth - overage > 100) {
-                    _contentView.toolbeltWidth = _contentView.toolbeltWidth - overage;
-                    windowFrame.size.width -= overage;
-                    overage = 0;
-                }
-            }
-            if (overage <= 0 && !NSEqualRects(self.window.frame, windowFrame)) {
-                didResizeWindow = YES;
-                [self.window setFrame:windowFrame display:YES];
-            }
-            hidingToolbeltShouldResizeWindow_ = didResizeWindow;
+            didResizeWindow = [self showToolbeltNotFullScreen];
         }
 
         [self refreshTools];
@@ -2415,6 +2427,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    [_contentView constrainToolbeltWidth];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
