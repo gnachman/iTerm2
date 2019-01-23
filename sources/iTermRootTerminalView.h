@@ -99,4 +99,6 @@ extern const CGFloat kHorizontalTabBarHeight;
 
 - (void)willShowTabBar;
 
+- (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
+
 @end

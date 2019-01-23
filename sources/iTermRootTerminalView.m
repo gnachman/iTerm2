@@ -114,7 +114,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
         // Create the toolbelt with its current default size.
         _toolbeltWidth = [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
-        [self constrainToolbeltWidth];
 
         self.toolbelt = [[[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
                                                          delegate:(id)_delegate] autorelease];
@@ -266,11 +265,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (void)constrainToolbeltWidth {
+    _toolbeltWidth = [self maximumToolbeltWidthForViewWidth:self.frame.size.width];
+}
+
+- (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth {
     CGFloat minSize = MIN(kMinimumToolbeltSizeInPoints,
-                          self.frame.size.width * kMinimumToolbeltSizeAsFractionOfWindow);
-    _toolbeltWidth = MAX(MIN(_toolbeltWidth,
-                             self.frame.size.width * kMaximumToolbeltSizeAsFractionOfWindow),
-                         minSize);
+                          viewWidth * kMinimumToolbeltSizeAsFractionOfWindow);
+    return MAX(MIN(_toolbeltWidth,
+                   viewWidth * kMaximumToolbeltSizeAsFractionOfWindow),
+               minSize);
 }
 
 - (NSRect)toolbeltFrame {
@@ -295,9 +298,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     }
     _shouldShowToolbelt = shouldShowToolbelt;
     _toolbelt.hidden = !shouldShowToolbelt;
-    if (shouldShowToolbelt) {
-        [self constrainToolbeltWidth];
-    }
 }
 
 - (void)updateToolbeltFrame {
@@ -379,7 +379,9 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
-    [self constrainToolbeltWidth];
+    if (_shouldShowToolbelt) {
+        [self constrainToolbeltWidth];
+    }
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
         // The tabBarControl should not be visible.
