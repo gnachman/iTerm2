@@ -8,7 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermToolbeltSplitView : NSSplitView
+#import "PTYSplitView.h"
+
+// Inherit from PTYSplitView to get its fancy delegate callbacks.
+@interface iTermToolbeltSplitView : PTYSplitView
 
 @property (readwrite, copy) NSColor *dividerColor;
 

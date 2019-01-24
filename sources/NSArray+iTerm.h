@@ -106,6 +106,10 @@
 - (id)it_jsonSafeValue;
 - (instancetype)it_arrayByRemovingObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 
+- (NSArray<iTermTuple *> *)zip:(NSArray *)other;
+
+- (double)sumOfNumbers;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

@@ -9,8 +9,10 @@
 #import "iTermSystemVersion.h"
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
+#import "iTermTuple.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -33,13 +35,17 @@ NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 NSString *const kDynamicToolsDidChange = @"kDynamicToolsDidChange";
 NSString *const iTermToolbeltDidRegisterDynamicToolNotification = @"iTermToolbeltDidRegisterDynamicToolNotification";
 
+static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbeltProportions";
+
 @interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
 @implementation iTermToolbeltView {
     iTermDragHandleView *_dragHandle;
     iTermToolbeltSplitView *_splitter;
-    NSMutableDictionary *_tools;
+    // Tool name to wrapper
+    NSMutableDictionary<NSString *, iTermToolWrapper *> *_tools;
+    NSDictionary *_proportions;
 }
 
 static NSMutableDictionary *gRegisteredTools;
@@ -245,6 +251,7 @@ static NSString *const kDynamicToolURL = @"URL";
 - (void)dealloc {
     [_splitter release];
     [_tools release];
+    [_proportions release];
     [super dealloc];
 }
 
@@ -302,6 +309,10 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 #pragma mark - APIs
+
++ (NSDictionary *)savedProportions {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:iTermToolbeltProportionsUserDefaultsKey];
+}
 
 - (void)shutdown {
     while ([_tools count]) {
@@ -525,6 +536,129 @@ static NSString *const kDynamicToolURL = @"URL";
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
     [splitView adjustSubviews];
     [self forceSplitterSubviewsToRespectSizeConstraints];
+}
+
+#pragma mark - PTYSplitViewDelegate
+
+- (NSDictionary *)proportions {
+    NSArray<NSString *> *names = [iTermToolbeltView configuredTools];
+    NSArray<NSNumber *> *heights = [names mapWithBlock:^id(NSString *name) {
+        return @(_tools[name].frame.size.height);
+    }];
+    double sumOfHeights = [heights sumOfNumbers];
+    if (sumOfHeights <= 0) {
+        return @{};
+    }
+    NSArray<NSNumber *> *fractions = [heights mapWithBlock:^id(NSNumber *height) {
+        return @(height.doubleValue / sumOfHeights);
+    }];
+    NSArray<NSDictionary<NSString *, id> *> *proportions = [[names zip:fractions] mapWithBlock:^id(iTermTuple *tuple) {
+        return @{ @"name": tuple.firstObject,
+                  @"heightAsFraction": tuple.secondObject };
+    }];
+    return @{ @"proportions": proportions };
+}
+
+- (void)setProportions:(NSDictionary *)dict {
+    [_proportions release];
+    _proportions = nil;
+    if (!dict) {
+        return;
+    }
+    NSArray *proportions = [NSArray castFrom:dict[@"proportions"]];
+    if (!proportions) {
+        return;
+    }
+
+    NSArray<NSString *> *names = [iTermToolbeltView configuredTools];
+    NSArray<NSNumber *> *currentHeights = [names mapWithBlock:^id(NSString *name) {
+        return @(_tools[name].frame.size.height);
+    }];
+    const double sumOfCurrentHeights = [currentHeights sumOfNumbers];
+    if (sumOfCurrentHeights <= 0) {
+        return;
+    }
+
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *tuples = [proportions mapWithBlock:^id(id anObject) {
+        NSDictionary *info = [NSDictionary castFrom:anObject];
+        if (!info) {
+            return nil;
+        }
+        NSString *name = [NSString castFrom:info[@"name"]];
+        NSNumber *fraction = [NSNumber castFrom:info[@"heightAsFraction"]];
+        if (!name || !fraction) {
+            return nil;
+        }
+        return [iTermTuple tupleWithObject:name andObject:fraction];
+    }];
+    if (tuples.count != proportions.count) {
+        return;
+    }
+    const BOOL consistent = [[tuples zip:names] allWithBlock:^BOOL(iTermTuple<iTermTuple<NSString *, NSNumber *> *, NSString *> *tuple) {
+        return [tuple.firstObject.firstObject isEqualToString:tuple.secondObject] && tuple.firstObject.secondObject.doubleValue > 0;
+    }];
+    if (!consistent) {
+        return;
+    }
+    __block double addedHeight = 0;
+    NSArray<NSNumber *> *desiredHeights = [tuples mapWithBlock:^id(iTermTuple<NSString *,NSNumber *> *tuple) {
+        iTermToolWrapper *wrapper = self->_tools[tuple.firstObject];
+        const CGFloat proposed = tuple.secondObject.doubleValue * sumOfCurrentHeights;
+        const CGFloat accepted = MAX(proposed, wrapper.minimumHeight);
+        const CGFloat addition = MAX(0, accepted - proposed);
+        addedHeight += addition;
+        return @(accepted);
+    }];
+    if (addedHeight > 0) {
+        NSArray<NSNumber *> *wiggleRoom = [[tuples zip:desiredHeights] mapWithBlock:^id(iTermTuple<iTermTuple<NSString *,NSNumber *> *, NSNumber *> *tuple) {
+            NSString *name = tuple.firstObject.firstObject;
+            double desiredHeight = tuple.secondObject.doubleValue;
+            iTermToolWrapper *wrapper = self->_tools[name];
+            return @(MAX(0, desiredHeight - wrapper.minimumHeight));
+        }];
+        const double totalWiggleRoom = [wiggleRoom sumOfNumbers];
+        if (totalWiggleRoom < addedHeight) {
+            return;
+        }
+        desiredHeights = [[desiredHeights zip:wiggleRoom] mapWithBlock:^id(iTermTuple<NSNumber *, NSNumber *> *tuple) {
+            const CGFloat wiggleRoom = tuple.secondObject.doubleValue;
+            if (wiggleRoom == 0) {
+                // No change
+                return tuple.firstObject;
+            }
+            const CGFloat originalDesiredHeight = tuple.firstObject.doubleValue;
+            const CGFloat fractionOfWiggleRoom = wiggleRoom / totalWiggleRoom;
+            return @(originalDesiredHeight - fractionOfWiggleRoom * addedHeight);
+        }];
+    }
+
+    CGFloat y = 0;
+    for (iTermTuple<NSString *, NSNumber *> *tuple in [names zip:desiredHeights]) {
+        NSView *view = _tools[tuple.firstObject];
+        NSRect frame = view.frame;
+        frame.origin.y = y;
+        frame.size.height = tuple.secondObject.doubleValue * sumOfCurrentHeights;
+        view.frame = frame;
+        y += tuple.secondObject.doubleValue * sumOfCurrentHeights;
+        y += _splitter.dividerThickness;
+    }
+    [_splitter adjustSubviews];
+    _proportions = [[self proportions] retain];
+}
+
+- (void)splitView:(PTYSplitView *)splitView
+draggingDidEndOfSplit:(int)clickedOnSplitterIndex
+           pixels:(NSSize)changePx {
+    [_proportions release];
+    _proportions = [[self proportions] retain];
+    [[NSUserDefaults standardUserDefaults] setObject:_proportions
+                                              forKey:iTermToolbeltProportionsUserDefaultsKey];
+}
+
+- (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
+}
+
+- (void)splitViewDidChangeSubviews:(PTYSplitView *)splitView {
 }
 
 #pragma mark - iTermDragHandleViewDelegate

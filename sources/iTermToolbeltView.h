@@ -2,7 +2,9 @@
 
 #import "FutureMethods.h"
 #import "iTermToolWrapper.h"
+#import "PTYSplitView.h"
 
+@protocol PTYSplitViewDelegate;
 @class ToolCapturedOutputView;
 @class ToolCommandHistoryView;
 @class ToolDirectoriesView;
@@ -22,11 +24,14 @@ extern NSString *const iTermToolbeltDidRegisterDynamicToolNotification;
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
 
-@interface iTermToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate>
+@interface iTermToolbeltView : NSView <PTYSplitViewDelegate, ToolWrapperDelegate>
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 @property(nonatomic, readonly) ToolDirectoriesView *directoriesView;
 @property(nonatomic, readonly) ToolCapturedOutputView *capturedOutputView;
+@property(nonatomic, retain) NSDictionary *proportions;
+
++ (NSDictionary *)savedProportions;
 
 // Returns an array of tool keys.
 + (NSArray *)allTools;

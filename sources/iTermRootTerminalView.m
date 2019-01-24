@@ -77,6 +77,7 @@ typedef struct {
     NSTextField *_windowTitleLabel;
     iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
     iTermGenericStatusBarContainer *_statusBarContainer;
+    NSDictionary *_desiredToolbeltProportions;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -167,6 +168,10 @@ typedef struct {
 
         self.toolbelt = [[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
                                                         delegate:(id)_delegate];
+        // Wait until whoever is creating the window sets it to its proper size before laying out the toolbelt.
+        // The hope is that the window controller will call updateToolbeltProportionsIfNeeded during this spin
+        // of the runloop, but if not we'll get it next time 'round.
+        [self setToolbeltProportions:[iTermToolbeltView savedProportions]];
         _toolbelt.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
         [self addSubview:_toolbelt];
         [self updateToolbelt];
@@ -505,6 +510,20 @@ typedef struct {
     [_statusBarContainer setNeedsDisplay:YES];
     [_tabBarBacking setNeedsDisplay:YES];
     [_tabBarControl setNeedsDisplay:YES];
+}
+
+- (void)setToolbeltProportions:(NSDictionary *)proportions {
+    _desiredToolbeltProportions = [proportions copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateToolbeltProportionsIfNeeded];
+    });
+}
+
+- (void)updateToolbeltProportionsIfNeeded {
+    if (_desiredToolbeltProportions) {
+        [self.toolbelt setProportions:_desiredToolbeltProportions];
+        _desiredToolbeltProportions = nil;
+    }
 }
 
 #pragma mark - Division View
