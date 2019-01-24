@@ -150,8 +150,11 @@ NS_ASSUME_NONNULL_BEGIN
             preferredEdge = NSRectEdgeMinY;
             break;
     }
-    [popover showRelativeToRect:view.bounds
-                         ofView:view
+    NSView *relativeView = view.subviews.firstObject ?: view;
+    NSRect rect = relativeView.bounds;
+    rect.size.width = [self statusBarComponentMinimumWidth];
+    [popover showRelativeToRect:rect
+                         ofView:relativeView
                   preferredEdge:preferredEdge];
 }
 
