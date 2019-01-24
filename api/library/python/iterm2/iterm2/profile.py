@@ -825,7 +825,7 @@ class WriteOnlyProfile:
         for value in preset.values:
             coro = self._async_color_set(
                     value.key,
-                    'iterm2.color.Color'(
+                    iterm2.color.Color(
                         value.red,
                         value.green,
                         value.blue,
