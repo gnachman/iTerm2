@@ -38,6 +38,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @implementation iTermRootTerminalView {
     BOOL _tabViewFrameReduced;
     BOOL _haveShownToolbelt;
+    NSDictionary *_desiredToolbeltProportions;
     NSVisualEffectView *_tabBarBacking NS_AVAILABLE_MAC(10_14);
 }
 
@@ -117,6 +118,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
         self.toolbelt = [[[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
                                                          delegate:(id)_delegate] autorelease];
+        // Wait until whoever is creating the window sets it to its proper size before laying out the toolbelt.
+        // The hope is that the window controller will call updateToolbeltProportionsIfNeeded during this spin
+        // of the runloop, but if not we'll get it next time 'round.
+        [self setToolbeltProportions:[iTermToolbeltView savedProportions]];
         _toolbelt.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
         [self addSubview:_toolbelt];
         [self updateToolbelt];
@@ -135,6 +140,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [_toolbelt release];
     _leftTabBarDragHandle.delegate = nil;
     [_leftTabBarDragHandle release];
+    [_desiredToolbeltProportions release];
 
     [super dealloc];
 }
@@ -206,6 +212,22 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
     } else {
         _tabBarControl.autoresizingMask = mask;
+    }
+}
+
+- (void)setToolbeltProportions:(NSDictionary *)proportions {
+    [_desiredToolbeltProportions autorelease];
+    _desiredToolbeltProportions = [proportions copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateToolbeltProportionsIfNeeded];
+    });
+}
+
+- (void)updateToolbeltProportionsIfNeeded {
+    if (_desiredToolbeltProportions) {
+        [self.toolbelt setProportions:_desiredToolbeltProportions];
+        [_desiredToolbeltProportions release];
+        _desiredToolbeltProportions = nil;
     }
 }
 

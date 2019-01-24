@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermTuple;
+
 @interface NSArray<ObjectType> (iTerm)
 
 + (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range;
@@ -88,6 +90,10 @@
 
 - (NSDictionary<id, NSArray<ObjectType> *> *)classify:(id (^)(ObjectType object))block;
 - (id)it_jsonSafeValue;
+
+- (NSArray<iTermTuple *> *)zip:(NSArray *)other;
+
+- (double)sumOfNumbers;
 
 @end
 

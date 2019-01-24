@@ -7,6 +7,8 @@
 //
 
 #import "NSArray+iTerm.h"
+
+#import "iTermTuple.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
@@ -381,6 +383,22 @@
             return nil;
         }
     }];
+}
+
+- (NSArray<iTermTuple *> *)zip:(NSArray *)other {
+    NSMutableArray<iTermTuple *> *result = [NSMutableArray array];
+    for (NSInteger i = 0; i < MIN(other.count, self.count); i++) {
+        [result addObject:[iTermTuple tupleWithObject:self[i] andObject:other[i]]];
+    }
+    return result;
+}
+
+- (double)sumOfNumbers {
+    double sum = 0;
+    for (NSNumber *number in self) {
+        sum += number.doubleValue;
+    }
+    return sum;
 }
 
 @end

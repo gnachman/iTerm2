@@ -100,5 +100,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (void)willShowTabBar;
 
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
+- (void)updateToolbeltProportionsIfNeeded;
+- (void)setToolbeltProportions:(NSDictionary *)proportions;
 
 @end
