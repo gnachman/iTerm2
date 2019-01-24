@@ -128,7 +128,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)statusBarComponentHandlesClicks {
-    return YES;
+    if (@available(macOS 10.14, *)) {
+        return YES;
+    }
+    // The outline view looks awful on 10.13 for no good reason.
+    return NO;
 }
 
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
@@ -150,8 +154,11 @@ NS_ASSUME_NONNULL_BEGIN
             preferredEdge = NSRectEdgeMinY;
             break;
     }
-    [popover showRelativeToRect:view.bounds
-                         ofView:view
+    NSView *relativeView = view.subviews.firstObject ?: view;
+    NSRect rect = relativeView.bounds;
+    rect.size.width = [self statusBarComponentMinimumWidth];
+    [popover showRelativeToRect:rect
+                         ofView:relativeView
                   preferredEdge:preferredEdge];
 }
 

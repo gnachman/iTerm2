@@ -720,9 +720,6 @@ typedef struct {
     if ([_delegate haveTopBorder]) {
         decorationHeights.top++;
     }
-    if (_delegate.divisionViewShouldBeVisible) {
-        decorationHeights.top += kDivisionViewHeight;
-    }
 
     const NSRect frame = NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
                                     decorationHeights.bottom,

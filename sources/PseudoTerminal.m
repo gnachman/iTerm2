@@ -3065,7 +3065,7 @@ ITERM_WEAKLY_REFERENCEABLE
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
     }
     [self notifyTmuxOfTabChange];
@@ -5028,7 +5028,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
-    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded:NO];
@@ -6847,7 +6847,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[_contentView.toolbelt commandHistoryView] updateCommands];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
+    if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded:NO];
@@ -8963,6 +8963,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
+        if ([iTermAdvancedSettingsModel pinEditSession] &&
+            ![NSObject object:session.profile[KEY_GUID] isEqualToObject:[[PreferencePanel sessionsInstance] currentProfileGuid]]) {
+            // Some other session closed while pinned
+            return;
+        }
         if (self.currentSession) {
             [self editSession:self.currentSession makeKey:NO];
         } else {

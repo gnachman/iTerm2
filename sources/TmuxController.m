@@ -1825,7 +1825,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     PTYTab *tab = [self window:[windowIndex intValue]];
     NSWindowController<iTermWindowController> * term = [tab realParentWindow];
     NSValue *p = [origins_ objectForKey:windowIndex];
-    if (term && p && ![term anyFullScreen]) {
+    if (term && p && ![term anyFullScreen] && term.tabs.count == 1) {
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];

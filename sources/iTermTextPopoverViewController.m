@@ -7,6 +7,8 @@
 
 #import "iTermTextPopoverViewController.h"
 
+#import "SolidColorView.h"
+
 const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 
 @interface iTermTextPopoverViewController ()
@@ -18,11 +20,15 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
+    _textView.textContainerInset = NSMakeSize(8, 8);
 }
 
 - (void)appendString:(NSString *)string {
     NSDictionary *attributes = @{ NSFontAttributeName: self.textView.font,
-                                  NSForegroundColorAttributeName: self.textView.textColor };
+                                  NSForegroundColorAttributeName: self.textView.textColor ?: [NSColor textColor] };
     [_textView.textStorage appendAttributedString:[[NSAttributedString alloc] initWithString:string attributes:attributes]];
 }
 

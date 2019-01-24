@@ -419,8 +419,11 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     NSSize inset = _popoverVC.textView.textContainerInset;
     frame.size.width = [FontSizeEstimator fontSizeEstimatorForFont:_popoverVC.textView.font].size.width * 60 + iTermTextPopoverViewControllerHorizontalMarginWidth * 2 + inset.width * 2;
     _popoverVC.view.frame = frame;
-    [_popoverVC.popover showRelativeToRect:_view.bounds
-                                    ofView:_view
+    NSView *view = _view.subviews.firstObject ?: _view;
+    NSRect rect = view.bounds;
+    rect.size.width = [self statusBarComponentMinimumWidth];
+    [_popoverVC.popover showRelativeToRect:rect
+                                    ofView:view
                              preferredEdge:NSRectEdgeMaxY];
 }
 
