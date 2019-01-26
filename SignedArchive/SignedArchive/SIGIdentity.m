@@ -51,7 +51,7 @@
         }
         NSError *trustError = nil;
         // Don't use the CRL policy because it would need to make a network round-trip.
-        SIGTrust *trust = [[SIGTrust alloc] initWithCertificates:@[ identity.signingCertificate]
+        SIGTrust *trust = [[SIGTrust alloc] initWithCertificates:@[ identity.signingCertificate ]
                                                         policies:@[ [[SIGX509Policy alloc] init] ]
                                                            error:&trustError];
         if (!trust || trustError) {

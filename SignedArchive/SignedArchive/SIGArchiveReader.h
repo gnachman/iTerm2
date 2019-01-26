@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSString *)metadata:(out NSError **)error;
 - (nullable NSData *)signature:(out NSError **)error;
 - (nullable NSInputStream *)payloadInputStream:(out NSError **)error;
-- (nullable NSData *)signingCertificate:(out NSError **)error;
+- (nullable NSArray<NSData *> *)signingCertificates:(out NSError **)error;
 
 @end
 

@@ -102,7 +102,18 @@ static BOOL sInstallingScript;
     }
     
     if (requireSignature) {
+        NSData *data = [[verifier.reader signingCertificates:nil] firstObject];
+        if (!data) {
+            completion(nil, @"Could not find certificate after verficiation (nil data)", NO);
+            return;
+        }
+        SIGCertificate *cert = [[SIGCertificate alloc] initWithData:data];
+        if (!cert) {
+            completion(nil, @"Could not find certificate after verficiation (bad data)", NO);
+            return;
+        }
         [self confirmInstallationOfVerifiedArchive:verifier.reader
+                                   withCertificate:cert
                                         completion:^(BOOL ok) {
                                             if (!ok) {
                                                 completion(nil, @"Installation canceled by user request.", NO);
@@ -136,9 +147,11 @@ static BOOL sInstallingScript;
 }
 
 + (void)confirmInstallationOfVerifiedArchive:(SIGArchiveReader *)reader
+                             withCertificate:(SIGCertificate *)cert
                                   completion:(void (^)(BOOL ok))completion {
-    SIGCertificate *cert = [[SIGCertificate alloc] initWithData:[reader signingCertificate:nil]];
-    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?", reader.url.lastPathComponent, ((cert.name ?: cert.longDescription) ?: @"Unknown")];
+    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?",
+                      reader.url.lastPathComponent,
+                      ((cert.name ?: cert.longDescription) ?: @"Unknown")];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
                                                                  actions:@[ @"OK", @"Cancel" ]
                                                                accessory:nil

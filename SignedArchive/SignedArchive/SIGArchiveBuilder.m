@@ -71,6 +71,16 @@
     if (![self writeCertificate:certificate toStream:writeStream error:error]) {
         return NO;
     }
+
+    // NOTE: The signing certificate must be first. This is a requirement of SecTrustCreateWithCertificates
+    // which is implicit in the file format.
+    SIGCertificate *issuerCertificate = _identity.signingCertificate.issuer;
+    while (issuerCertificate != nil) {
+        if (![self writeCertificate:issuerCertificate.data toStream:writeStream error:error]) {
+            return NO;
+        }
+        issuerCertificate = issuerCertificate.issuer;
+    }
     [writeStream close];
     return YES;
 }
