@@ -111,7 +111,7 @@
         sourceURLs = [sourceURLs arrayByAddingObject:metadata];
     }
 
-    NSString *extension = signingIdentity ? @"itermscript" : @"zip";
+    NSString *extension = signingIdentity ? @"its" : @"zip";
     NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
     [iTermCommandRunner zipURLs:sourceURLs
                       arguments:@[ @"-r" ]

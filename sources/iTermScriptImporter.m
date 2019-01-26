@@ -64,7 +64,7 @@ static BOOL sInstallingScript;
               requireSignature:(BOOL)requireSignature
                     completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
     SIGArchiveVerifier *verifier = [[SIGArchiveVerifier alloc] initWithURL:url];
-    if ([[url pathExtension] isEqualToString:@"itermscript"]) {
+    if ([[url pathExtension] isEqualToString:@"its"]) {
         if (![verifier smellsLikeSignedArchive:NULL]) {
             completion(nil, @"This script archive is corrupt and cannot be installed.", NO);
             return;
