@@ -31,3 +31,4 @@ The script demonstrates running some code when a new session is created. It pick
 
     iterm2.run_forever(main)
 
+:Download:`its <random_color.its>`

@@ -45,3 +45,5 @@ the output in the **Script Console**.
         print(await PresetForProfile(connection, profile))
 
     iterm2.run_until_complete(main)
+
+:Download:`its <current_preset.its>`

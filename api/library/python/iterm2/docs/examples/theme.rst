@@ -32,3 +32,4 @@ This script changes the color presets of all profiles when the theme changes. It
 
     iterm2.run_forever(main)
 
+:Download:`its <theme.its>`

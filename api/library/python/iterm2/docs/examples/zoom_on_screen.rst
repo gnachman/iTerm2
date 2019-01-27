@@ -31,3 +31,5 @@ The script clears "zooms" on the currently visible screen. It hides all text in 
         await iterm2.MainMenu.async_select_menu_item(connection, "Zoom In on Selection")
 
     iterm2.run_until_complete(main)
+
+:Download:`its <zoom_on_screen.its>`

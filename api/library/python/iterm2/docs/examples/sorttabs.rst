@@ -16,7 +16,7 @@ This script sorts the tabs in all windows by the name of the current session.
         for window in app.terminal_windows:
             tabs = window.tabs
             for tab in tabs:
-                tab.tab_name = await tab.async_get_variable("currentSession.session.name")
+                tab.tab_name = await tab.async_get_variable("currentSession.name")
             def tab_name(tab):
                 return tab.tab_name
             sorted_tabs = sorted(tabs, key=tab_name)
@@ -24,4 +24,5 @@ This script sorts the tabs in all windows by the name of the current session.
 
     iterm2.run_until_complete(main)
 
+:Download:`its <sorttabs.its>`
 
