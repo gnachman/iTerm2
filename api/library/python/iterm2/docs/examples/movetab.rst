@@ -1,3 +1,5 @@
+.. _movetab_example:
+
 Move Tab To Next/Previous Window
 ================================
 
@@ -8,6 +10,7 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 .. code-block:: python
 
     #!/usr/bin/env python3.7
+    import iterm2
 
     async def main(connection):
         app = await iterm2.async_get_app(connection)
@@ -36,3 +39,5 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
         await move_current_tab_to_previous_window.async_register(connection)
 
     iterm2.run_forever(main)
+
+:Download:`Download<movetab.its>`

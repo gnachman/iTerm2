@@ -70,23 +70,35 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)valueForVariableName:(NSString *)name {
     NSString *stripped = nil;
-    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    iTermVariables *owner = [self ownerForKey:name forWriting:NO stripped:&stripped];
     return [owner valueForVariableName:stripped];
 }
 
 - (NSString *)stringValueForVariableName:(NSString *)name {
     NSString *stripped = nil;
-    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    iTermVariables *owner = [self ownerForKey:name forWriting:NO stripped:&stripped];
     return [owner stringValueForVariableName:name] ?: @"";
 }
 
-- (iTermVariables *)ownerForKey:(NSString *)key stripped:(out NSString **)stripped {
+- (iTermVariables *)ownerForKey:(NSString *)key forWriting:(BOOL)forWriting stripped:(out NSString **)stripped {
     NSArray<NSString *> *parts = [key componentsSeparatedByString:@"."];
     if (parts.count == 0) {
         return nil;
     }
     if (parts.count == 1) {
         *stripped = key;
+        if (!forWriting) {
+            // Check all anonymous frames in case one of them is a match. Search from oldest to newest.
+            for (iTermTuple<NSString *,iTermVariables *> *tuple in [_frames reverseObjectEnumerator]) {
+                if (tuple.firstObject) {
+                    continue;
+                }
+                if ([tuple.secondObject valueForVariableName:key]) {
+                    return tuple.secondObject;
+                }
+            }
+        }
+        // Writes always go into the most recently added frame.
         return [_frames objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
             return element.firstObject == nil;
         }].secondObject;
@@ -107,7 +119,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)variableNamed:(NSString *)name isReferencedBy:(iTermVariableReference *)reference {
     NSString *tail;
-    iTermVariables *variables = [self ownerForKey:name stripped:&tail];
+    iTermVariables *variables = [self ownerForKey:name forWriting:NO stripped:&tail];
     if (!variables) {
         return NO;
     }
@@ -120,7 +132,7 @@ NS_ASSUME_NONNULL_BEGIN
     for (NSString *key in dict) {
         id object = dict[key];
         NSString *stripped = nil;
-        iTermVariables *owner = [self ownerForKey:key stripped:&stripped];
+        iTermVariables *owner = [self ownerForKey:key forWriting:YES stripped:&stripped];
         NSValue *value = [NSValue valueWithNonretainedObject:owner];
         NSMutableDictionary *inner = valuesByOwner[value];
         if (!inner) {
@@ -150,7 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak {
     NSString *stripped = nil;
-    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    iTermVariables *owner = [self ownerForKey:name forWriting:YES stripped:&stripped];
     if (!owner) {
         return NO;
     }
@@ -180,7 +192,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addLinksToReference:(iTermVariableReference *)reference {
     NSString *tail;
-    iTermVariables *variables = [self ownerForKey:reference.path stripped:&tail];
+    iTermVariables *variables = [self ownerForKey:reference.path forWriting:YES stripped:&tail];
     if (!variables) {
         [_danglingReferences addPointer:(__bridge void * _Nullable)(reference)];
         return;

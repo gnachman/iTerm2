@@ -1,3 +1,5 @@
+.. _enable_broadcasting_example:
+
 Enable Broadcasting Input
 =========================
 
@@ -22,3 +24,5 @@ There may be multiple "broadcast domains". Each broadcast domain has a collectio
 
 
     iterm2.run_until_complete(main)
+
+:Download:`Download<enable_broadcasting.its>`

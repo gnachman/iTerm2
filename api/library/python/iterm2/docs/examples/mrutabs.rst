@@ -1,3 +1,5 @@
+.. _mrutabs_example:
+
 MRU Tabs
 ========
 
@@ -13,7 +15,7 @@ This script keeps tabs in most-recently used order, with the current tab always 
     async def main(connection):
         app = await iterm2.async_get_app(connection)
 
-        async def focus_callback(connection, notification):
+        async def reorder_tabs():
           window = app.current_terminal_window
           if not window:
               return
@@ -24,6 +26,12 @@ This script keeps tabs in most-recently used order, with the current tab always 
               tabs.insert(0, window.current_tab)
               await window.async_set_tabs(tabs)
 
-        await iterm2.notifications.async_subscribe_to_focus_change_notification(connection, focus_callback)
+        async with iterm2.FocusMonitor(connection) as monitor:
+            while True:
+                update = await monitor.async_get_next_update()
+                if update.selected_tab_changed:
+                    await reorder_tabs()
 
     iterm2.run_forever(main)
+
+:Download:`Download<mrutabs.its>`

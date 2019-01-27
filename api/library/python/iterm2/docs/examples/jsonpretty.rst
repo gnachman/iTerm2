@@ -1,3 +1,5 @@
+.. _jsonpretty_example:
+
 JSON Pretty Printer Status Bar Component
 ========================================
 
@@ -24,6 +26,7 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
         app=await iterm2.async_get_app(connection)
 
         # Set the click handler
+        @iterm2.RPC
         async def onclick(session_id):
             session = app.get_session_by_id(session_id)
             selection = await session.async_get_selection()
@@ -34,23 +37,22 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
         vl = "json_pretty_printer"
         knobs = [iterm2.CheckboxKnob("JSON Pretty Printer", False, vl)]
         component = iterm2.StatusBarComponent(
-            "JSONPrettyPrinter",
-            "JSON Pretty Printer",
-            "Select JSON in the terminal, then click this status bar component to see it nicely formatted.",
-            knobs,
-            "{ JSON }",
-            None,
-            "com.iterm2.json-pretty-printer")
+            short_description="JSON Pretty Printer",
+            detailed_description="Select JSON in the terminal, then click this status bar component to see it nicely formatted.",
+            knobs=knobs,
+            exemplar="{ JSON }",
+            update_cadence=None,
+            identifier="com.iterm2.json-pretty-printer")
 
         # This function gets called whenever any of the paths named in defaults (below) changes
         # or its configuration changes.
+        @iterm2.StatusBarRPC
         async def coro(knobs):
             return ["{ JSON }"]
-
-        component.set_click_handler(onclick)
 
         # Register the component.
         await component.async_register(connection, coro, onclick=onclick)
 
     iterm2.run_forever(main)
 
+:Download:`Download<jsonpretty.its>`

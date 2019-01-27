@@ -1,3 +1,5 @@
+.. _escindicator_example:
+
 Escape Key Indicator
 ====================
 
@@ -23,7 +25,6 @@ This script is a long-running daemon since it must continually update the status
         tasks = {}
 
         component = iterm2.StatusBarComponent(
-            name="EscIndicator",
             short_description="Esc Key Indicator",
             detailed_description="Shows a visual indicator when the esc key is pressed",
             knobs=[],
@@ -54,7 +55,15 @@ This script is a long-running daemon since it must continually update the status
             counter += 1
             await session.async_set_variable("user.showEscIndicator", counter)
 
-        async def coro(show_indicator, session_id, knobs):
+        # The user variable `showEscIndicator` is used as a communications channel
+        # between the keyboard monitor and the status bar component coro. Since it
+        # may not always be defined (e.g., when a new session is created) it must be
+        # labeled as optional with the trailing ? to prevent an exception.
+        @iterm2.StatusBarRPC
+        async def coro(
+                knobs,
+                show_indicator=iterm2.Reference("user.showEscIndicator?"),
+                session_id=iterm2.Reference("id")):
             """This function gets called when showEscIndicator changes in any
             session."""
             if show_indicator:
@@ -68,15 +77,8 @@ This script is a long-running daemon since it must continually update the status
             else:
                 return "     "
 
-        # The user variable `showEscIndicator` is used as a communications channel
-        # between the keyboard monitor and the status bar component coro. Since it
-        # may not always be defined (e.g., when a new session is created) it must be
-        # labeled as optional with the trailing ? to prevent an exception.
-        defaults = { "show_indicator": "user.showEscIndicator?",
-                     "session_id": "id" }
-
         # Register the status bar component.
-        await component.async_register(connection, coro, defaults=defaults)
+        await component.async_register(connection, coro)
 
         # Monitor the keyboard
         async with iterm2.KeystrokeMonitor(connection) as mon:
@@ -86,3 +88,4 @@ This script is a long-running daemon since it must continually update the status
 
     iterm2.run_forever(main)
 
+:Download:`Download<escindicator.its>`

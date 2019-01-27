@@ -1,3 +1,5 @@
+.. _georges_title_example:
+
 George's Title Algorithm
 =========================
 
@@ -101,6 +103,8 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
         await georges_title.async_register("George's Title Algorithm", "com.iterm2.example.georges-title-algorithm")
 
     iterm2.run_forever(main)
+
+:Download:`Download<georges_title.its>`
 
 Finally, select *George's Title Algorithm* in **Prefs > Profiles > General > Title**.
 

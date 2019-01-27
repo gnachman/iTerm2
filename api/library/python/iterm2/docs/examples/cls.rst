@@ -1,3 +1,5 @@
+.. _cls_example:
+
 Clear All Sessions
 ==================
 
@@ -28,3 +30,4 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 
     iterm2.run_forever(main)
 
+:Download:`Download<cls.its>`

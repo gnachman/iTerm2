@@ -1,3 +1,5 @@
+.. _targeted_input_example:
+
 Targeted Input
 ==============
 
@@ -31,14 +33,12 @@ if it has a different name, modify the path below appropriately):
 
     ~/Library/ApplicationSupport/iTerm2/Scripts/TargetedInput/iterm2env/versions/*/bin/pip3 install aiohttp
 
-Then, replace `main.py` with:
+Then, replace `targeted_input.py` with:
 
 .. code-block:: python
 
     #!/usr/bin/env python3
     # NOTE: This script depends on aiohttp.
-    # To create this script, use "Full Environment". Then run
-    # ~/Library/ApplicationSupport/iTerm2/Scripts/SCRIPT_NAME_HERE/iterm2env/versions/*/bin/pip3 install aiohttp
     import aiohttp
     import asyncio
     import iterm2
@@ -100,6 +100,8 @@ Then, replace `main.py` with:
         await iterm2.tool.async_register_web_view_tool(connection, "Targeted Input", "com.iterm2.example.targeted-input", False, "http://localhost:9999/")
 
     iterm2.run_forever(main)
+
+:Download:`Download<targeted_input.its>`
 
 Run the script and then open the "Targeted Input" tool. It will appear in the
 **Toolbelt** menu. Turn on broadcast input on a few sessions and hit the

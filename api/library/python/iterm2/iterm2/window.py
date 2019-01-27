@@ -46,6 +46,8 @@ class Window:
         :returns: A new :class:`Window`.
 
         :throws: CreateWindowException if something went wrong.
+
+        .. seealso:: Example ":ref:`create_window_example`"
         """
         if command is not None:
             p = profile.LocalWriteOnlyProfile()
@@ -163,6 +165,11 @@ class Window:
 
         :param tabs: a list of tabs, forming the new set of tabs in this window.
         :raises: RPCException if something goes wrong.
+
+        .. seealso::
+            * Example ":ref:`movetab_example`"
+            * Example ":ref:`mrutabs_example`"
+            * Example ":ref:`sorttabs_example`"
         """
         tab_ids = map(lambda tab: tab.tab_id, tabs)
         result = await iterm2.rpc.async_reorder_tabs(
@@ -186,7 +193,10 @@ class Window:
 
         :param tmux_connection: The tmux connection to own the new tab.
 
-        :returns: A newly created tab, or `None` if it could not be created."""
+        :returns: A newly created tab, or `None` if it could not be created.
+
+        .. seealso:: Example ":ref:`tmux_example`"
+        """
         tmux_window_id = "{}".format(-(self.__number + 1))
         response = await iterm2.rpc.async_rpc_create_tmux_window(
             self.connection,

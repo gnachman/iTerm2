@@ -1,3 +1,5 @@
+.. _zoom_on_screen_example:
+
 Zoom on Screen
 ==============
 
@@ -18,12 +20,18 @@ The script clears "zooms" on the currently visible screen. It hides all text in 
         # overflow, which is lines that have been lost because scrollback history
         # exceeded its limit. These coordinates are consistent across scroll events,
         # although they may refer to no-longer-visible lines.
-        height, history, overflow, first = await session.async_get_number_of_lines()
+        lineInfo = await session.async_get_line_info()
+        (height, history, overflow, first) = (
+            lineInfo.mutable_area_height,
+            lineInfo.scrollback_buffer_height,
+            lineInfo.overflow,
+            lineInfo.first_visible_line_number)
+
         start = iterm2.Point(0, first + overflow)
         end = iterm2.Point(0, first + overflow + height)
         coordRange = iterm2.CoordRange(start, end)
         windowedCoordRange = iterm2.WindowedCoordRange(coordRange)
-        sub = iterm2.SubSelection(windowedCoordRange, iterm2.SelectionMode.CHARACTER)
+        sub = iterm2.SubSelection(windowedCoordRange, iterm2.SelectionMode.CHARACTER, False)
         selection = iterm2.Selection([sub])
 
         # Select the menu item that zooms on the selection.
@@ -31,3 +39,5 @@ The script clears "zooms" on the currently visible screen. It hides all text in 
         await iterm2.MainMenu.async_select_menu_item(connection, "Zoom In on Selection")
 
     iterm2.run_until_complete(main)
+
+:Download:`Download<zoom_on_screen.its>`

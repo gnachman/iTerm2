@@ -23,6 +23,29 @@ static BOOL sInstallingScript;
 + (void)importScriptFromURL:(NSURL *)downloadedURL
               userInitiated:(BOOL)userInitiated
                  completion:(void (^)(NSString *errorMessage))completion {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.install-script", DISPATCH_QUEUE_SERIAL);
+    });
+    dispatch_async(queue, ^{
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_enter(group);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self reallyImportScriptFromURL:downloadedURL
+                              userInitiated:userInitiated
+                                 completion:^(NSString *errorMessage) {
+                                     dispatch_group_leave(group);
+                                     completion(errorMessage);
+                                 }];
+        });
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    });
+}
+
++ (void)reallyImportScriptFromURL:(NSURL *)downloadedURL
+                    userInitiated:(BOOL)userInitiated
+                       completion:(void (^)(NSString *errorMessage))completion {
     if (sInstallingScript) {
         completion(@"Another import is in progress. Please try again after it completes.");
         return;
@@ -64,7 +87,7 @@ static BOOL sInstallingScript;
               requireSignature:(BOOL)requireSignature
                     completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
     SIGArchiveVerifier *verifier = [[SIGArchiveVerifier alloc] initWithURL:url];
-    if ([[url pathExtension] isEqualToString:@"itermscript"]) {
+    if ([[url pathExtension] isEqualToString:@"its"]) {
         if (![verifier smellsLikeSignedArchive:NULL]) {
             completion(nil, @"This script archive is corrupt and cannot be installed.", NO);
             return;
@@ -102,7 +125,18 @@ static BOOL sInstallingScript;
     }
     
     if (requireSignature) {
+        NSData *data = [[verifier.reader signingCertificates:nil] firstObject];
+        if (!data) {
+            completion(nil, @"Could not find certificate after verficiation (nil data)", NO);
+            return;
+        }
+        SIGCertificate *cert = [[SIGCertificate alloc] initWithData:data];
+        if (!cert) {
+            completion(nil, @"Could not find certificate after verficiation (bad data)", NO);
+            return;
+        }
         [self confirmInstallationOfVerifiedArchive:verifier.reader
+                                   withCertificate:cert
                                         completion:^(BOOL ok) {
                                             if (!ok) {
                                                 completion(nil, @"Installation canceled by user request.", NO);
@@ -136,9 +170,11 @@ static BOOL sInstallingScript;
 }
 
 + (void)confirmInstallationOfVerifiedArchive:(SIGArchiveReader *)reader
+                             withCertificate:(SIGCertificate *)cert
                                   completion:(void (^)(BOOL ok))completion {
-    SIGCertificate *cert = [[SIGCertificate alloc] initWithData:[reader signingCertificate:nil]];
-    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?", reader.url.lastPathComponent, ((cert.name ?: cert.longDescription) ?: @"Unknown")];
+    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?",
+                      reader.url.lastPathComponent,
+                      ((cert.name ?: cert.longDescription) ?: @"Unknown")];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
                                                                  actions:@[ @"OK", @"Cancel" ]
                                                                accessory:nil

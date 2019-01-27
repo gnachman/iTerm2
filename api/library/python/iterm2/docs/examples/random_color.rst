@@ -1,3 +1,5 @@
+.. _random_color_example:
+
 Random Color Preset
 ===================
 
@@ -31,3 +33,4 @@ The script demonstrates running some code when a new session is created. It pick
 
     iterm2.run_forever(main)
 
+:Download:`Download<random_color.its>`

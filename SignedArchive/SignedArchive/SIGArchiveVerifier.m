@@ -26,7 +26,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     NSError *_readerLoadError;
     SIGTrust *_trust;
     NSInputStream *_payloadInputStream;
-    SIGCertificate *_certificate;
+    NSArray<SIGCertificate *> *_certificates;
     NSData *_signatureData;
     BOOL _called;
     BOOL _prepared;
@@ -255,22 +255,30 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
         return NO;
     }
 
-    NSData *certificateData = [_reader signingCertificate:error];
-    if (!certificateData) {
+    NSArray<NSData *> *certificateDatas = [_reader signingCertificates:error];
+    if (!certificateDatas) {
         return NO;
+    }
+    if (certificateDatas.count == 0) {
+        *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
     }
 
-    _certificate = [[SIGCertificate alloc] initWithData:certificateData];
-    if (!_certificate) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeInputMalformedCertificate];
+    NSMutableArray<SIGCertificate *> *certs = [NSMutableArray array];
+    for (NSData *certificateData in certificateDatas) {
+        SIGCertificate *certificate = [[SIGCertificate alloc] initWithData:certificateData];
+        if (!certificate) {
+            if (error) {
+                *error = [SIGError errorWithCode:SIGErrorCodeInputMalformedCertificate];
+            }
+            return NO;
         }
-        return NO;
+        [certs addObject:certificate];
     }
+    _certificates = certs;
 
     SIGX509Policy *x509 = [[SIGX509Policy alloc] init];
     SIGCRLPolicy *crl = [[SIGCRLPolicy alloc] init];
-    _trust = [[SIGTrust alloc] initWithCertificates:@[ _certificate ]
+    _trust = [[SIGTrust alloc] initWithCertificates:certs
                                            policies:@[ x509, crl ]
                                               error:error];
     if (!_trust) {
@@ -298,7 +306,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     }
     return [algorithm verifyInputStream:_payloadInputStream
                           signatureData:_signatureData
-                              publicKey:_certificate.publicKey.secKey
+                              publicKey:_certificates.firstObject.publicKey.secKey
                                   error:error];
 }
 

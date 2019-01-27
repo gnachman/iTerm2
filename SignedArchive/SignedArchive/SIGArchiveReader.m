@@ -97,15 +97,23 @@
     return [chunk data:error];
 }
 
-- (NSData *)signingCertificate:(out NSError * _Nullable __autoreleasing *)error {
-    SIGArchiveChunk *chunk = [self chunkWithTag:SIGArchiveTagCertificate];
-    if (!chunk) {
+- (NSArray<NSData *> *)signingCertificates:(out NSError * _Nullable __autoreleasing *)error {
+    NSArray<SIGArchiveChunk *> *chunks = [self chunksWithTag:SIGArchiveTagCertificate];
+    if (!chunks.count) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
         }
         return nil;
     }
-    return [chunk data:error];
+    NSMutableArray<NSData *> *datas = [NSMutableArray array];
+    for (SIGArchiveChunk *chunk in chunks) {
+        NSData *data = [chunk data:error];
+        if (!data) {
+            return nil;
+        }
+        [datas addObject:data];
+    }
+    return datas;
 }
 
 - (NSInputStream *)payloadInputStream:(out NSError **)error {
@@ -119,6 +127,14 @@
     return [[SIGPartialInputStream alloc] initWithURL:_url
                                                 range:NSMakeRange(chunk.payloadOffset,
                                                                   chunk.payloadLength)];
+}
+
+- (long long)payloadLength {
+    SIGArchiveChunk *chunk = [self chunkWithTag:SIGArchiveTagPayload];
+    if (!chunk) {
+        return 0;
+    }
+    return chunk.payloadLength;
 }
 
 - (BOOL)load:(out NSError **)errorOut {
@@ -183,6 +199,16 @@
     }
 
     return _chunks[index];
+}
+
+- (NSArray<SIGArchiveChunk *> *)chunksWithTag:(SIGArchiveTag)tag {
+    NSIndexSet *indexes = [_chunks indexesOfObjectsPassingTest:^BOOL(SIGArchiveChunk * _Nonnull obj,
+                                                                     NSUInteger idx,
+                                                                     BOOL * _Nonnull stop) {
+        return obj.tag == tag;
+    }];
+
+    return [_chunks objectsAtIndexes:indexes];
 }
 
 @end

@@ -1,3 +1,5 @@
+.. _current_preset_example:
+
 Get Selected Color Preset
 =========================
 
@@ -45,3 +47,5 @@ the output in the **Script Console**.
         print(await PresetForProfile(connection, profile))
 
     iterm2.run_until_complete(main)
+
+:Download:`Download<current_preset.its>`

@@ -2,9 +2,9 @@ Color
 -----
 .. automodule:: iterm2.color
 .. autoclass:: iterm2.Color
-   :members: red, green, blue, alpha, color_space, COLOR_SPACE_NAME_SRGB, COLOR_SPACE_NAME_CALIBRATED
-
-
+   :members: red, green, blue, alpha, color_space
+.. autoclass:: iterm2.ColorSpace
+   :members: SRGB, CALIBRATED
 
 ----
 

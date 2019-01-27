@@ -108,6 +108,11 @@ class StatusBarComponent:
     :param exemplar: Example value to show in the picker UI as the sample content of the component.
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
     :param identifier: A string uniquely identifying this component. Use a backwards domain name. For example, `com.example.calculator` for a calculator component provided by example.com.
+
+    .. seealso::
+        * Example ":ref:`escindicator_example`"
+        * Example ":ref:`jsonpretty_example`"
+        * Example ":ref:`mousemode_example`"
     """
     def __init__(self,
             short_description: str,
@@ -141,6 +146,8 @@ class StatusBarComponent:
         :param session_id: The session identifier.
         :param html: A string containing HTML to show.
         :param size: The desired size of the popover, a :class:`~iterm2.util.Size`.
+
+        .. seealso:: Example ":ref:`jsonpretty_example`"
         """
         await iterm2.rpc.async_open_status_bar_component_popover(
                 self.__connection,
@@ -161,6 +168,40 @@ class StatusBarComponent:
         :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time. It should take a special argument named "knobs" that is a dictionary with configuration settings. It may return a string or a list of strings. If it returns a list of strings then the longest one that fits will be used.
         :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
         :param onclick: A coroutine to run when the user clicks on the status bar component. It should take one argument, which is the session_id of the session owning the status bar component that was clicked on.
+
+        Example:
+
+          .. code-block:: python
+
+              component = iterm2.StatusBarComponent(
+                  short_description="Session ID",
+                  detailed_description="Show the session's identifier",
+                  knobs=[],
+                  exemplar="[session ID]",
+                  update_cadence=None,
+                  identifier="com.iterm2.example.statusbar-rpc")
+
+              @iterm2.StatusBarRPC
+              async def session_id_status_bar_coro(
+                      knobs,
+                      session_id=iterm2.Reference("id")):
+                  # This status bar component shows the current session ID, which
+                  # is useful for debugging scripts.
+                  return session_id
+
+              @iterm2.RPC
+              async def my_status_bar_click_handler(session_id):
+                  # When you click the status bar it opens a popover with the
+                  # message "Hello World"
+                  await component.async_open_popover(
+                          session_id,
+                          "Hello world",
+                          iterm2.Size(200, 200))
+
+              await component.async_register(
+                      connection,
+                      session_id_status_bar_coro,
+                      onclick=my_status_bar_click_handler)
         """
         self.__connection = connection
         await coro.async_register(connection, self)

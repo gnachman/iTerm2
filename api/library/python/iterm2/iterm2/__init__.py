@@ -7,7 +7,7 @@ from iterm2.arrangement import SavedArrangementException, Arrangement
 
 from iterm2.broadcast import BroadcastDomain, async_set_broadcast_domains
 
-from iterm2.color import Color
+from iterm2.color import Color, ColorSpace
 
 from iterm2.colorpresets import ColorPreset, ListPresetsException, GetPresetException
 

@@ -30,6 +30,8 @@ class MainMenu:
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
 
         :throws MenuItemException: if something goes wrong.
+
+        .. seealso:: Example ":ref:`zoom_on_screen_example`"
         """
         response = await iterm2.rpc.async_menu_item(connection, identifier, False)
         status = response.menu_item_response.status

@@ -37,7 +37,10 @@ async def generic_handle_rpc(coro, connection, notif):
 class Reference:
     """Defines a reference to a variable for use in the @RPC decorator.
 
-    See also: :func:`~iterm2.registration.RPC`.
+    .. seealso::
+        * :func:`~iterm2.registration.RPC`.
+        * Example ":ref:`mousemode_example`"
+        * Example ":ref:`statusbar_example`"
     """
     def __init__(self, name):
         self.name = name
@@ -51,7 +54,15 @@ def RPC(func):
 
     The decorated coroutine will have a `async_register` value that you must call to complete the registration. `async_register` takes one required argument, the :class:`~iterm2.connection.Connection`. It also takes one optional argument, which is a timeout. The `timeout` is a value in seconds. If not given, the default timeout will be used. When waiting for an RPC to return, iTerm2 will stop waiting for the RPC after the timeout elapses.
 
-    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `~iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
+    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`iterm2.Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `~iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
+
+    .. seealso::
+        * Example ":ref:`badgetitle_example`"
+        * Example ":ref:`blending_example`"
+        * Example ":ref:`close_to_the_right_example`"
+        * Example ":ref:`cls_example`"
+        * Example ":ref:`jsonpretty_example`"
+        * Example ":ref:`movetab_example`"
 
     That's complicated, but an example will make it clearer:
 
@@ -102,6 +113,8 @@ def TitleProviderRPC(func):
 
     Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider. Then it takes a unique identifier, a string, which must be unique among all title providers.
 
+    .. seealso:: Example ":ref:`georges_title_example`"
+
     Example:
 
       .. code-block:: python
@@ -118,8 +131,8 @@ def TitleProviderRPC(func):
                   display_name="Upper-case Title",
                   unique_identifier="com.iterm2.example.title-provider")
     """
-    async def async_register(connection, display_name, unqiue_identifier, timeout=None):
-        assert unqiue_identifier
+    async def async_register(connection, display_name, unique_identifier, timeout=None):
+        assert unique_identifier
         signature = inspect.signature(func)
         defaults = {}
         for k, v in signature.parameters.items():
@@ -136,7 +149,7 @@ def TitleProviderRPC(func):
                 defaults=defaults,
                 role=iterm2.notifications.RPC_ROLE_SESSION_TITLE,
                 session_title_display_name=display_name,
-                session_title_unique_id=unqiue_identifier)
+                session_title_unique_id=unique_identifier)
         func.rpc_connection = connection
 
     func.async_register = async_register
@@ -154,6 +167,12 @@ def StatusBarRPC(func):
     It may return a string or an array of strings. In the case that it returns an array, the longest string fitting the available space will be used.
 
     Note that unlike the other RPC decorators, you use :meth:`~iterm2.statusbar.StatusBarComponent.async_register` to register it, rather than a register property added to the coroutine.
+
+    .. seealso::
+        * Example ":ref:`escindicator_example`"
+        * Example ":ref:`jsonpretty_example`"
+        * Example ":ref:`mousemode_example`"
+        * Example ":ref:`statusbar_example`"
 
     Example:
 

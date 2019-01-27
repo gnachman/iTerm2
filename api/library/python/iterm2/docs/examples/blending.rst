@@ -1,7 +1,9 @@
+.. _blending_example:
+
 Modify Background Image Blending
 --------------------------------
 
-This script demonstrates registering an RPC to adjust the image blending level of the current session. You can bind it to a keystroke by adding a new key binding in **Prefs > Keys**, selecting the action **Invoke Script Function**, and giving it the invocation `blend_more(session_id: session.id)` or `blend_less(session_id: session.id)`.
+This script demonstrates registering an RPC to adjust the image blending level of the current session. You can bind it to a keystroke by adding a new key binding in **Prefs > Keys**, selecting the action **Invoke Script Function**, and giving it the invocation `blend_more(session_id: id)` or `blend_less(session_id: id)`.
 
 .. code-block:: python
 
@@ -30,3 +32,4 @@ This script demonstrates registering an RPC to adjust the image blending level o
 
     iterm2.run_forever(main)
 
+:Download:`Download<blending.its>`

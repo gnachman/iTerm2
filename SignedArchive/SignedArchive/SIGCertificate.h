@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) NSString *longDescription;
 @property (nonatomic, readonly, nullable) NSString *name;
 @property (nonatomic, readonly, nullable) NSData *serialNumber;
+@property (nonatomic, readonly, nullable) SIGCertificate *issuer;
 
 - (nullable instancetype)initWithSecCertificate:(SecCertificateRef)secCertificate NS_DESIGNATED_INITIALIZER;
 - (nullable instancetype)initWithData:(NSData *)data NS_DESIGNATED_INITIALIZER;

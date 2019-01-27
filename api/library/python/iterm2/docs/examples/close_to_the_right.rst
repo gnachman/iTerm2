@@ -1,3 +1,5 @@
+.. _close_to_the_right_example:
+
 Close Tabs to the Right
 =======================
 
@@ -30,4 +32,4 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 
     iterm2.run_forever(main)
 
-
+:Download:`Download<close_to_the_right.its>`

@@ -1,3 +1,5 @@
+.. _tmux_example:
+
 Tmux Integration
 ================
 
@@ -22,3 +24,5 @@ First, attach to at least one tmux session using `tmux -CC`. This script will cr
         tab2 = await window.async_create_tmux_tab(tmux_conn)
 
     iterm2.run_until_complete(main)
+
+:Download:`Download<tmux.its>`

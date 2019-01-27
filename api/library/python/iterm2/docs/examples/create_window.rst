@@ -1,3 +1,5 @@
+.. _create_window_example:
+
 Create Window — Custom Escape Sequence
 ======================================
 
@@ -18,7 +20,9 @@ starting point for developing your own custom escape sequence handler.
 
     iterm2.run_forever(main)
 
-To run the script, use:
+:Download:`Download<create_window.its>`
+
+To create a window when this script is running, invoke this command:
 
 .. code-block:: bash
 

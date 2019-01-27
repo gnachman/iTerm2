@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SIGArchiveReader : NSObject
 
 @property (nonatomic, readonly) NSURL *url;
+@property (nonatomic, readonly) long long payloadLength;
 
 - (nullable instancetype)initWithURL:(NSURL *)url NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -23,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSString *)metadata:(out NSError **)error;
 - (nullable NSData *)signature:(out NSError **)error;
 - (nullable NSInputStream *)payloadInputStream:(out NSError **)error;
-- (nullable NSData *)signingCertificate:(out NSError **)error;
+- (nullable NSArray<NSData *> *)signingCertificates:(out NSError **)error;
 
 @end
 

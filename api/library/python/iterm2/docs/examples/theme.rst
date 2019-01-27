@@ -1,3 +1,5 @@
+.. _theme_example:
+
 Change Color Presets On Theme Change
 ====================================
 
@@ -32,3 +34,4 @@ This script changes the color presets of all profiles when the theme changes. It
 
     iterm2.run_forever(main)
 
+:Download:`Download<theme.its>`

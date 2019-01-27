@@ -7,7 +7,6 @@ Provides classes for monitoring keyboard activity and modifying how iTerm2 handl
   :members: async_get
 
 .. autoclass:: iterm2.KeystrokeFilter
-  :members: async_wait_forever
 
 .. autoclass:: iterm2.Keystroke
   :members: characters, characters_ignoring_modifiers, modifiers, keycode

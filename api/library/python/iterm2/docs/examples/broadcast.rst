@@ -1,3 +1,5 @@
+.. _broadcast_example:
+
 Asymmetric Broadcast Input
 ==========================
 
@@ -64,3 +66,5 @@ This demonstrates:
         await task
 
     iterm2.run_until_complete(main)
+
+:Download:`Download<broadcast.its>`

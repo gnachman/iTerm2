@@ -1,3 +1,5 @@
+.. _badgetitle_example:
+
 Badge or Window Name in Tab Title
 =================================
 
@@ -28,6 +30,8 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
 
     iterm2.run_forever(main)
 
+:Download:`Download<badgetitle.its>`
+
 Another similar example demonstrates showing the window title in the tab.
 Terminal apps may choose to set the window title without setting the tab title,
 but some users prefer to see the window title in both places.
@@ -54,3 +58,5 @@ but some users prefer to see the window title in both places.
         await window_title_in_tab.async_register(connection, "Window Name", "com.iterm2.example.window-name")
 
     iterm2.run_forever(main)
+
+:Download:`Download<windowtitle.its>`

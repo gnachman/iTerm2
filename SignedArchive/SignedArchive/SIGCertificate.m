@@ -9,6 +9,7 @@
 #import "SIGCertificate.h"
 
 #import "SIGKey.h"
+#import "SIGKeychain.h"
 #import "SIGTrust.h"
 
 @implementation SIGCertificate {
@@ -97,6 +98,84 @@
         return nil;
     }
     return value;
+}
+
++ (NSDictionary *)queryForCertWithName:(CFDataRef)name {
+    return @{ (__bridge id)kSecClass: (__bridge id)kSecClassCertificate,
+              (__bridge id)kSecAttrSubject: (__bridge NSData *)name,
+              (__bridge id)kSecReturnRef: (__bridge id)kCFBooleanTrue,
+              (__bridge id)kSecMatchLimit: (__bridge id)kSecMatchLimitAll };
+}
+
++ (BOOL)certificateInArray:(CFArrayRef)array atIndex:(NSInteger)i hasName:(CFDataRef)name {
+    SecCertificateRef secCertificate = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+
+    CFDataRef subjectContent = SecCertificateCopyNormalizedSubjectContent(secCertificate, NULL);
+    const BOOL result = CFEqual(subjectContent, name);
+    if (subjectContent) {
+        CFRelease(subjectContent);
+    }
+    return result;
+}
+
++ (BOOL)certificateIsRootWithName:(CFDataRef)name {
+    CFArrayRef array;
+    OSStatus err = SecTrustCopyAnchorCertificates(&array);
+    if (err != noErr) {
+        NSLog(@"Failed to get root certs: %@",
+              (__bridge_transfer NSString *)SecCopyErrorMessageString(err, NULL));
+        return NO;
+    }
+    for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
+        if ([self certificateInArray:array atIndex:i hasName:name]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (SecCertificateRef)secCertificateWithName:(CFDataRef)name {
+    if (name == NULL) {
+        return NULL;
+    }
+    NSDictionary *query = [self queryForCertWithName:name];
+    CFTypeRef result = NULL;
+    OSErr err = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
+    if (err != noErr) {
+        if (![self certificateIsRootWithName:name]) {
+            NSLog(@"Failed to get certificate: %@",
+                  (__bridge_transfer NSString *)SecCopyErrorMessageString(err, NULL));
+        }
+        return nil;
+    }
+
+    CFArrayRef array = (CFArrayRef)result;
+    for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
+        if ([SIGCertificate certificateInArray:array atIndex:i hasName:name]) {
+            return (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+        }
+    }
+
+    return NULL;
+}
+
+- (SIGCertificate *)issuer {
+    if (!_secCertificate) {
+        return nil;
+    }
+    SIGKeychain *keychain = [SIGKeychain sharedInstance];
+    if (keychain == nil) {
+        return nil;
+    }
+    CFDataRef issuerName = SecCertificateCopyNormalizedIssuerSequence(_secCertificate);
+    if (!issuerName) {
+        return nil;
+    }
+    SecCertificateRef secCertificate = [SIGCertificate secCertificateWithName:issuerName];
+    if (secCertificate == NULL) {
+        return nil;
+    }
+    return [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
 }
 
 @end

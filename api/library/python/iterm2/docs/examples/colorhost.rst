@@ -1,3 +1,5 @@
+.. _colorhost_example:
+
 Per-Host Colors
 ===============
 
@@ -60,3 +62,5 @@ Edit the `colormap` variable to specify the hostname to color preset mapping you
                 asyncio.create_task(MonitorSession(connection, app.get_session_by_id(session_id)))
 
     iterm2.run_forever(main)
+
+:Download:`Download<colorhost.its>`
