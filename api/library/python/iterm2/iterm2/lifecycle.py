@@ -97,15 +97,18 @@ class NewSessionMonitor:
 
       :param connection: The :class:`~iterm2.connection.Connection` to use.
 
-       Example:
+      .. seealso::
+          * Example ":ref:`colorhost_example`"
+          * Example ":ref:`random_color_example`"
 
-       .. code-block:: python
+      Example:
 
-           async with iterm2.NewSessionMonitor(connection) as mon:
-               while True:
-                   session_id = await mon.async_get()
-                   print("Session ID {} created".format(session_id))
+      .. code-block:: python
 
+          async with iterm2.NewSessionMonitor(connection) as mon:
+              while True:
+                  session_id = await mon.async_get()
+                  print("Session ID {} created".format(session_id))
       """
     def __init__(self, connection: iterm2.Connection):
         self.__connection = connection

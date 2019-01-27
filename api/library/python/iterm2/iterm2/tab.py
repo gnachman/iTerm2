@@ -91,8 +91,9 @@ class Tab:
         """
         Selects this tab.
 
-        :param order_window_front: Whether the window this session is in should be
-          brought to the front and given keyboard focus.
+        :param order_window_front: Whether the window this session is in should be brought to the front and given keyboard focus.
+
+        .. seealso:: Example ":ref:`function_key_tabs_example`"
         """
         await iterm2.rpc.async_activate(
             self.connection,
@@ -153,6 +154,8 @@ class Tab:
         :returns: The variable's value or `None` if it is undefined.
 
         :throws: :class:`RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`sorttabs_example`"
         """
         result = await iterm2.rpc.async_variable(self.connection, gets=[name], tab_id=self.__tab_id)
         status = result.variable_response.status
@@ -168,6 +171,8 @@ class Tab:
         :param force: If True, the user will not be prompted for a confirmation.
 
         :throws: :class:`RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`close_to_the_right_example`"
         """
         result = await iterm2.rpc.async_close(self.connection, tabs=[self.__tab_id], force=force)
         status = result.close_response.statuses[0]

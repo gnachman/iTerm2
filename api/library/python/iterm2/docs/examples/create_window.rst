@@ -1,3 +1,5 @@
+.. _create_window_example:
+
 Create Window — Custom Escape Sequence
 ======================================
 

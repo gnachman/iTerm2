@@ -1,3 +1,5 @@
+.. _theme_example:
+
 Change Color Presets On Theme Change
 ====================================
 

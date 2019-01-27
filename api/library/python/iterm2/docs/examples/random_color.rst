@@ -1,3 +1,5 @@
+.. _random_color_example:
+
 Random Color Preset
 ===================
 

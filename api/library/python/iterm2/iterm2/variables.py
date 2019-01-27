@@ -23,6 +23,10 @@ class VariableMonitor:
    :param name: The variable name.
    :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` the identifier may be "all" or "active".
 
+    .. seealso::
+        * Example ":ref:`colorhost_example`"
+        * Example ":ref:`theme_example`"
+
     Example:
 
       .. code-block:: python

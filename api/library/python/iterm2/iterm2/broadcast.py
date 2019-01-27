@@ -10,6 +10,8 @@ class BroadcastDomain:
     those keystrokes being sent to all sessions in that domain.
 
     Broadcast domains are disjoint.
+
+    .. seealso:: Example ":ref:`enable_broadcasting_example`"
     """
     def __init__(self):
         self.__sessions = []
@@ -41,6 +43,8 @@ async def async_set_broadcast_domains(
 
     :param connection: The connection to iTerm2.
     :param broadcast_domains: The new collection of broadcast domains.
+
+    .. seealso:: Example ":ref:`enable_broadcasting_example`"
     """
     await iterm2.rpc.async_set_broadcast_domains(connection, list(
         map(lambda d: list(

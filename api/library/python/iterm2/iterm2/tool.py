@@ -19,6 +19,8 @@ async def async_register_web_view_tool(
     :param url: The URL to show in the webview.
 
     :raises: :class:`~iterm2.RPCException` if something goes wrong
+
+    .. seealso:: Example ":ref:`targeted_input_example`"
     """
     result = await iterm2.rpc.async_register_web_view_tool(
         connection,

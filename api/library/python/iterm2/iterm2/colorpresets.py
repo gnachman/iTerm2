@@ -43,6 +43,10 @@ class ColorPreset:
         :param connection: An :class:`~iterm2.Connection`.
 
         :returns: Names of the color presets.
+
+        .. seealso::
+            * Example ":ref:`current_preset_example`"
+            * Example ":ref:`random_color_example`"
         """
         result = await iterm2.rpc.async_list_color_presets(connection)
         if result.color_preset_response.status == iterm2.api_pb2.ColorPresetResponse.Status.Value("OK"):
@@ -57,7 +61,13 @@ class ColorPreset:
         :param connection: The connection to iTerm2.
         :param name: The name of the preset to fetch.
 
-        :returns: Either a new preset or `None`."""
+        :returns: Either a new preset or `None`.
+
+        .. seealso::
+            * Example ":ref:`colorhost_example`"
+            * Example ":ref:`current_preset_example`"
+            * Example ":ref:`theme_example`"
+        """
         result = await iterm2.rpc.async_get_color_preset(connection, name)
         if result.color_preset_response.status == iterm2.api_pb2.ColorPresetResponse.Status.Value("OK"):
             return ColorPreset(result.color_preset_response.get_preset.color_settings)

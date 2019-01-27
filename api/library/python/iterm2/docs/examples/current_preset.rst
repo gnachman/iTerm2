@@ -1,3 +1,5 @@
+.. _current_preset_example:
+
 Get Selected Color Preset
 =========================
 

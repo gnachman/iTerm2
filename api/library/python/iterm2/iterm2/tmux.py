@@ -87,6 +87,8 @@ class TmuxConnection:
         This may not be called from within a :class:`~iterm2.Transaction`.
 
         :returns: A new :class:`Window`.
+
+        .. seealso:: Example ":ref:`tmux_example`"
         """
         response = await iterm2.rpc.async_rpc_create_tmux_window(self.__app.connection,
                                                                  self.__connection_id)
@@ -107,6 +109,8 @@ async def async_get_tmux_connections(connection: iterm2.connection.Connection) -
 
     :param connection: The connection to iTerm2.
     :returns: The current tmux connections.
+
+    .. seealso:: Example ":ref:`tmux_example`"
     """
     response = await iterm2.rpc.async_rpc_list_tmux_connections(connection)
     app = await iterm2.app.async_get_app(connection)

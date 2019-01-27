@@ -1,3 +1,5 @@
+.. _targeted_input_example:
+
 Targeted Input
 ==============
 

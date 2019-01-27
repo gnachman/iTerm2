@@ -1,3 +1,5 @@
+.. _sorttabs_example:
+
 Sort Tabs
 =========
 

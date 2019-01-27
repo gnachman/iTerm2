@@ -1,3 +1,5 @@
+.. _georges_title_example:
+
 George's Title Algorithm
 =========================
 

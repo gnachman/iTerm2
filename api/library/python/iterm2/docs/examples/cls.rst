@@ -1,3 +1,5 @@
+.. _cls_example:
+
 Clear All Sessions
 ==================
 

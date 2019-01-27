@@ -820,6 +820,11 @@ class WriteOnlyProfile:
         """Sets the color preset.
 
         :param preset: The new value.
+
+        .. seealso::
+            * Example ":ref:`colorhost_example`"
+            * Example ":ref:`random_color_example`"
+            * Example ":ref:`theme_example`"
         """
         coros = []
         for value in preset.values:
@@ -1149,6 +1154,8 @@ class WriteOnlyProfile:
 
     async def async_set_blend(self, value: float):
         """Sets how much the default background color gets blended with the background image.
+
+        .. seealso:: Example ":ref:`blending_example`"
 
         :param value: A float in 0 to 1"""
         return await self._async_simple_set("Blend", value)
@@ -2448,6 +2455,8 @@ class PartialProfile(Profile):
         :param guids: Lists GUIDs to list. Pass None for all profiles.
 
         :returns: A list of :class:`PartialProfile` objects with only the specified properties set.
+
+        .. seealso:: Example ":ref:`theme_example`"
         """
         response = await iterm2.rpc.async_list_profiles(connection, guids, properties)
         profiles = []
@@ -2465,7 +2474,10 @@ class PartialProfile(Profile):
 
         Raises BadGUIDException if the Guid is not set or does not match a profile.
 
-        :returns: A :class:`Profile`."""
+        :returns: A :class:`Profile`.
+
+        .. seealso:: Example ":ref:`theme_example`"
+        """
         if self.guid is None:
             raise
         response = await iterm2.rpc.async_list_profiles(self.connection, [self.guid], None)

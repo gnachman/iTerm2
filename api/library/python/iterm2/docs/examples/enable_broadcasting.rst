@@ -1,3 +1,5 @@
+.. _enable_broadcasting_example:
+
 Enable Broadcasting Input
 =========================
 

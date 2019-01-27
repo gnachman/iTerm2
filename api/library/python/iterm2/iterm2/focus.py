@@ -24,9 +24,9 @@ class FocusUpdateWindowChanged:
     `TERMINAL_WINDOW_IS_CURRENT`: A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
     `TERMINAL_WINDOW_RESIGNED_KEY`: A terminal window no longer has keyboard focus."""
 
-    TERMINAL_WINDOW_BECAME_KEY = 0
-    TERMINAL_WINDOW_IS_CURRENT = 1
-    TERMINAL_WINDOW_RESIGNED_KEY = 2
+    TERMINAL_WINDOW_BECAME_KEY = 0  # A terminal window received keyboard focus.
+    TERMINAL_WINDOW_IS_CURRENT = 1  # A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
+    TERMINAL_WINDOW_RESIGNED_KEY = 2  # A terminal window no longer has keyboard focus.
     TERMINAL_WINDOW_STRINGS = [ "WindowBecameKey", "WindowIsCurrent", "WindowResignedKey" ]
 
     def __init__(self, window_id: str, event: str):
@@ -131,7 +131,10 @@ class FocusUpdate:
 class FocusMonitor:
     """An asyncio context manager for monitoring keyboard focus changes.
 
-    :param connection: A connection to iTerm2."""
+    :param connection: A connection to iTerm2.
+
+    .. seealso:: Example ":ref:`mrutabs_example`"
+    """
     def __init__(self, connection: iterm2.connection.Connection):
         self.__connection = connection
         self.__queue = []

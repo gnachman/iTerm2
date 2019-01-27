@@ -1,3 +1,5 @@
+.. _movetab_example:
+
 Move Tab To Next/Previous Window
 ================================
 

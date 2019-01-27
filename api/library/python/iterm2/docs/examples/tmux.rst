@@ -1,3 +1,5 @@
+.. _tmux_example:
+
 Tmux Integration
 ================
 

@@ -1,3 +1,5 @@
+.. _function_key_tabs_example:
+
 Function Key Tabs
 =================
 

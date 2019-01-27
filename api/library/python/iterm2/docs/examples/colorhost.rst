@@ -1,3 +1,5 @@
+.. _colorhost_example:
+
 Per-Host Colors
 ===============
 

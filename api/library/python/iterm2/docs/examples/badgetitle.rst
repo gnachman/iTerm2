@@ -1,3 +1,5 @@
+.. _badgetitle_example:
+
 Badge or Window Name in Tab Title
 =================================
 

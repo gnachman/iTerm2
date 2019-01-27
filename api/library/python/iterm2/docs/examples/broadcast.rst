@@ -1,3 +1,5 @@
+.. _broadcast_example:
+
 Asymmetric Broadcast Input
 ==========================
 

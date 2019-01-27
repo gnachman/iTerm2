@@ -346,10 +346,16 @@ class App:
 
     @property
     def broadcast_domains(self) -> typing.List[iterm2.broadcast.BroadcastDomain]:
-        """Returns the current broadcast domains."""
+        """Returns the current broadcast domains.
+
+        .. seealso::
+            * Example ":ref:`targeted_input_example`"
+            * Example ":ref:`enable_broadcasting_example`"
+        """
         return self.__broadcast_domains
 
-    def get_tab_and_window_for_session(self, session: iterm2.session.Session) -> typing.Union[typing.Tuple[None, None], typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
+    def get_tab_and_window_for_session(self,
+            session: iterm2.session.Session) -> typing.Union[typing.Tuple[None, None], typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
         """Finds the tab and window that own a session.
 
         :param session: The session whose tab and window you wish to find.

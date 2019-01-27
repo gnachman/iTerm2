@@ -270,6 +270,11 @@ class KeystrokeMonitor:
     :param connection: The :class:`~iterm2.Connection` to use.
     :param session: The session ID to affect, or `None` meaning all sessions.
 
+    .. seealso::
+        * Example ":ref:`broadcast_example`"
+        * Example ":ref:`escindicator_example`"
+        * Example ":ref:`function_key_tabs_example`"
+
     Example:
 
       .. code-block:: python
@@ -308,18 +313,22 @@ class KeystrokeFilter:
     :param patterns: A list of :class:`KeystrokePattern` objects specifying keystrokes whose regular handling should be disabled.
     :param session: The session ID to affect, or None meaning all.
 
-       Example:
+    .. seealso::
+        * Example ":ref:`broadcast_example`"
+        * Example ":ref:`function_key_tabs_example`"
 
-       .. code-block:: python
+    Example:
 
-           # Prevent iTerm2 from handling all control-key combinations.
-           ctrl = iterm2.KeystrokePattern()
-           ctrl.required_modifiers = [iterm2.Modifier.CONTROL]
-           ctrl.keycodes = [keycode for keycode in iterm2.Keycode]
+    .. code-block:: python
 
-           filter = iterm2.KeystrokeFilter(connection, [ctrl])
-           async with filter as mon:
-               await iterm2.async_wait_forever()
+        # Prevent iTerm2 from handling all control-key combinations.
+        ctrl = iterm2.KeystrokePattern()
+        ctrl.required_modifiers = [iterm2.Modifier.CONTROL]
+        ctrl.keycodes = [keycode for keycode in iterm2.Keycode]
+
+        filter = iterm2.KeystrokeFilter(connection, [ctrl])
+        async with filter as mon:
+            await iterm2.async_wait_forever()
     """
     def __init__(
             self,

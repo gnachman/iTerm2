@@ -1,3 +1,5 @@
+.. _close_to_the_right_example:
+
 Close Tabs to the Right
 =======================
 

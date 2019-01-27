@@ -266,6 +266,10 @@ class Session:
 
         :param text: The text to send.
         :param suppress_broadcast: If `True`, text goes only to the specified session even if broadcasting is on.
+
+        .. seealso::
+            * Example ":ref:`broadcast_example`"
+            * Example ":ref:`targeted_input_example`"
         """
         await iterm2.rpc.async_send_text(self.connection, self.__session_id, text, suppress_broadcast)
 
@@ -286,6 +290,8 @@ class Session:
         :returns: A newly created Session.
 
         :throws: :class:`SplitPaneException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`broadcast_example`"
         """
         if profile_customizations is None:
             custom_dict = None
@@ -334,6 +340,12 @@ class Session:
         :returns: The profile for this session, including any session-local changes not in the underlying profile.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso::
+            * Example ":ref:`blending_example`"
+            * Example ":ref:`colorhost_example`"
+            * Example ":ref:`current_preset_example`"
+            * Example ":ref:`random_color_example`"
         """
         response = await iterm2.rpc.async_get_profile(self.connection, self.__session_id)
         status = response.get_profile_property_response.status
@@ -353,6 +365,8 @@ class Session:
         :param data: A byte array to inject.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`cls_example`"
         """
         response = await iterm2.rpc.async_inject(self.connection, data, [self.__session_id])
         status = response.inject_response.status[0]
@@ -365,6 +379,8 @@ class Session:
 
         :param select_tab: Whether the tab this session is in should be selected.
         :param order_window_front: Whether the window this session is in should be brought to the front and given keyboard focus.
+
+        .. seealso:: Example ":ref:`broadcast_example`"
         """
         await iterm2.rpc.async_activate(
             self.connection,
@@ -383,6 +399,8 @@ class Session:
         :param value: The new value to assign.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`escindicator_example`"
         """
         result = await iterm2.rpc.async_variable(
             self.connection,
@@ -404,6 +422,8 @@ class Session:
         :returns: The variable's value or empty string if it is undefined.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`colorhost_example`"
         """
         result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [], [name])
         status = result.variable_response.status
@@ -476,6 +496,8 @@ class Session:
         :returns: The selected regions of this session. The selection will be empty if there is no selected text.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`georges_title_example`"
         """
         response = await iterm2.rpc.async_get_selection(self.connection, self.session_id)
         status = response.selection_response.status
@@ -508,7 +530,9 @@ class Session:
 
         :param selection: A :class:`~iterm2.selection.Selection` defining a region in the session.
 
-        See also :func:`~iterm2.session.Session.async_get_selection`.
+        .. seealso::
+            * :func:`async_get_selection`.
+            * Example ":ref:`georges_title_example`"
 
         :returns: A string with the selection's contents. Discontiguous selections are combined with newlines."""
         return await selection.async_get_string(
@@ -521,6 +545,8 @@ class Session:
         :param selection: The regions of text to select.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`zoom_on_screen_example`"
         """
         response = await iterm2.rpc.async_set_selection(self.connection, self.session_id, selection)
         status = response.selection_response.status
@@ -532,6 +558,8 @@ class Session:
         Fetches the number of lines that are visible, in history, and that have been removed after history became full.
 
         :returns: Information about the session's wrapped lines of text.
+
+        .. seealso:: Example ":ref:`zoom_on_screen_example`"
         """
         response = await iterm2.rpc.async_get_property(self.connection, "number_of_lines", session_id=self.session_id)
         status = response.get_property_response.status

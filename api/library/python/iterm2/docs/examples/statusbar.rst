@@ -1,3 +1,5 @@
+.. _statusbar_example:
+
 Status Bar Component
 ====================
 

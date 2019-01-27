@@ -108,6 +108,11 @@ class StatusBarComponent:
     :param exemplar: Example value to show in the picker UI as the sample content of the component.
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
     :param identifier: A string uniquely identifying this component. Use a backwards domain name. For example, `com.example.calculator` for a calculator component provided by example.com.
+
+    .. seealso::
+        * Example ":ref:`escindicator_example`"
+        * Example ":ref:`jsonpretty_example`"
+        * Example ":ref:`mousemode_example`"
     """
     def __init__(self,
             short_description: str,
@@ -141,6 +146,8 @@ class StatusBarComponent:
         :param session_id: The session identifier.
         :param html: A string containing HTML to show.
         :param size: The desired size of the popover, a :class:`~iterm2.util.Size`.
+
+        .. seealso:: Example ":ref:`jsonpretty_example`"
         """
         await iterm2.rpc.async_open_status_bar_component_popover(
                 self.__connection,

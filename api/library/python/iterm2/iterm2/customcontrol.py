@@ -12,6 +12,8 @@ class CustomControlSequenceMonitor:
     :param regex: A regular expression. It will be used to search the payload. If it matches, the resulting `re.Match` is returned from `async_get()`.
     :param session_id: The session ID to monitor, or `None` to mean monitor all sessions (including those not yet created).
 
+    .. seealso:: Example ":ref:`create_window_example`"
+
     Example:
 
       .. code-block:: python

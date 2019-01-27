@@ -1,3 +1,5 @@
+.. _mousemode_example:
+
 Status Bar Component: Mouse Mode
 ================================
 
