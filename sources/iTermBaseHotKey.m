@@ -236,6 +236,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
         return nil;
     }
+    if ([NSApp modalWindow]) {
+        DLog(@"Ignore hotkey because there is a modal window %@", [NSApp modalWindow]);
+        return nil;
+    }
 
     // Only elements of siblings whose targets are iTermBaseHotKey
     NSArray<iTermHotKey *> *siblingHotkeys = [siblings filteredArrayUsingBlock:^BOOL(iTermHotKey *anObject) {
