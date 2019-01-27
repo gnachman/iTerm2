@@ -13,7 +13,7 @@ class Color:
       :param a: Alpha, in 0-255
       :param color_space: The color space. Only sRGB is supported currently.
       """
-    def __init__(self, r: int=0, g: int=0, b: int=0, a: int=255, color_space: str="sRGB"):
+    def __init__(self, r: int=0, g: int=0, b: int=0, a: int=255, color_space: ColorSpace=ColorSpace.SRGB):
         """Create a color."""
         self.__red = r
         self.__green = g

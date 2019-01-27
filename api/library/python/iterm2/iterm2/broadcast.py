@@ -21,7 +21,7 @@ class BroadcastDomain:
         :param session: The session to add."""
         self.__sessions.append(session)
 
-    def add_unresolved(self, resolver):
+    def add_unresolved(self, unresolved):
         self.__unresolved.append(unresolved)
 
     @property

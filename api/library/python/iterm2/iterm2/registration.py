@@ -118,8 +118,8 @@ def TitleProviderRPC(func):
                   display_name="Upper-case Title",
                   unique_identifier="com.iterm2.example.title-provider")
     """
-    async def async_register(connection, display_name, unqiue_identifier, timeout=None):
-        assert unqiue_identifier
+    async def async_register(connection, display_name, unique_identifier, timeout=None):
+        assert unique_identifier
         signature = inspect.signature(func)
         defaults = {}
         for k, v in signature.parameters.items():
@@ -136,7 +136,7 @@ def TitleProviderRPC(func):
                 defaults=defaults,
                 role=iterm2.notifications.RPC_ROLE_SESSION_TITLE,
                 session_title_display_name=display_name,
-                session_title_unique_id=unqiue_identifier)
+                session_title_unique_id=unique_identifier)
         func.rpc_connection = connection
 
     func.async_register = async_register

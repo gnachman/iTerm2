@@ -96,6 +96,7 @@ class TmuxConnection:
                     response.tmux_response.status))
         tab_id = response.tmux_response.create_window.tab_id
         app = self.__app
+        await app.async_refresh()
         return app.get_window_for_tab(tab_id)
 
 

@@ -73,7 +73,7 @@ class ColorPreset:
                 setting.green * 255,
                 setting.blue * 255,
                 setting.alpha * 255,
-                setting.color_space,
+                iterm2.color.ColorSpace(setting.color_space),
                 setting.key))
 
     @property

@@ -1,4 +1,5 @@
 """Provides handy functions."""
+import asyncio
 import json
 import iterm2.api_pb2
 import typing
@@ -374,7 +375,7 @@ class WindowedCoordRange:
         """Are the columns constrained?"""
         return self.__columnRange.length > 0
 
-async def async_wait_forever(self):
+async def async_wait_forever():
     """A convenience function that never returns."""
     await asyncio.wait([asyncio.Future()])
 
