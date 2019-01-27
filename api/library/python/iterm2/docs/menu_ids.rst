@@ -17,7 +17,6 @@ Menu Item                                                                       
 ======================================================================================= ==============================================================================
 iTerm2 > About iTerm2                                                                   `About iTerm2`                                                                
 iTerm2 > Show Tip of the Day                                                            `Show Tip of the Day`                                                         
-iTerm2 > Check for Incompatible Software                                                `Check for Incompatible Software`                                             
 iTerm2 > Check For Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      

@@ -46,4 +46,4 @@ the output in the **Script Console**.
 
     iterm2.run_until_complete(main)
 
-:Download:`its <current_preset.its>`
+:Download:`Download<current_preset.its>`

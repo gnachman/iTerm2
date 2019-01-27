@@ -30,4 +30,4 @@ This script demonstrates registering an RPC to adjust the image blending level o
 
     iterm2.run_forever(main)
 
-:Download:`its <blending.its>`
+:Download:`Download<blending.its>`

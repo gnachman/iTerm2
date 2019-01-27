@@ -102,7 +102,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
 
     iterm2.run_forever(main)
 
-:Download:`its <georges_title.its>`
+:Download:`Download<georges_title.its>`
 
 Finally, select *George's Title Algorithm* in **Prefs > Profiles > General > Title**.
 

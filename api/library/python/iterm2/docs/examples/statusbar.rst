@@ -53,4 +53,4 @@ This script is a long-running daemon since the registered function gets called w
 
     iterm2.run_forever(main)
 
-:Download:`its <statusbar.its>`
+:Download:`Download<statusbar.its>`

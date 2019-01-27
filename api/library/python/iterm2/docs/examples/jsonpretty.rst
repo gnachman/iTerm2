@@ -54,4 +54,4 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
 
     iterm2.run_forever(main)
 
-:Download:`its <jsonpretty.its>`
+:Download:`Download<jsonpretty.its>`

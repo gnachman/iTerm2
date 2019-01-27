@@ -59,4 +59,4 @@ The script makes it possible to select a tab by pressing a function key. F1 choo
     iterm2.run_forever(main)
 
 
-:Download:`its <function_key_tabs.its>`
+:Download:`Download<function_key_tabs.its>`

@@ -86,4 +86,4 @@ This script is a long-running daemon since it must continually update the status
 
     iterm2.run_forever(main)
 
-:Download:`its <escindicator.its>`
+:Download:`Download<escindicator.its>`

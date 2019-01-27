@@ -24,5 +24,5 @@ This script sorts the tabs in all windows by the name of the current session.
 
     iterm2.run_until_complete(main)
 
-:Download:`its <sorttabs.its>`
+:Download:`Download<sorttabs.its>`
 

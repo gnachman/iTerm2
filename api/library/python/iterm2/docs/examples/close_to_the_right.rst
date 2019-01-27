@@ -30,4 +30,4 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 
     iterm2.run_forever(main)
 
-:Download:`its <close_to_the_right.its>`
+:Download:`Download<close_to_the_right.its>`

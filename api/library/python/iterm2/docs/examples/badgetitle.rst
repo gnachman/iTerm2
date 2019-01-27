@@ -28,7 +28,7 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
 
     iterm2.run_forever(main)
 
-:Download:`its <badgetitle.its>`
+:Download:`Download<badgetitle.its>`
 
 Another similar example demonstrates showing the window title in the tab.
 Terminal apps may choose to set the window title without setting the tab title,
@@ -57,4 +57,4 @@ but some users prefer to see the window title in both places.
 
     iterm2.run_forever(main)
 
-:Download:`its <windowtitle.its>`
+:Download:`Download<windowtitle.its>`

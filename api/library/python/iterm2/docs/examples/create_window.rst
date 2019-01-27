@@ -18,7 +18,7 @@ starting point for developing your own custom escape sequence handler.
 
     iterm2.run_forever(main)
 
-:Download:`its <create_window.its>`
+:Download:`Download<create_window.its>`
 
 To create a window when this script is running, invoke this command:
 

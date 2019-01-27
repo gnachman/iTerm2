@@ -32,4 +32,4 @@ This script keeps tabs in most-recently used order, with the current tab always 
 
     iterm2.run_forever(main)
 
-:Download:`its <mrutabs.its>`
+:Download:`Download<mrutabs.its>`

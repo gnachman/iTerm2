@@ -43,4 +43,4 @@ folder.
 
     iterm2.run_forever(main)
 
-:Download:`its <mousemode.its>`
+:Download:`Download<mousemode.its>`

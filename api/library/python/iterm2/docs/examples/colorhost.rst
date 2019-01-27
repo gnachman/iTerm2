@@ -61,4 +61,4 @@ Edit the `colormap` variable to specify the hostname to color preset mapping you
 
     iterm2.run_forever(main)
 
-:Download:`its <colorhost.its>`
+:Download:`Download<colorhost.its>`

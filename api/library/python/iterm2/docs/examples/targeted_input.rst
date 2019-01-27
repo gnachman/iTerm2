@@ -99,7 +99,7 @@ Then, replace `targeted_input.py` with:
 
     iterm2.run_forever(main)
 
-:Download:`its <targeted_input.its>`
+:Download:`Download<targeted_input.its>`
 
 Run the script and then open the "Targeted Input" tool. It will appear in the
 **Toolbelt** menu. Turn on broadcast input on a few sessions and hit the

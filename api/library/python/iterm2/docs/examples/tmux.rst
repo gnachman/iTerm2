@@ -23,4 +23,4 @@ First, attach to at least one tmux session using `tmux -CC`. This script will cr
 
     iterm2.run_until_complete(main)
 
-:Download:`its <tmux.its>`
+:Download:`Download<tmux.its>`
