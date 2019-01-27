@@ -129,6 +129,14 @@
                                                                   chunk.payloadLength)];
 }
 
+- (long long)payloadLength {
+    SIGArchiveChunk *chunk = [self chunkWithTag:SIGArchiveTagPayload];
+    if (!chunk) {
+        return 0;
+    }
+    return chunk.payloadLength;
+}
+
 - (BOOL)load:(out NSError **)errorOut {
     assert(!_loaded);
     _loaded = YES;
