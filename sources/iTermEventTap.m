@@ -210,6 +210,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     if (!_machPort) {
         XLog(@"CGEventTapCreate failed");
         AppendPinnedDebugLogMessage(@"EventTap", @"CGEventTapCreate failed");
+        AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(id)kAXTrustedCheckOptionPrompt: @YES});
         goto error;
     }
 
