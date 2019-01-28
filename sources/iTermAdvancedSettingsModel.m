@@ -505,6 +505,7 @@ DEFINE_BOOL(sshURLsSupportPath, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"SSH 
 DEFINE_BOOL(useDivorcedProfileToSplit, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"When splitting a pane, use the profile with local modifications, not the backing profile.");
 DEFINE_BOOL(synergyModifierRemappingEnabled, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Support modifier remapping for keystrokes originated by Synergy.");
 DEFINE_BOOL(shouldSetLCTerminal, YES, SECTION_EXPERIMENTAL @"Set LC_TERMINAL=iTerm2.\nopenssh and mosh pass this to hosts you connect to. It communicates the current terminal emulator. This is useful for enabling terminal emulator-specific features.");
+DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell icon when a session becomes active.\nWhen off, you must type in the session to clear the bell icon.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

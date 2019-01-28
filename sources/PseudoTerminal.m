@@ -3095,6 +3095,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self notifyTmuxOfTabChange];
 
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
+    }
     [self updateUseMetalInAllTabs];
     [_contentView updateDivisionViewAndWindowNumberLabel];
 }
@@ -5088,6 +5091,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateProxyIcon];
     [_contentView layoutIfStatusBarChanged];
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
+    }
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateWindowShadow:self.ptyWindow];
@@ -6919,6 +6925,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
+    }
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
     }
     [self updateTouchBarIfNeeded:NO];
     [self updateProxyIcon];

@@ -52,6 +52,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)badgeMaxWidthFraction;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
++ (BOOL)clearBellIconAggressively;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (double)coloredSelectedTabOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
