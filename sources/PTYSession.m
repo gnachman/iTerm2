@@ -34,6 +34,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
@@ -6331,6 +6332,12 @@ ITERM_WEAKLY_REFERENCEABLE
         accessory.textView.selectable = YES;
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
     }
+    NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+    [entry addOutput:[NSString stringWithFormat:@"An error occurred while running the function invocation “%@”:\n%@\n\nTraceback:\n%@",
+                      invocation,
+                      error.localizedDescription,
+                      traceback]];
     [iTermWarning showWarningWithTitle:message
                                actions:@[ @"OK" ]
                              accessory:accessory
