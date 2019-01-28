@@ -6014,6 +6014,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (long long)instantReplayTimestampAfter:(long long)timestamp {
+    DVR* dvr = [[self currentSession] dvr];
+    return [dvr firstTimestampAfter:timestamp];
+}
+
 - (void)instantReplayExportFrom:(long long)start to:(long long)end {
     [iTermRecordingCodec exportRecording:self.currentSession.liveSession from:start to:end];
 }

@@ -18,6 +18,7 @@
 
 - (long long)instantReplayFirstTimestamp;
 - (long long)instantReplayLastTimestamp;
+- (long long)instantReplayTimestampAfter:(long long)timestamp;
 - (void)instantReplayExportFrom:(long long)start to:(long long)end;
 
 @end

@@ -118,6 +118,14 @@
     return entry->info.timestamp;
 }
 
+- (long long)firstTimestampAfter:(long long)timestamp {
+    DVRIndexEntry *entry = [buffer_ firstEntryWithTimestampAfter:timestamp];
+    if (!entry) {
+        return 0;
+    }
+    return entry->info.timestamp;
+}
+
 - (NSDictionary *)dictionaryValue {
     return [self dictionaryValueFrom:self.firstTimeStamp to:self.lastTimeStamp];
 }

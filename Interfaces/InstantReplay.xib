@@ -10,6 +10,7 @@
             <connections>
                 <outlet property="_currentTimeLabel" destination="eW9-Ho-L9H" id="Mhu-lw-q8f"/>
                 <outlet property="_earliestTimeLabel" destination="rwM-La-RBW" id="AGv-3I-hTz"/>
+                <outlet property="_eventsView" destination="Ag5-7O-YG2" id="7wS-KW-X04"/>
                 <outlet property="_firstButton" destination="U1p-e0-2Nl" id="Ued-1a-gJQ"/>
                 <outlet property="_latestTimeLabel" destination="EbS-W5-6is" id="9IT-lM-2he"/>
                 <outlet property="_secondButton" destination="DA7-r1-1Pd" id="6yX-un-4dM"/>
@@ -29,13 +30,17 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <visualEffectView appearanceType="inheritedVibrantLight" blendingMode="behindWindow" material="underWindowBackground" state="followsWindowActiveState" id="BeC-02-QT5">
-                        <rect key="frame" x="0.0" y="-14" width="602" height="71"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <rect key="frame" x="0.0" y="-14" width="603" height="71"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                         <subviews>
+                            <customView id="Ag5-7O-YG2" userLabel="Events View" customClass="iTermInstantReplayEventsView">
+                                <rect key="frame" x="88" y="44" width="391" height="4"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                            </customView>
                             <slider verticalHuggingPriority="750" id="GFt-3P-LVv">
-                                <rect key="frame" x="86" y="35" width="399" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="10" sliderType="linear" id="cdM-e9-PPO"/>
+                                <rect key="frame" x="86" y="35" width="399" height="15"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="2" sliderType="linear" id="cdM-e9-PPO"/>
                                 <connections>
                                     <action selector="sliderMoved:" target="-2" id="RBj-j4-8vn"/>
                                 </connections>

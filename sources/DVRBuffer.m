@@ -27,6 +27,7 @@
  */
 
 #import "DVRBuffer.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
 @implementation DVRBuffer {
@@ -222,6 +223,25 @@
 {
     assert(index_);
     return [index_ objectForKey:[NSNumber numberWithLongLong:key]];
+}
+
+- (DVRIndexEntry *)firstEntryWithTimestampAfter:(long long)timestamp {
+    NSArray<NSNumber *> *frameNumbers = [[index_ allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSArray<NSNumber *> *timestamps = [frameNumbers mapWithBlock:^NSNumber *(NSNumber *frameNumber) {
+        DVRIndexEntry *entry = index_[frameNumber];
+        return @(entry->info.timestamp);
+    }];
+    NSUInteger frameNumberIndex = [timestamps indexOfObject:@(timestamp + 1)
+                                              inSortedRange:NSMakeRange(0, frameNumbers.count)
+                                                    options:NSBinarySearchingInsertionIndex
+                                            usingComparator:
+                                   ^NSComparisonResult(NSNumber * _Nonnull timestamp1, NSNumber * _Nonnull timestamp2) {
+                                       return [timestamp1 compare:timestamp2];
+                                   }];
+    if (frameNumberIndex == NSNotFound || frameNumberIndex == index_.count) {
+        return nil;
+    }
+    return index_[frameNumbers[frameNumberIndex]];
 }
 
 - (char*)scratch

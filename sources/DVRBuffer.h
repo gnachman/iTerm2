@@ -80,6 +80,7 @@ typedef enum {
 // Look up an index entry by key.
 - (DVRIndexEntry*)entryForKey:(long long)key;
 - (BOOL)loadFromDictionary:(NSDictionary *)dict;
+- (DVRIndexEntry *)firstEntryWithTimestampAfter:(long long)timestamp;
 
 @end
 
