@@ -34,6 +34,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermRawKeyMapper.h"
@@ -6324,13 +6325,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
                          invocation, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
-    iTermDisclosableView *accessory = nil;
+    NSArray *actions = @[ @"OK" ];
     if (traceback) {
-        accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                         prompt:@"Traceback"
-                                                        message:traceback];
-        accessory.textView.selectable = YES;
-        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+        actions = [actions arrayByAddingObject:@"Reveal in Script Console"];
     }
     NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
@@ -6338,14 +6335,16 @@ ITERM_WEAKLY_REFERENCEABLE
                       invocation,
                       error.localizedDescription,
                       traceback]];
-    [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK" ]
-                             accessory:accessory
-                            identifier:@"NoSyncFunctionCallError"
-                           silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
-                                window:window];
-
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                 actions:actions
+                                                               accessory:nil
+                                                              identifier:@"NoSyncFunctionCallError"
+                                                             silenceable:kiTermWarningTypeTemporarilySilenceable
+                                                                 heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
+                                                                  window:window];
+    if (selection == kiTermWarningSelection1) {
+        [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
+    }
 }
 
 - (void)invokeFunctionCall:(NSString *)invocation

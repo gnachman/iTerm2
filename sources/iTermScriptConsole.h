@@ -7,8 +7,11 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermScriptHistoryEntry;
+
 @interface iTermScriptConsole : NSWindowController
 
 + (instancetype)sharedInstance;
+- (void)revealTailOfHistoryEntry:(iTermScriptHistoryEntry *)entry;
 
 @end
