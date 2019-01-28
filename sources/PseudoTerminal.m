@@ -2856,6 +2856,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self notifyTmuxOfTabChange];
 
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
+    }
     [self updateUseMetalInAllTabs];
     [_contentView updateDivisionView];
 }
@@ -4543,6 +4546,9 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         _contentView.color = [NSColor windowBackgroundColor];
     }
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
+    }
     [self updateCurrentLocation];
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow];
@@ -6212,6 +6218,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded]) {
         [self editSession:self.currentSession makeKey:NO];
+    }
+    if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        [self.currentSession setBell:NO];
     }
     [self updateTouchBarIfNeeded:NO];
     [self updateCurrentLocation];
