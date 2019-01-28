@@ -34,6 +34,8 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermScriptConsole.h"
+#import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
@@ -2542,8 +2544,21 @@ ITERM_WEAKLY_REFERENCEABLE
                      responseSelector:@selector(printTmuxCommandOutputToScreen:)];
         }
     } else if (unicode == 'X') {
-        [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
-        [self tmuxHostDisconnected:[[_tmuxGateway.dcsID copy] autorelease]];
+        [self forceTmuxDetach];
+    }
+}
+
+- (void)forceTmuxDetach {
+    switch (self.tmuxMode) {
+        case TMUX_GATEWAY:
+            [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
+            [self tmuxHostDisconnected:[[_tmuxGateway.dcsID copy] autorelease]];
+            return;
+        case TMUX_NONE:
+            return;
+        case TMUX_CLIENT:
+            [self.tmuxGatewaySession forceTmuxDetach];
+            return;
     }
 }
 
@@ -6310,22 +6325,26 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
                          invocation, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
-    iTermDisclosableView *accessory = nil;
+    NSArray *actions = @[ @"OK" ];
     if (traceback) {
-        accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                         prompt:@"Traceback"
-                                                        message:traceback];
-        accessory.textView.selectable = YES;
-        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+        actions = [actions arrayByAddingObject:@"Reveal in Script Console"];
     }
-    [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK" ]
-                             accessory:accessory
-                            identifier:@"NoSyncFunctionCallError"
-                           silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
-                                window:window];
-
+    NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+    [entry addOutput:[NSString stringWithFormat:@"An error occurred while running the function invocation “%@”:\n%@\n\nTraceback:\n%@",
+                      invocation,
+                      error.localizedDescription,
+                      traceback]];
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                 actions:actions
+                                                               accessory:nil
+                                                              identifier:@"NoSyncFunctionCallError"
+                                                             silenceable:kiTermWarningTypeTemporarilySilenceable
+                                                                 heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
+                                                                  window:window];
+    if (selection == kiTermWarningSelection1) {
+        [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
+    }
 }
 
 - (void)invokeFunctionCall:(NSString *)invocation

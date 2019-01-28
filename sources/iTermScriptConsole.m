@@ -229,6 +229,25 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     [[_inspector window] makeKeyAndOrderFront:nil];
 }
 
+- (void)revealTailOfHistoryEntry:(iTermScriptHistoryEntry *)entry {
+    [self.window makeKeyAndOrderFront:nil];
+
+    NSInteger index = [[self filteredEntries] indexOfObject:entry];
+    if (index == NSNotFound) {
+        index = [[[iTermScriptHistory sharedInstance] entries] indexOfObject:entry];
+        if (index != NSNotFound) {
+            [_scriptFilterControl selectSegmentWithTag:iTermScriptFilterControlTagAll];
+            [_tableView reloadData];
+        }
+    }
+    if (index == NSNotFound) {
+        return;
+    }
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    [_tabView selectFirstTabViewItem:nil];
+    [_logsView scrollToEndOfDocument:nil];
+}
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {

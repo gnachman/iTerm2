@@ -216,7 +216,7 @@
                     </button>
                     <button verticalHuggingPriority="750" id="63g-M2-ic1">
                         <rect key="frame" x="14" y="13" width="98" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Inspector" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4ZP-ZI-BFG">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -237,7 +237,7 @@
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" drawsBackground="NO" id="3XP-OX-1oQ">
                 <rect key="frame" x="1" y="1" width="238" height="220"/>
-                <autoresizingMask key="autoresizingMask"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" id="wrF-a6-UQL">
                         <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>

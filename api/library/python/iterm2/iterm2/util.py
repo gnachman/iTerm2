@@ -136,6 +136,9 @@ class Frame:
     self.__origin = origin
     self.__size = size
 
+  def __repr__(self):
+    return "<Frame origin={} size={}>".format(self.origin, self.size)
+
   @property
   def origin(self) -> Point:
     """The top-left coordinate.
