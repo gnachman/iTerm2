@@ -10,6 +10,12 @@
 
 static const float kAlphaValue = 0.9;
 
+typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
+    iTermInstantReplayStateNormal,
+    iTermInstantReplayStateSetStart,
+    iTermInstantReplayStateSetEnd
+};
+
 @implementation iTermInstantReplayPanel
 
 - (BOOL)canBecomeKeyWindow {
@@ -53,6 +59,10 @@ static const float kAlphaValue = 0.9;
     IBOutlet NSTextField *_currentTimeLabel;
     IBOutlet NSTextField *_earliestTimeLabel;
     IBOutlet NSTextField *_latestTimeLabel;
+    IBOutlet NSButton *_firstButton;
+    IBOutlet NSButton *_secondButton;
+    iTermInstantReplayState _state;
+    long long _start;
 }
 
 - (instancetype)init {
@@ -98,6 +108,55 @@ static const float kAlphaValue = 0.9;
         }
     }
     [self release];
+}
+
+- (IBAction)exportButton:(id)sender {
+    switch (_state) {
+        case iTermInstantReplayStateNormal:
+            [self setState:iTermInstantReplayStateSetStart byCancelling:NO];
+            break;
+        case iTermInstantReplayStateSetStart:
+            [self setState:iTermInstantReplayStateSetEnd byCancelling:NO];
+            break;
+        case iTermInstantReplayStateSetEnd:
+            [self setState:iTermInstantReplayStateNormal byCancelling:NO];
+    }
+}
+
+- (IBAction)cancelButton:(id)sender {
+    [self setState:iTermInstantReplayStateNormal byCancelling:YES];
+}
+
+- (void)setState:(iTermInstantReplayState)destinationState byCancelling:(BOOL)cancel {
+    if (_state == iTermInstantReplayStateSetStart &&
+               destinationState == iTermInstantReplayStateSetEnd) {
+        _start = [_delegate instantReplayCurrentTimestamp];
+    } else if (destinationState == iTermInstantReplayStateNormal &&
+               _state == iTermInstantReplayStateSetEnd &&
+               !cancel) {
+        long long end = [_delegate instantReplayCurrentTimestamp];
+        if (end < _start) {
+            NSBeep();
+            return;
+        }
+        [_delegate instantReplayExportFrom:_start to:end];
+    }
+    _state = destinationState;
+    switch (_state) {
+        case iTermInstantReplayStateNormal:
+            _firstButton.title = @"Export…";
+            _secondButton.hidden = YES;
+            break;
+        case iTermInstantReplayStateSetStart:
+            _firstButton.title = @"Set Start";
+            _secondButton.title = @"Cancel";
+            _secondButton.hidden = NO;
+            break;
+        case iTermInstantReplayStateSetEnd:
+            _firstButton.title = @"Set End";
+            _secondButton.title = @"Cancel";
+            _secondButton.hidden = NO;
+    }
 }
 
 #pragma mark - NSWindowController

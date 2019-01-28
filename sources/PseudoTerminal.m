@@ -6014,6 +6014,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)instantReplayExportFrom:(long long)start to:(long long)end {
+    [iTermRecordingCodec exportRecording:self.currentSession.liveSession from:start to:end];
+}
+
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
     if (self.currentSession.liveSession.screen.dvr.readOnly) {
         dispatch_async(dispatch_get_main_queue(), ^{

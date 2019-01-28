@@ -31,6 +31,7 @@
 #import "DVR.h"
 #import "DVRIndexEntry.h"
 #import "NSData+iTerm.h"
+#import "ScreenChar.h"
 #include <sys/time.h>
 
 @implementation DVR {
@@ -118,9 +119,19 @@
 }
 
 - (NSDictionary *)dictionaryValue {
+    return [self dictionaryValueFrom:self.firstTimeStamp to:self.lastTimeStamp];
+}
+
+- (NSDictionary *)dictionaryValueFrom:(long long)from to:(long long)to {
+    DVR *dvr;
+    if (from == self.firstTimeStamp && to == self.lastTimeStamp) {
+        dvr = self;
+    } else {
+        dvr = [[self copyWithFramesFrom:from to:to] autorelease];
+    }
     return @{ @"version": @1,
-              @"capacity": @(capacity_),
-              @"buffer": buffer_.dictionaryValue };
+              @"capacity": @(dvr->capacity_),
+              @"buffer": dvr->buffer_.dictionaryValue };
 }
 
 - (BOOL)loadDictionary:(NSDictionary *)dict {
@@ -156,6 +167,31 @@
     }
     readOnly_ = YES;
     return YES;
+}
+
+- (instancetype)copyWithFramesFrom:(long long)from to:(long long)to {
+    DVR *theCopy = [[DVR alloc] initWithBufferCapacity:capacity_];
+    DVRDecoder *decoder = [self getDecoder];
+    if ([decoder seek:from]) {
+        while (decoder.timestamp <= to || to == -1) {
+            screen_char_t *frame = (screen_char_t *)[decoder decodedFrame];
+            NSMutableArray *lines = [NSMutableArray array];
+            DVRFrameInfo info = [decoder info];
+            int offset = 0;
+            const int lineLength = info.width + 1;
+            for (int i = 0; i < info.height; i++) {
+                NSMutableData *data = [NSMutableData dataWithBytes:frame + offset length:lineLength * sizeof(screen_char_t)];
+                [lines addObject:data];
+                offset += lineLength;
+            }
+            [theCopy appendFrame:lines length:[decoder length] info:&info];
+            if (![decoder next]) {
+                break;
+            }
+        }
+    }
+    [self releaseDecoder:decoder];
+    return theCopy;
 }
 
 @end
