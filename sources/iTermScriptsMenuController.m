@@ -550,7 +550,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSTokenField *)newTokenFieldForDependencies {
     NSTokenField *tokenField = [[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 100, 22)];
     tokenField.tokenizingCharacterSet = [NSCharacterSet whitespaceCharacterSet];
-    tokenField.placeholderString = @"Package names separated by spaces";
+    tokenField.placeholderString = @"Package names";
     tokenField.font = [NSFont systemFontOfSize:13];
     return tokenField;
 }
