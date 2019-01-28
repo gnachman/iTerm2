@@ -2542,8 +2542,21 @@ ITERM_WEAKLY_REFERENCEABLE
                      responseSelector:@selector(printTmuxCommandOutputToScreen:)];
         }
     } else if (unicode == 'X') {
-        [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
-        [self tmuxHostDisconnected:[[_tmuxGateway.dcsID copy] autorelease]];
+        [self forceTmuxDetach];
+    }
+}
+
+- (void)forceTmuxDetach {
+    switch (self.tmuxMode) {
+        case TMUX_GATEWAY:
+            [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
+            [self tmuxHostDisconnected:[[_tmuxGateway.dcsID copy] autorelease]];
+            return;
+        case TMUX_NONE:
+            return;
+        case TMUX_CLIENT:
+            [self.tmuxGatewaySession forceTmuxDetach];
+            return;
     }
 }
 

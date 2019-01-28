@@ -2490,6 +2490,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentTmuxController] requestDetach];
 }
 
+- (IBAction)forceDetachTmux:(id)sender {
+    [self.currentSession forceTmuxDetach];
+}
+
 - (TmuxController *)currentTmuxController {
     TmuxController *controller = [[self currentSession] tmuxController];
     if (!controller) {
@@ -8263,7 +8267,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
-        [item action] == @selector(newTmuxTab:)) {
+        [item action] == @selector(newTmuxTab:) ||
+        [item action] == @selector(forceDetachTmux:)) {
         return [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;

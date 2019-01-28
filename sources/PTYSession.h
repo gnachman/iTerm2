@@ -203,6 +203,7 @@ typedef enum {
 
 // Returns the size of the tab in rows x cols. Initial tmux client size.
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile;
+- (void)forceTmuxDetach;
 
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;

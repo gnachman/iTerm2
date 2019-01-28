@@ -261,6 +261,12 @@ CQ
                                                 <action selector="detachTmux:" target="-1" id="1460"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Force Detach" alternate="YES" identifier="tmux.Force Detach" id="BV1-u8-JSz">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="forceDetachTmux:" target="-1" id="d8H-zq-jSZ"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="New Tmux Window" alternate="YES" keyEquivalent="N" identifier="tmux.New Tmux Window" id="1455">
                                             <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                             <connections>
