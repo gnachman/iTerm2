@@ -146,9 +146,11 @@
     _remove.enabled = NO;
     _selectedScriptPath = _scripts[index];
     iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:[_scripts[index] stringByAppendingPathComponent:@"setup.py"]];
-    _packageTuples = [parser.dependencies mapWithBlock:^id(NSString *dep) {
+    _packageTuples = [[parser.dependencies mapWithBlock:^id(NSString *dep) {
         iTermTuple *tuple = [iTermTuple tupleWithObject:dep andObject:@""];
         return tuple;
+    }] sortedArrayUsingComparator:^NSComparisonResult(iTermTuple * _Nonnull tuple1, iTermTuple * _Nonnull tuple2) {
+        return [tuple1.firstObject compare:tuple2.firstObject];
     }];
     [self loadPythonVersionsSelecting:parser.pythonVersion.it_twoPartVersionNumber];
     for (NSInteger i = 0; i < _packageTuples.count; i++) {
@@ -180,7 +182,9 @@
 }
 
 - (void)addScriptItems:(NSArray<iTermScriptItem *> *)scriptItems breadcrumbs:(NSArray<NSString *> *)breadcrumbs {
-    for (iTermScriptItem *item in scriptItems) {
+    for (iTermScriptItem *item in [scriptItems sortedArrayUsingComparator:^NSComparisonResult(iTermScriptItem * _Nonnull obj1, iTermScriptItem * _Nonnull obj2) {
+        return [obj1.name compare:obj2.name];
+    }]) {
         if (item.isFolder) {
             [self addScriptItems:item.children breadcrumbs:[breadcrumbs arrayByAddingObject:item.name]];
             continue;
@@ -394,6 +398,10 @@
 }
 
 - (IBAction)closeCurrentSession:(id)sender {
+    [self close];
+}
+
+- (IBAction)dismissController:(id)sender {
     [self close];
 }
 
