@@ -5232,8 +5232,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
-        glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
-        glyphSize.height = MAX(cellSize.height, NSMaxY(rect));
+        glyphSize.width = round(0.49 + MAX(cellSize.width, NSMaxX(rect)));
+        glyphSize.height = round(0.49 + MAX(cellSize.height, NSMaxY(rect)));
     } else {
         glyphSize = cellSize;
     }
