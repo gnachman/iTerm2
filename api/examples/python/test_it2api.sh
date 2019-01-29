@@ -53,8 +53,8 @@ REGEX='id=(pty-[^ ]*)'
 [[ $OUTPUT =~ $REGEX ]]
 WINDOW_ID="${BASH_REMATCH[1]}"
 
-expect_nothing "set-window-property" "$($PYTHON it2api set-window-property $WINDOW_ID frame 0,0,800,800)"
-expect_contains "get-window-property" "0,0,800,800" "$($PYTHON it2api get-window-property $WINDOW_ID frame)"
+expect_nothing "set-window-property" "$($PYTHON it2api set-window-property $WINDOW_ID frame 0,0,600,600)"
+expect_contains "get-window-property" "0,0,600,600" "$($PYTHON it2api get-window-property $WINDOW_ID frame)"
 
 expect_nothing "activate" "$($PYTHON it2api activate session $FIRST_SESSION_ID)"
 expect_contains "activate+show-focus" "$FIRST_SESSION_ID" "$($PYTHON it2api show-focus)"
@@ -71,6 +71,7 @@ expect_contains set-preset-initialized 0,0,0,255 "$($PYTHON it2api get-profile-p
 expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Light Background")"
 expect_contains set-preset-initialized 255,255,255,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
 
+$PYTHON it2api send-text $FIRST_SESSION_ID "cd /etc"
 expect_contains monitor-variable /etc "$($PYTHON it2api monitor-variable --session $FIRST_SESSION_ID session.path)"
 
 # Missing tests:
