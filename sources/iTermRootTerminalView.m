@@ -874,10 +874,7 @@ typedef struct {
     [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
 
     CGFloat widthAdjustment = 0;
-    if (_delegate.haveLeftBorder) {
-#warning TODO: Shouldn't this also increment xOffset by 1?
-        widthAdjustment += 1;
-    }
+    // Can't have a left border.
     if (_delegate.haveRightBorder) {
         widthAdjustment += 1;
     }
