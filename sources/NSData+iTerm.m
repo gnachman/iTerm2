@@ -86,7 +86,9 @@
     if (errorMessage.length) {
         NSString *errorString = [errorMessage stringWithEncoding:NSUTF8StringEncoding];
         if (errorString) {
-            *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
+            }
         } else {
             XLog(@"Error %s", errorMessage.bytes);
         }

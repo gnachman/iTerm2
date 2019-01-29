@@ -330,7 +330,7 @@
     NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
     [self drawAtPoint:corner fromRect:rect operation:NSCompositingOperationCopy fraction:1.0];
     [image unlockFocus];
-    return image;
+    return [image autorelease];
 }
 
 - (NSImage *)it_imageOfSize:(NSSize)newSize {

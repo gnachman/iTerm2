@@ -100,7 +100,7 @@ namespace iTerm2 {
             ITOwnershipLog(@"OWNERSHIP: retain %p as owner of %p with refcount %d", owner, this, (int)_owners[owner]);
         }
 
-        void release(TexturePageOwner *owner) {
+        bool release(TexturePageOwner *owner) {
             ITOwnershipLog(@"OWNERSHIP: release %p as owner of %p. New refcount for this owner will be %d", owner, this, (int)_owners[owner]-1);
             ITExtraDebugAssert(_owners[owner] > 0);
 
@@ -120,9 +120,10 @@ namespace iTerm2 {
                 if (_owners.empty()) {
                     ITOwnershipLog(@"OWNERSHIP: DELETE %p", this);
                     delete this;
-                    return;
+                    return true;
                 }
             }
+            return false;
         }
 
         void record_use() {

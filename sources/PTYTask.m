@@ -316,7 +316,7 @@ static int iTermForkToRunJobInServer(iTermForkState *forkState,
     // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
     iTermFileDescriptorServerLog("Calling MyForkPty");
     forkState->numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
-    int fd;
+    int fd = -1;
     forkState->pid = MyForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
     return fd;
 }

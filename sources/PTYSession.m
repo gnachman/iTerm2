@@ -1150,7 +1150,7 @@ ITERM_WEAKLY_REFERENCEABLE
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
-        aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
+        aSession.lastRemoteHost = aSession.screen.lastRemoteHost;
         if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
@@ -1454,7 +1454,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  oldCWD:oldCWD
                                          forceUseOldCWD:contents != nil && oldCWD.length
                                                 command:commandArg
-                                                 isUTF8:@(aSession.isUTF8)
+                                                 isUTF8:isUTF8Arg
                                           substitutions:substitutionsArg
                                        windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
                                              completion:completion];
@@ -5211,7 +5211,6 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             return NO;
         }
-#warning TODO: This is wrong. Is it called too soon when closing the dropdown find panel?
         if (_view.isDropDownSearchVisible) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonFindPanel;
@@ -10825,14 +10824,11 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray<NSString *> *actions;
     NSInteger thisProfile = 0;
     NSInteger allProfiles = -1;
-    NSInteger stopAsking = -1;
     if ([[[ProfileModel sharedInstance] bookmarks] count] == 1) {
         actions = @[ @"Yes", @"Stop Asking" ];
-        stopAsking = 1;
     } else {
         actions = @[ @"Change This Profile", @"Change All Profiles", @"Stop Asking" ];
         allProfiles = 1;
-        stopAsking = 2;
     }
 
     Profile *profileToChange = [[ProfileModel sharedInstance] bookmarkWithGuid:self.profile[KEY_GUID]];

@@ -37,7 +37,7 @@
     }
 }
 
-- (NSString *)newCookie {
+- (NSString *)randomStringForCooke {
     FILE *fp = fopen("/dev/random", "r");
 
     if (!fp) {

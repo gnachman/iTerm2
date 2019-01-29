@@ -158,10 +158,6 @@ static const int kDragThreshold = 3;
     // blinking cursor
     NSTimeInterval _timeOfLastBlink;
 
-    // Previous tracking rect to avoid expensive calls to addTrackingRect.
-#warning This is not used. Did I break tracking?
-    NSRect _trackingRect;
-
     // Helps with "selection scroll"
     iTermSelectionScrollHelper *_selectionScrollHelper;
 
@@ -6586,8 +6582,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - iTermSelectionDelegate
 
-#warning TODO This should be a no-op if it changed only because of scrollback overflow
 - (void)selectionDidChange:(iTermSelection *)selection {
+    NSLog(@"SEelction changed to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;

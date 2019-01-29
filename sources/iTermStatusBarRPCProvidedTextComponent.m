@@ -387,7 +387,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] couldLaunchScriptWithAbsolutePath:fullPath];
 }
 
-- (NSString *)fullPathOfScript {
+- (nullable NSString *)fullPathOfScript {
     if (!_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier) {
         return nil;
     }

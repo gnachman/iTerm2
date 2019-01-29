@@ -86,9 +86,9 @@
         strongSelf->_useBlur.enabled = haveTransparency;
     };
 
-    info = [self defineControl:_initialUseTransparency
-                           key:KEY_INITIAL_USE_TRANSPARENCY
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_initialUseTransparency
+                    key:KEY_INITIAL_USE_TRANSPARENCY
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBlur
                            key:KEY_BLUR

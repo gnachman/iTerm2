@@ -126,10 +126,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)layoutSubviews {
     CGFloat width = self.frame.size.width;
-    CGFloat x = 0;
     if (self.component.statusBarComponentIcon) {
         width -= iTermStatusBarViewControllerIconWidth;
-        x += iTermStatusBarViewControllerIconWidth;
     }
 
     [self.component statusBarComponentSizeView:_view toFitWidth:width];

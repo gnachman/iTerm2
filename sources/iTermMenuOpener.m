@@ -55,7 +55,6 @@
     _menu = menu;
     menu.delegate = self;
 
-    NSArray *elementsToRelease = elements;
     [self clickThroughElements:elements completion:^{
         if (self->_menu.delegate == self) {
             DLog(@"Done clicking through elements.");
@@ -64,10 +63,6 @@
             [self showMessage:message byFrame:frame menuItem:item];
         } else {
             DLog(@"Delegate is no longer self");
-        }
-        for (NSInteger i = 0; i < elementsToRelease.count; i++) {
-            AXUIElementRef element = (__bridge AXUIElementRef)(elements[i]);
-            CFRelease(element);
         }
     }];
 }
@@ -160,7 +155,6 @@
     NSInteger i = 0;
     while (element != nil && i < path.count) {
         element = [self childOfMenu:element withName:path[i]];
-#warning TODO: I appear to be over-releasing these elements. See the analyzer.
         [result addObject:(__bridge id _Nonnull)(element)];
         i++;
         if (i < path.count) {
@@ -198,8 +192,8 @@
     }
     
     CFArrayRef children = nil;
-    // Despite what the name would suggest, the children array and its contents don't seen to need
-    // too be released by us.
+    // Despite what the name would suggest, the children array and its contents don't seem to need
+    // to be released by us.
     error = AXUIElementCopyAttributeValues(menuBar,
                                            kAXChildrenAttribute,
                                            0,

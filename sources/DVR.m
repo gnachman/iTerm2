@@ -1,4 +1,3 @@
-#warning TODO: DVR should show historic status bar info
 // -*- mode:objc -*-
 /*
  **  DVR.m

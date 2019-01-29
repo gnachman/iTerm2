@@ -1138,7 +1138,7 @@ static iTermController *gSharedInstance;
         } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             return [self profileByModifyingProfile:prototype toTelnetTo:urlRep];
         } else if (!aDict) {
-            return [prototype copy];
+            return [[prototype copy] autorelease];
         } else {
             return prototype;
         }

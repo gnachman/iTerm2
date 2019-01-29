@@ -128,7 +128,10 @@ namespace iTerm2 {
                 _openPage = NULL;
             }
             _allPages.erase(pageToPrune);
-            pageToPrune->release(this);
+            bool freed = pageToPrune->release(this);
+#if DEBUG
+            assert(!freed);
+#endif
             ITExtraDebugAssert(pageToPrune->get_retain_count() > 0);
 
             // Make all glyph entries remove their references to the page. Remove our
@@ -142,7 +145,10 @@ namespace iTerm2 {
                 for (int j = 0; j < count; j++) {
                     if (owner->texture_page_owner_is_glyph_entry()) {
                         GlyphEntry *glyph_entry = static_cast<GlyphEntry *>(owner);
-                        pageToPrune->release(glyph_entry);
+#if DEBUG
+                        assert(!freed);
+#endif
+                        freed = pageToPrune->release(glyph_entry);
                         auto it = _pages.find(glyph_entry->_key);
                         if (it != _pages.end()) {
                             // Remove from _pages as soon as the first part is found for this glyph

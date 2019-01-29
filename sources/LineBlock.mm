@@ -1267,7 +1267,7 @@ static int Search(NSString* needle,
         // position.
 
         int limit = raw_line_length;
-        int tempResultLength;
+        int tempResultLength = 0;
         int tempPosition;
 
         NSString* haystack;

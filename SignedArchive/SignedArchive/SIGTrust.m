@@ -72,7 +72,7 @@
     CFErrorRef secError = NULL;
     const BOOL trusted = SecTrustEvaluateWithError(self->_secTrust,
                                                    &secError);
-    if (secError) {
+    if (secError && error) {
         *error = [SIGError errorWrapping:(__bridge NSError *)secError
                                     code:SIGErrorCodeTrust
                                   detail:@"Failed to evaluate certificate chain"];

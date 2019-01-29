@@ -107,10 +107,7 @@ const CGFloat iTermStatusBarHeight = 21;
         }
 
         // Normal case: add a separator after this component
-        haveFoundNonSpacer = YES;
         anObject.rightSeparatorOffset = offset.doubleValue;
-        lastFixedSpacerOffset = nil;
-        previousObject = anObject;
         return @[ offset ];
     }
     return [offsets uniq];

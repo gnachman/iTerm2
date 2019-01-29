@@ -244,7 +244,7 @@
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
 
-    __block int r;
+    __block int r = 0;
     const NSInteger result = [self internalIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&r];
     if (remainderPtr) {
         *remainderPtr = r;

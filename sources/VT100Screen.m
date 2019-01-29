@@ -5527,10 +5527,6 @@ static void SwapInt(int *a, int *b) {
 
 }
 
-- (iTermColorMap *)temporaryDoubleBufferedGridColorMapCopy {
-    return [[delegate_ screenColorMap] copy];
-}
-
 - (void)temporaryDoubleBufferedGridDidExpire {
     [currentGrid_ setAllDirty:YES];
     // Force the screen to redraw right away. Some users reported lag and this seems to fix it.

@@ -12,7 +12,6 @@
 
 @class iTermBacktraceFrame;
 
-NSString *iTermBacktraceForThread(pthread_t threadId);
 int GetCallstack(pthread_t threadId, void **buffer, int size);
 NSArray<iTermBacktraceFrame *> *GetBacktraceFrames(pthread_t threadId);
 

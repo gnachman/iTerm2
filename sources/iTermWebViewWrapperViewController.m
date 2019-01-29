@@ -231,7 +231,9 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
              completion:(void (^)(NSError *))completion {
     NSString *callback = message[@"callback"];
     if (!callback) {
-        completion([NSError errorWithDomain:iTermWebViewErrorDomain code:iTermWebViewErrorCodeMissingCallback userInfo:nil]);
+        if (completion) {
+            completion([NSError errorWithDomain:iTermWebViewErrorDomain code:iTermWebViewErrorCodeMissingCallback userInfo:nil]);
+        }
         return;
     }
     NSString *innerScript = nil;
@@ -260,7 +262,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         }
         completion([NSError errorWithDomain:iTermWebViewErrorDomain
                                        code:iTermWebViewErrorCodeRPCFailed
-                                   userInfo:@{ NSLocalizedDescriptionKey: description }]);
+                                   userInfo:@{ NSLocalizedDescriptionKey: description ?: @"Unknown error" }]);
     }];
 }
 

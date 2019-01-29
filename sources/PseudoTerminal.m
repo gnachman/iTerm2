@@ -1512,8 +1512,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     NSString *message;
-    NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
-    sortedNames = [names countedInstancesStrings];
+    NSArray *sortedNames = [names countedInstancesStrings];
     if ([sortedNames count] == 1) {
         message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
@@ -8845,11 +8844,6 @@ ITERM_WEAKLY_REFERENCEABLE
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
-    }
-    NSString *commandForSubs = command;
-    if (!command) {
-        commandForSubs = [ITAddressBookMgr bookmarkCommand:profile
-                                             forObjectType:objectType];
     }
     if (command) {
         profile = [[profile

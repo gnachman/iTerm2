@@ -219,7 +219,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                 tState.imageSize.height * scale);
     const CGSize viewportSize = CGSizeMake(tState.configuration.viewportSize.x,
                                            tState.configuration.viewportSize.y);
-    NSEdgeInsets insets = tState.edgeInsets;
+    NSEdgeInsets insets;
     CGFloat vmargin;
     if (@available(macOS 10.14, *)) {
         vmargin = 0;
@@ -246,7 +246,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   viewHeight);
     
     // pixel coordinates
-    CGRect textureFrame = CGRectMake(0, 0, nativeTextureSize.width, nativeTextureSize.height);
+    CGRect textureFrame;
     const CGRect frame = tState.frame;
     const CGSize containerSize = CGSizeMake(tState.containerSize.width * scale,
                                             tState.containerSize.height * scale);

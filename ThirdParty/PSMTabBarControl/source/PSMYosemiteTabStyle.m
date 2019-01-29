@@ -483,7 +483,7 @@
         return textAttributedString;
     }
     
-    NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+    NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
     textAttachment.image = graphic;
     textAttachment.bounds = NSMakeRect(0,
                                        - (graphic.size.height - font.capHeight) / 2.0,

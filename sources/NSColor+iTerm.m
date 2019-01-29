@@ -379,14 +379,24 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         view.appearance = appearance;
         NSImage *image = [view snapshot];
 
-        NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]];
+        NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]] autorelease];
         result = [imageRep colorAtX:0 y:0];
 
         dict[self] = result;
         return result;
     }
 
-#warning TODO: This should use the theme
+    if ([self isEqual:[NSColor labelColor]]) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                return [NSColor whiteColor];
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                return self;
+        }
+    }
+
     return self;
 }
 

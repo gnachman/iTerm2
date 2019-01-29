@@ -1418,7 +1418,8 @@ typedef struct iTermTextColorContext {
          }
          NSMutableDictionary *attrs = [[cheapString.attributes mutableCopy] autorelease];
          CGFloat components[2] = { 0, 1 };
-         CGColorRef black = CGColorCreate(CGColorSpaceCreateDeviceGray(),
+         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+         CGColorRef black = CGColorCreate(colorSpace,
                                           components);
          attrs[(NSString *)kCTForegroundColorAttributeName] = (id)black;
 
@@ -1430,7 +1431,8 @@ typedef struct iTermTextColorContext {
                                         inContext:[[NSGraphicsContext currentContext] graphicsPort]
                                   backgroundColor:backgroundColor
                                      forUnderline:YES];
-
+         CFRelease(colorSpace);
+         CFRelease(black);
      }];
 
     if (underlineContext->maskGraphicsContext) {

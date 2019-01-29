@@ -260,7 +260,9 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
         return NO;
     }
     if (certificateDatas.count == 0) {
-        *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
+        }
     }
 
     NSMutableArray<SIGCertificate *> *certs = [NSMutableArray array];
