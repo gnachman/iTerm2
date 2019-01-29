@@ -511,18 +511,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return selection_;
 }
 
-- (void)screenSetSelectionFromX:(int)startX
-                          fromY:(int)startY
-                            toX:(int)endX
-                            toY:(int)endY {
-    [selection_ clearSelection];
-    VT100GridWindowedRange theRange =
-    VT100GridWindowedRangeMake(VT100GridCoordRangeMake(startX, startY, endX, endY), 0, 0);
-    iTermSubSelection *theSub =
-    [iTermSubSelection subSelectionWithRange:theRange mode:kiTermSelectionModeCharacter];
-    [selection_ addSubSelection:theSub];
-}
-
 - (void)screenRemoveSelection {
     [selection_ clearSelection];
 }
