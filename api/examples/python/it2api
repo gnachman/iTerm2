@@ -54,14 +54,10 @@ async def split_pane(connection, args):
 async def get_buffer(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
-  h, y, o, _f = await s.async_get_line_info()
-  start = iterm2.Point(0, y + o)
-  end = iterm2.Point(0, y + o + h)
-  coordRange = iterm2.CoordRange(start, end)
-  windowedRange = iterm2.WindowedCoordRange(coordRange)
-  result = await s.async_get_screen_contents(windowedRange)
-  for i in range(result.number_of_lines):
-    print(result.line(i).string)
+  contents = await s.async_get_screen_contents()
+  for i in range(contents.number_of_lines):
+    line = contents.line(i)
+    print(line.string)
 
 async def get_prompt(connection, args):
   a = await iterm2.async_get_app(connection)

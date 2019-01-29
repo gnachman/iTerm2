@@ -140,9 +140,10 @@ class ScreenStreamer:
         self.future = None
 
         if self.want_contents:
-            result = await iterm2.rpc.async_get_buffer_with_screen_contents(
+            result = await iterm2.rpc.async_get_screen_contents(
                 self.connection,
-                self.session_id)
+                self.session_id,
+                windowedCoordRange)
             if result.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
                 return ScreenContents(result.get_buffer_response)
             else:

@@ -240,6 +240,20 @@ class Session:
         """
         return self.__session_id
 
+    async def async_get_screen_contents(self) -> iterm2.screen.ScreenContents:
+        """
+        Returns the contents of the mutable area of the screen.
+
+        :returns: A :class:`iterm2.screen.ScreenContents`, containing the screen contents.
+        """
+        result = await iterm2.rpc.async_get_screen_contents(
+            self.connection,
+            self.session_id)
+        if result.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
+            return iterm2.screen.ScreenContents(result.get_buffer_response)
+        else:
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status))
+
     def get_screen_streamer(self, want_contents: bool=True) -> iterm2.screen.ScreenStreamer:
         """
         Provides a nice interface for receiving updates to the screen.

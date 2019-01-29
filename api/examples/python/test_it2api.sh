@@ -1,5 +1,6 @@
 #!/bin/bash
-PYTHON=~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3.7
+PYTHON=python3.7
+PYTHONPATH=`pwd`/../../library/python/iterm2/iterm2
 
 function expect_contains() {
     echo -n "$1: "
