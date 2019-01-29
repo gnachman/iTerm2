@@ -185,7 +185,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)autolaunchScriptPath {
-    return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch"];
+    return [[self scriptsPathWithoutSpaces] stringByAppendingPathComponent:@"AutoLaunch"];
 }
 
 - (NSString *)quietFilePath {

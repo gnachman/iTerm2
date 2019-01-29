@@ -496,7 +496,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                      [pleaseWait.window makeKeyAndOrderFront:nil];
                                                                  }];
         _disablePathWatcher++;
-        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder pythonVersion:pythonVersion dependencies:dependencies createSetupPy:YES completion:^(BOOL ok) {
+        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder eventualLocation:folder pythonVersion:pythonVersion dependencies:dependencies createSetupPy:YES completion:^(BOOL ok) {
             [[NSNotificationCenter defaultCenter] removeObserver:token];
             [pleaseWait.window close];
             if (!ok) {

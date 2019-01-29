@@ -184,7 +184,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     if (trusted && [self wantsAutoLaunch] && [self userAcceptsAutoLaunchInstall]) {
         to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
     } else {
-        to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+        to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:setupParser.pythonVersion
@@ -197,6 +197,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
              return;
          }
          [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:[NSURL fileURLWithPath:from]
+                                                                  eventualLocation:[NSURL fileURLWithPath:to]
                                                                      pythonVersion:setupParser.pythonVersion
                                                                       dependencies:dependencies
                                                                      createSetupPy:NO
