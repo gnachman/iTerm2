@@ -34,7 +34,7 @@
     _suggester =
         [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
                                                             pathSource:^NSSet<NSString *> *(NSString *prefix) {
-                                                                return paths;
+                                                                return [NSSet setWithArray:paths];
                                                             }];
 
     _parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];

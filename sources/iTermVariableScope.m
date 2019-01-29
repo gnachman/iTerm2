@@ -88,8 +88,8 @@ NS_ASSUME_NONNULL_BEGIN
     if (parts.count == 1) {
         *stripped = key;
         if (!forWriting) {
-            // Check all anonymous frames in case one of them is a match. Search from oldest to newest.
-            for (iTermTuple<NSString *,iTermVariables *> *tuple in [_frames reverseObjectEnumerator]) {
+            // Check all anonymous frames in case one of them is a match.
+            for (iTermTuple<NSString *,iTermVariables *> *tuple in _frames) {
                 if (tuple.firstObject) {
                     continue;
                 }
