@@ -20,7 +20,6 @@ static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
 static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an advanced pref with the same name.
 static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
 static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
-static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPerDay;
 
 @interface iTermTipController()<iTermTipWindowDelegate>
 @property(nonatomic, retain) NSDictionary *tips;

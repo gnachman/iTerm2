@@ -352,7 +352,6 @@
     }];
 
     NSArray<NSString *> *options = [legalPaths arrayByAddingObjectsFromArray:functionNames];
-#warning TODO: Maybe I can remove this? They should already be prefixes.
     return [[options filteredArrayUsingBlock:^BOOL(NSString *anObject) {
         return prefix.length == 0 || [anObject hasPrefix:prefix];
     }] mapWithBlock:^id(NSString *s) {
