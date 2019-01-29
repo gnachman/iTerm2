@@ -345,7 +345,7 @@ class Session:
                 json_value)
             status = response.set_profile_property_response.status
             if status != iterm2.api_pb2.SetProfilePropertyResponse.Status.Value("OK"):
-                raise iterm2.rpc.RPCException(iterm2.api_pb2.GetPromptResponse.Status.Name(status))
+                raise iterm2.rpc.RPCException(iterm2.api_pb2.SetProfilePropertyResponse.Status.Name(status))
 
     async def async_get_profile(self) -> iterm2.profile.Profile:
         """

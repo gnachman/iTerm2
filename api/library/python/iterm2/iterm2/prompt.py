@@ -29,6 +29,16 @@ class Prompt:
         """Gives the :class:`~iterm2.util.CoordRange` of the output of a command following a shell prompt."""
         return iterm2.util.CoordRange.from_proto(self.__proto.output_range)
 
+    @property
+    def working_directory(self) -> typing.Union[None, str]:
+      """Returns the working directory at the time the prompt was printed."""
+      return self.__proto.working_directory
+
+    @property
+    def command(self) -> typing.Union[None, str]:
+      """Returns the command entered at the prompt."""
+      return self.__proto.command
+
 async def async_get_last_prompt(connection: iterm2.connection.Connection, session_id: str) -> typing.Union[None, Prompt]:
     """
     Fetches info about the last prompt in a session.

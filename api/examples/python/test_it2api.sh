@@ -44,10 +44,10 @@ WIDTH="${BASH_REMATCH[2]}"
 expect_contains "split-pane" "Session" "$OUTPUT"
 expect_contains "get-prompt" "working_directory: \"$HOME\"" "$($PYTHON it2api get-prompt $FIRST_SESSION_ID)" 
 expect_nothing "set-profile-property" "$($PYTHON it2api set-profile-property $SESSION_ID ansi_0_color '(255,255,255,255 sRGB)')"
-expect_contains "get-profile-property" "(255,255,255,255 sRGB)" "$($PYTHON it2api get-profile-property $SESSION_ID ansi_0_color)"
+expect_contains "get-profile-property" "(255,255,255,255 ColorSpace.SRGB)" "$($PYTHON it2api get-profile-property $SESSION_ID ansi_0_color)"
 
 expect_nothing "inject" "$($PYTHON it2api inject $SESSION_ID 'Press x')"
-expect_contains "read" 'characters: "x"' "$($PYTHON it2api read $SESSION_ID char)"
+expect_contains "read" 'chars=x' "$($PYTHON it2api read $SESSION_ID char)"
 
 OUTPUT=$($PYTHON it2api show-hierarchy | grep "Window" | tail -1)
 REGEX='id=(pty-[^ ]*)'
