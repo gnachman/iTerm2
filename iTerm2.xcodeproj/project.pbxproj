@@ -1490,6 +1490,7 @@
 		A61BB46421CA2D5A0027F47D /* iTerm2Script.icns in Resources */ = {isa = PBXBuildFile; fileRef = A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */; };
 		A61BB46521CA2D5A0027F47D /* iTerm2Script.icns in Resources */ = {isa = PBXBuildFile; fileRef = A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */; };
 		A61BB46621CA2D5A0027F47D /* iTerm2Script.icns in Resources */ = {isa = PBXBuildFile; fileRef = A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */; };
+		A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A61BB46722001E650027F47D /* iTermRecordingIcon.icns */; };
 		A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2A320E99DCD0035BECD /* iTermStatusBarClockComponent.h */; };
@@ -4424,6 +4425,7 @@
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInstantReplayWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = iTerm2Script.icns; path = images/iTerm2Script.icns; sourceTree = "<group>"; };
+		A61BB46722001E650027F47D /* iTermRecordingIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = iTermRecordingIcon.icns; path = images/iTermRecordingIcon.icns; sourceTree = "<group>"; };
 		A61CEAA51C72EA4C00939E97 /* iTermWeakReferenceTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWeakReferenceTest.m; sourceTree = "<group>"; };
 		A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorRun.h; sourceTree = "<group>"; };
 		A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRun.m; sourceTree = "<group>"; };
@@ -6340,6 +6342,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A61BB46722001E650027F47D /* iTermRecordingIcon.icns */,
 				A6AC04C521F0FDBC00CD2774 /* PopoverIcon.png */,
 				A6AC04C421F0FDBC00CD2774 /* PopoverIcon@2x.png */,
 				A6EC47C921EC73F5000E1321 /* PythonLogo.png */,
@@ -11010,6 +11013,7 @@
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
+				A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,

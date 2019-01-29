@@ -57,7 +57,7 @@
 				<string>itr</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
+			<string>iTermRecordingIcon.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>iTerm2 Recording</string>
 			<key>CFBundleTypeRole</key>
