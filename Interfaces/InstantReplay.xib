@@ -1,69 +1,110 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermInstantReplayWindowController">
             <connections>
                 <outlet property="_currentTimeLabel" destination="eW9-Ho-L9H" id="Mhu-lw-q8f"/>
                 <outlet property="_earliestTimeLabel" destination="rwM-La-RBW" id="AGv-3I-hTz"/>
+                <outlet property="_eventsView" destination="Ag5-7O-YG2" id="7wS-KW-X04"/>
+                <outlet property="_firstButton" destination="U1p-e0-2Nl" id="Ued-1a-gJQ"/>
                 <outlet property="_latestTimeLabel" destination="EbS-W5-6is" id="9IT-lM-2he"/>
+                <outlet property="_secondButton" destination="DA7-r1-1Pd" id="6yX-un-4dM"/>
                 <outlet property="_slider" destination="GFt-3P-LVv" id="FU0-ZA-ZXz"/>
                 <outlet property="window" destination="UYp-FA-gZP" id="yW4-3v-6ot"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
-        <window title="Instant Replay Control" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="UYp-FA-gZP" customClass="iTermInstantReplayPanel">
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Instant Replay Control" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="UYp-FA-gZP" customClass="iTermInstantReplayPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" resizable="YES" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="120" y="65" width="527" height="43"/>
+            <rect key="contentRect" x="120" y="65" width="602" height="43"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
             <view key="contentView" id="fmG-yW-YZh" customClass="iTermInstantReplayView">
-                <rect key="frame" x="0.0" y="0.0" width="527" height="43"/>
+                <rect key="frame" x="0.0" y="0.0" width="602" height="43"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <slider verticalHuggingPriority="750" id="GFt-3P-LVv">
-                        <rect key="frame" x="86" y="21" width="391" height="16"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="10" sliderType="linear" id="cdM-e9-PPO"/>
-                        <connections>
-                            <action selector="sliderMoved:" target="-2" id="RBj-j4-8vn"/>
-                        </connections>
-                    </slider>
-                    <textField verticalHuggingPriority="750" id="rwM-La-RBW">
-                        <rect key="frame" x="18" y="22" width="62" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="XX:XX:XX MM" id="vJo-pj-XsO">
-                            <font key="font" metaFont="miniSystem"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="EbS-W5-6is">
-                        <rect key="frame" x="483" y="22" width="26" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Now" id="Hau-2E-Qk8">
-                            <font key="font" metaFont="miniSystem"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField verticalHuggingPriority="750" id="eW9-Ho-L9H">
-                        <rect key="frame" x="454" y="6" width="63" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="justified" title="Live View" id="gh2-Nt-9U7">
-                            <font key="font" metaFont="miniSystem"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
+                    <visualEffectView appearanceType="inheritedVibrantLight" blendingMode="behindWindow" material="underWindowBackground" state="followsWindowActiveState" id="BeC-02-QT5">
+                        <rect key="frame" x="0.0" y="-14" width="603" height="71"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <customView id="Ag5-7O-YG2" userLabel="Events View" customClass="iTermInstantReplayEventsView">
+                                <rect key="frame" x="88" y="44" width="391" height="4"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                            </customView>
+                            <slider verticalHuggingPriority="750" id="GFt-3P-LVv">
+                                <rect key="frame" x="86" y="35" width="399" height="15"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="above" numberOfTickMarks="2" sliderType="linear" id="cdM-e9-PPO"/>
+                                <connections>
+                                    <action selector="sliderMoved:" target="-2" id="RBj-j4-8vn"/>
+                                </connections>
+                            </slider>
+                            <textField verticalHuggingPriority="750" id="rwM-La-RBW">
+                                <rect key="frame" x="18" y="36" width="62" height="14"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Time" id="vJo-pj-XsO">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="EbS-W5-6is">
+                                <rect key="frame" x="491" y="36" width="26" height="14"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Now" id="Hau-2E-Qk8">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" id="eW9-Ho-L9H">
+                                <rect key="frame" x="454" y="20" width="63" height="14"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="justified" title="Live View" id="gh2-Nt-9U7">
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button verticalHuggingPriority="750" id="U1p-e0-2Nl">
+                                <rect key="frame" x="522" y="35" width="61" height="16"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="push" title="Export…" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="AWP-wp-FTJ">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="miniSystem"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="exportButton:" target="-2" id="6Bi-NO-jd1"/>
+                                </connections>
+                            </button>
+                            <button hidden="YES" verticalHuggingPriority="750" id="DA7-r1-1Pd">
+                                <rect key="frame" x="522" y="18" width="61" height="16"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Wj9-c2-bSB">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="miniSystem"/>
+                                    <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="cancelButton:" target="-2" id="KBB-fW-pSq"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                    </visualEffectView>
                 </subviews>
             </view>
             <connections>
                 <outlet property="delegate" destination="-2" id="nDM-Ga-ZTv"/>
             </connections>
+            <point key="canvasLocation" x="176" y="149.5"/>
         </window>
     </objects>
 </document>

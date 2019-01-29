@@ -64,12 +64,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (NSString *)executableNamed:(NSString *)name
                   atPyenvRoot:(NSString *)root
-                pythonVersion:(NSString *)pythonVersion {
-    NSString *path = [root stringByAppendingPathComponent:@"versions"];
+                pythonVersion:(NSString *)pythonVersion
+                   searchPath:(NSString *)searchPath {
+    NSString *path = [searchPath stringByAppendingPathComponent:@"versions"];
     NSString *bestVersion = nil;
     if (pythonVersion) {
         if (pythonVersion.it_twoPartVersionNumber) {
-            bestVersion = [self threePartVersionForTwoPartVersion:pythonVersion at:path];
+            bestVersion = [self threePartVersionForTwoPartVersion:pythonVersion.it_twoPartVersionNumber at:path];
         } else {
             bestVersion = pythonVersion;
         }
@@ -77,20 +78,21 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         bestVersion = [iTermPythonRuntimeDownloader bestPythonVersionAt:path];
     }
     if ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:bestVersion]]) {
-        path = [path stringByAppendingPathComponent:bestVersion];
-        path = [path stringByAppendingPathComponent:@"bin"];
-        path = [path stringByAppendingPathComponent:name];
-        return path;
+        NSString *result = [root stringByAppendingPathComponent:@"versions"];
+        result = [result stringByAppendingPathComponent:bestVersion];
+        result = [result stringByAppendingPathComponent:@"bin"];
+        result = [result stringByAppendingPathComponent:name];
+        return result;
     }
     return nil;
 }
 
 - (NSString *)pip3At:(NSString *)root pythonVersion:(NSString *)pythonVersion {
-    return [self executableNamed:@"pip3" atPyenvRoot:root pythonVersion:pythonVersion];
+    return [self executableNamed:@"pip3" atPyenvRoot:root pythonVersion:pythonVersion searchPath:root];
 }
 
 - (NSString *)pyenvAt:(NSString *)root pythonVersion:(NSString *)pythonVersion {
-    return [self executableNamed:@"python3" atPyenvRoot:root pythonVersion:pythonVersion];
+    return [self executableNamed:@"python3" atPyenvRoot:root pythonVersion:pythonVersion searchPath:root];
 }
 
 - (NSString *)pathToStandardPyenvPythonWithPythonVersion:(NSString *)pythonVersion {
@@ -457,6 +459,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (void)installPythonEnvironmentTo:(NSURL *)container
+                  eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
                       dependencies:(NSArray<NSString *> *)dependencies
                      createSetupPy:(BOOL)createSetupPy
@@ -487,7 +490,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             // pip3 must use the python in this environment so it will install new dependencies to the right place.
             NSString *const pathToEnvironment = [container.path stringByAppendingPathComponent:@"iterm2env"];
             NSString *const pip3 = [self pip3At:pathToEnvironment pythonVersion:pythonVersion];
-            NSString *const pathToPython = [self pyenvAt:pathToEnvironment pythonVersion:pythonVersion];
+            NSString *const pathToPython = [self executableNamed:@"python3"
+                                                     atPyenvRoot:[eventualLocation.path stringByAppendingPathComponent:@"iterm2env"]
+                                                   pythonVersion:pythonVersion
+                                                      searchPath:source];
+
+
+            // Replace the shebang in pip3 to point at the right version of python.
             [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!%@", pathToPython]];
 
             [self installDependencies:dependencies to:container pythonVersion:pythonVersion completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {

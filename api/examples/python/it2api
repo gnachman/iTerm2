@@ -54,21 +54,17 @@ async def split_pane(connection, args):
 async def get_buffer(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
-  h, y, o, _f = await s.async_get_line_info()
-  start = iterm2.Point(0, y + o)
-  end = iterm2.Point(0, y + o + h)
-  coordRange = iterm2.CoordRange(start, end)
-  windowedRange = iterm2.WindowedCoordRange(coordRange)
-  result = await s.async_get_screen_contents(windowedRange)
-  for i in range(result.number_of_lines):
-    print(result.line(i).string)
+  contents = await s.async_get_screen_contents()
+  for i in range(contents.number_of_lines):
+    line = contents.line(i)
+    print(line.string)
 
 async def get_prompt(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
-  result = await s.async_get_prompt()
-  print(result)
-
+  result = await iterm2.async_get_last_prompt(connection, s.session_id)
+  print("working_directory: \"{}\"".format(result.working_directory))
+  print("command: \"{}\"".format(result.command))
 
 def profile_property_type_map():
   map = {
@@ -227,7 +223,7 @@ def encode_property_value(key, value):
         float(match.group(2)),
         float(match.group(3)),
         float(match.group(4)),
-        match.group(5))
+        iterm2.ColorSpace(match.group(5)))
 
 async def set_profile_property(connection, args):
   a = await iterm2.async_get_app(connection)
@@ -243,7 +239,9 @@ async def read(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
   if args.mode == "char":
-    print(await s.async_read_keystroke())
+    async with iterm2.KeystrokeMonitor(connection) as mon:
+      keystroke = await mon.async_get()
+      print(keystroke)
   elif args.mode == "line":
     async with s.get_keystroke_reader() as reader:
       eol = False

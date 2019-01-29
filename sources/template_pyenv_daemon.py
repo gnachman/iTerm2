@@ -1,9 +1,7 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 
 import iterm2
-# To install packages from PyPI, use this command, changing package_name to the package you
-# wish to install:
-#   "$$PYTHON_BIN$$/pip3" install package_name
+# To install, update, or remove packages from PyPI, use Scripts > Manage > Manage Dependencies...
 
 async def main(connection):
     # This is an example of using an asyncio context manager to register a custom control

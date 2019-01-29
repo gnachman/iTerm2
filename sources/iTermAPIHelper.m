@@ -585,9 +585,11 @@ static id sAPIHelperInstance;
                         [userinfo dictionaryBySettingObject:connectionKey
                                                      forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
                 }
-                *error = [NSError errorWithDomain:@"com.iterm2.api"
-                                             code:2
-                                         userInfo:userinfo];
+                if (error) {
+                    *error = [NSError errorWithDomain:@"com.iterm2.api"
+                                                 code:2
+                                             userInfo:userinfo];
+                }
 
                 return nil;
             }

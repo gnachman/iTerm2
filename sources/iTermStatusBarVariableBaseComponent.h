@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 scope:(nullable iTermVariableScope *)scope;
 
 // If you override stringVariants you don't need to provide this.
-- (NSString *)stringByCompressingString:(NSString *)source;
+- (nullable NSString *)stringByCompressingString:(NSString *)source;
 - (NSString *)transformedValue:(NSString *)value;
 
 @end

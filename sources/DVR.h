@@ -59,4 +59,7 @@
 // frees a decoder allocated with -[getDecoder].
 - (void)releaseDecoder:(DVRDecoder*)decoder;
 
+- (NSDictionary *)dictionaryValueFrom:(long long)from to:(long long)to;
+- (long long)firstTimestampAfter:(long long)timestamp;
+
 @end

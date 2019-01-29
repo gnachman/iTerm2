@@ -185,7 +185,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)autolaunchScriptPath {
-    return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch"];
+    return [[self scriptsPathWithoutSpaces] stringByAppendingPathComponent:@"AutoLaunch"];
 }
 
 - (NSString *)quietFilePath {
@@ -262,7 +262,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         } else {
             path = networkPath;
         }
-        if ([filename hasPrefix:networkPath]) {
+        if ([filename hasPrefix:path]) {
             DLog(@"Filename %@ has prefix of ignored path %@", filename, networkPath);
             return YES;
         }

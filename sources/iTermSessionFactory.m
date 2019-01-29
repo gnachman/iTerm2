@@ -44,11 +44,11 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 // Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
-- (NSDictionary *)substitutionsForCommand:(NSString *)command
-                              sessionName:(NSString *)name
-                        baseSubstitutions:(NSDictionary *)substitutions
-                                canPrompt:(BOOL)canPrompt
-                                   window:(NSWindow *)window {
+- (nullable NSDictionary *)substitutionsForCommand:(NSString *)command
+                                       sessionName:(NSString *)name
+                                 baseSubstitutions:(NSDictionary *)substitutions
+                                         canPrompt:(BOOL)canPrompt
+                                            window:(NSWindow *)window {
     NSSet *cmdVars = [command doubleDollarVariables];
     NSSet *nameVars = [name doubleDollarVariables];
     NSMutableSet *allVars = [cmdVars mutableCopy];
@@ -101,7 +101,7 @@ NS_ASSUME_NONNULL_BEGIN
                       serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
-                           environment:(NSDictionary *)environment
+                           environment:(nullable NSDictionary *)environment
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD
                                command:(nullable NSString *)command
@@ -239,7 +239,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (NSString *)promptForParameter:(NSString *)name promptingDisabled:(BOOL)promptingDisabled inWindow:(nonnull NSWindow *)window {
+- (nullable NSString *)promptForParameter:(NSString *)name promptingDisabled:(BOOL)promptingDisabled inWindow:(nonnull NSWindow *)window {
     if (promptingDisabled) {
         return @"";
     }

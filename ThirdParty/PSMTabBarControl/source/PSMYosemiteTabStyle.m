@@ -483,7 +483,7 @@
         return textAttributedString;
     }
     
-    NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+    NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
     textAttachment.image = graphic;
     textAttachment.bounds = NSMakeRect(0,
                                        - (graphic.size.height - font.capHeight) / 2.0,
@@ -1009,8 +1009,30 @@
             }
         }
 
+        attributedString = [self truncateAttributedStringIfNeeded:attributedString forWidth:labelRect.size.width];
         [attributedString drawInRect:labelRect];
     }
+}
+
+// In the neverending saga of Cocoa embarassing itself, if there isn't enough space for a text
+// attachment and the text that follows it, they are drawn overlapping.
+- (NSAttributedString *)truncateAttributedStringIfNeeded:(NSAttributedString *)attributedString
+                                                forWidth:(CGFloat)width {
+    __block BOOL truncate = NO;
+    [attributedString enumerateAttribute:NSAttachmentAttributeName
+                                 inRange:NSMakeRange(0, 1)
+                                 options:0
+                              usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+                                  if (![value isKindOfClass:[NSTextAttachment class]]) {
+                                      return;
+                                  }
+                                  NSTextAttachment *attachment = value;
+                                  truncate = (attachment.image.size.width * 2 > width);
+                              }];
+    if (truncate) {
+        return [attributedString attributedSubstringFromRange:NSMakeRange(0, 1)];
+    }
+    return attributedString;
 }
 
 - (NSColor *)tabBarColor {

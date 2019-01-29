@@ -32,7 +32,7 @@ NSString *const iTermStatusBarComponentKnobMinimumWidthKey = @"_minimumWidth";
     return self;
 }
 
-- (NSView *)inputView {
+- (nullable NSView *)inputView {
     [self doesNotRecognizeSelector:_cmd];
     return nil;
 }

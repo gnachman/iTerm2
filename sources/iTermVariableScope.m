@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermVariables(Private)
 - (NSDictionary<NSString *,NSString *> *)stringValuedDictionaryInScope:(nullable NSString *)scopeName;
-- (id)valueForVariableName:(NSString *)name;
+- (nullable id)valueForVariableName:(NSString *)name;
 - (NSString *)stringValueForVariableName:(NSString *)name;
 - (BOOL)hasLinkToReference:(iTermVariableReference *)reference
                       path:(NSString *)path;
@@ -80,7 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [owner stringValueForVariableName:name] ?: @"";
 }
 
-- (iTermVariables *)ownerForKey:(NSString *)key forWriting:(BOOL)forWriting stripped:(out NSString **)stripped {
+- (nullable iTermVariables *)ownerForKey:(NSString *)key forWriting:(BOOL)forWriting stripped:(out NSString **)stripped {
     NSArray<NSString *> *parts = [key componentsSeparatedByString:@"."];
     if (parts.count == 0) {
         return nil;
@@ -88,8 +88,8 @@ NS_ASSUME_NONNULL_BEGIN
     if (parts.count == 1) {
         *stripped = key;
         if (!forWriting) {
-            // Check all anonymous frames in case one of them is a match. Search from oldest to newest.
-            for (iTermTuple<NSString *,iTermVariables *> *tuple in [_frames reverseObjectEnumerator]) {
+            // Check all anonymous frames in case one of them is a match.
+            for (iTermTuple<NSString *,iTermVariables *> *tuple in _frames) {
                 if (tuple.firstObject) {
                     continue;
                 }

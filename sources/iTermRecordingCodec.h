@@ -14,5 +14,6 @@
 + (void)loadRecording;
 + (void)loadRecording:(NSURL *)url;
 + (void)exportRecording:(PTYSession *)session;
++ (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to;
 
 @end

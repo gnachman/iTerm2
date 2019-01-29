@@ -110,6 +110,7 @@
     if (!name) {
         [command setScriptErrorNumber:1];
         [command setScriptErrorString:@"No name given"];
+        return nil;
     }
 
     id value = [self.variablesScope valueForVariableName:name];

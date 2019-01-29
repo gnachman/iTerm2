@@ -51,7 +51,7 @@ class Window:
         """
         if command is not None:
             p = profile.LocalWriteOnlyProfile()
-            p.set_use_custom_command(profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
+            p.set_use_custom_command(iterm2.profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
             p.set_command(command)
             custom_dict = p.values
         elif profile_customizations is not None:
@@ -228,8 +228,8 @@ class Window:
         :raises: CreateTabException if something goes wrong.
         """
         if command is not None:
-            p = profile.LocalWriteOnlyProfile()
-            p.set_use_custom_command(profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
+            p = iterm2.profile.LocalWriteOnlyProfile()
+            p.set_use_custom_command(iterm2.profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
             p.set_command(command)
             custom_dict = p.values
         elif profile_customizations is not None:

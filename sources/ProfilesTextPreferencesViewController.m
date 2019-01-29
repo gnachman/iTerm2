@@ -218,9 +218,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateWarnings]; };
 
-    info = [self defineControl:_powerline
-                           key:KEY_POWERLINE
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_powerline
+                    key:KEY_POWERLINE
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];

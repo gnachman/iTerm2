@@ -81,8 +81,7 @@
 + (void)writeMetadataTo:(NSURL *)destinationURL
               sourceURL:(NSURL *)sourceURL {
     NSString *autoLaunchPath = [[NSFileManager defaultManager] autolaunchScriptPath];
-    NSDictionary *metadata = @{};
-    metadata = @{ @"AutoLaunch": @([sourceURL.path hasPrefix:autoLaunchPath]) };
+    NSDictionary *metadata = @{ @"AutoLaunch": @([sourceURL.path hasPrefix:autoLaunchPath]) };
     [[NSJSONSerialization it_jsonStringForObject:metadata] writeToURL:[destinationURL URLByAppendingPathComponent:@"metadata.json"]
                                                            atomically:NO
                                                              encoding:NSUTF8StringEncoding
@@ -150,7 +149,7 @@
     }
 
     SIGArchiveBuilder *builder = [[SIGArchiveBuilder alloc] initWithPayloadFileURL:payloadURL identity:identity];
-    ok = [builder writeToURL:url error:&error];
+    [builder writeToURL:url error:&error];
     [[NSFileManager defaultManager] removeItemAtURL:payloadURL error:nil];
     completion(error);
 }

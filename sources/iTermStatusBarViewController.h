@@ -20,7 +20,7 @@ extern const CGFloat iTermStatusBarHeight;
 
 @protocol iTermStatusBarViewControllerDelegate<NSObject>
 - (NSColor *)statusBarDefaultTextColor;
-- (NSColor *)statusBarSeparatorColor;
+- (nullable NSColor *)statusBarSeparatorColor;
 - (NSColor *)statusBarBackgroundColor;
 - (NSColor *)statusBarTerminalBackgroundColor;
 - (NSFont *)statusBarTerminalFont;

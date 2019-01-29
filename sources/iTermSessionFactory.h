@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
                       serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
-                           environment:(NSDictionary *)environment
+                           environment:(nullable NSDictionary *)environment
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD  // Change custom directory setting to make it use the passed-in oLDCWD
                                command:(nullable NSString *)command   // Overrides profile's command if nonnil

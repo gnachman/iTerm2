@@ -138,11 +138,11 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return YES;
 }
 
-- (id)discouragedValueForVariableName:(NSString *)name {
+- (nullable id)discouragedValueForVariableName:(NSString *)name {
     return [self valueForVariableName:name];
 }
 
-- (id)rawValueForVariableName:(NSString *)name {
+- (nullable id)rawValueForVariableName:(NSString *)name {
     return _values[name];
 }
 
@@ -155,7 +155,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
 }
 
-- (id)valueForVariableName:(NSString *)name {
+- (nullable id)valueForVariableName:(NSString *)name {
     if (_values[name]) {
         return [self valueByUnwrappingWeakVariables:_values[name]];
     }
@@ -295,7 +295,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
 }
 
-- (iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
+- (nullable iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
     assert(name.length > 0);
 
     // If name refers to a variable of a child, go down a level.

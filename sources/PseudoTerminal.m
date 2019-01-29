@@ -1512,8 +1512,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     NSString *message;
-    NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
-    sortedNames = [names countedInstancesStrings];
+    NSArray *sortedNames = [names countedInstancesStrings];
     if ([sortedNames count] == 1) {
         message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
@@ -1961,8 +1960,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         NSString *tmuxId = @"";
         if ([[self currentSession] isTmuxClient]) {
-            tmuxId = [NSString stringWithFormat:@" [%@]",
-                      [[[self currentSession] tmuxController] clientName]];
+            NSString *clientName = [[[self currentSession] tmuxController] clientName];
+            if (clientName) {
+                tmuxId = [NSString stringWithFormat:@" [%@]", clientName];
+            }
         }
         NSString *windowNumber = @"";
 
@@ -5811,7 +5812,30 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
     }
     self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
-    self.window.titlebarAppearsTransparent = NO;  // Keep it from showing content from other windows behind it. Issue 7108.
+    self.window.titlebarAppearsTransparent = [self titleBarShouldAppearTransparent];  // Keep it from showing content from other windows behind it. Issue 7108.
+}
+
+- (BOOL)titleBarShouldAppearTransparent {
+    switch (windowType_) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            break;
+
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+            return YES;
+    }
+    return NO;
 }
 
 - (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
@@ -6012,6 +6036,15 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return -1;
     }
+}
+
+- (long long)instantReplayTimestampAfter:(long long)timestamp {
+    DVR* dvr = [[self currentSession] dvr];
+    return [dvr firstTimestampAfter:timestamp];
+}
+
+- (void)instantReplayExportFrom:(long long)start to:(long long)end {
+    [iTermRecordingCodec exportRecording:self.currentSession.liveSession from:start to:end];
 }
 
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
@@ -8813,11 +8846,6 @@ ITERM_WEAKLY_REFERENCEABLE
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
-    }
-    NSString *commandForSubs = command;
-    if (!command) {
-        commandForSubs = [ITAddressBookMgr bookmarkCommand:profile
-                                             forObjectType:objectType];
     }
     if (command) {
         profile = [[profile

@@ -41,6 +41,7 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 
 // Install a copy of the current environment somewhere.
 - (void)installPythonEnvironmentTo:(NSURL *)container
+                  eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
                       dependencies:(NSArray<NSString *> *)dependencies
                      createSetupPy:(BOOL)createSetupPy

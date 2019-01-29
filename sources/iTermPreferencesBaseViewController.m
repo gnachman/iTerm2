@@ -489,11 +489,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     assert([info.control isKindOfClass:[NSTextField class]]);
     NSTextField *textField = (NSTextField *)info.control;
     int iv = [self intForString:[textField stringValue] inRange:info.range];
-    unichar lastChar = '0';
-    int numChars = [[textField stringValue] length];
-    if (numChars) {
-        lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
-    }
     if (iv != [textField separatorTolerantIntValue]) {
         // If the int values don't match up or there are terminal non-number
         // chars, then update the value.
@@ -505,12 +500,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     assert([info.control isKindOfClass:[NSTextField class]]);
     NSTextField *textField = (NSTextField *)info.control;
     NSUInteger iv = [self unsignedIntegerForString:[textField stringValue] inRange:info.range];
-    unichar lastChar = '0';
-    int numChars = [[textField stringValue] length];
-    if (numChars) {
-        lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
-    }
-    if (iv != [textField separatorTolerantUnsignedIntegerValue] || (lastChar < '0' || lastChar > '9')) {
+    if (iv != [textField separatorTolerantUnsignedIntegerValue]) {
         [textField setStringValue:[NSString stringWithFormat:@"%lu", iv]];
     }
 }

@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermSessionPicker : NSObject
 
-- (PTYSession *)pickSession;
+- (nullable PTYSession *)pickSession;
 
 @end
 

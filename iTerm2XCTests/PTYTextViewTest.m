@@ -617,7 +617,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         profile[key] = profileOverrides[key];
     }
 
-#warning TODO
     PTYSession *session = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     [session setProfile:profile];
 
@@ -819,7 +818,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                              0, 0);
                               iTermSubSelection *subSelection =
                                   [iTermSubSelection subSelectionWithRange:range
-                                                                      mode:kiTermSelectionModeCharacter];
+                                                                      mode:kiTermSelectionModeCharacter
+                                                                     width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
                           }
               profileOverrides:nil
@@ -837,7 +837,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                              0, 0);
                               iTermSubSelection *subSelection =
                               [iTermSubSelection subSelectionWithRange:range
-                                                                  mode:kiTermSelectionModeBox];
+                                                                  mode:kiTermSelectionModeBox
+                                                                 width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
                           }
               profileOverrides:nil
@@ -856,13 +857,15 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                              0, 0);
                               iTermSubSelection *subSelection =
                                   [iTermSubSelection subSelectionWithRange:range
-                                                                      mode:kiTermSelectionModeBox];
+                                                                      mode:kiTermSelectionModeBox
+                                                                     width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
 
                               range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 2, 0),
                                                                  0, 0);
                               subSelection = [iTermSubSelection subSelectionWithRange:range
-                                                                                 mode:kiTermSelectionModeCharacter];
+                                                                                 mode:kiTermSelectionModeCharacter
+                                                                                width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
 
                           }
@@ -882,7 +885,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                              1, 2);
                               iTermSubSelection *subSelection =
                               [iTermSubSelection subSelectionWithRange:range
-                                                                  mode:kiTermSelectionModeBox];
+                                                                  mode:kiTermSelectionModeBox
+                                                                 width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
                           }
               profileOverrides:nil
@@ -901,7 +905,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                          0, 0);
                               iTermSubSelection *subSelection =
                               [iTermSubSelection subSelectionWithRange:range
-                                                                  mode:kiTermSelectionModeCharacter];
+                                                                  mode:kiTermSelectionModeCharacter
+                                                                 width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
                           }
               profileOverrides:nil
@@ -920,7 +925,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                                  0, 0);
                                   iTermSubSelection *subSelection =
                                       [iTermSubSelection subSelectionWithRange:range
-                                                                          mode:kiTermSelectionModeCharacter];
+                                                                          mode:kiTermSelectionModeCharacter
+                                                                         width:textView.dataSource.width];
                                   [textView.selection addSubSelection:subSelection];
                               }
                   profileOverrides:nil
@@ -939,7 +945,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                                  0, 0);
                                   iTermSubSelection *subSelection =
                                       [iTermSubSelection subSelectionWithRange:range
-                                                                          mode:kiTermSelectionModeCharacter];
+                                                                          mode:kiTermSelectionModeCharacter
+                                                                         width:textView.dataSource.width];
                                   [textView.selection addSubSelection:subSelection];
                               }
                   profileOverrides:nil
@@ -957,7 +964,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                                              0, 0);
                               iTermSubSelection *subSelection =
                                   [iTermSubSelection subSelectionWithRange:range
-                                                                      mode:kiTermSelectionModeCharacter];
+                                                                      mode:kiTermSelectionModeCharacter
+                                                                     width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
                                   helper.isFrontTextView = YES;

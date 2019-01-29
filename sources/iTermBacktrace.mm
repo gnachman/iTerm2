@@ -210,12 +210,6 @@ NSString *DumpCallstack(void*const* buffer, int size) {
 }
 
 extern "C" {
-    NSString *iTermBacktraceForThread(pthread_t threadId) {
-        void *buffer[1024];
-        int n = InternalGetCallstack(threadId, buffer, 1024);
-        return DumpCallstack(buffer, n);
-    }
-
     int GetCallstack(pthread_t threadId, void **buffer, int size) {
         return InternalGetCallstack(threadId, buffer, size);
     }

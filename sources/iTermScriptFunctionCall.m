@@ -111,13 +111,17 @@
     iTermParsedExpression *expression = [[iTermFunctionCallParser callParser] parse:invocation
                                                                               scope:permissiveScope];
     if (expression.string || expression.number) {
-        *error = [NSError errorWithDomain:@"com.iterm2.call"
-                                     code:3
-                                 userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a literal" }];
+        if (error) {
+            *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                         code:3
+                                     userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a literal" }];
+        }
         return nil;
     }
     if (expression.error) {
-        *error = expression.error;
+        if (error) {
+            *error = expression.error;
+        }
         return nil;
     }
     return expression.functionCall.signature;
@@ -353,7 +357,6 @@
                 return;
             }
             if (synchronous) {
-#warning TODO
                 // This is useful because it causes the scope to be called for all depended-upon
                 // variables even if the function can't be executed. This makes it possible for
                 // the session name controller to build up its set of dependencies.

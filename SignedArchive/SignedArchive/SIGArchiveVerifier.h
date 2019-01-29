@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSURL *url;
 @property (nonatomic, readonly) BOOL verified;
-@property (nonatomic, readonly) SIGArchiveReader *reader;
+@property (nonatomic, readonly, nullable) SIGArchiveReader *reader;
 
 - (instancetype)initWithURL:(NSURL *)url NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

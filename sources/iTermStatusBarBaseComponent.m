@@ -274,7 +274,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return MAX(0.01, value.doubleValue);
 }
 
-- (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
+- (nullable NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
     return nil;
 }
 

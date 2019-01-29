@@ -108,7 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [result copy];
 }
 
-- (NSString *)stringByCompressingString:(NSString *)source {
+- (nullable NSString *)stringByCompressingString:(NSString *)source {
     return nil;
 }
 
@@ -138,7 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
     return @"example.com";
 }
 
-- (NSString *)stringByCompressingString:(NSString *)source {
+- (nullable NSString *)stringByCompressingString:(NSString *)source {
     NSMutableArray<NSString *> *parts = [[source componentsSeparatedByString:@"."] mutableCopy];
     __block NSString *replacement = nil;
     NSUInteger index = [parts indexOfObjectWithOptions:NSEnumerationReverse
@@ -246,7 +246,7 @@ NS_ASSUME_NONNULL_BEGIN
     return NSHomeDirectory();
 }
 
-- (NSString *)stringByCompressingString:(NSString *)source {
+- (nullable NSString *)stringByCompressingString:(NSString *)source {
     NSMutableArray<NSString *> *parts = [[source componentsSeparatedByString:@"/"] mutableCopy];
     __block NSString *replacement = nil;
     NSUInteger index = [parts indexOfObjectPassingTest:^BOOL(NSString * _Nonnull part, NSUInteger idx, BOOL * _Nonnull stop) {

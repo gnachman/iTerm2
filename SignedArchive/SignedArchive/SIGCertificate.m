@@ -54,7 +54,7 @@
     }
 
     _publicKey = [[SIGKey alloc] initWithSecKey:key];
-
+    CFRelease(key); 
     return _publicKey;
 }
 
@@ -172,6 +172,7 @@
         return nil;
     }
     SecCertificateRef secCertificate = [SIGCertificate secCertificateWithName:issuerName];
+    CFRelease(issuerName);
     if (secCertificate == NULL) {
         return nil;
     }

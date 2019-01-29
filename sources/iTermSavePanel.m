@@ -46,7 +46,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
     CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
                                                                 (__bridge CFStringRef)extension,
                                                                 NULL);
-    NSString *lowercaseDescription = (__bridge NSString *)UTTypeCopyDescription(fileUTI);
+    NSString *lowercaseDescription = (__bridge_transfer NSString *)UTTypeCopyDescription(fileUTI);
 
     CFRelease(fileUTI);
 

@@ -282,13 +282,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     }
 }
 
-- (void)setSelectionRange:(VT100GridCoordRange)range {
+- (void)setSelectionRange:(VT100GridCoordRange)range width:(int)width {
     [selection_ clearSelection];
     VT100GridWindowedRange theRange =
     VT100GridWindowedRangeMake(range, 0, 0);
     iTermSubSelection *theSub =
     [iTermSubSelection subSelectionWithRange:theRange
-                                        mode:kiTermSelectionModeCharacter];
+                                        mode:kiTermSelectionModeCharacter
+                                       width:width];
     [selection_ addSubSelection:theSub];
 }
 
@@ -508,18 +509,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (iTermSelection *)screenSelection {
     return selection_;
-}
-
-- (void)screenSetSelectionFromX:(int)startX
-                          fromY:(int)startY
-                            toX:(int)endX
-                            toY:(int)endY {
-    [selection_ clearSelection];
-    VT100GridWindowedRange theRange =
-    VT100GridWindowedRangeMake(VT100GridCoordRangeMake(startX, startY, endX, endY), 0, 0);
-    iTermSubSelection *theSub =
-    [iTermSubSelection subSelectionWithRange:theRange mode:kiTermSelectionModeCharacter];
-    [selection_ addSubSelection:theSub];
 }
 
 - (void)screenRemoveSelection {
@@ -907,6 +896,16 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSoftAlternateScreenModeDidChange {
 }
 
+- (void)screenDisinterSession {
+}
+
+
+- (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
+}
+
+
+- (void)screenSetPreferredProxyIcon:(NSString *)value {
+}
 
 #pragma mark - iTermSelectionDelegate
 
@@ -1176,7 +1175,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "jk"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 3, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 3, 2) width:screen.width];
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
@@ -1198,7 +1197,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "abcd"
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 4, 0)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 4, 0) width:screen.width];
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
@@ -1220,7 +1219,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijk\n"
@@ -1238,7 +1237,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "gh\ij"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     [screen setSize:VT100GridSizeMake(9, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"abcdefgh.\n"
@@ -1258,7 +1257,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\ij"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ABCD\n"
@@ -1276,7 +1275,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\nij"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
@@ -1294,7 +1293,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "abc"
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 3, 0)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 3, 0) width:screen.width];
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"IJK\n"
@@ -1311,7 +1310,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self showAltAndUppercase:screen];
     // select "gh\nij"
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"GH\nIJ"]);
     [screen setSize:VT100GridSizeMake(6, 5)];
     XCTAssert([[screen compactLineDump] isEqualToString:
@@ -1347,7 +1346,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....."]);
     // select everything
     // TODO There's a bug when the selection is at the very end (5,6). It is deselected.
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 6)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 6) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[screen compactLineDump] isEqualToString:
@@ -1384,7 +1383,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
     // select everything
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 6)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 6) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nijkl\nMNOPQRST\nUVWXYZ\n"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     ITERM_TEST_KNOWN_BUG([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nMNOPQRST\nUVWXYZ\n"],
@@ -1428,7 +1427,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self fiveByFourScreenWithThreeLinesOneWrapped];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     // select "efgh.."
-    [self setSelectionRange:VT100GridCoordRangeMake(4, 0, 5, 1)];
+    [self setSelectionRange:VT100GridCoordRangeMake(4, 0, 5, 1) width:screen.width];
     [screen setSize:VT100GridSizeMake(3, 3)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"efgh\n"]);
     needsRedraw_ = 0;
@@ -1443,7 +1442,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // abcde
     // fgh..
     // ijkl.
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 2) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"\nabcdef"]);
     [screen setSize:VT100GridSizeMake(13, 4)];
     // TODO
@@ -1469,7 +1468,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"z....\n"
                @"....."]);
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 2) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefgh\nij"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -1499,7 +1498,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 2, 3)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 2, 2, 3) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"jklmNO"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"NO"]);
@@ -1510,7 +1509,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 4, 2, 4)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 4, 2, 4) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ST"]);
@@ -1522,7 +1521,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 2, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 2, 2, 2) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"ij"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([self selectedStringInScreen:screen] == nil);
@@ -1534,7 +1533,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 1)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 1, 1) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
@@ -1544,7 +1543,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 0)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 5, 0) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcde"]);
@@ -1554,7 +1553,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [self appendLines:@[@"abcdefgh", @"ijklmnopqrst", @"uvwxyz"] toScreen:screen];
     [self showAltAndUppercase:screen];
-    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 1)];
+    [self setSelectionRange:VT100GridCoordRangeMake(0, 0, 2, 1) width:screen.width];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdefg"]);
     [screen setSize:VT100GridSizeMake(6, 6)];
     XCTAssert([[self selectedStringInScreen:screen] isEqualToString:@"abcdef"]);
@@ -1773,7 +1772,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testClearScrollbackBuffer {
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 1, 1)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 1, 1) width:screen.width];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abcde\n"
@@ -2642,7 +2641,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self showAltAndUppercase:screen];
     screen.saveToScrollbackInAlternateScreen = YES;
     [screen resetDirty];
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     [screen terminalLineFeed];
     XCTAssert([screen scrollbackOverflow] == 1);
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -2661,7 +2660,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     screen.saveToScrollbackInAlternateScreen = NO;
     // scrollback overflow should be 0 and selection shouldn't be insane
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 5, 2, 5)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 5, 2, 5) width:screen.width];
     [screen terminalLineFeed];
     XCTAssert([screen scrollbackOverflow] == 0);
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
@@ -3900,7 +3899,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     screen.delegate = self;
     [screen terminalShowAltBuffer];
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     XCTAssert([selection_ hasSelection]);
     [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert(![selection_ hasSelection]);
@@ -3909,7 +3908,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testResizeWithSelectionOfJustNullsInMainScreen {
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     screen.delegate = self;
-    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2)];
+    [self setSelectionRange:VT100GridCoordRangeMake(1, 1, 2, 2) width:screen.width];
     XCTAssert([selection_ hasSelection]);
     [screen setSize:VT100GridSizeMake(4, 4)];
     XCTAssert(![selection_ hasSelection]);
