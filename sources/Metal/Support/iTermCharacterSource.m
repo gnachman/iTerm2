@@ -211,8 +211,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         return [cache[key] rectValue];
     }
     
-    const CGSize bigSize = CGSizeMake(pointSize * 10,
-                                      pointSize * 10);
+    const CGSize bigSize = CGSizeMake(round(pointSize * 10),
+                                      round(pointSize * 10));
     iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:asciiFontInfo
                                                                                                            nonAsciiFont:nonAsciiFontInfo
                                                                                                             asciiOffset:CGSizeZero
