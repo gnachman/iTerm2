@@ -5652,6 +5652,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.tmuxMode != TMUX_NONE) {
         return;
     }
+    NSString *preferredTmuxClientName = [self preferredTmuxClientName];
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
@@ -5668,7 +5669,7 @@ ITERM_WEAKLY_REFERENCEABLE
         profile = self.profile;
     }
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
-                                                   clientName:[self preferredTmuxClientName]
+                                                   clientName:preferredTmuxClientName
                                                       profile:profile
                                                  profileModel:model];
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
