@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import iterm2
-# To install packages from PyPI, use the Dependency Manager.
+# To install, update, or remove packages from PyPI, use Scripts > Manage > Manage Dependencies...
 
 async def main(connection):
     # This is an example of using an asyncio context manager to register a custom control
