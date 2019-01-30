@@ -556,17 +556,12 @@ static BOOL hasBecomeActive = NO;
     if ([[filename pathExtension] isEqualToString:@"its"]) {
         [iTermScriptImporter importScriptFromURL:[NSURL fileURLWithPath:filename]
                                    userInitiated:NO
-                                      completion:^(NSString * _Nullable errorMessage) {
-                                          if (errorMessage) {
-                                              NSAlert *alert = [[NSAlert alloc] init];
-                                              alert.messageText = @"Script Not Installed";
-                                              alert.informativeText = errorMessage;
-                                              [alert runModal];
-                                          } else {
-                                              NSAlert *alert = [[NSAlert alloc] init];
-                                              alert.messageText = @"Script Imported Successfully";
-                                              [alert runModal];
+                                      completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
+                                          if (quiet) {
+                                              return;
                                           }
+                                          [self->_scriptsMenuController importDidFinishWithErrorMessage:errorMessage
+                                                                                               location:location];
                                       }];
         return YES;
     }

@@ -296,15 +296,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)importFromURL:(NSURL *)url {
     [iTermScriptImporter importScriptFromURL:url
                                userInitiated:YES
-                                  completion:^(NSString * _Nullable errorMessage) {
+                                  completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                       // Mojave deadlocks if you do this without the dispatch_async
                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                          [self importDidFinishWithErrorMessage:errorMessage];
+                                          if (quiet) {
+                                              return;
+                                          }
+                                          [self importDidFinishWithErrorMessage:errorMessage
+                                                                       location:location];
                                       });
                                   }];
 }
 
-- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage {
+- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage location:(NSURL *)location {
     if (errorMessage) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Could Not Install Script";
@@ -313,7 +317,15 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Script Imported Successfully";
-        [alert runModal];
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Launch"];
+        const NSModalResponse response = [alert runModal];
+        if (response == NSAlertFirstButtonReturn) {
+            return;
+        }
+        if (response == NSAlertSecondButtonReturn) {
+            [self launchScriptWithAbsolutePath:location.path];
+        }
     }
 }
 
