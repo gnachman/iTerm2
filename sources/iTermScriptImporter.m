@@ -22,7 +22,7 @@ static BOOL sInstallingScript;
 
 + (void)importScriptFromURL:(NSURL *)downloadedURL
               userInitiated:(BOOL)userInitiated
-                 completion:(void (^)(NSString *errorMessage))completion {
+                 completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -34,9 +34,9 @@ static BOOL sInstallingScript;
         dispatch_async(dispatch_get_main_queue(), ^{
             [self reallyImportScriptFromURL:downloadedURL
                               userInitiated:userInitiated
-                                 completion:^(NSString *errorMessage) {
+                                 completion:^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                                      dispatch_group_leave(group);
-                                     completion(errorMessage);
+                                     completion(errorMessage, quiet, location);
                                  }];
         });
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
@@ -45,22 +45,25 @@ static BOOL sInstallingScript;
 
 + (void)reallyImportScriptFromURL:(NSURL *)downloadedURL
                     userInitiated:(BOOL)userInitiated
-                       completion:(void (^)(NSString *errorMessage))completion {
+                       completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     if (sInstallingScript) {
-        completion(@"Another import is in progress. Please try again after it completes.");
+        completion(@"Another import is in progress. Please try again after it completes.", NO, nil);
         return;
     }
 
     sInstallingScript = YES;
-    [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage, BOOL trusted) {
+    [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage, BOOL trusted, BOOL reveal, BOOL quiet) {
         if (errorMessage) {
-            completion(errorMessage);
+            completion(errorMessage, quiet, nil);
             sInstallingScript = NO;
             return;
         }
 
-        iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
-        [pleaseWait.window makeKeyAndOrderFront:nil];
+        iTermBuildingScriptWindowController *pleaseWait;
+        if (!reveal) {
+            pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
+            [pleaseWait.window makeKeyAndOrderFront:nil];
+        }
         NSString *tempDir = [[NSFileManager defaultManager] temporaryDirectory];
 
         [iTermCommandRunner unzipURL:url
@@ -69,15 +72,19 @@ static BOOL sInstallingScript;
                           completion:^(BOOL ok) {
                               if (!ok) {
                                   [pleaseWait.window close];
-                                  completion(@"Could not unzip archive");
+                                  completion(@"Could not unzip archive", NO, nil);
                                   sInstallingScript = NO;
                                   return;
                               }
-                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted withCompletion:^(NSString *errorMessage) {
+                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:^(NSString *errorMessage, NSURL *location) {
+                                  sInstallingScript = NO;
+                                  if (reveal) {
+                                      completion(errorMessage, errorMessage == nil, nil);
+                                      return;
+                                  }
                                   [self eraseTempDir:tempDir];
                                   [pleaseWait.window close];
-                                  sInstallingScript = NO;
-                                  completion(errorMessage);
+                                  completion(errorMessage, NO, location);
                               }];
                           }];
     }];
@@ -85,11 +92,11 @@ static BOOL sInstallingScript;
 
 + (void)verifyAndUnwrapArchive:(NSURL *)url
               requireSignature:(BOOL)requireSignature
-                    completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
+                    completion:(void (^)(NSURL *url, NSString *, BOOL trusted, BOOL reveal, BOOL quiet))completion {
     SIGArchiveVerifier *verifier = [[SIGArchiveVerifier alloc] initWithURL:url];
     if ([[url pathExtension] isEqualToString:@"its"]) {
         if (![verifier smellsLikeSignedArchive:NULL]) {
-            completion(nil, @"This script archive is corrupt and cannot be installed.", NO);
+            completion(nil, @"This script archive is corrupt and cannot be installed.", NO, NO, NO);
             return;
         }
         
@@ -107,10 +114,10 @@ static BOOL sInstallingScript;
         return;
     }
     if (requireSignature) {
-        completion(nil, @"This is not a valid iTerm2 script archive.", NO);
+        completion(nil, @"This is not a valid iTerm2 script archive.", NO, NO, NO);
         return;
     }
-    completion(url, nil, NO);
+    completion(url, nil, NO, NO, NO);
 }
 
 + (void)verifierDidComplete:(SIGArchiveVerifier *)verifier
@@ -118,34 +125,34 @@ static BOOL sInstallingScript;
                  payloadURL:(NSURL *)zipURL
            requireSignature:(BOOL)requireSignature
                       error:(NSError *)error
-                 completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
+                 completion:(void (^)(NSURL *url, NSString *, BOOL trusted, BOOL reveal, BOOL quiet))completion {
     if (!ok) {
-        completion(nil, error.localizedDescription ?: @"Unknown error", NO);
+        completion(nil, error.localizedDescription ?: @"Unknown error", NO, NO, NO);
         return;
     }
     
     if (requireSignature) {
         NSData *data = [[verifier.reader signingCertificates:nil] firstObject];
         if (!data) {
-            completion(nil, @"Could not find certificate after verficiation (nil data)", NO);
+            completion(nil, @"Could not find certificate after verficiation (nil data)", NO, NO, NO);
             return;
         }
         SIGCertificate *cert = [[SIGCertificate alloc] initWithData:data];
         if (!cert) {
-            completion(nil, @"Could not find certificate after verficiation (bad data)", NO);
+            completion(nil, @"Could not find certificate after verficiation (bad data)", NO, NO, NO);
             return;
         }
         [self confirmInstallationOfVerifiedArchive:verifier.reader
                                    withCertificate:cert
-                                        completion:^(BOOL ok) {
+                                        completion:^(BOOL ok, BOOL reveal) {
                                             if (!ok) {
-                                                completion(nil, @"Installation canceled by user request.", NO);
+                                                completion(nil, @"Installation canceled by user request.", NO, NO, YES);
                                                 return;
                                             }
                                             [self copyPayloadFromVerifier:verifier
                                                                     toURL:zipURL
                                                                completion:^(NSURL *URL, NSString *errorString) {
-                                                                   completion(URL, errorString, YES);
+                                                                   completion(URL, errorString, YES, reveal, NO);
                                                                }];
                                         }];
         return;
@@ -153,7 +160,7 @@ static BOOL sInstallingScript;
     [self copyPayloadFromVerifier:verifier
                             toURL:zipURL
                        completion:^(NSURL *URL, NSString *errorString) {
-                           completion(URL, errorString, YES);
+                           completion(URL, errorString, YES, NO, NO);
                        }];
 }
 
@@ -169,38 +176,51 @@ static BOOL sInstallingScript;
     completion(zipURL, nil);
 }
 
++ (void)revealPayloadFromVerifier:(SIGArchiveVerifier *)verifier
+                           zipURL:(NSURL *)zipURL {
+
+}
+
 + (void)confirmInstallationOfVerifiedArchive:(SIGArchiveReader *)reader
                              withCertificate:(SIGCertificate *)cert
-                                  completion:(void (^)(BOOL ok))completion {
+                                  completion:(void (^)(BOOL ok, BOOL toTemp))completion {
     NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?",
                       reader.url.lastPathComponent,
                       ((cert.name ?: cert.longDescription) ?: @"Unknown")];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ @"OK", @"Cancel" ]
+                                                                 actions:@[ @"OK", @"Cancel", @"Reveal Contents" ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
                                                                  heading:@"Confirm Installation"
                                                                   window:nil];
-    completion(selection == kiTermWarningSelection0);
+    completion(selection != kiTermWarningSelection1, selection == kiTermWarningSelection2);
 }
 
 + (void)didUnzipSuccessfullyTo:(NSString *)tempDir
                        trusted:(BOOL)trusted
-                withCompletion:(void (^)(NSString *errorMessage))completion {
+                        reveal:(BOOL)reveal
+                withCompletion:(void (^)(NSString *errorMessage, NSURL *location))completion {
+    if (reveal) {
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:tempDir]];
+        completion(nil, nil);
+        return;
+    }
+
     iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir];
     if (!archive) {
-        completion(@"Archive does not contain a valid iTerm2 script");
+        completion(@"Archive does not contain a valid iTerm2 script", nil);
         return;
     }
 
     if ([self haveScriptNamed:archive.name]) {
-        completion([NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]);
+        completion([NSString stringWithFormat:@"A script named “%@” is already installed", archive.name],
+                   nil);
         return;
     }
 
-    [archive installTrusted:trusted withCompletion:^(NSError *error) {
-        completion(error.localizedDescription);
+    [archive installTrusted:trusted withCompletion:^(NSError *error, NSURL *location) {
+        completion(error.localizedDescription, location);
     }];
 }
 
