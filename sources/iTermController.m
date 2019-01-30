@@ -1438,8 +1438,8 @@ static iTermController *gSharedInstance;
 }
 
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
-    _willPowerOff = YES;
     if ([iTermAdvancedSettingsModel killSessionsOnLogout] && [iTermAdvancedSettingsModel runJobsInServers]) {
+        _willPowerOff = YES;
         [self killRestorableSessions];
     }
 }
