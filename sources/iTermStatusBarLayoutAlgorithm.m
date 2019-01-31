@@ -26,22 +26,30 @@ const CGFloat iTermStatusBarViewControllerMargin = 10;
 }
 
 + (instancetype)layoutAlgorithmWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                                    mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
                                    statusBarWidth:(CGFloat)statusBarWidth
                                           setting:(iTermStatusBarLayoutAlgorithmSetting)setting {
     switch (setting) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
             return [[iTermStatusBarStableLayoutAlgorithm alloc] initWithContainerViews:containerViews
+                                                                         mandatoryView:mandatoryView
                                                                         statusBarWidth:statusBarWidth];
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             return [[iTermStatusBarTightlyPackedLayoutAlgorithm alloc] initWithContainerViews:containerViews
+                                                                                mandatoryView:mandatoryView
                                                                           statusBarWidth:statusBarWidth];
     }
     return nil;
 }
 
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                         mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
                         statusBarWidth:(CGFloat)statusBarWidth {
-    return [super init];
+    self = [super init];
+    if (self) {
+        _mandatoryView = mandatoryView;
+    }
+    return self;
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)visibleContainerViews {

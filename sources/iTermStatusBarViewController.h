@@ -40,6 +40,7 @@ extern const CGFloat iTermStatusBarHeight;
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryLeftComponent;
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryRightComponent;
 @property (nonatomic, weak) id<iTermStatusBarViewControllerDelegate> delegate;
+@property (nonatomic) BOOL mustShowSearchComponent;
 
 - (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
                          scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;

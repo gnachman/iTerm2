@@ -142,6 +142,12 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 @end
 
+typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
+    iTermSessionViewFindDriverDropDown,
+    iTermSessionViewFindDriverTemporaryStatusBar,
+    iTermSessionViewFindDriverPermanentStatusBar
+};
+
 @interface SessionView : NSView <SessionTitleViewDelegate>
 // Unique per-process id of view, used for ordering them in PTYTab.
 @property(nonatomic, assign) int viewId;
@@ -162,6 +168,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 @property(nonatomic, readonly) BOOL findViewHasKeyboardFocus;
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
 @property(nonatomic, readonly) NSSize internalDecorationSize;
+@property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 
 - (void)showFindUI;
 - (void)findViewDidHide;

@@ -4977,13 +4977,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview clearHighlights:YES];
 }
 
-- (void)findViewControllerVisibilityDidChange:(id)sender {
+- (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {
     if (@available(macOS 10.11, *)) {
         [_delegate sessionUpdateMetalAllowed];
+    }
+    if (sender.driver.isVisible) {
+        return;
     }
     if (_view.findViewHasKeyboardFocus) {
         [_view findViewDidHide];
     }
+}
+
+- (void)findViewControllerDidCeaseToBeMandatory:(id<iTermFindViewController>)sender {
+    [_view findViewDidHide];
 }
 
 - (NSImage *)snapshot {

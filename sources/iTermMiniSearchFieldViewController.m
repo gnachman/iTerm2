@@ -110,6 +110,8 @@
 - (void)close {
     if (self.canClose) {
         [self.driver setVisible:NO];
+    } else {
+        [self.driver ceaseToBeMandatory];
     }
 }
 

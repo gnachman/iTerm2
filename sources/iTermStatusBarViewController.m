@@ -38,6 +38,7 @@ const CGFloat iTermStatusBarHeight = 21;
     NSMutableArray<iTermStatusBarContainerView *> *_containerViews;
     NSArray<iTermStatusBarContainerView *> *_visibleContainerViews;
     NSInteger _updating;
+    BOOL _makeSearchControllerFirstResponder;
 }
 
 - (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
@@ -62,8 +63,18 @@ const CGFloat iTermStatusBarHeight = 21;
     [self updateViews];
 }
 
+- (iTermStatusBarContainerView *)mandatoryView {
+    if (!self.mustShowSearchComponent) {
+        return nil;
+    }
+    return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
+        return containerView.component.statusBarComponentSearchViewController != nil;
+    }];
+}
+
 - (iTermStatusBarLayoutAlgorithm *)layoutAlgorithm {
     return [iTermStatusBarLayoutAlgorithm layoutAlgorithmWithContainerViews:_containerViews
+                                                              mandatoryView:self.mandatoryView
                                                              statusBarWidth:self.view.frame.size.width
                                                                     setting:_layout.advancedConfiguration.layoutAlgorithm];
 }
@@ -159,6 +170,10 @@ const CGFloat iTermStatusBarHeight = 21;
     view.backgroundColors = [self desiredBackgroundColors];
 
     [view setNeedsDisplay:YES];
+    if (_makeSearchControllerFirstResponder) {
+        [self.searchViewController open];
+        _makeSearchControllerFirstResponder = NO;
+    }
     DLog(@"--- end status bar layout ---");
 }
 
@@ -178,6 +193,12 @@ const CGFloat iTermStatusBarHeight = 21;
     return [_containerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
         return containerView.component.statusBarComponentSearchViewController;
     }].firstObject;
+}
+
+- (void)setMustShowSearchComponent:(BOOL)mustShowSearchComponent {
+    _mustShowSearchComponent = mustShowSearchComponent;
+    _makeSearchControllerFirstResponder = mustShowSearchComponent;
+    [self.view setNeedsLayout:YES];
 }
 
 #pragma mark - Private

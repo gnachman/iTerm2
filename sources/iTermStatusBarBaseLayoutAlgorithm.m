@@ -15,8 +15,11 @@
 @implementation iTermStatusBarBaseLayoutAlgorithm
 
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                         mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
                         statusBarWidth:(CGFloat)statusBarWidth {
-    self = [super initWithContainerViews:containerViews statusBarWidth:statusBarWidth];
+    self = [super initWithContainerViews:containerViews
+                           mandatoryView:mandatoryView
+                          statusBarWidth:statusBarWidth];
     if (self) {
         _statusBarWidth = statusBarWidth;
         _containerViews = [containerViews copy];
@@ -133,8 +136,18 @@
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)containerViewsSortedByPriority:(NSArray<iTermStatusBarContainerView *> *)eligibleContainerViews {
+    NSView *mandatoryView = self.mandatoryView;
     NSArray<iTermStatusBarContainerView *> *prioritized = [eligibleContainerViews sortedArrayUsingComparator:^NSComparisonResult(iTermStatusBarContainerView * _Nonnull obj1, iTermStatusBarContainerView * _Nonnull obj2) {
-        NSComparisonResult result = [@(obj2.component.statusBarComponentPriority) compare:@(obj1.component.statusBarComponentPriority)];
+        if (obj1 == mandatoryView && obj2 != mandatoryView) {
+            return NSOrderedDescending;
+        }
+        if (obj1 != mandatoryView && obj2 == mandatoryView) {
+            return NSOrderedAscending;
+        }
+        if (obj1 == obj2) {
+            return NSOrderedSame;
+        }
+        NSComparisonResult result = [@(obj1.component.statusBarComponentPriority) compare:@(obj2.component.statusBarComponentPriority)];
         if (result != NSOrderedSame) {
             return result;
         }
@@ -209,7 +222,7 @@
     }].mutableCopy;
     CGFloat desiredWidth = [self minimumWidthOfContainerViews:prioritized];
     while (desiredWidth > allowedWidth) {
-        iTermStatusBarContainerView *viewToRemove = prioritizedNonzerominimum.lastObject;
+        iTermStatusBarContainerView *viewToRemove = prioritizedNonzerominimum.firstObject;
         iTermStatusBarContainerView *adjacentViewToRemove = [self viewToRemoveAdjacentToViewBeingRemoved:viewToRemove
                                                                                                fromViews:[self viewsFrom:prioritized keepingOrderIn:_containerViews]];
 
