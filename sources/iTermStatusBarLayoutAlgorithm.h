@@ -19,13 +19,16 @@ typedef NS_ENUM(NSUInteger, iTermStatusBarLayoutAlgorithmSetting) {
 };
 
 @interface iTermStatusBarLayoutAlgorithm : NSObject
+@property (nonatomic, strong, readonly) iTermStatusBarContainerView *mandatoryView;
 
 + (instancetype)layoutAlgorithmWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                                    mandatoryView:(iTermStatusBarContainerView *)mandatoryView
                                    statusBarWidth:(CGFloat)statusBarWidth
                                           setting:(iTermStatusBarLayoutAlgorithmSetting)setting;
 
 // This is for subclasses, not clients.
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
+                         mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
                         statusBarWidth:(CGFloat)statusBarWidth NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

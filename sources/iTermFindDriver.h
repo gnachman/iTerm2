@@ -56,7 +56,7 @@
 
 // The search view became (in)visible.
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender;
-
+- (void)findViewControllerDidCeaseToBeMandatory:(id<iTermFindViewController>)sender;
 @end
 
 @interface iTermFindDriver : NSObject

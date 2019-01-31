@@ -2,7 +2,9 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermModifierRemapper.h"
+
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
@@ -77,6 +79,9 @@
 #pragma mark - Private
 
 - (iTermEventTap *)keyDown {
+    if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
+        return nil;
+    }
     if (!_keyDown) {
         _keyDown = [[iTermEventTap alloc] initWithEventTypes:CGEventMaskBit(kCGEventKeyDown)];
     }
@@ -100,6 +105,10 @@
 }
 
 - (void)requestAccessibilityPermission {
+    if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
+        return;
+    }
+
     DLog(@"Requesting accessibility permission");
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

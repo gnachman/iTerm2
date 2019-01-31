@@ -10,6 +10,7 @@
 @interface iTermFindDriver(Internal)
 
 - (void)setVisible:(BOOL)visible;
+- (void)ceaseToBeMandatory;
 - (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue;
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery;
 - (void)backTab;

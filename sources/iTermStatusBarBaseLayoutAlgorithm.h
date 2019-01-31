@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateMargins:(NSArray<iTermStatusBarContainerView *> *)views;
 - (CGFloat)totalMarginWidthForViews:(NSArray<iTermStatusBarContainerView *> *)views;
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views;
+- (NSArray<iTermStatusBarContainerView *> *)containerViewsSortedByPriority:(NSArray<iTermStatusBarContainerView *> *)eligibleContainerViews;
 
 @end
 

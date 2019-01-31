@@ -301,6 +301,10 @@ static NSString *gSearchString;
     }
 }
 
+- (void)ceaseToBeMandatory {
+    [self.delegate findViewControllerDidCeaseToBeMandatory:self.viewController];
+}
+
 - (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue {
     if (_savedState) {
         return;
