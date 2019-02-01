@@ -5,6 +5,7 @@
 //  Created by George Nachman on 1/21/19.
 //
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermBadgeConfigurationWindowController.h"
 #import "iTermFontPanel.h"
 #import "ITAddressBookMgr.h"
@@ -15,6 +16,24 @@
 #import "NSObject+iTerm.h"
 
 static const CGFloat iTermBadgeConfigurationBadgeViewInset = 3;
+static NSString *const iTermBadgeConfigurationWindowWillChangeFirstResponderNotification = @"iTermBadgeConfigurationWindowWillChangeFirstResponderNotification";
+
+@interface iTermBadgeConfigurationWindow : NSWindow
+@end
+
+@implementation iTermBadgeConfigurationWindow
+
+- (BOOL)makeFirstResponder:(NSResponder *)responder {
+    const BOOL result = [super makeFirstResponder:responder];
+    if (result) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermBadgeConfigurationWindowWillChangeFirstResponderNotification
+                                                            object:self
+                                                          userInfo:@{ @"responder": responder ?: [NSNull null] }];
+    }
+    return result;
+}
+
+@end
 
 @protocol iTermBadgeConfigurationBadgeViewDelegate<NSObject>
 - (void)badgeViewFrameDidChange:(NSRect)frame;
@@ -24,6 +43,7 @@ static const CGFloat iTermBadgeConfigurationBadgeViewInset = 3;
 
 @interface iTermBadgeConfigurationBadgeView : NSBox<iTermBadgeLabelDelegate>
 @property (nonatomic, weak) id<iTermBadgeConfigurationBadgeViewDelegate> delegate;
+@property (nonatomic) BOOL fontPanelOpen;
 @end
 
 typedef struct {
@@ -62,6 +82,22 @@ typedef struct {
 
 - (void)awakeFromNib {
     _badge.viewSize = self.bounds.size;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(firstResponderWillChange:)
+                                                 name:iTermBadgeConfigurationWindowWillChangeFirstResponderNotification
+                                               object:self.window];
+}
+
+- (void)firstResponderWillChange:(NSNotification *)notification {
+    if (!_fontPanelOpen) {
+        return;
+    }
+    id responder = notification.userInfo[@"responder"];
+    if ([responder isKindOfClass:[NSNull class]] || responder == self.window) {
+        return;
+    }
+    _fontPanelOpen = NO;
+    [[[NSFontManager sharedFontManager] fontPanel:NO] close];
 }
 
 - (void)setDelegate:(id<iTermBadgeConfigurationBadgeViewDelegate>)delegate {
@@ -438,6 +474,9 @@ typedef struct {
 
 - (void)changeFont:(nullable id)sender {
     NSFont *font = [sender convertFont:self.font];
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
+        font = [[NSFontManager sharedFontManager] convertFont:font toHaveTrait:NSBoldFontMask];
+    }
     _fontName = font.fontName;
     [_badgeView reload];
 }
@@ -447,10 +486,17 @@ typedef struct {
     [[NSFontManager sharedFontManager] fontPanel:YES];
     [[NSFontManager sharedFontManager] setSelectedFont:self.font isMultiple:NO];
     [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
+    [self.window makeFirstResponder:nil];
+    self.badgeView.fontPanelOpen = YES;
 }
 
 - (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
-    return (NSFontPanelFaceModeMask | NSFontPanelCollectionModeMask);
+    return NSFontPanelCollectionModeMask;
+}
+
+- (BOOL)validateProposedFirstResponder:(NSResponder *)responder forEvent:(NSEvent *)event {
+    BOOL result = [super validateProposedFirstResponder:responder forEvent:event];
+    return result;
 }
 
 - (void)setBadgeFrameFromTextFields {
@@ -474,10 +520,16 @@ typedef struct {
 
 - (IBAction)ok:(id)sender {
     _ok = YES;
+    if (_badgeView.fontPanelOpen) {
+        [[[NSFontManager sharedFontManager] fontPanel:NO] close];
+    }
     [self.window.sheetParent endSheet:self.window];
 }
 
 - (IBAction)cancel:(id)sender {
+    if (_badgeView.fontPanelOpen) {
+        [[[NSFontManager sharedFontManager] fontPanel:NO] close];
+    }
     [self.window.sheetParent endSheet:self.window];
 }
 

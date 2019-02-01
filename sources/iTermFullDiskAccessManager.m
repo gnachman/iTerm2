@@ -54,7 +54,7 @@
     alert.messageText = @"Full Disk Access";
     alert.informativeText = @"iTerm2 requires full disk access for some programs (such as crontab) to work correctly.\n"
     @"To grant access:\n\n"
-    @"1. Go to System Preferences > Security & Privacy.\n"
+    @"1. Go to System Preferences > Security & Privacy > Privacy.\n"
     @"2. Select Full Disk Access on the left.\n"
     @"3. Click the padlock in the bottom to enable modifications.\n"
     @"4. Add iTerm2 to the list of apps on the right.";
@@ -78,7 +78,7 @@
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"To Grant Access";
     alert.informativeText =
-        @"1. Go to System Preferences > Security & Privacy.\n"
+        @"1. Go to System Preferences > Security & Privacy > Privacy.\n"
         @"2. Select Full Disk Access on the left.\n"
         @"3. Click the padlock in the bottom to enable modifications.\n"
         @"4. Add iTerm2 to the list of apps on the right.";
