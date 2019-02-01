@@ -499,6 +499,7 @@ static const NSUInteger kMaxHosts = 100;
 
     id<iTermKeyMapper> _keyMapper;
     BOOL _useLibTickit;
+    NSString *_badgeFontName;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -810,6 +811,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_jobPidRef release];
     [_customIcon release];
     [_keyMapper release];
+    [_badgeFontName release];
 
     [super dealloc];
 }
@@ -3781,6 +3783,9 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
+    [_badgeFontName release];
+    _badgeFontName = [[iTermProfilePreferences stringForKey:KEY_BADGE_FONT inProfile:aDict] copy];
+
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
     // forces the badge to update
     _textview.badgeLabel = @"";
@@ -10922,10 +10927,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSString *fontName = [iTermProfilePreferences stringForKey:KEY_BADGE_FONT inProfile:self.profile];
-    NSFont *font;
-
-    font = [NSFont fontWithName:fontName size:pointSize];
+    NSFont *font = [NSFont fontWithName:_badgeFontName size:pointSize];
     if (!font) {
         font = [NSFont fontWithName:@"Helvetica" size:pointSize];
     }
