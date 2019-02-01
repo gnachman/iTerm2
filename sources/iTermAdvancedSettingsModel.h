@@ -37,6 +37,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)addNewTabAtEndOfTabs;
 + (BOOL)aggressiveFocusFollowsMouse;
++ (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;
 + (BOOL)alternateMouseScroll;
 + (NSString *)alternateMouseScrollStringForDown;
