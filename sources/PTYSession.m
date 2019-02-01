@@ -2372,10 +2372,10 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL moved = NO;
     if ((event.modifierFlags & mask) == NSEventModifierFlagControl) {
         switch (code) {
-            case 2:  // ^B
+            case 'b':  // ^B
                 moved = [_copyModeState pageUp];
                 break;
-            case 6: // ^F
+            case 'f': // ^F
                 moved = [_copyModeState pageDown];
                 break;
             case ' ':
