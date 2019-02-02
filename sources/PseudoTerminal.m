@@ -1434,7 +1434,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.shouldUseMinimalStyle) {
         PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
         DLog(@"> begin Computing decoration color");
-        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor];
+        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor windowIsKey:(self.window.isKeyWindow && NSApp.isActive)];
         DLog(@"< end Computing decoration color");
     } else {
         CGFloat whiteLevel;
@@ -7523,7 +7523,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_contentView.tabBarControl.style backgroundColorSelected:YES highlightAmount:0];
 }
 
-- (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
+- (NSColor *)windowDecorationColor {
     if (self.currentSession.tabColor &&
         [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0) {
         // The window number will be displayed over the tab color.
@@ -7532,13 +7532,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     
     // The window number will be displayed over the tabbar color.
-    return [_contentView.tabBarControl.style textColorDefaultSelected:self.window.isKeyWindow
-                                                      backgroundColor:nil];
+    return [_contentView.tabBarControl.style textColorDefaultSelected:YES
+                                                      backgroundColor:nil
+                                                          windowIsKey:(self.window.isKeyWindow && NSApp.isActive)];
+}
+
+- (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
+    return [self windowDecorationColor];
 }
 
 - (NSColor *)rootTerminalViewTabBarTextColorForTitle {
-    // This is only called for compact windows. Minimal is irrelevant.
-    return [_contentView.tabBarControl.style textColorForCell:_contentView.tabBarControl.cells.firstObject];
+    return [self windowDecorationColor];
 }
 
 - (void)rootTerminalViewDidChangeEffectiveAppearance {

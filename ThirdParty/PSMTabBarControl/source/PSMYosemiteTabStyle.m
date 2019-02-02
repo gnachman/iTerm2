@@ -386,9 +386,9 @@
                autorelease];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsKey:(BOOL)windowIsKey {
     CGFloat value;
-    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+    if (windowIsKey) {
         value = 0;
     } else {
         if (selected) {
@@ -410,7 +410,6 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     DLog(@"cell=%@", cell);
-    NSColor *textColor;
     const BOOL selected = (cell.state == NSOnState);
     if ([self anyTabHasColor]) {
         DLog(@"anyTabHasColor. computing tab color brightness.");
@@ -422,11 +421,11 @@
             if (cellBrightness > 0.5) {
                 DLog(@"is bright. USE BLACK TEXT COLOR");
                 // bright tab
-                textColor = [NSColor blackColor];
+                return [NSColor blackColor];
             } else {
                 DLog(@"is dark. Use white text");
                 // dark tab
-                textColor = [NSColor whiteColor];
+                return [NSColor whiteColor];
             }
         } else {
             DLog(@"Not selected");
@@ -449,13 +448,12 @@
         // No cell has a tab color
         if (selected) {
             DLog(@"selected");
-            return [self textColorDefaultSelected:YES backgroundColor:nil];
+            return [self textColorDefaultSelected:YES backgroundColor:nil windowIsKey:_tabBar.window.isKeyWindow && [NSApp isActive]];
         } else {
             DLog(@"not selected");
-            textColor = [self textColorDefaultSelected:NO backgroundColor:nil];
+            return [self textColorDefaultSelected:NO backgroundColor:nil windowIsKey:_tabBar.window.isKeyWindow && [NSApp isActive]];
         }
     }
-    return textColor;
 }
 
 - (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {

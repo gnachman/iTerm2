@@ -59,7 +59,7 @@
     return (backgroundBrightness < 0.5);
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsKey:(BOOL)windowIsKey {
     CGFloat backgroundBrightness = backgroundColor ? backgroundColor.it_hspBrightness : self.tabBarColor.it_hspBrightness;
     if (!backgroundColor) {
         DLog(@"Choose background brightness form tab bar color of %@", self.tabBarColor);
@@ -72,7 +72,12 @@
         value = MAX(0, backgroundBrightness - delta);
     }
     DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
-    return [NSColor colorWithWhite:value alpha:1];
+    // TODO: Make sure this looks good on 10.13.
+    CGFloat alpha = 1;
+    if (!windowIsKey) {
+        alpha = 0.5;
+    }
+    return [NSColor colorWithWhite:value alpha:alpha];
 }
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
@@ -121,7 +126,7 @@
 
 - (NSColor *)accessoryTextColor {
     DLog(@"> begin Computing accessory color");
-    NSColor *result = [self textColorDefaultSelected:YES backgroundColor:nil];
+    NSColor *result = [self textColorDefaultSelected:YES backgroundColor:nil windowIsKey:self.tabBar.window.isKeyWindow && [NSApp isActive]];
     DLog(@"< end Computing accessory color");
     return result;
 }

@@ -179,6 +179,7 @@ typedef struct {
         [self addSubview:_windowNumberLabel];
 
         _windowTitleLabel = [NSTextField newLabelStyledTextField];
+        _windowTitleLabel.alphaValue = 0.75;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
         _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
