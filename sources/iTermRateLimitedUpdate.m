@@ -22,7 +22,11 @@
 }
 
 - (void)scheduleTimer {
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:self.minimumInterval
+    [self scheduleTimerAfterDelay:self.minimumInterval];
+}
+
+- (void)scheduleTimerAfterDelay:(NSTimeInterval)delay {
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
                                                   target:self
                                                 selector:@selector(performBlockIfNeeded:)
                                                 userInfo:nil
@@ -78,6 +82,48 @@
         block();
         [self scheduleTimer];
     }
+}
+
+@end
+
+static NSString *const iTermPersistentRateLimitedUpdateUserDefaultsKey = @"NoSyncPersistentRateLimitedUpdates";
+
+@implementation iTermPersistentRateLimitedUpdate {
+    NSString *_name;
+}
+
++ (NSTimeInterval)nextDateForName:(NSString *)name {
+    NSDictionary<NSString *, NSNumber *> *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
+    return [dict[name] doubleValue];
+}
+
++ (void)setNextDate:(NSTimeInterval)nextDate forName:(NSString *)name {
+    NSMutableDictionary<NSString *, NSNumber *> *dict = [[[NSUserDefaults standardUserDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey] ?: @{} mutableCopy];
+    dict[name] = @(nextDate);
+    [[NSUserDefaults standardUserDefaults] setObject:dict forKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
+}
+
+- (instancetype)initWithName:(NSString *)name {
+    self = [super init];
+    if (self) {
+        _name = name;
+        NSTimeInterval nextTime = [self.class nextDateForName:name];
+        if (nextTime != 0) {
+            const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+            if (now < nextTime) {
+                // Next allowed run is in the future
+                [self scheduleTimerAfterDelay:nextTime - now];
+            }
+        }
+    }
+    return self;
+}
+
+- (void)scheduleTimer {
+    const NSTimeInterval delay = self.minimumInterval;
+    [super scheduleTimer];
+    [self.class setNextDate:[NSDate timeIntervalSinceReferenceDate] + delay
+                    forName:_name];
 }
 
 @end

@@ -5669,7 +5669,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
     Profile *profile;
-    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+    if ([iTermPreferences useTmuxProfile]) {
         model = [ProfileModel sharedInstance];
         profile = [[ProfileModel sharedInstance] tmuxProfile];
     } else {
@@ -6139,7 +6139,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSInteger)tmuxNumberOfLinesOfScrollbackHistory {
     Profile *profile = _tmuxController.profile;
-    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+    if ([iTermPreferences useTmuxProfile]) {
         profile = [[ProfileModel sharedInstance] tmuxProfile];
     }
     if ([profile[KEY_UNLIMITED_SCROLLBACK] boolValue]) {
@@ -6147,6 +6147,46 @@ ITERM_WEAKLY_REFERENCEABLE
         return 10 * 1000 * 1000;
     } else {
         return [profile[KEY_SCROLLBACK_LINES] integerValue];
+    }
+}
+
+- (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID {
+    NSArray<NSString *> *actions = @[ @"OK", @"Reveal" ];
+    TmuxController *controller = [[TmuxControllerRegistry sharedInstance] tmuxControllerWithSessionGUID:sessionGUID];
+    if (!controller) {
+        actions = @[ @"OK" ];
+    }
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"This instance of iTerm2 is already attached to this session"
+                               actions:actions
+                             accessory:nil
+                            identifier:@"AlreadyAttachedToTmuxSession"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Cannot Attach"
+                                window:self.view.window];
+    if (selection != kiTermWarningSelection1) {
+        return;
+    }
+    NSArray<NSWindow *> *windows = [[[controller.clientSessions mapWithBlock:^id(PTYSession *anObject) {
+        return anObject.view.window;
+    }] sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        intptr_t p1 = (intptr_t)obj1;
+        intptr_t p2 = (intptr_t)obj2;
+        return [@(p1) compare:@(p2)];
+    }] uniq];
+
+    if (windows.count == 0) {
+        iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
+        [delegate openDashboard:nil];
+        return;
+    }
+
+    for (NSWindow *window in windows) {
+        if (window.miniaturized) {
+            [window deminiaturize:nil];
+        } else {
+            [window orderFront:nil];
+        }
     }
 }
 
@@ -7850,6 +7890,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)bury {
+    if (self.isTmuxClient) {
+        if (!self.delegate) {
+            return;
+        }
+        [_tmuxController hideWindow:self.delegate.tmuxWindow];
+        return;
+    }
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [[iTermBuriedSessions sharedInstance] addBuriedSession:self];

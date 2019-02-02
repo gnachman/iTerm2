@@ -8,7 +8,6 @@
 #import "iTermLaunchExperienceController.h"
 
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermFullDiskAccessManager.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermTipController.h"
@@ -25,7 +24,6 @@ static NSString *const iTermLaunchExperienceControllerTipOfTheDayEligibilityBega
 typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
     iTermLaunchExperienceChoiceNone,
     iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning,
-    iTermLaunchExperienceChoiceFullDiskAccess,
     iTermLaunchExperienceChoiceWhatsNew,
     iTermLaunchExperienceChoiceTipOfTheDay,
 };
@@ -64,10 +62,6 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
     if ([self willWarnAboutChangeToDefaultPasteBehavior]) {
         // This is important because it is an unsafe change.
         return iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning;
-    }
-    if ([iTermFullDiskAccessManager willRequestFullDiskAccess]) {
-        // This is important because it enables basic functionality.
-        return iTermLaunchExperienceChoiceFullDiskAccess;
     }
     if ([iTermOnboardingWindowController shouldBeShown]) {
         // This preceeds tip of the day because it's more relevant to an upgrading user.
@@ -151,7 +145,6 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             [[iTermTipController sharedInstance] startWithPermissionPromptAllowed:NO notBefore:[NSDate date]];
             return;
         case iTermLaunchExperienceChoiceWhatsNew:
-        case iTermLaunchExperienceChoiceFullDiskAccess:
         case iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning:
             // If permission was already granted then allow a tip after 24 hours.
             [[iTermTipController sharedInstance] startWithPermissionPromptAllowed:NO
@@ -169,16 +162,6 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 
 - (void)applicationDidFinishLaunching {
     switch (_choice) {
-        case iTermLaunchExperienceChoiceFullDiskAccess:
-            if (@available(macOS 10.14, *)) {
-                [self.class quellAnnoyancesForDays:1];
-                [iTermFullDiskAccessManager maybeRequestFullDiskAccess];
-            } else {
-                // Shouldn't get here.
-                assert(NO);
-            }
-            return;
-
         case iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning:
             [self.class quellAnnoyancesForDays:1];
             [self warnAboutChangeToDefaultPasteBehavior];

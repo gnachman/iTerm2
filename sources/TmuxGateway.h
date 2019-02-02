@@ -48,6 +48,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error;
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane;
 - (void)tmuxDidOpenInitialWindows;
+- (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID;
 - (NSString *)tmuxOwningSessionGUID;
 
 @end
@@ -105,5 +106,6 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane;
 - (void)detach;
+- (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;
 
 @end

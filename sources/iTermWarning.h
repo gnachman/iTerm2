@@ -27,6 +27,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // selected.
 @interface iTermWarningAction : NSObject
 
+@property (nonatomic, strong) NSString *keyEquivalent;
+
 + (instancetype)warningActionWithLabel:(NSString *)label
                                  block:(iTermWarningActionBlock)block;
 

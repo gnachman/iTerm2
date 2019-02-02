@@ -44,7 +44,6 @@
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
-#import "iTermFullDiskAccessManager.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
@@ -316,9 +315,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if ([menuItem action] == @selector(openDashboard:)) {
-        return [[iTermController sharedInstance] haveTmuxConnection];
-    } else if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
+    if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
     } else if ([menuItem action] == @selector(undo:)) {
@@ -1568,7 +1565,6 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
-    [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfPossible];
 }
 
 #pragma mark - Main Menu
@@ -1995,6 +1991,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)installPythonRuntime:(id)sender {  // Explicit request from menu item
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
+                                                                                   requiredToContinue:NO
                                                                                        withCompletion:^(BOOL ok) {}];
 }
 
@@ -2006,6 +2003,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)openREPL:(id)sender {
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:nil
+                                                                                   requiredToContinue:YES
                                                                                        withCompletion:^(BOOL ok) {
         if (!ok) {
             return;

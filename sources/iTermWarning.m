@@ -1,16 +1,22 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermDisclosableView.h"
 #import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
 static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
+
+@interface iTermWarningAction()
+@property (nonatomic) NSRange shortcutRange;
+@end
 
 @implementation iTermWarningAction
 
@@ -25,6 +31,7 @@ static BOOL gShowingWarning;
 - (void)dealloc {
     [_label release];
     [_block release];
+    [_keyEquivalent release];
     [super dealloc];
 }
 
@@ -183,6 +190,38 @@ static BOOL gShowingWarning;
     }
 }
 
+- (void)assignKeyEquivalents {
+    NSSet<NSString *> *assignedValues = [NSSet set];
+    for (iTermWarningAction *action in _warningActions) {
+        if (action.keyEquivalent) {
+            [assignedValues setByAddingObject:action.keyEquivalent];
+        }
+    }
+    for (iTermWarningAction *action in _warningActions) {
+        [action.label enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+            if (complexString.length > 1) {
+                return;
+            }
+            const unichar c = complexString.length ? [complexString characterAtIndex:0] : simple;
+            if (c <= ' ' || c >= 127) {
+                return;
+            }
+            const char lower = tolower(c);
+            if (lower < 'a' || lower > 'z') {
+                return;
+            }
+            NSString *string = [NSString stringWithLongCharacter:lower];
+            if ([assignedValues containsObject:string]) {
+                return;
+            }
+            action.keyEquivalent = string;
+            [assignedValues setByAddingObject:string];
+            action.shortcutRange = range;
+            *stop = YES;
+        }];
+    }
+}
+
 // Does not invoke the warning action's block
 - (iTermWarningSelection)runModalImpl {
     if (!gWarningHandler &&
@@ -194,9 +233,33 @@ static BOOL gShowingWarning;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = _heading ?: @"Warning";
     alert.informativeText = _title;
-    for (int i = 0; i < _warningActions.count; i++) {
-        [alert addButtonWithTitle:_warningActions[i].label];
+
+    for (iTermWarningAction *action in _warningActions) {
+        [alert addButtonWithTitle:action.label];
+        if (action.keyEquivalent) {
+            alert.buttons.lastObject.keyEquivalent = action.keyEquivalent;
+        } else {
+            action.keyEquivalent = alert.buttons.lastObject.keyEquivalent;
+        }
     }
+    [self assignKeyEquivalents];
+    [_warningActions enumerateObjectsUsingBlock:^(iTermWarningAction * _Nonnull action, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSButton *button = alert.buttons[idx];
+        if (!button.keyEquivalent.length) {
+            button.keyEquivalent = action.keyEquivalent;
+            if ([iTermAdvancedSettingsModel alertsIndicateShortcuts] && action.shortcutRange.length == 1) {
+                dispatch_async(dispatch_get_main_queue(),
+                               ^{
+                                   NSMutableAttributedString *attributedString = [[[NSMutableAttributedString alloc] initWithString:button.title
+                                                                                                                         attributes:nil] autorelease];
+                                   [attributedString setAttributes:@{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) } range:action.shortcutRange];
+                                   button.attributedTitle = attributedString;
+                               });
+            }
+        }
+    }];
+
+
     int numNonCancelActions = [_warningActions count];
     for (iTermWarningAction *warningAction in _warningActions) {
         if ([warningAction.label isEqualToString:_cancelLabel]) {

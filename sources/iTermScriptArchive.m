@@ -188,6 +188,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:setupParser.pythonVersion
+                                                                                   requiredToContinue:YES
                                                                                        withCompletion:
      ^(BOOL downloadedOk) {
          if (!downloadedOk) {

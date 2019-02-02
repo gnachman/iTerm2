@@ -15,6 +15,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
 #import "iTermTuple.h"
+#import "NSArray+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
@@ -109,7 +110,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @interface TmuxController ()
 
 @property(nonatomic, copy) NSString *clientName;
-@property(nonatomic, copy) NSString *sessionGuid;
+@property(nonatomic, copy, readwrite) NSString *sessionGuid;
 
 @end
 
@@ -551,8 +552,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
         self.sessionGuid = guid;
     } else if ([self.attachedSessionGuids containsObject:sessionGuid]) {
-        [self.gateway abortWithErrorMessage:@"This instance of iTerm2 is already attached to this session."
-                                      title:@"Could not attach to session."];
+        [self.gateway doubleAttachDetectedForSessionGUID:sessionGuid];
     } else {
         self.sessionGuid = sessionGuid;
     }
@@ -1488,6 +1488,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)didListWindowsSubsequentToSettingLayout:(NSString *)response {
     [self parseListWindowsResponseAndUpdateLayouts:response];
+}
+
+- (NSArray<PTYSession *> *)clientSessions {
+    return windowPanes_.allValues;
 }
 
 #pragma mark - Private

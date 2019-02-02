@@ -61,6 +61,7 @@
     NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:pythonVersion
+                                                                                   requiredToContinue:YES
                                                                                        withCompletion:^(BOOL ok) {
         if (ok) {
             [self reallyLaunchScript:filename

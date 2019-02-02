@@ -10,6 +10,8 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermInitialDirectory.h"
+#import "iTermNotificationCenter.h"
+#import "iTermPreferences.h"
 #import "TmuxSessionsTable.h"
 #import "TmuxController.h"
 #import "TSVParser.h"
@@ -28,6 +30,8 @@
     IBOutlet TmuxSessionsTable *sessionsTable_;
     IBOutlet TmuxWindowsTable *windowsTable_;
     IBOutlet NSPopUpButton *connectionsButton_;
+    IBOutlet NSTextField *setting_;
+    IBOutlet NSStepper *stepper_;
 }
 
 + (TmuxDashboardController *)sharedInstance {
@@ -81,13 +85,13 @@
                                                  selector:@selector(tmuxControllerRegistryDidChange:)
                                                      name:kTmuxControllerRegistryDidChange
                                                    object:nil];
+        __weak __typeof(self) weakSelf = self;
+        [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification *notification) {
+            [weakSelf preferenceDidChange:notification];
+        }];
     }
 
     return self;
-}
-
-- (void)dealloc {
-    [super dealloc];
 }
 
 - (void)windowDidLoad
@@ -99,6 +103,29 @@
     }
     [sessionsTable_ setDelegate:self];
     [windowsTable_ setDelegate:self];
+    setting_.integerValue = [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
+    stepper_.integerValue = setting_.integerValue;
+}
+
+- (void)preferenceDidChange:(iTermPreferenceDidChangeNotification *)notification {
+    if ([notification.key isEqualToString:kPreferenceKeyTmuxDashboardLimit]) {
+        setting_.integerValue = [notification.value integerValue];
+        stepper_.integerValue = [notification.value integerValue];
+    }
+}
+
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    NSTextField *field = [aNotification object];
+    if (field != setting_) {
+        return;
+    }
+
+    int i = [setting_ intValue];
+    [iTermPreferences setInt:i forKey:kPreferenceKeyTmuxDashboardLimit];
+}
+
+- (IBAction)step:(id)sender {
+    [iTermPreferences setInt:stepper_.intValue forKey:kPreferenceKeyTmuxDashboardLimit];
 }
 
 // cmd-w
@@ -310,7 +337,7 @@
 }
 
 - (void)tmuxControllerRegistryDidChange:(NSNotification *)notification {
-    NSString *previousSelection = [[[self currentClient] copy] autorelease];
+    NSString *previousSelection = [[self currentClient] copy];
     [connectionsButton_.menu cancelTracking];
     [connectionsButton_.cell dismissPopUp];
     [connectionsButton_ removeAllItems];

@@ -12,6 +12,7 @@
 // Optionally, it may have a function that computes its value (set in +computedObjectDictionary)
 // and the view controller may customize how its control's appearance changes dynamically.
 
+#import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
@@ -43,7 +44,6 @@ NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = 
 
 NSString *const iTermMetalSettingsDidChangeNotification = @"iTermMetalSettingsDidChangeNotification";
 
-
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
@@ -56,6 +56,7 @@ NSString *const kPreferenceKeyLionStyleFullscreen = @"UseLionStyleFullscreen";
 NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
+NSString *const kPreferenceKeyUseTmuxProfile = @"TmuxUsesDedicatedProfile";
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
@@ -243,6 +244,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenTmuxWindowsIn: @(kOpenTmuxWindowsAsNativeWindows),
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
+                  kPreferenceKeyUseTmuxProfile: @YES,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
@@ -437,6 +439,8 @@ static NSString *sPreviousVersion;
     for (void (^block)(id, id) in observers) {
         block(before, object);
     }
+
+    [[iTermPreferenceDidChangeNotification notificationWithKey:key value:object] post];
 }
 
 #pragma mark - APIs
@@ -618,5 +622,6 @@ typedef struct {
 
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeMetalThroughput, kPreferenceKeyMetalMaximizeThroughput)
+FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
 
 @end

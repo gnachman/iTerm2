@@ -43,6 +43,18 @@ const int iTermMinimumPythonEnvironmentVersion = 26;
     return self;
 }
 
+- (BOOL)progressIsDeterminant {
+    return YES;
+}
+
+- (NSString *)progressString {
+    return @"Connecting…";
+}
+
+- (BOOL)buttonEnabled {
+    return YES;
+}
+
 - (void)download {
     assert(!_urlSession);
     assert(!_task);
@@ -238,8 +250,9 @@ didCompleteWithError:(nullable NSError *)error {
                     version:(int)version
           expectedSignature:(NSString *)expectedSignature
      requestedPythonVersion:(NSString *)requestedPythonVersion
-           expectedVersions:(NSArray<NSString *> *)expectedVersions {
-    self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nil];
+           expectedVersions:(NSArray<NSString *> *)expectedVersions
+           nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
+    self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nextPhaseFactory];
     if (self) {
         _version = version;
         _expectedSignature = [expectedSignature copy];
@@ -247,6 +260,25 @@ didCompleteWithError:(nullable NSError *)error {
         _expectedVersions = [expectedVersions copy];
     }
     return self;
+}
+
+@end
+
+@implementation iTermInstallingPhase
+
+- (void)download {
+}
+
+- (BOOL)progressIsDeterminant {
+    return NO;
+}
+
+- (NSString *)progressString {
+    return @"Installing…";
+}
+
+- (BOOL)buttonEnabled {
+    return NO;
 }
 
 @end
@@ -260,6 +292,7 @@ didCompleteWithError:(nullable NSError *)error {
     IBOutlet NSTextField *_progressLabel;
     IBOutlet NSProgressIndicator *_progressIndicator;
     IBOutlet NSButton *_button;
+    IBOutlet NSProgressIndicator *_installIndicator;
     iTermOptionalComponentDownloadPhase *_firstPhase;
     BOOL _showingMessage;
 }
@@ -272,6 +305,15 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase {
+    const BOOL determinant = phase.progressIsDeterminant;
+    _progressIndicator.hidden = !determinant;
+    _installIndicator.hidden = determinant;
+    if (!determinant) {
+        [_installIndicator startAnimation:nil];
+    } else {
+        [_installIndicator stopAnimation:nil];
+    }
+
     _showingMessage = NO;
     assert(!_currentPhase.downloading);
     if (!_currentPhase) {
@@ -281,8 +323,8 @@ didCompleteWithError:(nullable NSError *)error {
     _titleLabel.stringValue = phase.title;
     phase.delegate = self;
     [phase download];
-    _progressLabel.stringValue = [NSString stringWithFormat:@"Connecting…"];
-    _button.enabled = YES;
+    _progressLabel.stringValue = phase.progressString;
+    _button.enabled = phase.buttonEnabled;
     _button.title = @"Cancel";
 }
 
@@ -307,7 +349,7 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)downloadDidFailWithError:(NSError *)error {
     _button.enabled = YES;
     _button.title = @"Try Again";
-    if (error.code == -999) {
+    if (error.code == -999 && [error.domain isEqualToString:@"com.iterm2"]) {
         _progressLabel.stringValue = @"Canceled";
         _titleLabel.stringValue = @"";
     } else {
@@ -325,23 +367,16 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender {
     if (sender.error) {
         [self downloadDidFailWithError:sender.error];
-    } else if (sender.nextPhaseFactory) {
-        iTermOptionalComponentDownloadPhase *nextPhase = sender.nextPhaseFactory(_currentPhase);
-        if (nextPhase) {
-            [self beginPhase:nextPhase];
-        } else {
-            iTermOptionalComponentDownloadPhase *phase = _currentPhase;
-            _currentPhase = nil;
-            self.completion(phase);
-        }
-    } else {
-        _titleLabel.stringValue = @"Download Finished";
-        _button.enabled = NO;
-        _progressLabel.stringValue = @"Installing…";
-        iTermOptionalComponentDownloadPhase *phase = _currentPhase;
-        _currentPhase = nil;
-        self.completion(phase);
+        return;
     }
+    iTermOptionalComponentDownloadPhase *nextPhase = sender.nextPhaseFactory ? sender.nextPhaseFactory(_currentPhase) : nil;
+    if (nextPhase) {
+        [self beginPhase:nextPhase];
+        return;
+    }
+    iTermOptionalComponentDownloadPhase *phase = _currentPhase;
+    _currentPhase = nil;
+    self.completion(phase);
 }
 
 - (void)optionalComponentDownloadPhase:(iTermOptionalComponentDownloadPhase *)sender

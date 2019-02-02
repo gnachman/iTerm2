@@ -4413,11 +4413,19 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (@available(macOS 10.14, *)) {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
-            const BOOL haveTransparency = [self anySessionInCurrentTabHasTransparency];
-            DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
-            window.hasShadow = !haveTransparency;
+            [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
+        }
+    } else {
+        if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyPreMojave]) {
+            [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
         }
     }
+}
+
+- (void)updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:(NSWindow *)window {
+    const BOOL haveTransparency = [self anySessionInCurrentTabHasTransparency];
+    DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
+    window.hasShadow = !haveTransparency;
 }
 
 - (void)didChangeCompactness {
