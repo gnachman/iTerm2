@@ -12,6 +12,7 @@
 // Optionally, it may have a function that computes its value (set in +computedObjectDictionary)
 // and the view controller may customize how its control's appearance changes dynamically.
 
+#import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
@@ -42,7 +43,6 @@ NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"No
 NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = @"NoSyncNeverRemindPrefsChangesLostForFile";
 
 NSString *const iTermMetalSettingsDidChangeNotification = @"iTermMetalSettingsDidChangeNotification";
-
 
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
@@ -437,6 +437,8 @@ static NSString *sPreviousVersion;
     for (void (^block)(id, id) in observers) {
         block(before, object);
     }
+
+    [[iTermPreferenceDidChangeNotification notificationWithKey:key value:object] post];
 }
 
 #pragma mark - APIs
