@@ -44,7 +44,6 @@
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
-#import "iTermFullDiskAccessManager.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
