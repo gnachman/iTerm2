@@ -68,6 +68,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
 + (BOOL)disableWindowShadowWhenTransparencyOnMojave;
++ (BOOL)disableWindowShadowWhenTransparencyPreMojave;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
