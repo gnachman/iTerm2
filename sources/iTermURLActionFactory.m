@@ -340,7 +340,7 @@
 
         if (looksLikeURL) {
             DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
-            NSString *defaultScheme = @"http://";
+            NSString *defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@":"];
             stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
         } else {
             DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
