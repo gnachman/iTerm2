@@ -1992,6 +1992,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)installPythonRuntime:(id)sender {  // Explicit request from menu item
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
+                                                                                   requiredToContinue:NO
                                                                                        withCompletion:^(BOOL ok) {}];
 }
 
@@ -2003,6 +2004,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)openREPL:(id)sender {
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:nil
+                                                                                   requiredToContinue:YES
                                                                                        withCompletion:^(BOOL ok) {
         if (!ok) {
             return;

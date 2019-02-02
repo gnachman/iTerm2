@@ -483,6 +483,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (url) {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
+                                                                                       requiredToContinue:YES
                                                                                            withCompletion:^(BOOL ok) {
             if (!ok) {
                 return;

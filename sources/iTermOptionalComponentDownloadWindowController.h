@@ -21,10 +21,13 @@ extern const int iTermMinimumPythonEnvironmentVersion;
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, copy, readonly) iTermOptionalComponentDownloadPhase *(^nextPhaseFactory)(iTermOptionalComponentDownloadPhase *);
 @property (nonatomic, copy, readonly) NSString *title;
+@property (nonatomic, readonly) BOOL progressIsDeterminant;
+@property (nonatomic, readonly) NSString *progressString;
+@property (nonatomic, readonly) BOOL buttonEnabled;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithURL:(NSURL *)url
-                      title:(NSString *)title          
+                      title:(NSString *)title
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory;
 
 @end
@@ -52,12 +55,16 @@ extern const int iTermMinimumPythonEnvironmentVersion;
                     version:(int)version
           expectedSignature:(NSString *)expectedSignature
      requestedPythonVersion:(NSString *)requestedPythonVersion
-           expectedVersions:(NSArray<NSString *> *)expectedVersions NS_DESIGNATED_INITIALIZER;
+           expectedVersions:(NSArray<NSString *> *)expectedVersions
+           nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithURL:(NSURL *)url
                       title:(NSString *)title
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory NS_UNAVAILABLE;
 
+@end
+
+@interface iTermInstallingPhase : iTermOptionalComponentDownloadPhase
 @end
 
 @interface iTermOptionalComponentDownloadWindowController : NSWindowController
