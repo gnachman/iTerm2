@@ -669,11 +669,10 @@ typedef struct {
 }
 
 - (void)updateWindowNumberFont {
-    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (preferredStyle == TAB_STYLE_MINIMAL) {
-        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-    } else {
+    if ([self tabBarShouldBeVisible]) {
         _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    } else {
+        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
 }
 
