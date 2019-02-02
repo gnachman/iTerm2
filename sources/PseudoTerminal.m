@@ -7524,12 +7524,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (preferredStyle != TAB_STYLE_MINIMAL && self.tabBarShouldBeVisible) {
-        // The window number will be displayed over the system titlebar color.
-        return [NSColor labelColor];
-    }
-    
     if (self.currentSession.tabColor &&
         [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0) {
         // The window number will be displayed over the tab color.
