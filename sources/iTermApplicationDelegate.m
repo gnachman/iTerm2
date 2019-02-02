@@ -1566,7 +1566,6 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
-    [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfPossible];
 }
 
 #pragma mark - Main Menu
