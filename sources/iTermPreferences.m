@@ -56,6 +56,7 @@ NSString *const kPreferenceKeyLionStyleFullscreen = @"UseLionStyleFullscreen";
 NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
+NSString *const kPreferenceKeyUseTmuxProfile = @"TmuxUsesDedicatedProfile";
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
@@ -243,6 +244,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenTmuxWindowsIn: @(kOpenTmuxWindowsAsNativeWindows),
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
+                  kPreferenceKeyUseTmuxProfile: @YES,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
@@ -620,5 +622,6 @@ typedef struct {
 
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeMetalThroughput, kPreferenceKeyMetalMaximizeThroughput)
+FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
 
 @end

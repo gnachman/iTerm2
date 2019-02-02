@@ -5225,7 +5225,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile {
-    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+    if ([iTermPreferences useTmuxProfile]) {
         return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
                                  [[profile objectForKey:KEY_ROWS] intValue]);
     } else {

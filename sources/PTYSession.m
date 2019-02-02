@@ -5669,7 +5669,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
     Profile *profile;
-    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+    if ([iTermPreferences useTmuxProfile]) {
         model = [ProfileModel sharedInstance];
         profile = [[ProfileModel sharedInstance] tmuxProfile];
     } else {
@@ -6139,7 +6139,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSInteger)tmuxNumberOfLinesOfScrollbackHistory {
     Profile *profile = _tmuxController.profile;
-    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
+    if ([iTermPreferences useTmuxProfile]) {
         profile = [[ProfileModel sharedInstance] tmuxProfile];
     }
     if ([profile[KEY_UNLIMITED_SCROLLBACK] boolValue]) {

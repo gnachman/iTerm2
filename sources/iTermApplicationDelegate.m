@@ -316,9 +316,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if ([menuItem action] == @selector(openDashboard:)) {
-        return [[iTermController sharedInstance] haveTmuxConnection];
-    } else if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
+    if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
     } else if ([menuItem action] == @selector(undo:)) {

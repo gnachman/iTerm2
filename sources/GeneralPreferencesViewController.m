@@ -18,8 +18,6 @@
 #import "WindowArrangements.h"
 #import "NSImage+iTerm.h"
 
-static const NSInteger iTermMaximumTmuxDashboardLimit = 1000;
-
 @interface iTermCustomFolderTextFieldCell : NSTextFieldCell
 @end
 
@@ -112,13 +110,10 @@ enum {
     // Open tmux windows in [windows, tabs]
     IBOutlet NSPopUpButton *_openTmuxWindows;
 
-    // Open tmux dashboard if there are more than N windows
-    IBOutlet NSTextField *_tmuxDashboardLimit;
-
     // Hide the tmux client session
     IBOutlet NSButton *_autoHideTmuxClientSession;
     
-    IBOutlet NSStepper *_tmuxDashboardLimitStepper;
+    IBOutlet NSButton *_useTmuxProfile;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -367,16 +362,11 @@ enum {
     // This is how it was done before the great refactoring, but I don't see why it's needed.
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
-    info = [self defineControl:_tmuxDashboardLimit
-                           key:kPreferenceKeyTmuxDashboardLimit
-                          type:kPreferenceInfoTypeIntegerTextField];
-    info.range = NSMakeRange(0, iTermMaximumTmuxDashboardLimit);
-    _tmuxDashboardLimitStepper.integerValue = _tmuxDashboardLimit.integerValue;
-    info.observer = ^{
-        [weakSelf didObserverTmuxDashboardLimitChange];
-    };
     [self defineControl:_autoHideTmuxClientSession
                     key:kPreferenceKeyAutoHideTmuxClientSession
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_useTmuxProfile
+                    key:kPreferenceKeyUseTmuxProfile
                    type:kPreferenceInfoTypeCheckbox];
 }
 
@@ -388,17 +378,7 @@ enum {
     }
 }
 
-- (void)didObserverTmuxDashboardLimitChange {
-    _tmuxDashboardLimitStepper.integerValue = _tmuxDashboardLimit.integerValue;
-}
-
 #pragma mark - Actions
-
-- (IBAction)tmuxDashboardLimitStepperDidChange:(id)sender {
-    NSInteger newValue = MAX(MIN(iTermMaximumTmuxDashboardLimit, _tmuxDashboardLimitStepper.integerValue), 0);
-    [self setInteger:newValue forKey:kPreferenceKeyTmuxDashboardLimit];
-    _tmuxDashboardLimit.integerValue = newValue;
-}
 
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];

@@ -401,7 +401,6 @@ DEFINE_BOOL(disableWindowShadowWhenTransparencyOnMojave, YES, SECTION_WINDOWS @"
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, SECTION_TMUX @"Suppress alert asking what kind of tab/window to open in tmux integration. Affects both windows and tabs.\nThis setting predates having separate settings for windows vs tabs. If it is off, then the two new settings will take effect.");
 DEFINE_BOOL(noSyncNewWindowFromTmuxOpensTmux, NO, SECTION_TMUX @"Suppress alert asking what kind of window to open in tmux integration.\nNOTE: This only takes effect if the now-deprecated “Suppress alert asking what kind of tab/window to open in tmux integration” setting is off.");
 DEFINE_BOOL(noSyncNewTabFromTmuxOpensTmux, NO, SECTION_TMUX @"Suppress alert asking what kind of tab to open in tmux integration.\nNOTE: This only takes effect if the now-deprecated “Suppress alert asking what kind of tab/window to open in tmux integration” setting is off.");
-DEFINE_BOOL(tmuxUsesDedicatedProfile, YES, SECTION_TMUX @"Tmux always uses the “tmux” profile.\nIf disabled, tmux sessions use the profile of the session you ran tmux -CC in.");
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, SECTION_TMUX @"Tolerate unrecognized commands from server.\nIf enabled, an unknown command from tmux (such as output from ssh or wall) will end the session. Turning this off helps detect dead ssh sessions.");
 DEFINE_BOOL(useTmuxStatusBar, YES, SECTION_TMUX @"Always use the tmux status bar in tmux integration mode.");
 

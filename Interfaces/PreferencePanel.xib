@@ -1321,6 +1321,7 @@ DQ
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
+                <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
             </connections>
@@ -4637,6 +4638,17 @@ DQ
                         <outlet property="nextKeyView" destination="6337" id="age-Bh-isX"/>
                     </connections>
                 </button>
+                <button id="6366">
+                    <rect key="frame" x="337" y="140" width="398" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="9Se-ld-UJa" id="E7x-cI-dhk"/>
+                    </connections>
+                </button>
                 <button toolTip="Smart window placement puts new windows where the most free space is available." id="4570">
                     <rect key="frame" x="337" y="288" width="233" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4828,7 +4840,7 @@ DQ
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                 </imageView>
                 <popUpButton verticalHuggingPriority="750" id="6337">
-                    <rect key="frame" x="489" y="112" width="281" height="26"/>
+                    <rect key="frame" x="489" y="90" width="281" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
@@ -4865,7 +4877,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="rci-Sr-fks">
-                    <rect key="frame" x="337" y="118" width="148" height="18"/>
+                    <rect key="frame" x="337" y="96" width="148" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open tmux windows as:" id="OHo-9E-q2w">
                         <font key="font" metaFont="system"/>
@@ -4906,15 +4918,15 @@ DQ
                         <action selector="advancedGPU:" target="9Se-ld-UJa" id="q48-sD-aZR"/>
                     </connections>
                 </button>
-                <button id="6366">
-                    <rect key="frame" x="337" y="140" width="398" height="18"/>
+                <button id="gLU-0J-chc">
+                    <rect key="frame" x="337" y="120" width="398" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
+                    <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of connecting session." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="E7x-cI-dhk"/>
+                        <action selector="settingChanged:" target="9Se-ld-UJa" id="BUO-Fp-RSb"/>
                     </connections>
                 </button>
             </subviews>
