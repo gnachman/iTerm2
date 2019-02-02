@@ -238,6 +238,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
 
     if (shouldBeginDownload) {
+        __block BOOL declined = NO;
         __block BOOL raiseOnCompletion = (!silent || !confirm);
         NSURL *url = [NSURL URLWithString:[iTermAdvancedSettingsModel pythonRuntimeDownloadURL]];
         __weak __typeof(self) weakSelf = self;
@@ -264,6 +265,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
                 [alert addButtonWithTitle:@"Cancel"];
                 if ([alert runModal] == NSAlertSecondButtonReturn) {
+                    declined = YES;
                     return nil;
                 }
                 stillNeedsConfirmation = NO;
@@ -295,6 +297,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             if (lastPhase == manifestPhase) {
                 iTermPythonRuntimeDownloader *strongSelf = weakSelf;
                 if (strongSelf) {
+                    if (declined) {
+                        [strongSelf->_downloadController close];
+                        return;
+                    }
                     [strongSelf->_downloadController showMessage:@"✅ The Python runtime is up to date."];
                     if (raiseOnCompletion) {
                         [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
