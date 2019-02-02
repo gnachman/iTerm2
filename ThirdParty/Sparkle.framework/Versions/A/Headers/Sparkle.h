@@ -21,4 +21,13 @@
 #import "SUVersionDisplayProtocol.h"
 #import "SUErrors.h"
 
+#import "SPUDownloader.h"
+#import "SPUDownloaderDelegate.h"
+#import "SPUDownloaderDeprecated.h"
+#import "SPUDownloadData.h"
+#import "SPUDownloaderProtocol.h"
+#import "SPUDownloaderSession.h"
+#import "SPUURLRequest.h"
+#import "SUCodeSigningVerifier.h"
+
 #endif

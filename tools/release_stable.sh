@@ -1,4 +1,8 @@
 #!/bin/bash
+
+echo WARNING - THIS IS THE FIRST TRANSITIONAL STABLE BUILD - TEST THE DICKENS OUT OF SPARKLE
+exit 1
+
 function die {
   echo $1
   exit
@@ -15,6 +19,7 @@ function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
     SIG=$(cat /tmp/sig.txt)
+    NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
     TEMPLATE=$2
@@ -24,8 +29,9 @@ function SparkleSign {
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
-    sed -e "s/%LENGTH%/$LENGTH/" |
-    sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
+    sed -e "s/%LENGTH%/$LENGTH/" | \
+    sed -e "s,%SIG%,${SIG}," | \
+    sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/stable/
 }
 
@@ -86,11 +92,13 @@ function Build {
   echo 'Options +FollowSymlinks' > ~/iterm2-website/downloads/stable/.htaccess
   echo 'Redirect 302 /downloads/stable/latest https://iterm2.com/downloads/stable/iTerm2-'${NAME}'.zip' >> ~/iterm2-website/downloads/stable/.htaccess
 
-  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/final_new.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
   popd
 
-  # Prepare the sparkle xml file
+  # Transitional (has both signatures)
   SparkleSign ${SPARKLE_PREFIX}final.xml ${SPARKLE_PREFIX}final_template.xml
+  # Modern (EdDSA only)
+  SparkleSign ${SPARKLE_PREFIX}final_new.xml ${SPARKLE_PREFIX}final_new_template.xml
 
   popd
 }

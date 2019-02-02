@@ -9,7 +9,9 @@ test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid 
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
+    ../../tools/sign_update iTerm2-${NAME}.zip > /tmp/newsig.txt || die SparkleSignNew
     SIG=$(cat /tmp/sig.txt)
+    NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
     TEMPLATE=$2
@@ -19,8 +21,9 @@ function SparkleSign {
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
-    sed -e "s/%LENGTH%/$LENGTH/" |
-    sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
+    sed -e "s/%LENGTH%/$LENGTH/" | \
+    sed -e "s,%SIG%,${SIG}," | \
+    sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 

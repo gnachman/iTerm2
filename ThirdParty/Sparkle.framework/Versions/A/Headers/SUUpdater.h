@@ -160,11 +160,7 @@ SU_EXPORT @interface SUUpdater : NSObject
 
  The keys of this dictionary are HTTP header fields (NSString) and values are corresponding values (NSString)
  */
-#if __has_feature(objc_generics)
 @property (copy) NSDictionary<NSString *, NSString *> *httpHeaders;
-#else
-@property (copy) NSDictionary *httpHeaders;
-#endif
 
 /*!
  A property indicating whether or not the user's system profile information is sent when checking for updates.
@@ -179,15 +175,30 @@ SU_EXPORT @interface SUUpdater : NSObject
 @property (nonatomic, copy) NSString *decryptionPassword;
 
 /*!
-    Checks for updates and, if available, immediately downloads and installs them.
+    This function ignores normal update schedule, ignores user preferences,
+    and interrupts users with an unwanted immediate app update.
+
+    WARNING: this function should not be used in regular apps. This function
+    is a user-unfriendly hack only for very special cases, like unstable
+    rapidly-changing beta builds that would not run correctly if they were
+    even one day out of date.
+
+    Instead of this function you should set `SUAutomaticallyUpdate` to `YES`,
+    which will gracefully install updates when the app quits.
+
+    For UI-less/daemon apps that aren't usually quit, instead of this function,
+    you can use the delegate method
+    SUUpdaterDelegate::updater:willInstallUpdateOnQuit:immediateInstallationInvocation:
+    to immediately start installation when an update was found.
+
     A progress dialog is shown but the user will never be prompted to read the
     release notes.
 
+    This function will cause update to be downloaded twice if automatic updates are
+    enabled.
+
     You may want to respond to the userDidCancelDownload delegate method in case
     the user clicks the "Cancel" button while the update is downloading.
-
-    If you are writing a UI-less background application, you probably want to instead use
-    SUUpdaterDelegate::updater:willInstallUpdateOnQuit:immediateInstallationInvocation:
  */
 - (void)installUpdatesIfAvailable;
 

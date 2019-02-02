@@ -1,4 +1,8 @@
 #!/bin/bash
+
+echo WARNING - THIS IS THE FIRST TRANSITIONAL BETA BUILD - TEST THE DICKENS OUT OF SPARKLE
+exit 1
+
 function die {
   echo $1
   exit
@@ -14,15 +18,19 @@ test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid 
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
+    ../../tools/sign_update iTerm2-${NAME}.zip > /tmp/newsig.txt || die SparkleSignNew
 
     echo "Signature is "
     cat /tmp/sig.txt
+    echo "ECDSA signature is "
+    cat /tmp/newsig.txt
     actualsize=$(wc -c < /tmp/sig.txt)
     if (( $actualsize < 60)); then
         die "signature file too small"
     fi
 
     SIG=$(cat /tmp/sig.txt)
+    NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
     TEMPLATE=$2
@@ -32,8 +40,9 @@ function SparkleSign {
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
-    sed -e "s/%LENGTH%/$LENGTH/" |
-    sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
+    sed -e "s/%LENGTH%/$LENGTH/" | \
+    sed -e "s,%SIG%,${SIG}," | \
+    sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
@@ -75,11 +84,13 @@ function Build {
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_new.xml source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
   popd
 
-  # Prepare the sparkle xml file
+  # Transitional (has both DSA and EdDSA)
   SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
+  # Modern (has EdDSA only)
+  SparkleSign ${SPARKLE_PREFIX}testing3_new.xml ${SPARKLE_PREFIX}template3_new.xml
 
   popd
 }
