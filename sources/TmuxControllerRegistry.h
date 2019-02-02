@@ -21,5 +21,6 @@ extern NSString *const kTmuxControllerRegistryDidChange;
 - (TmuxController *)controllerForClient:(NSString *)client;
 - (void)setController:(TmuxController *)controller forClient:(NSString *)client;
 - (NSString *)uniqueClientNameBasedOn:(NSString *)preferredName;
+- (TmuxController *)tmuxControllerWithSessionGUID:(NSString *)sessionGUID;
 
 @end

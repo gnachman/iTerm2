@@ -81,5 +81,6 @@ extern NSString *const iTermDidToggleSecureInputNotification;
 - (void)newSession:(id)sender;
 - (void)undo:(id)sender;
 - (void)showPrefWindow:(id)sender;
+- (IBAction)openDashboard:(id)sender;
 
 @end

@@ -48,6 +48,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) BOOL detaching;
 @property(nonatomic, copy) Profile *profile;
 @property(nonatomic, readonly) NSDictionary *fontOverrides;
+@property(nonatomic, readonly) NSString *sessionGuid;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -164,5 +165,6 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
            vSpacing:(double)vs;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
+- (NSArray<PTYSession *> *)clientSessions;
 
 @end

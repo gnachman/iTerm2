@@ -103,6 +103,12 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];  // Force the client to quit
 }
 
+- (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid {
+    [self.delegate tmuxDoubleAttachForSessionGUID:sessionGuid];
+    [self detach];
+    [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];  // Force the client to quit
+}
+
 - (NSData *)decodeEscapedOutput:(const char *)bytes
 {
     NSMutableData *data = [NSMutableData data];
