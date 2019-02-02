@@ -27,3 +27,12 @@
                         withObject:(id)object;
 
 @end
+
+// Remembers the delay across restarts. Useful for things like checking for updates every N days.
+@interface iTermPersistentRateLimitedUpdate : iTermRateLimitedUpdate
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithName:(NSString *)name NS_DESIGNATED_INITIALIZER;
+
+@end
+

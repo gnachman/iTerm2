@@ -13,6 +13,7 @@
 #import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermSetupPyParser.h"
 #import "iTermSignatureVerifier.h"
 #import "NSArray+iTerm.h"
@@ -31,6 +32,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     dispatch_group_t _downloadGroup;
     BOOL _didDownload;  // Set when _downloadGroup notified.
     dispatch_queue_t _queue;  // Used to serialize installs
+    iTermPersistentRateLimitedUpdate *_checkForUpdateRateLimit;
 }
 
 + (instancetype)sharedInstance {
@@ -166,6 +168,17 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     [self checkForNewerVersionThan:installedVersion silently:YES confirm:YES requiredToContinue:NO pythonVersion:nil];
 }
 
+- (void)performPeriodicUpgradeCheck {
+    if (!_checkForUpdateRateLimit) {
+        _checkForUpdateRateLimit = [[iTermPersistentRateLimitedUpdate alloc] initWithName:@"CheckForUpdatedPythonRuntime"];
+        const NSTimeInterval day = 24 * 60 * 60;
+        _checkForUpdateRateLimit.minimumInterval = 2 * day;
+    }
+    [_checkForUpdateRateLimit performRateLimitedBlock:^{
+        [self upgradeIfPossible];
+    }];
+}
+
 - (void)userRequestedCheckForUpdate {
     [self checkForNewerVersionThan:[self installedVersionWithPythonVersion:nil]
                           silently:NO
@@ -178,6 +191,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                              pythonVersion:(NSString *)pythonVersion
                                             withCompletion:(void (^)(BOOL))completion {
     if (![self shouldDownloadEnvironmentForPythonVersion:pythonVersion]) {
+        [self performPeriodicUpgradeCheck];
         completion(YES);
         return;
     }
@@ -245,9 +259,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 if (requiredToContinue) {
                     alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 29 MB. OK to download it now?";
                 } else {
-                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 29 MB. OK to download it now?";
+                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 30 MB. OK to download it now?";
                 }
-                [alert addButtonWithTitle:@"OK"];
+                [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
                 [alert addButtonWithTitle:@"Cancel"];
                 if ([alert runModal] == NSAlertSecondButtonReturn) {
                     return nil;
