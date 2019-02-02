@@ -2,79 +2,79 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSAppTransportSecurity</key>  
-	<dict>  
-	    <key>NSExceptionDomains</key>  
-	    <dict>  
-		<key>127.0.0.1</key>  
-		<dict>  
-		    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
-		    <true/>  
-		</dict>  
-		<key>localhost</key>  
-		<dict>  
-		    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
-		    <true/>  
-		</dict>  
-	    </dict>  
-	</dict> 
-	<key>NSHumanReadableCopyright</key>
-	<string>GPL v2</string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
+        <key>NSAppTransportSecurity</key>  
+        <dict>  
+            <key>NSExceptionDomains</key>  
+            <dict>  
+                <key>127.0.0.1</key>  
+                <dict>  
+                    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
+                    <true/>  
+                </dict>  
+                <key>localhost</key>  
+                <dict>  
+                    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
+                    <true/>  
+                </dict>  
+            </dict>  
+        </dict> 
+        <key>NSHumanReadableCopyright</key>
+        <string>GPL v2</string>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>English</string>
+        <key>CFBundleDocumentTypes</key>
+        <array>
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
                                 <string>itr</string>
                         </array>
                         <key>CFBundleTypeIconFile</key>
-			<string>iTermRecordingIcon.icns</string>
+                        <string>iTermRecordingIcon.icns</string>
                         <key>CFBundleTypeName</key>
                         <string>iTerm2 Recording</string>
                         <key>CFBundleTypeRole</key>
                         <string>Editor</string>
                 </dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>command</string>
-				<string>tool</string>
-				<string>sh</string>
-				<string>zsh</string>
-				<string>csh</string>
-				<string>pl</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>Terminal scripts</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>fold</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Folders</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>itermcolors</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>iTerm2 Color Presets</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-		</dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>command</string>
+                                <string>tool</string>
+                                <string>sh</string>
+                                <string>zsh</string>
+                                <string>csh</string>
+                                <string>pl</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>Terminal scripts</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeOSTypes</key>
+                        <array>
+                                <string>fold</string>
+                        </array>
+                        <key>CFBundleTypeName</key>
+                        <string>Folders</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itermcolors</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Color Presets</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
@@ -93,15 +93,17 @@
                         <key>LSHandlerRank</key>
                         <string>Owner</string>
                 </dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Shell</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>public.unix-executable</string>
-			</array>
-		</dict>
-	</array>
+                <dict>
+                        <key>CFBundleTypeRole</key>
+                        <string>Shell</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                                <string>public.unix-executable</string>
+                        </array>
+                </dict>
+        </array>
+        <key>NSSystemAdministrationUsageDescription</key>
+        <string>The operation being performed by a program in iTerm2 requires elevated permission.</string>
         <key>NSAppleEventsUsageDescription</key>
         <string>An application in iTerm2 wants to use AppleScript.</string>
         <key>NSCalendarsUsageDescription</key>
@@ -120,190 +122,190 @@
         <string>An application in iTerm2 wants to use your microphone.</string>
         <key>NSRemindersUsageDescription</key>
         <string>An application in iTerm2 wants to use your reminders.</string>
-	<key>NSServices</key>
-	<array>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
-				<string>New iTerm2 Tab Here</string>
-			</dict>
-			<key>NSMessage</key>
-			<string>openTab</string>
-			<key>NSRequiredContext</key>
-			<dict>
-				<key>NSTextContent</key>
-				<string>FilePath</string>
-			</dict>
-			<key>NSSendTypes</key>
-			<array>
-				<string>NSFilenamesPboardType</string>
-				<string>public.plain-text</string>
-			</array>
-		</dict>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
-				<string>New iTerm2 Window Here</string>
-			</dict>
-			<key>NSMessage</key>
-			<string>openWindow</string>
-			<key>NSRequiredContext</key>
-			<dict>
-				<key>NSTextContent</key>
-				<string>FilePath</string>
-			</dict>
-			<key>NSSendTypes</key>
-			<array>
-				<string>NSFilenamesPboardType</string>
-				<string>public.plain-text</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleExecutable</key>
-	<string>iTerm2</string>
-	<key>CFBundleGetInfoString</key>
-	<string>unknown</string>
-	<key>CFBundleHelpBookFolder</key>
-	<string>iTerm2 Help</string>
-	<key>CFBundleHelpBookName</key>
-	<string>iTerm2 Help</string>
-	<key>CFBundleIconFile</key>
-	<string>iTerm2.icns</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.googlecode.iterm2</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>iTerm2</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>unknown</string>
-	<key>CFBundleSignature</key>
-	<string>ITRM</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>http URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>http</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>https URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>https</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>ftp URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>ftp</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>gopher URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>gopher</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>mailto URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>mailto</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>news URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>news</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>nntp URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>nntp</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>ssh URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>ssh</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>telnet URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>telnet</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>wais URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>wais</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>whois URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>whois</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>x-man-page URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>x-man-page</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleVersion</key>
-	<string>unknown</string>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
-	<key>NSAppleScriptEnabled</key>
-	<string>YES</string>
-	<key>OSAScriptingDefinition</key>
-	<string>iTerm2.sdef</string>
-	<key>NSExtensions</key>
-	<dict/>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
-	<key>NSPrincipalClass</key>
-	<string>iTermApplication</string>
-	<key>NSSupportsAutomaticGraphicsSwitching</key>
-	<true/>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
-	<key>SUFeedURLForTesting</key>
-	<string>https://iterm2.com/appcasts/nightly.xml</string>
-	<key>SUFeedURLForFinal</key>
-	<string>https://iterm2.com/appcasts/final.xml</string>
+        <key>NSServices</key>
+        <array>
+                <dict>
+                        <key>NSMenuItem</key>
+                        <dict>
+                                <key>default</key>
+                                <string>New iTerm2 Tab Here</string>
+                        </dict>
+                        <key>NSMessage</key>
+                        <string>openTab</string>
+                        <key>NSRequiredContext</key>
+                        <dict>
+                                <key>NSTextContent</key>
+                                <string>FilePath</string>
+                        </dict>
+                        <key>NSSendTypes</key>
+                        <array>
+                                <string>NSFilenamesPboardType</string>
+                                <string>public.plain-text</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>NSMenuItem</key>
+                        <dict>
+                                <key>default</key>
+                                <string>New iTerm2 Window Here</string>
+                        </dict>
+                        <key>NSMessage</key>
+                        <string>openWindow</string>
+                        <key>NSRequiredContext</key>
+                        <dict>
+                                <key>NSTextContent</key>
+                                <string>FilePath</string>
+                        </dict>
+                        <key>NSSendTypes</key>
+                        <array>
+                                <string>NSFilenamesPboardType</string>
+                                <string>public.plain-text</string>
+                        </array>
+                </dict>
+        </array>
+        <key>CFBundleExecutable</key>
+        <string>iTerm2</string>
+        <key>CFBundleGetInfoString</key>
+        <string>unknown</string>
+        <key>CFBundleHelpBookFolder</key>
+        <string>iTerm2 Help</string>
+        <key>CFBundleHelpBookName</key>
+        <string>iTerm2 Help</string>
+        <key>CFBundleIconFile</key>
+        <string>iTerm2.icns</string>
+        <key>CFBundleIdentifier</key>
+        <string>com.googlecode.iterm2</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+        <key>CFBundleName</key>
+        <string>iTerm2</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleShortVersionString</key>
+        <string>unknown</string>
+        <key>CFBundleSignature</key>
+        <string>ITRM</string>
+        <key>CFBundleURLTypes</key>
+        <array>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>http URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>http</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>https URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>https</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>ftp URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>ftp</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>gopher URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>gopher</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>mailto URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>mailto</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>news URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>news</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>nntp URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>nntp</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>ssh URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>ssh</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>telnet URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>telnet</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>wais URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>wais</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>whois URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>whois</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>x-man-page URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>x-man-page</string>
+                        </array>
+                </dict>
+        </array>
+        <key>CFBundleVersion</key>
+        <string>unknown</string>
+        <key>LSApplicationCategoryType</key>
+        <string>public.app-category.utilities</string>
+        <key>NSAppleScriptEnabled</key>
+        <string>YES</string>
+        <key>OSAScriptingDefinition</key>
+        <string>iTerm2.sdef</string>
+        <key>NSExtensions</key>
+        <dict/>
+        <key>NSMainNibFile</key>
+        <string>MainMenu</string>
+        <key>NSPrincipalClass</key>
+        <string>iTermApplication</string>
+        <key>NSSupportsAutomaticGraphicsSwitching</key>
+        <true/>
+        <key>SUPublicDSAKeyFile</key>
+        <string>dsa_pub.pem</string>
+        <key>SUFeedURLForTesting</key>
+        <string>https://iterm2.com/appcasts/nightly.xml</string>
+        <key>SUFeedURLForFinal</key>
+        <string>https://iterm2.com/appcasts/final.xml</string>
         <key>SUFeedURL</key>
         <string>https://iterm2.com/appcasts/final.xml</string>
 </dict>
