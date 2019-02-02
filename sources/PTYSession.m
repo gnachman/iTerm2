@@ -43,7 +43,6 @@
 #import "iTermMetaFrustrationDetector.h"
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
-#import "iTermMenuOpener.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
@@ -931,18 +930,16 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)educateAboutCopyMode {
-    [iTermMenuOpener revealMenuWithPath:@[ @"Help", @"Copy Mode Shortcuts" ]
-                                message:@"You have entered Copy Mode.\nWhile in copy mode, you use keyboard\nshortcuts to modify the selection.\nYou can always find the list of\nshortcuts in the Help menu."];
-
+    [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Copy Mode"
+                                                                     detail:@"Copy Mode lets you make a selection with the keyboard. Click to view the manual."
+                                                                        URL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]];
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
     if (copyMode) {
         NSString *const key = @"NoSyncHaveUsedCopyMode";
         if ([[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [self educateAboutCopyMode];
-            });
+            [self educateAboutCopyMode];
         }
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
     }
@@ -5954,8 +5951,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
         static NSString *const kAutoBurialKey = @"NoSyncAutoBurialReveal";
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kAutoBurialKey]) {
-            [iTermMenuOpener revealMenuWithPath:@[ @"Session", @"Buried Sessions" ]
-                                        message:@"The session that started tmux has been hidden.\nYou can restore it here, in “Buried Sessions.”"];
+            [[iTermNotificationController sharedInstance] notify:@"Session Buried"
+                                                 withDescription:@"It can be restored by detaching from tmux, or from the Sessions > Buried Sessions menu."];
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kAutoBurialKey];
         }
     }

@@ -81,4 +81,8 @@
           viewIndex:(int)viewIndex
              sticky:(BOOL)sticky;
 
+- (void)postNotificationWithTitle:(NSString *)title
+                           detail:(NSString *)detail
+                              URL:(NSURL *)url;
+
 @end

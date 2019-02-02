@@ -112,8 +112,25 @@
     return YES;
 }
 
+- (void)postNotificationWithTitle:(NSString *)title detail:(NSString *)detail URL:(NSURL *)url {
+    NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+    notification.title = title;
+    notification.informativeText = detail;
+    NSDictionary *context = @{ @"URL": url.absoluteString };
+    notification.userInfo = context;
+    notification.soundName = NSUserNotificationDefaultSoundName;
+    DLog(@"Post notification %@", notification);
+    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+}
+
 - (void)notificationWasClicked:(id)clickContext {
     DLog(@"notificationWasClicked:%@", clickContext);
+    NSURL *url = [NSURL URLWithString:clickContext[@"URL"]];
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        return;
+    }
+
     int win = [clickContext[@"win"] intValue];
     int tab = [clickContext[@"tab"] intValue];
     int view = [clickContext[@"view"] intValue];
