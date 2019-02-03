@@ -54,20 +54,26 @@ rm -rf iTerm.app
 mv iTerm2.app iTerm.app
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
-# This is the way forward. Eventually keep only this, when the last transitional build is a good jumping-off point.
+# Modern
+SparkleSign nightly_modern.xml nightly_modern_template.xml
+# Transitional
 SparkleSign nightly_new.xml nightly_new_template.xml
-# Transitional - don't keep doing this for too long
+# Legacy
 SparkleSign nightly.xml nightly_template.xml
 
 cask-repair --cask-version $CASK_VERSION iterm2-nightly
 
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml $SVNDIR/source/appcasts/nightly_new.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml $SVNDIR/source/appcasts/nightly_new.xml $SVNDIR/source/appcasts/nightly_modern.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"
 
 cd $SVNDIR
-git add source/appcasts/nightly_new.xml source/appcasts/nightly_changes.txt
-# Transitional:
+git add source/appcasts/nightly_changes.txt
+# Modern
+git add source/appcasts/nightly_modern.xml
+# Transitional
+git add source/appcasts/nightly_new.xml
+# Legacy
 git add source/appcasts/nightly.xml
 git commit -m "${NAME}"
 
