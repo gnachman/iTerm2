@@ -92,13 +92,15 @@ function Build {
   echo 'Options +FollowSymlinks' > ~/iterm2-website/downloads/stable/.htaccess
   echo 'Redirect 302 /downloads/stable/latest https://iterm2.com/downloads/stable/iTerm2-'${NAME}'.zip' >> ~/iterm2-website/downloads/stable/.htaccess
 
-  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/final_new.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/final_new.xml source/appcasts/final_modern.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
   popd
 
-  # Transitional (has both signatures)
+  # Legacy
   SparkleSign ${SPARKLE_PREFIX}final.xml ${SPARKLE_PREFIX}final_template.xml
-  # Modern (EdDSA only)
+  # Transitional
   SparkleSign ${SPARKLE_PREFIX}final_new.xml ${SPARKLE_PREFIX}final_new_template.xml
+  # Modern
+  SparkleSign ${SPARKLE_PREFIX}final_modern.xml ${SPARKLE_PREFIX}final_modern.xml
 
   popd
 }
