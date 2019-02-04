@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImageView+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 
 const CGFloat iTermStatusBarViewControllerIconWidth = 17;
@@ -143,6 +144,89 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)viewDidMoveToWindow {
     [_component statusBarComponentDidMoveToWindow];
+}
+
+- (nullable NSView *)hitTest:(NSPoint)point {
+    NSEvent *event = NSApp.currentEvent;
+    if (NSPointInRect(point, self.frame)) {
+        if (event.type == NSEventTypeRightMouseUp ||
+            event.type == NSEventTypeRightMouseDown) {
+            return self;
+        }
+        if (event.type == NSEventTypeLeftMouseUp ||
+            event.type == NSEventTypeLeftMouseDown) {
+            if (event.modifierFlags & NSEventModifierFlagControl) {
+                return self;
+            }
+        }
+    }
+    return [super hitTest:point];
+}
+
+- (void)mouseUp:(NSEvent *)event {
+    if (event.clickCount != 1 || !(event.modifierFlags & NSEventModifierFlagControl)) {
+        [super mouseUp:event];
+        return;
+    }
+    [self showContextMenuForEvent:event];
+}
+
+- (void)rightMouseUp:(NSEvent *)event {
+    if (event.clickCount != 1) {
+        [super rightMouseUp:event];
+        return;
+    }
+    [self showContextMenuForEvent:event];
+}
+
+- (void)showContextMenuForEvent:(NSEvent *)event {
+    NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    if ([[_component statusBarComponentKnobs] count]) {
+        [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
+                        action:@selector(configureComponent:)
+                 keyEquivalent:@""];
+    }
+    [menu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", [self.component statusBarComponentShortDescription]]
+                    action:@selector(hideComponent:)
+             keyEquivalent:@""];
+    [menu addItemWithTitle:@"Configure Status Bar"
+                    action:@selector(configureStatusBar:)
+             keyEquivalent:@""];
+    NSDictionary<NSString *, id> *values = [self.component statusBarComponentKnobValues];
+    __block BOOL haveAddedSeparator = NO;
+    [[self.component statusBarComponentKnobs] enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (knob.type == iTermStatusBarComponentKnobTypeCheckbox) {
+            if (!haveAddedSeparator) {
+                haveAddedSeparator = YES;
+                [menu addItem:[NSMenuItem separatorItem]];
+            }
+            NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:knob.labelText action:@selector(toggleKnob:) keyEquivalent:@""];
+            item.identifier = knob.key;
+            item.state = [[NSNumber castFrom:values[knob.key]] boolValue] ? NSOnState : NSOffState;
+            [menu addItem:item];
+        }
+    }];
+    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+}
+
+- (void)configureComponent:(id)sender {
+    [self.delegate statusBarContainerView:self configureComponent:self.component];
+}
+
+- (void)hideComponent:(id)sender {
+    [self.delegate statusBarContainerView:self hideComponent:self.component];
+}
+
+- (void)configureStatusBar:(id)sender {
+    [self.delegate statusBarContainerViewConfigureStatusBar:self];
+}
+
+- (void)toggleKnob:(NSMenuItem *)sender {
+    NSString *key = sender.identifier;
+    NSMutableDictionary *knobValues = [[self.component statusBarComponentKnobValues] mutableCopy] ?: [NSMutableDictionary dictionary];
+    NSNumber *number = [NSNumber castFrom:knobValues[key]];
+    knobValues[key] = @(!number.boolValue);
+    [self.component statusBarComponentSetKnobValues:knobValues];
 }
 
 @end

@@ -21,5 +21,6 @@
 
 - (void)deleteSelected;
 - (void)autoRainbowWithDarkBackground:(BOOL)darkBackground;
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier;
 
 @end

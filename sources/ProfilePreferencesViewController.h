@@ -45,6 +45,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 - (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
 - (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid;
+- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier;
 
 // Update views for changed backing state.
 - (void)refresh;

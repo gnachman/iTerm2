@@ -491,6 +491,12 @@
     }];
 }
 
+- (instancetype)it_arrayByRemovingObjectsPassingTest:(BOOL (^)(id anObject))block {
+    NSMutableArray *mutableArray = [self mutableCopy];
+    [mutableArray removeObjectsPassingTest:block];
+    return mutableArray;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

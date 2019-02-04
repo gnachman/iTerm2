@@ -99,5 +99,6 @@ void LoadPrefsFromCustomFolder(void);
 
 // Go to the profiles tab, go to its Keys sub-tab, and open the Hotkey window panel.
 - (void)configureHotkeyForProfile:(Profile *)profile;
+- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier tmux:(BOOL)tmux;
 
 @end

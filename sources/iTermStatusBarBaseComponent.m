@@ -249,6 +249,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     [self.delegate statusBarComponentKnobsDidChange:self];
 }
 
+- (NSDictionary *)statusBarComponentKnobValues {
+    return _configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+}
+
 - (NSView *)statusBarComponentView {
     [self doesNotRecognizeSelector:_cmd];
     return [[NSView alloc] init];

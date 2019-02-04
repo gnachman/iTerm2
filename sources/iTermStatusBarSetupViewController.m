@@ -302,6 +302,10 @@ NS_ASSUME_NONNULL_BEGIN
     [window.sheetParent endSheet:window];
 }
 
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier {
+    [_destinationViewController configureStatusBarComponentWithIdentifier:identifier];
+}
+
 #pragma mark - NSCollectionViewDataSource
 
 - (NSInteger)collectionView:(NSCollectionView *)collectionView

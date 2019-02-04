@@ -30,6 +30,7 @@ const CGFloat iTermStatusBarHeight = 21;
 
 @interface iTermStatusBarViewController ()<
     iTermStatusBarComponentDelegate,
+    iTermStatusBarContainerViewDelegate,
     iTermStatusBarLayoutDelegate>
 
 @end
@@ -236,6 +237,7 @@ const CGFloat iTermStatusBarHeight = 21;
             [_containerViews removeObject:view];
         } else {
             view = [[iTermStatusBarContainerView alloc] initWithComponent:component];
+            view.delegate = self;
         }
         [updatedContainerViews addObject:view];
     }
@@ -309,6 +311,25 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
     [self.delegate statusBarWriteString:string];
+}
+
+#pragma mark - iTermStatusBarContainerViewDelegate
+
+- (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component {
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:[self.layout dictionaryValue]
+                                                                              scope:_scope];
+    layout.components = [layout.components it_arrayByRemovingObjectsPassingTest:^BOOL(id<iTermStatusBarComponent> anObject) {
+        return anObject.class == component.class;
+    }];
+    [self.delegate statusBarSetLayout:layout];
+}
+
+- (void)statusBarContainerViewConfigureStatusBar:(iTermStatusBarContainerView *)sender {
+    [self.delegate statusBarOpenPreferencesToComponent:nil];
+}
+
+- (void)statusBarContainerView:(iTermStatusBarContainerView *)sender configureComponent:(id<iTermStatusBarComponent>)component {
+    [self.delegate statusBarOpenPreferencesToComponent:component];
 }
 
 @end

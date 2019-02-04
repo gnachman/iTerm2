@@ -263,6 +263,15 @@ static PreferencePanel *gSessionsPreferencePanel;
     [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
 }
 
+- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier tmux:(BOOL)tmux {
+    _tmux = tmux;
+    _profilesViewController.tmuxSession = tmux;
+    [self window];
+    [self selectProfilesTab];
+    [self run];
+    [_profilesViewController openToProfileWithGuid:guid andEditComponentWithIdentifier:identifier];
+}
+
 - (NSWindow *)window {
     BOOL shouldPostWindowLoadNotification = !self.windowLoaded;
     NSWindow *window = [super window];

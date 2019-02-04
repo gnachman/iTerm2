@@ -182,12 +182,24 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
     self = [super init];
     if (self) {
         _scope = scope;
-        _children = [scope.frames flatMapWithBlock:^id(iTermTuple<NSString *,iTermVariables *> *tuple) {
+        NSArray<iTermTuple<NSString *, iTermVariables *> *> *sortedFrames = [scope.frames sortedArrayUsingComparator:^NSComparisonResult(iTermTuple<NSString *, iTermVariables *> * _Nonnull obj1, iTermTuple<NSString *, iTermVariables *> * _Nonnull obj2) {
+            if (obj1.firstObject == nil && obj2.firstObject == nil) {
+                return NSOrderedSame;
+            }
+            if (obj1.firstObject == nil) {
+                return NSOrderedAscending;
+            }
+            if (obj2.secondObject) {
+                return NSOrderedDescending;
+            }
+            return [obj1.firstObject compare:obj2.firstObject];
+        }];
+        _children = [sortedFrames flatMapWithBlock:^id(iTermTuple<NSString *,iTermVariables *> *tuple) {
             if (tuple.firstObject) {
                 return @[ [[iTermVariablesNonterminalProxy alloc] initWithName:tuple.firstObject
                                                                      variables:tuple.secondObject] ];
             } else {
-                return [tuple.secondObject.allNames mapWithBlock:^id(NSString *name) {
+                return [[tuple.secondObject.allNames sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^id(NSString *name) {
                     id value = [tuple.secondObject rawValueForVariableName:name];
                     iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
                     const BOOL isAlias = (tuple.firstObject == nil &&

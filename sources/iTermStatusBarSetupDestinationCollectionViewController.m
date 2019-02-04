@@ -170,6 +170,22 @@
     [self deleteSelected];
 }
 
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier {
+    NSInteger index = [_elements indexOfObjectPassingTest:^BOOL(iTermStatusBarSetupElement * _Nonnull element, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [element.component.statusBarComponentIdentifier isEqualToString:identifier];
+    }];
+    if (index == NSNotFound) {
+        return;
+    }
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
+    NSSet<NSIndexPath *> *indexPaths = [NSSet setWithObject:indexPath];
+    [self.collectionView selectItemsAtIndexPaths:indexPaths scrollPosition:NSCollectionViewScrollPositionCenteredVertically];
+    [self collectionView:self.collectionView didSelectItemsAtIndexPaths:indexPaths];
+    if (_configureButton.enabled) {
+        [_configureButton.target it_performNonObjectReturningSelector:_configureButton.action withObject:_configureButton];
+    }
+}
+
 #pragma mark - NSCollectionViewDataSource
 
 - (NSInteger)collectionView:(NSCollectionView *)collectionView

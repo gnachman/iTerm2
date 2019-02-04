@@ -104,6 +104,7 @@
 - (NSArray *)countedInstancesStrings;
 - (NSDictionary *)keyValuePairsWithBlock:(iTermTuple * (^)(ObjectType object))block;
 - (id)it_jsonSafeValue;
+- (instancetype)it_arrayByRemovingObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 
 @end
 

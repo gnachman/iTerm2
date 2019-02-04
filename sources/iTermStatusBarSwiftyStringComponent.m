@@ -99,6 +99,10 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     [super statusBarComponentSetKnobValues:knobValues];
 }
 
+- (NSDictionary *)statusBarComponentKnobValues {
+    return self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

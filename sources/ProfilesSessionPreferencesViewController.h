@@ -11,5 +11,6 @@
 @interface ProfilesSessionPreferencesViewController : iTermProfilePreferencesBaseViewController
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier;
 
 @end

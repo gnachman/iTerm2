@@ -104,6 +104,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 
 // Updates knob values
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues;
+- (NSDictionary *)statusBarComponentKnobValues;
 
 // If this component serves as a search view, returns the view controller. Otherwise, returns nil.
 - (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;

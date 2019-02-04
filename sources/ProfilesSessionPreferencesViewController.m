@@ -278,6 +278,14 @@
     }];
 }
 
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier {
+    if (_statusBarEnabled.state != NSOnState) {
+        return;
+    }
+    [self configureStatusBar:nil];
+    [_statusBarSetupViewController configureStatusBarComponentWithIdentifier:identifier];
+}
+
 #pragma mark - Prompt before closing
 
 - (void)promptBeforeClosingDidChange {

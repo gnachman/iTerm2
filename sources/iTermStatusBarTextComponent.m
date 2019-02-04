@@ -181,6 +181,9 @@ NS_ASSUME_NONNULL_BEGIN
     }
     DLog(@"Place text view %@ of width %@ at x=%@ in container of width %@", textField, @(width), @(x), @(textField.superview.frame.size.width));
     view.frame = NSMakeRect(x, 0, width, view.frame.size.height);
+    if (view == _textField) {
+        [self setValueInField:_textField compressed:YES];
+    }
 }
 
 - (CGFloat)widthForString:(NSString *)string {

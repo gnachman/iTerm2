@@ -22,6 +22,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                          bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;
 - (nullable instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
+- (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier;
+
 @end
 
 NS_ASSUME_NONNULL_END

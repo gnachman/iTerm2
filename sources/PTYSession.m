@@ -1585,6 +1585,8 @@ ITERM_WEAKLY_REFERENCEABLE
     int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
     int height = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
     [_screen destructivelySetScreenWidth:width height:height];
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(width),
+                                                    iTermVariableKeySessionRows: @(height) }];
 
     [_textview setDataSource:_screen];
     [_textview setDelegate:self];
@@ -1664,6 +1666,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.11, *)) {
         [self updateMetalDriver];
     }
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
+                                                    iTermVariableKeySessionRows: @(_screen.height) }];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -4832,6 +4836,21 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)remarry
 {
     _isDivorced = NO;
+}
+
+// TBH I'm not 100% sure this is correct. Don't use it for anything critical until this whole mess
+// has been burned to the ground and rebuilt.
+- (NSString *)guidOfUnderlyingProfile {
+    if (!self.isDivorced) {
+        return self.profile[KEY_GUID];
+    }
+
+    NSString *guid = _originalProfile[KEY_GUID];
+    if (guid && [[ProfileModel sharedInstance] bookmarkWithGuid:guid]) {
+        return guid;
+    }
+
+    return nil;
 }
 
 - (NSString*)divorceAddressBookEntryFromPreferences
@@ -10844,6 +10863,33 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)statusBarDidUpdate {
     [_view updateFindDriver];
+}
+
+- (void)statusBarOpenPreferencesToComponent:(nullable id<iTermStatusBarComponent>)component {
+    PreferencePanel *panel;
+    NSString *guid;
+    if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {
+        panel = [PreferencePanel sessionsInstance];
+        guid = _profile[KEY_GUID];
+    } else {
+        panel = [PreferencePanel sharedInstance];
+        guid = _originalProfile[KEY_GUID];
+    }
+    [panel openToProfileWithGuid:guid andEditComponentWithIdentifier:component.statusBarComponentIdentifier tmux:self.isTmuxClient];
+}
+
+
+- (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
+    ProfileModel *model;
+    if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {
+        model = [ProfileModel sessionsInstance];
+    } else {
+        model = [ProfileModel sharedInstance];
+    }
+    [iTermProfilePreferences setObject:[layout dictionaryValue]
+                                forKey:KEY_STATUS_BAR_LAYOUT
+                             inProfile:self.originalProfile
+                                 model:model];
 }
 
 #pragma mark - iTermMetaFrustrationDetectorDelegate

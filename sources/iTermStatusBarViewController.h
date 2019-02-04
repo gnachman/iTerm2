@@ -26,6 +26,8 @@ extern const CGFloat iTermStatusBarHeight;
 - (NSFont *)statusBarTerminalFont;
 - (void)statusBarWriteString:(NSString *)string;
 - (void)statusBarDidUpdate;
+- (void)statusBarSetLayout:(iTermStatusBarLayout *)layout;
+- (void)statusBarOpenPreferencesToComponent:(nullable id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarContainer<NSObject>
