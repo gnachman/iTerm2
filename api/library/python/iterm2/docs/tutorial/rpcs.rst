@@ -46,17 +46,18 @@ function as an RPC. Here's how you call it:
         await clear_all_sessions.async_register(connection)
 
 This exploits a quirk of Python that functions are capable of having values
-attached to them in this odd way.
+attached to them in this way.
 
 Registered RPCs like this one exist in a single global name space. An RPC is
-identified by the combination of its name ("clear_all_sessions", in thise case)
+identified by the combination of its name (`clear_all_sessions`, in thise case)
 and its arguments' names, ignoring their order. Keep this in mind to avoid
 naming conflicts. Python's reflection features are used to determine the
 function's name and argument names.
 
 Your RPC may need information about the context in which it is run. For
-example, knowing the session_id of the session in which a key was pressed that
-invoked the RPC would allow you to perform actions on that session.
+example, knowing the unique identifier of the session in which a key was
+pressed that invoked the RPC would allow you to perform actions on that
+session.
 
 Your RPC may take a special kind of default parameter value that gets filled in
 with the value of a variable at the time of invocation. Suppose you want to get
@@ -72,7 +73,7 @@ the session ID in which an RPC was invoked. You could register it this way:
                 await session.async_inject(code)
         await clear_session.async_register(connection)
 
-The function invocation will not be made if the reference cannot be resolved.
+The function invocation will not be made if the variable is undefined.
 If you'd prefer a value of `None` instead in such a case, use a question mark
 to indicate an optional value, like this: `Reference("id?")`.
 
@@ -102,10 +103,10 @@ watch for requests for a set period of time, like this:
 
     await app.connection.async_dispatch_for_duration(1)
 
-The argument of `1` is how long to wait. Requests to execute registered
-functions wait in a queue until they can be handled. That means you can press a
-key in iTerm2 to call the RPC and then do `async_dispatch_for_duration(0.1)` and
-it will be handled immediately.
+The argument of `1` is how long to wait in seconds. Requests to execute
+registered functions wait in a queue until they can be handled. That means you
+can press a key in iTerm2 to call the RPC and then do
+`async_dispatch_for_duration(0.1)` and it will be handled immediately.
 
 Arguments
 ---------
@@ -121,7 +122,7 @@ Here's what a function invocation might look like:
 
 .. code-block:: python
 
-    function_name(session: session.id, favorite_number: 123, nickname: "Joe")
+    function_name(session: id, favorite_number: 123, nickname: "Joe")
 
 The name of the function and the name of each argument is an *Identifier*.
 Identifiers begin with a letter and may contain letters, numbers, and
@@ -129,17 +130,19 @@ underscore. Every character must be ASCII.
 
 Each argument must have a distinct name.
 
-The value passed to an argument can take one of three types:
+The value passed to an argument can take one of four types:
 
-1. A *path*, like `session.id`.
+1. A *variable reference*, like `id`.
 
-Paths refer to variables. Variables are attached to a session. Some are defined
-by iTerm2 (like `session.id`) and others, beginning with `user.` are defined by
-the user.
+A variable is a named piece of data attached to a session, tab, window, or the
+iTerm2 application itself. Some are defined by iTerm2, like `id`, which
+takes a string value that uniquely identifies a session. Others, beginning with
+`user.` may be defined by the user.
 
-For a full list of the iTerm2-defined paths, see `Badges <https://www.iterm2.com/documentation-badges.html>`_.
+For a full list of the iTerm2-defined variables, see
+`Badges <https://www.iterm2.com/documentation-badges.html>`_.
 
-To set a user-defined variable, you can use an escape sequence or call
+To set a user-defined variable, you can use a control sequence or call
 :meth:`iterm2.Session.async_set_variable`. Variables can take any type JSON can
 describe.
 
@@ -160,6 +163,10 @@ can use scientific notation.
 
 Strings are escaped like JSON, using backslash.
 
+4. The result of a function call.
+
+For more details, see Composition_.
+
 Timeouts
 --------
 
@@ -168,12 +175,15 @@ The function continues to run until completion. You can pass an optional
 `timeout` parameter to `async_register` to set your own timeout value in
 seconds.
 
+.. _Composition:
+
 Composition
 -----------
 
-Functions may be composed. A registered function can return a value which the
-becomes an argument to a subsequent function call. Here's a snippet of an
-example, which you can add to the `main` function of the previous example:
+Function invocations may use composition. A registered function can return a
+value which the becomes an argument to a subsequent function call. Here's a
+snippet of an example, which you can add to the `main` function of the previous
+example:
 
 .. code-block:: python
 

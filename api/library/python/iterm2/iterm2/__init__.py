@@ -15,7 +15,7 @@ from iterm2.connection import Connection, run_until_complete, run_forever
 
 from iterm2.customcontrol import CustomControlSequenceMonitor
 
-from iterm2.focus import FocusMonitor,  FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
+from iterm2.focus import FocusMonitor, FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
 
 from iterm2.lifecycle import SessionTerminationMonitor, LayoutChangeMonitor, NewSessionMonitor
 

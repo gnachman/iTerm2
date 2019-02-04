@@ -1,12 +1,13 @@
 Running a Script
 ================
 
-There are four ways to run a script:
+There are many ways to run a script:
 
 1. From the Scripts menu.
 2. At the command line.
 3. Auto-run scripts launched when iTerm2 starts.
 4. With an interactive interpreter called a REPL.
+5. From the Open Quickly window.
 
 Scripts Menu
 ------------
@@ -25,29 +26,35 @@ Command Line
 ------------
 
 Your machine probably has `many instances of Python <https://xkcd.com/1987/>`_
-installed in different places. It's important to run your script with the right
-Python so that it can find the packages the script depends on (such as the
-`iterm2` package).
+installed in different places. Each installation of Python may have different
+modules installed. Python determines the path to its modules by examining the
+location of the `python3` executable. For this reason, it's important to use
+the right `python3` so that your script's dependencies (such as the `iterm2`
+module) can be satisfied.
 
 The standard iTerm2 Python installation is at
-`~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/iterm2env/versions/*/bin/python3`.
 This is the so-called "Basic" environment.
 
 If you create a script with the "Full Environment" its instance of Python
 will be in
-`~/Library/ApplicationSupport/iTerm2/Scripts/YourScript/iterm2env/versions/3.7.0/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/Scripts/YourScript/iterm2env/versions/*/bin/python3`.
 
 Internally, iTerm2 runs a basic script by invoking:
 
 .. code-block:: python
 
-    ~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3 YourScript.py
+    ~/Library/ApplicationSupport/iTerm2/iterm2env/versions/*/bin/python3 YourScript.py
 
 
 Scripts are stored in `$HOME/Library/ApplicationSupport/iTerm2/Scripts`.
 
 Make sure you don't have a `PYTHONPATH` environment variable set when you run
 your script.
+
+If you prefer to use Python as installed by Homebrew, you can install modules
+yourself using the Homebrew-installed `pip3`, which should be in your path. At
+a minimum, install the `iterm2` module.
 
 .. note::
 
@@ -72,7 +79,7 @@ Python interpreter.
 The REPL uses the `apython` script provided by aioconsole_ which extends Python
 so that you can use `await` without having to put it inside an `async`
 function. In other words, you don't need to write
-`iterm2.run(main)` to launch a `main` function when in
+`iterm2.run_until_complete(main)` to launch a `main` function when in
 the REPL. Instead, a typical REPL session would begin with:
 
 .. code-block:: python
@@ -86,6 +93,13 @@ remember this. You can just copy-paste it into the interpreter. Once you've got
 an `app` the rest is easy :).
 
 .. _aioconsole: https://github.com/vxgmichel/aioconsole
+
+Open Quickly
+------------
+
+Enter the name of your script in the Open Quickly window to launch it.
+
+.. image:: open_quickly.png
 
 Continue to the next section, :doc:`daemons`.
 

@@ -13,38 +13,60 @@ Begin by reading about RPCs as described in :doc:`rpcs`. Hooks are similar, but 
 Session Title Provider
 ----------------------
 
-A session title provider is an RPC that accepts information about the current session as input and returns a string to be shown in the tab bar or window title.
+A session title provider is an RPC that accepts information about the current
+session as input and returns a string to be shown in the tab bar or window
+title.
 
-Here's a minimal example that takes the "auto name" of the session and converts it to upper case. The auto name is the "normal" session name. It defaults to the profile name and can be changed by the control sequence that sets the title, by a trigger that sets the title, or by the user editing the session name in the *Edit Session* window. In other words, this simply causes the title to be the upper-case version of the session name.
+Here's a minimal example that takes the "auto name" of the session and converts
+it to upper case. The auto name is the "normal" session name. It defaults to
+the profile name and can be changed by the control sequence that sets the
+title, by a trigger that sets the title, or by the user editing the session
+name in the *Edit Session* window.
+to be the upper-case version of the session name.
 
 .. code-block:: python
 
-    @iterm2.TitleProviderRPC
-    async def upper_case_title(auto_name=iterm2.Reference("autoName?")):
-        if not auto_name:
-            return ""
-        return auto_name.upper()
+    #!/usr/bin/env python3.7
 
-    # Remember to call async_register!
-    await upper_case_title.async_register(connection, "Upper-case Title", "com.iterm2.example.upper-case-title")
+    import iterm2
 
-The `async_register` call takes a second argument which is the display name of the title provider and a third argument that gives the title provider a unique ID. When this script is running and the user navigates to **Prefs > Profiles > General** and opens the **Title** menu, your title provider will appear there with this name.
+    async def main(connection):
+        @iterm2.TitleProviderRPC
+        async def upper_case_title(auto_name=iterm2.Reference("autoName?")):
+            if not auto_name:
+                return ""
+            return auto_name.upper()
 
-When does the RPC get run? It is always run once when it gets attached to a session. Thereafter, it is run when any variable with an `iterm2.Reference` as a default value of an argument of your RPC changes.
+        await upper_case_title.async_register(
+            connection,
+            display_name="Upper-case Title",
+            unique_identifier="com.iterm2.example.upper-case-title")
+
+    iterm2.run_forever(main)
+
+The `display_name` is shown to the user in Profile Preferences.
+
+The `unique_identifier` is a string that identifies this title provider. The
+algorithm and function signature and function name may change over time, but as
+long as the unique identifier remains the user will not need to update their
+preferences.
+
+When this script is running and the user navigates to **Prefs > Profiles >
+General** and opens the **Title** menu, your title provider will appear there
+with this name.
+
+When does the RPC get run? It is always run once when it gets attached to a
+session. Thereafter, it is run when any variable with an `iterm2.Reference` as
+a default value of an argument of your RPC changes.
 
 If some variable might not be defined, you should put a `?` after its name to signify that a
-null value is allowed. The function will be called with `None` for such
-undefined variables. Variables are detailed in
+value of `None` is allowed. Variables are detailed in
 `Badges <https://www.iterm2.com/documentation-badges.html>`_.
 
 Force Reevaluation
 ------------------
 
 If you want to change the title in response to some external action, such as a timer, network request, or user action, you must cause a user-defined variable to change. Here is a full working example that sets the session title to its age in seconds:
-
-import asyncio
-import iterm2
-import traceback
 
 .. code-block:: python
 
@@ -62,7 +84,8 @@ import traceback
                 while True:
                     await asyncio.sleep(1)
                     # When the session ends, this will raise an exception.
-                    await session.async_set_variable("user.session_age_in_seconds", age)
+                    await session.async_set_variable(
+                        "user.session_age_in_seconds", age)
                     age += 1
            except Exception as e:
                traceback.print_exc()
@@ -78,7 +101,10 @@ import traceback
                 tasks[session_id] = asyncio.create_task(wake_coro)
             return str(age)
 
-        await age_in_seconds_title.async_register(connection, "Age in Seconds", "com.iterm2.example.age-in-seconds")
+        await age_in_seconds_title.async_register(
+            connection,
+            display_name="Age in Seconds",
+            unique_identifier="com.iterm2.example.age-in-seconds")
 
     iterm2.run_forever(main)
 

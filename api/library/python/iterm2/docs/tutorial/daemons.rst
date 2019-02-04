@@ -5,12 +5,14 @@ A daemon in the Unix tradition is a computer program that runs as a background
 process, rather than being under the direct control of an interactive user.
 
 An iTerm2 daemon would ordinarily be an AutoLaunch script that provides some
-service, such as listening for notifications and reacting to them. Autolaunch
-scripts should be placed in `~/Library/Application Support/iTerm2/Scripts/AutoLaunch`.
+ongoing service. For example, it might enable you to create a window when a
+special string is printed. Such a script lies dormant until it is needed, so it
+must run at all times.
 
-AutoLaunch scripts are launched at startup. When you create a new one it does
-not get launched until iTerm2 is restarted, but you can always run it by
-selecting it from the **Scripts** menu.
+AutoLaunch scripts are launched at startup.  Autolaunch scripts should be placed in
+`~/Library/Application Support/iTerm2/Scripts/AutoLaunch`. When you create a
+new one it does not get launched until iTerm2 is restarted, but you can always
+run it by selecting it from the **Scripts** menu.
 
 When you create a new script and choose to make it a "Long-Running Daemon" (as
 opposed to a "Simple" script), iTerm2 will provide a sample program to help you
@@ -47,8 +49,8 @@ created and when the context ends.
 
 This particular context manager registers a hook for custom control sequences.
 Terminal emulators work by processing out-of-band messages called control
-sequences to perform actions such as to move the cursor, clear the screen, or
-change the current text color. Custom control sequences allow you to define your
+sequences to perform actions such as moving the cursor, clearing the screen, or
+changing the current text color. Custom control sequences allow you to define your
 own actions to perform when a control sequence you define is received.
 
 When you use a context manager this way the flow of control enters the body of
@@ -111,14 +113,16 @@ its body has a `while True` infinite loop. Here's how you do that:
 As you browse the documentation you will find many different context managers
 that allow you to perform actions when something hapens. For example:
 
-* :class:`iterm2.focus.FocusMonitor`
-* :class:`iterm2.keyboard.KeystrokeMonitor`
-* :class:`iterm2.lifecycle.LayoutChangeMonitor`
-* :class:`iterm2.lifecycle.NewSessionMonitor`
-* :class:`iterm2.prompt.PromptMonitor`
-* :class:`iterm2.screen.ScreenStreamer`
-* :class:`iterm2.lifecycle.SessionTerminationMonitor`
-* :class:`iterm2.variables.VariableMonitor`
+* :class:`iterm2.FocusMonitor`
+* :class:`iterm2.KeystrokeFilter`
+* :class:`iterm2.KeystrokeMonitor`
+* :class:`iterm2.LayoutChangeMonitor`
+* :class:`iterm2.NewSessionMonitor`
+* :class:`iterm2.PromptMonitor`
+* :class:`iterm2.ScreenStreamer`
+* :class:`iterm2.SessionTerminationMonitor`
+* :class:`iterm2.Transaction`
+* :class:`iterm2.VariableMonitor`
 
 Continue to the next section, :doc:`rpcs`.
 

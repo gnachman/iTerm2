@@ -49,6 +49,7 @@ Shell > Broadcast Input > Broadcast Input to All Panes in Current Tab           
 Shell > Broadcast Input > Toggle Broadcast Input to Current Session                     `Broadcast Input.Toggle Broadcast Input to Current Session`                   
 Shell > Broadcast Input > Show Background Pattern Indicator                             `Broadcast Input.Show Background Pattern Indicator`                           
 Shell > tmux > Detach                                                                   `tmux.Detach`                                                                 
+Shell > tmux > Force Detach                                                             `tmux.Force Detach`                                                           
 Shell > tmux > New Tmux Window                                                          `tmux.New Tmux Window`                                                        
 Shell > tmux > New Tmux Tab                                                             `tmux.New Tmux Tab`                                                           
 Shell > tmux > Dashboard                                                                `tmux.Dashboard`                                                              

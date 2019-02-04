@@ -8,7 +8,7 @@ async def main(connection):
     app = await iterm2.async_get_app(connection)
     window = app.current_terminal_window
     if window is not None:
-        await iterm2.Window.async_create(connection)
+        await window.async_create_tab()
     else:
         # You can view this message in the script console.
         print("No current window")

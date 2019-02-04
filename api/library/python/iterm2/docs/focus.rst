@@ -1,19 +1,19 @@
 Focus
 -----
-.. automodule:: iterm2.focus
-.. autoclass:: FocusMonitor
+
+.. autoclass:: iterm2.FocusMonitor
    :members: async_get_next_update
 
-.. autoclass:: FocusUpdate
+.. autoclass:: iterm2.FocusUpdate
    :members: application_active, window_changed, selected_tab_changed, active_session_changed
 
-.. autoclass:: FocusUpdateActiveSessionChanged
+.. autoclass:: iterm2.FocusUpdateActiveSessionChanged
    :members: session_id
 
-.. autoclass:: FocusUpdateSelectedTabChanged
+.. autoclass:: iterm2.FocusUpdateSelectedTabChanged
    :members: tab_id
 
-.. autoclass:: FocusUpdateWindowChanged
+.. autoclass:: iterm2.FocusUpdateWindowChanged
    :members: window_id, event, TERMINAL_WINDOW_BECAME_KEY, TERMINAL_WINDOW_IS_CURRENT, TERMINAL_WINDOW_RESIGNED_KEY
 
 .. autoclass:: iterm2.FocusUpdateApplicationActive

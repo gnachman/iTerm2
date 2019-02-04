@@ -56,30 +56,14 @@
 
 {%- block document %}
 <div class="row">
-  <div class="small-12 medium-12 large-10 large-centered columns wide-row">
-    <div class="main panel">
+    <div class="small-12 medium-12 large-10 large-centered columns wide-row">
+        <div class="main panel">
 
-      <div class="doc-wrapper">
-	<a href="#" data-dropdown="drop-menu">Table of Contents</a>
-	<div id="drop-menu" data-dropdown-content class="f-dropdown content">
-	  <div class="inner-menu">
-	    <ul class="sub-nav">
-	      <div class="toc_subhead">iTerm2</div>
+            <div class="doc-wrapper">
+                <a href="/documentation">&lt; iTerm2 Documentation</a>
+            </div>
 
-	      <li><a href="/documentation.html">iTerm2 Documentation</a></li>
-
-	      <div class="toc_subhead">Python API</div>
-
-	      <li><a href="/python-api">Python API</a></li>
-	      <li><a href="/python-api/tutorial/index.html">Tutorial</a></li>
-	      <li><a href="/python-api/examples/index.html">Examples</a></li>
-
-	    </ul>
-	  </div>
-	</div>
-      </div>
-
-<hr/>
+            <hr/>
 
       <div class="documentwrapper">
 	{%- if render_sidebar %}
@@ -96,7 +80,7 @@
   </div>
 </div>
 
-<script src="https://iterm2.com/js/scripts.js"></script>                
+<!-- Note: scripts.js not loaded because it breaks anchors, which Sphinx makes a lot of. -->
 <script type="text/javascript">
   function showId(id) {
     document.getElementById("changelist" + id).style.display = 'block';
@@ -111,7 +95,6 @@
   }
   $(document).foundation();
 </script>
-
 {%- endblock %}
 
 
