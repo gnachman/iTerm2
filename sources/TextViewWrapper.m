@@ -64,7 +64,12 @@
     [self setNeedsDisplay:YES];
 }
 
-- (void)drawRect:(NSRect)rect {
+- (void)drawRect:(NSRect)bogusRect {
+    // The passed-in rect tends to be 0x0 but respecting it leaves visible
+    // parts undrawn. Some day macOS 10.0's features will work correctly but
+    // I'm not holding my breath.
+    NSRect rect = self.enclosingScrollView.documentVisibleRect;
+    rect.size.height = 2;
     if (_useMetal) {
         if (@available(macOS 10.14, *)) {
             return;

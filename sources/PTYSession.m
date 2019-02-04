@@ -875,6 +875,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [_wrapper setNeedsDisplay:needsDisplay];
+}
+
 - (void)irAdvance:(int)dir
 {
     if (!_dvr) {

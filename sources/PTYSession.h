@@ -729,6 +729,10 @@ typedef enum {
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;
 
+// This is to work around a macOS bug where setNeedsDisplay: on the root view controller does not
+// cause the TextViewWrapper to be redrawn in its entirety.
+- (void)setNeedsDisplay:(BOOL)needsDisplay;
+
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
 

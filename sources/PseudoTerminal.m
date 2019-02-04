@@ -3928,6 +3928,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     useTransparency_ = !useTransparency_;
     [self updateUseTransparency];
+    [_contentView setNeedsDisplay:YES];
+    for (PTYSession *session in self.currentTab.sessions) {
+        [session setNeedsDisplay:YES];
+    }
     restoreUseTransparency_ = NO;
 }
 
