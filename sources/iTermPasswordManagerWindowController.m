@@ -237,16 +237,24 @@ static BOOL sAuthenticated;
 }
 
 - (IBAction)add:(id)sender {
+    DLog(@"add password button clicked");
     if (sAuthenticated) {
+        DLog(@"Am authenticated");
         NSString *name = [self nameForNewAccount];
-        if ([[self keychain] setPassword:@"" forService:kServiceName account:name]) {
+        NSError *error = nil;
+        if ([[self keychain] setPassword:@"" forService:kServiceName account:name error:&error]) {
+            DLog(@"Was able to set empty password for account name %@", name);
             [self reloadAccounts];
             NSUInteger index = [self indexOfAccountName:name];
             if (index != NSNotFound) {
                 [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
             }
+        } else {
+            DLog(@"Unable to set password: %@", error);
         }
         [self passwordsDidChange];
+    } else {
+        DLog(@"Am not authenticated");
     }
 }
 
@@ -283,7 +291,10 @@ static BOOL sAuthenticated;
             [[alert window] makeFirstResponder:newPassword];
 
             if ([alert runModal] == NSAlertFirstButtonReturn) {
-                [[self keychain] setPassword:newPassword.stringValue forService:kServiceName account:accountName];
+                NSError *error = nil;
+                if (![[self keychain] setPassword:newPassword.stringValue forService:kServiceName account:accountName error:&error]) {
+                    DLog(@"Failed to set password: %@", error);
+                }
                 [self passwordsDidChange];
             }
         }
@@ -347,6 +358,7 @@ static BOOL sAuthenticated;
     if (sAuthenticated) {
         return [SSKeychain class];
     } else {
+        DLog(@"Return nil keychain because not authenticated");
         return nil;
     }
 }
@@ -537,7 +549,10 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
                 password = @"";
             }
             if ([[self keychain] deletePasswordForService:kServiceName account:accountName]) {
-                [[self keychain] setPassword:password forService:kServiceName account:anObject];
+                NSError *error = nil;
+                if (![[self keychain] setPassword:password forService:kServiceName account:anObject error:&error]) {
+                    DLog(@"Failed to set password: %@", error);
+                }
                 [self reloadAccounts];
             }
         }
