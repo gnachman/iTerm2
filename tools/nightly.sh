@@ -61,7 +61,7 @@ SparkleSign nightly_new.xml nightly_new_template.xml
 # Legacy
 SparkleSign nightly.xml nightly_template.xml
 
-cask-repair --cask-version $CASK_VERSION iterm2-nightly
+cask-repair --cask-version $CASK_VERSION iterm2-nightly < /dev/null
 
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
