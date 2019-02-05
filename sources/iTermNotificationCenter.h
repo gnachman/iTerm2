@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermBaseNotification<T> : NSObject<NSSecureCoding>
+@interface iTermBaseNotification : NSObject
 - (nullable instancetype)init NS_UNAVAILABLE;
 - (void)post;
 @end

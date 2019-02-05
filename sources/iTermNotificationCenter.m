@@ -8,6 +8,7 @@
 #import "iTermNotificationCenter.h"
 
 #import "DebugLogging.h"
+#import "NSNull+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static NSString *const iTermInternalNotification = @"iTermInternalNotification";
@@ -44,38 +45,8 @@ static const char iTermNotificationTokenAssociatedObject;
 
 @implementation iTermBaseNotification
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initPrivate];
-}
-
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-}
-
 - (instancetype)initPrivate {
     return [super init];
-}
-
-+ (id)decodedUserInfo:(NSDictionary *)userInfo {
-    NSString *class = userInfo[@"class"];
-    Class theClass = NSClassFromString(class);
-    if (!theClass) {
-        return nil;
-    }
-    NSData *data = userInfo[@"data"];
-    @try {
-        NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingWithData:data];
-        return [[theClass alloc] initWithCoder:decoder];
-    } 
-    @catch (NSException *exception) {
-        NSLog(@"Failed to decode notification of class %@", class);
-        DLog(@"Failed to decode notification of class %@", class);
-    }
-    return nil;
-}
-
-+ (NSDictionary *)encodedUserInfoWithData:(NSData *)data {
-    return @{ @"class": NSStringFromClass(self),
-              @"data": data };
 }
 
 + (void)internalSubscribe:(NSObject *)owner withBlock:(void (^)(id notification))block {
@@ -91,11 +62,11 @@ static const char iTermNotificationTokenAssociatedObject;
                                                                      if (handling) {
                                                                          return;
                                                                      }
-                                                                     id decoded = [self decodedUserInfo:notification.userInfo];
-                                                                     assert(decoded);
+                                                                     id object = notification.userInfo[@"object"];
+                                                                     assert(object);
 
                                                                      handling = YES;
-                                                                     block(decoded);
+                                                                     block(object);
                                                                      handling = NO;
                                                                  }
                                                              }];
@@ -104,23 +75,9 @@ static const char iTermNotificationTokenAssociatedObject;
 }
 
 - (void)post {
-    if (![self conformsToProtocol:@protocol(NSCoding)]) {
-        assert(NO);
-    }
-
-    id<NSCoding> codingObject = (id<NSCoding>)self;
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
-    coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
-    [codingObject encodeWithCoder:coder];
-    [coder finishEncoding];
-
-    NSDictionary *dict = [self.class encodedUserInfoWithData:data];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermInternalNotification object:[self class] userInfo:dict];
-}
-
-+ (BOOL)supportsSecureCoding {
-    return YES;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermInternalNotification
+                                                        object:[self class]
+                                                      userInfo:@{ @"object": self }];
 }
 
 @end
@@ -131,20 +88,6 @@ static const char iTermNotificationTokenAssociatedObject;
 @end
 
 @implementation iTermPreferenceDidChangeNotification
-
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
-    self = [super initPrivate];
-    if (self) {
-        self.key = [aDecoder decodeObjectForKey:@"key"];
-        self.value = [aDecoder decodeObjectForKey:@"value"];
-    }
-    return self;
-}
-
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.key forKey:@"key"];
-    [aCoder encodeObject:self.value forKey:@"value"];
-}
 
 + (instancetype)notificationWithKey:(NSString *)key value:(id)value {
     iTermPreferenceDidChangeNotification *notif = [[self alloc] initPrivate];
