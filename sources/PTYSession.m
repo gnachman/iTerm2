@@ -7639,11 +7639,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSString *)valueForLanguageEnvironmentVariable {
-    DLog(@"Looking for a locale...");
-    const NSInteger numberOfLanguagesToConsider = 1;
-    DLog(@"Consider %@ of languages: %@", @(numberOfLanguagesToConsider), [NSLocale preferredLanguages]);
-    NSArray<NSString *> *languageCodes = [[[NSLocale preferredLanguages] subarrayToIndex:numberOfLanguagesToConsider] mapWithBlock:^id(NSString *language) {
+- (NSArray<NSString *> *)preferredLanguageCodesByRemovingCountry {
+    return [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *language) {
         DLog(@"Found preferred language: %@", language);
         NSUInteger index = [language rangeOfString:@"-" options:0].location;
         if (index == NSNotFound) {
@@ -7652,7 +7649,23 @@ ITERM_WEAKLY_REFERENCEABLE
             return [language substringToIndex:index];
         }
     }];
-    DLog(@"Preferred languages are: %@", languageCodes);
+}
+
+- (NSArray<NSString *> *)languageCodesUpToAndIncludingFirstTwoLetterCode:(NSArray<NSString *> *)allCodes {
+    NSInteger lastIndexToInclude = [allCodes indexOfObjectPassingTest:^BOOL(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.length <= 2;
+    }];
+    if (lastIndexToInclude == NSNotFound) {
+        return allCodes;
+    }
+    return [allCodes subarrayToIndex:lastIndexToInclude + 1];
+}
+
+- (NSString *)valueForLanguageEnvironmentVariable {
+    DLog(@"Looking for a locale...");
+    DLog(@"Preferred languages are: %@", [NSLocale preferredLanguages]);
+    NSArray<NSString *> *languageCodes = [self languageCodesUpToAndIncludingFirstTwoLetterCode:[self preferredLanguageCodesByRemovingCountry]];
+    DLog(@"Considering these languages: %@", languageCodes);
 
     NSString *const countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
     NSArray<NSString *> *languagePlusCountryCodes = @[];
