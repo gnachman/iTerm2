@@ -431,16 +431,24 @@
             DLog(@"Not selected");
             // Non-selected cell when any cell has a tab color
             CGFloat prominence = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredUnselectedTabTextProminence] doubleValue];
-            CGFloat delta = prominence ?: 0.1;
-            DLog(@"prominence=%@ delta=%@", @(prominence), @(delta));
-            if (cellBrightness > 0.5) {
-                DLog(@"Is light. use 0.5-delta");
-                // Light tab
-                return [NSColor colorWithWhite:0.5 - delta alpha:1];
+            if (@available(macOS 10.14, *)) {
+                if (cellBrightness > 0.5) {
+                    // Light tab
+                    return [NSColor colorWithWhite:0 alpha:prominence];
+                } else {
+                    // Dark tab
+                    return [NSColor colorWithWhite:1 alpha:prominence];
+                }
             } else {
-                DLog(@"Is dark. Use 0.5+delta");
-                // Dark tab
-                return [NSColor colorWithWhite:0.5 + delta alpha:1];
+                // 10.13 and earlier. Don't count on it blending competently.
+                CGFloat delta = prominence ?: 0.1;
+                if (cellBrightness > 0.5) {
+                    // Light tab
+                    return [NSColor colorWithWhite:cellBrightness - delta alpha:1];
+                } else {
+                    // Dark tab
+                    return [NSColor colorWithWhite:cellBrightness + delta alpha:1];
+                }
             }
         }
     } else {
