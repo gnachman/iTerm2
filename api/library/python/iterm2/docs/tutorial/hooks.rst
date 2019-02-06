@@ -44,6 +44,8 @@ to be the upper-case version of the session name.
 
     iterm2.run_forever(main)
 
+:Download:`Download<tutorial_title.its>`
+
 The `display_name` is shown to the user in Profile Preferences.
 
 The `unique_identifier` is a string that identifies this title provider. The
@@ -107,6 +109,8 @@ If you want to change the title in response to some external action, such as a t
             unique_identifier="com.iterm2.example.age-in-seconds")
 
     iterm2.run_forever(main)
+
+:Download:`Download<tutorial_age.its>`
 
 Installation
 ------------

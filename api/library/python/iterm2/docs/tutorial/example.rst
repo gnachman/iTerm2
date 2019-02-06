@@ -19,6 +19,8 @@ Here's the example script that iTerm2 provides for you, minus some comments:
 
     iterm2.run_until_complete(main)
 
+:Download:`Download<tutorial_example.its>`
+
 There's a lot going on here. Let's take it part by part.
 
 .. code-block:: python
