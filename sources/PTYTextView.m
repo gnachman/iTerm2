@@ -6583,7 +6583,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
-    NSLog(@"SEelction changed to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
