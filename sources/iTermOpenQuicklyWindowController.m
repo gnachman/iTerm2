@@ -294,6 +294,9 @@
 }
 
 - (void)updateTextColorForAllRows {
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
     NSInteger row = [_table selectedRow];
     // Fix up text color for all items
     for (int i = 0; i < _model.items.count; i++) {
