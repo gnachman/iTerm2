@@ -126,5 +126,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)setWindowTitleIcon:(NSImage *)icon;
 - (iTermTabBarControlView *)borrowTabBarControl NS_AVAILABLE_MAC(10_14);
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl NS_AVAILABLE_MAC(10_14);
+- (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
 
 @end

@@ -164,7 +164,6 @@ typedef struct {
 
         // Create the toolbelt with its current default size.
         _toolbeltWidth = [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
-        [self constrainToolbeltWidth];
 
         self.toolbelt = [[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
                                                         delegate:(id)_delegate];
@@ -571,11 +570,15 @@ typedef struct {
 }
 
 - (void)constrainToolbeltWidth {
+    _toolbeltWidth = [self maximumToolbeltWidthForViewWidth:self.frame.size.width];
+}
+
+- (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth {
     CGFloat minSize = MIN(kMinimumToolbeltSizeInPoints,
-                          self.frame.size.width * kMinimumToolbeltSizeAsFractionOfWindow);
-    _toolbeltWidth = MAX(MIN(_toolbeltWidth,
-                             self.frame.size.width * kMaximumToolbeltSizeAsFractionOfWindow),
-                         minSize);
+                          viewWidth * kMinimumToolbeltSizeAsFractionOfWindow);
+    return MAX(MIN(_toolbeltWidth,
+                   viewWidth * kMaximumToolbeltSizeAsFractionOfWindow),
+               minSize);
 }
 
 - (NSRect)toolbeltFrame {
@@ -600,9 +603,6 @@ typedef struct {
     }
     _shouldShowToolbelt = shouldShowToolbelt;
     _toolbelt.hidden = !shouldShowToolbelt;
-    if (shouldShowToolbelt) {
-        [self constrainToolbeltWidth];
-    }
 }
 
 - (void)updateToolbeltFrame {
@@ -961,7 +961,9 @@ typedef struct {
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
-    [self constrainToolbeltWidth];
+    if (_shouldShowToolbelt) {
+        [self constrainToolbeltWidth];
+    }
     _tabViewFrameReduced = NO;
     if (![self tabBarShouldBeVisible]) {
         [self layoutSubviewsWithHiddenTabBarForWindow:thisWindow];
