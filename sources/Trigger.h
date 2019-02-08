@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class iTermStringLine;
+@class iTermVariableScope;
 @class PTYSession;
 
 extern NSString * const kTriggerRegexKey;
@@ -31,8 +32,8 @@ extern NSString * const kTriggerPartialLineKey;
 - (NSString *)action;
 // Subclasses should implement:
 - (NSString *)title;
-- (NSString *)paramPlaceholder;
-- (NSString *)paramDefault;
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;
+- (NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation;
 // Returns true if this kind of action takes a parameter.
 - (BOOL)takesParameter;
 // Returns true if the parameter this action takes is a popupbutton.
@@ -52,15 +53,25 @@ extern NSString * const kTriggerPartialLineKey;
 // (i.e., an element of groupedMenuItemsForPopupButton)
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSString *const *)strings
-                                                  count:(NSInteger)count;
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)strings;
+- (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
+               byAddingBackreferences:(NSArray<NSString *> *)backreferences;
+
+- (void)paramWithBackreferencesReplacedWithValues:(NSString *const *)strings
+                                            count:(NSInteger)count
+                                            scope:(iTermVariableScope *)scope
+                                 useInterpolation:(BOOL)useInterpolation
+                                       completion:(void (^)(NSString *result))completion;
+- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
+                                            scope:(iTermVariableScope *)scope
+                                 useInterpolation:(BOOL)useInterpolation
+                                       completion:(void (^)(NSString *result))completion;
 
 // Returns YES if no more triggers should be processed.
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
-       lineNumber:(long long)lineNumber;
+       lineNumber:(long long)lineNumber
+ useInterpolation:(BOOL)useInterpolation;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
@@ -69,6 +80,7 @@ extern NSString * const kTriggerPartialLineKey;
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)s
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop;
 
 - (NSComparisonResult)compareTitle:(Trigger *)other;

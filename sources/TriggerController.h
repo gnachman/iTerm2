@@ -12,6 +12,7 @@
 
 @protocol TriggerDelegate <NSObject>
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
+- (void)triggerSetUseInterpolatedStrings:(BOOL)useInterpolatedStrings;
 @end
 
 @interface TriggerController : NSWindowController <NSWindowDelegate>

@@ -84,6 +84,7 @@ enum {
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     [NSApp requestUserAttention:[self bounceType]];
     return YES;

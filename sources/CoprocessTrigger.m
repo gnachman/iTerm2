@@ -24,8 +24,7 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter coprocess command to run";
 }
 
@@ -40,26 +39,28 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if ([aSession hasCoprocess]) {
         [self.class showCoprocessAnnouncementInSession:aSession];
     } else {
-        NSString *command = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                      count:captureCount];
-        [self executeCommand:command inSession:aSession];
+        [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                  count:captureCount
+                                                  scope:aSession.variablesScope
+                                       useInterpolation:useInterpolation
+                                             completion:^(NSString *command) {
+                                                 if (command) {
+                                                     [self executeCommand:command inSession:aSession];
+                                                 }
+                                             }];
     }
     return YES;
 }
 
 + (void)showCoprocessAnnouncementInSession:(PTYSession *)aSession {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCoprocessTriggerWarning]) {
-        [aSession retain];
         void (^completion)(int selection) = ^(int selection) {
             switch (selection) {
-                case -2:
-                    [aSession release];
-                    break;
-
                 case 0:
                     [[NSUserDefaults standardUserDefaults] setBool:YES
                                                             forKey:kSuppressCoprocessTriggerWarning];
@@ -91,8 +92,7 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter coprocess command to run";
 }
 
@@ -107,13 +107,20 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if ([aSession hasCoprocess]) {
         [CoprocessTrigger showCoprocessAnnouncementInSession:aSession];
     } else {
-        NSString *command = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                      count:captureCount];
-        [self executeCommand:command inSession:aSession];
+        [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                  count:captureCount
+                                                  scope:aSession.variablesScope
+                                       useInterpolation:useInterpolation
+                                             completion:^(NSString *command) {
+                                                 if (command) {
+                                                     [self executeCommand:command inSession:aSession];
+                                                 }
+                                             }];
     }
     return YES;
 }

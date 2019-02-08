@@ -20,8 +20,7 @@
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter text to send";
 }
 
@@ -32,10 +31,18 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                  count:captureCount];
-    [aSession writeTaskNoBroadcast:message];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *message) {
+                                             if (!message) {
+                                                 return;
+                                             }
+                                             [aSession writeTaskNoBroadcast:message];
+                                         }];
     return YES;
 }
 

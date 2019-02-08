@@ -64,8 +64,7 @@ enum {
     return @"Highlight Text…";
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"";
 }
 
@@ -426,6 +425,7 @@ enum {
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     NSRange rangeInString = capturedRanges[0];
     NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];

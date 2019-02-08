@@ -1577,7 +1577,9 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                   URLCode:(unsigned short)code {
     long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
-    
+    if (lineNumber < 0) {
+        return;
+    }
     VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
     if (gridRun.length > 0) {
         [self linkRun:gridRun withURLCode:code];
@@ -2241,7 +2243,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         screenMark.delegate = self;
         screenMark.sessionGuid = [delegate_ screenSessionGuid];
     }
-    int nonAbsoluteLine = line - [self totalScrollbackOverflow];
+    long long totalOverflow = [self totalScrollbackOverflow];
+    if (line < totalOverflow || line >= totalOverflow + self.numberOfLines) {
+        return nil;
+    }
+    int nonAbsoluteLine = line - totalOverflow;
     VT100GridCoordRange range;
     if (oneLine) {
         range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);

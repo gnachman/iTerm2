@@ -19,8 +19,7 @@
     return @"Show Alert…";
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter text to show in alert";
 }
 
@@ -35,13 +34,26 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if (disabled_) {
         return YES;
     }
-    NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                  count:captureCount];
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *message) {
+                                             [self showAlertWithMessage:message inSession:aSession];
+                                         }];
+    return YES;
+}
+
+- (void)showAlertWithMessage:(NSString *)message inSession:(PTYSession *)aSession {
+    if (!message) {
+        return;
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = message ?: @"";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Show Session"];
@@ -56,16 +68,15 @@
             [aSession.delegate sessionSelectContainingTab];
             [aSession.delegate setActiveSession:aSession];
             break;
+        }
 
         case NSAlertThirdButtonReturn:
             disabled_ = YES;
             break;
-        }
 
         default:
             break;
     }
-    return YES;
 }
 
 @end

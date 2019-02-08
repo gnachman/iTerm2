@@ -209,7 +209,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                          KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
                          KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
                          KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
-                         KEY_POWERLINE
+                         KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                        ];
     NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT ];
     if ([string containsObject:key]) {
@@ -371,6 +371,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TITLE_FUNC: [NSNull null],
                   KEY_SHOW_STATUS_BAR: @NO,
                   KEY_STATUS_BAR_LAYOUT: @{},
+                  KEY_TRIGGERS_USE_INTERPOLATED_STRINGS: @NO
                   // Remember to update valueIsLegal:forKey: and the websocket
                   // README.md when adding a new value that should be
                   // API-settable.

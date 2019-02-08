@@ -216,6 +216,12 @@ NS_ASSUME_NONNULL_BEGIN
     return theCopy;
 }
 
+- (id)unsafeCheapCopy {
+    iTermVariableScope *theCopy = [[self.class alloc] init];
+    theCopy->_frames = [_frames copy];
+    return theCopy;
+}
+
 @end
 
 @implementation iTermVariableRecordingScope {

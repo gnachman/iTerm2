@@ -38,7 +38,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     return YES;
 }
 
-- (NSString *)paramPlaceholder {
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
   return @"Coprocess to run on activation";
 }
 
@@ -64,6 +64,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
@@ -146,10 +147,14 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session {
     if (!session.hasCoprocess) {
-        NSString *command = [self paramWithBackreferencesReplacedWithValues:capturedOutput.values];
-        if (command) {
-            [session launchCoprocessWithCommand:command];
-        }
+        [self paramWithBackreferencesReplacedWithValues:capturedOutput.values
+                                                  scope:session.variablesScope
+                                       useInterpolation:session.triggerParametersUseInterpolatedStrings
+                                             completion:^(NSString *command) {
+                                                 if (command) {
+                                                     [session launchCoprocessWithCommand:command];
+                                                 }
+                                             }];
     } else {
         iTermAnnouncementViewController *announcement =
             [iTermAnnouncementViewController announcementWithTitle:@"Can't run two coprocesses at once."

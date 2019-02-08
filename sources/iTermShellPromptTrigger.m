@@ -25,6 +25,7 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if (captureCount > 0) {
         [aSession triggerDidDetectStartOfPromptAt:VT100GridAbsCoordMake(capturedRanges[0].location, lineNumber)];

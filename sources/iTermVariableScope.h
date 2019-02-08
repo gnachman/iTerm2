@@ -47,6 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addLinksToReference:(iTermVariableReference *)reference;
 - (BOOL)variableNamed:(NSString *)name isReferencedBy:(iTermVariableReference *)reference;
 
+// Don't use this unless you know what you're doing.
+// It does not attempt to resolve dangling references and should not be long-lived.
+- (iTermVariableScope *)unsafeCheapCopy;
+
 @end
 
 // A scope that remembers which variables were referred to.

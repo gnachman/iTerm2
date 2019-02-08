@@ -433,6 +433,7 @@ typedef enum {
 
 @property (nonatomic, readonly) iTermVariables *variables;
 @property (nonatomic, readonly) iTermVariableScope *variablesScope;
+@property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;
 

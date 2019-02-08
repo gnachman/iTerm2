@@ -2817,7 +2817,8 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:partial
-                            lineNumber:startAbsLineNumber];
+                            lineNumber:startAbsLineNumber
+                      useInterpolation:_triggerParametersUseInterpolatedStrings];
         if (stop || _exited || (_triggers != triggers)) {
             break;
         }
@@ -3724,6 +3725,9 @@ ITERM_WEAKLY_REFERENCEABLE
             [_triggers addObject:trigger];
         }
     }
+    _triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
+                                                                         inProfile:aDict];
+
     [_textview setSmartSelectionRules:aDict[KEY_SMART_SELECTION_RULES]];
     [_textview setSemanticHistoryPrefs:aDict[KEY_SEMANTIC_HISTORY]];
     [_textview setUseNonAsciiFont:[iTermProfilePreferences boolForKey:KEY_USE_NONASCII_FONT

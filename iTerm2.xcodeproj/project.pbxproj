@@ -1136,9 +1136,7 @@
 		1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDC09411B4DB9A600B1A910 /* iTermClearView.h */; };
 		1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC09421B4DB9A600B1A910 /* iTermClearView.m */; };
 		1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */; };
-		1DE0C8461BF17397008ACBA9 /* SetHostnameTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */; };
 		1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */; };
-		1DE0C84A1BF17E34008ACBA9 /* SetDirectoryTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */; };
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
 		1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
@@ -1325,6 +1323,17 @@
 		53C5650D21B8CF65002B3167 /* PowerlineLineRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
+		53E9DFE0220D518E0070C9C0 /* AlertTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC15142D7FC10016228A /* AlertTrigger.m */; };
+		53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */; };
+		53E9DFE2220D52730070C9C0 /* PasswordTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DABA03219253FEA00A228D8 /* PasswordTrigger.m */; };
+		53E9DFE3220D52B00070C9C0 /* ScriptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC11142D7F970016228A /* ScriptTrigger.m */; };
+		53E9DFE4220D52EF0070C9C0 /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
+		53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */; };
+		53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */; };
+		53E9DFE7220D53230070C9C0 /* Trigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCBFD142D7BA60016228A /* Trigger.m */; };
+		53E9DFE8220D53980070C9C0 /* iTermHyperlinkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 7581C4DE20A38DF900699F99 /* iTermHyperlinkTrigger.m */; };
+		53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */; };
+		53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC03142D7E570016228A /* iTermUserNotificationTrigger.m */; };
 		53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */; };
 		53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */; };
 		53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
@@ -1351,7 +1360,6 @@
 		53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		7581C4E120A38E0F00699F99 /* iTermHyperlinkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 7581C4DD20A38DF900699F99 /* iTermHyperlinkTrigger.h */; };
-		7581C4E220A38E0F00699F99 /* iTermHyperlinkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 7581C4DE20A38DF900699F99 /* iTermHyperlinkTrigger.m */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		874206530564169600CFC3F1 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */; };
@@ -2001,7 +2009,6 @@
 		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
 		A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A673BFEC1E1A13E600FA2386 /* iTermSetTitleTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */; };
-		A673BFED1E1A13E600FA2386 /* iTermSetTitleTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */; };
 		A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A675271B213DB6E800035F2B /* NSImageView+iTerm.h */; };
 		A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A675271C213DB6E800035F2B /* NSImageView+iTerm.m */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
@@ -2920,19 +2927,12 @@
 		A6C763A81B45C52B00E3C992 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
-		A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC15142D7FC10016228A /* AlertTrigger.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
 		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
 		A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
-		A6C763AF1B45C52B00E3C992 /* CoprocessTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */; };
-		A6C763B01B45C52B00E3C992 /* iTermUserNotificationTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC03142D7E570016228A /* iTermUserNotificationTrigger.m */; };
 		A6C763B11B45C52B00E3C992 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
 		A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D891E42190724DB0053C4BB /* MarkTrigger.m */; };
-		A6C763B31B45C52B00E3C992 /* PasswordTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DABA03219253FEA00A228D8 /* PasswordTrigger.m */; };
-		A6C763B41B45C52B00E3C992 /* ScriptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC11142D7F970016228A /* ScriptTrigger.m */; };
-		A6C763B51B45C52B00E3C992 /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
 		A6C763B61B45C52B00E3C992 /* StopTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468F031B06A79000226083 /* StopTrigger.m */; };
-		A6C763B71B45C52B00E3C992 /* Trigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCBFD142D7BA60016228A /* Trigger.m */; };
 		A6C763B91B45C52B00E3C992 /* iTermTipCardActionButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */; };
 		A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A1D1B308AD000CB272A /* iTermTipCardViewController.m */; };
 		A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72A11B3134FB00F947A7 /* iTermTipController.m */; };
@@ -11750,6 +11750,7 @@
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
+				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
 				A62EED9720DF602F00943DE3 /* iTermCommandRunner.m in Sources */,
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
@@ -11797,6 +11798,7 @@
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,
+				53E9DFE7220D53230070C9C0 /* Trigger.m in Sources */,
 				A63011BA20E83000008114B7 /* iTermStatusBarKnobTextViewController.m in Sources */,
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
@@ -11828,6 +11830,7 @@
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
+				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
 				A6A4866920B6792900493302 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */,
@@ -11863,6 +11866,7 @@
 				5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */,
 				A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */,
 				A65FF3C220F18547008BD0AE /* iTermMiniSearchFieldViewController.m in Sources */,
+				53E9DFE2220D52730070C9C0 /* PasswordTrigger.m in Sources */,
 				5370678721C9D2780088D0F3 /* SIGPartialInputStream.m in Sources */,
 				A6153D6121F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m in Sources */,
 				A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */,
@@ -11881,6 +11885,7 @@
 				A6A4867120B67A6D00493302 /* KeysPreferencesViewController.m in Sources */,
 				A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
+				53E9DFE4220D52EF0070C9C0 /* SendTextTrigger.m in Sources */,
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
@@ -11900,6 +11905,8 @@
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A6180D7121A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.m in Sources */,
+				53E9DFE3220D52B00070C9C0 /* ScriptTrigger.m in Sources */,
+				53E9DFE0220D518E0070C9C0 /* AlertTrigger.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
@@ -11919,6 +11926,7 @@
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
+				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
 				A6C4352421D1C98900346910 /* iTermWebViewWrapperViewController.m in Sources */,
 				A639358C21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m in Sources */,
 				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
@@ -11947,6 +11955,7 @@
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
+				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
 				5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
@@ -12024,8 +12033,10 @@
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
 				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
+				53E9DFE8220D53980070C9C0 /* iTermHyperlinkTrigger.m in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
+				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
 				5365207221433ED2003C58FD /* iTermGitState.m in Sources */,
 				A630118E20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.m in Sources */,
 				A63011C920E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m in Sources */,
@@ -12067,7 +12078,6 @@
 				A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */,
 				A6C762E71B45C52B00E3C992 /* VT100GridTypes.m in Sources */,
 				A6C7634C1B45C52B00E3C992 /* PasteView.m in Sources */,
-				A6C763B51B45C52B00E3C992 /* SendTextTrigger.m in Sources */,
 				A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */,
 				A6FEA2791CF2CBCC00376F28 /* iTermAppHotKeyProvider.m in Sources */,
 				1D0EA5A21CA5DAA2005FCF8B /* PSMLightHighContrastTabStyle.m in Sources */,
@@ -12100,7 +12110,6 @@
 				A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */,
 				A6C763121B45C52B00E3C992 /* iTermImageInfo.m in Sources */,
 				A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */,
-				A6C763B01B45C52B00E3C992 /* iTermUserNotificationTrigger.m in Sources */,
 				A6C762D11B45C52B00E3C992 /* iTermSemanticHistoryController.m in Sources */,
 				5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */,
 				A6CEC10F1DCE8146009F4FD2 /* GPBRootObject.m in Sources */,
@@ -12113,7 +12122,6 @@
 				A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,
-				A673BFED1E1A13E600FA2386 /* iTermSetTitleTrigger.m in Sources */,
 				A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */,
 				A6C763241B45C52B00E3C992 /* MovingAverage.m in Sources */,
 				A6C763601B45C52B00E3C992 /* PopupEntry.m in Sources */,
@@ -12130,7 +12138,6 @@
 				A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */,
 				A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */,
 				A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */,
-				A6C763B71B45C52B00E3C992 /* Trigger.m in Sources */,
 				A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */,
 				A6C762F71B45C52B00E3C992 /* iTermExposeGridView.m in Sources */,
 				A6C762B11B45C52B00E3C992 /* NSData+iTerm.m in Sources */,
@@ -12150,7 +12157,6 @@
 				A6C7631D1B45C52B00E3C992 /* iTermSelectionScrollHelper.m in Sources */,
 				A6FC49881C3A44390061B3BA /* iTermPrintAccessoryViewController.m in Sources */,
 				A62C3B261BCC24AB00B5629D /* iTermCommandHistoryEntryMO.m in Sources */,
-				A6C763AF1B45C52B00E3C992 /* CoprocessTrigger.m in Sources */,
 				A6F3E96F1D60E4F0000E97C4 /* iTermInitialDirectory.m in Sources */,
 				A6C763CA1B45C52B00E3C992 /* VT100Terminal.m in Sources */,
 				A6C763541B45C52B00E3C992 /* iTermOpenQuicklyTableCellView.m in Sources */,
@@ -12172,7 +12178,6 @@
 				A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */,
 				A6C7638D1B45C52B00E3C992 /* ProfileTagsView.m in Sources */,
 				A6C763381B45C52B00E3C992 /* PasteViewController.m in Sources */,
-				7581C4E220A38E0F00699F99 /* iTermHyperlinkTrigger.m in Sources */,
 				A6C763931B45C52B00E3C992 /* iTermFileDescriptorServer.c in Sources */,
 				A6C7638F1B45C52B00E3C992 /* iTermCommandHistoryEntryMO+Additions.m in Sources */,
 				A66E5E531E6268E700E8FE35 /* iTermMutableAttributedStringBuilder.m in Sources */,
@@ -12248,7 +12253,6 @@
 				A6C763291B45C52B00E3C992 /* PTYFontInfo.m in Sources */,
 				A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */,
 				A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */,
-				A6C763B31B45C52B00E3C992 /* PasswordTrigger.m in Sources */,
 				A6C7633D1B45C52B00E3C992 /* FindView.m in Sources */,
 				A6C763891B45C52B00E3C992 /* ProfileModel.m in Sources */,
 				A6C762F31B45C52B00E3C992 /* DVRIndexEntry.m in Sources */,
@@ -12273,7 +12277,6 @@
 				A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */,
 				A6C762FC1B45C52B00E3C992 /* SCPFile.m in Sources */,
 				A67778B51CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m in Sources */,
-				1DE0C8461BF17397008ACBA9 /* SetHostnameTrigger.m in Sources */,
 				A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */,
 				A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */,
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,
@@ -12287,7 +12290,6 @@
 				A6EFF2211D1DD89B00806EEF /* iTermHotKeyMigrationHelper.m in Sources */,
 				A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */,
 				A6C763C01B45C52B00E3C992 /* VT100ControlParser.m in Sources */,
-				A6C763B41B45C52B00E3C992 /* ScriptTrigger.m in Sources */,
 				A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */,
 				A6C7633E1B45C52B00E3C992 /* iTermAboutWindow.m in Sources */,
 				A6FEA2691CF2C83700376F28 /* iTermPreviousState.m in Sources */,
@@ -12366,7 +12368,6 @@
 				A6C7635D1B45C52B00E3C992 /* DirectoriesPopup.m in Sources */,
 				A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */,
 				A6C763021B45C52B00E3C992 /* VT100RemoteHost.m in Sources */,
-				1DE0C84A1BF17E34008ACBA9 /* SetDirectoryTrigger.m in Sources */,
 				A6C763DE1B45C6DD00E3C992 /* PSMRolloverButton.m in Sources */,
 				A6C762EF1B45C52B00E3C992 /* DVR.m in Sources */,
 				A6C763071B45C52B00E3C992 /* CapturedOutput.m in Sources */,
@@ -12396,7 +12397,6 @@
 				A62C3B2C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				A6C7635F1B45C52B00E3C992 /* iTermPopupWindowController.m in Sources */,
 				A62C3A8E1BCAE08300B5629D /* iTermDirectoryTree.m in Sources */,
-				A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */,
 				A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */,
 				A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */,
 				A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */,

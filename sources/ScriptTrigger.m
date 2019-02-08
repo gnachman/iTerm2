@@ -7,6 +7,7 @@
 
 #import "ScriptTrigger.h"
 #import "DebugLogging.h"
+#import "PTYSession.h"
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
 #include <sys/types.h>
@@ -24,8 +25,7 @@
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter command to run";
 }
 
@@ -36,21 +36,29 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSString *command = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                  count:captureCount];
-    [NSThread detachNewThreadSelector:@selector(runCommand:)
-                             toTarget:[self class]
-                           withObject:command];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *command) {
+                                             if (!command) {
+                                                 return;
+                                             }
+                                             [NSThread detachNewThreadSelector:@selector(runCommand:)
+                                                                      toTarget:[self class]
+                                                                    withObject:command];
+                                         }];
     return YES;
 }
 
-+ (void)runCommand:(NSString *)command
-{
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    DLog(@"Invoking command %@", command);
-    system([command UTF8String]);
-    [pool drain];
++ (void)runCommand:(NSString *)command {
+    @autoreleasepool {
+        // TODO: Use a buried single-purpose window or something somehow less terrible.
+        DLog(@"Invoking command %@", command);
+        system([command UTF8String]);
+    }
 }
 
 @end

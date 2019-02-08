@@ -7,6 +7,9 @@
 
 #import "Trigger.h"
 #import "DebugLogging.h"
+#import "iTermSwiftyString.h"
+#import "iTermVariableScope.h"
+#import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -22,12 +25,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
     // line. -1 means it has not fired on the current line.
     long long _lastLineNumber;
     NSString *regex_;
-    NSString *action_;
     id param_;
+    iTermSwiftyString *_cachedSwiftyString;
 }
 
 @synthesize regex = regex_;
-@synthesize action = action_;
 @synthesize param = param_;
 
 + (Trigger *)triggerFromDict:(NSDictionary *)dict
@@ -39,7 +41,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
         className = @"GrowlTrigger";
     }
     Class class = NSClassFromString(className);
-    Trigger *trigger = [[[class alloc] init] autorelease];
+    Trigger *trigger = [[class alloc] init];
     trigger.regex = dict[kTriggerRegexKey];
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
@@ -58,9 +60,13 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
                NSStringFromClass(self.class), self, self.regex, self.param];
 }
-- (NSString *)action
-{
+
+- (NSString *)action {
     return NSStringFromClass([self class]);
+}
+
+- (void)setAction:(NSString *)action {
+    assert(false);
 }
 
 - (NSString *)title
@@ -68,13 +74,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
     assert(false);
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     assert(false);
 }
 
-- (NSString *)paramDefault
-{
+- (NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation {
     return nil;
 }
 
@@ -110,21 +114,13 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return nil;
 }
 
-- (void)dealloc {
-    [regex_ release];
-    [action_ release];
-    [param_ release];
-    [_backgroundColor release];
-    [_textColor release];
-    [super dealloc];
-}
-
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     assert(false);
     return NO;
@@ -133,7 +129,8 @@ NSString * const kTriggerPartialLineKey = @"partial";
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
-       lineNumber:(long long)lineNumber {
+       lineNumber:(long long)lineNumber
+ useInterpolation:(BOOL)useInterpolation {
     if (_partialLine && _lastLineNumber == lineNumber) {
         // Already fired a on a partial line on this line.
         if (!partialLine) {
@@ -150,10 +147,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
     NSString *s = stringLine.stringValue;
     [s enumerateStringsMatchedByRegex:regex_
                            usingBlock:^(NSInteger captureCount,
-                                        NSString *const *capturedStrings,
+                                        NSString *const __unsafe_unretained *capturedStrings,
                                         const NSRange *capturedRanges,
                                         volatile BOOL *const stopEnumerating) {
-                               _lastLineNumber = lineNumber;
+                               self->_lastLineNumber = lineNumber;
                                DLog(@"Trigger %@ matched string %@", self, s);
                                if (![self performActionWithCapturedStrings:capturedStrings
                                                             capturedRanges:capturedRanges
@@ -161,6 +158,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
                                                                  inSession:aSession
                                                                   onString:stringLine
                                                       atAbsoluteLineNumber:lineNumber
+                                                          useInterpolation:useInterpolation
                                                                       stop:&stopFutureTriggersFromRunningOnThisLine]) {
                                    *stopEnumerating = YES;
                                }
@@ -171,17 +169,34 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)strings {
+- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
+                                            scope:(iTermVariableScope *)scope
+                                 useInterpolation:(BOOL)useInterpolation
+                                       completion:(void (^)(NSString *))completion {
     NSString *temp[10];
     int i;
     for (i = 0; i < strings.count; i++) {
         temp[i] = strings[i];
     }
-    return [self paramWithBackreferencesReplacedWithValues:temp count:i];
+    [self paramWithBackreferencesReplacedWithValues:temp
+                                              count:i
+                                              scope:scope
+                                   useInterpolation:useInterpolation
+                                         completion:completion];
 }
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
-                                                  count:(NSInteger)count {
+- (void)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
+                                            count:(NSInteger)count
+                                            scope:(iTermVariableScope *)scope
+                                 useInterpolation:(BOOL)useInterpolation
+                                       completion:(void (^)(NSString *))completion {
+    if (useInterpolation) {
+        [self evaluateSwiftyStringParameter:self.param
+                             backreferences:[[NSArray alloc] initWithObjects:strings count:count]
+                                      scope:scope
+                                 completion:completion];
+        return;
+    }
     NSString *p = self.param;
 
     for (int i = 0; i < 9; i++) {
@@ -199,7 +214,42 @@ NSString * const kTriggerPartialLineKey = @"partial";
     p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
     p = [p stringByReplacingEscapedChar:'\\' withString:@"\\"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
-    return p;
+    completion(p);
+}
+
+- (iTermVariableScope *)variableScope:(iTermVariableScope *)scope byAddingBackreferences:(NSArray<NSString *> *)backreferences {
+    iTermVariables *matchesFrame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
+    iTermVariableScope *myScope = [scope copy];
+    [myScope addVariables:matchesFrame toScopeNamed:nil];
+    [backreferences enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [myScope setValue:obj forVariableNamed:[NSString stringWithFormat:@"match%@", @(idx)]];
+    }];
+    return myScope;
+}
+
+- (void)evaluateSwiftyStringParameter:(NSString *)expression
+                       backreferences:(NSArray<NSString *> *)backreferences
+                                scope:(iTermVariableScope *)scope
+                           completion:(void (^)(NSString *))completion {
+    iTermVariableScope *myScope = [self variableScope:scope byAddingBackreferences:backreferences];;
+    if (![_cachedSwiftyString.swiftyString isEqualToString:expression]) {
+        _cachedSwiftyString = [[iTermSwiftyString alloc] initWithString:expression scope:myScope observer:nil];
+    }
+
+    [_cachedSwiftyString evaluateSynchronously:NO withScope:myScope completion:^(NSString * _Nonnull value, NSError * _Nonnull error, NSSet<NSString *> * _Nonnull missing) {
+        if (error) {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
+                                                [[self class] title], self->_cachedSwiftyString.swiftyString, error.localizedDescription]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncErrorInTriggerParameter"
+                                   silenceable:kiTermWarningTypeTemporarilySilenceable
+                                       heading:@"Error in Trigger Parameter"
+                                        window:nil];
+            completion(nil);
+        }
+        completion(value);
+    }];
 }
 
 - (NSComparisonResult)compareTitle:(Trigger *)other

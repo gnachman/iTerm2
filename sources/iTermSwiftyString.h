@@ -33,9 +33,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
-                      observer:(void (^)(NSString *newValue))observer NS_DESIGNATED_INITIALIZER;
+                      observer:(void (^ _Nullable)(NSString *newValue))observer NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (void)invalidate;
+- (void)evaluateSynchronously:(BOOL)synchronously
+                    withScope:(iTermVariableScope *)scope
+                   completion:(void (^)(NSString *result, NSError *error, NSSet<NSString *> *missing))completion;
 
 @end
 
@@ -46,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithString:(NSString *)swiftyString NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
-                      observer:(void (^)(NSString *newValue))observer NS_UNAVAILABLE;
+                      observer:(void (^ _Nullable)(NSString *newValue))observer NS_UNAVAILABLE;
 
 @end
 

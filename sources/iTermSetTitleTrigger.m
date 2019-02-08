@@ -18,8 +18,7 @@
     return @"Set Title…";
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter new title";
 }
 
@@ -34,10 +33,17 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSString *newName = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                  count:captureCount];
-    [aSession triggerDidChangeNameTo:newName];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *newName) {
+                                             if (newName) {
+                                                 [aSession triggerDidChangeNameTo:newName];
+                                             }
+                                         }];
     return YES;
 }
 

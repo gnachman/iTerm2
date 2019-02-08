@@ -9,6 +9,7 @@
 #import "PasswordTrigger.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPasswordManagerWindowController.h"
+#import "PTYSession.h"
 
 @interface PasswordTrigger ()
 @property(nonatomic, copy) NSArray *accountNames;
@@ -28,20 +29,14 @@
     return self;
 }
 
-- (void)dealloc {
-    [_accountNames release];
-    [super dealloc];
-}
-
 - (void)reloadData {
-    [_accountNames release];
     _accountNames = [[iTermPasswordManagerWindowController accountNamesWithFilter:nil] copy];
     if (!_accountNames.count) {
         _accountNames = [@[ @"" ] copy];
     }
 }
 
-- (NSString *)paramPlaceholder {
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
   return @"";
 }
 
@@ -88,11 +83,19 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
-    [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                                         count:captureCount]
-                                     inSession:aSession];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *accountName) {
+                                             if (accountName) {
+                                                 iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+                                                 [itad openPasswordManagerToAccountName:accountName
+                                                                                  inSession:aSession];
+                                             }
+                                         }];
     return YES;
 }
 

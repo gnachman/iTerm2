@@ -231,6 +231,7 @@
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
+#define KEY_TRIGGERS_USE_INTERPOLATED_STRINGS @"Triggers Use Interpolated Strings"
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"

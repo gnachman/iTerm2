@@ -20,6 +20,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermNoColorAccessoryButton.h"
+#import "iTermProfilePreferences.h"
 #import "iTermRPCTrigger.h"
 #import "iTermShellPromptTrigger.h"
 #import "MarkTrigger.h"
@@ -85,6 +86,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
     IBOutlet NSButton *_removeTriggerButton;
+    IBOutlet NSButton *_interpolatedStringParameters;
 }
 
 - (instancetype)init {
@@ -235,25 +237,10 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
               kTriggerActionKey: [trigger action] };
 }
 
-- (IBAction)addTrigger:(id)sender {
-    [self setTriggerDictionary:[self defaultTriggerDictionary] forRow:-1 reloadData:YES];
-    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:_tableView.numberOfRows - 1]
-            byExtendingSelection:NO];
-}
-
-- (IBAction)removeTrigger:(id)sender {
-    if (_tableView.selectedRow < 0) {
-        XLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
-        return;
-    }
-    [self setTriggerDictionary:nil forRow:[_tableView selectedRow] reloadData:YES];
-    self.hasSelection = [_tableView numberOfSelectedRows] > 0;
-    _removeTriggerButton.enabled = self.hasSelection;
-}
-
 - (void)setGuid:(NSString *)guid {
     _guid = [guid copy];
     [_tableView reloadData];
+    _interpolatedStringParameters.state = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]] ? NSOnState : NSOffState;
 }
 
 - (NSTextField *)labelWithString:(NSString *)string origin:(NSPoint)origin {
@@ -510,7 +497,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 _parameterDelegate = [trigger newParameterDelegateWithPassthrough:self];
                 textField.delegate = _parameterDelegate ?: self;
                 if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
-                    textField.placeholderString = [trigger paramPlaceholder];
+                    textField.placeholderString = [trigger triggerOptionalParameterPlaceholderWithInterpolation:_interpolatedStringParameters.state == NSOnState];
                 }
                 textField.identifier = kParameterColumnIdentifier;
 
@@ -539,6 +526,28 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 }
 
 #pragma mark - Actions
+
+- (IBAction)addTrigger:(id)sender {
+    [self setTriggerDictionary:[self defaultTriggerDictionary] forRow:-1 reloadData:YES];
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:_tableView.numberOfRows - 1]
+            byExtendingSelection:NO];
+}
+
+- (IBAction)removeTrigger:(id)sender {
+    if (_tableView.selectedRow < 0) {
+        XLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
+        return;
+    }
+    [self setTriggerDictionary:nil forRow:[_tableView selectedRow] reloadData:YES];
+    self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+    _removeTriggerButton.enabled = self.hasSelection;
+}
+
+- (IBAction)toggleUseInterpolatedStrings:(id)sender {
+    _interpolatedStringParameters.state = (![iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]]) ? NSOnState : NSOffState;
+    [self.delegate triggerSetUseInterpolatedStrings:_interpolatedStringParameters.state == NSOnState];
+    [_tableView reloadData];
+}
 
 - (void)doubleClick:(id)sender {
     NSPoint screenLocation = [NSEvent mouseLocation];
@@ -622,8 +631,8 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
     if ([triggerObj paramIsPopupButton]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
-    } else if ([triggerObj paramDefault]) {
-        triggerDictionary[kTriggerParameterKey] = [triggerObj paramDefault];
+    } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSOnState]) {
+        triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSOnState];
     }
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
 }

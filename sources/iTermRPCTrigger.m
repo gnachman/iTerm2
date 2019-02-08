@@ -24,7 +24,7 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
     return @"Invoke Script Function";
 }
 
-- (NSString *)paramPlaceholder {
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Function call";
 }
 
@@ -45,13 +45,14 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSString *invocation = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                     count:captureCount];
-    NSMutableArray<NSString *> *captureStringArray = [NSMutableArray array];
+    NSString *invocation = self.param;
+
+    NSArray<NSString *> *captureStringArray = [[NSArray alloc] initWithObjects:capturedStrings
+                                                                         count:captureCount];
     NSMutableArray<NSArray<NSNumber *> *> *captureRangeArray = [NSMutableArray array];
     for (NSInteger i = 0; i < captureCount; i++) {
-        [captureStringArray addObject:capturedStrings[i] ?: @""];
         [captureRangeArray addObject:@[ @(capturedRanges[i].location), @(capturedRanges[i].length) ]];
     }
 
@@ -59,10 +60,8 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                                           iTermRPCTriggerPathCapturedRanges: captureRangeArray,
                                           iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
                                           iTermRPCTriggerPathLineNumber: @(lineNumber) };
-    iTermVariableScope *scope = [aSession.variablesScope copy];
-    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
-                                                                  owner:self];
-    [scope addVariables:variables toScopeNamed:nil];
+    iTermVariableScope *scope = [self variableScope:aSession.variablesScope
+                             byAddingBackreferences:captureStringArray];
     [scope setValuesFromDictionary:temporaryVariables];
     [aSession invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
 

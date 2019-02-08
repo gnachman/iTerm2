@@ -26,13 +26,14 @@
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
-    return [self paramDefault];
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
+    return [self triggerOptionalDefaultParameterValueWithInterpolation:interpolation];
 }
 
-- (NSString *)paramDefault
-{
+- (NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation {
+    if (interpolation) {
+        return @"https://\\(match0)";
+    }
     return @"https://\\0";
 }
 
@@ -42,18 +43,29 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSRange rangeInString = capturedRanges[0];
+    const NSRange rangeInString = capturedRanges[0];
     
-    NSString *urlString = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                     count:captureCount];
-    
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *urlString) {
+                                             [self performActionWithURLString:urlString
+                                                                        range:rangeInString
+                                                                      session:aSession
+                                                           absoluteLineNumber:lineNumber];
+                                         }];
+    return YES;
+}
+
+- (void)performActionWithURLString:(NSString *)urlString
+                             range:(NSRange)rangeInString
+                           session:(PTYSession *)aSession
+                absoluteLineNumber:(long long)lineNumber {
     NSURL *url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
 
-    if (url == nil) {
-        return NO;
-    }
-    
     // add URL to URL Store and retrieve URL code for later reference
     unsigned short code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
     
@@ -64,11 +76,9 @@
     
     // add invisible URL Mark so the URL can automatically freed
     iTermURLMark *mark = [aSession.screen addMarkStartingAtAbsoluteLine:lineNumber
-                                           oneLine:YES
-                                           ofClass:[iTermURLMark class]];
+                                                                oneLine:YES
+                                                                ofClass:[iTermURLMark class]];
     mark.code = code;
-    
-    
-    return YES;
 }
+
 @end

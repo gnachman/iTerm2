@@ -22,8 +22,7 @@
     return YES;
 }
 
-- (NSString *)paramPlaceholder
-{
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter Message";
 }
 
@@ -33,16 +32,31 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    iTermNotificationController *gd = [iTermNotificationController sharedInstance];
-    [gd notify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
-        withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
-                         [aSession name],
-                         aSession.delegate.tabNumber]
-        windowIndex:[aSession screenWindowIndex]
-           tabIndex:[aSession screenTabIndex]
-          viewIndex:[aSession screenViewIndex]];
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *notificationText) {
+                                             [self postNotificationWithText:notificationText inSession:aSession];
+                                         }];
     return YES;
+}
+
+- (void)postNotificationWithText:(NSString *)notificationText
+                       inSession:(PTYSession *)aSession {
+    if (!notificationText) {
+        return;
+    }
+    iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
+    [notificationController notify:notificationText
+                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
+                                    [aSession name],
+                                    aSession.delegate.tabNumber]
+                       windowIndex:[aSession screenWindowIndex]
+                          tabIndex:[aSession screenTabIndex]
+                         viewIndex:[aSession screenViewIndex]];
 }
 
 @end

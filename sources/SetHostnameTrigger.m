@@ -20,7 +20,7 @@
   return YES;
 }
 
-- (NSString *)paramPlaceholder {
+- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
   return @"username@hostname";
 }
 
@@ -31,13 +31,18 @@
                                inSession:(PTYSession *)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-  NSString *remoteHost = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                   count:captureCount];
-  if (remoteHost.length) {
-    [aSession.screen terminalSetRemoteHost:remoteHost];
-  }
-  return YES;
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:aSession.variablesScope
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *remoteHost) {
+                                             if (remoteHost.length) {
+                                                 [aSession.screen terminalSetRemoteHost:remoteHost];
+                                             }
+                                         }];
+    return YES;
 }
 
 @end

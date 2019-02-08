@@ -93,43 +93,49 @@
     }];
 }
 
-- (void)evaluateSynchronously:(BOOL)synchronously completion:(void (^)(NSString *))completion {
+- (void)evaluateSynchronously:(BOOL)synchronously
+                   completion:(void (^)(NSString *))completion {
     iTermVariableRecordingScope *scope = [_scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
-    [iTermScriptFunctionCall evaluateString:_swiftyString
-                                    timeout:synchronously ? 0 : 30
-                                      scope:scope
-                                 completion:
-     ^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
-         __strong __typeof(self) strongSelf = weakSelf;
-         if (!strongSelf) {
-             return;
-         }
-         [strongSelf->_missingFunctions unionSet:missing];
-         if (error) {
-             NSString *message =
-             [NSString stringWithFormat:@"Invocation of “%@” failed with error:\n%@\n",
-              strongSelf.swiftyString,
-              [error localizedDescription]];
+    [self evaluateSynchronously:synchronously withScope:_scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_missingFunctions unionSet:missing];
+        if (error) {
+            NSString *message =
+            [NSString stringWithFormat:@"Invocation of “%@” failed with error:\n%@\n",
+             strongSelf.swiftyString,
+             [error localizedDescription]];
 
-             NSString *connectionKey =
-                 error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
-             iTermScriptHistoryEntry *entry =
-                [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
-             if (!entry) {
-                 entry = [iTermScriptHistoryEntry globalEntry];
-             }
-             [entry addOutput:message];
+            NSString *connectionKey =
+            error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+            iTermScriptHistoryEntry *entry =
+            [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+            if (!entry) {
+                entry = [iTermScriptHistoryEntry globalEntry];
+            }
+            [entry addOutput:message];
 
-         }
-         completion(result);
-     }];
+        }
+        completion(result);
+    }];
     _refs = [scope recordedReferences];
     for (iTermVariableReference *ref in _refs) {
         ref.onChangeBlock = ^{
             [weakSelf dependencyDidChange];
         };
     }
+}
+
+- (void)evaluateSynchronously:(BOOL)synchronously
+                   withScope:(iTermVariableScope *)scope
+                   completion:(void (^)(NSString *result, NSError *error, NSSet<NSString *> *missing))completion {
+    [iTermScriptFunctionCall evaluateString:_swiftyString
+                                    timeout:synchronously ? 0 : 30
+                                      scope:scope
+                                 completion:completion];
 }
 
 - (void)dependencyDidChange {

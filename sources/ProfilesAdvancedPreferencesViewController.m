@@ -64,6 +64,7 @@
 
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_TRIGGERS,
+                       KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
                        KEY_SMART_SELECTION_RULES,
                        KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
@@ -137,6 +138,10 @@
 - (void)setTriggersValue:(NSArray *)value {
     [self setObject:value forKey:KEY_TRIGGERS];
     [_triggerWindowController.tableView reloadData];
+}
+
+- (void)triggerSetUseInterpolatedStrings:(BOOL)useInterpolatedStrings {
+    [self setBool:useInterpolatedStrings forKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS];
 }
 
 #pragma mark - SmartSelectionDelegate
