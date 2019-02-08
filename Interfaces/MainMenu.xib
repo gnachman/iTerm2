@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -159,14 +159,14 @@ CQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
-                            <menuItem title="Split Vertically with Current Profile" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
-                                <connections>
-                                    <action selector="splitVertically:" target="-1" id="1202"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Split Horizontally with Current Profile" keyEquivalent="D" identifier="Split Horizontally with Current Profile" id="1201">
                                 <connections>
                                     <action selector="splitHorizontally:" target="-1" id="1203"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Split Vertically with Current Profile" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
+                                <connections>
+                                    <action selector="splitVertically:" target="-1" id="1202"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Split Horizontally…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
@@ -1310,6 +1310,10 @@ DQ
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
+                <outlet property="_splitHorizontally" destination="1289" id="Arv-ON-Put"/>
+                <outlet property="_splitHorizontallyWithCurrentProfile" destination="1201" id="FLl-hN-paX"/>
+                <outlet property="_splitVertically" destination="1291" id="HKF-80-dqT"/>
+                <outlet property="_splitVerticallyWithCurrentProfile" destination="1200" id="TXu-qW-aIJ"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>
                 <outlet property="closeWindow" destination="598" id="796"/>

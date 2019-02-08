@@ -190,6 +190,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)shortLivedSessionDuration;
 + (BOOL)shouldSetLCTerminal;
 + (BOOL)showBlockBoundaries;
++ (BOOL)showHintsInSplitPaneMenuItems;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showYellowMarkForJobStoppedBySignal;

@@ -179,6 +179,11 @@ static BOOL hasBecomeActive = NO;
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
+    IBOutlet NSMenuItem *_splitHorizontallyWithCurrentProfile;
+    IBOutlet NSMenuItem *_splitVerticallyWithCurrentProfile;
+    IBOutlet NSMenuItem *_splitHorizontally;
+    IBOutlet NSMenuItem *_splitVertically;
+
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
@@ -311,6 +316,13 @@ static BOOL hasBecomeActive = NO;
 
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
+    }
+
+    if ([iTermAdvancedSettingsModel showHintsInSplitPaneMenuItems]) {
+        _splitHorizontally.title = [@"─⃞ " stringByAppendingString:_splitHorizontally.title];
+        _splitHorizontallyWithCurrentProfile.title = [@"─⃞ " stringByAppendingString:_splitHorizontallyWithCurrentProfile.title];
+        _splitVertically.title = [@"│⃞ " stringByAppendingString:_splitVertically.title];
+        _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
 }
 

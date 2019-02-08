@@ -316,6 +316,7 @@ DEFINE_BOOL(swapFindNextPrevious, YES, SECTION_GENERAL @"Swap Find Next and Find
 DEFINE_BOOL(pinEditSession, NO, SECTION_GENERAL @"Pin Edit Session window to the session it originally edited.\nIf not set, it will affect the most recently active session.");
 DEFINE_BOOL(remapModifiersWithoutEventTap, NO, SECTION_GENERAL @"Disable remapping modifiers for system shortcuts.\nThis prevents asking for accessibility permission. It breaks remapping system shortcuts like cmd-tab.");
 DEFINE_BOOL(alertsIndicateShortcuts, NO, SECTION_GENERAL @"Buttons in modal alerts indicate keyboard shortcuts.\nDo you miss Windows 95? I do.");
+DEFINE_BOOL(showHintsInSplitPaneMenuItems, NO, SECTION_GENERAL @"Show hints in split pane menu items to indicate horizontal vs vertical semantics.\nYou must restart iTerm2 after changing this setting for it to take effect.");
 
 #pragma mark - Drawing
 
