@@ -914,6 +914,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize {
+    [self sanityCheckIntervalsFrom:currentGrid_.size note:@"pre-hoc"];
     [self.temporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = currentGrid_.size;
     iTermSelection *selection = [delegate_ screenSelection];
@@ -1000,9 +1001,21 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
        couldHaveSelection:couldHaveSelection
             subSelections:newSubSelections];
     [altScreenLineBuffer endResizing];
-
+    [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
+}
+
+- (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note {
+#if BETA
+    for (id<IntervalTreeObject> obj in [intervalTree_ allObjects]) {
+        IntervalTreeEntry *entry = obj.entry;
+        Interval *interval = entry.interval;
+        ITBetaAssert(interval.limit >= 0, @"Bogus interval %@ after resizing from %@ to %@. Note: %@",
+                     interval, VT100GridSizeDescription(oldSize), VT100GridSizeDescription(currentGrid_.size),
+                     note);
+    }
+#endif
 }
 
 - (void)reloadMarkCache {

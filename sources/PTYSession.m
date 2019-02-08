@@ -4919,6 +4919,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setCurrentMarkOrNotePosition:(Interval *)currentMarkOrNotePosition {
+    [_currentMarkOrNotePosition autorelease];
+    _currentMarkOrNotePosition = [currentMarkOrNotePosition retain];
+    ITBetaAssert(currentMarkOrNotePosition.limit >= 0, @"Negative limit in current mark or note %@", currentMarkOrNotePosition);
+}
+
 - (BOOL)hasSavedScrollPosition
 {
     return [_screen lastMark] != nil;
