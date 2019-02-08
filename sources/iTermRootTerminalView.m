@@ -276,10 +276,11 @@ typedef struct {
     const CGFloat baselineOffset = -_windowTitleLabel.font.descender;
     const CGFloat capHeight = _windowTitleLabel.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
-    NSEdgeInsets insets = [self.delegate tabBarInsets];
-    return NSMakeRect(insets.left,
+    const NSEdgeInsets insets = [self.delegate tabBarInsets];
+    const CGFloat sideInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
+    return NSMakeRect(sideInset,
                       myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset,
-                      MAX(0, self.frame.size.width - insets.left - iTermRootTerminalViewWindowNumberLabelMargin),
+                      MAX(0, self.frame.size.width - sideInset * 2),
                       _windowTitleLabel.frame.size.height);
 }
 
