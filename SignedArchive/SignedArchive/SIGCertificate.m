@@ -20,6 +20,7 @@
     self = [super init];
     if (self) {
         _secCertificate = secCertificate;
+        CFRetain(secCertificate);
     }
     return self;
 }
@@ -33,6 +34,10 @@
         }
     }
     return self;
+}
+
+- (void)dealloc {
+    CFRelease(_secCertificate);
 }
 
 - (SIGKey *)publicKey {
@@ -54,7 +59,8 @@
     }
 
     _publicKey = [[SIGKey alloc] initWithSecKey:key];
-    CFRelease(key); 
+    CFRelease(key);
+
     return _publicKey;
 }
 

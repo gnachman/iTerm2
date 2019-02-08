@@ -12,12 +12,6 @@
     SecPolicyRef _policy;
 }
 
-- (void)dealloc {
-    if (_policy) {
-        CFRelease(_policy);
-    }
-}
-
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -27,6 +21,12 @@
         }
     }
     return self;
+}
+
+- (void)dealloc {
+    if (_policy) {
+        CFRelease(_policy);
+    }
 }
 
 - (SecPolicyRef)secPolicy {
@@ -39,12 +39,6 @@
     SecPolicyRef _policy;
 }
 
-- (void)dealloc {
-    if (_policy) {
-        CFRelease(_policy);
-    }
-}
-
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -55,6 +49,12 @@
         }
     }
     return self;
+}
+
+- (void)dealloc {
+    if (_policy) {
+        CFRelease(_policy);
+    }
 }
 
 - (SecPolicyRef)secPolicy {

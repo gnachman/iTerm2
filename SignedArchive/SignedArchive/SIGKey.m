@@ -13,6 +13,7 @@
 - (instancetype)initWithSecKey:(SecKeyRef)secKey {
     self = [super init];
     if (self) {
+        CFRetain(secKey);
         _secKey = secKey;
     }
     return self;

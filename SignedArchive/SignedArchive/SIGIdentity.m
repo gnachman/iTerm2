@@ -99,7 +99,9 @@
         return nil;
     }
     
-    return [[SIGKey alloc] initWithSecKey:privateKey];
+    SIGKey *result = [[SIGKey alloc] initWithSecKey:privateKey];
+    CFRelease(privateKey);
+    return result;
 }
 
 - (SIGCertificate *)signingCertificate {

@@ -13,10 +13,10 @@
 #import "SIGKey.h"
 
 @implementation SIGSHA2SigningAlgorithm {
-    SecTransformRef readTransform;
-    SecTransformRef dataDigestTransform;
-    SecTransformRef dataSignTransform;
-    SecGroupTransformRef group;
+    SecTransformRef _readTransform;
+    SecTransformRef _dataDigestTransform;
+    SecTransformRef _dataSignTransform;
+    SecGroupTransformRef _group;
 }
 
 + (NSString *)name {
@@ -24,17 +24,17 @@
 }
 
 - (void)dealloc {
-    if (readTransform) {
-        CFRelease(readTransform);
+    if (_readTransform) {
+        CFRelease(_readTransform);
     }
-    if (dataDigestTransform) {
-        CFRelease(dataDigestTransform);
+    if (_dataDigestTransform) {
+        CFRelease(_dataDigestTransform);
     }
-    if (dataSignTransform) {
-        CFRelease(dataSignTransform);
+    if (_dataSignTransform) {
+        CFRelease(_dataSignTransform);
     }
-    if (group) {
-        CFRelease(group);
+    if (_group) {
+        CFRelease(_group);
     }
 }
 
@@ -51,8 +51,8 @@
         return nil;
     }
     
-    readTransform = SecTransformCreateReadTransformWithReadStream((__bridge CFReadStreamRef)readStream);
-    if (!readTransform) {
+    _readTransform = SecTransformCreateReadTransformWithReadStream((__bridge CFReadStreamRef)readStream);
+    if (!_readTransform) {
         if (error) {
             *error = [SIGError errorWrapping:(__bridge NSError *)err
                                       code:SIGErrorCodeAlgorithmCreationFailed
@@ -61,10 +61,10 @@
         return nil;
     }
     
-    dataDigestTransform = SecDigestTransformCreate(kSecDigestSHA2,
+    _dataDigestTransform = SecDigestTransformCreate(kSecDigestSHA2,
                                                    256,
                                                    &err);
-    if (!dataDigestTransform) {
+    if (!_dataDigestTransform) {
         if (error) {
             *error = [SIGError errorWrapping:(__bridge NSError *)err
                                       code:SIGErrorCodeAlgorithmCreationFailed
@@ -73,9 +73,9 @@
         return nil;
     }
     
-    dataSignTransform = SecSignTransformCreate(privateKey.secKey,
+    _dataSignTransform = SecSignTransformCreate(privateKey.secKey,
                                                &err);
-    if (!dataSignTransform) {
+    if (!_dataSignTransform) {
         if (error) {
             *error = [SIGError errorWrapping:(__bridge NSError *)err
                                       code:SIGErrorCodeAlgorithmCreationFailed
@@ -84,7 +84,7 @@
         return nil;
     }
     
-    SecTransformSetAttribute(dataSignTransform,
+    SecTransformSetAttribute(_dataSignTransform,
                              kSecInputIsAttributeName,
                              kSecInputIsDigest,
                              &err);
@@ -97,7 +97,7 @@
         return nil;
     }
     
-    SecTransformSetAttribute(dataSignTransform,
+    SecTransformSetAttribute(_dataSignTransform,
                              kSecDigestTypeAttribute,
                              kSecDigestSHA2,
                              &err);
@@ -110,7 +110,7 @@
         return nil;
     }
     
-    SecTransformSetAttribute(dataSignTransform,
+    SecTransformSetAttribute(_dataSignTransform,
                              kSecDigestLengthAttribute,
                              (__bridge CFTypeRef _Nonnull)@256,
                              &err);
@@ -123,12 +123,12 @@
         return nil;
     }
     
-    group = SecTransformCreateGroupTransform();
-    SecTransformConnectTransforms(readTransform,
+    _group = SecTransformCreateGroupTransform();
+    SecTransformConnectTransforms(_readTransform,
                                   kSecTransformOutputAttributeName,
-                                  dataDigestTransform,
+                                  _dataDigestTransform,
                                   kSecTransformInputAttributeName,
-                                  group,
+                                  _group,
                                   &err);
     if (err != nil) {
         if (error) {
@@ -139,11 +139,11 @@
         return nil;
     }
     
-    SecTransformConnectTransforms(dataDigestTransform,
+    SecTransformConnectTransforms(_dataDigestTransform,
                                   kSecTransformOutputAttributeName,
-                                  dataSignTransform,
+                                  _dataSignTransform,
                                   kSecTransformInputAttributeName,
-                                  group,
+                                  _group,
                                   &err);
     if (err != nil) {
         if (error) {
@@ -154,7 +154,7 @@
         return nil;
     }
     
-    NSData *signature = (__bridge_transfer NSData *)SecTransformExecute(group, &err);
+    NSData *signature = (__bridge_transfer NSData *)SecTransformExecute(_group, &err);
     if (err != nil) {
         if (error) {
             *error = [SIGError errorWrapping:(__bridge NSError *)err
