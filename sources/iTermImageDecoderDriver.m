@@ -20,48 +20,6 @@
 - (NSString *)stringByEscapingForSandboxLiteral;
 @end
 
-@implementation NSString(Sandbox)
-
-// Adapted from Chromium's Sandbox::QuotePlainString
-- (NSString *)stringByEscapingForSandboxLiteral {
-    NSMutableString *result = [NSMutableString string];
-    for (NSUInteger i = 0; i < self.length; i++) {
-        unichar c = [self characterAtIndex:i];
-        if (c < 128) {
-            switch (c) {
-                case '\b':
-                    [result appendString:@"\\b"];
-                    break;
-                case '\f':
-                    [result appendString:@"\\f"];
-                    break;
-                case '\n':
-                    [result appendString:@"\\n"];
-                    break;
-                case '\r':
-                    [result appendString:@"\\r"];
-                    break;
-                case '\t':
-                    [result appendString:@"\\t"];
-                    break;
-                case '\\':
-                    [result appendString:@"\\\\"];
-                    break;
-                case '"':
-                    [result appendString:@"\\\""];
-                    break;
-                default:
-                    [result appendCharacter:c];
-                    break;
-            }
-        } else {
-            [result appendFormat:@"\\u%04X", (unsigned int)c];
-        }
-    }
-    return result;
-}
-
-@end
 
 static void Dup2OrDie(int source, int dest) {
     int rc;

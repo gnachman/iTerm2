@@ -4,7 +4,7 @@ GIT_BINARY=/usr/bin/git
 
 dirty() {
     # Outputs "dirty" or "clean"
-    OUTPUT=$($GIT_BINARY status --porcelain --ignore-submodules -unormal)
+    OUTPUT=$("$GIT_BINARY" status --porcelain --ignore-submodules -unormal)
     if (($?)); then
         echo "clean"
         return
@@ -17,7 +17,7 @@ dirty() {
 }
 
 counts() {
-    OUTPUT=$($GIT_BINARY rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)
+    OUTPUT=$("$GIT_BINARY" rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)
     if (($?)); then
         return
     fi
@@ -25,7 +25,7 @@ counts() {
 }
 
 branch() {
-    OUTPUT=$($GIT_BINARY symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
+    OUTPUT=$("$GIT_BINARY" symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
     if (($?)); then
         return
     fi

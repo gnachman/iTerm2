@@ -1280,6 +1280,9 @@
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
 		5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */; };
+		5376CB3C220D2E4300FE7476 /* git.sb in Resources */ = {isa = PBXBuildFile; fileRef = 5376CB3B220D2E4300FE7476 /* git.sb */; };
+		5376CB3D220D2E4300FE7476 /* git.sb in Resources */ = {isa = PBXBuildFile; fileRef = 5376CB3B220D2E4300FE7476 /* git.sb */; };
+		5376CB3E220D2E4300FE7476 /* git.sb in Resources */ = {isa = PBXBuildFile; fileRef = 5376CB3B220D2E4300FE7476 /* git.sb */; };
 		537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC320FFA5A40098C91F /* iTermStatusBarJobComponent.h */; };
 		537BFDC920FFB2590098C91F /* iTermProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC720FFB2590098C91F /* iTermProcessCache.h */; };
 		537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC820FFB2590098C91F /* iTermProcessCache.m */; };
@@ -4154,6 +4157,7 @@
 		5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarRPCProvidedTextComponent.m; sourceTree = "<group>"; };
 		5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QLPreviewPanel+iTerm.h"; sourceTree = "<group>"; };
 		5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QLPreviewPanel+iTerm.m"; sourceTree = "<group>"; };
+		5376CB3B220D2E4300FE7476 /* git.sb */ = {isa = PBXFileReference; lastKnownFileType = text; name = git.sb; path = sources/git.sb; sourceTree = "<group>"; };
 		537BFDC320FFA5A40098C91F /* iTermStatusBarJobComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarJobComponent.h; sourceTree = "<group>"; };
 		537BFDC420FFA5A40098C91F /* iTermStatusBarJobComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarJobComponent.m; sourceTree = "<group>"; };
 		537BFDC720FFB2590098C91F /* iTermProcessCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcessCache.h; sourceTree = "<group>"; };
@@ -6316,6 +6320,7 @@
 				53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */,
 				A6C4352021D1C64800346910 /* iterm2Invoke.js */,
 				53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */,
+				5376CB3B220D2E4300FE7476 /* git.sb */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -10138,6 +10143,7 @@
 				A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A67F6149214395870093940A /* graphic_less@2x.png in Resources */,
 				53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
+				5376CB3E220D2E4300FE7476 /* git.sb in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
@@ -10648,6 +10654,7 @@
 				A6EFF2391D20F6BF00806EEF /* EraseDarkBackground.png in Resources */,
 				A6F7A74A213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				1D44D0031CC7F5A600BE5630 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
+				5376CB3D220D2E4300FE7476 /* git.sb in Resources */,
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D44CFD21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
@@ -11086,6 +11093,7 @@
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
 				A6EC47C421EC682B000E1321 /* CompactMinimalWindowScreenshot.png in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
+				5376CB3C220D2E4300FE7476 /* git.sb in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
 				A67F61EA214395D50093940A /* graphic_yarn@2x.png in Resources */,

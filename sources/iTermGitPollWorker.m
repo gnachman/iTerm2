@@ -12,6 +12,7 @@
 #import "iTermGitCache.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -112,7 +113,11 @@ typedef void (^iTermGitCallback)(iTermGitState *);
             return;
         }
         DLog(@"Launch new git poller script from %@", script);
-        _commandRunner = [[iTermCommandRunner alloc] initWithCommand:script withArguments:@[] path:@"/"];
+        NSString *sandboxConfig = [[[NSString stringWithContentsOfFile:[bundle pathForResource:@"git" ofType:@"sb"]
+                                                              encoding:NSUTF8StringEncoding
+                                                                 error:nil] componentsSeparatedByString:@"\n"] componentsJoinedByString:@" "];
+        assert(sandboxConfig.length > 0);
+        _commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/usr/bin/sandbox-exec" withArguments:@[ @"-p", sandboxConfig, script ] path:@"/"];
         __weak __typeof(self) weakSelf = self;
         _commandRunner.outputHandler = ^(NSData *data) {
             [weakSelf didRead:data];

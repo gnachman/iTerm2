@@ -298,6 +298,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // If this is a 2+ part version number, return a 2 part version number. Otherwise, nil.
 - (NSString *)it_twoPartVersionNumber;
+- (NSString *)stringByEscapingForSandboxLiteral;
 @end
 
 @interface NSMutableString (iTerm)
