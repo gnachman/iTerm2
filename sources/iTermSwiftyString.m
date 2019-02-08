@@ -97,7 +97,7 @@
                    completion:(void (^)(NSString *))completion {
     iTermVariableRecordingScope *scope = [_scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
-    [self evaluateSynchronously:synchronously withScope:_scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
+    [self evaluateSynchronously:synchronously withScope:scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
