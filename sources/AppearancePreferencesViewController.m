@@ -28,6 +28,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
+    IBOutlet NSButton *_preserveWindowSizeWhenTabBarVisibilityChanges;
+
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
 
@@ -125,8 +127,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() {
         [weakSelf postRefreshNotification];
-        [weakSelf updateFlashTabsVisibility];
+        [weakSelf updateHiddenAndEnabled];
     };
+
+    info = [self defineControl:_preserveWindowSizeWhenTabBarVisibilityChanges
+                           key:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
+                          type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber
@@ -203,7 +209,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
                    type:kPreferenceInfoTypeCheckbox];
-    [self updateFlashTabsVisibility];
+    [self updateHiddenAndEnabled];
 
     info = [self defineControl:_showTabBarInFullscreen
                            key:kPreferenceKeyShowFullscreenTabBar
@@ -288,16 +294,19 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 - (void)showFullscreenTabsSettingDidChange:(NSNotification *)notification {
     _showTabBarInFullscreen.state =
         [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState;
-    [self updateFlashTabsVisibility];
+    [self updateHiddenAndEnabled];
 }
 
-- (void)updateFlashTabsVisibility {
+- (void)updateHiddenAndEnabled {
     // Enable flashing tabs in fullscreen when it's possible for the tab bar in fullscreen to be
     // hidden: either it's not always visible or it's hidden when there's a single tab. The single-
     // tab case is relevant when going from two tabs to one, which could be considered a "switch".
     _flashTabBarInFullscreenWhenSwitchingTabs.enabled =
         (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ||
          [iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
+
+    // Can't preserve size if you can't hide the tab bar.
+    _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSOnState);
 }
 
 @end

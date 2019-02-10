@@ -68,6 +68,7 @@ NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyStatusBarPosition = @"StatusBarPosition";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
+NSString *const kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges = @"PreserveWindowSizeWhenTabBarVisibilityChanges";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
@@ -257,6 +258,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyStatusBarPosition: @(iTermStatusBarPositionTop),
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
+                  kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,

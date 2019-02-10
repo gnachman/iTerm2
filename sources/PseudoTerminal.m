@@ -5419,7 +5419,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
-        [self fitWindowToTabs];
+        if (![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+            [self fitWindowToTabs];
+        }
         [self repositionWidgets];
         if (wasDraggedFromAnotherWindow_) {
             wasDraggedFromAnotherWindow_ = NO;
