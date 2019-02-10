@@ -5292,7 +5292,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="DgM-Zm-3SV">
-                                        <rect key="frame" x="137" y="89" width="259" height="74"/>
+                                        <rect key="frame" x="137" y="110" width="259" height="74"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <button id="rf8-fE-qJb">
@@ -5339,7 +5339,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="YkA-5c-Wt0">
-                                        <rect key="frame" x="66" y="61" width="400" height="102"/>
+                                        <rect key="frame" x="66" y="82" width="400" height="102"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <button id="4560">
