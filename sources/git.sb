@@ -1,0 +1,7 @@
+(version 1)
+(allow default)
+(deny file-write*)
+(allow file-write* (subpath "/var"))
+(allow file-write* (subpath "/tmp"))
+(allow file-write* (subpath "/private"))
+(allow file-write* (subpath "/dev"))
