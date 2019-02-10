@@ -69,7 +69,7 @@
     // parts undrawn. Some day macOS 10.0's features will work correctly but
     // I'm not holding my breath.
     NSRect rect = self.enclosingScrollView.documentVisibleRect;
-    rect.size.height = 2;
+    rect.size.height = [iTermAdvancedSettingsModel terminalVMargin];
     if (_useMetal) {
         if (@available(macOS 10.14, *)) {
             return;
