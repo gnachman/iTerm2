@@ -400,65 +400,74 @@ Gw
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <tabView allowsTruncatedLabels="NO" initialItem="2101" id="2100" userLabel="Profiles Tab View">
-                                            <rect key="frame" x="320" y="10" width="579" height="450"/>
+                                        <customView id="P2y-de-Vwq" userLabel="Wrapper view" customClass="iTermProfilePreferencesTabViewWrapperView">
+                                            <rect key="frame" x="327" y="0.0" width="575" height="454"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                            <font key="font" metaFont="system"/>
-                                            <tabViewItems>
-                                                <tabViewItem label="General" identifier="1" id="2101">
-                                                    <view key="view" id="2104" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Colors" identifier="2" id="2102">
-                                                    <view key="view" id="2103" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Text" identifier="Item 5" id="4763">
-                                                    <view key="view" id="4764" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Window" identifier="Item 5" id="4909">
-                                                    <view key="view" id="4910" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Terminal" identifier="Item 2" id="2107">
-                                                    <view key="view" id="2108" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Session" identifier="Item 6" id="5652">
-                                                    <view key="view" id="5653" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Keys" identifier="Item 3" id="2109">
-                                                    <view key="view" id="2110" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                                <tabViewItem label="Advanced" identifier="Item 7" id="5776">
-                                                    <view key="view" id="5777" userLabel="Filler">
-                                                        <rect key="frame" x="10" y="33" width="559" height="404"/>
-                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                    </view>
-                                                </tabViewItem>
-                                            </tabViewItems>
+                                            <subviews>
+                                                <tabView allowsTruncatedLabels="NO" initialItem="2101" id="2100" userLabel="Profiles Tab View">
+                                                    <rect key="frame" x="-7" y="0.0" width="579" height="450"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                    <tabViewItems>
+                                                        <tabViewItem label="General" identifier="1" id="2101">
+                                                            <view key="view" id="2104" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Colors" identifier="2" id="2102">
+                                                            <view key="view" id="2103" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Text" identifier="Item 5" id="4763">
+                                                            <view key="view" id="4764" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Window" identifier="Item 5" id="4909">
+                                                            <view key="view" id="4910" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Terminal" identifier="Item 2" id="2107">
+                                                            <view key="view" id="2108" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Session" identifier="Item 6" id="5652">
+                                                            <view key="view" id="5653" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Keys" identifier="Item 3" id="2109">
+                                                            <view key="view" id="2110" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                        <tabViewItem label="Advanced" identifier="Item 7" id="5776">
+                                                            <view key="view" id="5777" userLabel="Filler">
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                            </view>
+                                                        </tabViewItem>
+                                                    </tabViewItems>
+                                                    <connections>
+                                                        <outlet property="delegate" destination="HVI-63-mNz" id="T5j-sK-sYR"/>
+                                                        <outlet property="nextKeyView" destination="2273" id="5219"/>
+                                                    </connections>
+                                                </tabView>
+                                            </subviews>
                                             <connections>
-                                                <outlet property="delegate" destination="HVI-63-mNz" id="T5j-sK-sYR"/>
-                                                <outlet property="nextKeyView" destination="2273" id="5219"/>
+                                                <outlet property="_tabView" destination="2100" id="PZ5-Cb-Hbo"/>
                                             </connections>
-                                        </tabView>
+                                        </customView>
                                         <button id="2111" userLabel="Square Button - Add Profile">
                                             <rect key="frame" x="52" y="19" width="24" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -637,7 +646,7 @@ Gw
                 <outlet property="delegate" destination="-2" id="2982"/>
                 <outlet property="initialFirstResponder" destination="1959" id="5303"/>
             </connections>
-            <point key="canvasLocation" x="-288" y="-1058.5"/>
+            <point key="canvasLocation" x="-489" y="-1494"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="1971"/>
         <customView id="3079" userLabel="FontAccessory">
@@ -784,7 +793,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
@@ -956,7 +965,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1172,7 +1181,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -3716,7 +3725,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -5847,7 +5856,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -5961,7 +5970,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="0.0" width="849" height="245"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
@@ -6148,7 +6157,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
