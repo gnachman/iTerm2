@@ -4,11 +4,11 @@ function die {
     echo "$@" | mail -s "Nightly build failure" $MY_EMAIL_ADDR
     exit 1
 }
-# Usage: SparkleSign testing.xml template.xml
+# Usage: SparkleSign testing.xml template.xml signingkey
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die "Signing failed"
-    ../../tools/sign_update iTerm2-${NAME}.zip > /tmp/newsig.txt || die SparkleSignNew
+    ../../tools/sign_update iTerm2-${NAME}.zip "$3" > /tmp/newsig.txt || die SparkleSignNew
     SIG=$(cat /tmp/sig.txt)
     NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
@@ -55,13 +55,13 @@ mv iTerm2.app iTerm.app
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
 # Modern
-SparkleSign nightly_modern.xml nightly_modern_template.xml
+SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
 # Transitional
-SparkleSign nightly_new.xml nightly_new_template.xml
+SparkleSign nightly_new.xml nightly_new_template.xml "$SIGNING_KEY"
 # Legacy
-SparkleSign nightly.xml nightly_template.xml
+SparkleSign nightly.xml nightly_template.xml "$SIGNING_KEY"
 
-cask-repair --cask-version $CASK_VERSION iterm2-nightly < /dev/null
+cask-repair --cask-url https://www.iterm2.com/nightly/latest -b --cask-version $CASK_VERSION iterm2-nightly < /dev/null
 
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
