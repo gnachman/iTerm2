@@ -85,6 +85,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
++ (void)registerBuiltInFunctions;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
 

@@ -583,6 +583,33 @@ class Session:
         t = (dict["grid"], dict["history"], dict["overflow"], dict["first_visible"] )
         return SessionLineInfo(t)
 
+    async def async_invoke_function(self, invocation: str, timeout: float=-1):
+        """
+        Invoke an RPC. Could be a registered function by this or another script of a built-in function.
+
+        :param invocation: A function invocation string.
+        :param timeout: Max number of secondsto wait. Negative values mean to use the system default timeout.
+
+        :returns: The result of the invocation if successful.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        response = await iterm2.rpc.async_invoke_function(
+                self.connection,
+                invocation,
+                session_id=self.session_id,
+                timeout=timeout)
+        which = response.invoke_function_response.WhichOneof('disposition')
+        if which == 'error':
+            if response.invoke_function_response.error.status == iterm2.api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT"):
+                raise iterm2.rpc.RPCException("Timeout")
+            else:
+                raise iterm2.rpc.RPCException("{}: {}".format(
+                    iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
+                        response.invoke_function_response.error.status),
+                    response.invoke_function_response.error.error_reason))
+        return json.loads(response.invoke_function_response.success.json_result)
+
 
 class InvalidSessionId(Exception):
     """The specified session ID is not allowed in this method."""

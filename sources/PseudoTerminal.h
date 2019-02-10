@@ -359,5 +359,7 @@ extern NSString *const iTermSelectedTabDidChange;
 - (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
+- (PseudoTerminal *)moveTabToNewWindow:(PTYTab *)aTab;
+
 @end
 

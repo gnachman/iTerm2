@@ -30,6 +30,7 @@ NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
 NSString *const iTermVariableKeyTabTmuxWindow = @"tmuxWindow";
+NSString *const iTermVariableKeyTabID = @"id";
 
 NSString *const iTermVariableKeySessionAutoLogID = @"autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"columns";

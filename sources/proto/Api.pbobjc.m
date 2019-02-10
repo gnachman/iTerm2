@@ -270,6 +270,7 @@ BOOL ITMVariableScope_IsValidValue(int32_t value__) {
 @dynamic statusBarComponentRequest;
 @dynamic setBroadcastDomainsRequest;
 @dynamic closeRequest;
+@dynamic invokeFunctionRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -305,6 +306,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMStatusBarComponentRequest *statusBarComponentRequest;
   ITMSetBroadcastDomainsRequest *setBroadcastDomainsRequest;
   ITMCloseRequest *closeRequest;
+  ITMInvokeFunctionRequest *invokeFunctionRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -611,6 +613,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "invokeFunctionRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_InvokeFunctionRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, invokeFunctionRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -678,6 +689,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic statusBarComponentResponse;
 @dynamic setBroadcastDomainsResponse;
 @dynamic closeResponse;
+@dynamic invokeFunctionResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -715,6 +727,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMStatusBarComponentResponse *statusBarComponentResponse;
   ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
   ITMCloseResponse *closeResponse;
+  ITMInvokeFunctionResponse *invokeFunctionResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -1032,6 +1045,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "invokeFunctionResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, invokeFunctionResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -1068,6 +1090,491 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMInvokeFunctionRequest
+
+@implementation ITMInvokeFunctionRequest
+
+@dynamic contextOneOfCase;
+@dynamic tab;
+@dynamic session;
+@dynamic window;
+@dynamic app;
+@dynamic hasInvocation, invocation;
+@dynamic hasTimeout, timeout;
+
+typedef struct ITMInvokeFunctionRequest__storage_ {
+  uint32_t _has_storage_[2];
+  ITMInvokeFunctionRequest_Tab *tab;
+  ITMInvokeFunctionRequest_Session *session;
+  ITMInvokeFunctionRequest_Window *window;
+  ITMInvokeFunctionRequest_App *app;
+  NSString *invocation;
+  double timeout;
+} ITMInvokeFunctionRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "tab",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Tab),
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Tab,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, tab),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "session",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Session),
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Session,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, session),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "window",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Window),
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Window,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, window),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "app",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_App),
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_App,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, app),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "invocation",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Invocation,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, invocation),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueDouble = -1,
+        .core.name = "timeout",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Timeout,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, timeout),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue),
+        .core.dataType = GPBDataTypeDouble,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMInvokeFunctionRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    static const char *oneofs[] = {
+      "context",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMInvokeFunctionRequest_ClearContextOneOfCase(ITMInvokeFunctionRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMInvokeFunctionRequest_Tab
+
+@implementation ITMInvokeFunctionRequest_Tab
+
+@dynamic hasTabId, tabId;
+
+typedef struct ITMInvokeFunctionRequest_Tab__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *tabId;
+} ITMInvokeFunctionRequest_Tab__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionRequest_Tab_FieldNumber_TabId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Tab__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_Tab class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionRequest_Tab__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Session
+
+@implementation ITMInvokeFunctionRequest_Session
+
+@dynamic hasSessionId, sessionId;
+
+typedef struct ITMInvokeFunctionRequest_Session__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *sessionId;
+} ITMInvokeFunctionRequest_Session__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionRequest_Session_FieldNumber_SessionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Session__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_Session class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionRequest_Session__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Window
+
+@implementation ITMInvokeFunctionRequest_Window
+
+@dynamic hasWindowId, windowId;
+
+typedef struct ITMInvokeFunctionRequest_Window__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *windowId;
+} ITMInvokeFunctionRequest_Window__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionRequest_Window_FieldNumber_WindowId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Window__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_Window class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionRequest_Window__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_App
+
+@implementation ITMInvokeFunctionRequest_App
+
+
+typedef struct ITMInvokeFunctionRequest_App__storage_ {
+  uint32_t _has_storage_[1];
+} ITMInvokeFunctionRequest_App__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_App class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMInvokeFunctionRequest_App__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionResponse
+
+@implementation ITMInvokeFunctionResponse
+
+@dynamic dispositionOneOfCase;
+@dynamic error;
+@dynamic success;
+
+typedef struct ITMInvokeFunctionResponse__storage_ {
+  uint32_t _has_storage_[2];
+  ITMInvokeFunctionResponse_Error *error;
+  ITMInvokeFunctionResponse_Success *success;
+} ITMInvokeFunctionResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "error",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse_Error),
+        .number = ITMInvokeFunctionResponse_FieldNumber_Error,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse__storage_, error),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "success",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse_Success),
+        .number = ITMInvokeFunctionResponse_FieldNumber_Success,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse__storage_, success),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "disposition",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMInvokeFunctionResponse_ClearDispositionOneOfCase(ITMInvokeFunctionResponse *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - Enum ITMInvokeFunctionResponse_Status
+
+GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000Timeout\000Failed\000RequestMalformed\000Inval"
+        "idId\000";
+    static const int32_t values[] = {
+        ITMInvokeFunctionResponse_Status_Ok,
+        ITMInvokeFunctionResponse_Status_Timeout,
+        ITMInvokeFunctionResponse_Status_Failed,
+        ITMInvokeFunctionResponse_Status_RequestMalformed,
+        ITMInvokeFunctionResponse_Status_InvalidId,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMInvokeFunctionResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMInvokeFunctionResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMInvokeFunctionResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMInvokeFunctionResponse_Status_Ok:
+    case ITMInvokeFunctionResponse_Status_Timeout:
+    case ITMInvokeFunctionResponse_Status_Failed:
+    case ITMInvokeFunctionResponse_Status_RequestMalformed:
+    case ITMInvokeFunctionResponse_Status_InvalidId:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMInvokeFunctionResponse_Error
+
+@implementation ITMInvokeFunctionResponse_Error
+
+@dynamic hasStatus, status;
+@dynamic hasErrorReason, errorReason;
+
+typedef struct ITMInvokeFunctionResponse_Error__storage_ {
+  uint32_t _has_storage_[1];
+  ITMInvokeFunctionResponse_Status status;
+  NSString *errorReason;
+} ITMInvokeFunctionResponse_Error__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMInvokeFunctionResponse_Status_EnumDescriptor,
+        .number = ITMInvokeFunctionResponse_Error_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "errorReason",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionResponse_Error_FieldNumber_ErrorReason,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, errorReason),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionResponse_Error class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionResponse_Error__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionResponse_Success
+
+@implementation ITMInvokeFunctionResponse_Success
+
+@dynamic hasJsonResult, jsonResult;
+
+typedef struct ITMInvokeFunctionResponse_Success__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *jsonResult;
+} ITMInvokeFunctionResponse_Success__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "jsonResult",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionResponse_Success_FieldNumber_JsonResult,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Success__storage_, jsonResult),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionResponse_Success class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMInvokeFunctionResponse_Success__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMCloseRequest
 
 @implementation ITMCloseRequest

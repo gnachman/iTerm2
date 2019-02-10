@@ -82,7 +82,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                                     handler:(void (^)(ITMSetBroadcastDomainsResponse *))completion;
 - (void)apiServerCloseRequest:(ITMCloseRequest *)request
                       handler:(void (^)(ITMCloseResponse *))response;
-
+- (void)apiServerInvokeFunctionRequest:(ITMInvokeFunctionRequest *)request
+                               handler:(void (^)(ITMInvokeFunctionResponse *))response;
 @end
 
 @interface iTermAPIServer : NSObject

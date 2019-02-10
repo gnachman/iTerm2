@@ -1146,6 +1146,7 @@ static BOOL hasBecomeActive = NO;
     }];
 
     [PTYSession registerBuiltInFunctions];
+    [PTYTab registerBuiltInFunctions];
     
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];

@@ -19,6 +19,7 @@
 #import "iTermLSOF.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermSelection.h"
 #import "iTermStatusBarComponent.h"
@@ -1021,24 +1022,9 @@ static id sAPIHelperInstance;
         return [windowController.terminalGuid isEqualToString:windowID];
     }];
 }
-- (PTYTab *)tabWithID:(NSString *)tabID {
-    if (tabID.length == 0) {
-        return nil;
-    }
-    NSCharacterSet *nonNumericCharacterSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-    if ([tabID rangeOfCharacterFromSet:nonNumericCharacterSet].location != NSNotFound) {
-        return nil;
-    }
 
-    int numericID = tabID.intValue;
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        for (PTYTab *tab in term.tabs) {
-            if (tab.uniqueId == numericID) {
-                return tab;
-            }
-        }
-    }
-    return nil;
+- (PTYTab *)tabWithID:(NSString *)tabID {
+    return [[iTermController sharedInstance] tabWithID:tabID];
 }
 
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
@@ -3339,6 +3325,112 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
     }
+    completion(response);
+}
+
+- (void)apiServerInvokeFunctionRequest:(ITMInvokeFunctionRequest *)request handler:(void (^)(ITMInvokeFunctionResponse *))completion {
+
+    switch (request.contextOneOfCase) {
+        case ITMInvokeFunctionRequest_Context_OneOfCase_App:
+            [self invokeFunction:request.invocation inAppContextWithCompletion:completion timeout:request.timeout];
+            return;
+        case ITMInvokeFunctionRequest_Context_OneOfCase_Tab:
+            [self invokeFunction:request.invocation inTabWithID:request.tab.tabId completion:completion timeout:request.timeout];
+            return;
+        case ITMInvokeFunctionRequest_Context_OneOfCase_Window:
+            [self invokeFunction:request.invocation inWindowWithID:request.window.windowId completion:completion timeout:request.timeout];
+            return;
+        case ITMInvokeFunctionRequest_Context_OneOfCase_Session:
+            [self invokeFunction:request.invocation inSessionWithID:request.session.sessionId completion:completion timeout:request.timeout];
+            return;
+
+        case ITMInvokeFunctionRequest_Context_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+
+    ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+    response.error.status = ITMInvokeFunctionResponse_Status_RequestMalformed;
+    response.error.errorReason = @"Invalid context";
+    completion(response);
+}
+
+- (void)invokeFunction:(NSString *)invocation inAppContextWithCompletion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+    [iTermScriptFunctionCall callFunction:invocation
+                                  timeout:timeout >= 0 ? timeout : 30
+                                    scope:[iTermVariableScope globalsScope]
+                               completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                   [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
+                               }];
+}
+
+- (void)invokeFunction:(NSString *)invocation inTabWithID:(NSString *)tabId completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+    PTYTab *tab = [self tabWithID:tabId];
+    if (!tab) {
+        ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+        response.error.status = ITMInvokeFunctionResponse_Status_InvalidId;
+        response.error.errorReason = @"No such tab";
+        completion(response);
+        return;
+    }
+    [iTermScriptFunctionCall callFunction:invocation
+                                  timeout:timeout >= 0 ? timeout : 30
+                                    scope:tab.variablesScope
+                               completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                   [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
+                               }];
+}
+
+- (void)invokeFunction:(NSString *)invocation inWindowWithID:(NSString *)windowId completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+    PseudoTerminal *term = [self windowControllerWithID:windowId];
+    if (!term) {
+        ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+        response.error.status = ITMInvokeFunctionResponse_Status_InvalidId;
+        response.error.errorReason = @"No such window";
+        completion(response);
+        return;
+    }
+    [iTermScriptFunctionCall callFunction:invocation
+                                  timeout:timeout >= 0 ? timeout : 30
+                                    scope:term.scope
+                               completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                   [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
+                               }];
+}
+
+- (void)invokeFunction:(NSString *)invocation inSessionWithID:(NSString *)sessionId completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+    PTYSession *session = [self sessionForAPIIdentifier:sessionId includeBuriedSessions:YES];
+    if (!session) {
+        ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+        response.error.status = ITMInvokeFunctionResponse_Status_InvalidId;
+        response.error.errorReason = @"No such session";
+        completion(response);
+        return;
+    }
+    [iTermScriptFunctionCall callFunction:invocation
+                                  timeout:timeout >= 0 ? timeout : 30
+                                    scope:session.variablesScope
+                               completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                   [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
+                               }];
+}
+
+- (void)functionInvocationDidCompleteWithObject:(id)object
+                                          error:(NSError *)error
+                                     completion:(void (^)(ITMInvokeFunctionResponse *))completion {
+    ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+    if (error) {
+        if ([error.domain isEqualToString:@"com.iterm2.call"] && error.code == 2) {
+            response.error.status = ITMRPCRegistrationRequest_FieldNumber_Timeout;
+        } else {
+            response.error.status = ITMInvokeFunctionResponse_Status_Failed;
+            response.error.errorReason = error.localizedDescription;
+        }
+        completion(response);
+        return;
+    }
+
+    NSString *json = [NSJSONSerialization it_jsonStringForObject:object];
+    response.success.jsonResult = json;
     completion(response);
 }
 

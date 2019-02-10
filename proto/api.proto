@@ -47,6 +47,7 @@ message ClientOriginatedMessage {
     StatusBarComponentRequest status_bar_component_request = 129;
     SetBroadcastDomainsRequest set_broadcast_domains_request = 130;
     CloseRequest close_request = 131;
+    InvokeFunctionRequest invoke_function_request = 132;
   }
 }
 
@@ -91,9 +92,52 @@ message ServerOriginatedMessage {
     StatusBarComponentResponse status_bar_component_response = 129;
     SetBroadcastDomainsResponse set_broadcast_domains_response = 130;
     CloseResponse close_response = 131;
+    InvokeFunctionResponse invoke_function_response = 132;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
+  }
+}
+
+message InvokeFunctionRequest {
+  message Tab {
+    optional string tab_id = 1;
+  }
+  message Session {
+    optional string session_id = 1;
+  }
+  message Window {
+    optional string window_id = 1;
+  }
+  message App {
+  }
+  oneof context {
+    Tab tab = 1;
+    Session session = 2;
+    Window window = 3;
+    App app = 4;
+  }
+  optional string invocation = 5;
+  optional double timeout = 6 [default=-1];  // If not given a reasonable default value will be used. Negative value means to use the default.
+}
+
+message InvokeFunctionResponse {
+  enum Status {
+    TIMEOUT = 1;
+    FAILED = 2;
+    REQUEST_MALFORMED = 3;
+    INVALID_ID = 4;
+  }
+  message Error {
+    optional Status status = 1;
+    optional string error_reason = 2;
+  }
+  message Success {
+    optional string json_result = 1;
+  }
+  oneof disposition {
+    Error error = 1;
+    Success success = 2;
   }
 }
 

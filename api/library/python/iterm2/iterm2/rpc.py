@@ -595,6 +595,21 @@ async def async_close(connection, sessions=None, tabs=None, windows=None, force=
     return await _async_call(connection, request)
 
 
+async def async_invoke_function(connection, invocation, session_id=None, tab_id=None, window_id=None, timeout=-1):
+    request = _alloc_request()
+    request.invoke_function_request.SetInParent()
+    request.invoke_function_request.invocation = invocation
+    if session_id:
+        request.invoke_function_request.session.session_id = session_id
+    elif tab_id:
+        request.invoke_function_request.tab.tab_id = tab_id
+    elif window_id:
+        request.invoke_function_request.window.window_id = window_id
+    else:
+        request.invoke_function_request.app.SetInParent()
+    request.invoke_function_request.timeout = timeout
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

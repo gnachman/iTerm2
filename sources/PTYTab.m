@@ -7,6 +7,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermFlexibleView.h"
+#import "iTermMoveTabToWindowBuiltInFunction.h"
 #import "iTermNotificationController.h"
 #import "iTermPowerManager.h"
 #import "iTermPreferences.h"
@@ -272,6 +273,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self _recursiveRegisterSessionsInArrangement:arrangement[TAB_ARRANGEMENT_ROOT]];
 }
 
++ (void)registerBuiltInFunctions {
+    [iTermMoveTabToWindowBuiltInFunction registerBuiltInFunction];
+}
+
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark {
     NSFont *font;
     double hspace;
@@ -379,6 +384,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                        owner:self];
     [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
     [self.variablesScope setValue:[iTermVariables globalInstance] forVariableNamed:iTermVariableKeyGlobalScopeName];
+    [self.variablesScope setValue:[@(self.uniqueId) stringValue] forVariableNamed:iTermVariableKeyTabID];
 
     self.tmuxWindow = -1;
     _sessionsWithDeferredFontChanges = [[NSMutableArray alloc] init];

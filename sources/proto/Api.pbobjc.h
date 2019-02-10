@@ -67,6 +67,14 @@ CF_EXTERN_C_BEGIN
 @class ITMGetPropertyResponse;
 @class ITMInjectRequest;
 @class ITMInjectResponse;
+@class ITMInvokeFunctionRequest;
+@class ITMInvokeFunctionRequest_App;
+@class ITMInvokeFunctionRequest_Session;
+@class ITMInvokeFunctionRequest_Tab;
+@class ITMInvokeFunctionRequest_Window;
+@class ITMInvokeFunctionResponse;
+@class ITMInvokeFunctionResponse_Error;
+@class ITMInvokeFunctionResponse_Success;
 @class ITMKeystrokeFilterRequest;
 @class ITMKeystrokeMonitorRequest;
 @class ITMKeystrokeNotification;
@@ -263,6 +271,24 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMVariableScope_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMInvokeFunctionResponse_Status
+
+typedef GPB_ENUM(ITMInvokeFunctionResponse_Status) {
+  ITMInvokeFunctionResponse_Status_Ok = 0,
+  ITMInvokeFunctionResponse_Status_Timeout = 1,
+  ITMInvokeFunctionResponse_Status_Failed = 2,
+  ITMInvokeFunctionResponse_Status_RequestMalformed = 3,
+  ITMInvokeFunctionResponse_Status_InvalidId = 4,
+};
+
+GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMInvokeFunctionResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMCloseResponse_Status
 
@@ -946,6 +972,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_StatusBarComponentRequest = 129,
   ITMClientOriginatedMessage_FieldNumber_SetBroadcastDomainsRequest = 130,
   ITMClientOriginatedMessage_FieldNumber_CloseRequest = 131,
+  ITMClientOriginatedMessage_FieldNumber_InvokeFunctionRequest = 132,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -982,6 +1009,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_StatusBarComponentRequest = 129,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsRequest = 130,
   ITMClientOriginatedMessage_Submessage_OneOfCase_CloseRequest = 131,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_InvokeFunctionRequest = 132,
 };
 
 /**
@@ -1059,6 +1087,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMCloseRequest *closeRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest *invokeFunctionRequest;
+
 @end
 
 /**
@@ -1103,6 +1133,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_StatusBarComponentResponse = 129,
   ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_FieldNumber_CloseResponse = 131,
+  ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1141,6 +1172,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_StatusBarComponentResponse = 129,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_Submessage_OneOfCase_CloseResponse = 131,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1223,6 +1255,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMCloseResponse *closeResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionResponse *invokeFunctionResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -1232,6 +1266,160 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMInvokeFunctionRequest
+
+typedef GPB_ENUM(ITMInvokeFunctionRequest_FieldNumber) {
+  ITMInvokeFunctionRequest_FieldNumber_Tab = 1,
+  ITMInvokeFunctionRequest_FieldNumber_Session = 2,
+  ITMInvokeFunctionRequest_FieldNumber_Window = 3,
+  ITMInvokeFunctionRequest_FieldNumber_App = 4,
+  ITMInvokeFunctionRequest_FieldNumber_Invocation = 5,
+  ITMInvokeFunctionRequest_FieldNumber_Timeout = 6,
+};
+
+typedef GPB_ENUM(ITMInvokeFunctionRequest_Context_OneOfCase) {
+  ITMInvokeFunctionRequest_Context_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMInvokeFunctionRequest_Context_OneOfCase_Tab = 1,
+  ITMInvokeFunctionRequest_Context_OneOfCase_Session = 2,
+  ITMInvokeFunctionRequest_Context_OneOfCase_Window = 3,
+  ITMInvokeFunctionRequest_Context_OneOfCase_App = 4,
+};
+
+@interface ITMInvokeFunctionRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMInvokeFunctionRequest_Context_OneOfCase contextOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Tab *tab;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Session *session;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Window *window;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_App *app;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *invocation;
+/** Test to see if @c invocation has been set. */
+@property(nonatomic, readwrite) BOOL hasInvocation;
+
+/** If not given a reasonable default value will be used. Negative value means to use the default. */
+@property(nonatomic, readwrite) double timeout;
+
+@property(nonatomic, readwrite) BOOL hasTimeout;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'context'.
+ **/
+void ITMInvokeFunctionRequest_ClearContextOneOfCase(ITMInvokeFunctionRequest *message);
+
+#pragma mark - ITMInvokeFunctionRequest_Tab
+
+typedef GPB_ENUM(ITMInvokeFunctionRequest_Tab_FieldNumber) {
+  ITMInvokeFunctionRequest_Tab_FieldNumber_TabId = 1,
+};
+
+@interface ITMInvokeFunctionRequest_Tab : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Session
+
+typedef GPB_ENUM(ITMInvokeFunctionRequest_Session_FieldNumber) {
+  ITMInvokeFunctionRequest_Session_FieldNumber_SessionId = 1,
+};
+
+@interface ITMInvokeFunctionRequest_Session : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Window
+
+typedef GPB_ENUM(ITMInvokeFunctionRequest_Window_FieldNumber) {
+  ITMInvokeFunctionRequest_Window_FieldNumber_WindowId = 1,
+};
+
+@interface ITMInvokeFunctionRequest_Window : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_App
+
+@interface ITMInvokeFunctionRequest_App : GPBMessage
+
+@end
+
+#pragma mark - ITMInvokeFunctionResponse
+
+typedef GPB_ENUM(ITMInvokeFunctionResponse_FieldNumber) {
+  ITMInvokeFunctionResponse_FieldNumber_Error = 1,
+  ITMInvokeFunctionResponse_FieldNumber_Success = 2,
+};
+
+typedef GPB_ENUM(ITMInvokeFunctionResponse_Disposition_OneOfCase) {
+  ITMInvokeFunctionResponse_Disposition_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMInvokeFunctionResponse_Disposition_OneOfCase_Error = 1,
+  ITMInvokeFunctionResponse_Disposition_OneOfCase_Success = 2,
+};
+
+@interface ITMInvokeFunctionResponse : GPBMessage
+
+@property(nonatomic, readonly) ITMInvokeFunctionResponse_Disposition_OneOfCase dispositionOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionResponse_Error *error;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionResponse_Success *success;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'disposition'.
+ **/
+void ITMInvokeFunctionResponse_ClearDispositionOneOfCase(ITMInvokeFunctionResponse *message);
+
+#pragma mark - ITMInvokeFunctionResponse_Error
+
+typedef GPB_ENUM(ITMInvokeFunctionResponse_Error_FieldNumber) {
+  ITMInvokeFunctionResponse_Error_FieldNumber_Status = 1,
+  ITMInvokeFunctionResponse_Error_FieldNumber_ErrorReason = 2,
+};
+
+@interface ITMInvokeFunctionResponse_Error : GPBMessage
+
+@property(nonatomic, readwrite) ITMInvokeFunctionResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *errorReason;
+/** Test to see if @c errorReason has been set. */
+@property(nonatomic, readwrite) BOOL hasErrorReason;
+
+@end
+
+#pragma mark - ITMInvokeFunctionResponse_Success
+
+typedef GPB_ENUM(ITMInvokeFunctionResponse_Success_FieldNumber) {
+  ITMInvokeFunctionResponse_Success_FieldNumber_JsonResult = 1,
+};
+
+@interface ITMInvokeFunctionResponse_Success : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonResult;
+/** Test to see if @c jsonResult has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonResult;
+
+@end
 
 #pragma mark - ITMCloseRequest
 

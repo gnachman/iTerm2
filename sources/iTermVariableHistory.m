@@ -84,6 +84,8 @@
     // Tab context
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindow inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabID inContext:iTermVariablesSuggestionContextTab];
+
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyGlobalScopeName
                                     inContext:iTermVariablesSuggestionContextTab
                              leadingToContext:iTermVariablesSuggestionContextApp];

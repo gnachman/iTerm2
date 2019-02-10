@@ -875,6 +875,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleInvokeFunctionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerInvokeFunctionRequest:request.invokeFunctionRequest handler:^(ITMInvokeFunctionResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
+        response.invokeFunctionResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
@@ -1020,6 +1033,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_CloseRequest:
             [self handleCloseRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_InvokeFunctionRequest:
+            [self handleInvokeFunctionRequest:request connection:webSocketConnection];
             break;
     }
 }

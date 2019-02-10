@@ -8666,22 +8666,27 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Move a tab to a new window due to a context menu selection.
-- (void)moveTabToNewWindowContextualMenuAction:(id)sender
-{
-    NSWindowController<iTermWindowController> *term;
+- (void)moveTabToNewWindowContextualMenuAction:(id)sender {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
+    [self moveTabToNewWindow:aTab];
+}
 
+- (PseudoTerminal *)moveTabToNewWindow:(PTYTab *)aTab {
     if (aTab == nil) {
-        return;
+        return nil;
     }
-
+    if (self.tabs.count < 2) {
+        return nil;
+    }
+    NSAssert([self.tabs containsObject:aTab], @"Called on wrong window");
+    NSTabViewItem *aTabViewItem = aTab.tabViewItem;
     NSPoint point = [[self window] frame].origin;
     point.x += 10;
     point.y += 10;
-    term = [self terminalDraggedFromAnotherWindowAtPoint:point];
+    NSWindowController<iTermWindowController> *term = [self terminalDraggedFromAnotherWindowAtPoint:point];
     if (term == nil) {
-        return;
+        return nil;
     }
 
     // temporarily retain the tabViewItem
@@ -8697,6 +8702,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // release the tabViewItem
     [aTabViewItem release];
+
+    return [PseudoTerminal castFrom:term];
 }
 
 // Change the tab color to the selected menu color
