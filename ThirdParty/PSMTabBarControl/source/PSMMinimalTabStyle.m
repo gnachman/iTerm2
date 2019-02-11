@@ -72,9 +72,10 @@
         value = MAX(0, backgroundBrightness - delta);
     }
     DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
-    // TODO: Make sure this looks good on 10.13.
     CGFloat alpha = 1;
-    if (!windowIsKey) {
+    if (windowIsKey) {
+        alpha = 0.75;
+    } else {
         alpha = 0.5;
     }
     return [NSColor colorWithWhite:value alpha:alpha];

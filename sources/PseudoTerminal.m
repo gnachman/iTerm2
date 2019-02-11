@@ -7567,10 +7567,16 @@ ITERM_WEAKLY_REFERENCEABLE
         return [_contentView.tabBarControl.style textColorForCell:_contentView.tabBarControl.cells.firstObject];
     }
     
-    // The window number will be displayed over the tabbar color.
-    return [_contentView.tabBarControl.style textColorDefaultSelected:YES
-                                                      backgroundColor:nil
-                                                          windowIsKey:(self.window.isKeyWindow && NSApp.isActive)];
+    // The window number will be displayed over the tabbar color. For non-key windows, use the
+    // non-selected tab text color because that more closely matches the titlebar color.
+    const BOOL windowIsKey = (self.window.isKeyWindow && NSApp.isActive);
+    NSColor *color = [_contentView.tabBarControl.style textColorDefaultSelected:windowIsKey
+                                                                backgroundColor:nil
+                                                                    windowIsKey:windowIsKey];
+    if (windowIsKey) {
+        return [color colorWithAlphaComponent:0.65];
+    }
+    return color;
 }
 
 - (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
