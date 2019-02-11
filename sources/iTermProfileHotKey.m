@@ -77,6 +77,14 @@ static NSString *const kArrangement = @"Arrangement";
                                                      name:iTermApplicationCharacterPaletteDidClose
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(inputMethodEditorDidOpen:)
+                                                     name:iTermApplicationInputMethodEditorDidOpen
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(inputMethodEditorDidClose:)
+                                                     name:iTermApplicationInputMethodEditorDidClose
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updateWindowLevel)
                                                      name:iTermApplicationWillShowModalWindow
                                                    object:nil];
@@ -171,7 +179,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (NSWindowLevel)floatingLevel {
     iTermApplication *app = [iTermApplication sharedApplication];
-    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen) {
+    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen) {
         return NSFloatingWindowLevel;
     } else {
         return NSStatusWindowLevel;
@@ -882,6 +890,14 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)characterPanelDidClose:(NSNotification *)notification {
+    [self updateWindowLevel];
+}
+
+- (void)inputMethodEditorDidOpen:(NSNotification *)notification {
+    [self updateWindowLevel];
+}
+
+- (void)inputMethodEditorDidClose:(NSNotification *)notification {
     [self updateWindowLevel];
 }
 

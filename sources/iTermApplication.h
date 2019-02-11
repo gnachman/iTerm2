@@ -37,6 +37,8 @@ extern unsigned short iTermBogusVirtualKeyCode;
 // Notifications posted when the character panel opens/closes. A pile of hacks.
 extern NSString *const iTermApplicationCharacterPaletteWillOpen;
 extern NSString *const iTermApplicationCharacterPaletteDidClose;
+extern NSString *const iTermApplicationInputMethodEditorDidOpen;
+extern NSString *const iTermApplicationInputMethodEditorDidClose;
 
 extern NSString *const iTermApplicationWillShowModalWindow;
 extern NSString *const iTermApplicationDidCloseModalWindow;
@@ -62,6 +64,7 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 @property(nonatomic) BOOL localAuthenticationDialogOpen;
 @property(nonatomic) BOOL it_characterPanelIsOpen;
 @property(nonatomic, readonly) BOOL it_modalWindowOpen;
+@property(nonatomic, readonly) BOOL it_imeOpen;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;

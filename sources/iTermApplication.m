@@ -52,6 +52,9 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
 NSString *const iTermApplicationCharacterPaletteWillOpen = @"iTermApplicationCharacterPaletteWillOpen";
 NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCharacterPaletteDidClose";
 
+NSString *const iTermApplicationInputMethodEditorDidOpen = @"iTermApplicationInputMethodEditorDidOpen";
+NSString *const iTermApplicationInputMethodEditorDidClose = @"iTermApplicationInputMethodEditorDidClose";
+
 NSString *const iTermApplicationWillShowModalWindow = @"iTermApplicationWillShowModalWindow";
 NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidCloseModalWindow";
 
@@ -82,25 +85,57 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                             forKeyPath:@"modalWindow"
                                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
                                context:(void *)iTermApplicationKVOKey];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_windowDidOrderOnScreen:)
+                                                     name:@"NSWindowDidOrderOnScreenAndFinishAnimatingNotification"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_windowDidOrderOffScreen:)
+                                                     name:@"NSWindowDidOrderOffScreenAndFinishAnimatingNotification"
+                                                   object:nil];
+
     });
     return sharedApplication;
 }
 
+// Giant pile of private API hacks for issue 7521.
+- (void)it_windowDidOrderOnScreen:(NSNotification *)notification {
+    NSObject *object = notification.object;
+    if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
+        _it_imeOpen = YES;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationInputMethodEditorDidOpen object:nil];
+    }
+}
+
+- (void)it_windowDidOrderOffScreen:(NSNotification *)notification {
+    NSObject *object = notification.object;
+    if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
+        _it_imeOpen = NO;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationInputMethodEditorDidClose object:nil];
+    }
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (context == iTermApplicationKVOKey &&
-        [keyPath isEqualToString:@"modalWindow"]) {
-        change = [change dictionaryByRemovingNullValues];
-        if (change[NSKeyValueChangeOldKey] == nil &&
-            change[NSKeyValueChangeNewKey] != nil) {
-            _it_modalWindowOpen = YES;
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];
-        } else if (change[NSKeyValueChangeOldKey] != nil &&
-                   change[NSKeyValueChangeNewKey] == nil) {
-            _it_modalWindowOpen = NO;
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationDidCloseModalWindow object:nil];
-        }
-    } else {
+    if (context != iTermApplicationKVOKey) {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+    if ([keyPath isEqualToString:@"modalWindow"]) {
+        NSDictionary *dict = [change dictionaryByRemovingNullValues];
+        [self it_modalWindowDidChangeFrom:dict[NSKeyValueChangeOldKey] to:dict[NSKeyValueChangeNewKey]];
+        return;
+    }
+}
+
+- (void)it_modalWindowDidChangeFrom:(NSWindow *)oldValue to:(NSWindow *)newValue {
+    if (oldValue == nil && newValue != nil) {
+        _it_modalWindowOpen = YES;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];
+        return;
+    }
+    if (oldValue != nil && newValue == nil) {
+        _it_modalWindowOpen = NO;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationDidCloseModalWindow object:nil];
     }
 }
 
