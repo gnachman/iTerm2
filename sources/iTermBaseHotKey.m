@@ -182,6 +182,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSTimeInterval kMaxTimeBetweenTaps = [iTermAdvancedSettingsModel hotKeyDoubleTapMaxDelay];
     const NSTimeInterval kMinTimeBetweenTabs = [iTermAdvancedSettingsModel hotKeyDoubleTapMinDelay];
     const NSTimeInterval elapsedTime = time - _lastModifierTapTime;
+    DLog(@"min=%@ max=%@", @(kMinTimeBetweenTabs), @(kMaxTimeBetweenTaps));
     BOOL result = (kMinTimeBetweenTabs <= elapsedTime && elapsedTime < kMaxTimeBetweenTaps);
     _lastModifierTapTime = time;
     return result;
@@ -189,6 +190,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)handleActivationModifierPress {
     if ([self activationModifierPressIsDoubleTap]) {
+        DLog(@"Was a double tap. Finding siblings.");
         NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
             if (![anObject.weaklyReferencedObject isKindOfClass:[self class]]) {
                 return nil;
@@ -200,15 +202,18 @@ ITERM_WEAKLY_REFERENCEABLE
                 return nil;
             }
         }];
+        DLog(@"Notify siblings: %@", siblings);
         [self hotKeyPressedWithSiblings:siblings];
     }
 }
 
 - (BOOL)activationModifierPressedInFlags:(CGEventFlags)flags {
     if (!self.hasModifierActivation) {
+        DLog(@"Don't have modifier activation");
         return NO;
     }
     CGEventFlags maskedFlags = (flags & kCGEventHotKeyModifierMask);
+    DLog(@"Masked flags are %@ while modifierActivation is %@", @(maskedFlags), @(self.modifierActivation));
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:
@@ -268,15 +273,20 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (type == kCGEventFlagsChanged) {
+        DLog(@"This is a flags-changed event");
         CGEventFlags flags = CGEventGetFlags(event);
+        DLog(@"flags are %@", @(flags));
         BOOL modifierIsPressed = [self activationModifierPressedInFlags:flags];
         if (!_modifierWasPressed && modifierIsPressed) {
+            DLog(@"Looks like a press of the right modifier key to me");
             [self handleActivationModifierPress];
         } else if (_modifierWasPressed && (flags & kCGEventHotKeyModifierMask)) {
+            DLog(@"Not a press of the right modifier. Cancel double tap");
             [self cancelDoubleTap];
         }
         _modifierWasPressed = modifierIsPressed;
     } else {
+        DLog(@"Not a flags-changed event. Cancel double tap.");
         [self cancelDoubleTap];
     }
 }

@@ -115,7 +115,6 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 - (CGEventRef)eventTapCallbackWithProxy:(CGEventTapProxy)proxy
                                    type:(CGEventType)type
                                   event:(CGEventRef)event {
-    DLog(@"Event tap running");
     if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
         DLog(@"Event tap disabled (type is %@)", @(type));
         if ([self isEnabled]) {
@@ -136,7 +135,9 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
         return event;
     }
 
+    DLog(@"Event tap %@ handling event %@", self, [NSEvent eventWithCGEvent:event]);
     event = [self.remappingDelegate remappedEventFromEventTappedWithType:type event:event];
+    DLog(@"Remapped event is %@", [NSEvent eventWithCGEvent:event]);
 
     DLog(@"Notifying observers");
     [self postEventToObservers:event type:type];
@@ -145,9 +146,12 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 }
 
 - (void)postEventToObservers:(CGEventRef)event type:(CGEventType)type {
+    DLog(@"Post event tap event to observers");
     for (id<iTermEventTapObserver> observer in self.observers) {
+        DLog(@"Send to observer %@", observer);
         [observer eventTappedWithType:type event:event];
     }
+    DLog(@"Done posting to observers");
     [self pruneReleasedObservers];
 }
 
@@ -281,6 +285,7 @@ error:
 #pragma mark - iTermEventTapRemappingDelegate
 
 - (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+    DLog(@"Flags changed event tap remapper running (does nothing)");
     return event;
 }
 
