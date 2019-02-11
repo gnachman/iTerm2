@@ -243,7 +243,9 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
 - (void)makeDatabaseReadableOnlyByUser {
     NSString *basePath = [self pathForFileNamed:nil];
-    for (NSString *filename in [[NSFileManager defaultManager] enumeratorAtPath:basePath]) {
+    NSDirectoryEnumerator<NSString *> *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:basePath];
+    [enumerator skipDescendants];
+    for (NSString *filename in enumerator) {
         if (![filename hasPrefix:self.databaseFilenamePrefix]) {
             DLog(@"Skip setting permissions on file %@ that isn't part of the shell history db", filename);
             continue;
