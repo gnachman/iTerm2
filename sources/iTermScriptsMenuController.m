@@ -303,17 +303,22 @@ NS_ASSUME_NONNULL_BEGIN
                                               return;
                                           }
                                           [self importDidFinishWithErrorMessage:errorMessage
-                                                                       location:location];
+                                                                       location:location
+                                                                    originalURL:url];
                                       });
                                   }];
 }
 
-- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage location:(NSURL *)location {
+- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage location:(NSURL *)location originalURL:(NSURL *)url {
     if (errorMessage) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Could Not Install Script";
         alert.informativeText = errorMessage;
-        [alert runModal];
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Try Again"];
+        if ([alert runModal] ==  NSAlertSecondButtonReturn) {
+            [self importFromURL:url];
+        }
     } else {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Script Imported Successfully";
@@ -424,9 +429,23 @@ NS_ASSUME_NONNULL_BEGIN
         } else {
             [self showAlertForScript:fullPath error:errorInfo];
         }
-    } else {
-        [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
+        return;
     }
+    if ([[NSFileManager defaultManager] itemIsDirectory:fullPath]) {
+        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The script “%@” is malformed.", fullPath.lastPathComponent]
+                                                                     actions:@[ @"OK", @"Reveal" ]
+                                                                   accessory:nil
+                                                                  identifier:@"NoSyncScriptMalformed"
+                                                                 silenceable:kiTermWarningTypeTemporarilySilenceable
+                                                                     heading:@"Cannot Run Script"
+                                                                      window:nil];
+        if (selection == kiTermWarningSelection1) {
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
+            return;
+        }
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
 }
 
 // NOTE: This logic needs to be kept in sync with -launchScriptWithAbsolutePath

@@ -570,7 +570,8 @@ static BOOL hasBecomeActive = NO;
                                               return;
                                           }
                                           [self->_scriptsMenuController importDidFinishWithErrorMessage:errorMessage
-                                                                                               location:location];
+                                                                                               location:location
+                                                                                            originalURL:[NSURL fileURLWithPath:filename]];
                                       }];
         return YES;
     }
