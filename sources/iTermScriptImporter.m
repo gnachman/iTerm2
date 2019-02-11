@@ -10,6 +10,7 @@
 #import "iTermBuildingScriptWindowController.h"
 #import "iTermCommandRunner.h"
 #import "iTermScriptArchive.h"
+#import "iTermScriptHistory.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSWorkspace+iTerm.h"
@@ -76,15 +77,15 @@ static BOOL sInstallingScript;
                                   sInstallingScript = NO;
                                   return;
                               }
-                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:^(NSString *errorMessage, NSURL *location) {
+                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                                   sInstallingScript = NO;
                                   if (reveal) {
-                                      completion(errorMessage, errorMessage == nil, nil);
+                                      completion(errorMessage, errorMessage == nil || quiet, nil);
                                       return;
                                   }
                                   [self eraseTempDir:tempDir];
                                   [pleaseWait.window close];
-                                  completion(errorMessage, NO, location);
+                                  completion(errorMessage, quiet, location);
                               }];
                           }];
     }];
@@ -200,27 +201,38 @@ static BOOL sInstallingScript;
 + (void)didUnzipSuccessfullyTo:(NSString *)tempDir
                        trusted:(BOOL)trusted
                         reveal:(BOOL)reveal
-                withCompletion:(void (^)(NSString *errorMessage, NSURL *location))completion {
+                withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     if (reveal) {
         [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:tempDir]];
-        completion(nil, nil);
+        completion(nil, NO, nil);
         return;
     }
 
     iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir];
     if (!archive) {
-        completion(@"Archive does not contain a valid iTerm2 script", nil);
+        completion(@"Archive does not contain a valid iTerm2 script", NO, nil);
         return;
     }
 
     if ([self haveScriptNamed:archive.name]) {
-        completion([NSString stringWithFormat:@"A script named “%@” is already installed", archive.name],
-                   nil);
+        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]
+                                                                     actions:@[ @"Replace Script", @"Cancel" ]
+                                                                   accessory:nil
+                                                                  identifier:nil
+                                                                 silenceable:kiTermWarningTypePersistent
+                                                                     heading:@"Script Already Exists"
+                                                                      window:nil];
+        if (selection == kiTermWarningSelection0) {
+            [self removeScriptNamed:archive.name];
+            [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:completion];
+            return;
+        }
+        completion(nil, YES, nil);
         return;
     }
 
     [archive installTrusted:trusted withCompletion:^(NSError *error, NSURL *location) {
-        completion(error.localizedDescription, location);
+        completion(error.localizedDescription, NO, location);
     }];
 }
 
@@ -232,6 +244,16 @@ static BOOL sInstallingScript;
 + (BOOL)haveScriptNamed:(NSString *)name {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     return [fileManager fileExistsAtPath:[[fileManager scriptsPath] stringByAppendingPathComponent:name]];
+}
+
++ (void)removeScriptNamed:(NSString *)name {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *path = [[fileManager scriptsPath] stringByAppendingPathComponent:name];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithFullPath:path];
+    if (entry) {
+        [entry kill];
+    }
+    [fileManager removeItemAtPath:path error:nil];
 }
 
 @end
