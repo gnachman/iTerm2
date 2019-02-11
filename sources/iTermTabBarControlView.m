@@ -109,8 +109,10 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)setHidden:(BOOL)hidden {
-    if ([self.superview isKindOfClass:[NSVisualEffectView class]]) {
-        self.superview.hidden = hidden;
+    if (!hidden || [self.itermTabBarDelegate iTermTabBarShouldHideBacking]) {
+        if ([self.superview isKindOfClass:[NSVisualEffectView class]]) {
+            self.superview.hidden = hidden;
+        }
     }
     [super setHidden:hidden];
 }

@@ -8874,6 +8874,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return (windowType_ == WINDOW_TYPE_COMPACT);
 }
 
+- (BOOL)iTermTabBarShouldHideBacking {
+    if (@available(macOS 10.14, *)) {
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        return (preferredStyle != TAB_STYLE_MINIMAL);
+    }
+    return YES;
+}
+
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment {

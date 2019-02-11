@@ -1154,6 +1154,14 @@ typedef struct {
     return[ _delegate iTermTabBarCanDragWindow];
 }
 
+- (BOOL)iTermTabBarShouldHideBacking {
+    if (@available(macOS 10.14, *)) {
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        return (preferredStyle == TAB_STYLE_MINIMAL);
+    }
+    return YES;
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 // For the left-side tab bar.
