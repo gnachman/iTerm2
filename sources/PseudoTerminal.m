@@ -4244,7 +4244,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     [self.window setOpaque:NO];
     self.window.alphaValue = 0;
-    if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+    if (self.ptyWindow.isCompact) {
         [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
     } else {
         self.window.styleMask = [self styleMask];
@@ -4256,7 +4256,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)willExitTraditionalFullScreenMode {
     self.windowType = savedWindowType_;
-    if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+    if ([PseudoTerminal windowType:savedWindowType_ shouldBeCompactWithSavedWindowType:savedWindowType_]) {
         [self replaceWindowWithWindowOfType:savedWindowType_];
     } else {
         // NOTE: Setting the style mask causes the presentation options to be
