@@ -446,6 +446,8 @@ async def async_invoke_function(self, invocation: str, timeout: float=-1):
     """
     Invoke an RPC. Could be a registered function by this or another script of a built-in function.
 
+    This invokes the RPC in the global application context. Note that most user-defined RPCs expect to be invoked in the context of a session. Default variables will be pulled from that scope. If you call a function from the wrong context it may fail because its defaults will not be set properly.
+
     :param invocation: A function invocation string.
     :param timeout: Max number of secondsto wait. Negative values mean to use the system default timeout.
 
