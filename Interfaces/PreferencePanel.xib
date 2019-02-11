@@ -1428,6 +1428,7 @@ DQ
                 <outlet property="_sessionTab" destination="5652" id="ftz-NZ-QGG"/>
                 <outlet property="_sessionViewController" destination="TG6-06-mq9" id="jYA-Wb-aH4"/>
                 <outlet property="_tabView" destination="2100" id="sRa-Z0-Ngh"/>
+                <outlet property="_tabViewWrapperView" destination="P2y-de-Vwq" id="E9e-zd-w4Q"/>
                 <outlet property="_terminalTab" destination="2107" id="peE-0g-nN2"/>
                 <outlet property="_terminalViewController" destination="gMD-DK-gev" id="Gzm-8d-1w7"/>
                 <outlet property="_textTab" destination="4763" id="LM3-ed-Kwk"/>

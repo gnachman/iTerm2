@@ -14,6 +14,7 @@
 #import "iTermFlippedView.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfilePreferencesTabViewWrapperView.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
@@ -64,6 +65,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     // Tab view for profiles (general/colors/text/window/terminal/session/keys/advanced)
     IBOutlet NSTabView *_tabView;
+    IBOutlet iTermProfilePreferencesTabViewWrapperView *_tabViewWrapperView;
 
     // Minus under table view to delete the selected profile.
     IBOutlet NSButton *_removeProfileButton;
@@ -246,13 +248,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
     [_keysViewController layoutSubviewsForEditCurrentSessionMode];
-    NSRect newFrame = _tabView.superview.bounds;
+    NSRect newFrame = _tabViewWrapperView.superview.bounds;
     newFrame.size.width -= 13;
 
     newFrame.size.height -= kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
     newFrame.origin.y += kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
 
-    _tabView.frame = newFrame;
+    _tabViewWrapperView.frame = newFrame;
 }
 
 - (void)selectGuid:(NSString *)guid {
