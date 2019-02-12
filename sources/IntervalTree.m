@@ -227,7 +227,6 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (NSDictionary *)dictionaryValue {
-    assert(_location + _length >= 0);
     return @{ kIntervalLocationKey: @(_location),
               kIntervalLengthKey: @(_length) };
 }
