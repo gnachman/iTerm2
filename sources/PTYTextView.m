@@ -939,9 +939,6 @@ static const int kDragThreshold = 3;
         [self scrollEnd];
     }
 
-    // Update accessibility.
-    [self refreshAccessibility];
-
     if ([[self subviews] count]) {
         // TODO: Why update notes not in this textview?
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYNoteViewControllerShouldUpdatePosition
@@ -956,7 +953,15 @@ static const int kDragThreshold = 3;
 
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.
-    return [self updateDirtyRects] || [self isCursorBlinking];
+    BOOL foundDirty = NO;
+    const BOOL foundBlink = [self updateDirtyRects:&foundDirty] || [self isCursorBlinking];
+
+    // Update accessibility.
+    if (foundDirty) {
+        [self refreshAccessibility];
+    }
+
+    return foundBlink;
 }
 
 - (void)setNeedsDisplayOnLine:(int)line
@@ -6340,7 +6345,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
 // [_dataSource dirty] correctly.
-- (BOOL)updateDirtyRects {
+- (BOOL)updateDirtyRects:(BOOL *)foundDirtyPtr {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
     assert([_dataSource scrollbackOverflow] == 0);
@@ -6458,6 +6463,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }];
     [_dataSource resetAnimatedLines];
 
+    if (foundDirtyPtr) {
+        *foundDirtyPtr = foundDirty;
+    }
     return _blinkAllowed && anythingIsBlinking;
 }
 
@@ -7001,83 +7009,125 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSInteger)accessibilityLineForIndex:(NSInteger)index {
-    return [_accessibilityHelper lineForIndex:index];
+    const NSInteger line = [_accessibilityHelper lineForIndex:index];
+    DLog(@"Line for index %@ is %@", @(index), @(line));
+    return line;
 }
 
 - (NSRange)accessibilityRangeForLine:(NSInteger)line {
-    return [_accessibilityHelper rangeForLine:line];
+    const NSRange range = [_accessibilityHelper rangeForLine:line];
+    DLog(@"Range for line %@ is %@", @(line), NSStringFromRange(range));
+    return range;
 }
 
 - (NSString *)accessibilityStringForRange:(NSRange)range {
-    return [_accessibilityHelper stringForRange:range];
+    NSString *const string = [_accessibilityHelper stringForRange:range];
+    DLog(@"string for range %@ is %@", NSStringFromRange(range), string);
+    return string;
 }
 
 - (NSRange)accessibilityRangeForPosition:(NSPoint)point {
-    return [_accessibilityHelper rangeForPosition:point];
+    const NSRange range = [_accessibilityHelper rangeForPosition:point];
+    DLog(@"Range for position %@ is %@", NSStringFromPoint(point), NSStringFromRange(range));
+    return range;
 }
 
 - (NSRange)accessibilityRangeForIndex:(NSInteger)index {
-    return [_accessibilityHelper rangeOfIndex:index];
+    const NSRange range = [_accessibilityHelper rangeOfIndex:index];
+    DLog(@"Range for index %@ is %@", @(index), NSStringFromRange(range));
+    return range;
 }
 
 - (NSRect)accessibilityFrameForRange:(NSRange)range {
-    return [_accessibilityHelper boundsForRange:range];
+    const NSRect frame = [_accessibilityHelper boundsForRange:range];
+    DLog(@"Frame for range %@ is %@", NSStringFromRange(range), NSStringFromRect(frame));
+    return frame;
 }
 
 - (NSAttributedString *)accessibilityAttributedStringForRange:(NSRange)range {
-    return [_accessibilityHelper attributedStringForRange:range];
+    NSAttributedString *string = [_accessibilityHelper attributedStringForRange:range];
+    DLog(@"Attributed string for range %@ is %@", NSStringFromRange(range), string);
+    return string;
 }
 
 - (NSAccessibilityRole)accessibilityRole {
-    return [_accessibilityHelper role];
+    const NSAccessibilityRole role = [_accessibilityHelper role];
+    DLog(@"accessibility role is %@", role);
+    return role;
 }
 
 - (NSString *)accessibilityRoleDescription {
-    return [_accessibilityHelper roleDescription];
+    NSString *const description = [_accessibilityHelper roleDescription];
+    DLog(@"Acccessibility description is %@", description);
+    return description;
 }
 
 - (NSString *)accessibilityHelp {
-    return [_accessibilityHelper help];
+    NSString *help = [_accessibilityHelper help];
+    DLog(@"accessibility help is %@", help);
+    return help;
 }
 
 - (BOOL)isAccessibilityFocused {
-    return [_accessibilityHelper focused];
+    const BOOL focused = [_accessibilityHelper focused];
+    DLog(@"focused is %@", @(focused));
+    return focused;
 }
 
 - (NSString *)accessibilityLabel {
-    return [_accessibilityHelper label];
+    NSString *const label = [_accessibilityHelper label];
+    DLog(@"label is %@", label);
+    return label;
 }
 
 - (id)accessibilityValue {
-    return [_accessibilityHelper allText];
+    id value = [_accessibilityHelper allText];
+    DLog(@"value is %@", value);
+    return value;
 }
 
 - (NSInteger)accessibilityNumberOfCharacters {
-    return [_accessibilityHelper numberOfCharacters];
+    const NSInteger number = [_accessibilityHelper numberOfCharacters];
+    DLog(@"Number of characters is %@", @(number));
+    return number;
 }
 
 - (NSString *)accessibilitySelectedText {
-    return [_accessibilityHelper selectedText];
+    NSString *selected = [_accessibilityHelper selectedText];
+    DLog(@"selected text is %@", selected);
+    return selected;
 }
 
 - (NSRange)accessibilitySelectedTextRange {
-    return [_accessibilityHelper selectedTextRange];
+    const NSRange range = [_accessibilityHelper selectedTextRange];
+    DLog(@"selected text range is %@", NSStringFromRange(range));
+    return range;
 }
 
 - (NSArray<NSValue *> *)accessibilitySelectedTextRanges {
-    return [_accessibilityHelper selectedTextRanges];
+    NSArray<NSValue *> *ranges = [_accessibilityHelper selectedTextRanges];
+    DLog(@"ranges are %@", [[ranges mapWithBlock:^id(NSValue *anObject) {
+        return NSStringFromRange([anObject rangeValue]);
+    }] componentsJoinedByString:@", "]);
+    return ranges;
 }
 
 - (NSInteger)accessibilityInsertionPointLineNumber {
-    return [_accessibilityHelper insertionPointLineNumber];
+    const NSInteger line = [_accessibilityHelper insertionPointLineNumber];
+    DLog(@"insertion point line number is %@", @(line));
+    return line;
 }
 
 - (NSRange)accessibilityVisibleCharacterRange {
-    return [_accessibilityHelper visibleCharacterRange];
+    const NSRange range = [_accessibilityHelper visibleCharacterRange];
+    DLog(@"visible range is %@", NSStringFromRange(range));
+    return range;
 }
 
 - (NSString *)accessibilityDocument {
-    return [[_accessibilityHelper currentDocumentURL] absoluteString];
+    NSString *const doc = [[_accessibilityHelper currentDocumentURL] absoluteString];
+    DLog(@"document is %@", doc);
+    return doc;
 }
 
 - (void)setAccessibilitySelectedTextRange:(NSRange)accessibilitySelectedTextRange {

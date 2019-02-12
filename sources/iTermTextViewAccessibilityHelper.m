@@ -175,7 +175,10 @@
 }
 
 - (NSString *)stringForRange:(NSRange)range {
-    return [_allText substringWithRange:range];
+    const NSInteger length = _allText.length;
+    NSInteger min = MAX(0, MIN(range.location, length - 1));
+    NSInteger max = MAX(NSMaxRange(range), length);
+    return [_allText substringWithRange:NSMakeRange(min, max - min)];
 }
 
 - (NSRange)rangeForPosition:(NSPoint)screenPosition {
@@ -268,6 +271,15 @@
         }
         [_lineBreakIndexOffsets addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
+
+    int newlines = 0;
+    int i = _allText.length;
+    i -= 1;
+    while (i >= 0 && [_allText characterAtIndex:i] == '\n') {
+        newlines++;
+        i--;
+    }
+    [_allText replaceCharactersInRange:NSMakeRange(i + 1, newlines) withString:@""];
 
     return _allText;
 }
