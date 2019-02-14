@@ -4947,6 +4947,13 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return NO;
     }
+    if ([PTYNoteViewController anyNoteVisible]) {
+        // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonAnnotations;
+        }
+        return NO;
+    }
 
     if (_textview.transparencyAlpha < 1) {
         if (@available(macOS 10.14, *)) {
@@ -4995,12 +5002,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!(hasSquareCorners || marginsOk)) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonMarginSize;
-            }
-            return NO;
-        }
-        if ([PTYNoteViewController anyNoteVisible]) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonAnnotations;
             }
             return NO;
         }
@@ -5631,6 +5632,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYNoteViewController *note in notes) {
         [note setNoteHidden:anyNoteIsVisible];
     }
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
