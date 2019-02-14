@@ -3812,11 +3812,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      onLine:_selection.lastRange.coordRange.start.y] != nil);
     }
     if ([item action]==@selector(showNotes:)) {
-        return _validationClickPoint.x >= 0 &&
-               [[_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
-                                                                  _validationClickPoint.y,
-                                                                  _validationClickPoint.x + 1,
-                                                                  _validationClickPoint.y)] count] > 0;
+        if (_validationClickPoint.x < 0) {
+            return NO;
+        }
+        for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
+                                                                                              _validationClickPoint.y,
+                                                                                              _validationClickPoint.x + 1,
+                                                                                              _validationClickPoint.y)]) {
+            if (note.isNoteHidden) {
+                return YES;
+            }
+        }
+        return NO;
     }
 
     // Image actions
@@ -3983,11 +3990,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
             return nil;
         }
+        NSPoint clickPoint = [self clickPoint:theEvent allowRightMarginOverflow:NO];
+        _validationClickPoint = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+        openingContextMenu_ = YES;
+
         NSMenu *menu = [self contextMenuWithEvent:theEvent];
         menu.delegate = self;
         return menu;
     } else {
         // Hamburger icon in session title view.
+        _validationClickPoint = VT100GridCoordMake(-1, -1);
         NSMenu *menu = [self titleBarMenu];
         self.savedSelectedText = [self selectedText];
         menu.delegate = self;
@@ -3996,6 +4008,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSMenu *)titleBarMenu {
+    _validationClickPoint = VT100GridCoordMake(-1, -1);
     return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
 }
 
@@ -4852,7 +4865,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
-    [theMenu addItemWithTitle:@"Show Note"
+    [theMenu addItemWithTitle:@"Reveal Annotation"
                        action:@selector(showNotes:)
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
