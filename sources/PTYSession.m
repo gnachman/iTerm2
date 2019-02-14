@@ -5858,6 +5858,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [note makeFirstResponder];
 }
 
+- (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
+    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange,
+                                                                     _screen.totalScrollbackOverflow);
+    if (range.start.x < 0) {
+        return;
+    }
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    [note setString:text];
+    [note sizeToFit];
+    [_screen addNote:note inRange:range];
+}
+
 - (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
         VT100GridCoordRangeMake(0,

@@ -705,6 +705,7 @@ typedef enum {
 - (void)setTmuxPane:(int)windowPane;
 
 - (void)addNoteAtCursor;
+- (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)range;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
 - (void)scrollToMark:(id<iTermMark>)mark;

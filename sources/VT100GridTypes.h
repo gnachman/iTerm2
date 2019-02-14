@@ -320,6 +320,20 @@ NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromVT100GridAbsWindowedR
     return result;
 }
 
+NS_INLINE VT100GridCoordRange VT100GridCoordRangeFromAbsCoordRange(VT100GridAbsCoordRange absRange, long long totalOverflow) {
+    const long long startY = absRange.start.y - totalOverflow;
+    const long long endY = absRange.end.y - totalOverflow;
+    if (endY < 0 || startY >= INT_MAX || endY >= INT_MAX) {
+        // Avoid integer underflow
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    }
+    return VT100GridCoordRangeMake(absRange.start.x,
+                                   (int)startY,
+                                   absRange.end.x,
+                                   (int)endY);
+}
+
+
 NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
     return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
 }

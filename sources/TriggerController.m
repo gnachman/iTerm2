@@ -8,6 +8,7 @@
 #import "TriggerController.h"
 
 #import "AlertTrigger.h"
+#import "AnnotateTrigger.h"
 #import "BellTrigger.h"
 #import "BounceTrigger.h"
 #import "CaptureTrigger.h"
@@ -103,6 +104,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 
 - (NSArray *)triggerClasses {
     NSArray *allClasses = @[ [AlertTrigger class],
+                             [AnnotateTrigger class],
                              [BellTrigger class],
                              [BounceTrigger class],
                              [iTermRPCTrigger class],
