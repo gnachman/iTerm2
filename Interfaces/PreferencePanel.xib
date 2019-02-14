@@ -510,15 +510,16 @@ Gw
                                                 <menu key="menu" title="OtherViews" id="3232">
                                                     <items>
                                                         <menuItem title="Other Actions..." state="on" image="NSActionTemplate" hidden="YES" id="3235"/>
-                                                        <menuItem title="Duplicate Profile" keyEquivalent="=" id="3233">
-                                                            <connections>
-                                                                <action selector="duplicateProfile:" target="HVI-63-mNz" id="lcS-Op-ONj"/>
-                                                            </connections>
-                                                        </menuItem>
                                                         <menuItem title="Set as Default" id="3318">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
                                                                 <action selector="setAsDefault:" target="HVI-63-mNz" id="32D-mS-4Sc"/>
+                                                            </connections>
+                                                        </menuItem>
+                                                        <menuItem isSeparatorItem="YES" id="0sM-Qj-g3Q"/>
+                                                        <menuItem title="Duplicate Profile" keyEquivalent="=" id="3233">
+                                                            <connections>
+                                                                <action selector="duplicateProfile:" target="HVI-63-mNz" id="lcS-Op-ONj"/>
                                                             </connections>
                                                         </menuItem>
                                                         <menuItem title="Bulk Copy from Selected Profile..." id="3516">
@@ -527,6 +528,7 @@ Gw
                                                                 <action selector="openCopyBookmarks:" target="HVI-63-mNz" id="y0M-e8-fea"/>
                                                             </connections>
                                                         </menuItem>
+                                                        <menuItem isSeparatorItem="YES" id="Lfh-66-x8L"/>
                                                         <menuItem title="Copy Profile as JSON" id="dEP-Mo-LZj">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
@@ -537,6 +539,13 @@ Gw
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
                                                                 <action selector="copyAllProfilesJson:" target="HVI-63-mNz" id="meW-Qu-sxh"/>
+                                                            </connections>
+                                                        </menuItem>
+                                                        <menuItem isSeparatorItem="YES" id="ZaV-Qb-4Dj"/>
+                                                        <menuItem title="Import JSON Profiles…" id="tzJ-Nr-kZY">
+                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                            <connections>
+                                                                <action selector="importJSONProfiles:" target="HVI-63-mNz" id="ZNc-dK-FjM"/>
                                                             </connections>
                                                         </menuItem>
                                                     </items>

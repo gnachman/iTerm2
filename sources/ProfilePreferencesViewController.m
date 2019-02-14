@@ -20,6 +20,8 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
+#import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
 #import "ProfilesAdvancedPreferencesViewController.h"
@@ -709,6 +711,123 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         alert.informativeText = @"An error occurred. Check Console.app for details.";
         [alert runModal];
     }
+}
+
+- (IBAction)importJSONProfiles:(id)sender {
+    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
+
+    // Set options.
+    openPanel.canChooseFiles = YES;
+    openPanel.canChooseDirectories = NO;
+    openPanel.allowsMultipleSelection = YES;
+    openPanel.allowedFileTypes = @[ @"json" ];
+
+    if ([openPanel runModal] == NSModalResponseOK) {
+        for (NSURL *url in openPanel.URLs) {
+            NSError *error = nil;
+            if (![self tryToImportJSONProfileFromURL:url error:&error]) {
+                NSArray<NSString *> *actions = @[ @"OK" ];
+                if (![url isEqual:openPanel.URLs.lastObject]) {
+                    actions = [actions arrayByAddingObject:@"Abort"];
+                }
+                iTermWarningSelection selection =
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Import from %@ failed: %@", url.path, error.localizedDescription]
+                                               actions:actions
+                                             accessory:nil
+                                            identifier:@"NoSyncJSONImportFailed"
+                                           silenceable:kiTermWarningTypeTemporarilySilenceable
+                                               heading:@"Could not Import Profile"
+                                                window:self.view.window];
+                if (selection == kiTermWarningSelection1) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+- (BOOL)tryToImportJSONProfileFromURL:(NSURL *)url error:(out NSError **)error {
+    DLog(@"Import profile from %@", url.path);
+    NSData *data = [NSData dataWithContentsOfURL:url options:0 error:error];
+    if (!data) {
+        return NO;
+    }
+
+    id object = [NSJSONSerialization JSONObjectWithData:data
+                                           options:NSJSONReadingAllowFragments
+                                             error:error];
+    if (!object) {
+        return NO;
+    }
+
+    NSDictionary *dict = [NSDictionary castFrom:object];
+    if (!dict) {
+        if (error) {
+            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: does not have a top-level dictionary." }];
+        }
+        return NO;
+    }
+
+    NSString *name = dict[KEY_NAME];
+    NSString *guid = dict[KEY_GUID];
+    if (!name || !guid) {
+        NSArray *profiles = [NSArray castFrom:dict[@"Profiles"]];
+        if (profiles) {
+            return [self tryToImportMultipleProfilesFromJSONObject:profiles error:error];
+        }
+        if (error) {
+            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: missing Name or Guid key in top-level dictionary." }];
+        }
+        return NO;
+    }
+
+    if ([[ProfileModel sharedInstance] bookmarkWithGuid:guid]) {
+        dict = [dict dictionaryBySettingObject:[[NSUUID UUID] UUIDString] forKey:KEY_GUID];
+    }
+
+    [[ProfileModel sharedInstance] addBookmark:dict];
+    return YES;
+}
+
+- (BOOL)tryToImportMultipleProfilesFromJSONObject:(NSArray *)profiles error:(out NSError **)error {
+    NSMutableArray<NSDictionary *> *dicts = [NSMutableArray array];
+    __block BOOL ok = YES;
+    __block NSError *internalError = nil;
+    [profiles enumerateObjectsUsingBlock:^(id  _Nonnull object, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSDictionary *dict = [NSDictionary castFrom:object];
+        if (!dict) {
+            internalError = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: not an array of dictionaries." }];
+            ok = NO;
+            *stop = YES;
+            return;
+        }
+
+        NSString *name = dict[KEY_NAME];
+        NSString *guid = dict[KEY_GUID];
+        if (!name || !guid) {
+            NSString *reason = [NSString stringWithFormat:@"Invalid JSON: missing Name or Guid key in profile number %@.", @(idx + 1)];
+            internalError = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: reason }];
+            ok = NO;
+            *stop = YES;
+            return;
+        }
+
+        if ([[ProfileModel sharedInstance] bookmarkWithGuid:guid]) {
+            dict = [dict dictionaryBySettingObject:[[NSUUID UUID] UUIDString] forKey:KEY_GUID];
+        }
+
+        [dicts addObject:dict];
+    }];
+    if (!ok) {
+        if (error && internalError) {
+            *error = internalError;
+        }
+        return NO;
+    }
+    for (NSDictionary *dict in dicts) {
+        [[ProfileModel sharedInstance] addBookmark:dict];
+    }
+    return YES;
 }
 
 - (IBAction)copyProfileJson:(id)sender {
