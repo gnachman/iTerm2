@@ -135,7 +135,17 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 - (BOOL)dropTab:(PTYTab *)tab
       inSession:(PTYSession *)dest
            half:(SplitSessionHalf)half
-        atPoint:(NSPoint)point
+        atPoint:(NSPoint)point {
+    _dropping = YES;
+    const BOOL result = [self reallyDropTab:tab inSession:dest half:half atPoint:point];
+    _dropping = NO;
+    return result;
+}
+
+- (BOOL)reallyDropTab:(PTYTab *)tab
+            inSession:(PTYSession *)dest
+                 half:(SplitSessionHalf)half
+              atPoint:(NSPoint)point
 {
     if ([[tab sessions] count] != 1) {
         // This sometimes can't be done at all, and it usually can't be done right if tabs' sizes
@@ -155,6 +165,15 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
               atPoint:(NSPoint)point {
+    _dropping = YES;
+    const BOOL result = [self reallyDropInSession:dest half:half atPoint:point];
+    _dropping = NO;
+    return result;
+}
+
+- (BOOL)reallyDropInSession:(PTYSession *)dest
+                       half:(SplitSessionHalf)half
+                    atPoint:(NSPoint)point {
     if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
         dest == session_ ||  // move to self
         !session_) {         // no source (?)
@@ -251,6 +270,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         [[term window] disableCursorRects];
     }
     [[NSCursor closedHandCursor] set];
+    _isDragInProgress = YES;
     [theWindow dragImage:[session dragImage]
                       at:rect.origin
                   offset:NSZeroSize
@@ -258,6 +278,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
               pasteboard:pboard
                   source:source
                slideBack:NO];
+    _isDragInProgress = NO;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term window] enableCursorRects];
     }

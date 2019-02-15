@@ -21,6 +21,8 @@
 
 @interface PSMTabDragAssistant : NSObject
 
+@property (nonatomic, readonly) BOOL dropping;
+
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;
 
