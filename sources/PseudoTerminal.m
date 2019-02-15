@@ -5994,7 +5994,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return [self.currentSession textColorForStatusBar];
     }
     if ([_contentView.tabBarControl isHidden] && ![self anyFullScreen]) {
-        return [NSColor blackColor];
+        return [NSColor controlTextColor];
     } else {
         return [_contentView.tabBarControl accessoryTextColor];
     }

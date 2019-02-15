@@ -29,3 +29,7 @@
 
 @interface FindView : NSView
 @end
+
+@interface MinimalFindView : NSView
+@end
+

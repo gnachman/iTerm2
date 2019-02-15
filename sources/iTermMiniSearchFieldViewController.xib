@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,14 +16,14 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customView autoresizesSubviews="NO" misplaced="YES" id="Hz6-mo-xeY" customClass="iTermMiniSearchFieldView">
+        <customView autoresizesSubviews="NO" id="Hz6-mo-xeY" customClass="iTermMiniSearchFieldView">
             <rect key="frame" x="0.0" y="0.0" width="213" height="18"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <searchField wantsLayer="YES" verticalHuggingPriority="750" textCompletion="NO" id="dU2-8g-HHo" customClass="iTermMiniSearchField">
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" textCompletion="NO" id="dU2-8g-HHo" customClass="iTermMiniSearchField">
                     <rect key="frame" x="0.0" y="0.0" width="149" height="19"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" placeholderString=" " usesSingleLineMode="YES" bezelStyle="round" sendsSearchStringImmediately="YES" sendsWholeSearchString="YES" maximumRecents="10" id="dfd-7C-O0k" customClass="iTermSearchFieldCell">
+                    <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" focusRingType="none" placeholderString=" " usesSingleLineMode="YES" bezelStyle="round" sendsSearchStringImmediately="YES" sendsWholeSearchString="YES" maximumRecents="10" id="dfd-7C-O0k" customClass="iTermMiniSearchFieldCell">
                         <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -33,7 +33,7 @@
                         <outlet property="searchMenuTemplate" destination="SQ6-gA-jag" id="o2O-Bz-7kK"/>
                     </connections>
                 </searchField>
-                <segmentedControl verticalHuggingPriority="750" misplaced="YES" id="PjS-H3-x6e">
+                <segmentedControl verticalHuggingPriority="750" id="PjS-H3-x6e">
                     <rect key="frame" x="156" y="0.0" width="33" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="roundRect" trackingMode="momentary" id="0qr-Oz-fS9">
@@ -47,7 +47,7 @@
                         <action selector="searchNextPrev:" target="-2" id="wcj-Kf-poJ"/>
                     </connections>
                 </segmentedControl>
-                <button misplaced="YES" id="j06-kt-Dyv">
+                <button id="j06-kt-Dyv">
                     <rect key="frame" x="188" y="-3" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="TabClose_Front" imagePosition="only" alignment="center" alternateImage="TabClose_Front_Pressed" inset="2" id="Wvh-el-wPa">

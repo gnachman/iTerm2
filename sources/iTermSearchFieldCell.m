@@ -12,6 +12,18 @@
 static NSSize kFocusRingInset = { 2, 3 };
 const CGFloat kEdgeWidth = 3;
 
+@implementation iTermMinimalSearchFieldCell
+- (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
+    return NO;
+}
+@end
+
+@implementation iTermMiniSearchFieldCell
+- (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
+    return YES;
+}
+@end
+
 @implementation iTermSearchFieldCell {
     CGFloat _alphaMultiplier;
     NSTimer *_timer;
@@ -59,10 +71,14 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
+- (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
+    return ([controlView respondsToSelector:@selector(currentEditor)] &&
+            [(NSControl *)controlView currentEditor]);
+}
+
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     NSRect originalFrame = cellFrame;
-    BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
-                    [(NSControl *)controlView currentEditor]);
+    const BOOL focused = [self shouldUseFocusedAppearanceWithControlView:controlView];
     [self.backgroundColor set];
 
     CGFloat xInset, yInset;

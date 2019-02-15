@@ -15,3 +15,10 @@
 - (void)willAnimate;
 
 @end
+
+@interface iTermMinimalSearchFieldCell : iTermSearchFieldCell
+@end
+
+@interface iTermMiniSearchFieldCell : iTermSearchFieldCell
+@end
+

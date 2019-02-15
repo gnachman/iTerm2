@@ -8,6 +8,7 @@
 
 #import "PasteViewController.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "NSColor+iTerm.h"
 #import "PasteContext.h"
 #import "PasteView.h"
@@ -15,6 +16,16 @@
 #import "PreferencePanel.h"
 
 static float kAnimationDuration = 0.25;
+
+static NSString *iTermPasteViewControllerNibName(BOOL mini) {
+    if (mini) {
+        return @"MiniPasteView";
+    }
+    if ([iTermAdvancedSettingsModel useOldStyleDropDownViews]) {
+        return @"PasteView";
+    }
+    return @"MinimalPasteView";
+}
 
 @implementation PasteViewController {
     IBOutlet NSTextField *_label;
@@ -29,16 +40,19 @@ static float kAnimationDuration = 0.25;
 - (instancetype)initWithContext:(PasteContext *)pasteContext
                          length:(int)length
                            mini:(BOOL)mini {
-    self = [super initWithNibName:mini ? @"MiniPasteView" : @"PasteView" bundle:[NSBundle bundleForClass:self.class]];
+    self = [super initWithNibName:iTermPasteViewControllerNibName(mini)
+                           bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         [self view];
         _mini = mini;
-        
-        // Fix up frames because the view is flipped.
-        for (NSView *view in [self.view subviews]) {
-            NSRect frame = [view frame];
-            frame.origin.y = NSMaxY([self.view bounds]) - NSMaxY([view frame]);
-            [view setFrame:frame];
+
+        if (self.view.flipped) {
+            // Fix up frames because the view is flipped.
+            for (NSView *view in [self.view subviews]) {
+                NSRect frame = [view frame];
+                frame.origin.y = NSMaxY([self.view bounds]) - NSMaxY([view frame]);
+                [view setFrame:frame];
+            }
         }
         pasteContext_ = [pasteContext retain];
         totalLength_ = remainingLength_ = length;
@@ -60,6 +74,26 @@ static float kAnimationDuration = 0.25;
     if (pasteContext_.isUpload) {
         _label.stringValue = @"Sending…";
     }
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    if (_mini) {
+        return;
+    }
+    if ([iTermAdvancedSettingsModel useOldStyleDropDownViews]) {
+        return;
+    }
+
+    NSShadow *shadow = [[NSShadow alloc] init];
+    shadow.shadowOffset = NSMakeSize(2, -2);
+    shadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.3];
+    shadow.shadowBlurRadius = 2;
+
+    self.view.wantsLayer = YES;
+    [self.view makeBackingLayer];
+    self.view.shadow = shadow;
 }
 
 - (void)viewDidAppear {

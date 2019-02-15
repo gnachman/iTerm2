@@ -11,3 +11,7 @@
 @interface PasteView : NSView
 
 @end
+
+@interface MinimalPasteView : NSView
+@end
+

@@ -317,6 +317,7 @@ DEFINE_BOOL(pinEditSession, NO, SECTION_GENERAL @"Pin Edit Session window to the
 DEFINE_BOOL(remapModifiersWithoutEventTap, NO, SECTION_GENERAL @"Disable remapping modifiers for system shortcuts.\nThis prevents asking for accessibility permission. It breaks remapping system shortcuts like cmd-tab.");
 DEFINE_BOOL(alertsIndicateShortcuts, NO, SECTION_GENERAL @"Buttons in modal alerts indicate keyboard shortcuts.\nDo you miss Windows 95? I do.");
 DEFINE_BOOL(showHintsInSplitPaneMenuItems, NO, SECTION_GENERAL @"Show hints in split pane menu items to indicate horizontal vs vertical semantics.\nYou must restart iTerm2 after changing this setting for it to take effect.");
+DEFINE_BOOL(useOldStyleDropDownViews, NO, SECTION_GENERAL @"Use old-style find and paste progress indicator views.\nThis change will only affect new windows.");
 
 #pragma mark - Drawing
 

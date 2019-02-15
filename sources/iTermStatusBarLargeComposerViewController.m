@@ -66,4 +66,9 @@
 
 @implementation iTermStatusBarLargeComposerViewController
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    self.textView.textColor = [NSColor textColor];
+}
+
 @end

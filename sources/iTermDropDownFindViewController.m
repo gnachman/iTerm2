@@ -62,8 +62,6 @@ static const float kAnimationDuration = 0.2;
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         [findBarTextField_ setDelegate:self];
-        [self loadView];
-        [[self view] setHidden:YES];
     }
     return self;
 }
@@ -71,6 +69,22 @@ static const float kAnimationDuration = 0.2;
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    if ([iTermAdvancedSettingsModel useOldStyleDropDownViews]) {
+        return;
+    }
+
+    NSShadow *shadow = [[NSShadow alloc] init];
+    shadow.shadowOffset = NSMakeSize(2, -2);
+    shadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.3];
+    shadow.shadowBlurRadius = 2;
+
+    self.view.wantsLayer = YES;
+    [self.view makeBackingLayer];
+    self.view.shadow = shadow;
 }
 
 #pragma mark - iTermFindViewController
@@ -141,6 +155,14 @@ static const float kAnimationDuration = 0.2;
 
 - (IBAction)closeFindView:(id)sender {
     [self.driver close];
+}
+
+- (IBAction)searchPrevious:(id)sender {
+    [self.driver searchPrevious];
+}
+
+- (IBAction)searchNext:(id)sender {
+    [self.driver searchNext];
 }
 
 - (IBAction)searchNextPrev:(id)sender {
