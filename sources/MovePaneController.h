@@ -18,6 +18,8 @@ extern NSString *const iTermSessionDidChangeTabNotification;
 @class SessionView;
 @interface MovePaneController : NSObject <SplitSelectionViewDelegate>
 
+@property (nonatomic, readonly) BOOL isDragInProgress;
+@property (nonatomic, readonly) BOOL dropping;
 @property (nonatomic, assign) BOOL dragFailed;
 @property (nonatomic, assign) PTYSession *session;
 

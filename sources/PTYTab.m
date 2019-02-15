@@ -4021,7 +4021,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 
     [session1Tab fitSessionToCurrentViewSize:session1];
-    [session2Tab fitSessionToCurrentViewSize:session1];
+    [session2Tab fitSessionToCurrentViewSize:session2];
 
     DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
@@ -5309,6 +5309,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (BOOL)sessionShouldSendWindowSizeIOCTL:(PTYSession *)session {
+    if ([[MovePaneController sharedInstance] dropping]) {
+        return YES;
+    }
+    if ([[PSMTabDragAssistant sharedDragAssistant] dropping]) {
+        return YES;
+    }
+    if ([[MovePaneController sharedInstance] isDragInProgress]) {
+        return NO;
+    }
+    if ([[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+        return NO;
+    }
     return _temporarilyUnmaximizedSessionGUID == nil;
 }
 

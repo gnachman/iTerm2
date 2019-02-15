@@ -10115,6 +10115,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewDraggingExited:(id<NSDraggingInfo>)sender {
     [self.delegate sessionDraggingExited:self];
+    [_textview setNeedsDisplay:YES];
 }
 
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender {

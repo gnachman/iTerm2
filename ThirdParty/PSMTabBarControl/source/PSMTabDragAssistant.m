@@ -340,6 +340,12 @@
 }
 
 - (void)performDragOperation:(id<NSDraggingInfo>)sender {
+    _dropping = YES;
+    [self reallyPerformDragOperation:sender];
+    _dropping = NO;
+}
+
+- (void)reallyPerformDragOperation:(id<NSDraggingInfo>)sender {
     // Move cell.
     int destinationIndex = [[[self destinationTabBar] cells] indexOfObject:[self targetCell]];
 
