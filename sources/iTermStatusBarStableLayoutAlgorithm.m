@@ -73,16 +73,13 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     if (orderedViews.count == 0) {
         return @[];
     }
-    
-    // Find the views with equal priority to the first. Note the views are sorted by priority.
-    const double priority = sortedViews.firstObject.component.statusBarComponentPriority;
-    const NSInteger index = [sortedViews indexOfObjectPassingTest:^BOOL(iTermStatusBarContainerView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return obj.component.statusBarComponentPriority > priority;
-    }];
-    const NSRange range = (index == NSNotFound) ? NSMakeRange(0, sortedViews.count) : NSMakeRange(0, index);
-    NSArray<iTermStatusBarContainerView *> *removalCandidates = [sortedViews subarrayWithRange:range];
-    
-    // Of those, remove the one with the largest minimum width.
+    NSArray<iTermStatusBarContainerView *> *removalCandidates = sortedViews;
+    if (self.mandatoryView) {
+        removalCandidates = [removalCandidates arrayByRemovingObject:self.mandatoryView];
+    }
+    if (removalCandidates.count == 0) {
+        return orderedViews;
+    }
     iTermStatusBarContainerView *viewWithLargestMinimumWidth = [self bestViewToRemoveFrom:removalCandidates];
     iTermStatusBarContainerView *adjacentViewToRemove = [self viewToRemoveAdjacentToViewBeingRemoved:viewWithLargestMinimumWidth
                                                                                            fromViews:orderedViews];
@@ -96,7 +93,12 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
                                                              orderedViews:orderedViews];
 }
 
+// views are sorted ascending by priority. First remove spacers regardless of priority, then remove
+// views from lowest to highest priority.
 - (iTermStatusBarContainerView *)bestViewToRemoveFrom:(NSArray<iTermStatusBarContainerView *> *)views {
+    if (views.count == 0) {
+        return nil;
+    }
     NSInteger (^score)(iTermStatusBarContainerView *) = ^NSInteger(iTermStatusBarContainerView *view) {
         if ([view.component isKindOfClass:[iTermStatusBarSpringComponent class]]) {
             return 2;
@@ -110,9 +112,25 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
         NSInteger aScore = score(a);
         NSInteger bScore = score(b);
         if (aScore == 0 && bScore == 0) {
+            // Tiebreak by priority
+            const double aPriority = a.component.statusBarComponentPriority;
+            const double bPrioirty = b.component.statusBarComponentPriority;
+            NSComparisonResult result = [@(bPrioirty) compare:@(aPriority)];  // Backwards so we score lower priority higher for removal
+            if (result != NSOrderedSame) {
+                return result;
+            }
+
             // Tiebreak nonspacers by minimum width
             aScore = a.component.statusBarComponentMinimumWidth;
             bScore = b.component.statusBarComponentMinimumWidth;
+            result = [@(aScore) compare:@(bScore)];
+            if (result != NSOrderedSame) {
+                return result;
+            }
+
+            // Tiebreak by index (prefer larger index)
+            aScore = [views indexOfObject:a];
+            bScore = [views indexOfObject:b];
         }
         return [@(aScore) compare:@(bScore)];
     }];

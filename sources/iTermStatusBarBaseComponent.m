@@ -110,6 +110,11 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
                                  scope:nil];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p priority=%@>",
+            NSStringFromClass([self class]), self, @(self.statusBarComponentPriority)];
+}
+
 - (NSString *)statusBarComponentIdentifier {
     return [NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)];
 }
