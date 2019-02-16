@@ -412,7 +412,38 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
 }
 
++ (BOOL)windowTypeHasFullSizeContentView:(iTermWindowType)windowType {
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            if (@available(macOS 10.14, *)) {
+                return YES;
+            } else {
+                return NO;
+            }
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return NO;
+
+        case WINDOW_TYPE_COMPACT:
+            return YES;
+
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_NORMAL:
+            return NO;
+    }
+}
+
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     NSInteger mask = 0;
     if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
@@ -457,6 +488,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
+            if (@available(macOS 10.14, *)) {
+                if ([self windowTypeHasFullSizeContentView:savedWindowType]) {
+                    mask |= NSWindowStyleMaskFullSizeContentView;
+                }
+            }
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
@@ -692,9 +728,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
         // to exit fullscreen with the right style.
         styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType
+                                           savedWindowType:savedWindowType
                                           hotkeyWindowType:hotkeyWindowType];
     } else {
         styleMask = [PseudoTerminal styleMaskForWindowType:windowType
+                                           savedWindowType:savedWindowType
                                           hotkeyWindowType:hotkeyWindowType];
     }
     savedWindowType_ = savedWindowType;
@@ -3585,11 +3623,23 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSEdgeInsets)tabBarInsets {
-    if (windowType_ != WINDOW_TYPE_COMPACT) {
-        return NSEdgeInsetsZero;
-    }
-    if (self.anyFullScreen || togglingLionFullScreen_) {
-        return NSEdgeInsetsZero;
+    if (@available(macOS 10.14, *)) {
+        iTermWindowType effectiveWindowType = windowType_;
+        if (exitingLionFullscreen_) {
+            effectiveWindowType = savedWindowType_;
+        }
+        if (effectiveWindowType != WINDOW_TYPE_COMPACT) {
+            return NSEdgeInsetsZero;
+        }
+        if (!exitingLionFullscreen_) {
+            if (self.anyFullScreen || togglingLionFullScreen_) {
+                return NSEdgeInsetsZero;
+            }
+        }
+    } else {
+        if (self.anyFullScreen || togglingLionFullScreen_) {
+            return NSEdgeInsetsZero;
+        }
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
@@ -4116,7 +4166,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSUInteger)styleMask {
-    return [PseudoTerminal styleMaskForWindowType:windowType_ hotkeyWindowType:_hotkeyWindowType];
+    return [PseudoTerminal styleMaskForWindowType:windowType_
+                                  savedWindowType:savedWindowType_
+                                 hotkeyWindowType:_hotkeyWindowType];
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
@@ -4188,6 +4240,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     NSWindowStyleMask styleMask = [PseudoTerminal styleMaskForWindowType:windowTypeForStyleMask
+                                                         savedWindowType:savedWindowType
                                                         hotkeyWindowType:hotkeyWindowType];
     const BOOL defer = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
     NSWindow<PTYWindow> *myWindow = [[[windowClass alloc] initWithContentRect:initialFrame
@@ -4726,16 +4779,46 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
+    } else {
+        self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_
+                                                       savedWindowType:savedWindowType_
+                                                      hotkeyWindowType:_hotkeyWindowType];
     }
-    self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
     [self updateWindowShadow:(NSWindow<PTYWindow> *)self.window];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
-    [self repositionWidgets];
+    if (@available(macOS 10.14, *)) {} else {
+        [self repositionWidgets];
+    }
     self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow:self.ptyWindow];
     self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
+    if (@available(macOS 10.14, *)) {
+        switch (savedWindowType_) {
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_ACCESSORY:
+                break;
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
+                [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
+                [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+                break;
+        }
+        [_contentView didChangeCompactness];
+        [self repositionWidgets];
+    }
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
@@ -4746,6 +4829,11 @@ ITERM_WEAKLY_REFERENCEABLE
     lionFullScreen_ = NO;
 
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
+    if (@available(macOS 10.14, *)) {
+        self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_
+                                                       savedWindowType:savedWindowType_
+                                                      hotkeyWindowType:_hotkeyWindowType];
+    }
     self.windowType = savedWindowType_;
     [self didChangeAnyFullScreen];
 
@@ -5857,26 +5945,76 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)titleBarShouldAppearTransparent {
+    if (@available(macOS 10.14, *)) { } else {
+        return [PseudoTerminal titleBarShouldAppearTransparentForWindowType:windowType_];
+    }
+
     switch (windowType_) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return [PseudoTerminal titleBarShouldAppearTransparentForWindowType:savedWindowType_];
+            break;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            break;
-
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
-            return YES;
+            return [PseudoTerminal titleBarShouldAppearTransparentForWindowType:windowType_];
     }
-    return NO;
+}
+
++ (BOOL)titleBarShouldAppearTransparentForWindowType:(iTermWindowType)windowType {
+    if (@available(macOS 10.14, *)) {
+        switch (windowType) {
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                break;
+
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+                return YES;
+        }
+        return NO;
+    } else {
+        switch (windowType) {
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                break;
+
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+                return YES;
+        }
+        return NO;
+    }
 }
 
 - (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
@@ -7531,8 +7669,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) { } else {
         return NO;
     }
-    if (self.lionFullScreen || togglingLionFullScreen_) {
-        return NO;
+    iTermWindowType effectiveWindowType = windowType_;
+    if (exitingLionFullscreen_) {
+        effectiveWindowType = savedWindowType_;
+    } else {
+        if (self.lionFullScreen || togglingLionFullScreen_) {
+            return NO;
+        }
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
@@ -7544,7 +7687,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         return NO;
     }
-    if (windowType_ == WINDOW_TYPE_COMPACT) {
+    if (effectiveWindowType == WINDOW_TYPE_COMPACT) {
         return YES;
     }
 
@@ -7627,7 +7770,23 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons {
-    if (self.anyFullScreen || self.enteringLionFullscreen) {
+    if (self.enteringLionFullscreen) {
+        return NO;
+    }
+    if (self.exitingLionFullscreen) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_TopTab:
+            case PSMTab_LeftTab:
+                return YES;
+            case PSMTab_BottomTab:
+                break;
+        }
+        return NO;
+    }
+    if (exitingLionFullscreen_) {
+        return windowType_ == WINDOW_TYPE_COMPACT || savedWindowType_ == WINDOW_TYPE_COMPACT;
+    }
+    if (self.anyFullScreen) {
         return NO;
     }
     return windowType_ == WINDOW_TYPE_COMPACT;

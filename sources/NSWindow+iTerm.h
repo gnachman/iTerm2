@@ -17,5 +17,6 @@ extern NSString *const iTermWindowAppearanceDidChange;
 - (BOOL)isTerminalWindow;
 
 @property (nonatomic, readonly) NSArray<__kindof NSTitlebarAccessoryViewController *> *it_titlebarAccessoryViewControllers;
+@property (nonatomic, readonly) NSString *it_styleMaskDescription;
 
 @end

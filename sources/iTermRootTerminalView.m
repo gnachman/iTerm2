@@ -645,6 +645,10 @@ typedef struct {
     if (_tabBarControlOnLoan) {
         return NO;
     }
+    return [self tabBarShouldBeVisibleEvenWhenOnLoan];
+}
+
+- (BOOL)tabBarShouldBeVisibleEvenWhenOnLoan {
     if (self.tabBarControl.flashing) {
         return YES;
     } else {
@@ -653,7 +657,7 @@ typedef struct {
 }
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs {
-    if ([_delegate anyFullScreen] &&
+    if (([_delegate anyFullScreen] || [_delegate enteringLionFullscreen]) &&
         ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
         return NO;
     }
@@ -751,6 +755,10 @@ typedef struct {
                    decorationHeights.bottom,
                    [self tabviewWidth],
                    [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
+    if ([self tabBarShouldBeVisibleEvenWhenOnLoan]) {
+        tabViewFrame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
+                                                                 window:thisWindow];
+    }
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
     [self.tabView setFrame:tabViewFrame];
     [self updateDivisionViewAndWindowNumberLabel];
@@ -788,6 +796,8 @@ typedef struct {
                                      temp.bottom,
                                      [self tabviewWidth],
                                      [[thisWindow contentView] frame].size.height - temp.bottom - temp.top);
+    tabViewFrame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
+                                                             window:thisWindow];
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
     [self.tabView setFrame:tabViewFrame];
 
@@ -853,8 +863,34 @@ typedef struct {
                                      tabBarFrame.size.width,
                                      [thisWindow.contentView frame].size.height - decorationHeights.top - decorationHeights.bottom);
     DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-    self.tabView.frame = tabViewFrame;
+    self.tabView.frame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
+                                                                   window:thisWindow];
     [self updateDivisionViewAndWindowNumberLabel];
+}
+
+- (NSRect)tabViewFrameByShrinkingForFullScreenTabBar:(NSRect)frame
+                                              window:(NSWindow *)thisWindow {
+    if (@available(macOS 10.14, *)) {} else {
+        return frame;
+    }
+    if ((thisWindow.styleMask & NSWindowStyleMaskFullSizeContentView) != NSWindowStyleMaskFullSizeContentView) {
+        return frame;
+    }
+    if (![self.delegate enteringLionFullscreen] &&
+        !(thisWindow.styleMask & NSWindowStyleMaskFullScreen)) {
+        return frame;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab:
+            break;
+        case PSMTab_LeftTab:
+        case PSMTab_BottomTab:
+            return frame;
+    }
+    NSRect tabViewFrame = frame;
+    const CGFloat offset = _tabBarControl.height;
+    tabViewFrame.size.height -= offset;
+    return tabViewFrame;
 }
 
 - (void)setTabBarControlAutoresizingMask:(NSAutoresizingMaskOptions)mask {
@@ -915,7 +951,8 @@ typedef struct {
     if (showToolbeltInline) {
         tabViewFrame.size.width -= self.toolbeltFrame.size.width;
     }
-    self.tabView.frame = tabViewFrame;
+    self.tabView.frame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
+                                                                   window:thisWindow];
     [self updateDivisionViewAndWindowNumberLabel];
 
     const CGFloat dragHandleWidth = 3;
