@@ -278,10 +278,10 @@ typedef struct {
     const CGFloat myHeight = self.frame.size.height;
     const NSEdgeInsets insets = [self.delegate tabBarInsets];
     const CGFloat sideInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
-    return NSMakeRect(sideInset,
-                      myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset,
-                      MAX(0, self.frame.size.width - sideInset * 2),
-                      _windowTitleLabel.frame.size.height);
+    return NSMakeRect([self retinaRound:sideInset],
+                      [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset],
+                      ceil(MAX(0, self.frame.size.width - sideInset * 2)),
+                      ceil(_windowTitleLabel.frame.size.height));
 }
 
 - (NSWindowButton *)windowButtonTypes {
