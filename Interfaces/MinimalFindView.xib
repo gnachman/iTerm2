@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="FindViewController">
+            <connections>
+                <outlet property="findBarTextField_" destination="2" id="27"/>
+                <outlet property="view" destination="1" id="10"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="1" customClass="MinimalFindView">
+            <rect key="frame" x="0.0" y="0.0" width="288" height="52"/>
+            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <segmentedControl verticalHuggingPriority="750" id="13">
+                    <rect key="frame" x="206" y="15" width="44" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
+                    <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="14">
+                        <font key="font" metaFont="smallSystem"/>
+                        <segments>
+                            <segment image="NSGoLeftTemplate" width="19"/>
+                            <segment image="NSGoRightTemplate" width="18" tag="1"/>
+                        </segments>
+                    </segmentedCell>
+                    <connections>
+                        <action selector="searchNextPrev:" target="-2" id="30"/>
+                    </connections>
+                </segmentedControl>
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2">
+                    <rect key="frame" x="20" y="16" width="176" height="19"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                    <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" usesSingleLineMode="YES" bezelStyle="round" id="3" customClass="iTermMinimalSearchFieldCell">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </searchFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="35"/>
+                        <outlet property="searchMenuTemplate" destination="15" id="20"/>
+                    </connections>
+                </searchField>
+                <button id="23">
+                    <rect key="frame" x="252" y="14" width="24" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
+                    <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="TabClose_Front" imagePosition="only" alignment="center" alternateImage="TabClose_Front_Pressed" inset="2" id="24">
+                        <behavior key="behavior" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                    </buttonCell>
+                    <connections>
+                        <action selector="closeFindView:" target="-2" id="29"/>
+                    </connections>
+                </button>
+            </subviews>
+            <point key="canvasLocation" x="139" y="154"/>
+        </customView>
+        <menu id="15">
+            <items>
+                <menuItem title="Smart Case Substring" state="on" id="16">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="OVp-ei-63a"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="qHP-Qy-WFh"/>
+                <menuItem title="Case-Sensitive Substring" state="on" tag="1" id="IJN-DB-LJ2">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="tWH-sW-7Ij"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Insensitive Substring" state="on" tag="2" id="6Px-6a-JTm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="aPy-bk-w39"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="F1b-pc-PFJ"/>
+                <menuItem title="Case-Sensitive Regex" state="on" tag="3" id="s1o-x7-jkk">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="cem-eD-Fft"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Insensitive Regex" state="on" tag="4" id="C2V-dA-zRG">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeMode:" target="-2" id="ZJX-A7-7La"/>
+                    </connections>
+                </menuItem>
+            </items>
+        </menu>
+    </objects>
+    <resources>
+        <image name="NSGoLeftTemplate" width="9" height="12"/>
+        <image name="NSGoRightTemplate" width="9" height="12"/>
+        <image name="TabClose_Front" width="15" height="15"/>
+        <image name="TabClose_Front_Pressed" width="15" height="15"/>
+    </resources>
+</document>
