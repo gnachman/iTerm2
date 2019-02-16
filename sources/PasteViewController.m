@@ -140,14 +140,15 @@ static NSString *iTermPasteViewControllerNibName(BOOL mini) {
                           self.view.frame.size.width,
                           self.view.frame.size.height);
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
-    [[self.view animator] setFrame:newFrame];
+    self.view.frame = newFrame;
+    self.view.animator.alphaValue = 1;
 }
 
 - (void)closeWithCompletion:(void (^)(void))completion {
     NSRect newFrame = self.view.frame;
     newFrame.origin.y = self.view.superview.frame.size.height;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
-    [[self.view animator] setFrame:newFrame];
+    self.view.animator.alphaValue = 0;
     [self.view performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:kAnimationDuration];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         completion();

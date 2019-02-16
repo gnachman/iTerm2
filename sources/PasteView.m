@@ -54,8 +54,13 @@
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:bounds
                                                          xRadius:radius
                                                          yRadius:radius];
-    [[NSColor controlColor] set];
-    [path fill];
+    if (@available(macOS 10.14, *)) {
+        [[NSColor controlBackgroundColor] set];
+        [path fill];
+    } else {
+        [[NSColor controlColor] set];
+        [path fill];
+    }
 
     [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
     [path setLineWidth:0.25];

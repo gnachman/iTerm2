@@ -102,7 +102,7 @@ static const float kAnimationDuration = 0.2;
         [self.driver setVisible:NO];
     }];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
-    [[[self view] animator] setFrame:[self collapsedFrame]];
+    self.view.animator.alphaValue = 0;
     [NSAnimationContext endGrouping];
 }
 
@@ -118,9 +118,10 @@ static const float kAnimationDuration = 0.2;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         [[[[self view] window] contentView] setNeedsDisplay:YES];
     }];
-    
-    [[[self view] animator] setFrame:[self fullSizeFrame]];
-    
+
+    self.view.frame = self.fullSizeFrame;
+    self.view.animator.alphaValue = 1.0;
+
     [NSAnimationContext endGrouping];
     
     DLog(@"Grab focus for find view %@", self.view);
