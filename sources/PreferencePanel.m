@@ -231,10 +231,12 @@ static PreferencePanel *gSessionsPreferencePanel;
 #pragma mark - API
 
 - (void)configureHotkeyForProfile:(Profile *)profile {
+    _profilesViewController.scope = nil;
     [self window];
     [self selectProfilesTab];
     [self run];
-    [_profilesViewController openToProfileWithGuidAndEditHotKey:profile[KEY_GUID]];
+    [_profilesViewController openToProfileWithGuidAndEditHotKey:profile[KEY_GUID]
+                                                          scope:nil];
 }
 
 - (void)selectProfilesTab {
@@ -254,22 +256,34 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
-- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab tmux:(BOOL)tmux {
+- (void)openToProfileWithGuid:(NSString*)guid
+             selectGeneralTab:(BOOL)selectGeneralTab
+                         tmux:(BOOL)tmux
+                        scope:(iTermVariableScope *)scope {
     _tmux = tmux;
     _profilesViewController.tmuxSession = tmux;
+    _profilesViewController.scope = scope;
     [self window];
     [self selectProfilesTab];
     [self run];
-    [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
+    [_profilesViewController openToProfileWithGuid:guid
+                                  selectGeneralTab:selectGeneralTab
+                                             scope:scope];
 }
 
-- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier tmux:(BOOL)tmux {
+- (void)openToProfileWithGuid:(NSString *)guid
+andEditComponentWithIdentifier:(NSString *)identifier
+                         tmux:(BOOL)tmux
+                        scope:(iTermVariableScope *)scope {
     _tmux = tmux;
     _profilesViewController.tmuxSession = tmux;
+    _profilesViewController.scope = scope;
     [self window];
     [self selectProfilesTab];
     [self run];
-    [_profilesViewController openToProfileWithGuid:guid andEditComponentWithIdentifier:identifier];
+    [_profilesViewController openToProfileWithGuid:guid
+                    andEditComponentWithIdentifier:identifier
+                                             scope:scope];
 }
 
 - (NSWindow *)window {

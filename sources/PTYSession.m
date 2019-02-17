@@ -44,6 +44,7 @@
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
 #import "iTermMouseCursor.h"
+#import "iTermNotificationCenter.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProcessCache.h"
@@ -10913,7 +10914,10 @@ ITERM_WEAKLY_REFERENCEABLE
         panel = [PreferencePanel sharedInstance];
         guid = _originalProfile[KEY_GUID];
     }
-    [panel openToProfileWithGuid:guid andEditComponentWithIdentifier:component.statusBarComponentIdentifier tmux:self.isTmuxClient];
+    [panel openToProfileWithGuid:guid
+  andEditComponentWithIdentifier:component.statusBarComponentIdentifier
+                            tmux:self.isTmuxClient
+                           scope:self.variablesScope];
 }
 
 

@@ -49,6 +49,13 @@ static const char iTermNotificationTokenAssociatedObject;
     return [super init];
 }
 
++ (void)subscribe:(NSObject *)owner selector:(SEL)selector {
+    __weak NSObject *weakOwner = owner;
+    [self internalSubscribe:owner withBlock:^(id notification) {
+        [weakOwner it_performNonObjectReturningSelector:selector withObject:notification];
+    }];
+}
+
 + (void)internalSubscribe:(NSObject *)owner withBlock:(void (^)(id notification))block {
     __weak NSObject *weakOwner = owner;
     // This prevents infinite recursion if you cause the notification to be sent while handling it.

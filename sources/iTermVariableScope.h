@@ -30,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
 - (id)valueForVariableName:(NSString *)name;
+- (id)valueForPath:(NSString *)firstName, ... NS_REQUIRES_NIL_TERMINATION;
+
 - (NSString *)stringValueForVariableName:(NSString *)name;
 // Values of NSNull get unset
 - (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
@@ -37,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 // nil or NSNull value means unset it.
 // Returns whether it was set. If the value is unchanged, it does not get set.
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
+- (BOOL)setValue:(nullable id)value forPath:(NSString *)firstName, ... NS_REQUIRES_NIL_TERMINATION;
 
 // Set weak to YES when a strong reference to value should not be kept.
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak;

@@ -18,8 +18,10 @@ extern NSString *const iTermVariableKeyApplicationLocalhostName;
 extern NSString *const iTermVariableKeyApplicationEffectiveTheme;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
+extern NSString *const iTermVariableKeyTabTitleOverrideFormat;
 extern NSString *const iTermVariableKeyTabCurrentSession;
 extern NSString *const iTermVariableKeyTabID;
+extern NSString *const iTermVariableKeyTabWindow;
 
 // If this window is a tmux client, this is the window number defined by
 // the tmux server. -1 if not a tmux client.
@@ -56,7 +58,7 @@ extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only 
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)
 extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated badge swifty string.
 extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
-extern NSString *const iTermVariableKeyWindowTitleOverride;
+extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 
 @class iTermVariableReference;

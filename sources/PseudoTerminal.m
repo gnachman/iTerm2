@@ -29,6 +29,7 @@
 #import "iTermFindDriver.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyMigrationHelper.h"
@@ -56,6 +57,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
+#import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
@@ -187,7 +189,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 // reset to nil after the change is made in the window.
 @property(nonatomic, copy) NSString *desiredTitle;
 
-@property(nonatomic, retain) NSString *titleOverride;
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
 @end
@@ -400,6 +401,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _lockTransientTitle;
 
     NSMutableArray *_toggleFullScreenModeCompletionBlocks;
+    iTermVariableReference *_titleOverrideFormatReference;
 }
 
 @synthesize scope = _scope;
@@ -864,10 +866,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     _initialProfile = [[PseudoTerminal expurgatedInitialProfile:profile] retain];
     if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
         NSString *override = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];;
-        self.titleOverride = override.length ? override : @" ";
+        [self.scope setValue:override.length ? override : @" " forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
+    _titleOverrideFormatReference = [[iTermVariableReference alloc] initWithPath:iTermVariableKeyWindowTitleOverrideFormat scope:self.scope];
+    _titleOverrideFormatReference.onChangeBlock = ^{
+        [weakSelf titleOverrideFormatDidChange];
+    };
     DLog(@"Done initializing PseudoTerminal %@", self);
 }
 
@@ -995,6 +1001,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_variables release];
     [_scope release];
     [_windowTitleOverrideSwiftyString release];
+    [_titleOverrideFormatReference release];
     [_initialProfile release];
     [_toggleFullScreenModeCompletionBlocks release];
 
@@ -2467,11 +2474,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
 }
 
-- (void)setTitleOverride:(NSString *)titleOverride {
+- (void)titleOverrideFormatDidChange {
+    NSString *titleOverride = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat];
     [_windowTitleOverrideSwiftyString invalidate];
     if (!titleOverride) {
         _windowTitleOverrideSwiftyString = nil;
-        [self.scope setValue:nil forVariableNamed:iTermVariableKeyWindowTitleOverride];
+        [self.scope setValue:nil forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -2480,13 +2488,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                         scope:self.scope
                                      observer:
      ^(NSString * _Nonnull newValue) {
-         [weakSelf.scope setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverride];
+         [weakSelf.scope setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
          [weakSelf setWindowTitle];
      }];
-}
-
-- (NSString *)titleOverride {
-    return _windowTitleOverrideSwiftyString.swiftyString;
 }
 
 - (iTermVariables *)variables {
@@ -2519,7 +2523,7 @@ ITERM_WEAKLY_REFERENCEABLE
     titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
-    titleTextField.stringValue = self.titleOverride ?: @"";
+    titleTextField.stringValue = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] ?: @"";
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -2527,7 +2531,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [titleTextField.window makeFirstResponder:titleTextField];
     });
     if ([alert runModal] == NSAlertFirstButtonReturn) {
-        self.titleOverride = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+        [self.scope setValue:titleTextField.stringValue.length ? titleTextField.stringValue : nil
+            forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
     }
 }
 
@@ -4982,7 +4987,8 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *newGuid = [session divorceAddressBookEntryFromPreferences];
     [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid
                                              selectGeneralTab:makeKey
-                                                         tmux:session.isTmuxClient];
+                                                         tmux:session.isTmuxClient
+                                                        scope:session.variablesScope];
     if (makeKey) {
         [[[PreferencePanel sessionsInstance] window] makeKeyAndOrderFront:nil];
     }
@@ -5844,7 +5850,6 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [tabView selectTabViewItem:tabViewItem];
-    PTYTab *tab = tabViewItem.identifier;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
     alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
@@ -5856,7 +5861,7 @@ ITERM_WEAKLY_REFERENCEABLE
     titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
-    titleTextField.stringValue = tab.titleOverride ?: @"";
+    titleTextField.stringValue = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] ?: @"";
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -5864,7 +5869,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [titleTextField.window makeFirstResponder:titleTextField];
     });
     if ([alert runModal] == NSAlertFirstButtonReturn) {
-        tab.titleOverride = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+        [self.scope setValue:titleTextField.stringValue.length ? titleTextField.stringValue : nil
+            forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
     }
 }
 
@@ -7559,7 +7565,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return 0;
 }
 
-- (void)updateWindowNumberVisibility:(NSNotification*)aNotification {
+- (void)updateWindowNumberVisibility:(NSNotification *)aNotification {
     // This is if displaying of window number was toggled in prefs.
     if (@available(macOS 10.14, *)) {
         if (_shortcutAccessoryViewController) {
@@ -8393,7 +8399,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)undecoratedWindowTitle {
-    if (self.titleOverride &&
+    if ([self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] &&
         self.windowTitleOverrideSwiftyString.evaluatedString.length > 0) {
         return self.windowTitleOverrideSwiftyString.evaluatedString;
     }
@@ -9463,6 +9469,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView layoutSubviews];
 }
 
+- (iTermVariables *)tabWindowVariables:(PTYTab *)tab {
+    return self.variables;
+}
+
 #pragma mark - Toolbelt
 
 - (void)toolbeltUpdateMouseCursor {
@@ -9573,7 +9583,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Update dimming of panes.
     [self refreshTerminal:nil];
     [self setDimmingForSessions];
-    
+
     // Post a notification to reload menus
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
                                                         object:self

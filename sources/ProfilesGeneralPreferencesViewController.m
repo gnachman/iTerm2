@@ -14,7 +14,9 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
 #import "iTermLaunchServices.h"
+#import "iTermNotificationCenter.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShortcutInputView.h"
 #import "iTermVariableScope.h"
@@ -68,9 +70,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_tabTitleTextFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_windowTitleTextFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
     IBOutlet NSPopUpButton *_icon;
     IBOutlet NSImageView *_imageWell;
+    IBOutlet NSTextField *_tabTitle;
+    IBOutlet NSTextField *_windowTitle;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
@@ -83,15 +89,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_customTitleHelp;
 
     BOOL _profileNameChangePending;
-    NSTimer *_timer;
+    iTermRateLimitedUpdate *_rateLimit;
 }
 
 - (void)dealloc {
     _profileNameFieldForEditCurrentSession.delegate = nil;
-    [_timer invalidate];
 }
 
 - (void)awakeFromNib {
+    _rateLimit = [[iTermRateLimitedUpdate alloc] init];
+    _rateLimit.minimumInterval = 0.75;
+    
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
 
@@ -137,7 +145,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     };
-    
+
     info = [self defineControl:_icon
                            key:KEY_ICON
                           type:kPreferenceInfoTypePopup];
@@ -208,6 +216,18 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                            passthrough:_badgeTextForEditCurrentSession.delegate
                                                          functionsOnly:NO];
     _badgeTextForEditCurrentSession.delegate = _badgeTextForEditCurrentSessionFieldDelegate;
+
+    _tabTitleTextFieldDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
+                                                       passthrough:_tabTitle.delegate
+                                                     functionsOnly:NO];
+    _tabTitle.delegate = _tabTitleTextFieldDelegate;
+
+    _windowTitleTextFieldDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
+                                                       passthrough:_windowTitle.delegate
+                                                     functionsOnly:NO];
+    _windowTitle.delegate = _windowTitleTextFieldDelegate;
 
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
@@ -301,8 +321,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if (_profileNameChangePending) {
         [self updateProfileName];
     }
-    [_timer invalidate];
-    _timer = nil;
+    [_rateLimit invalidate];
     if ([_tagsTokenField textFieldIsFirstResponder]) {
         // The token field's editor is the first responder. Force the token field to end editing
         // so the last token entered will be tokenized and prefs saved with it.
@@ -320,11 +339,20 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     self.view = _editCurrentSessionView;
 }
 
+- (iTermVariableScope *)scope {
+    return [self.profileDelegate profilesGeneralPreferencesScope];
+}
+
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
     _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
+    iTermVariableScope *scope = self.scope;
+    if (scope) {
+        _tabTitle.stringValue = [self.scope valueForPath:iTermVariableKeySessionTab, iTermVariableKeyTabTitleOverrideFormat, nil] ?: @"";
+        _windowTitle.stringValue = [self.scope valueForPath:iTermVariableKeySessionTab, iTermVariableKeyTabWindow, iTermVariableKeyWindowTitleOverrideFormat, nil] ?: @"";
+    }
 }
 
 - (NSString *)selectedGuid {
@@ -831,26 +859,48 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];
-    if (control != _profileNameFieldForEditCurrentSession) {
-        [super controlTextDidChange:aNotification];
-    } else {
-        _profileNameChangePending = YES;
-        if (!_timer) {
-            _timer = [NSTimer scheduledTimerWithTimeInterval:0.75
-                                                      target:self
-                                                    selector:@selector(postUpdateSessionNameNotification:)
-                                                    userInfo:nil
-                                                     repeats:NO];
-        }
+    if (control == _profileNameFieldForEditCurrentSession) {
+        [self sessionNameDidChange];
+        return;
     }
+    if (control == _tabTitle) {
+        [self tabTitleDidChange];
+        return;
+    }
+    if (control == _windowTitle) {
+        [self windowTitleDidChange];
+    }
+    [super controlTextDidChange:aNotification];
+}
+
+- (void)sessionNameDidChange {
+    _profileNameChangePending = YES;
+    [_rateLimit performRateLimitedSelector:@selector(postUpdateSessionNameNotification)
+                                  onTarget:self
+                                withObject:nil];
+}
+
+- (void)tabTitleDidChange {
+    NSString *value = _tabTitle.stringValue;
+    if (value.length == 0) {
+        value = nil;
+    }
+    [self.scope setValue:value
+                 forPath:iTermVariableKeySessionTab, iTermVariableKeyTabTitleOverrideFormat, nil];
+}
+
+- (void)windowTitleDidChange {
+    NSString *value = _windowTitle.stringValue;
+    if (value.length == 0) {
+        value = nil;
+    }
+    [self.scope setValue:value forPath:iTermVariableKeySessionTab, iTermVariableKeyTabWindow, iTermVariableKeyWindowTitleOverrideFormat, nil];
 }
 
 #pragma mark - Notifications
 
-- (void)postUpdateSessionNameNotification:(NSTimer *)timer {
+- (void)postUpdateSessionNameNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
-    [_timer invalidate];
-    _timer = nil;
 }
 
 - (void)updateProfileName {

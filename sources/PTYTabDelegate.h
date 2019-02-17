@@ -8,6 +8,7 @@
 
 #import "iTermMetalUnavailableReason.h"
 
+@class iTermVariables;
 @class NSImage;
 @class PTYSession;
 @class PTYTab;
@@ -47,5 +48,6 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab;
 - (BOOL)tabAnyDragInProgress:(PTYTab *)tab;
 - (void)tabDidInvalidateStatusBar:(PTYTab *)tab;
+- (iTermVariables *)tabWindowVariables:(PTYTab *)tab;
 
 @end

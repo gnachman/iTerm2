@@ -9,6 +9,7 @@
 #import "iTermPreferencesBaseViewController.h"
 #import "ProfileModel.h"
 
+@class iTermVariableScope;
 @class ProfileModel;
 
 // Posted when the name field ends editing in the "get info" dialog. The object is the guid of the
@@ -28,6 +29,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 @property(nonatomic, weak) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
 @property (nonatomic) BOOL tmuxSession;
+@property (nonatomic, strong) iTermVariableScope *scope;
 
 // Size of tab view.
 @property(nonatomic, readonly) NSSize size;
@@ -43,9 +45,16 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 - (void)changeFont:(id)fontManager;
 - (void)selectGeneralTab;
 
-- (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
-- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid;
-- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier;
+- (void)openToProfileWithGuid:(NSString *)guid
+             selectGeneralTab:(BOOL)selectGeneralTab
+                        scope:(iTermVariableScope *)scope;
+
+- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid
+                                     scope:(iTermVariableScope *)scope;
+
+- (void)openToProfileWithGuid:(NSString *)guid
+andEditComponentWithIdentifier:(NSString *)identifier
+                        scope:(iTermVariableScope *)scope;
 
 // Update views for changed backing state.
 - (void)refresh;

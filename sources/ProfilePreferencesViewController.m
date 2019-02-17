@@ -16,6 +16,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermProfilePreferencesTabViewWrapperView.h"
 #import "iTermSizeRememberingView.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -287,7 +288,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
 }
 
-- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid {
+- (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid
+                                     scope:(iTermVariableScope *)scope {
+    self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
         [self reloadProfileInProfileViewControllers];
@@ -300,7 +303,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
-- (void)openToProfileWithGuid:(NSString *)guid andEditComponentWithIdentifier:(NSString *)identifier {
+- (void)openToProfileWithGuid:(NSString *)guid
+andEditComponentWithIdentifier:(NSString *)identifier
+                        scope:(iTermVariableScope *)scope {
+    self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
         [self reloadProfileInProfileViewControllers];
@@ -313,7 +319,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
-- (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab {
+- (void)openToProfileWithGuid:(NSString *)guid
+             selectGeneralTab:(BOOL)selectGeneralTab
+                        scope:(iTermVariableScope *)scope {
+    self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
         [self reloadProfileInProfileViewControllers];
@@ -903,6 +912,11 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [[NSNotificationCenter defaultCenter] postNotificationName:kProfileSessionHotkeyDidChange
                                                         object:[_profilesListView selectedGuid]];
 }
+
+- (iTermVariableScope *)profilesGeneralPreferencesScope {
+    return self.scope;
+}
+
 
 #pragma mark - NSTabViewDelegate
 

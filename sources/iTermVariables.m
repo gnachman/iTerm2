@@ -28,9 +28,11 @@ NSString *const iTermVariableKeyApplicationLocalhostName = @"localhostName";
 NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
 
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
+NSString *const iTermVariableKeyTabTitleOverrideFormat = @"titleOverrideFormat";
 NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
 NSString *const iTermVariableKeyTabTmuxWindow = @"tmuxWindow";
 NSString *const iTermVariableKeyTabID = @"id";
+NSString *const iTermVariableKeyTabWindow = @"window";
 
 NSString *const iTermVariableKeySessionAutoLogID = @"autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"columns";
@@ -64,7 +66,7 @@ NSString *const iTermVariableKeySessionMouseReportingMode = @"mouseReportingMode
 NSString *const iTermVariableKeySessionBadge = @"badge";
 NSString *const iTermVariableKeySessionTab = @"tab";
 
-NSString *const iTermVariableKeyWindowTitleOverride = @"titleOverride";
+NSString *const iTermVariableKeyWindowTitleOverrideFormat = @"titleOverrideFormat";
 NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 
 // NOTE: If you add here, also update +recordBuiltInVariables

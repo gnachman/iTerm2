@@ -68,6 +68,17 @@ NS_ASSUME_NONNULL_BEGIN
     return result;
 }
 
+- (id)valueForPath:(NSString *)firstName, ... {
+    va_list args;
+    va_start(args, firstName);
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSString *name = firstName; name != nil; name = va_arg(args, NSString*)) {
+        [parts addObject:name];
+    }
+    va_end(args);
+    return [self valueForVariableName:[parts componentsJoinedByString:@"."]];
+}
+
 - (id)valueForVariableName:(NSString *)name {
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name forWriting:NO stripped:&stripped];
@@ -156,11 +167,24 @@ NS_ASSUME_NONNULL_BEGIN
     return changed;
 }
 
+- (BOOL)setValue:(nullable id)value forPath:(NSString *)firstName, ... {
+    va_list args;
+    va_start(args, firstName);
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSString *name = firstName; name != nil; name = va_arg(args, NSString*)) {
+        [parts addObject:name];
+    }
+    va_end(args);
+    return [self setValue:value forVariableNamed:[parts componentsJoinedByString:@"."]];
+}
+
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
     return [self setValue:value forVariableNamed:name weak:NO];
 }
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak {
+    assert(![value isKindOfClass:[iTermVariableScope class]]);  // You meant to use iTermVariables, not iTermVariableScope.
+
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name forWriting:YES stripped:&stripped];
     if (!owner) {

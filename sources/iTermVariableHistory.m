@@ -83,8 +83,10 @@
 
     // Tab context
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverrideFormat inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindow inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabID inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabWindow inContext:iTermVariablesSuggestionContextTab];
 
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyGlobalScopeName
                                     inContext:iTermVariablesSuggestionContextTab
@@ -95,7 +97,7 @@
     // TODO: Add a weak link from tab to window.
 
     // Window context
-    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverride inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverrideFormat inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyWindowCurrentTab
                                     inContext:iTermVariablesSuggestionContextWindow
                              leadingToContext:iTermVariablesSuggestionContextTab];

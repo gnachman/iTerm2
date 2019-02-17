@@ -14,6 +14,7 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSwiftyString.h"
+#import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "MovePaneController.h"
 #import "NSAppearance+iTerm.h"
@@ -196,6 +197,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     BOOL _resizingSplit;
     iTermSwiftyString *_tabTitleOverrideSwiftyString;
+    iTermVariableReference *_tabTitleOverrideFormatReference;
 
     NSInteger _numberOfSplitViewDragsInProgress;
 
@@ -405,6 +407,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              selector:@selector(screenParametersDidChange:)
                                                  name:NSApplicationDidChangeScreenParametersNotification
                                                object:nil];
+    _tabTitleOverrideFormatReference = [[iTermVariableReference alloc] initWithPath:iTermVariableKeyTabTitleOverrideFormat
+                                                                              scope:self.variablesScope];
+    __weak __typeof(self) weakSelf = self;
+    _tabTitleOverrideFormatReference.onChangeBlock = ^{
+        [weakSelf updateTitleOverrideFromFormatVariable];
+    };
 }
 
 - (void)dealloc {
@@ -452,6 +460,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 #pragma mark - Everything else
+
+- (void)setDelegate:(id<PTYTabDelegate>)delegate {
+    _delegate = delegate;
+    [self.variablesScope setValue:[delegate tabWindowVariables:self]
+                 forVariableNamed:iTermVariableKeyTabWindow
+                             weak:YES];
+}
 
 - (BOOL)useSeparateStatusbarsPerPane {
     if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
@@ -4090,10 +4105,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setTitleOverride:(NSString *)titleOverride {
+    [self.variablesScope setValue:titleOverride forVariableNamed:iTermVariableKeyTabTitleOverrideFormat];
+}
+
+- (void)updateTitleOverrideFromFormatVariable {
+    NSString *titleOverride = [self.variablesScope valueForVariableName:iTermVariableKeyTabTitleOverrideFormat];
     [_tabTitleOverrideSwiftyString invalidate];
     if (!titleOverride) {
         _tabTitleOverrideSwiftyString = nil;
         [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabTitleOverride];
+        [self updateTabTitle];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -4105,6 +4126,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
              [weakSelf.variablesScope setValue:newValue forVariableNamed:iTermVariableKeyTabTitleOverride];
              [weakSelf updateTabTitle];
          }];
+
 }
 
 - (NSString *)titleOverride {
