@@ -28,3 +28,18 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+#import <Cocoa/Cocoa.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface iTermFlagsChangedNotification : iTermBaseNotification
+
+@property (nonatomic, strong, readonly) NSEvent *event;
+
++ (instancetype)notificationWithEvent:(NSEvent *)event;
++ (void)subscribe:(NSObject *)owner
+            block:(void (^)(iTermFlagsChangedNotification * _Nonnull notification))block;
+@end
+
+NS_ASSUME_NONNULL_END

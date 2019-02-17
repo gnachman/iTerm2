@@ -4,12 +4,13 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermEventTap.h"
+#import "iTermNotificationCenter.h"
 #import "NSArray+iTerm.h"
 
 NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappedNotification";
 
 @interface iTermEventTap()
-@property(nonatomic, retain) NSMutableArray<iTermWeakReference<id<iTermEventTapObserver>> *> *observers;
+@property(nonatomic, strong) NSMutableArray<iTermWeakReference<id<iTermEventTapObserver>> *> *observers;
 @end
 
 @implementation iTermEventTap {
@@ -32,12 +33,6 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
     return self;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_observers release];
-    [super dealloc];
-}
-
 - (void)secureInputDidChange:(NSNotification *)notification {
     [self setEnabled:[self shouldBeEnabled]];
 }
@@ -50,7 +45,7 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 }
 
 - (NSEvent *)runEventTapHandler:(NSEvent *)event {
-    CGEventRef newEvent = iTermEventTapCallback(nil, kCGEventKeyDown, [event CGEvent], self);
+    CGEventRef newEvent = iTermEventTapCallback(nil, kCGEventKeyDown, [event CGEvent], (__bridge void *)self);
     if (newEvent) {
         return [NSEvent eventWithCGEvent:newEvent];
     } else {
@@ -107,7 +102,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         CGEventType type,
                                         CGEventRef event,
                                         void *refcon) {
-    iTermEventTap *eventTap = (id)refcon;
+    iTermEventTap *eventTap = (__bridge id)refcon;
     DLog(@"event tap %@ for %@", eventTap, event);
     return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
 }
@@ -136,7 +131,11 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
         return event;
     }
 
-    event = [self.remappingDelegate remappedEventFromEventTappedWithType:type event:event];
+    return [self handleEvent:event ofType:type];
+}
+
+- (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {
+    CGEventRef event = [self.remappingDelegate remappedEventFromEventTappedWithType:type event:originalEvent];
 
     DLog(@"Notifying observers");
     [self postEventToObservers:event type:type];
@@ -206,11 +205,11 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                  kCGEventTapOptionDefault,
                                  _types,
                                  (CGEventTapCallBack)iTermEventTapCallback,
-                                 self);
+                                 (__bridge void *)self);
     if (!_machPort) {
         XLog(@"CGEventTapCreate failed");
         AppendPinnedDebugLogMessage(@"EventTap", @"CGEventTapCreate failed");
-        AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(id)kAXTrustedCheckOptionPrompt: @YES});
+        AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @YES});
         goto error;
     }
 
@@ -267,6 +266,10 @@ error:
     self = [super initWithEventTypes:CGEventMaskBit(kCGEventFlagsChanged)];
     if (self) {
         self.remappingDelegate = self;
+        __weak __typeof(self) weakSelf = self;
+        [iTermFlagsChangedNotification subscribe:self block:^(iTermFlagsChangedNotification * _Nonnull notification) {
+            [weakSelf flagsDidChange:notification];
+        }];
     }
     return self;
 }
@@ -276,6 +279,15 @@ error:
         remappingDelegate = self;
     }
     [super setRemappingDelegate:remappingDelegate];
+}
+
+- (void)flagsDidChange:(iTermFlagsChangedNotification *)notification {
+    if (@available(macOS 10.13, *)) {
+        if (IsSecureEventInputEnabled()) {
+            DLog(@"Injecting flagsChanged event %@ because secure input is on", notification.event);
+            [self handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
+        }
+    }
 }
 
 #pragma mark - iTermEventTapRemappingDelegate

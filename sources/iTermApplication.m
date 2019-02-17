@@ -32,6 +32,7 @@
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermModifierRemapper.h"
+#import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
 #import "iTermScriptingWindow.h"
 #import "iTermShortcutInputView.h"
@@ -385,7 +386,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     if ([self routeEventToShortcutInputView:event]) {
         return YES;
     }
-
+    [[iTermFlagsChangedNotification notificationWithEvent:event] post];
     return NO;
 }
 

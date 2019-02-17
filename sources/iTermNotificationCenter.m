@@ -102,3 +102,21 @@ static const char iTermNotificationTokenAssociatedObject;
 }
 
 @end
+
+@interface iTermFlagsChangedNotification()
+@property (nonatomic, strong, readwrite) NSEvent *event;
+@end
+
+@implementation iTermFlagsChangedNotification
+
++ (instancetype)notificationWithEvent:(id)event {
+    iTermFlagsChangedNotification *notif = [[self alloc] initPrivate];
+    notif.event = event;
+    return notif;
+}
+
++ (void)subscribe:(NSObject *)owner block:(void (^)(iTermFlagsChangedNotification * _Nonnull))block {
+    [self internalSubscribe:owner withBlock:block];
+}
+
+@end

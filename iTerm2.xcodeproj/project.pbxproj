@@ -1861,6 +1861,7 @@
 		A663013119D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A663013219D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
+		A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A667190A1DCE36C3000CE608 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
 		A667190B1DCE36C3000CE608 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A667190C1DCE36C3000CE608 /* iTermWeakReference.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCB60C1C6714C70019184E /* iTermWeakReference.h */; };
@@ -3393,7 +3394,6 @@
 		A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */; };
-		A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */; };
 		A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2621CF0F33300376F28 /* iTermModifierRemapper.m */; };
 		A6FEA2681CF2C83700376F28 /* iTermPreviousState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA2661CF2C83700376F28 /* iTermPreviousState.h */; };
@@ -11999,6 +11999,7 @@
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
+				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
 				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,
@@ -12310,7 +12311,6 @@
 				A6C762EE1B45C52B00E3C992 /* IntervalTree.m in Sources */,
 				A62C3B3F1BD40DC900B5629D /* iTermCapturedOutputMark.m in Sources */,
 				A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */,
-				A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */,
 				A6C763961B45C52B00E3C992 /* iTermOrphanServerAdopter.m in Sources */,
 				A6C763CC1B45C52B00E3C992 /* VT100Token.m in Sources */,
 				A6CEC1141DCE8146009F4FD2 /* GPBWireFormat.m in Sources */,
