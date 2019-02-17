@@ -59,6 +59,7 @@
 #import "iTermTouchBarButton.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
@@ -2501,12 +2502,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _variables;
 }
 
-- (iTermVariableScope *)scope {
+- (iTermVariableScope<iTermWindowScope> *)scope {
     if (!_scope) {
-        _scope = [[iTermVariableScope alloc] init];
-        [_scope addVariables:self.variables toScopeNamed:nil];
-        [_scope addVariables:[iTermVariables globalInstance] toScopeNamed:iTermVariableKeyGlobalScopeName];
-        [_scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
+        _scope = [iTermVariableScope newWindowScopeWithVariables:self.variables
+                                                    tabVariables:self.currentTab.variables];
     }
     return _scope;
 }

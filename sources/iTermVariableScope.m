@@ -34,12 +34,6 @@ NS_ASSUME_NONNULL_BEGIN
     NSPointerArray *_danglingReferences;
 }
 
-+ (instancetype)globalsScope {
-    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
-    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:nil];
-    return scope;
-}
-
 - (instancetype)init {
     self = [super init];
     if (self) {

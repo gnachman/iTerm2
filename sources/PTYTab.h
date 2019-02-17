@@ -11,6 +11,7 @@
 #import "Api.pbobjc.h"
 
 @class FakeWindow;
+@protocol iTermTabScope;
 @class iTermVariables;
 @class iTermVariableScope;
 @class PTYSession;
@@ -77,7 +78,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 // This value is in the variable PTYTabVariableTitleOverride.
 @property (nonatomic, readonly) NSString *evaluatedTitleOverride;
 
-@property (nonatomic, readonly) iTermVariableScope *variablesScope;
+@property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
 @property(nonatomic) BOOL deferFontChanges;
 

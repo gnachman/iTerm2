@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL neverReturnNil;
 @property (nonatomic, readonly) NSArray<iTermTuple<NSString *, iTermVariables *> *> *frames;
 
-+ (instancetype)globalsScope;
 - (iTermVariableRecordingScope *)recordingCopy;
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;

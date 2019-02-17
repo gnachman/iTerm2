@@ -75,6 +75,8 @@
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Global.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermWarning.h"
 #import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
@@ -7697,11 +7699,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return _variables.stringValuedDictionary;
 }
 
-- (iTermVariableScope *)variablesScope {
-    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
-    [scope addVariables:self.variables toScopeNamed:nil];
-    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:iTermVariableKeyGlobalScopeName];
-    return [scope autorelease];
+- (iTermVariableScope<iTermSessionScope> *)variablesScope {
+    return [[iTermVariableScope newSessionScopeWithVariables:self.variables] autorelease];
 }
 
 - (BOOL)textViewSuppressingAllOutput {

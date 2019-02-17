@@ -16,6 +16,7 @@
 #import "iTermSwiftyString.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Tab.h"
 #import "MovePaneController.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -4094,10 +4095,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateTabTitleForCurrentSessionName:sessionName];
 }
 
-- (iTermVariableScope *)variablesScope {
-    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
-    [scope addVariables:_variables toScopeNamed:nil];
-    return scope;
+- (iTermVariableScope<iTermTabScope> *)variablesScope {
+    return [iTermVariableScope newTabScopeWithVariables:_variables];
 }
 
 - (id)valueForVariable:(NSString *)name {

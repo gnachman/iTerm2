@@ -57,6 +57,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class iTermNotificationController;
 @class iTermPromptOnCloseReason;
 @class iTermQuickLookController;
+@protocol iTermSessionScope;
 @class SessionView;
 
 typedef NS_ENUM(NSInteger, SplitSelectionMode) {
@@ -432,7 +433,7 @@ typedef enum {
 @property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
 
 @property (nonatomic, readonly) iTermVariables *variables;
-@property (nonatomic, readonly) iTermVariableScope *variablesScope;
+@property (nonatomic, readonly) iTermVariableScope<iTermSessionScope> *variablesScope;
 @property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;

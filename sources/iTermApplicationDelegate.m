@@ -82,7 +82,7 @@
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
-#import "iTermVariableScope.h"
+#import "iTermVariableScope+Global.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import "MovePaneController.h"
