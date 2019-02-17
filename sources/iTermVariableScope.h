@@ -52,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Don't use this unless you know what you're doing.
 // It does not attempt to resolve dangling references and should not be long-lived.
 - (iTermVariableScope *)unsafeCheapCopy;
+- (NSArray<iTermVariables *> *)variablesInScopeNamed:(nullable NSString *)scopeName;
 
 @end
 

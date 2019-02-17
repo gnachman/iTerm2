@@ -6,6 +6,7 @@
 //
 
 #import "iTermVariableScope+Session.h"
+#import "iTermVariableScope+Tab.h"
 #import "iTermVariables.h"
 
 @implementation iTermVariableScope (Session)
@@ -258,11 +259,7 @@
 }
 
 - (iTermVariableScope<iTermTabScope> *)tab {
-    return [self valueForVariableName:iTermVariableKeySessionTab];
-}
-
-- (void)setTab:(iTermVariableScope<iTermTabScope> *)newValue {
-    [self setValue:newValue forVariableNamed:iTermVariableKeySessionTab];
+    return [iTermVariableScope newTabScopeWithVariables:[self valueForVariableName:iTermVariableKeySessionTab]];
 }
 
 @end

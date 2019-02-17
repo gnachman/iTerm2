@@ -9,6 +9,7 @@
 #import "iTermPreferencesBaseViewController.h"
 #import "ProfileModel.h"
 
+@protocol iTermSessionScope;
 @class iTermVariableScope;
 @class ProfileModel;
 
@@ -29,7 +30,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 @property(nonatomic, weak) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
 @property (nonatomic) BOOL tmuxSession;
-@property (nonatomic, strong) iTermVariableScope *scope;
+@property (nonatomic, strong) iTermVariableScope<iTermSessionScope> *scope;
 
 // Size of tab view.
 @property(nonatomic, readonly) NSSize size;
@@ -47,14 +48,14 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 - (void)openToProfileWithGuid:(NSString *)guid
              selectGeneralTab:(BOOL)selectGeneralTab
-                        scope:(iTermVariableScope *)scope;
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope;
 
 - (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid
-                                     scope:(iTermVariableScope *)scope;
+                                     scope:(iTermVariableScope<iTermSessionScope> *)scope;
 
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
-                        scope:(iTermVariableScope *)scope;
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope;
 
 // Update views for changed backing state.
 - (void)refresh;

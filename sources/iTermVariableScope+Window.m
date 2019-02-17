@@ -7,6 +7,7 @@
 
 #import "iTermVariableScope+Window.h"
 #import "iTermVariableScope+Global.h"
+#import "iTermVariableScope+Tab.h"
 
 @implementation iTermVariableScope (Window)
 
@@ -28,12 +29,7 @@
 }
 
 - (iTermVariableScope<iTermTabScope> *)currentTab {
-    return [self valueForVariableName:iTermVariableKeyWindowCurrentTab];
+    return [iTermVariableScope newTabScopeWithVariables:[self valueForVariableName:iTermVariableKeyWindowCurrentTab]];
 }
-
-- (void)setCurrentTab:(iTermVariableScope<iTermTabScope> *)newValue {
-    [self setValue:newValue forVariableNamed:iTermVariableKeyWindowCurrentTab];
-}
-
 
 @end

@@ -6,6 +6,8 @@
 //
 
 #import "iTermVariableScope+Tab.h"
+#import "iTermVariableScope+Session.h"
+#import "iTermVariableScope+Window.h"
 
 
 @implementation iTermVariableScope (Tab)
@@ -33,11 +35,7 @@
 }
 
 - (iTermVariableScope<iTermSessionScope> *)currentSession {
-    return [self valueForVariableName:iTermVariableKeyTabCurrentSession];
-}
-
-- (void)setCurrentSession:(iTermVariableScope<iTermSessionScope> *)newValue {
-    [self setValue:newValue forVariableNamed:iTermVariableKeyTabCurrentSession];
+    return [iTermVariableScope newSessionScopeWithVariables:[self valueForVariableName:iTermVariableKeyTabCurrentSession]];
 }
 
 - (NSNumber *)tmuxWindow {
@@ -57,11 +55,8 @@
 }
 
 - (iTermVariableScope<iTermWindowScope> *)window {
-    return [self valueForVariableName:iTermVariableKeyTabWindow];
-}
-
-- (void)setWindow:(iTermVariableScope<iTermWindowScope> *)newValue {
-    [self setValue:newValue forVariableNamed:iTermVariableKeyTabWindow];
+    return [iTermVariableScope newWindowScopeWithVariables:[self valueForVariableName:iTermVariableKeyTabWindow]
+                                              tabVariables:[[self variablesInScopeNamed:nil] lastObject]];
 }
 
 @end

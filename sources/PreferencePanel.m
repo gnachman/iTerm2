@@ -259,7 +259,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (void)openToProfileWithGuid:(NSString*)guid
              selectGeneralTab:(BOOL)selectGeneralTab
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope *)scope {
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope {
     _tmux = tmux;
     _profilesViewController.tmuxSession = tmux;
     _profilesViewController.scope = scope;
@@ -274,7 +274,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope *)scope {
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope {
     _tmux = tmux;
     _profilesViewController.tmuxSession = tmux;
     _profilesViewController.scope = scope;

@@ -19,7 +19,9 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShortcutInputView.h"
-#import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
+#import "iTermVariableScope+Tab.h"
+#import "iTermVariableScope+Window.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
@@ -339,7 +341,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     self.view = _editCurrentSessionView;
 }
 
-- (iTermVariableScope *)scope {
+- (id<iTermSessionScope>)scope {
     return [self.profileDelegate profilesGeneralPreferencesScope];
 }
 
@@ -348,10 +350,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
     _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
-    iTermVariableScope *scope = self.scope;
+    id<iTermSessionScope> scope = self.scope;
     if (scope) {
-        _tabTitle.stringValue = [self.scope valueForPath:iTermVariableKeySessionTab, iTermVariableKeyTabTitleOverrideFormat, nil] ?: @"";
-        _windowTitle.stringValue = [self.scope valueForPath:iTermVariableKeySessionTab, iTermVariableKeyTabWindow, iTermVariableKeyWindowTitleOverrideFormat, nil] ?: @"";
+        _tabTitle.stringValue =  scope.tab.tabTitleOverrideFormat ?: @"";
+        _windowTitle.stringValue = scope.tab.window.windowTitleOverrideFormat ?: @"";
     }
 }
 
@@ -885,8 +887,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if (value.length == 0) {
         value = nil;
     }
-    [self.scope setValue:value
-                 forPath:iTermVariableKeySessionTab, iTermVariableKeyTabTitleOverrideFormat, nil];
+    self.scope.tab.tabTitleOverrideFormat = value;
 }
 
 - (void)windowTitleDidChange {
@@ -894,7 +895,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if (value.length == 0) {
         value = nil;
     }
-    [self.scope setValue:value forPath:iTermVariableKeySessionTab, iTermVariableKeyTabWindow, iTermVariableKeyWindowTitleOverrideFormat, nil];
+    self.scope.tab.window.windowTitleOverrideFormat = value;
 }
 
 #pragma mark - Notifications

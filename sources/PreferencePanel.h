@@ -54,6 +54,7 @@ extern NSString *const kReloadAllProfiles;
 
 @class iTermController;
 @class iTermSemanticHistoryPrefsController;
+@protocol iTermSessionScope;
 @class SmartSelectionController;
 @class TriggerController;
 
@@ -82,7 +83,7 @@ void LoadPrefsFromCustomFolder(void);
 - (void)openToProfileWithGuid:(NSString *)guid
              selectGeneralTab:(BOOL)selectGeneralTab
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope *)scope;
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope;
 
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
@@ -105,6 +106,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope *)scope;
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope;
 
 @end

@@ -289,7 +289,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)openToProfileWithGuidAndEditHotKey:(NSString *)guid
-                                     scope:(iTermVariableScope *)scope {
+                                     scope:(iTermVariableScope<iTermSessionScope> *)scope {
     self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
@@ -305,7 +305,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
-                        scope:(iTermVariableScope *)scope {
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope {
     self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
@@ -321,7 +321,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (void)openToProfileWithGuid:(NSString *)guid
              selectGeneralTab:(BOOL)selectGeneralTab
-                        scope:(iTermVariableScope *)scope {
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope {
     self.scope = scope;
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
@@ -913,7 +913,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                         object:[_profilesListView selectedGuid]];
 }
 
-- (iTermVariableScope *)profilesGeneralPreferencesScope {
+- (iTermVariableScope<iTermSessionScope> *)profilesGeneralPreferencesScope {
     return self.scope;
 }
 

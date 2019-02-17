@@ -16,10 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, nonatomic, strong) NSString *tabTitleOverride;
 @property (nullable, nonatomic, strong) NSString *tabTitleOverrideFormat;
-@property (nullable, nonatomic, strong) iTermVariableScope<iTermSessionScope> *currentSession;
+@property (nullable, nonatomic, readonly) iTermVariableScope<iTermSessionScope> *currentSession;
 @property (nullable, nonatomic, strong) NSNumber *tmuxWindow;
 @property (nullable, nonatomic, strong) NSNumber *tabID;
-@property (nullable, nonatomic, strong) iTermVariableScope<iTermWindowScope> *window;
+@property (nullable, nonatomic, readonly) iTermVariableScope<iTermWindowScope> *window;
 
 @end
 

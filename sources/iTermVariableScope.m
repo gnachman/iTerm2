@@ -12,6 +12,7 @@
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -46,6 +47,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName {
     [_frames insertObject:[iTermTuple tupleWithObject:scopeName andObject:variables] atIndex:0];
     [self resolveDanglingReferences];
+}
+
+- (NSArray<iTermVariables *> *)variablesInScopeNamed:(nullable NSString *)scopeName {
+    return [_frames mapWithBlock:^id(iTermTuple<NSString *,iTermVariables *> *anObject) {
+        if (![NSObject object:scopeName isEqualToObject:anObject.firstObject]) {
+            return nil;
+        }
+        return anObject.secondObject;
+    }];
 }
 
 - (void)enumerateVariables:(void (^)(NSString * _Nonnull, iTermVariables * _Nonnull))block {
