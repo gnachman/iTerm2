@@ -221,9 +221,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     iTermVariables *matchesFrame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
     iTermVariableScope *myScope = [scope copy];
     [myScope addVariables:matchesFrame toScopeNamed:nil];
-    [backreferences enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [myScope setValue:obj forVariableNamed:[NSString stringWithFormat:@"match%@", @(idx)]];
-    }];
+    [myScope setValue:backreferences forVariableNamed:@"matches"];
     return myScope;
 }
 

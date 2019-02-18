@@ -27,14 +27,16 @@
 @implementation iTermScriptFunctionCall {
     NSError *_depError;
     NSMutableDictionary<NSString *, id> *_parameters;
-    NSMutableDictionary<NSString *, iTermScriptFunctionCall *> *_dependencies;
+    NSMutableDictionary<NSString *, iTermScriptFunctionCall *> *_dependentCalls;
+    NSMutableDictionary<NSString *, NSArray *> *_dependentInterpolatedStrings;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _parameters = [NSMutableDictionary dictionary];
-        _dependencies = [NSMutableDictionary dictionary];
+        _dependentCalls = [NSMutableDictionary dictionary];
+        _dependentInterpolatedStrings = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -59,7 +61,8 @@
     }
     return ([NSObject object:_depError isEqualToObject:other->_depError] &&
             [NSObject object:_parameters isEqualToObject:other->_parameters] &&
-            [NSObject object:_dependencies isEqualToObject:other->_dependencies]);
+            [NSObject object:_dependentCalls isEqualToObject:other->_dependentCalls] &&
+            [NSObject object:_dependentInterpolatedStrings isEqualToObject:other->_dependentInterpolatedStrings]);
 }
 
 #pragma mark - APIs
@@ -83,25 +86,49 @@
           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermParsedExpression *expression = [[iTermFunctionCallParser callParser] parse:invocation
                                                                               scope:scope];
-    if (expression.string || expression.number) {
-        NSString *reason = @"Expected a function call, not a literal";
-        completion(nil,
-                   [NSError errorWithDomain:@"com.iterm2.call"
-                                       code:3
-                                   userInfo:@{ NSLocalizedDescriptionKey: reason }],
-                   nil);
-        return;
-    }
-    if (expression.error) {
-        completion(nil, expression.error, nil);
-        return;
-    }
+    switch (expression.expressionType) {
+        case iTermParsedExpressionTypeArray:
+        case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeString: {
+            NSString *reason = @"Expected a function call, not a literal";
+            completion(nil,
+                       [NSError errorWithDomain:@"com.iterm2.call"
+                                           code:3
+                                       userInfo:@{ NSLocalizedDescriptionKey: reason }],
+                       nil);
+            return;
+        }
+        case iTermParsedExpressionTypeError:
+            completion(nil, expression.error, nil);
+            return;
 
-    [self performFunctionCall:expression.functionCall
-               fromInvocation:invocation
-                        scope:scope
-                      timeout:timeout
-                   completion:completion];
+        case iTermParsedExpressionTypeNil: {
+            NSString *reason = @"nil not allowed";
+            completion(nil,
+                       [NSError errorWithDomain:@"com.iterm2.call"
+                                           code:4
+                                       userInfo:@{ NSLocalizedDescriptionKey: reason }],
+                       nil);
+            return;
+        }
+        case iTermParsedExpressionTypeFunctionCall:
+            [self performFunctionCall:expression.functionCall
+                       fromInvocation:invocation
+                                scope:scope
+                              timeout:timeout
+                           completion:completion];
+            return;
+        case iTermParsedExpressionTypeInterpolatedString: {
+            NSString *reason = @"interpolated string not allowed";
+            completion(nil,
+                       [NSError errorWithDomain:@"com.iterm2.call"
+                                           code:4
+                                       userInfo:@{ NSLocalizedDescriptionKey: reason }],
+                       nil);
+            return;
+        }
+    }
+    assert(NO);
 }
 
 + (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
@@ -110,21 +137,42 @@
     permissiveScope.neverReturnNil = YES;
     iTermParsedExpression *expression = [[iTermFunctionCallParser callParser] parse:invocation
                                                                               scope:permissiveScope];
-    if (expression.string || expression.number) {
-        if (error) {
-            *error = [NSError errorWithDomain:@"com.iterm2.call"
-                                         code:3
-                                     userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a literal" }];
-        }
-        return nil;
+    switch (expression.expressionType) {
+        case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeString:
+        case iTermParsedExpressionTypeArray:
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                             code:3
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a literal" }];
+            }
+            return nil;
+
+        case iTermParsedExpressionTypeError:
+            if (error) {
+                *error = expression.error;
+            }
+            return nil;
+
+        case iTermParsedExpressionTypeFunctionCall:
+            return expression.functionCall.signature;
+
+        case iTermParsedExpressionTypeNil:
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                             code:3
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not nil" }];
+            }
+            return nil;
+        case iTermParsedExpressionTypeInterpolatedString:
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                             code:3
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not an interpolated string" }];
+            }
+            return nil;
     }
-    if (expression.error) {
-        if (error) {
-            *error = expression.error;
-        }
-        return nil;
-    }
-    return expression.functionCall.signature;
+    assert(NO);
 }
 
 + (void)evaluateString:(NSString *)string
@@ -148,7 +196,8 @@
                              timeout:timeout
                                scope:scope
                           completion:
-             ^(id output, NSError *error, NSSet<NSString *> *missingFuncs) {
+             ^(id originalOutput, NSError *error, NSSet<NSString *> *missingFuncs) {
+                 id output = [self stringFromJSONObject:originalOutput];
                  if (output) {
                      parts[i] = output;
                  }
@@ -177,16 +226,25 @@
 
 + (NSString *)stringFromJSONObject:(id)jsonObject {
     NSString *string = [NSString castFrom:jsonObject];
-    NSNumber *number = [NSNumber castFrom:jsonObject];
     if (string) {
         return string;
-    } else if (number) {
-        return [number stringValue];
-    } else if ([NSNull castFrom:jsonObject]) {
-        return @"";
-    } else {
-        return [NSJSONSerialization it_jsonStringForObject:jsonObject];
     }
+    NSNumber *number = [NSNumber castFrom:jsonObject];
+    if (number) {
+        return [number stringValue];
+    }
+    NSArray *array = [NSArray castFrom:jsonObject];
+    if (array) {
+        return [NSString stringWithFormat:@"[%@]", [[array mapWithBlock:^id(id anObject) {
+            return [self stringFromJSONObject:anObject];
+        }] componentsJoinedByString:@", "]];
+    }
+
+    if ([NSNull castFrom:jsonObject] || !jsonObject) {
+        return @"";
+    }
+
+    return [NSJSONSerialization it_jsonStringForObject:jsonObject];
 }
 
 + (void)evaluateInterpolatedStringParts:(NSArray *)interpolatedStringParts
@@ -199,11 +257,6 @@
     NSMutableSet<NSString *> *missingFunctionSignatures = [NSMutableSet set];
     if (timeout > 0) {
         group = dispatch_group_create();
-        dispatch_notify(group, dispatch_get_main_queue(), ^{
-            completion([parts componentsJoinedByString:@""],
-                       firstError,
-                       missingFunctionSignatures);
-        });
     }
     [interpolatedStringParts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([obj isKindOfClass:[NSString class]]) {
@@ -231,9 +284,9 @@
                      [[iTermScriptHistoryEntry globalEntry] addOutput:message];
                  } else {
                      parts[index] = [self stringFromJSONObject:value];
-                     if (group) {
-                         dispatch_group_leave(group);
-                     }
+                 }
+                 if (group) {
+                     dispatch_group_leave(group);
                  }
              }];
         }
@@ -242,6 +295,12 @@
         completion([parts componentsJoinedByString:@""],
                    firstError,
                    missingFunctionSignatures);
+    } else {
+        dispatch_notify(group, dispatch_get_main_queue(), ^{
+            completion(firstError ? nil : [parts componentsJoinedByString:@""],
+                       firstError,
+                       missingFunctionSignatures);
+        });
     }
 }
 
@@ -249,36 +308,36 @@
                          timeout:(NSTimeInterval)timeout
                            scope:(iTermVariableScope *)scope
                       completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    if (expression.string) {
-        completion(expression.string, nil, nil);
-        return;
-    }
-    if (expression.number) {
-        completion([expression.number stringValue], nil, nil);
-        return;
-    }
-    if (expression.error) {
-        completion(nil, expression.error, nil);
-        return;
-    }
-    if (expression.interpolatedStringParts) {
-        [self evaluateInterpolatedStringParts:expression.interpolatedStringParts
-                                      timeout:timeout
-                                        scope:scope
-                                   completion:completion];
-        return;
-    }
-    if (expression.optional) {
-        completion(nil, nil, nil);
-        return;
-    }
-    if (expression.functionCall) {
-        [self performFunctionCall:expression.functionCall
-                   fromInvocation:expression.functionCall.description
-                            scope:scope
-                          timeout:timeout
-                       completion:completion];
-        return;
+    switch (expression.expressionType) {
+        case iTermParsedExpressionTypeFunctionCall:
+            [self performFunctionCall:expression.functionCall
+                       fromInvocation:expression.functionCall.description
+                                scope:scope
+                              timeout:timeout
+                           completion:completion];
+            return;
+        case iTermParsedExpressionTypeNil:
+            assert(expression.optional);
+            completion(nil, nil, nil);
+            return;
+        case iTermParsedExpressionTypeError:
+            completion(nil, expression.error, nil);
+            return;
+        case iTermParsedExpressionTypeNumber:
+            completion(expression.number, nil, nil);
+            return;
+        case iTermParsedExpressionTypeString:
+            completion(expression.string, nil, nil);
+            return;
+        case iTermParsedExpressionTypeInterpolatedString:
+            [self evaluateInterpolatedStringParts:expression.interpolatedStringParts
+                                          timeout:timeout
+                                            scope:scope
+                                       completion:completion];
+            return;
+        case iTermParsedExpressionTypeArray:
+            completion(expression.array, nil, nil);
+            return;
     }
 
     ITAssertWithMessage(NO, @"Malformed expression %@", expression);
@@ -311,7 +370,7 @@
             completion(nil, error, nil);
         }];
     }
-    [functionCall callWithScope:scope synchronous:(timeout == 0) completion:^(id output, NSError *error) {
+    [functionCall callWithScope:scope synchronous:(timeout == 0) completion:^(id output, NSError *error, NSSet<NSString *> *missing) {
         if (timeout > 0) {
             // Not synchronous
             if (timer == nil) {
@@ -321,10 +380,6 @@
             [timer invalidate];
             timer = nil;
         }
-        NSSet<NSString *> *missing = nil;
-        if (error.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
-            missing = [NSSet setWithObject:functionCall.signature];
-        }
         completion(output, error, missing);
     }];
 }
@@ -333,48 +388,66 @@
     _parameters[name] = value;
     iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:value];
     if (call) {
-        _dependencies[name] = call;
+        _dependentCalls[name] = call;
+    }
+
+    iTermParsedExpression *expression = [iTermParsedExpression castFrom:value];
+    if (expression.expressionType == iTermParsedExpressionTypeInterpolatedString) {
+        _dependentInterpolatedStrings[name] = expression.interpolatedStringParts;
     }
 }
 
 - (void)callWithScope:(iTermVariableScope *)scope
           synchronous:(BOOL)synchronous
-           completion:(void (^)(id, NSError *))completion {
+           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     if (_depError) {
-        completion(nil, self->_depError);
-    } else {
-        dispatch_group_t group = dispatch_group_create();
-        [self resolveDependenciesWithScope:scope
-                               synchronous:synchronous
-                                     group:group];
-        void (^onResolved)(void) = ^{
-            if (self->_depError) {
-                completion(nil, self->_depError);
-                return;
-            }
-            if (self.isBuiltinFunction) {
-                [self callBuiltinFunctionWithScope:scope completion:completion];
-                return;
-            }
-            if (synchronous) {
-                // This is useful because it causes the scope to be called for all depended-upon
-                // variables even if the function can't be executed. This makes it possible for
-                // the session name controller to build up its set of dependencies.
-                completion(nil, nil);
-                return;
-            }
-            NSString *signature = iTermFunctionSignatureFromNameAndArguments(self.name,
-                                                                             self->_parameters.allKeys);
-            self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithSignature:signature] copy];
-            [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                                       arguments:self->_parameters
-                                                      completion:completion];
-        };
-        if (synchronous) {
-            onResolved();
-        } else {
-            dispatch_group_notify(group, dispatch_get_main_queue(), onResolved);
+        completion(nil, self->_depError, nil);
+        return;
+    }
+
+    dispatch_group_t group = dispatch_group_create();
+    NSMutableSet<NSString *> *mutableMissing = [NSMutableSet set];
+    [self resolveDependenciesWithScope:scope
+                           synchronous:synchronous
+                               missing:mutableMissing
+                                 group:group];
+    void (^onResolved)(NSSet<NSString *> *) = ^(NSSet<NSString *> *missing){
+        if (self->_depError) {
+            completion(nil, self->_depError, missing);
+            return;
         }
+        if (self.isBuiltinFunction) {
+            [self callBuiltinFunctionWithScope:scope completion:^(id object, NSError *error) {
+                completion(object, error, nil);
+            }];
+            return;
+        }
+        if (synchronous) {
+            // This is useful because it causes the scope to be called for all depended-upon
+            // variables even if the function can't be executed. This makes it possible for
+            // the session name controller to build up its set of dependencies.
+            completion(nil, nil, missing);
+            return;
+        }
+        NSString *signature = iTermFunctionSignatureFromNameAndArguments(self.name,
+                                                                         self->_parameters.allKeys);
+        self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithSignature:signature] copy];
+        [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
+                                                   arguments:self->_parameters
+                                                  completion:^(id apiResult, NSError *apiError) {
+                                                      NSSet<NSString *> *missing = nil;
+                                                      if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
+                                                          missing = [NSSet setWithObject:self.signature];
+                                                      }
+                                                      completion(apiResult, apiError, missing);
+                                                  }];
+    };
+    if (synchronous) {
+        onResolved(nil);
+    } else {
+        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+            onResolved(mutableMissing);
+        });
     }
 }
 
@@ -393,6 +466,9 @@
 }
 
 - (NSError *)errorForDependentCall:(iTermScriptFunctionCall *)call thatFailedWithError:(NSError *)error {
+    if (error.code == iTermAPIHelperFunctionCallUnregisteredErrorCode && [error.domain isEqualToString:@"com.iterm2.api"]) {
+        return error;
+    }
     NSString *reason = [NSString stringWithFormat:@"In call to %@: %@", call.name, error.localizedDescription];
     NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
     if (error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection]) {
@@ -414,14 +490,16 @@
 
 - (void)resolveDependenciesWithScope:(iTermVariableScope *)scope
                           synchronous:(BOOL)synchronous
+                             missing:(NSMutableSet<NSString *> *)missing
                                 group:(dispatch_group_t)group {
-    [_dependencies enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
+    [_dependentCalls enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
         if (self->_depError) {
             *stop = YES;
             return;
         }
         dispatch_group_enter(group);
-        [call callWithScope:scope synchronous:synchronous completion:^(id result, NSError *error) {
+        [call callWithScope:scope synchronous:synchronous completion:^(id result, NSError *error, NSSet<NSString *> *innerMissing) {
+            [missing unionSet:innerMissing];
             if (error) {
                 self->_depError = [self errorForDependentCall:call thatFailedWithError:error];
             } else {
@@ -429,6 +507,25 @@
             }
             dispatch_group_leave(group);
         }];
+    }];
+    [_dependentInterpolatedStrings enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSArray * _Nonnull interpolatedStringParts, BOOL * _Nonnull stop) {
+        if (self->_depError) {
+            *stop = YES;
+            return;
+        }
+        dispatch_group_enter(group);
+        [iTermScriptFunctionCall evaluateInterpolatedStringParts:interpolatedStringParts
+                                                         timeout:synchronous ? 0 : INFINITY
+                                                           scope:scope
+                                                      completion:^(id result, NSError *error, NSSet<NSString *> *innerMissing) {
+                                                          [missing unionSet:innerMissing];
+                                                          if (error) {
+                                                              self->_depError = error;
+                                                          } else {
+                                                              self->_parameters[key] = result;
+                                                          }
+                                                          dispatch_group_leave(group);
+                                                      }];
     }];
 }
 

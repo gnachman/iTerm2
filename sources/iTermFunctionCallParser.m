@@ -27,18 +27,32 @@
 
 - (NSString *)description {
     NSString *value = nil;
-    if (self.functionCall) {
-        value = self.functionCall.description;
-    } else if (self.error) {
-        value = self.error.description;
-    } else if (self.string) {
-        value = self.string;
-    } else if (self.interpolatedStringParts) {
-        value = [[self.interpolatedStringParts mapWithBlock:^id(id anObject) {
-            return [anObject description];
-        }] componentsJoinedByString:@""];
-    } else if (self.number) {
-        value = [self.number stringValue];
+    switch (self.expressionType) {
+        case iTermParsedExpressionTypeInterpolatedString:
+            value = [[self.interpolatedStringParts mapWithBlock:^id(id anObject) {
+                return [anObject description];
+            }] componentsJoinedByString:@""];
+            break;
+        case iTermParsedExpressionTypeFunctionCall:
+            value = self.functionCall.description;
+            break;
+        case iTermParsedExpressionTypeNil:
+            value = @"nil";
+            break;
+        case iTermParsedExpressionTypeError:
+            value = self.error.description;
+            break;
+        case iTermParsedExpressionTypeNumber:
+            value = [self.number stringValue];
+            break;
+        case iTermParsedExpressionTypeString:
+            value = self.string;
+            break;
+        case iTermParsedExpressionTypeArray:
+            value = [[self.array mapWithBlock:^id(id anObject) {
+                return [anObject description];
+            }] componentsJoinedByString:@" "];
+            break;
     }
     if (self.optional) {
         value = [value stringByAppendingString:@"?"];
@@ -51,18 +65,136 @@
     if (!other) {
         return NO;
     }
-    return ([NSObject object:self.functionCall isEqualToObject:other.functionCall] &&
-            [NSObject object:self.error isEqualToObject:other.error] &&
-            [NSObject object:self.string isEqualToObject:other.string] &&
-            [NSObject object:self.number isEqualToObject:other.number] &&
-            [NSObject object:self.interpolatedStringParts isEqualToObject:other.interpolatedStringParts] &&
+    return ([NSObject object:self.object isEqualToObject:other.object] &&
+            self.expressionType == other.expressionType &&
             self.optional == other.optional);
 }
 
 + (instancetype)parsedString:(NSString *)string {
-    iTermParsedExpression *expr = [[self alloc] init];
-    expr.string = string;
-    return expr;
+    return [[self alloc] initWithString:string optional:NO];
+}
+
+- (instancetype)initWithString:(NSString *)string optional:(BOOL)optional {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeString;
+        _optional = optional;
+        _object = string;
+    }
+    return self;
+}
+
+- (instancetype)initWithFunctionCall:(iTermScriptFunctionCall *)functionCall {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeFunctionCall;
+        _object = functionCall;
+    }
+    return self;
+}
+
+- (instancetype)initWithErrorCode:(int)code reason:(NSString *)localizedDescription {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeError;
+        _object = [NSError errorWithDomain:@"com.iterm2.parser"
+                                      code:code
+                                  userInfo:@{ NSLocalizedDescriptionKey: localizedDescription ?: @"Unknown error" }];
+    }
+    return self;
+}
+
+// Object may be NSString, NSNumber, or NSArray. If it is not, an error will be created with the
+// given reason.
+- (instancetype)initWithObject:(id)object errorReason:(NSString *)errorReason {
+    if ([object isKindOfClass:[NSString class]]) {
+        return [self initWithString:object optional:NO];
+    }
+    if ([object isKindOfClass:[NSNumber class]]) {
+        return [self initWithNumber:object];
+    }
+    if ([object isKindOfClass:[NSArray class]]) {
+        return [self initWithArray:object];
+    }
+    return [self initWithErrorCode:7 reason:errorReason];
+}
+
+- (instancetype)initWithOptionalObject:(id)object {
+    if (object) {
+        self = [self initWithObject:object errorReason:[NSString stringWithFormat:@"Invalid type: %@", [object class]]];
+    } else {
+        self = [super init];
+    }
+    if (self) {
+        _optional = YES;
+    }
+    return self;
+}
+
+- (instancetype)initWithArray:(NSArray *)array {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeArray;
+        _object = array;
+    }
+    return self;
+}
+
+- (instancetype)initWithNumber:(NSNumber *)number {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeNumber;
+        _object = number;
+    }
+    return self;
+}
+
+- (instancetype)initWithError:(NSError *)error {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeError;
+        _object = error;
+    }
+    return self;
+}
+
+- (instancetype)initWithInterpolatedStringParts:(NSArray *)parts {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeInterpolatedString;
+        _object = parts;
+    }
+    return self;
+}
+
+- (NSArray *)array {
+    assert([_object isKindOfClass:[NSArray class]]);
+    return _object;
+}
+
+- (NSString *)string {
+    assert([_object isKindOfClass:[NSString class]]);
+    return _object;
+}
+
+- (NSNumber *)number {
+    assert([_object isKindOfClass:[NSNumber class]]);
+    return _object;
+}
+
+- (NSError *)error {
+    assert([_object isKindOfClass:[NSError class]]);
+    return _object;
+}
+
+- (iTermScriptFunctionCall *)functionCall {
+    assert([_object isKindOfClass:[iTermScriptFunctionCall class]]);
+    return _object;
+}
+
+- (NSArray *)interpolatedStringParts {
+    assert([_object isKindOfClass:[NSArray class]]);
+    return _object;
 }
 
 @end
@@ -85,7 +217,14 @@
     iTermVariableScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:[[iTermVariableScope alloc] init]];
     scope.neverReturnNil = YES;
     iTermParsedExpression *expression = [parser parse:invocation scope:scope];
-    return expression.functionCall.signature;
+    if (expression.expressionType == iTermParsedExpressionTypeFunctionCall) {
+        return expression.functionCall.signature;
+    }
+    if (expression.expressionType == iTermParsedExpressionTypeError) {
+        return [NSString stringWithFormat:@"Erroneous invocation %@", invocation];
+    }
+    assert(NO);
+    return @"";
 }
 
 + (instancetype)expressionParser {
@@ -155,6 +294,8 @@
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@","]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"."]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"?"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"["]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"]"]];
     [tokenizer addTokenRecogniser:[CPNumberRecogniser numberRecogniser]];
     [tokenizer addTokenRecogniser:[CPWhiteSpaceRecogniser whiteSpaceRecogniser]];
     [tokenizer addTokenRecogniser:[CPIdentifierRecogniser identifierRecogniser]];
@@ -200,29 +341,23 @@
     __weak __typeof(self) weakSelf = self;
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
                                iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
                                call.name = (NSString *)syntaxTree.children[0];
                                NSArray<iTermFunctionArgument *> *argsArray = syntaxTree.children[1];
                                for (iTermFunctionArgument *arg in argsArray) {
-                                   if (arg.expression.string) {
-                                       [call addParameterWithName:arg.name value:arg.expression.string];
-                                   } else if (arg.expression.number) {
-                                       [call addParameterWithName:arg.name value:arg.expression.number];
-                                   } else if (arg.expression.functionCall) {
-                                       [call addParameterWithName:arg.name value:arg.expression.functionCall];
-                                   } else if (arg.expression.error) {
-                                       return arg.expression;
-                                   } else if (arg.expression.optional) {
-                                       [call addParameterWithName:arg.name value:[NSNull null]];
-                                   } else if (arg.expression.interpolatedStringParts) {
-                                       [call addParameterWithName:arg.name value:arg.expression];
+                                   if (arg.expression.expressionType == iTermParsedExpressionTypeError) {
+                                       return arg.expression.error;
+                                   }
+                                   assert(arg.expression.optional || arg.expression.object);
+                                   if (arg.expression.expressionType == iTermParsedExpressionTypeInterpolatedString) {
+                                       [call addParameterWithName:arg.name
+                                                            value:arg.expression];
                                    } else {
-                                       assert(false);
+                                       [call addParameterWithName:arg.name
+                                                            value:arg.expression.object ?: [NSNull null]];
                                    }
                                }
-                               expression.functionCall = call;
-                               return expression;
+                               return [[iTermParsedExpression alloc] initWithFunctionCall:call];
                            }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -247,44 +382,36 @@
                                arg.expression = syntaxTree.children[2];
                                return arg;
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path>"
+    [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermFunctionCallParser *strongSelf = weakSelf;
                                if (!strongSelf) {
                                    return nil;
                                }
-                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
-                               NSString *path = syntaxTree.children[0];
-                               id value = [strongSelf->_scope valueForVariableName:path];
-                               expression.string = [NSString castFrom:value];
-                               expression.number = [NSNumber castFrom:value];
-                               if (!expression.string && !expression.number) {
-                                   NSString *reason = [NSString stringWithFormat:@"Reference to undefined variable “%@”. Use ? to convert undefined values to null.", path];
-                                   expression.error = [NSError errorWithDomain:@"com.iterm2.parser"
-                                                                          code:1
-                                                                      userInfo:@{ NSLocalizedDescriptionKey: reason }];
+                               iTermTriple *triple = syntaxTree.children[0];
+                               if (triple.secondObject) {
+                                   return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:triple.secondObject];
                                }
-                               return expression;
+                               id value = triple.firstObject;
+                               return [[iTermParsedExpression alloc] initWithObject:value
+                                                                        errorReason:[NSString stringWithFormat:@"Reference to undefined variable “%@”. Use ? to convert undefined values to null.", triple.thirdObject]];
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
+    [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array> '?'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermFunctionCallParser *strongSelf = weakSelf;
                                if (!strongSelf) {
                                    return nil;
                                }
-                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
-                               NSString *path = syntaxTree.children[0];
-                               id value = [strongSelf->_scope valueForVariableName:path];
-                               expression.string = [NSString castFrom:value];
-                               expression.number = [NSNumber castFrom:value];
-                               expression.optional = YES;
-                               return expression;
+                               iTermTriple *triple = syntaxTree.children[0];
+                               if (triple.secondObject) {
+                                   return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:triple.secondObject];
+                               }
+                               id value = triple.firstObject;
+                               return [[iTermParsedExpression alloc] initWithOptionalObject:value];
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
-                               expression.number = [(CPNumberToken *)syntaxTree.children[0] number];
-                               return expression;
+                               return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -304,7 +431,7 @@
                                    iTermParsedExpression *expression = [parser parse:substring
                                                                                scope:strongSelf->_scope];
                                    [interpolatedParts addObject:expression];
-                                   if (expression.error) {
+                                   if (expression.expressionType == iTermParsedExpressionTypeError) {
                                        *stop = YES;
                                        return;
                                    }
@@ -316,6 +443,45 @@
     [_grammarProcessor addProductionRule:@"expression ::= <call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return syntaxTree.children[0];
+                           }];
+    [_grammarProcessor addProductionRule:@"path_or_dereferenced_array ::= <path>"  // -> (value, error string, path); value of NSNull means undefined.
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermFunctionCallParser *strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return nil;
+                               }
+                               NSString *path = syntaxTree.children[0];
+                               id untypedValue = [strongSelf->_scope valueForVariableName:path];
+                               if (!untypedValue) {
+                                   return [iTermTriple tripleWithObject:nil andObject:nil object:path];
+                               }
+                               return [iTermTriple tripleWithObject:untypedValue andObject:nil object:path];
+                           }];
+    [_grammarProcessor addProductionRule:@"path_or_dereferenced_array ::= <path> '[' 'Number' ']'"  // -> (value, error string, path); value of NSNull means undefined.
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermFunctionCallParser *strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return nil;
+                               }
+
+                               NSString *path = syntaxTree.children[0];
+                               CPNumberToken *numberToken = syntaxTree.children[2];
+                               const NSInteger index = numberToken.number.integerValue;
+
+                               id untypedValue = [strongSelf->_scope valueForVariableName:path];
+                               if (!untypedValue) {
+                                   return [iTermTriple tripleWithObject:nil andObject:nil object:path];
+                               }
+                               NSArray *array = [NSArray castFrom:untypedValue];
+                               if (!array) {
+                                   NSString *reason = [NSString stringWithFormat:@"Variable “%@” is of type %@, not array", path, NSStringFromClass([untypedValue class])];
+                                   return [iTermTriple tripleWithObject:nil andObject:reason object:path];
+                               }
+                               if (index < 0 || index >= array.count) {
+                                   NSString *reason = [NSString stringWithFormat:@"Index %@ out of range of “%@”, which %@ values", @(index), path, @(array.count)];
+                                   return [iTermTriple tripleWithObject:nil andObject:reason object:path];
+                               }
+                               return [iTermTriple tripleWithObject:array[index] andObject:nil object:path];
                            }];
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -332,7 +498,6 @@
 - (iTermParsedExpression *)expressionWithCoalescedInterpolatedStringParts:(NSArray *)interpolatedParts {
     NSMutableArray *coalesced = [NSMutableArray array];
     NSMutableArray *parts = [interpolatedParts mutableCopy];
-    NSError *error = nil;
     while (parts.count) {
         id previous = coalesced.lastObject;
         id object = parts.firstObject;
@@ -340,19 +505,29 @@
 
         id value = object;
         iTermParsedExpression *inner = [iTermParsedExpression castFrom:object];
-        if (inner.string) {
-            value = inner.string;
-        } else if (inner.number) {
-            value = inner.number.stringValue;
-        } else if (inner.error) {
-            error = inner.error;
-            break;
-        } else if (inner.interpolatedStringParts) {
-            NSArray *innerParts = inner.interpolatedStringParts;
-            for (NSInteger i = 0; i < innerParts.count; i++) {
-                [parts insertObject:innerParts[i] atIndex:i];
+        if (inner) {
+            switch (inner.expressionType) {
+                case iTermParsedExpressionTypeError:
+                    return [[iTermParsedExpression alloc] initWithError:inner.error];
+                case iTermParsedExpressionTypeNumber:
+                    value = inner.number.stringValue;
+                    break;
+                case iTermParsedExpressionTypeNil:
+                case iTermParsedExpressionTypeString:
+                case iTermParsedExpressionTypeArray:
+                    value = inner.object;
+                    break;
+                case iTermParsedExpressionTypeInterpolatedString: {
+                    NSArray *innerParts = inner.interpolatedStringParts;
+                    for (NSInteger i = 0; i < innerParts.count; i++) {
+                        [parts insertObject:innerParts[i] atIndex:i];
+                    }
+                    value = nil;
+                    break;
+                }
+                case iTermParsedExpressionTypeFunctionCall:
+                    break;
             }
-            value = nil;
         }
         if ([value isKindOfClass:[NSString class]] &&
             [previous isKindOfClass:[NSString class]]) {
@@ -363,43 +538,39 @@
         }
     }
 
-    iTermParsedExpression *result = [[iTermParsedExpression alloc] init];
-    if (error) {
-        result.error = error;
-        return result;
+    if (coalesced.count != 1) {
+        return [[iTermParsedExpression alloc] initWithInterpolatedStringParts:coalesced];
     }
-    if (coalesced.count == 1) {
-        if ([coalesced.firstObject isKindOfClass:[NSString class]]) {
-            result.string = coalesced.firstObject;
-            return result;
-        } else {
-            assert([coalesced.firstObject isKindOfClass:[iTermParsedExpression class]]);
-            return coalesced.firstObject;
-        }
+
+    id onlyObject = coalesced.firstObject;
+    if ([onlyObject isKindOfClass:[NSString class]]) {
+        return [[iTermParsedExpression alloc] initWithString:onlyObject optional:NO];
     }
-    result.interpolatedStringParts = coalesced;
-    return result;
+
+    assert([onlyObject isKindOfClass:[iTermParsedExpression class]]);
+    return onlyObject;
 }
 
 - (iTermParsedExpression *)parse:(NSString *)invocation scope:(iTermVariableScope *)scope {
     _input = [invocation copy];
     _scope = scope;
     CPTokenStream *tokenStream = [_tokenizer tokenise:invocation];
-    iTermParsedExpression *expression = (iTermParsedExpression *)[_parser parse:tokenStream];
+    id result = [_parser parse:tokenStream];
+    if ([result isKindOfClass:[NSError class]]) {
+        return [[iTermParsedExpression alloc] initWithError:result];
+    }
+    iTermParsedExpression *expression = [iTermParsedExpression castFrom:result];
     if (expression) {
         return expression;
     }
 
-    expression = [[iTermParsedExpression alloc] init];
     if (_error) {
-        expression.error = _error;
-    } else {
-        expression.error = [NSError errorWithDomain:@"com.iterm2.parser"
-                                               code:2
-                                           userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];
+        return [[iTermParsedExpression alloc] initWithError:_error];
     }
-
-    return expression;
+    NSError *error = [NSError errorWithDomain:@"com.iterm2.parser"
+                                         code:2
+                                     userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];
+    return [[iTermParsedExpression alloc] initWithError:error];
 }
 
 #pragma mark - CPTokeniserDelegate

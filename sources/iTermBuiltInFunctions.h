@@ -39,8 +39,12 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 + (instancetype)sharedInstance;
 
+// for tests to temporarily add functions
+- (id)savedState;
+- (void)restoreState:(id)savedState;
+
 - (void)registerFunction:(iTermBuiltInFunction *)function
-               namespace:(NSString *)namespace;
+               namespace:(nullable NSString *)namespace;
 
 - (BOOL)haveFunctionWithName:(NSString *)name
                    arguments:(NSArray<NSString *> *)arguments;
@@ -53,6 +57,10 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
 
+@end
+
+@interface iTermArrayCountBuiltInFunction : NSObject
++ (void)registerBuiltInFunction;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -10,6 +10,7 @@
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 
 NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames) {
     NSString *combinedArguments = [[argumentNames sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
@@ -65,7 +66,7 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 #pragma mark - Private
 
 - (NSError *)typeMismatchError:(NSString *)argument wanted:(Class)wanted got:(nullable id)object {
-    NSString *reason = [NSString stringWithFormat:@"Type mismatch for argument %@. Got %@, expected %@.",
+    NSString *reason = [NSString stringWithFormat:@"Type mismatch for argument %@. Expected %@ but got %@.",
                         argument,
                         NSStringFromClass(wanted),
                         object ? NSStringFromClass([object class]) : @"(null)" ];
@@ -88,6 +89,14 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
     NSMutableDictionary<NSString *, iTermBuiltInFunction *> *_functions;
 }
 
+- (id)savedState {
+    return [_functions mutableCopy];
+}
+
+- (void)restoreState:(id)savedState {
+    _functions = savedState;
+}
+
 + (instancetype)sharedInstance {
     static id instance;
     static dispatch_once_t onceToken;
@@ -106,7 +115,7 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 }
 
 - (void)registerFunction:(iTermBuiltInFunction *)function namespace:(NSString *)namespace {
-    NSString *name = [NSString stringWithFormat:@"%@.%@", namespace, function.name];
+    NSString *name = namespace ? [NSString stringWithFormat:@"%@.%@", namespace, function.name] : function.name;
     NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, function.argumentsAndTypes.allKeys);
     _functions[signature] = function;
 }
@@ -168,3 +177,44 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 }
 
 @end
+
+@implementation iTermArrayCountBuiltInFunction
+
++ (void)registerBuiltInFunction {
+    NSString *const array = @"array";
+    iTermBuiltInFunction *func =
+    [[iTermBuiltInFunction alloc] initWithName:@"count"
+                                     arguments:@{ array: [NSArray class] }
+                                 defaultValues:@{}
+                                       context:iTermVariablesSuggestionContextNone
+                                         block:
+     ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
+         [self countOfObject:parameters[array] completion:completion];
+     }];
+    [[iTermBuiltInFunctions sharedInstance] registerFunction:func
+                                                   namespace:@"iterm2"];
+}
+
++ (void)countOfObject:(id)value completion:(iTermBuiltInFunctionCompletionBlock)completion {
+    if (!value) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.array-count"
+                                             code:1
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Array argument must be non-null" }];
+        completion(nil, error);
+        return;
+    }
+
+    NSArray *array = [NSArray castFrom:value];
+    if (!array) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.array-count"
+                                             code:2
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Argument must be an array (was %@)", [value class]] }];
+        completion(nil, error);
+        return;
+    }
+
+    completion(@(array.count), nil);
+}
+
+@end
+

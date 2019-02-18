@@ -35,6 +35,7 @@
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
 #import "iTermCPUProfilerUI.h"
 #import "iTermColorPresets.h"
@@ -1148,6 +1149,7 @@ static BOOL hasBecomeActive = NO;
 
     [PTYSession registerBuiltInFunctions];
     [PTYTab registerBuiltInFunctions];
+    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
@@ -1503,7 +1505,8 @@ static BOOL hasBecomeActive = NO;
                [[[iTermController sharedInstance] terminals] count] == 0 &&
                ![self isAppleScriptTestApp] &&
                [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
-               [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
+               [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0 &&
+               ![[NSApplication sharedApplication] isRunningUnitTests]) {
         [self newWindow:nil];
     }
     if (_untitledFileOpenStatus == iTermUntitledFileOpenDisallowed) {
