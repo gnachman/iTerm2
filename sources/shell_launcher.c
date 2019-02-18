@@ -247,12 +247,11 @@ int iterm2_server(int argc, char *const *argv) {
 
     sudo_closefrom(NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER);
 
-    if (!getenv("ITERM2_DISABLE_BOOTSTRAP")) {
-        // Let's move to the 'per-user' namespace! [Must be done here, just before the fork()]
-        syslog(LOG_ERR, "qqq bootstrap daemon");
-        MoveOutOfAquaSession();
+    if (getenv("ITERM2_DISABLE_BOOTSTRAP")) {
+        unsetenv("ITERM2_DISABLE_BOOTSTRAP");
     } else {
-        syslog(LOG_ERR, "qqq do NOT bootstrap daemon");
+        // Let's move to the 'per-user' namespace! [Must be done here, just before the fork()]
+        MoveOutOfAquaSession();
     }
 
     // Start the child.
