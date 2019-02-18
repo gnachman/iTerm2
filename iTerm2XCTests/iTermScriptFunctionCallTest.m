@@ -425,6 +425,19 @@
     XCTAssertNil(error);
 }
 
+- (void)testSignatureForErroneousFunctionCallInvocation {
+    NSString *invocation = @"f(x: 1, y: \"foo)";
+    NSError *error = nil;
+    NSString *actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
+    XCTAssertNil(actual);
+    XCTAssertNotNil(error);
+
+    invocation = @"f(x: 1, y: 2";
+    actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
+    XCTAssertNil(actual);
+    XCTAssertNotNil(error);
+}
+
 #pragma mark - Evaluate String
 
 - (void)testEvaluateString {
@@ -454,6 +467,20 @@
                                  }];
     NSString *expected = @"[1, foo]";
     XCTAssertEqualObjects(expected, result);
+}
+
+#pragma mark - Built-in Functions
+
+- (void)testArrayCount {
+    __block id result;
+    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
+    [iTermScriptFunctionCall callFunction:@"iterm2.count(array: a())"
+                                  timeout:0
+                                    scope:_scope
+                               completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                   result = object;
+                               }];
+    XCTAssertEqualObjects(result, @2);
 }
 
 @end
