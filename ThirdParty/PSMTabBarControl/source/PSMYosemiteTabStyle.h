@@ -27,6 +27,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 @property(nonatomic, readonly) NSColor *tabBarColor;
 @property(nonatomic, readonly) PSMTabBarOrientation orientation;
+@property(nonatomic, readonly) BOOL windowIsMainAndAppIsActive;
 
 #pragma mark - For subclasses
 

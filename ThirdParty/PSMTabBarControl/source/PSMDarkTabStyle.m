@@ -16,7 +16,7 @@
     return @"Dark";
 }
 
-+ (NSColor *)tabBarColorWhenKeyAndActive:(BOOL)keyAndActive {
++ (NSColor *)tabBarColorWhenMainAndActive:(BOOL)keyMainAndActive {
     if (@available(macOS 10.14, *)) {
         return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0.25];
     } else {
@@ -25,13 +25,15 @@
 }
 
 - (NSColor *)tabBarColor {
-    return [PSMDarkTabStyle tabBarColorWhenKeyAndActive:self.tabBar.window.isKeyWindow && [NSApp isActive]];
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    return [PSMDarkTabStyle tabBarColorWhenMainAndActive:keyMainAndActive];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsKey:(BOOL)windowIsKey {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)windowIsMainAndAppIsActive {
     CGFloat value = selected ? 0.80 : 0.60;
     if (@available(macOS 10.14, *)) {
-        if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
             value = selected ? 1.0 : 0.65;
         } else {
             value = selected ? 0.45 : 0.37;
@@ -42,7 +44,8 @@
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
     if (@available(macOS 10.14, *)) {
-        if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
             return [NSColor colorWithWhite:1 alpha:0.20];
         } else {
             return [NSColor colorWithWhite:1 alpha:0.16];
@@ -71,11 +74,12 @@
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (@available(macOS 10.14, *)) {
         CGFloat colors[3];
-        if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
             if (selected) {
                 return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
             } else {
-                NSColor *color = [self.class tabBarColorWhenKeyAndActive:YES];
+                NSColor *color = [self.class tabBarColorWhenMainAndActive:YES];
                 colors[0] = color.redComponent;
                 colors[1] = color.greenComponent;
                 colors[2] = color.blueComponent;
@@ -84,7 +88,7 @@
             if (selected) {
                 return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
             } else {
-                NSColor *color = [self.class tabBarColorWhenKeyAndActive:NO];
+                NSColor *color = [self.class tabBarColorWhenMainAndActive:NO];
                 colors[0] = color.redComponent;
                 colors[1] = color.greenComponent;
                 colors[2] = color.blueComponent;
@@ -125,7 +129,8 @@
 }
 
 - (NSColor *)accessoryTextColor {
-    return [self textColorDefaultSelected:YES backgroundColor:nil windowIsKey:(self.tabBar.window.isKeyWindow && [NSApp isActive])];
+    const BOOL mainAndActive = self.windowIsMainAndAppIsActive;
+    return [self textColorDefaultSelected:YES backgroundColor:nil windowIsMainAndAppIsActive:mainAndActive];
 }
 
 - (NSEdgeInsets)insetsForTabBarDividers {

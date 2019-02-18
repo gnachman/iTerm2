@@ -159,6 +159,13 @@
     [super dealloc];
 }
 
+#pragma mark - Utility
+
+- (BOOL)windowIsMainAndAppIsActive {
+    return (self.tabBar.window.isMainWindow &&
+            [NSApp isActive]);
+}
+
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
@@ -386,9 +393,9 @@
                autorelease];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsKey:(BOOL)windowIsKey {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
     CGFloat value;
-    if (windowIsKey) {
+    if (mainAndActive) {
         value = 0;
     } else {
         if (selected) {
@@ -454,12 +461,13 @@
     } else {
         DLog(@"No tab has color");
         // No cell has a tab color
+        const BOOL mainAndActive = self.windowIsMainAndAppIsActive;
         if (selected) {
             DLog(@"selected");
-            return [self textColorDefaultSelected:YES backgroundColor:nil windowIsKey:_tabBar.window.isKeyWindow && [NSApp isActive]];
+            return [self textColorDefaultSelected:YES backgroundColor:nil windowIsMainAndAppIsActive:mainAndActive];
         } else {
             DLog(@"not selected");
-            return [self textColorDefaultSelected:NO backgroundColor:nil windowIsKey:_tabBar.window.isKeyWindow && [NSApp isActive]];
+            return [self textColorDefaultSelected:NO backgroundColor:nil windowIsMainAndAppIsActive:mainAndActive];
         }
     }
 }
@@ -524,14 +532,15 @@
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
     if (@available(macOS 10.14, *)) {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
         } else {
             return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
         }
     } else {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             if (selected) {
                 return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
             } else {
@@ -544,14 +553,15 @@
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
     if (@available(macOS 10.14, *)) {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
         } else {
             return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
         }
     } else {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
         } else {
             return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
@@ -563,7 +573,8 @@
     if (@available(macOS 10.14, *)) {
         return [NSColor colorWithWhite:0 alpha:0.15];
     } else {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
         } else {
             return [NSColor colorWithSRGBRed:210/255.0 green:210/255.0 blue:210/255.0 alpha:1];
@@ -584,7 +595,8 @@
         }
     } else {
         CGFloat value;
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
             value = 190/255.0 - highlightAmount * 0.048;
         } else {
             // Make inactive windows' background color lighter
@@ -599,7 +611,8 @@
 }
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
     CGFloat colors[3];
-    if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (keyMainAndActive) {
         if (selected) {
             colors[0] = 210.0 / 255.0;
             colors[1] = 210.0 / 255.0;
@@ -664,7 +677,8 @@
                                     selected:(BOOL)selected {
     // Alpha the non-key window's tab colors a bit to make it clearer which window is key.
     CGFloat alpha;
-    if ([_tabBar.window isKeyWindow]) {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (keyMainAndActive) {
         if (selected) {
             alpha = 1;
         } else {
@@ -873,7 +887,8 @@
         NSColor *innerColor;
         NSNumber *strengthNumber = [bar.delegate tabView:bar valueOfOption:PSMTabBarControlOptionColoredSelectedTabOutlineStrength] ?: @0.5;
         CGFloat strength = strengthNumber.doubleValue;
-        const CGFloat alpha = MIN(MAX(strength, 0), 1) * ([_tabBar.window isKeyWindow] ? 1 : 0.6);
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        const CGFloat alpha = MIN(MAX(strength, 0), 1) * (keyMainAndActive ? 1 : 0.6);
         if (brightness > 0.5) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
             innerColor = [NSColor colorWithWhite:0 alpha:alpha];
@@ -1042,8 +1057,9 @@
 }
 
 - (NSColor *)tabBarColor {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
     if (@available(macOS 10.14, *)) {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:188.0 / 255.0
                                        green:188.0 / 255.0
                                         blue:188.0 / 255.0
@@ -1055,7 +1071,7 @@
                                        alpha:1];
         }
     } else {
-        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (keyMainAndActive) {
             return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
         } else {
             return [NSColor colorWithCalibratedWhite:236 / 255.0 alpha:1];

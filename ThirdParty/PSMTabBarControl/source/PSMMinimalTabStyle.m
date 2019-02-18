@@ -59,7 +59,7 @@
     return (backgroundBrightness < 0.5);
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsKey:(BOOL)windowIsKey {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
     CGFloat backgroundBrightness = backgroundColor ? backgroundColor.it_hspBrightness : self.tabBarColor.it_hspBrightness;
     if (!backgroundColor) {
         DLog(@"Choose background brightness form tab bar color of %@", self.tabBarColor);
@@ -73,7 +73,7 @@
     }
     DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
     CGFloat alpha = 1;
-    if (windowIsKey) {
+    if (mainAndActive) {
         alpha = 0.75;
     } else {
         alpha = 0.5;
@@ -127,7 +127,7 @@
 
 - (NSColor *)accessoryTextColor {
     DLog(@"> begin Computing accessory color");
-    NSColor *result = [self textColorDefaultSelected:YES backgroundColor:nil windowIsKey:self.tabBar.window.isKeyWindow && [NSApp isActive]];
+    NSColor *result = [self textColorDefaultSelected:YES backgroundColor:nil windowIsMainAndAppIsActive:self.windowIsMainAndAppIsActive];
     DLog(@"< end Computing accessory color");
     return result;
 }
@@ -153,7 +153,8 @@
         
         NSColor *outerColor;
         NSColor *innerColor;
-        const CGFloat alpha = [self.tabBar.window isKeyWindow] ? 0.75 : 0.5;
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        const CGFloat alpha = keyMainAndActive ? 0.75 : 0.5;
         const BOOL tabBarColorIsDark = self.backgroundIsDark;
         if (tabColorIsDark != tabBarColorIsDark) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
@@ -497,7 +498,8 @@
 - (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor
                                    selected:(BOOL)selected {
     CGFloat alpha = selected ? 1 : 0.5;
-    if (![self.tabBar.window isKeyWindow]) {
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (!keyMainAndActive) {
         alpha *= 0.5;
     }
     return [tabColor colorWithAlphaComponent:alpha];

@@ -1494,7 +1494,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.shouldUseMinimalStyle) {
         PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
         DLog(@"> begin Computing decoration color");
-        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor windowIsKey:(self.window.isKeyWindow && NSApp.isActive)];
+        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor windowIsMainAndAppIsActive:(self.window.isMainWindow && NSApp.isActive)];
         DLog(@"< end Computing decoration color");
     } else {
         CGFloat whiteLevel;
@@ -6055,7 +6055,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case TAB_STYLE_DARK:
                 case TAB_STYLE_DARK_HIGH_CONTRAST:  // fall through
                     // the key/active status is ignored on 10.12
-                    backgroundColor = [PSMDarkTabStyle tabBarColorWhenKeyAndActive:NO];
+                    backgroundColor = [PSMDarkTabStyle tabBarColorWhenMainAndActive:NO];
                     break;
             }
         }
@@ -7722,11 +7722,11 @@ ITERM_WEAKLY_REFERENCEABLE
     
     // The window number will be displayed over the tabbar color. For non-key windows, use the
     // non-selected tab text color because that more closely matches the titlebar color.
-    const BOOL windowIsKey = (self.window.isKeyWindow && NSApp.isActive);
-    NSColor *color = [_contentView.tabBarControl.style textColorDefaultSelected:windowIsKey
+    const BOOL mainAndActive = (self.window.isMainWindow && NSApp.isActive);
+    NSColor *color = [_contentView.tabBarControl.style textColorDefaultSelected:mainAndActive
                                                                 backgroundColor:nil
-                                                                    windowIsKey:windowIsKey];
-    if (windowIsKey) {
+                                                     windowIsMainAndAppIsActive:mainAndActive];
+    if (mainAndActive) {
         return [color colorWithAlphaComponent:0.65];
     }
     return color;
