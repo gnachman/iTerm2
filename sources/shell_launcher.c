@@ -247,8 +247,12 @@ int iterm2_server(int argc, char *const *argv) {
 
     sudo_closefrom(NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER);
 
-    // Let's move to the 'per-user' namespace! [Must be done here, just before the fork()]
-    MoveOutOfAquaSession();
+    if (getenv("ITERM2_DISABLE_BOOTSTRAP")) {
+        unsetenv("ITERM2_DISABLE_BOOTSTRAP");
+    } else {
+        // Let's move to the 'per-user' namespace! [Must be done here, just before the fork()]
+        MoveOutOfAquaSession();
+    }
 
     // Start the child.
     pid_t pid = fork();

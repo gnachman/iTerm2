@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermOrphanServerAdopter.h"
+#import "NSDictionary+iTerm.h"
 #import <OpenDirectory/OpenDirectory.h>
 
 #include "iTermFileDescriptorClient.h"
@@ -490,6 +491,10 @@ static int MyForkPty(int *amaster,
         // Now change progpath to run iTerm2.
         NSString *iterm2Binary = [[NSBundle mainBundle] executablePath];
         progpath = iterm2Binary;
+
+        if (![iTermAdvancedSettingsModel bootstrapDaemon]) {
+            env = [env dictionaryBySettingObject:@"1" forKey:@"ITERM2_DISABLE_BOOTSTRAP"];
+        }
     }
 
     path = [progpath copy];
