@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermOrphanServerAdopter.h"
+#import "NSDictionary+iTerm.h"
 #import <OpenDirectory/OpenDirectory.h>
 
 #include "iTermFileDescriptorClient.h"
@@ -594,6 +595,9 @@ static void HandleSigChld(int n) {
         // We want to run
         //   iTerm2 --server progpath args
         NSArray *updatedArgs = [@[ @"--server", progpath ] arrayByAddingObjectsFromArray:args];
+        if (![iTermAdvancedSettingsModel bootstrapDaemon]) {
+            env = [env dictionaryBySettingObject:@"1" forKey:@"ITERM2_DISABLE_BOOTSTRAP"];
+        }
         [self reallyLaunchWithPath:[[NSBundle mainBundle] executablePath]
                          arguments:updatedArgs
                        environment:env
