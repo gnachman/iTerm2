@@ -179,6 +179,10 @@ static BOOL sAuthenticated;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self reloadAccounts];
     [self update];
+    if (@available(macOS 10.14, *)) {
+        self.window.backgroundColor = [NSColor clearColor];
+        self.window.contentView.layer.cornerRadius = 4;
+    }
     [_searchField setArrowHandler:_tableView];
 }
 
