@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -1045,10 +1045,16 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="24F-Ft-dce"/>
-                            <menuItem title="Edit Window Title" identifier="Edit Window Title" id="o4x-qQ-aC9">
+                            <menuItem title="Edit Tab Title" identifier="Edit Window Title" id="o4x-qQ-aC9">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="editWindowTitle:" target="-1" id="qic-7a-iUA"/>
+                                    <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Edit Window Title" identifier="Edit Window Title" id="STe-pB-R3v">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="editWindowTitle:" target="-1" id="AQk-j6-utG"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="885">

@@ -59,6 +59,7 @@
 #import "iTermTouchBarButton.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
@@ -5856,6 +5857,14 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [tabView selectTabViewItem:tabViewItem];
+    [self openEditTabTitleWindow];
+}
+
+- (IBAction)editTabTitle:(id)sender {
+    [self openEditTabTitleWindow];
+}
+
+- (void)openEditTabTitleWindow {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
     alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
@@ -5867,7 +5876,7 @@ ITERM_WEAKLY_REFERENCEABLE
     titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
-    titleTextField.stringValue = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] ?: @"";
+    titleTextField.stringValue = self.currentTab.variablesScope.tabTitleOverrideFormat ?: @"";
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -5875,8 +5884,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [titleTextField.window makeFirstResponder:titleTextField];
     });
     if ([alert runModal] == NSAlertFirstButtonReturn) {
-        [self.scope setValue:titleTextField.stringValue.length ? titleTextField.stringValue : nil
-            forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
+        self.currentTab.variablesScope.tabTitleOverrideFormat = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
     }
 }
 
@@ -8534,6 +8542,8 @@ ITERM_WEAKLY_REFERENCEABLE
         result = ![[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
+    } else if ([item action] == @selector(editTabTitle:)) {
+        return self.numberOfTabs > 0;
     } else if ([item action] == @selector(moveTabLeft:)) {
         result = [_contentView.tabView numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(moveTabRight:)) {

@@ -35,8 +35,8 @@ Shell > New Window                                                              
 Shell > New Tab                                                                         `New Tab`                                                                     
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
 Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
-Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
 Shell > Split Horizontally with Current Profile                                         `Split Horizontally with Current Profile`                                     
+Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
 Shell > Split Horizontally…                                                             `Split Horizontally…`                                                         
 Shell > Split Vertically…                                                               `Split Vertically…`                                                           
 Shell > Save Selected Text…                                                             `Save Selected Text…`                                                         
