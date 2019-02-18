@@ -3552,6 +3552,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         _shortcutAccessoryViewController.isMain = YES;
     }
+    [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification {
@@ -3571,6 +3572,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
+    [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
 - (BOOL)isEdgeWindow
