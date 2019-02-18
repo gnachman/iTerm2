@@ -67,6 +67,7 @@ class ColorPreset:
             * Example ":ref:`colorhost_example`"
             * Example ":ref:`current_preset_example`"
             * Example ":ref:`theme_example`"
+            * Example ":ref:`darknight`"
         """
         result = await iterm2.rpc.async_get_color_preset(connection, name)
         if result.color_preset_response.status == iterm2.api_pb2.ColorPresetResponse.Status.Value("OK"):

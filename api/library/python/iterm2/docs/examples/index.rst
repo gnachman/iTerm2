@@ -16,6 +16,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`movetab`
 * :doc:`create_window`
 * :doc:`random_color`
+* :doc:`darknight`
 * :doc:`colorhost`
 * :doc:`targeted_input`
 * :doc:`enable_broadcasting`
