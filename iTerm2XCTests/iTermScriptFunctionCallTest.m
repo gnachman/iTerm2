@@ -418,10 +418,10 @@
 
 - (void)testSignatureForFunctionCallInvocation {
     NSString *invocation = @"f(x: 1, y: \"foo\")";
-    NSString *expected = @"f(x, y)";
+    NSString *expected = @"f(x,y)";
     NSError *error = nil;
     NSString *actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
-    XCTAssertEqual(expected, actual);
+    XCTAssertEqualObjects(expected, actual);
     XCTAssertNil(error);
 }
 

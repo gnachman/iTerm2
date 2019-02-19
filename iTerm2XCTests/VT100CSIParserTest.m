@@ -60,7 +60,7 @@
 
 - (void)testFullyFormedPrefixParameterIntermediateFinal {
     VT100Token *token = [self tokenForDataWithFormat:@"%c[?36$p", VT100CC_ESC];
-    XCTAssert(token->type == VT100_NOTSUPPORT);  // Sadly, DECRQM isn't supported yet, so this test is incomplete.
+    XCTAssert(token->type == VT100CSI_DECRQM_DEC);
 }
 
 - (void)testSimpleCSI {
@@ -219,8 +219,8 @@
         // >p not supported (Set resource value pointerMode. This is used by xterm to decide whether
         // to hide the pointer cursor as the user types.)
         { '!', 0, 'p', VT100CSI_DECSTR, -1, -1, -1, -1 },
-        // $p not supported (Request ANSI mode (DECRQM))
-        // ?$p not supported (Request DEC private mode (DECRQM))
+        { 0, '$', 'p', VT100CSI_DECRQM_ANSI, 0, -1, -1, -1 },
+        { '?', '$', 'p', VT100CSI_DECRQM_DEC, 0, -1, -1, -1 },
         // "p not supported (Set conformance level (DECSCL))
         // q not supported (Load LEDs (DECLL))
         { 0, ' ', 'q', VT100CSI_DECSCUSR, 0, -1, -1, -1 },
@@ -308,8 +308,6 @@
         "a",
         "?1i",
         ">0p",
-        "1$p",
-        "?1$p",
         "61;0\"p",
         "q",
         "\"q",

@@ -224,6 +224,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
+        _cursorVisible = YES;
     }
     return self;
 }
@@ -4077,8 +4078,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetTabColorBlueComponentTo:color];
 }
 
-- (BOOL)terminalFocusReportingEnabled {
+- (BOOL)terminalFocusReportingAllowed {
     return [iTermAdvancedSettingsModel focusReportingEnabled];
+}
+
+- (BOOL)terminalCursorVisible {
+    return _cursorVisible;
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {

@@ -603,7 +603,7 @@ static const int kMaxScreenRows = 4096;
                 [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
                 break;
             case 1004:
-                self.reportFocus = mode && [delegate_ terminalFocusReportingEnabled];
+                self.reportFocus = mode && [delegate_ terminalFocusReportingAllowed];
                 break;
 
             case 1005:
@@ -1604,6 +1604,7 @@ static const int kMaxScreenRows = 4096;
                         break;
                     case 12:
                         self.sendReceiveMode = !mode;
+                        break;
                 }
             }
             break;
@@ -1752,6 +1753,14 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_REP:
             [delegate_ terminalRepeatPreviousCharacter:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECRQM_ANSI:
+            [self executeANSIRequestMode:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECRQM_DEC:
+            [self executeDECRequestMode:token.csi->p[0]];
             break;
 
             // ANSI CSI
@@ -2689,6 +2698,128 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalFinalTermCommand:[args subarrayWithRange:NSMakeRange(1, args.count - 1)]];
             break;
     }
+}
+
+typedef NS_ENUM(int, iTermDECRPMSetting)  {
+    iTermDECRPMSettingNotRecognized = 0,
+    iTermDECRPMSettingSet = 1,
+    iTermDECRPMSettingReset = 2,
+    iTermDECRPMSettingPermanentlySet = 3,
+    iTermDECRPMSettingPermanentlyReset = 4
+};
+
+- (NSData *)decrpmForMode:(int)mode
+                  setting:(iTermDECRPMSetting)setting
+                     ansi:(BOOL)ansi {
+    NSString *string;
+    if (ansi) {
+        string = [NSString stringWithFormat:@"%c[%d;%d$y", VT100CC_ESC, mode, setting];
+    } else {
+        string = [NSString stringWithFormat:@"%c[?%d;%d$y", VT100CC_ESC, mode, setting];
+    }
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (void)executeANSIRequestMode:(int)mode {
+    const iTermDECRPMSetting setting = [self settingForANSIRequestMode:mode];
+    [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:YES]];
+}
+
+- (void)executeDECRequestMode:(int)mode {
+    const iTermDECRPMSetting setting = [self settingForDECRequestMode:mode];
+    [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:NO]];
+}
+
+static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
+    return flag ? iTermDECRPMSettingSet : iTermDECRPMSettingReset;
+};
+
+- (iTermDECRPMSetting)settingForANSIRequestMode:(int)mode {
+    switch (mode) {
+        case 4:
+            return VT100TerminalDECRPMSettingFromBoolean(self.insertMode);
+        case 12:
+            return VT100TerminalDECRPMSettingFromBoolean(self.sendReceiveMode);
+    }
+    return iTermDECRPMSettingPermanentlyReset;
+}
+
+- (iTermDECRPMSetting)settingForDECRequestMode:(int)mode {
+    switch (mode) {
+        case 1:
+            return VT100TerminalDECRPMSettingFromBoolean(self.cursorMode);
+        case 2:
+            return VT100TerminalDECRPMSettingFromBoolean(ansiMode_);
+        case 3:
+            if (self.allowColumnMode) {
+                return VT100TerminalDECRPMSettingFromBoolean(self.columnMode);
+            } else {
+                return iTermDECRPMSettingReset;
+            }
+        case 4:
+            // Smooth vs jump scrolling. Not supported.
+            break;
+        case 5:
+            return VT100TerminalDECRPMSettingFromBoolean(self.reverseVideo);
+        case 6:
+            return VT100TerminalDECRPMSettingFromBoolean(self.originMode);
+        case 7:
+            return VT100TerminalDECRPMSettingFromBoolean(self.wraparoundMode);
+        case 8:
+            return VT100TerminalDECRPMSettingFromBoolean(self.autorepeatMode);
+        case 9:
+            // TODO: This should send mouse x&y on button press.
+            break;
+        case 20:
+            // This used to be the setter for "line mode", but it wasn't used and it's not
+            // supported by xterm. Seemed to have something to do with CR vs LF.
+            break;
+        case 25:
+            return VT100TerminalDECRPMSettingFromBoolean([self.delegate terminalCursorVisible]);
+        case 40:
+            return VT100TerminalDECRPMSettingFromBoolean(self.allowColumnMode);
+        case 41:
+            return VT100TerminalDECRPMSettingFromBoolean(self.moreFix);
+        case 45:
+            return VT100TerminalDECRPMSettingFromBoolean(self.reverseWraparoundMode);
+        case 1049:
+        case 47:
+            // alternate screen buffer mode
+            if (self.disableSmcupRmcup) {
+                return iTermDECRPMSettingReset;
+            } else {
+                return VT100TerminalDECRPMSettingFromBoolean(self.softAlternateScreenMode);
+            }
+
+        case 69:
+            return VT100TerminalDECRPMSettingFromBoolean([delegate_ terminalUseColumnScrollRegion]);
+
+        case 1000:
+        case 1001:
+        case 1002:
+        case 1003:
+            return VT100TerminalDECRPMSettingFromBoolean(self.mouseMode + 1000 == mode);
+
+        case 1004:
+            return VT100TerminalDECRPMSettingFromBoolean(self.reportFocus && [delegate_ terminalFocusReportingAllowed]);
+
+        case 1005:
+            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_XTERM_EXT);
+
+        case 1006:
+            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR);
+
+        case 1015:
+            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
+
+        case 1337:
+            return VT100TerminalDECRPMSettingFromBoolean(self.reportKeyUp);
+
+        case 2004:
+            // Set bracketed paste mode
+            return VT100TerminalDECRPMSettingFromBoolean(self.bracketedPasteMode);
+    }
+    return iTermDECRPMSettingPermanentlyReset;
 }
 
 - (NSString *)substringAfterSpaceInString:(NSString *)string {

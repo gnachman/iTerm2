@@ -391,7 +391,8 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalSetBadgeFormat:(NSString *)badge;
 - (void)terminalSetUserVar:(NSString *)kvp;
 
-- (BOOL)terminalFocusReportingEnabled;
+- (BOOL)terminalFocusReportingAllowed;
+- (BOOL)terminalCursorVisible;
 
 - (BOOL)terminalIsTrusted;
 

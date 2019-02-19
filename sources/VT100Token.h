@@ -97,6 +97,8 @@ typedef enum {
     VT100CSI_DECSLRM,               // Set left-right margin
     VT100CSI_DECRQCRA,              // Request Checksum of Rectangular Area
     VT100CSI_REP,                   // Repeat
+    VT100CSI_DECRQM_DEC,            // Request Mode - Host To Terminal (DEC Private)
+    VT100CSI_DECRQM_ANSI,           // Request Mode - Host To Terminal (ANSI)
 
     // some xterm extensions
     XTERMCC_WIN_TITLE,            // Set window title

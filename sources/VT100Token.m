@@ -139,6 +139,8 @@
                           @(VT100CSI_REP):                    @"VT100CSI_REP",
                           @(VT100CSI_XTREPORTSGR):            @"VT100CSI_XTREPORTSGR",
                           @(VT100CSI_DECSLRM):                @"VT100CSI_DECSLRM",
+                          @(VT100CSI_DECRQM_DEC):             @"VT100CSI_DECRQM_DEC",
+                          @(VT100CSI_DECRQM_ANSI):            @"VT100CSI_DECRQM_ANSI",
                           @(XTERMCC_WIN_TITLE):               @"XTERMCC_WIN_TITLE",
                           @(XTERMCC_ICON_TITLE):              @"XTERMCC_ICON_TITLE",
                           @(XTERMCC_WINICON_TITLE):           @"XTERMCC_WINICON_TITLE",

@@ -518,6 +518,16 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = VT100CSI_DECSTR;
             break;
 
+        case PACKED_CSI_COMMAND('?', '$', 'p'):
+            result->type = VT100CSI_DECRQM_DEC;
+            iTermParserSetCSIParameterIfDefault(param, 0, 0);
+            break;
+
+        case PACKED_CSI_COMMAND(0, '$', 'p'):
+            result->type = VT100CSI_DECRQM_ANSI;
+            iTermParserSetCSIParameterIfDefault(param, 0, 0);
+            break;
+
         case PACKED_CSI_COMMAND(0, '*', 'y'):
             result->type = VT100CSI_DECRQCRA;
             iTermParserSetCSIParameterIfDefault(param, 2, 1);

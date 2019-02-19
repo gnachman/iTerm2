@@ -35,7 +35,7 @@
 @property(nonatomic, readonly) BOOL isAnsi;
 @property(nonatomic, readonly) BOOL autorepeatMode;
 @property(nonatomic, assign) BOOL insertMode;
-@property(nonatomic, assign) BOOL sendReceiveMode;
+@property(nonatomic, assign) BOOL sendReceiveMode;  // TODO: This is not actually used. It is a write-only variable. I guess I should add support for it but I doubt it's used much.
 @property(nonatomic, readonly) int charset;  // G0 through G3
 @property(nonatomic, assign) MouseMode mouseMode;
 @property(nonatomic, readonly) MouseMode previousMouseMode;  // will never equal NONE
