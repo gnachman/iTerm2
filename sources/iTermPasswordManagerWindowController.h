@@ -14,6 +14,9 @@
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast;
 - (BOOL)iTermPasswordManagerCanBroadcast;
 
+@optional
+- (void)iTermPasswordManagerWillClose;
+
 @end
 
 @interface iTermPasswordManagerWindowController : NSWindowController

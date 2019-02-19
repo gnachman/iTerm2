@@ -234,6 +234,24 @@ static NSError *SCPFileError(NSString *description) {
     [self performTransfer:isDownload agentAllowed:YES];
 }
 
+// Don't call this on the main thread!
+- (NSString *)keyboardInteractiveRequest:(NSString *)prompt {
+    __block NSString *value = nil;
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    dispatch_async(dispatch_get_main_queue(), ^() {
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                              interactivePrompt:prompt
+                                                     completion:^(NSString *result) {
+                                                         value = [result copy];
+                                                         dispatch_group_leave(group);
+                                                     }];
+    });
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+    return value;
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
@@ -321,11 +339,7 @@ static NSError *SCPFileError(NSString *description) {
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
-                __block NSString *password;
-                dispatch_sync(dispatch_get_main_queue(), ^() {
-                    password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                             keyboardInteractivePrompt:@"password"];
-                });
+                NSString *password = [self keyboardInteractiveRequest:@"password"];
                 if (self.stopped || !password) {
                     break;
                 }
@@ -337,8 +351,7 @@ static NSError *SCPFileError(NSString *description) {
                 [self.session authenticateByKeyboardInteractiveUsingBlock:^NSString *(NSString *request) {
                     __block NSString *response;
                     dispatch_sync(dispatch_get_main_queue(), ^() {
-                        response = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                                 keyboardInteractivePrompt:request];
+                        response = [self keyboardInteractiveRequest:request];
                     });
                     return response;
                 }];
@@ -371,8 +384,7 @@ static NSError *SCPFileError(NSString *description) {
                             NSString *prompt =
                                 [NSString stringWithFormat:@"passphrase for private key “%@”:",
                                     keyPath];
-                            password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                                     keyboardInteractivePrompt:prompt];
+                            password = [self keyboardInteractiveRequest:prompt];
                         });
                     }
                     XLog(@"Attempting to authenticate with key %@", keyPath);
@@ -662,8 +674,7 @@ static NSError *SCPFileError(NSString *description) {
 - (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request {
     __block NSString *string;
     dispatch_sync(dispatch_get_main_queue(), ^() {
-        string = [[FileTransferManager sharedInstance] transferrableFile:self
-                                               keyboardInteractivePrompt:request];
+        string = [self keyboardInteractiveRequest:request];
     });
     return string;
 }

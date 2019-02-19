@@ -8,6 +8,7 @@
 
 #import "FileTransferManager.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
 #import "TransferrableFileMenuItemViewController.h"
 
@@ -15,13 +16,15 @@
 // seconds.
 static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
-@interface FileTransferManager ()
+@interface FileTransferManager ()<iTermPasswordManagerDelegate>
 @property(nonatomic, retain) NSMutableArray *files;
 @end
 
 @implementation FileTransferManager {
     NSMutableArray *_viewControllers;
     NSTimer *_timer;  // cleanUpMenus timer. weak reference.
+    iTermPasswordManagerWindowController *_passwordManagerWindowController;
+    void (^_passwordCompletion)(NSString *password);
 }
 
 + (instancetype)sharedInstance {
@@ -351,8 +354,9 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 // Shows a modal alert with the text in |prompt| and a freeform keyboard input. Returns the
 // value entered.
-- (NSString *)transferrableFile:(TransferrableFile *)transferrableFile
-      keyboardInteractivePrompt:(NSString *)prompt {
+- (void)transferrableFile:(TransferrableFile *)transferrableFile
+        interactivePrompt:(NSString *)prompt
+               completion:(void (^)(NSString *password))completion {
     NSString *text = [NSString stringWithFormat:@"Authenticate %@", transferrableFile.authRequestor];
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = text;
@@ -361,6 +365,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
                              transferrableFile.protocolName];
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:@"Password Manager…"];
 
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
@@ -371,10 +376,23 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     NSInteger button = [alert runModal];
     if (button == NSAlertFirstButtonReturn) {
         [input validateEditing];
-        return [input stringValue];
+        completion([input stringValue]);
+    } else if (button == NSAlertThirdButtonReturn) {
+        [self asynchronouslySelectPasswordFromPasswordManager:completion];
     } else {
-        return nil;
+        completion(nil);
     }
+}
+
+- (void)asynchronouslySelectPasswordFromPasswordManager:(void (^)(NSString *password))completion {
+    if (_passwordManagerWindowController) {
+        completion(nil);
+        return;
+    }
+    _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+    _passwordManagerWindowController.delegate = self;
+    [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
+    _passwordCompletion = [completion copy];
 }
 
 // Shows message, returns YES if OK, NO if Cancel
@@ -396,6 +414,31 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     NSMenuItem *item = [viewController.view enclosingMenuItem];
     [[item menu] removeItem:item];
     [_viewControllers removeObject:viewController];
+}
+
+#pragma mark - iTermPasswordManagerDelegate
+
+- (BOOL)iTermPasswordManagerCanEnterPassword {
+    return YES;
+}
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
+    if (_passwordCompletion) {
+        _passwordCompletion(password);
+    }
+    _passwordCompletion = nil;
+    _passwordManagerWindowController.delegate = nil;
+    _passwordManagerWindowController = nil;
+}
+
+- (BOOL)iTermPasswordManagerCanBroadcast {
+    return NO;
+}
+
+- (void)iTermPasswordManagerWillClose {
+    _passwordCompletion = nil;
+    _passwordManagerWindowController.delegate = nil;
+    _passwordManagerWindowController = nil;
 }
 
 @end

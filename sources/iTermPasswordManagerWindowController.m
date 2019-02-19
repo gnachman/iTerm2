@@ -231,6 +231,7 @@ static BOOL sAuthenticated;
     } else {
         [[self window] orderOut:nil];
     }
+    [self sendWillClose];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -317,6 +318,7 @@ static BOOL sAuthenticated;
         DLog(@"Close window");
         [self.window close];
     }
+    [self sendWillClose];
 }
 
 - (IBAction)revealPassword:(id)sender {
@@ -596,6 +598,13 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)windowWillClose:(NSNotification *)notification {
     [_tableView reloadData];
+    [self sendWillClose];
+}
+
+- (void)sendWillClose {
+    if ([self.delegate respondsToSelector:@selector(iTermPasswordManagerWillClose)]) {
+        [self.delegate iTermPasswordManagerWillClose];
+    }
 }
 
 #pragma mark - Search field delegate
