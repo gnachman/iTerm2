@@ -13,4 +13,6 @@ extern NSString *const iTermProcessTypeDidChangeNotification;
 
 @interface AppearancePreferencesViewController : iTermPreferencesBaseViewController
 
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
+
 @end

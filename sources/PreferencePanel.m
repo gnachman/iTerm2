@@ -503,6 +503,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
         if (_disableResize == 0) {
             [_profilesViewController resizeWindowForCurrentTabAnimated:YES];
         }
+    } else if (tabViewItem == _appearanceTabViewItem) {
+        [_appearancePreferencesViewController resizeWindowForCurrentTabAnimated:YES];
     } else {
         [self resizeWindowForTabViewItem:tabViewItem];
         [_profilesViewController invalidateSavedSize];

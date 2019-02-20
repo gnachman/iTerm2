@@ -14,6 +14,9 @@
 
 NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidChangeNotification";
 
+@interface AppearancePreferencesViewController()<NSTabViewDelegate>
+@end
+
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
     IBOutlet NSPopUpButton *_tabStyle;
@@ -87,6 +90,9 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_enableDivisionView;
 
     IBOutlet NSButton *_enableProxyIcon;
+
+    IBOutlet NSTabView *_tabView;
+    NSRect _desiredFrame;
 }
 
 - (void)awakeFromNib {
@@ -285,6 +291,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated {
+    [self resizeWindowForTabViewItem:_tabView.selectedTabViewItem animated:animated];
+}
+
 - (void)postUpdateLabelsNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateLabelsNotification
                                                         object:nil
@@ -307,6 +317,71 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Can't preserve size if you can't hide the tab bar.
     _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSOnState);
+}
+
+- (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
+    NSView *theView = tabViewItem.view.subviews.firstObject;
+    [self resizeWindowForView:theView animated:animated];
+}
+
+- (NSRect)windowFrameForTabViewSize:(NSSize)tabViewSize {
+    NSWindow *window = self.view.window;
+    NSView *contentView = window.contentView;
+    const CGFloat left = NSMinX([_tabView convertRect:_tabView.bounds toView:contentView]);
+    const CGFloat right = NSWidth(contentView.frame) - NSMaxX([_tabView convertRect:_tabView.bounds
+                                                                             toView:contentView]);
+    const CGFloat below = NSMinY([_tabView convertRect:_tabView.bounds toView:contentView]);
+    const CGFloat above = NSHeight(contentView.frame) - NSMaxY([_tabView convertRect:_tabView.bounds
+                                                                              toView:contentView]);
+    const NSRect contentViewFrame = NSMakeRect(0,
+                                               0,
+                                               left + tabViewSize.width + right,
+                                               below + tabViewSize.height + above);
+    const NSSize windowSize = [window frameRectForContentRect:contentViewFrame].size;
+    const NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame),
+                                              NSMaxY(window.frame));
+    return NSMakeRect(windowTopLeft.x,
+                      windowTopLeft.y - windowSize.height,
+                      windowSize.width,
+                      windowSize.height);
+}
+
+- (void)resizeWindowForView:(NSView *)theView animated:(BOOL)animated {
+    const CGFloat kTabViewMinWidth = 374;
+    const CGFloat inset = NSWidth(_tabView.bounds) - NSWidth(theView.superview.bounds);
+    CGSize tabViewSize = NSMakeSize(MAX(kTabViewMinWidth, theView.bounds.size.width) + inset,
+                                    theView.bounds.size.height + 50);
+    NSRect frame = [self windowFrameForTabViewSize:tabViewSize];
+    if (NSEqualRects(_desiredFrame, frame)) {
+        return;
+    }
+    NSWindow *window = self.view.window;
+    if (!animated) {
+        _desiredFrame = NSZeroRect;
+        [window setFrame:frame display:YES];
+        return;
+    }
+
+    // Animated
+    _desiredFrame = frame;
+    NSTimeInterval duration = [window animationResizeTime:frame];
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        context.duration = duration;
+        [window.animator setFrame:frame display:YES];
+    } completionHandler:^{
+        self->_desiredFrame = NSZeroRect;
+        NSRect rect = frame;
+        rect.size.width += 1;
+        [window setFrame:rect display:YES];
+        rect.size.width -= 1;
+        [window setFrame:rect display:YES];
+    }];
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    [self resizeWindowForTabViewItem:tabViewItem animated:YES];
 }
 
 @end
