@@ -30,6 +30,9 @@ extern NSString *const kTerminalFileShouldStopNotification;
 
 @end
 
+@interface TerminalFileDownload : TerminalFile
+@end
+
 @interface TerminalFileUpload : TerminalFile
 - (void)didUploadBytes:(NSInteger)count;
 @end
