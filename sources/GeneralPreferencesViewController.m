@@ -114,6 +114,8 @@ enum {
     IBOutlet NSButton *_autoHideTmuxClientSession;
     
     IBOutlet NSButton *_useTmuxProfile;
+
+    IBOutlet NSTabView *_tabView;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -470,6 +472,14 @@ enum {
     }  else {
         return NO;
     }
+}
+
+- (NSTabView *)tabView {
+    return _tabView;
+}
+
+- (CGFloat)minimumWidth {
+    return 598;
 }
 
 @end

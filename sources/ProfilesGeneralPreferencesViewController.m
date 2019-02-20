@@ -41,7 +41,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfilePreferencesUpdateSessionName";
 
-@interface ProfilesGeneralPreferencesViewController () <iTermImageWellDelegate, iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermImageWellDelegate, iTermShortcutInputViewDelegate, NSMenuDelegate, NSTabViewDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -92,6 +92,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     BOOL _profileNameChangePending;
     iTermRateLimitedUpdate *_rateLimit;
+    IBOutlet NSTabView *_tabView;
+    NSRect _desiredFrame;
 }
 
 - (void)dealloc {

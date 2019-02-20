@@ -17,7 +17,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
-@interface iTermPreferencesBaseViewController : NSViewController
+@interface iTermPreferencesBaseViewController : NSViewController<NSTabViewDelegate>
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;
@@ -103,5 +103,11 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 
 // The prefs panel this view controller belongs to will close. This implementation does nothing.
 - (void)windowWillClose;
+
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
+
+// Override this if you have a tab view.
+- (NSTabView *)tabView;
+- (CGFloat)minimumWidth;
 
 @end

@@ -33,6 +33,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     NSMapTable *_keyMap;
     // Set of all defined keys (KEY_XXX).
     NSMutableSet *_keys;
+
+    NSRect _desiredFrame;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -577,6 +579,86 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             [self->_keyMap removeAllObjects];
         });
     }
+}
+
+- (NSTabView *)tabView {
+    return nil;
+}
+
+- (CGFloat)minimumWidth {
+    return 0;
+}
+
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated {
+    if (!self.tabView) {
+        return;
+    }
+    [self resizeWindowForTabViewItem:self.tabView.selectedTabViewItem
+                            animated:animated];
+}
+
+- (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem
+                          animated:(BOOL)animated {
+    NSView *theView = tabViewItem.view.subviews.firstObject;
+    [self resizeWindowForView:theView tabView:self.tabView animated:animated];
+}
+
+- (NSRect)windowFrameForTabViewSize:(NSSize)tabViewSize tabView:(NSTabView *)tabView {
+    NSWindow *window = self.view.window;
+    NSView *contentView = window.contentView;
+    const CGFloat left = NSMinX([tabView convertRect:tabView.bounds toView:contentView]);
+    const CGFloat right = NSWidth(contentView.frame) - NSMaxX([tabView convertRect:tabView.bounds
+                                                                             toView:contentView]);
+    const CGFloat below = NSMinY([tabView convertRect:tabView.bounds toView:contentView]);
+    const CGFloat above = NSHeight(contentView.frame) - NSMaxY([tabView convertRect:tabView.bounds
+                                                                              toView:contentView]);
+    const NSRect contentViewFrame = NSMakeRect(0,
+                                               0,
+                                               left + tabViewSize.width + right,
+                                               below + tabViewSize.height + above);
+    const NSSize windowSize = [window frameRectForContentRect:contentViewFrame].size;
+    const NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame),
+                                              NSMaxY(window.frame));
+    return NSMakeRect(windowTopLeft.x,
+                      windowTopLeft.y - windowSize.height,
+                      windowSize.width,
+                      windowSize.height);
+}
+
+- (void)resizeWindowForView:(NSView *)theView tabView:(NSTabView *)tabView animated:(BOOL)animated {
+    const CGFloat kTabViewMinWidth = self.minimumWidth;
+    const CGFloat inset = NSWidth(tabView.bounds) - NSWidth(theView.superview.bounds);
+    CGSize tabViewSize = NSMakeSize(MAX(kTabViewMinWidth, theView.bounds.size.width) + inset,
+                                    theView.bounds.size.height + 50);
+    NSRect frame = [self windowFrameForTabViewSize:tabViewSize tabView:tabView];
+    if (NSEqualRects(_desiredFrame, frame)) {
+        return;
+    }
+    NSWindow *window = self.view.window;
+    if (!animated) {
+        _desiredFrame = NSZeroRect;
+        [window setFrame:frame display:YES];
+        return;
+    }
+
+    // Animated
+    _desiredFrame = frame;
+    NSTimeInterval duration = [window animationResizeTime:frame];
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        context.duration = duration;
+        [window.animator setFrame:frame display:YES];
+    } completionHandler:^{
+        self->_desiredFrame = NSZeroRect;
+        NSRect rect = frame;
+        [window setFrame:rect display:YES];
+    }];
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    assert(self.tabView);
+    [self resizeWindowForTabViewItem:tabViewItem animated:YES];
 }
 
 @end
