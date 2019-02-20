@@ -17,6 +17,27 @@
     TransferrableFile *_successor;
 }
 
+static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
+    static NSMutableSet<NSString *> *locks;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        locks = [[NSMutableSet alloc] init];
+    });
+    return locks;
+}
+
++ (void)lockFileName:(NSString *)name {
+    [iTermTransferrableFileLockedFileNames() addObject:name];
+}
+
++ (void)unlockFileName:(NSString *)name {
+    [iTermTransferrableFileLockedFileNames() removeObject:name];
+}
+
++ (BOOL)fileNameIsLocked:(NSString *)name {
+    return [iTermTransferrableFileLockedFileNames() containsObject:name];
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -90,7 +111,8 @@
             suffix = [baseName substringFromIndex:rangeOfDot.location];
         }
         name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
-    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
+    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination] ||
+             [TransferrableFile fileNameIsLocked:finalDestination]);
     return finalDestination;
 }
 

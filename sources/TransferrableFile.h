@@ -29,6 +29,10 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
 @property(atomic, retain) TransferrableFile *successor;
 @property(atomic, assign) BOOL hasPredecessor;
 
++ (void)lockFileName:(NSString *)name;
++ (void)unlockFileName:(NSString *)name;
++ (BOOL)fileNameIsLocked:(NSString *)name;
+
 // These two are only needed for keyboard-interactive auth
 - (NSString *)protocolName;
 - (NSString *)authRequestor;

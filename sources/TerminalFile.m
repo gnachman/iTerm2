@@ -21,6 +21,18 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 @property(nonatomic, retain) NSString *error;
 @end
 
+@implementation TerminalFileDownload
+
+- (instancetype)initWithName:(NSString *)name size:(int)size {
+    self = [super initWithName:name size:size];
+    if (self) {
+        [TransferrableFile lockFileName:self.localPath];
+    }
+    return self;
+}
+
+@end
+
 @implementation TerminalFile
 
 - (instancetype)initWithName:(NSString *)name size:(int)size {
@@ -51,6 +63,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 }
 
 - (void)dealloc {
+    [TransferrableFile unlockFileName:_localPath];
     [_localPath release];
     [_data release];
     [_filename release];
@@ -96,6 +109,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     self.data = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalFileShouldStopNotification
                                                         object:self];
+    [TransferrableFile unlockFileName:_localPath];
 }
 
 - (NSString *)destination  {
@@ -125,6 +139,11 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 }
 
 - (void)endOfData {
+    [self handleEndOfData];
+    [TransferrableFile unlockFileName:_localPath];
+}
+
+- (void)handleEndOfData {
     if (!self.data) {
         self.status = kTransferrableFileStatusCancelled;
         [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
