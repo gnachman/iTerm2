@@ -120,7 +120,7 @@ const CGFloat iTermStatusBarHeight = 21;
 
         // Normal case: add a separator after this component
         anObject.rightSeparatorOffset = offset.doubleValue;
-        return @[ offset ];
+        [offsets addObject:offset];
     }
     return [offsets uniq];
 }
