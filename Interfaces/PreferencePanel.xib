@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -974,7 +974,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1190,7 +1190,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -3739,7 +3739,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -4815,11 +4815,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="aL9-Uk-rzg">
-                                        <rect key="frame" x="229" y="351" width="297" height="117"/>
+                                        <rect key="frame" x="229" y="353" width="297" height="115"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button toolTip="Smart window placement puts new windows where the most free space is available." id="4570">
-                                                <rect key="frame" x="18" y="81" width="233" height="18"/>
+                                                <rect key="frame" x="18" y="79" width="233" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Smart window placement" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4571">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4831,7 +4831,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="&quot;Zoom&quot; is the green button, except on OS 10.10 where you must hold Option while pressing the green button." id="4540">
-                                                <rect key="frame" x="18" y="40" width="211" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="211" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Zoom maximizes vertically only" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4541">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4842,7 +4842,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button identifier="adjustWindowForFontSizeChange" toolTip="If enabled, changes to font size will try to preserve session dimensions." id="6377">
-                                                <rect key="frame" x="18" y="61" width="261" height="18"/>
+                                                <rect key="frame" x="18" y="59" width="261" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Adjust window when changing font size" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6378">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4952,7 +4952,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="keM-ww-m44">
-                                        <rect key="frame" x="90" y="365" width="575" height="103"/>
+                                        <rect key="frame" x="80" y="365" width="595" height="103"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" id="6337">
@@ -4984,9 +4984,9 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <button id="gLU-0J-chc">
-                                                <rect key="frame" x="170" y="18" width="387" height="18"/>
+                                                <rect key="frame" x="170" y="18" width="407" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of connecting session." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
+                                                <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of the connecting session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
@@ -5923,7 +5923,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -5983,11 +5983,11 @@ DQ
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="3" y="3" width="623" height="379"/>
+                        <rect key="frame" x="1" y="1" width="627" height="381"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="3" width="619" height="374"/>
+                                <rect key="frame" x="4" y="5" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>
@@ -6037,7 +6037,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="0.0" width="849" height="245"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
@@ -6224,7 +6224,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
