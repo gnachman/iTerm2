@@ -1242,9 +1242,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
             break;
     }
-    if (statusBarChanged) {
-        [self updateFindDriver];
-    }
+    [self updateFindDriver];
 }
 
 - (void)updateFindDriver {
