@@ -511,6 +511,7 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     static NSString *const possibleFilePart1 = @"path/to/file:12:34: blah blah blah";
     static NSString *const possibleFilePart2 = @"raz boom bah";
+    [_semanticHistoryController.fakeFileManager.files addObject:kWorkingDirectory];
     NSString *kAbsoluteFilename =
     [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
