@@ -64,6 +64,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                    workingDirectory:(NSString *)workingDirectory
                 extractedLineNumber:(NSString **)lineNumber
                        columnNumber:(NSString **)columnNumber {
+    if (lineNumber) {
+        *lineNumber = nil;
+    }
+    if (columnNumber) {
+        *columnNumber = nil;
+    }
     NSString *result = [self reallyComputeCleanedUpPathFromPath:path
                                                          suffix:suffix
                                                workingDirectory:workingDirectory
@@ -93,18 +99,23 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                 workingDirectory:(NSString *)workingDirectory
                              extractedLineNumber:(NSString **)lineNumber
                                     columnNumber:(NSString **)columnNumber {
-    NSString *pathExLineNumberAndColumn = [self pathByStrippingEnclosingPunctuationFromPath:path
-                                                                                     suffix:suffix
-                                                                        extractedLineNumber:lineNumber
-                                                                               columnNumber:columnNumber];
-    NSString *fullPath = [self getFullPath:pathExLineNumberAndColumn workingDirectory:workingDirectory];
+    NSString *stringToSearchForLineAndColumn = suffix;
+    NSString *pathWithoutNearbyGunk = [self pathByStrippingEnclosingPunctuationFromPath:path
+                                                                     lineAndColumnMatch:&stringToSearchForLineAndColumn];
+    if (!pathWithoutNearbyGunk) {
+        return nil;
+    }
+    if (lineNumber != nil || columnNumber != nil) {
+        if (stringToSearchForLineAndColumn) {
+            [self extractFromSuffix:stringToSearchForLineAndColumn lineNumber:lineNumber columnNumber:columnNumber];
+        }
+    }
+    NSString *fullPath = [self getFullPath:pathWithoutNearbyGunk workingDirectory:workingDirectory];
     return fullPath;
 }
 
 - (NSString *)pathByStrippingEnclosingPunctuationFromPath:(NSString *)path
-                                                   suffix:(NSString *)suffix
-                                      extractedLineNumber:(NSString **)lineNumber
-                                             columnNumber:(NSString **)columnNumber {
+                                       lineAndColumnMatch:(NSString **)lineAndColumnMatch {
     if (!path || [path length] == 0) {
         DLog(@"  no: it is empty");
         return nil;
@@ -113,58 +124,67 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // If it's in any form of bracketed delimiters, strip them
     path = [path stringByRemovingEnclosingBrackets];
 
-    BOOL stripTrailingParen = YES;
-    {
-        NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
-        if (!value) {
-            value = [path stringByMatching:@"\\[(\\d+), ?\\d+]" capture:1];
-        }
-        if (!value) {
-            value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:1];
-        }
-        if (!value) {
-            value = [path stringByMatching:@"\\((\\d+), ?\\d+\\)" capture:1];
-            if (value) {
-                stripTrailingParen = NO;
-            }
-        }
-        if (lineNumber != nil) {
-            *lineNumber = value;
-        }
-    }
-    if (columnNumber != nil) {
-        NSString *value = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
-        if (!value) {
-            value = [path stringByMatching:@"\\[(\\d+), ?(\\d+)]" capture:2];
-        }
-        if (!value) {
-            value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:2];
-        }
-        if (!value) {
-            value = [path stringByMatching:@"\\((\\d+), ?(\\d+)\\)" capture:2];
-        }
-        *columnNumber = value;
-    }
-
-    // strip various trailing characters that are unlikely to be part of the file name.
-    NSString *regex = stripTrailingParen ? @"[.),:]$" : @"[.,:]$";
-    path = [path stringByReplacingOccurrencesOfRegex:regex
+    // Strip various trailing characters that are unlikely to be part of the file name.
+    NSString *trailingPunctuationRegex = @"[.,:]$";
+    path = [path stringByReplacingOccurrencesOfRegex:trailingPunctuationRegex
                                           withString:@""];
-    DLog(@" Strip trailing chars, leaving %@", path);
 
-    NSString *pathExLineNumberAndColumn = nil;
-    if ([path stringByMatching:@"\\[(\\d+), ?(\\d+)]"]) {
-        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, ?\\d+](?::.*)?$"
-                                                                   withString:@""];
-    } else if ([path stringByMatching:@"\\((\\d+), ?(\\d+)\\)"]) {
-        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\(\\d+, ?\\d+\\)(?::.*)?$"
-                                                                   withString:@""];
-    } else {
-        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
-                                                                   withString:@""];
+    // Try to chop off a trailing line/column number.
+    NSArray<NSString *> *regexes = [self.lineAndColumnNumberRegexes mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringByAppendingString:@"$"];
+    }];
+    for (NSString *regex in regexes) {
+        NSString *match = [path stringByMatching:regex];
+        if (!match) {
+            continue;
+        }
+        if (lineAndColumnMatch) {
+            *lineAndColumnMatch = match;
+        }
+        return [path stringByDroppingLastCharacters:match.length];
     }
 
-    return pathExLineNumberAndColumn;
+    // No trailing line/column number. Drop a trailing paren.
+    if ([path hasSuffix:@")"]) {
+        return [path stringByDroppingLastCharacters:1];
+    }
+
+    return path;
+}
+
+- (NSArray<NSString *> *)lineAndColumnNumberRegexes {
+    return @[ @":(\\d+):(\\d+)",
+              @":(\\d+)",
+              @"\\[(\\d+), ?(\\d+)]",
+              @"\", line (\\d+), column (\\d+)",
+              @"\\((\\d+), ?(\\d+)\\)" ];
+}
+
+- (void)extractFromSuffix:(NSString *)suffix lineNumber:(NSString **)lineNumber columnNumber:(NSString **)columnNumber {
+    NSArray<NSString *> *regexes = [[self lineAndColumnNumberRegexes] mapWithBlock:^id(NSString *anObject) {
+        return [@"^" stringByAppendingString:anObject];
+    }];
+    for (NSString *regex in regexes) {
+        NSString *match = [suffix stringByMatching:regex];
+        if (!match) {
+            continue;
+        }
+        const NSInteger matchLength = match.length;
+        if (matchLength < suffix.length) {
+            // If part of `suffix` would remain, we can't use it.
+            continue;
+        }
+        DLog(@"  Suffix of %@ matches regex %@", suffix, regex);
+        NSArray<NSArray<NSString *> *> *matches = [suffix arrayOfCaptureComponentsMatchedByRegex:regex];
+        NSArray<NSString *> *captures = matches.firstObject;
+        if (captures.count > 1 && lineNumber) {
+            *lineNumber = captures[1];
+        }
+        if (captures.count > 2 && columnNumber) {
+            *columnNumber = captures[2];
+        }
+        return;
+    }
 }
 
 - (NSString *)getFullPath:(NSString *)pathExLineNumberAndColumn

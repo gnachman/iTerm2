@@ -506,6 +506,26 @@
     XCTAssert(actual == nil);
 }
 
+- (void)testRandomStuffAfterFileNameNotIdentifiedAsPartOfFile {
+    static NSString *const kRelativeFilename = @"path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    static NSString *const possibleFilePart1 = @"path/to/file:12:34: blah blah blah";
+    static NSString *const possibleFilePart2 = @"raz boom bah";
+    NSString *kAbsoluteFilename =
+    [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    int prefixChars;
+    int suffixChars;
+    NSString *filename =
+    [_semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                           suffix:possibleFilePart2
+                                                 workingDirectory:kWorkingDirectory
+                                             charsTakenFromPrefix:&prefixChars
+                                             charsTakenFromSuffix:&suffixChars
+                                                   trimWhitespace:NO];
+    XCTAssertNil(filename);
+}
+
 #pragma mark - Open Path
 
 - (void)testOpenPathRawAction {
