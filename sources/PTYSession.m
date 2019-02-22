@@ -7393,6 +7393,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate previousSession];
 }
 
+- (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
+                                      fromSelection:(BOOL)fromSelection {
+    NSString *string = fromSelection ? [[iTermController sharedInstance] lastSelection] : [NSString stringFromPasteboard];
+    [_pasteHelper pasteString:string
+                 stringConfig:configuration];
+}
+
 - (void)textViewEditSession {
     [[_delegate realParentWindow] editSession:self makeKey:YES];
 }

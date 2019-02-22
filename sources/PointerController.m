@@ -31,9 +31,17 @@
 {
     DLog(@"Perform action %@", action);
     if ([action isEqualToString:kPasteFromClipboardPointerAction]) {
-        [delegate_ pasteFromClipboardWithEvent:event];
+        if (argument.length) {
+            [delegate_ advancedPasteWithConfiguration:argument fromSelection:NO withEvent:event];
+        } else {
+            [delegate_ pasteFromClipboardWithEvent:event];
+        }
     } else if ([action isEqualToString:kPasteFromSelectionPointerAction]) {
-        [delegate_ pasteFromSelectionWithEvent:event];
+        if (argument.length) {
+            [delegate_ advancedPasteWithConfiguration:argument fromSelection:YES withEvent:event];
+        } else {
+            [delegate_ pasteFromSelectionWithEvent:event];
+        }
     } else if ([action isEqualToString:kOpenTargetPointerAction]) {
         [delegate_ openTargetWithEvent:event];
     } else if ([action isEqualToString:kSmartSelectionPointerAction]) {

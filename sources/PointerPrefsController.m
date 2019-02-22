@@ -11,6 +11,7 @@
 #import "PreferencePanel.h"
 #import "NSPopUpButton+iTerm.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermPasteSpecialViewController.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
 #import "NSTextField+iTerm.h"
@@ -79,7 +80,8 @@ typedef enum {
     kEscPlusArg,
     kHexCodeArg,
     kTextArg,
-    kProfileArg
+    kProfileArg,
+    kAdvancedPasteArg
 } ArgumentType;
 
 @interface NSString (PointerPrefsController)
@@ -144,6 +146,10 @@ typedef enum {
 
     IBOutlet NSButton *ok_;
     IBOutlet NSButton *remove_;
+    iTermPasteSpecialViewController *_pasteSpecialViewController;
+    IBOutlet NSView *_pasteSpecialViewContainer;
+    NSRect _initialFrame;
+    NSRect _initialPasteContainerFrame;
 
     NSString *origKey_;
 }
@@ -384,8 +390,8 @@ typedef enum {
 + (NSDictionary *)localizedActionMap
 {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
-                           @"Paste from Clipboard", kPasteFromClipboardPointerAction,
-                           @"Paste from Selection", kPasteFromSelectionPointerAction,
+                           @"Paste from Clipboard…", kPasteFromClipboardPointerAction,
+                           @"Paste from Selection…", kPasteFromSelectionPointerAction,
                            @"Extend Selection", kExtendSelectionPointerAction,
                            @"Open URL/Semantic History", kOpenTargetPointerAction,
                            @"Open URL in background", kOpenTargetInBackgroundPointerAction,
@@ -419,13 +425,15 @@ typedef enum {
 + (ArgumentType)argumentTypeForAction:(NSString *)action
 {
     NSDictionary *args = [NSDictionary dictionaryWithObjectsAndKeys:
-                          [NSNumber numberWithInt:kEscPlusArg], kSendEscapeSequencePointerAction,
-                          [NSNumber numberWithInt:kHexCodeArg], kSendHexCodePointerAction,
-                          [NSNumber numberWithInt:kTextArg], kSendTextPointerAction,
-                          [NSNumber numberWithInt:kProfileArg], kNewWindowWithProfilePointerAction,
-                          [NSNumber numberWithInt:kProfileArg], kNewTabWithProfilePointerAction,
-                          [NSNumber numberWithInt:kProfileArg], kNewVerticalSplitWithProfilePointerAction,
-                          [NSNumber numberWithInt:kProfileArg], kNewHorizontalSplitWithProfilePointerAction,
+                          @(kEscPlusArg), kSendEscapeSequencePointerAction,
+                          @(kHexCodeArg), kSendHexCodePointerAction,
+                          @(kTextArg), kSendTextPointerAction,
+                          @(kProfileArg), kNewWindowWithProfilePointerAction,
+                          @(kProfileArg), kNewTabWithProfilePointerAction,
+                          @(kProfileArg), kNewVerticalSplitWithProfilePointerAction,
+                          @(kProfileArg), kNewHorizontalSplitWithProfilePointerAction,
+                          @(kAdvancedPasteArg), kPasteFromClipboardPointerAction,
+                          @(kAdvancedPasteArg), kPasteFromSelectionPointerAction,
                           nil];
     NSNumber *n = [args objectForKey:action];
     if (n) {
@@ -479,6 +487,13 @@ typedef enum {
                 }
                 return [name stringByReplacingOccurrencesOfString:@"…"
                                                        withString:[NSString stringWithFormat:@" \"%@\"", bookmarkName]];
+            }
+            case kAdvancedPasteArg: {
+                if (argument.length) {
+                    name = [NSString stringWithFormat:@"%@: %@",
+                            [name stringByReplacingOccurrencesOfString:@"…" withString:@""],
+                            [iTermPasteSpecialViewController descriptionForCodedSettings:argument]];
+                }
             }
         }
     }
@@ -800,6 +815,10 @@ typedef enum {
 
 - (void)updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg
 {
+    if (NSEqualRects(NSZeroRect, _initialFrame)) {
+        _initialFrame = _pasteSpecialViewContainer.window.frame;
+        _initialPasteContainerFrame = _pasteSpecialViewContainer.frame;
+    }
     ArgumentType argType = kNoArg;
     if (actionIdent) {
         argType = [PointerPrefsController argumentTypeForAction:actionIdent];
@@ -809,6 +828,7 @@ typedef enum {
             [editArgumentLabel_ setHidden:YES];
             [editArgumentField_ setHidden:YES];
             [editArgumentButton_ setHidden:YES];
+            _pasteSpecialViewContainer.hidden = YES;
             break;
 
         case kEscPlusArg:
@@ -821,6 +841,7 @@ typedef enum {
             [editArgumentField_ setStringValue:currentArg];
             [editArgumentField_ setRefusesFirstResponder:NO];
             [editArgumentField_ setSelectable:YES];
+            _pasteSpecialViewContainer.hidden = YES;
             break;
 
         case kHexCodeArg:
@@ -831,6 +852,7 @@ typedef enum {
             [editArgumentLabel_ setStringValue:@"Hex codes:"];
             [[editArgumentField_ cell] setPlaceholderString:@"ex: 0x7f 0x20"];
             [editArgumentField_ setStringValue:currentArg];
+            _pasteSpecialViewContainer.hidden = YES;
             break;
 
         case kTextArg:
@@ -841,6 +863,7 @@ typedef enum {
             [editArgumentLabel_ setStringValue:@"Text:"];
             [[editArgumentField_ cell] setPlaceholderString:@"Enter value to send"];
             [editArgumentField_ setStringValue:currentArg];
+            _pasteSpecialViewContainer.hidden = YES;
             break;
 
         case kProfileArg:
@@ -849,10 +872,18 @@ typedef enum {
             [editArgumentButton_ setHidden:NO];
             [editArgumentLabel_ setStringValue:@"Profile:"];
             [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg];
-
+            _pasteSpecialViewContainer.hidden = YES;
             break;
 
+        case kAdvancedPasteArg:
+            editArgumentLabel_.hidden = YES;
+            editArgumentField_.hidden = YES;
+            editArgumentButton_.hidden = YES;
+            _pasteSpecialViewContainer.hidden = NO;
+            [self configurePasteSpecialWithArgument:currentArg];
+            break;
     }
+    [self updateWindowFrame];
 }
 
 - (void)loadKeyIntoEditPane:(NSString *)key
@@ -980,6 +1011,11 @@ typedef enum {
             [newValue setObject:[[editArgumentButton_ selectedItem] title]
                          forKey:kArgumentKey];
         }
+    } else if (!_pasteSpecialViewContainer.isHidden) {
+        if ([PointerPrefsController argumentTypeForAction:theAction] == kAdvancedPasteArg) {
+            [newValue setObject:[_pasteSpecialViewController stringEncodedSettings] ?: @""
+                         forKey:kArgumentKey];
+        }
     }
     NSString *newKey;
     int modMask = 0;
@@ -1050,6 +1086,41 @@ typedef enum {
 {
     [PointerPrefsController setSettings:[PointerPrefsController defaultSettings]];
     [tableView_ reloadData];
+}
+
+- (void)configurePasteSpecialWithArgument:(NSString *)parameterValue {
+    _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+    [_pasteSpecialViewController view];
+
+    // Set a few defaults; otherwise everything is reasonable.
+    _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+    _pasteSpecialViewController.shouldRemoveNewlines = NO;
+    _pasteSpecialViewController.shouldBase64Encode = NO;
+    _pasteSpecialViewController.shouldWaitForPrompt = NO;
+    _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = NO;
+    if (parameterValue.length > 0) {
+        [_pasteSpecialViewController loadSettingsFromString:parameterValue];
+    }
+    _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+    NSRect theFrame = _pasteSpecialViewContainer.frame;
+    CGFloat originalHeight = theFrame.size.height;
+    theFrame.size = _pasteSpecialViewController.view.bounds.size;
+    theFrame.origin.y -= (theFrame.size.height - originalHeight);
+    _pasteSpecialViewContainer.frame = theFrame;
+    [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
+}
+
+- (void)updateWindowFrame {
+    NSRect frame;
+    if (_pasteSpecialViewContainer.isHidden) {
+        frame = _initialFrame;
+    } else {
+        frame = _initialFrame;
+        NSSize desiredSize = _pasteSpecialViewController.view.frame.size;
+        frame.size.width += desiredSize.width - _initialPasteContainerFrame.size.width;
+        frame.size.height += desiredSize.height - _initialPasteContainerFrame.size.height;
+    }
+    [_pasteSpecialViewContainer.window setFrame:frame display:YES animate:YES];
 }
 
 @end

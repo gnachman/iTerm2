@@ -37,7 +37,9 @@
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event;
 - (void)extendSelectionWithEvent:(NSEvent *)event;
 - (void)quickLookWithEvent:(NSEvent *)event;
-
+- (void)advancedPasteWithConfiguration:(NSString *)configuration
+                         fromSelection:(BOOL)fromSelection
+                             withEvent:(NSEvent *)event;
 @end
 
 @interface PointerController : NSObject

@@ -128,6 +128,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewCreateTabWithProfileGuid:(NSString *)guid;
 - (void)textViewSelectNextPane;
 - (void)textViewSelectPreviousPane;
+- (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
+                                      fromSelection:(BOOL)fromSelection;
 - (void)textViewEditSession;
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
