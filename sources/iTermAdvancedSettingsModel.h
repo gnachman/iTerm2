@@ -112,6 +112,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
 + (BOOL)killSessionsOnLogout;
++ (BOOL)loadFromFindPasteboard;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
 + (BOOL)lowFiCombiningMarks;

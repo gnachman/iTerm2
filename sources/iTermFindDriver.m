@@ -278,6 +278,9 @@ static NSString *gSearchString;
 #pragma mark - Notifications
 
 - (void)loadFindStringFromSharedPasteboard:(NSNotification *)notification {
+    if (![iTermAdvancedSettingsModel loadFromFindPasteboard]) {
+        return;
+    }
     if (!_viewController.searchBarIsFirstResponder) {
         NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
         if ([[findBoard types] containsObject:NSStringPboardType]) {
