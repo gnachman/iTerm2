@@ -247,9 +247,19 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 }
 
 - (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
+    if (maximumWidth <= 0) {
+        if (preferredWidth != nil) {
+            *preferredWidth = 0;
+        }
+        return @[];
+    }
+
     NSArray *model = self.values;
     if (model.count > maximumWidth) {
-        model = [model subarrayWithRange:NSMakeRange(model.count - maximumWidth, maximumWidth)];
+        NSInteger minimum = (CGFloat)model.count - MAX(0, maximumWidth);
+
+        model = [model subarrayWithRange:NSMakeRange(MAX(0, minimum),
+                                                     MAX(0, maximumWidth))];
     }
     if (preferredWidth) {
         *preferredWidth = model.count;
