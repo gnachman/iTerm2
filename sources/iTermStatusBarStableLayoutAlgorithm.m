@@ -218,7 +218,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
         [preallocatedViews enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
             view.desiredWidth = apportionment;
         }];
-        return totalWidth;
+        return apportionment;
     }
 }
 
