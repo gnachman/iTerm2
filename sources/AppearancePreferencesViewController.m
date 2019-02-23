@@ -125,7 +125,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    info.onChange = ^() {
+        [weakSelf postRefreshNotification];
+        [weakSelf updateProxyIconEnabled];
+    };
 
 
     info = [self defineControl:_hideTab
@@ -285,6 +288,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyEnableProxyIcon
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    [self updateProxyIconEnabled];
+}
+
+- (void)updateProxyIconEnabled {
+    const iTermPreferencesTabStyle tabStyle = [self intForKey:kPreferenceKeyTabStyle];
+    _enableProxyIcon.enabled = (tabStyle != TAB_STYLE_MINIMAL);
 }
 
 - (void)dealloc {

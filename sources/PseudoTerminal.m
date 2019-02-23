@@ -5209,17 +5209,56 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)updateProxyIcon {
+- (BOOL)proxyIconIsAllowed {
     if (![iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
+        return NO;
+    }
+
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+            return NO;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            break;
+    }
+
+    switch (windowType_) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return NO;
+
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
+            break;
+    }
+
+    return YES;
+}
+
+- (void)updateProxyIcon {
+    if (![self proxyIconIsAllowed]) {
         self.window.representedURL = nil;
         return;
     }
-
     if (self.currentSession.preferredProxyIcon) {
         self.window.representedURL = self.currentSession.preferredProxyIcon;
-    } else {
-        self.window.representedURL = self.currentSession.textViewCurrentLocation;
+        return;
     }
+    self.window.representedURL = self.currentSession.textViewCurrentLocation;
 }
 
 - (void)notifyTmuxOfTabChange {
