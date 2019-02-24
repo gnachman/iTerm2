@@ -13,8 +13,46 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@implementation iTermVariableDesignator {
+    iTermVariables *_variables;
+    NSString *_path;
+}
+
+- (instancetype)initWithVariables:(iTermVariables *)variables path:(NSString *)path {
+    self = [super init];
+    if (self) {
+        _variables = variables;
+        _path = [path copy];
+    }
+    return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p path=%@ variables=%@>", NSStringFromClass([self class]), self, _path, _variables];
+}
+
+- (NSUInteger)hash {
+    return _path.hash;
+}
+
+- (BOOL)isEqual:(id)object {
+    iTermVariableDesignator *other = [iTermVariableDesignator castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return (_variables == other->_variables &&
+            [_path isEqual:other->_path]);
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone {
+    return self;
+}
+
+@end
 
 @interface iTermVariables(Private)
 - (NSDictionary<NSString *,NSString *> *)stringValuedDictionaryInScope:(nullable NSString *)scopeName;
@@ -129,6 +167,35 @@ NS_ASSUME_NONNULL_BEGIN
         }
     }].secondObject;
     *stripped = strippedOut;
+    return owner;
+}
+
+- (nullable iTermVariables *)ownerOfTerminalForPath:(NSString *)path
+                                         forWriting:(BOOL)forWriting
+                                           terminal:(out NSString **)terminal {
+    NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
+    if (parts.count == 0) {
+        return nil;
+    }
+
+    NSString *stripped;
+    iTermVariables *owner = [self ownerForKey:path forWriting:forWriting stripped:&stripped];
+    if (!owner) {
+        return nil;
+    }
+
+    parts = [stripped componentsSeparatedByString:@"."];
+    assert(parts.count > 0);
+    while (parts.count > 1) {
+        id value = [owner valueForVariableName:parts.firstObject];
+        if (value == nil) {
+            return nil;
+        }
+        assert([value isKindOfClass:[iTermVariables class]]);
+        owner = value;
+        parts = [parts subarrayFromIndex:1];
+    }
+    *terminal = parts[0];
     return owner;
 }
 
@@ -248,6 +315,14 @@ NS_ASSUME_NONNULL_BEGIN
     iTermVariableScope *theCopy = [[self.class alloc] init];
     theCopy->_frames = [_frames copy];
     return theCopy;
+}
+
+- (iTermVariableDesignator *)designatorForPath:(NSString *)path {
+    NSString *terminal;
+    iTermVariables *owner = [self ownerOfTerminalForPath:path
+                                              forWriting:NO
+                                                terminal:&terminal];
+    return [[iTermVariableDesignator alloc] initWithVariables:owner path:terminal];
 }
 
 @end

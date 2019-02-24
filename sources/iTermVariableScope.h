@@ -16,6 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermVariables;
 @class iTermVariableReference;
 
+// This has a tuple of (iTermVariables, terminal path name). It compares equal to other designators
+// that refer to the same variable. The variable must be set to be designated.
+@interface iTermVariableDesignator : NSObject<NSCopying>
+@end
+
 // Provides access to  the variables that are visible from a particular callsite. Each
 // set of variables except one (that of the most local scope) must have a name.
 // Variables are searched for one matching the name. You could get and set variables through
@@ -53,6 +58,8 @@ NS_ASSUME_NONNULL_BEGIN
 // It does not attempt to resolve dangling references and should not be long-lived.
 - (iTermVariableScope *)unsafeCheapCopy;
 - (NSArray<iTermVariables *> *)variablesInScopeNamed:(nullable NSString *)scopeName;
+
+- (iTermVariableDesignator *)designatorForPath:(NSString *)path;
 
 @end
 

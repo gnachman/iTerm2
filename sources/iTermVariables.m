@@ -246,6 +246,17 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
 }
 
+// This is useful for debugging purposes.
+- (NSString *)linksDescription {
+    return [[_resolvedLinks.allKeys mapWithBlock:^NSString *(NSString *key) {
+        NSArray<iTermVariableReference *> *refs = [self strongArrayFromWeakArray:self->_resolvedLinks[key]];
+        NSString *refsString = [[refs mapWithBlock:^id(iTermVariableReference *ref) {
+            return [NSString stringWithFormat:@"%@=%p", ref.path, (__bridge void *)ref.onChangeBlock];
+        }] componentsJoinedByString:@", "];
+        return [NSString stringWithFormat:@"%@ -> %@", key, refsString];
+    }] componentsJoinedByString:@"\n"];
+}
+
 - (void)didChangeTerminalValueWithPath:(NSString *)name {
     NSArray<iTermVariableReference *> *refs = [self strongArrayFromWeakArray:_resolvedLinks[name]];
     for (iTermVariableReference *ref in refs) {

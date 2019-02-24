@@ -219,6 +219,11 @@
     return [self subarrayWithRange:NSMakeRange(0, index)];
 }
 
+
+- (NSArray *)subarrayToIndexInclusive:(NSUInteger)index {
+    return [self subarrayToIndex:index + 1];
+}
+
 - (NSArray *)subarrayFromIndex:(NSUInteger)index {
     NSUInteger length;
     if (self.count >= index) {

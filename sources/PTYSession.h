@@ -40,6 +40,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class iTermAnnouncementViewController;
 @class iTermEchoProbe;
 @class iTermStatusBarViewController;
+@class iTermSwiftyStringGraph;
 @class iTermVariables;
 @class iTermVariableScope;
 @class PTYTab;
@@ -227,6 +228,7 @@ typedef enum {
 - (BOOL)sessionShouldSendWindowSizeIOCTL:(PTYSession *)session;
 
 - (void)sessionDidInvalidateStatusBar:(PTYSession *)session;
+- (void)sessionAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
 
 @end
 
@@ -789,6 +791,7 @@ typedef enum {
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;
+- (BOOL)checkForCyclesInSwiftyStrings;
 
 #pragma mark - API
 

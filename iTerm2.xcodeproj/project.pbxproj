@@ -1706,6 +1706,11 @@
 		A638A05020EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
 		A638A05120EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
 		A638A05220EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
+		A638D29D22222B5D001CD688 /* iTermSwiftyStringGraph.h in Headers */ = {isa = PBXBuildFile; fileRef = A638D29B22222B5D001CD688 /* iTermSwiftyStringGraph.h */; };
+		A638D29E22222B5D001CD688 /* iTermSwiftyStringGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = A638D29C22222B5D001CD688 /* iTermSwiftyStringGraph.m */; };
+		A638D2A1222230A3001CD688 /* iTermDirectedGraph.h in Headers */ = {isa = PBXBuildFile; fileRef = A638D29F222230A3001CD688 /* iTermDirectedGraph.h */; };
+		A638D2A2222230A3001CD688 /* iTermDirectedGraph.m in Sources */ = {isa = PBXBuildFile; fileRef = A638D2A0222230A3001CD688 /* iTermDirectedGraph.m */; };
+		A638D2A522223394001CD688 /* iTermDirectedGraphTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A638D2A322223394001CD688 /* iTermDirectedGraphTest.m */; };
 		A639358B21023BDB00A16D1C /* iTermStatusBarGraphicComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A639358921023BDB00A16D1C /* iTermStatusBarGraphicComponent.h */; };
 		A639358C21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A639358A21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m */; };
 		A63935952103FD8B00A16D1C /* iTermMemoryUtilization.h in Headers */ = {isa = PBXBuildFile; fileRef = A63935932103FD8B00A16D1C /* iTermMemoryUtilization.h */; };
@@ -4625,6 +4630,11 @@
 		A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermUnusedText.metal; path = Metal/Shaders/iTermUnusedText.metal; sourceTree = "<group>"; };
 		A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextShaderCommon.h; path = Metal/Shaders/iTermTextShaderCommon.h; sourceTree = "<group>"; };
 		A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermTextShaderCommon.metal; path = Metal/Shaders/iTermTextShaderCommon.metal; sourceTree = "<group>"; };
+		A638D29B22222B5D001CD688 /* iTermSwiftyStringGraph.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwiftyStringGraph.h; sourceTree = "<group>"; };
+		A638D29C22222B5D001CD688 /* iTermSwiftyStringGraph.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSwiftyStringGraph.m; sourceTree = "<group>"; };
+		A638D29F222230A3001CD688 /* iTermDirectedGraph.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDirectedGraph.h; sourceTree = "<group>"; };
+		A638D2A0222230A3001CD688 /* iTermDirectedGraph.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermDirectedGraph.m; sourceTree = "<group>"; };
+		A638D2A322223394001CD688 /* iTermDirectedGraphTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermDirectedGraphTest.m; sourceTree = "<group>"; };
 		A639358921023BDB00A16D1C /* iTermStatusBarGraphicComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarGraphicComponent.h; sourceTree = "<group>"; };
 		A639358A21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarGraphicComponent.m; sourceTree = "<group>"; };
 		A63935932103FD8B00A16D1C /* iTermMemoryUtilization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMemoryUtilization.h; sourceTree = "<group>"; };
@@ -8449,6 +8459,10 @@
 				A666D5EF221A1EF100D6184A /* iTermVariableScope+Window.m */,
 				A666D5F2221A1F9200D6184A /* iTermVariableScope+Global.h */,
 				A666D5F3221A1F9200D6184A /* iTermVariableScope+Global.m */,
+				A638D29B22222B5D001CD688 /* iTermSwiftyStringGraph.h */,
+				A638D29C22222B5D001CD688 /* iTermSwiftyStringGraph.m */,
+				A638D29F222230A3001CD688 /* iTermDirectedGraph.h */,
+				A638D2A0222230A3001CD688 /* iTermDirectedGraph.m */,
 			);
 			name = Language;
 			sourceTree = "<group>";
@@ -8493,6 +8507,7 @@
 				535EA4F320D0D6A300FC81E0 /* iTermFunctionCallSuggesterTest.m */,
 				A62F8FD221DA8457008EA71C /* iTermTermkeyKeyMapperTest.m */,
 				A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */,
+				A638D2A322223394001CD688 /* iTermDirectedGraphTest.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -9498,6 +9513,7 @@
 				A65D3AE221D16FE200384015 /* iTermBacktraceFrame.h in Headers */,
 				A655E6952066C78700DC21B9 /* iTermScrollAccumulator.h in Headers */,
 				A631FC8D20EDDAEA00EB824F /* iTermSearchFieldCell.h in Headers */,
+				A638D29D22222B5D001CD688 /* iTermSwiftyStringGraph.h in Headers */,
 				5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */,
 				A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */,
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
@@ -9632,6 +9648,7 @@
 				A695CA7F213DAA8500486440 /* iTermLocalHostNameGuesser.h in Headers */,
 				A6DBC03C2003479400F1466D /* iTermImageRenderer.h in Headers */,
 				A6F9EF3720850C41005530F7 /* iTermCompetentTableRowView.h in Headers */,
+				A638D2A1222230A3001CD688 /* iTermDirectedGraph.h in Headers */,
 				A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */,
 				A630118D20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.h in Headers */,
 				A69C9332212108BC00531438 /* iTermStatusBarComposerComponent.h in Headers */,
@@ -11974,6 +11991,7 @@
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A69C9333212108BC00531438 /* iTermStatusBarComposerComponent.m in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
+				A638D29E22222B5D001CD688 /* iTermSwiftyStringGraph.m in Sources */,
 				A6180D7A21B399AA0073F219 /* NSFileManager+iTerm.m in Sources */,
 				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
@@ -12093,6 +12111,7 @@
 				5337A316203E065300024BEA /* iTermPowerManager.m in Sources */,
 				A65D3ADF21D16D1800384015 /* iTermCPUProfiler.m in Sources */,
 				A6A4867320B67ADB00493302 /* PointerPrefsController.m in Sources */,
+				A638D2A2222230A3001CD688 /* iTermDirectedGraph.m in Sources */,
 				A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */,
 				A6A4866C20B679DB00493302 /* iTermProfilePreferences.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
@@ -12504,6 +12523,7 @@
 				A608CCF5214DE7C1007A7B87 /* iTermVariablesTest.m in Sources */,
 				A608CD07214DE7C1007A7B87 /* iTermWeakReferenceTest.m in Sources */,
 				A608CD04214DE7C1007A7B87 /* VT100ScreenTest.m in Sources */,
+				A638D2A522223394001CD688 /* iTermDirectedGraphTest.m in Sources */,
 				A608CCFD214DE7C1007A7B87 /* iTermSemanticHistoryTest.m in Sources */,
 				A608CD03214DE7C1007A7B87 /* VT100GridTest.m in Sources */,
 				A608CD08214DE7C1007A7B87 /* iTermTextExtractorTest.m in Sources */,

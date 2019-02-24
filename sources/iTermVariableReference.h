@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSString *path;
 @property (nonatomic, readonly) iTermVariableScope *scope;
-@property (nonatomic, copy) void (^onChangeBlock)(void);
+@property (nullable, nonatomic, copy) void (^onChangeBlock)(void);
 @property (nullable, nonatomic, strong) ObjectType value;
 
 - (instancetype)initWithPath:(NSString *)path

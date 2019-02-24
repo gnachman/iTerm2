@@ -301,6 +301,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByEscapingForSandboxLiteral;
 - (NSString *)stringByDroppingLastCharacters:(NSInteger)count;
 
+- (NSString *)stringByAppendingVariablePathComponent:(NSString *)component;
+
 @end
 
 @interface NSMutableString (iTerm)

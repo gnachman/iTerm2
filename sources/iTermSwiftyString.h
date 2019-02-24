@@ -22,11 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 // +[iTermScriptFunctionCall evaluateString:timeout:source:completion:].
 @interface iTermSwiftyString : NSObject
 
-@property (nonatomic, readonly) NSString *swiftyString;
+@property (nonatomic, copy) NSString *swiftyString;
 @property (nonatomic, readonly, copy) id (^source)(NSString *);
-@property (nonatomic, readonly, readonly) void (^observer)(NSString *);
+@property (nonatomic, copy) void (^observer)(NSString *);
 @property (nullable, nonatomic, readonly) NSString *evaluatedString;
 @property (nonatomic, readonly) NSArray<iTermVariableReference *> *refs;
+@property (nonatomic, copy) NSString *destinationPath;
 
 // Variables the string depends on
 @property (nonatomic, readonly) NSSet<NSString *> *dependencies;
@@ -34,6 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
                       observer:(void (^ _Nullable)(NSString *newValue))observer NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithScope:(nullable iTermVariableScope *)scope
+                   sourcePath:(NSString *)sourcePath
+              destinationPath:(nullable NSString *)destinationPath NS_DESIGNATED_INITIALIZER;
+
 - (instancetype)init NS_UNAVAILABLE;
 - (void)invalidate;
 - (void)evaluateSynchronously:(BOOL)synchronously
@@ -47,6 +53,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermSwiftyStringPlaceholder : iTermSwiftyString
 
 - (instancetype)initWithString:(NSString *)swiftyString NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithScope:(nullable iTermVariableScope *)scope
+                   sourcePath:(NSString *)sourcePath
+              destinationPath:(nullable NSString *)destinationPath NS_UNAVAILABLE;
+
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
                       observer:(void (^ _Nullable)(NSString *newValue))observer NS_UNAVAILABLE;
