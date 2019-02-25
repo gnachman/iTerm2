@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermWindowScope<NSObject>
 
 @property (nullable, nonatomic, strong) NSString *windowTitleOverrideFormat;
+@property (nullable, nonatomic, readonly) NSString *windowTitleOverride;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermTabScope> *currentTab;
 
 @end

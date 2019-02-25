@@ -74,10 +74,6 @@ extern NSString *const PTYTabVariableTitleOverride;
 // Set to nil to use the default behavior. This is a swifty string.
 @property (nonatomic, copy) NSString *titleOverride;
 
-// titleOverride with inline expressions evaluated.
-// This value is in the variable PTYTabVariableTitleOverride.
-@property (nonatomic, readonly) NSString *evaluatedTitleOverride;
-
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
 @property(nonatomic) BOOL deferFontChanges;

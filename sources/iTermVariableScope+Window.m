@@ -28,6 +28,10 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
 }
 
+- (NSString *)windowTitleOverride {
+    return [self valueForVariableName:iTermVariableKeyWindowTitleOverride];
+}
+
 - (iTermVariableScope<iTermTabScope> *)currentTab {
     return [iTermVariableScope newTabScopeWithVariables:[self valueForVariableName:iTermVariableKeyWindowCurrentTab]];
 }

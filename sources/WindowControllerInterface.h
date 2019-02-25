@@ -9,6 +9,7 @@
 
 @class iTermPopupWindowController;
 @class iTermRestorableSession;
+@class iTermSwiftyStringGraph;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTab;
@@ -235,6 +236,8 @@
 - (PTYTab *)tabForSession:(PTYSession *)session;
 
 - (void)tabTitleDidChange:(PTYTab *)tab;
+
+- (void)tabAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
 
 #pragma mark - Sessions
 

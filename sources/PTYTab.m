@@ -625,7 +625,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
-    NSString *value = (self.evaluatedTitleOverride ?: newName) ?: @" ";
+    NSString *value = self.variablesScope.tabTitleOverride;
+    if (value.length == 0) {
+        value = newName ?: @"";
+    }
     [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
@@ -2876,7 +2879,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 
     return [@{ TAB_ARRANGEMENT_ROOT: rootNode,
-               TAB_ARRANGEMENT_TITLE_OVERRIDE: self.titleOverride ?: [NSNull null] } dictionaryByRemovingNullValues];
+               TAB_ARRANGEMENT_TITLE_OVERRIDE: self.titleOverride.length ? self.titleOverride : [NSNull null] } dictionaryByRemovingNullValues];
 }
 
 - (NSDictionary*)arrangement {
@@ -4116,7 +4119,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateTabTitle];
     for (PTYSession *session in self.sessions) {
         if ([session checkForCyclesInSwiftyStrings]) {
-            __weak typeof(self) weakSelf = self;
             _tabTitleOverrideSwiftyString.swiftyString = @"[Cycle detected]";
         }
     }
@@ -4124,10 +4126,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSString *)titleOverride {
     return _tabTitleOverrideSwiftyString.swiftyString;
-}
-
-- (NSString *)evaluatedTitleOverride {
-    return [self.variablesScope valueForVariableName:iTermVariableKeyTabTitleOverride];
 }
 
 #pragma mark NSSplitView delegate methods
@@ -5350,6 +5348,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             withFormatPath:iTermVariableKeyTabTitleOverrideFormat
             evaluationPath:iTermVariableKeyTabTitleOverride
                      scope:self.variablesScope];
+
+    [self.realParentWindow tabAddSwiftyStringsToGraph:graph];
 }
 
 @end

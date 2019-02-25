@@ -58,8 +58,10 @@ extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only 
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)
 extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated badge swifty string.
 extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
+
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
+extern NSString *const iTermVariableKeyWindowTitleOverride;
 
 @class iTermVariableReference;
 @class iTermVariables;

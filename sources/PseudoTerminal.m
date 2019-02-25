@@ -53,6 +53,7 @@
 #import "iTermSessionFactory.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSwiftyString.h"
+#import "iTermSwiftyStringGraph.h"
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
@@ -404,7 +405,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _lockTransientTitle;
 
     NSMutableArray *_toggleFullScreenModeCompletionBlocks;
-    iTermVariableReference *_titleOverrideFormatReference;
 }
 
 @synthesize scope = _scope;
@@ -873,9 +873,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
-    _titleOverrideFormatReference = [[iTermVariableReference alloc] initWithPath:iTermVariableKeyWindowTitleOverrideFormat scope:self.scope];
-    _titleOverrideFormatReference.onChangeBlock = ^{
-        [weakSelf titleOverrideFormatDidChange];
+
+    _windowTitleOverrideSwiftyString =
+        [[iTermSwiftyString alloc] initWithScope:self.scope
+                                      sourcePath:iTermVariableKeyWindowTitleOverrideFormat
+                                 destinationPath:iTermVariableKeyWindowTitleOverride];
+    _windowTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue) {
+        [weakSelf setWindowTitle];
     };
     DLog(@"Done initializing PseudoTerminal %@", self);
 }
@@ -1004,7 +1008,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_variables release];
     [_scope release];
     [_windowTitleOverrideSwiftyString release];
-    [_titleOverrideFormatReference release];
     [_initialProfile release];
     [_toggleFullScreenModeCompletionBlocks release];
 
@@ -1398,6 +1401,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabTitleDidChange:(PTYTab *)tab {
     [self updateTouchBarIfNeeded:NO];
+}
+
+- (void)tabAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph {
+    [graph addSwiftyString:_windowTitleOverrideSwiftyString
+            withFormatPath:iTermVariableKeyWindowTitleOverrideFormat
+            evaluationPath:iTermVariableKeyWindowTitleOverride
+                     scope:self.scope];
 }
 
 - (BOOL)miniaturizedWindowShouldPreserveFrameUntilDeminiaturized {
@@ -2475,25 +2485,6 @@ ITERM_WEAKLY_REFERENCEABLE
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
                   forceOpeningHotKeyWindow:(BOOL)force {
     return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
-}
-
-- (void)titleOverrideFormatDidChange {
-    NSString *titleOverride = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat];
-    [_windowTitleOverrideSwiftyString invalidate];
-    if (!titleOverride) {
-        _windowTitleOverrideSwiftyString = nil;
-        [self.scope setValue:nil forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
-        return;
-    }
-    __weak __typeof(self) weakSelf = self;
-    _windowTitleOverrideSwiftyString =
-    [[iTermSwiftyString alloc] initWithString:titleOverride
-                                        scope:self.scope
-                                     observer:
-     ^(NSString * _Nonnull newValue) {
-         [weakSelf.scope setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
-         [weakSelf setWindowTitle];
-     }];
 }
 
 - (iTermVariables *)variables {
@@ -8453,8 +8444,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)undecoratedWindowTitle {
     if ([self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] &&
-        self.windowTitleOverrideSwiftyString.evaluatedString.length > 0) {
-        return self.windowTitleOverrideSwiftyString.evaluatedString;
+        self.scope.windowTitleOverrideFormat.length > 0) {
+        return self.scope.windowTitleOverride;
     }
     return self.currentSession.nameController.presentationWindowTitle ?: @"Untitled";
 }
