@@ -77,9 +77,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // ALWAYS USE THE FLOOR OF THIS VALUE!
 @property(nonatomic) CGFloat toolbeltWidth;
 
-// TODO: Remove this
-@property(nonatomic, readonly) NSRect toolbeltFrame;
-
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;
@@ -102,13 +99,11 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)updateDivisionViewAndWindowNumberLabel;
 
 // Perform a layout pass on the toolbelt, and hide/show it as needed.
-- (void)updateToolbelt;
+- (void)updateToolbeltFrameForWindow:(NSWindow *)thisWindow;
+- (void)updateToolbeltForWindow:(NSWindow *)thisWindow;
 
 // TODO: Don't expose this
 - (void)constrainToolbeltWidth;
-
-// TODO: Get rid of this
-- (void)updateToolbeltFrame;
 
 - (void)shutdown;
 

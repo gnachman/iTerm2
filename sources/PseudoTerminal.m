@@ -2728,7 +2728,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self fitTabsToWindow];
-    [_contentView updateToolbelt];
+    [_contentView updateToolbeltForWindow:self.window];
     return YES;
 }
 
@@ -3243,7 +3243,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [_contentView updateToolbeltFrame];
+    [_contentView updateToolbeltFrameForWindow:self.window];
 }
 
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen {
@@ -4409,7 +4409,7 @@ ITERM_WEAKLY_REFERENCEABLE
     togglingFullScreen_ = YES;
     _contentView.toolbeltWidth = savedToolbeltWidth;
     [_contentView constrainToolbeltWidth];
-    [_contentView updateToolbelt];
+    [_contentView updateToolbeltForWindow:self.window];
     [self updateUseTransparency];
 
     if (_fullScreen) {
@@ -4720,7 +4720,7 @@ ITERM_WEAKLY_REFERENCEABLE
     lionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [_contentView.tabBarControl setFlashing:YES];
-    [_contentView updateToolbelt];
+    [_contentView updateToolbeltForWindow:self.window];
     [self repositionWidgets];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
@@ -4846,7 +4846,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self fitTabsToWindow];
     [self repositionWidgets];
     [self invalidateRestorableState];
-    [_contentView updateToolbelt];
+    [_contentView updateToolbeltForWindow:self.window];
 
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
