@@ -50,9 +50,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem title="Profile CPU Usage" identifier="Profile CPU Usage" id="BHe-4M-lqd">
-                                <string key="keyEquivalent" base64-UTF8="YES">
-CQ
-</string>
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="createCPUProfile:" target="201" id="kex-OS-LzO"/>
                                 </connections>
