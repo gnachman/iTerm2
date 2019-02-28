@@ -55,6 +55,24 @@ class InitialWorkingDirectory(enum.Enum):
     INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
 
+class IconMode(enum.Enum):
+    """How should session icons be selected?"""
+    NONE = 0
+    AUTOMATIC = 1
+    CUSTOM = 2
+
+class TitleComponents(enum.Enum):
+    """Which title components should be present?"""
+    SESSION_NAME = (1 << 0)
+    JOB = (1 << 1)
+    WORKING_DIRECTORy = (1 << 2)
+    TTY = (1 << 3)
+    CUSTOM = (1 << 4)  #: Mutually exclusive with all other options.
+    PROFILE_NAME = (1 << 5)
+    PROFILE_AND_SESSION_NAME = (1 << 6)
+    USER = (1 << 7)
+    HOST = (1 << 8)
+
 class LocalWriteOnlyProfile:
     """A profile that can be modified but not read and does not send changes on each write."""
     def __init__(self):
@@ -774,6 +792,119 @@ class LocalWriteOnlyProfile:
         The initial_directory_mode must be set to "Yes" for this to take effect.
         """
         return self._simple_set("Working Directory", value)
+
+    def set_icon_mode(self, value: IconMode):
+        """Sets the icon mode.
+
+        :param value: The icon mode.
+        """
+        return self._simple_set("Icon", value.value)
+
+    def set_custom_icon_path(self, value: str):
+        """Sets the path of the custom icon.
+
+        The `icon_mode` must be set to `CUSTOM`.
+        """
+        return self._simple_set("Custom Icon Path", value)
+
+    def set_title_components(self, value: typing.List[TitleComponents]):
+        """Sets which components are visible in the session's title, or selects a custom component.
+
+        If it is set to `CUSTOM` then the title_function must be set properly.
+        """
+        n = 0
+        for c in value:
+            n += c.value
+        return self._simple_set("Title Components", n)
+
+    def set_title_function(self, display_name: str, identifier: str):
+        """Sets the function call for the session title provider and its display name for the UI.
+
+        :param display_name: This is shown in the Title Components menu in the UI.
+        :identifier: The unique identifier, typically a backwards domain name.
+
+        This takes effect only when the title_components property is set to `CUSTOM`.
+        """
+        return self._simple_set("Title Function", [display_name, identifier])
+
+    def set_badge_top_margin(self, value: int):
+        """Sets the top margin of the badge.
+
+        :param value: The new value in points.
+        """
+        return self._simple_set("Badge Top Margin", value)
+
+    def set_badge_right_margin(self, value: int):
+        """Sets the right margin of the badge.
+
+        :param value: The new value in points.
+        """
+        return self._simple_set("Badge Right Margin", value)
+
+    def set_badge_max_width(self, value: int):
+        """Sets the max width of the badge.
+
+        :param value: The new value in points.
+        """
+        return self._simple_set("Badge Max Width", value)
+
+    def set_badge_max_height(self, value: int):
+        """Sets the max height of the badge.
+
+        :param value: The new value in points.
+        """
+        return self._simple_set("Badge Max Height", value)
+
+
+    def set_badge_font(self, value: str):
+        """Sets the font of the badge.
+
+        :param value: The new font name, like "Helvetica"
+        """
+        return self._simple_set("Badge Font", value)
+
+    def set_use_custom_window_title(self, value: bool):
+        """Sets whether the custom window title is used.
+
+        :param value: Should the custom window title in the profile be used?
+        """
+        return self._simple_set("Use Custom Window Title", value)
+
+    def set_custom_window_title(self, value: str):
+        """Sets the custom window title.
+
+        This will only be used if use_custom_window_title is True.
+
+        :param value: The new value. An interpolated string.
+        """
+        return self._simple_set("Custom Window Title", value)
+
+    def set_use_transparency_initially(self, value: bool):
+        """Should a window created with this profile respect the transparency setting?
+
+        :param value: If True, use transparency; if False, force the window to be opaque (but it can be toggled with View > Use Transparency).
+        """
+        return self._simple_set("Initial Use Transparency", value)
+
+    def set_status_bar_enabled(self, value: bool):
+        """Should the status bar be enabled?
+
+        :param value: If True, the status bar will be shown.
+        """
+        return self._simple_set("Show Status Bar", value)
+
+    def set_use_csi_u(self, value: bool):
+        """Report keystrokes with CSI u protocol?
+
+        :param value: If True, CSI u will be enabled.
+        """
+        return self._simple_set("Use libtickit protocol", value)
+
+    def set_triggers_use_interpolated_strings(self, value: bool):
+        """Should trigger parameters be interpreted as interpolated strings?
+        """
+        return self._simple_set("Triggers Use Interpolated Strings", value)
+
 
 class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
@@ -1536,6 +1667,118 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Working Directory", value)
 
+    async def async_set_icon_mode(self, value: IconMode):
+        """Sets the icon mode.
+
+        :param value: The icon mode.
+        """
+        return await self._async_simple_set("Icon", value.value)
+
+    async def async_set_custom_icon_path(self, value: str):
+        """Sets the path of the custom icon.
+
+        The `icon_mode` must be set to `CUSTOM`.
+        """
+        return await self._async_simple_set("Custom Icon Path", value)
+
+    async def async_set_title_components(self, value: typing.List[TitleComponents]):
+        """Sets which components are visible in the session's title, or selects a custom component.
+
+        If it is set to `CUSTOM` then the title_function must be set properly.
+        """
+        n = 0
+        for c in value:
+            n += c.value
+        return await self._async_simple_set("Title Components", n)
+
+    async def async_set_title_function(self, display_name: str, identifier: str):
+        """Sets the function call for the session title provider and its display name for the UI.
+
+        :param display_name: This is shown in the Title Components menu in the UI.
+        :identifier: The unique identifier, typically a backwards domain name.
+
+        This takes effect only when the title_components property is set to `CUSTOM`.
+        """
+        return await self._async_simple_set("Title Function", [display_name, identifier])
+
+    async def async_set_badge_top_margin(self, value: int):
+        """Sets the top margin of the badge.
+
+        :param value: The new value in points.
+        """
+        return await self._async_simple_set("Badge Top Margin", value)
+
+    async def async_set_badge_right_margin(self, value: int):
+        """Sets the right margin of the badge.
+
+        :param value: The new value in points.
+        """
+        return await self._async_simple_set("Badge Right Margin", value)
+
+    async def async_set_badge_max_width(self, value: int):
+        """Sets the max width of the badge.
+
+        :param value: The new value in points.
+        """
+        return await self._async_simple_set("Badge Max Width", value)
+
+    async def async_set_badge_max_height(self, value: int):
+        """Sets the max height of the badge.
+
+        :param value: The new value in points.
+        """
+        return await self._async_simple_set("Badge Max Height", value)
+
+
+    async def async_set_badge_font(self, value: str):
+        """Sets the font of the badge.
+
+        :param value: The new font name, like "Helvetica"
+        """
+        return await self._async_simple_set("Badge Font", value)
+
+    async def async_set_use_custom_window_title(self, value: bool):
+        """Sets whether the custom window title is used.
+
+        :param value: Should the custom window title in the profile be used?
+        """
+        return await self._async_simple_set("Use Custom Window Title", value)
+
+    async def async_set_custom_window_title(self, value: str):
+        """Sets the custom window title.
+
+        This will only be used if use_custom_window_title is True.
+
+        :param value: The new value. An interpolated string.
+        """
+        return await self._async_simple_set("Custom Window Title", value)
+
+    async def async_set_use_transparency_initially(self, value: bool):
+        """Should a window created with this profile respect the transparency setting?
+
+        :param value: If True, use transparency; if False, force the window to be opaque (but it can be toggled with View > Use Transparency).
+        """
+        return await self._async_simple_set("Initial Use Transparency", value)
+
+    async def async_set_status_bar_enabled(self, value: bool):
+        """Should the status bar be enabled?
+
+        :param value: If True, the status bar will be shown.
+        """
+        return await self._async_simple_set("Show Status Bar", value)
+
+    async def async_set_use_csi_u(self, value: bool):
+        """Report keystrokes with CSI u protocol?
+
+        :param value: If True, CSI u will be enabled.
+        """
+        return await self._async_simple_set("Use libtickit protocol", value)
+
+    async def async_set_triggers_use_interpolated_strings(self, value: bool):
+        """Should trigger parameters be interpreted as interpolated strings?
+        """
+        return await self._async_simple_set("Triggers Use Interpolated Strings", value)
+
 class Profile(WriteOnlyProfile):
     """Represents a profile.
 
@@ -1546,7 +1789,7 @@ class Profile(WriteOnlyProfile):
     USE_CUSTOM_COMMAND_DISABLED = "No"
 
     @staticmethod
-    async def async_get(connection, guids=None):
+    async def async_get(connection, guids=None) -> typing.List['Profile']:
         """Fetches all profiles with the specified GUIDs.
 
         :param guids: The profiles to get, or if `None` then all will be returned.
@@ -1583,6 +1826,11 @@ class Profile(WriteOnlyProfile):
             return self.__props[key]
         else:
             return None
+
+    def _get_optional_bool(self, key):
+        if key not in self.__props:
+            return None
+        return bool(self.__props[key])
 
     def get_color_with_key(self, key):
         """Returns the color for the request key, or None.
@@ -2438,6 +2686,135 @@ class Profile(WriteOnlyProfile):
         :returns: The specific directory this profile has been set to start in.
         """
         return self._simple_get("Working Directory")
+
+    @property
+    def icon_mode(self) -> IconMode:
+        """Returns what kind of icon the session shows.
+
+        :returns: The icon mode.
+        """
+        return self._simple_get("Icon")
+
+    @property
+    def custom_icon_path(self) -> typing.Optional[str]:
+        """Returns the path of the custom icon.
+
+        The `icon_mode` must be set to `CUSTOM`.
+        """
+        return self._simple_get("Custom Icon Path")
+
+    @property
+    def title_components(self) -> typing.Optional[typing.List[TitleComponents]]:
+        """Returns which components are visible in the session's title, or selects a custom component.
+
+        If it is set to `CUSTOM` then the title_function must be set properly.
+        """
+        l = []
+        n = 1
+        value = self._simple_get("Title Components")
+        while n <= value:
+            if (n & value):
+                l.append(TitleComponents(n))
+            n *= 2
+        return l
+
+    @property
+    def title_function(self) -> typing.Optional[typing.Tuple[str, str]]:
+        """Returns the function call for the session title provider and its display name for the UI.
+
+        :returns: (display name, unique identifier)
+        """
+        list = self._simple_get("Title Function")
+        return (list[0], list[1])
+
+    @property
+    def badge_top_margin(self) -> typing.Optional[int]:
+        """Returns the top margin of the badge.
+
+        :returns: The new value in points.
+        """
+        return self._simple_get("Badge Top Margin")
+
+    @property
+    def badge_right_margin(self) -> typing.Optional[int]:
+        """Returns the right margin of the badge.
+
+        :returns: The new value in points.
+        """
+        return self._simple_get("Badge Right Margin")
+
+    @property
+    def badge_max_width(self) -> typing.Optional[int]:
+        """Returns the max width of the badge.
+
+        :returns: The new value in points.
+        """
+        return self._simple_get("Badge Max Width")
+
+    @property
+    def badge_max_height(self) -> typing.Optional[int]:
+        """Returns the max height of the badge.
+
+        :returns: The new value in points.
+        """
+        return self._simple_get("Badge Max Height")
+
+
+    @property
+    def badge_font(self) -> typing.Optional[str]:
+        """Returns the font of the badge.
+
+        :returns: The new font name, like "Helvetica"
+        """
+        return self._simple_get("Badge Font")
+
+    @property
+    def use_custom_window_title(self) -> typing.Optional[bool]:
+        """Returns whether the custom window title is used.
+
+        :returns: Should the custom window title in the profile be used?
+        """
+        return self._get_optional_bool("Use Custom Window Title")
+
+    @property
+    def custom_window_title(self) -> typing.Optional[str]:
+        """Returns the custom window title.
+
+        This will only be used if use_custom_window_title is True.
+
+        :returns: The new value. An interpolated string.
+        """
+        return self._simple_get("Custom Window Title")
+
+    @property
+    def use_transparency_initially(self) -> typing.Optional[bool]:
+        """Returns whether a window created with this profile should respect the transparency setting?
+
+        :returns: If True, use transparency; if False, force the window to be opaque (but it can be toggled with View > Use Transparency).
+        """
+        return self._get_optional_bool("Initial Use Transparency")
+
+    @property
+    def status_bar_enabled(self) -> typing.Optional[bool]:
+        """Returns whether the status bar should be enabled?
+
+        :returns: If True, the status bar will be shown.
+        """
+        return self._get_optional_bool("Show Status Bar")
+
+    @property
+    def use_csi_u(self) -> typing.Optional[bool]:
+        """REturns wehtehr keystrokes will be reported with CSI u protocol
+
+        :returns: If True, CSI u will be enabled.
+        """
+        return self._get_optional_bool("Use libtickit protocol")
+
+    @property
+    def triggers_use_interpolated_strings(self) -> typing.Optional[bool]:
+        """Returns whether trigger parameters are interpreted as interpolated strings?
+        """
+        return self._get_optional_bool("Triggers Use Interpolated Strings")
 
     async def async_make_default(self):
         """Makes this profile the default profile."""

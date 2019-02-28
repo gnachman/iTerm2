@@ -31,6 +31,7 @@ class PreferenceKey(enum.Enum):
     OPEN_TMUX_WINDOWS_IN = "OpenTmuxWindowsIn"  #: Specifies how to open tmux windows.  Takes an integer. 0=native windows, 1=new window, 2=tabs in existing window.
     TMUX_DASHBOARD_LIMIT = "TmuxDashboardLimit"  #: Open tmux dashboard if there are more than this many windows.  Takes an integer.
     AUTO_HIDE_TMUX_CLIENT_SESSION = "AutoHideTmuxClientSession"  #: Automatically bury the tmux client session?  Takes a boolean.
+    USE_TMUX_PROFILE = "TmuxUsesDedicatedProfile"  #: Use dedicated tmux profile. Takes a boolean.
     USE_METAL = "UseMetal"  #: Use the GPU renderer?  Takes a boolean.
     DISABLE_METAL_WHEN_UNPLUGGED = "disableMetalWhenUnplugged"  #: Disable the GPU renderer when not connected to power?  Takes a boolean.
     PREFER_INTEGRATED_GPU = "preferIntegratedGPU"  #: Prefer the integrated GPU over discrete, if available?  Takes a boolean.
@@ -91,6 +92,14 @@ class PreferenceKey(enum.Enum):
     SHOW_FULL_SCREEN_TAB_BAR = "ShowFullScreenTabBar"  #: Show tab bar in full screen?  Takes a boolean.
     DEFAULT_TOOLBELT_WIDTH = "Default Toolbelt Width"  #: Width of toolbelt by default.  Takes a nonnegative integer.
     SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does changing text size with cmd-+ and cmd-- affect only the session or also its profile?
+    STATUS_BAR_POSITION = "StatusBarPosition"  #: Where does the status bar go? Takes an integer. 0=top, 1=bottom.
+    PRESERVE_WINDOW_SIZE_WHEN_TAB_BAR_VISIBILITY_CHANGES = "PreserveWindowSizeWhenTabBarVisibilityChanges"  #: Keep window size the same when tabbar shows/hides? Takes a boolean.
+    PER_PANE_BACKGROUND_IMAGE = "PerPaneBackgroundImage"  #: Should each split pane have a separate bg image, or one for the whole window? Takes a boolean.
+    PER_PANE_STATUS_BAR = "SeparateStatusBarsPerPane"  #: Should each split pane have a separate status bar, or just one for the whole window? Takes a boolean.
+    EMULATE_US_KEYBOARD = "UseVirtualKeyCodesForDetectingDigits"  #: Emulate US keyboard for the purposes of switching tabs/panes/windows by keyboard? Takes a boolean.
+    TEXT_SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does increasing/decreasing text size update the backing profile? Takes a boolean.
+
+
 
 async def async_get_preference(connection, key: PreferenceKey) -> typing.Union[None, typing.Any]:
     """
