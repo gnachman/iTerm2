@@ -17,6 +17,7 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
 #import "iTermScriptFunctionCall.h"
@@ -2920,7 +2921,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
 
 - (ITMPreferencesResponse_Result_GetPreferenceResult *)handleGetPreferenceRequestForKey:(NSString *)key {
     ITMPreferencesResponse_Result_GetPreferenceResult *result = [[ITMPreferencesResponse_Result_GetPreferenceResult alloc] init];
-    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    id obj = [iTermPreferences objectForKey:key];
     NSString *json = [NSJSONSerialization it_jsonStringForObject:obj];
     result.jsonValue = json;
     return result;
