@@ -20,6 +20,7 @@ extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
 @class iTermScriptHistoryEntry;
+@class iTermVariableScope;e
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
@@ -69,6 +70,11 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // stringSignature is like func(arg1,arg2). Use iTermFunctionSignatureFromNameAndArguments to construct it safely.
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
+- (NSString *)connectionKeyForRPCWithName:(NSString *)name
+                       explicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
+                                    scope:(iTermVariableScope *)scope
+                           fullParameters:(out NSDictionary<NSString *, id> **)fullParameters;
+
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
                                              format:(NSString *)format, ...;
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString

@@ -158,6 +158,60 @@ static iTermAPIHelper *sAPIHelperInstance;
     return iTermFunctionSignatureFromNameAndArguments(self.name, argNames);
 }
 
+- (NSSet<NSString *> *)it_allArgumentNames {
+    return [NSSet setWithArray:[self.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
+        return anObject.name;
+    }]];
+}
+
+- (NSSet<NSString *> *)it_argumentsWithDefaultValues {
+    return [NSSet setWithArray:[self.defaultsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *anObject) {
+        return anObject.name;
+    }]];
+}
+
+- (NSSet<NSString *> *)it_requiredArguments {
+    NSMutableSet *result = [[self it_allArgumentNames] mutableCopy];
+    [result minusSet:[self it_argumentsWithDefaultValues]];
+    return result;
+}
+
+- (BOOL)it_satisfiesExplicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
+                                 scope:(iTermVariableScope *)scope
+                        fullParameters:(out NSDictionary<NSString *, id> **)fullParameters {
+    NSSet<NSString *> *providedArguments = [NSSet setWithArray:explicitParameters.allKeys];
+    NSSet<NSString *> *requiredArguments = [self it_requiredArguments];
+    if (![requiredArguments isSubsetOfSet:providedArguments]) {
+        // Does not contain all required arguments
+        return NO;
+    }
+
+    // Make sure all the arguments with defaults can be satisfied by the scope.
+    NSMutableDictionary<NSString *, id> *params = [explicitParameters mutableCopy];
+    for (ITMRPCRegistrationRequest_RPCArgument *defaultArgument in self.defaultsArray) {
+        NSString *name = defaultArgument.name;
+        BOOL isOptional = NO;
+        if ([name hasSuffix:@"?"]) {
+            isOptional = YES;
+            name = [name substringToIndex:name.length - 1];
+        }
+        if (params[name]) {
+            // An explicit value was provided, which overrides the default.
+            continue;
+        }
+        id value = [scope valueForVariableName:defaultArgument.path];
+        if (value) {
+            params[name] = value;
+            continue;
+        }
+        if (!isOptional) {
+            return NO;
+        }
+    }
+    *fullParameters = params;
+    return YES;
+}
+
 @end
 
 @interface ITMServerOriginatedRPC(Extensions)
@@ -627,6 +681,22 @@ static iTermAPIHelper *sAPIHelperInstance;
 
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature {
     return self.serverOriginatedRPCSubscriptions[signature].firstObject;
+}
+
+- (NSString *)connectionKeyForRPCWithName:(NSString *)name
+                       explicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
+                                    scope:(iTermVariableScope *)scope
+                           fullParameters:(out NSDictionary<NSString *, id> **)fullParameters {
+    for (NSString *signature in self.serverOriginatedRPCSubscriptions) {
+        iTermTuple<id, ITMNotificationRequest *> *tuple = self.serverOriginatedRPCSubscriptions[signature];
+        ITMNotificationRequest *request = tuple.secondObject;
+        if ([request.rpcRegistrationRequest it_satisfiesExplicitParameters:explicitParameters
+                                                                     scope:scope
+                                                            fullParameters:fullParameters]) {
+            return tuple.firstObject;
+        }
+    }
+    return nil;
 }
 
 - (ITMServerOriginatedRPC *)serverOriginatedRPCWithName:(NSString *)name
