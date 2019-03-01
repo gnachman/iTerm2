@@ -19,7 +19,7 @@ extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
 @class iTermScriptHistoryEntry;
-@class iTermVariableScope;e
+@class iTermVariableScope;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 

@@ -58,6 +58,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
+- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
 
 @end
 

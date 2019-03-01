@@ -52,6 +52,7 @@
             value = [[self.array mapWithBlock:^id(id anObject) {
                 return [anObject description];
             }] componentsJoinedByString:@" "];
+            value = [NSString stringWithFormat:@"[ %@ ]", value];
             break;
     }
     if (self.optional) {
@@ -412,6 +413,24 @@
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= '[' ']'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [[iTermParsedExpression alloc] initWithArray:@[]];
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> ']'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [[iTermParsedExpression alloc] initWithArray:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @[ syntaxTree.children[0] ];
+                           }];
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression> ',' <comma_delimited_expressions>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               id firstExpression = syntaxTree.children[0];
+                               NSArray *tail = syntaxTree.children[2];
+                               return [@[firstExpression] arrayByAddingObjectsFromArray:tail];
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

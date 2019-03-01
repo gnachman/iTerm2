@@ -20,6 +20,14 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
             combinedArguments];
 }
 
+NSString *iTermFuncionNameFromSignature(NSString *signature) {
+    NSInteger index = [signature rangeOfString:@"("].location;
+    if (index == NSNotFound || index == 0) {
+        return nil;
+    }
+    return [signature substringWithRange:NSMakeRange(0, index)];
+}
+
 @interface iTermBuiltInFunction()
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters;
 @end
@@ -129,6 +137,13 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 - (BOOL)haveFunctionWithName:(NSString *)name arguments:(NSArray<NSString *> *)arguments {
     NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
     return _functions[signature] != nil;
+}
+
+- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name {
+    return [_functions.allKeys objectPassingTest:^BOOL(NSString *signature, NSUInteger index, BOOL *stop) {
+        NSString *signatureName = iTermFuncionNameFromSignature(signature);
+        return [signatureName isEqualToString:name];
+    }];
 }
 
 - (void)callFunctionWithName:(NSString *)name

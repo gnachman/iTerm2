@@ -12,6 +12,7 @@
 @interface iTermScriptFunctionCall : NSObject
 
 @property (nonatomic, readonly) NSString *signature;
+@property (nonatomic, readonly) NSString *name;
 
 // Evaluates an expression given in invocation.
 // invocation should look like one of:
@@ -69,7 +70,7 @@
 + (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
                                            error:(out NSError **)error;
 
-// Evaluate a string with embedded function calls like a swift string with \(expression)s in it.
+// Evaluate a string with embedded function calls like a swifty string with \(expression)s in it.
 // If you need a string that changes dynamically as its dependencies (i.e., variables) change,
 // use iTermSwiftyString instead.
 + (void)evaluateString:(NSString *)string
@@ -78,5 +79,11 @@
             completion:(void (^)(NSString *result,
                                  NSError *error,
                                  NSSet<NSString *> *missingFunctionSignatures))completion;
+
++ (void)performFunctionCall:(iTermScriptFunctionCall *)functionCall
+             fromInvocation:(NSString *)invocation
+                      scope:(iTermVariableScope *)scope
+                    timeout:(NSTimeInterval)timeout
+                 completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
 @end

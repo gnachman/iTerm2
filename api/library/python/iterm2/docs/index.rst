@@ -26,6 +26,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    :maxdepth: 1
    :caption: Class reference:
 
+   alert
    app
    arrangement
    broadcast

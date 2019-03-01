@@ -10,6 +10,7 @@
 #import "iTermFunctionCallParser.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
+#import "NSArray+iTerm.h"
 
 @interface iTermScriptFunctionCallTest : XCTestCase
 
@@ -483,4 +484,17 @@
     XCTAssertEqualObjects(result, @2);
 }
 
+#pragma mark - Parsing
+
+- (void)testParseExpressionWithArrayLiteral {
+    iTermFunctionCallParser *parser = [iTermFunctionCallParser expressionParser];
+    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
+    iTermParsedExpression *expression = [parser parse:@"[ 1, 2, 3 ]" scope:scope];
+    XCTAssertEqual(expression.expressionType, iTermParsedExpressionTypeArray);
+    NSArray *actual = [expression.array mapWithBlock:^id(iTermParsedExpression *expression) {
+        return expression.object;
+    }];
+    NSArray *expected = @[ @1, @2, @3 ];
+    XCTAssertEqualObjects(actual, expected);
+}
 @end
