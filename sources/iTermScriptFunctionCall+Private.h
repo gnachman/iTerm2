@@ -7,11 +7,18 @@
 
 #import "iTermScriptFunctionCall.h"
 
+@class iTermParsedExpression;
+
 @interface iTermScriptFunctionCall()
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) NSString *connectionKey;
 
-- (void)addParameterWithName:(NSString *)name value:(id)value;
+- (void)performFunctionCallFromInvocation:(NSString *)invocation
+                                    scope:(iTermVariableScope *)scope
+                                  timeout:(NSTimeInterval)timeout
+                               completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
+
+- (void)addParameterWithName:(NSString *)name parsedExpression:(iTermParsedExpression *)expression;
 
 @end

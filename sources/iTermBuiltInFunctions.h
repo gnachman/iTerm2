@@ -26,6 +26,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 @property (nonatomic, readonly) NSDictionary<NSString *, Class> *argumentsAndTypes;
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *defaultValues;
 @property (nonatomic, readonly) iTermBuiltInFunctionsExecutionBlock block;
+@property (nonatomic, readonly) NSString *signature;
 
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
@@ -58,6 +59,8 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
+- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
+- (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
 @end
 

@@ -7,9 +7,10 @@
 
 #import <XCTest/XCTest.h>
 #import "iTermBuiltInFunctions.h"
-#import "iTermFunctionCallParser.h"
+#import "iTermExpressionParser.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
+#import "NSArray+iTerm.h"
 
 @interface iTermScriptFunctionCallTest : XCTestCase
 
@@ -80,7 +81,7 @@
 }
 
 - (void)testSignature {
-    iTermFunctionCallParser *parser = [iTermFunctionCallParser callParser];
+    iTermExpressionParser *parser = [iTermExpressionParser callParser];
     iTermVariableScope *scope = [[iTermVariableScope alloc] init];
     iTermParsedExpression *expression = [parser parse:@"add(x:1, y:2)" scope:scope];
     XCTAssertEqual(expression.expressionType, iTermParsedExpressionTypeFunctionCall);
@@ -420,7 +421,7 @@
     NSString *invocation = @"f(x: 1, y: \"foo\")";
     NSString *expected = @"f(x,y)";
     NSError *error = nil;
-    NSString *actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
+    NSString *actual = [iTermExpressionParser signatureForFunctionCallInvocation:invocation error:&error];
     XCTAssertEqualObjects(expected, actual);
     XCTAssertNil(error);
 }
@@ -428,12 +429,12 @@
 - (void)testSignatureForErroneousFunctionCallInvocation {
     NSString *invocation = @"f(x: 1, y: \"foo)";
     NSError *error = nil;
-    NSString *actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
+    NSString *actual = [iTermExpressionParser signatureForFunctionCallInvocation:invocation error:&error];
     XCTAssertNil(actual);
     XCTAssertNotNil(error);
 
     invocation = @"f(x: 1, y: 2";
-    actual = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&error];
+    actual = [iTermExpressionParser signatureForFunctionCallInvocation:invocation error:&error];
     XCTAssertNil(actual);
     XCTAssertNotNil(error);
 }
@@ -483,4 +484,17 @@
     XCTAssertEqualObjects(result, @2);
 }
 
+#pragma mark - Parsing
+
+- (void)testParseExpressionWithArrayLiteral {
+    iTermExpressionParser *parser = [iTermExpressionParser expressionParser];
+    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
+    iTermParsedExpression *expression = [parser parse:@"[ 1, 2, 3 ]" scope:scope];
+    XCTAssertEqual(expression.expressionType, iTermParsedExpressionTypeArray);
+    NSArray *actual = [expression.array mapWithBlock:^id(iTermParsedExpression *expression) {
+        return expression.object;
+    }];
+    NSArray *expected = @[ @1, @2, @3 ];
+    XCTAssertEqualObjects(actual, expected);
+}
 @end

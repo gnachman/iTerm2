@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermVariableReference.h"
@@ -181,10 +182,12 @@
 - (void)evaluateSynchronously:(BOOL)synchronously
                    withScope:(iTermVariableScope *)scope
                    completion:(void (^)(NSString *result, NSError *error, NSSet<NSString *> *missing))completion {
-    [iTermScriptFunctionCall evaluateString:_swiftyString
-                                    timeout:synchronously ? 0 : 30
-                                      scope:scope
-                                 completion:completion];
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:_swiftyString
+                                                                                                 scope:scope];
+    [evaluator evaluateWithTimeout:synchronously ? 0 : 30
+                        completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+                            completion(evaluator.value, evaluator.error, evaluator.missingValues);
+                        }];
 }
 
 - (void)dependencyDidChange {

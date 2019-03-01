@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
 #import "iTermScriptFunctionCall.h"
@@ -181,27 +182,15 @@ NS_ASSUME_NONNULL_BEGIN
             completion(ok);
         }
     };
-    void (^block)(NSString *) = ^(NSString *result) {
-        [windowController setName:result ?: @"" forSession:aSession];
-        [self finishAttachingOrLaunchingSession:aSession
-                                            cmd:cmd
-                                     completion:wrapper
-                                    environment:environment
-                                         isUTF8:isUTF8
-                               serverConnection:serverConnection
-                                  substitutions:substitutions
-                               windowController:windowController];
-    };
-    if ([iTermAdvancedSettingsModel evaluateSwiftyStrings]) {
-        [iTermScriptFunctionCall evaluateString:name
-                                        timeout:[iTermAdvancedSettingsModel timeoutForStringEvaluation]
-                                          scope:aSession.variablesScope
-                                     completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
-                                         block(result ?: @"");
-                                     }];
-    } else {
-        block(name);
-    }
+    [windowController setName:name ?: @"" forSession:aSession];
+    [self finishAttachingOrLaunchingSession:aSession
+                                        cmd:cmd
+                                 completion:wrapper
+                                environment:environment
+                                     isUTF8:isUTF8
+                           serverConnection:serverConnection
+                              substitutions:substitutions
+                           windowController:windowController];
     return YES;
 }
 

@@ -19,8 +19,9 @@ extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
+@class iTermParsedExpression;
 @class iTermScriptHistoryEntry;
-@class iTermVariableScope;e
+@class iTermVariableScope;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 

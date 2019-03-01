@@ -8,9 +8,11 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 
 #import "iTermAPIHelper.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermFunctionCallSuggester.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermFunctionCallTextFieldDelegate()<
@@ -32,10 +34,13 @@
                 functionsOnly:(BOOL)functionsOnly {
     self = [super init];
     if (self) {
-        NSDictionary<NSString *,NSArray<NSString *> *> *signatures =
+        NSDictionary<NSString *,NSArray<NSString *> *> *registeredSignatures =
             [iTermAPIHelper registeredFunctionSignatureDictionary];
+        NSDictionary<NSString *,NSArray<NSString *> *> *bifSignatures =
+            [[iTermBuiltInFunctions sharedInstance] registeredFunctionSignatureDictionary];
+        NSDictionary<NSString *,NSArray<NSString *> *> *combinedSignatures = [registeredSignatures dictionaryByMergingDictionary:bifSignatures];
         Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
-        _suggester = [[suggesterClass alloc] initWithFunctionSignatures:signatures
+        _suggester = [[suggesterClass alloc] initWithFunctionSignatures:combinedSignatures
                                                              pathSource:pathSource];
         _passthrough = passthrough;
     }

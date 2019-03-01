@@ -7,12 +7,13 @@
 
 #import "iTermFunctionCallSuggester.h"
 
-#import "iTermFunctionCallParser.h"
+#import "iTermExpressionParser+Private.h"
 #import "iTermGrammarProcessor.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
 #import "iTermTruncatedQuotedRecognizer.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermFunctionCallSuggester()<CPParserDelegate, CPTokeniserDelegate>
@@ -34,7 +35,7 @@
     if (self) {
         _functionSignatures = [functionSignatures copy];
         _pathSource = [pathSource copy];
-        _tokenizer = [iTermFunctionCallParser newTokenizer];
+        _tokenizer = [iTermExpressionParser newTokenizer];
         [self addTokenRecognizersToTokenizer:_tokenizer];
         _tokenizer.delegate = self;
         _grammarProcessor = [[iTermGrammarProcessor alloc] init];
@@ -44,7 +45,17 @@
         CPGrammar *grammar = [CPGrammar grammarWithStart:self.grammarStart
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
-        _parser = [CPSLRParser parserWithGrammar:grammar];
+        // NOTE:
+        // CPSLRParser is a slightly faster parser but is not capable of dealing with the grammar
+        // rules for functions in expressions. You need lookahead to distinguish function calls
+        // from paths. "foo.bar(" is a valid beginning for a function call. "foo.bar.baz(" is not
+        // because nested namespaces are not allowed. Without lookahead, the SLR parser has a
+        // shift-reduce conflict because it can't distinguish
+        // "funcname ::= Identifier '.' Identifier" from "path ::= Identifier ['.' path]". The
+        // reason a funcname is not a path is that it can only have two parts.
+        //
+        // See the comments in the headers for the two parsers for more details about their costs.
+        _parser = [CPLALR1Parser parserWithGrammar:grammar];
         assert(_parser);
         _parser.delegate = self;
     }
@@ -52,7 +63,6 @@
 }
 
 - (void)addTokenRecognizersToTokenizer:(CPTokeniser *)tokenizer {
-    [tokenizer addTokenRecogniser:[self stringRecognizer]];
     iTermSwiftyStringRecognizer *swiftyRecognizer =
     [[iTermSwiftyStringRecognizer alloc] initWithStartQuote:@"\""
                                                    endQuote:@"\""
@@ -61,39 +71,23 @@
                                                        name:@"SwiftyString"
                                          tolerateTruncation:YES];
 
-    [iTermFunctionCallParser setEscapeReplacerInStringRecognizer:swiftyRecognizer];
+    [iTermExpressionParser setEscapeReplacerInStringRecognizer:swiftyRecognizer];
     [_tokenizer addTokenRecogniser:swiftyRecognizer];
 }
 
 - (CPQuotedRecogniser *)stringRecognizer {
-    return [iTermFunctionCallParser stringRecognizerWithClass:[iTermTruncatedQuotedRecognizer class]];
+    return [iTermExpressionParser stringRecognizerWithClass:[iTermTruncatedQuotedRecognizer class]];
 }
 
 - (NSString *)grammarStart {
     return @"call";
 }
 
-- (void)addStringRules {
-    [_grammarProcessor addProductionRule:@"expression ::= <string>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermSwiftyStringToken *token = [iTermSwiftyStringToken castFrom:syntaxTree.children[0]];
-                               if (token.truncated && !token.endsWithLiteral) {
-                                   return @{ @"truncated_interpolation": token.truncatedPart };
-                               } else {
-                                   return @{ @"literal": @YES };
-                               }
-                           }];
-    [_grammarProcessor addProductionRule:@"string ::= 'SwiftyString'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return syntaxTree.children[0];
-                           }];
-}
-
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
-    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+    [_grammarProcessor addProductionRule:@"call ::= <funcname> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                               return [weakSelf callWithName:syntaxTree.children[0]
                                                      arglist:syntaxTree.children[1]];
                            }];
     [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
@@ -101,6 +95,18 @@
                                return [weakSelf callWithName:@""
                                                      arglist:@{ @"partial-arglist": @YES }];
                            }];
+
+    [_grammarProcessor addProductionRule:@"funcname ::= 'Identifier'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [syntaxTree.children[0] identifier];
+                           }];
+    [_grammarProcessor addProductionRule:@"funcname ::= 'Identifier' '.' 'Identifier'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [NSString stringWithFormat:@"%@.%@",
+                                       [syntaxTree.children[0] identifier],
+                                       [syntaxTree.children[2] identifier]];
+                           }];
+
     [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"partial-arglist": @YES };
@@ -154,6 +160,10 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"path": syntaxTree.children[0] };
                            }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path> '[' 'Number' ']'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"path": syntaxTree.children[0] };
+                           }];
     [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"path": syntaxTree.children[0],
@@ -163,11 +173,38 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"literal": @YES };
                            }];
-    [self addStringRules];
+    [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermSwiftyStringToken *token = [iTermSwiftyStringToken castFrom:syntaxTree.children[0]];
+                               if (token.truncated && !token.endsWithLiteral) {
+                                   return @{ @"truncated_interpolation": token.truncatedPart };
+                               } else {
+                                   return @{ @"literal": @YES };
+                               }
+                           }];
     [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"call": syntaxTree.children[0] };
                            }];
+
+    // Array literals
+    [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [syntaxTree.children[1] dictionaryBySettingObject:@YES forKey:@"inside-truncated-array-literal"];
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> ']'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression> ',' <comma_delimited_expressions>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children.lastObject;
+                           }];
+
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [syntaxTree.children[0] identifier];
@@ -182,9 +219,9 @@
                                        [syntaxTree.children[0] identifier],
                                        syntaxTree.children[2]];
                            }];
-    [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
+    [_grammarProcessor addProductionRule:@"composed_call ::= <funcname> <composed_arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                               return [weakSelf callWithName:syntaxTree.children[0]
                                                      arglist:syntaxTree.children[1]];
                            }];
     [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
@@ -323,7 +360,8 @@
         return [inner suggestionsForString:expression[@"truncated_interpolation"]];
     } else {
         NSArray<NSString *> *legalPaths = [_pathSource(expression[@"path"]) allObjects];
-        if (valuesMustBeArgs) {
+        const BOOL insideTruncatedArrayLiteral = [expression[@"inside-truncated-array-literal"] boolValue];
+        if (valuesMustBeArgs && !insideTruncatedArrayLiteral) {
             if (nextArgumentName == nil) {
                 legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
                     if ([anObject hasSuffix:@"."]) {

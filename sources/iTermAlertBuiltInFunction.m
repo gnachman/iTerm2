@@ -48,7 +48,7 @@
             [alert addButtonWithTitle:text];
         }
     }
-    completion(@(alert.runModal - NSAlertFirstButtonReturn), nil);
+    completion(@(alert.runModal), nil);
 }
 
 @end

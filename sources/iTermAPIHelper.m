@@ -687,9 +687,15 @@ static iTermAPIHelper *sAPIHelperInstance;
                        explicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
                                     scope:(iTermVariableScope *)scope
                            fullParameters:(out NSDictionary<NSString *, id> **)fullParameters {
+    if ([name hasPrefix:@"iterm2."]) {
+        return nil;
+    }
     for (NSString *signature in self.serverOriginatedRPCSubscriptions) {
         iTermTuple<id, ITMNotificationRequest *> *tuple = self.serverOriginatedRPCSubscriptions[signature];
         ITMNotificationRequest *request = tuple.secondObject;
+        if (![request.rpcRegistrationRequest.name isEqualToString:name]) {
+            continue;
+        }
         if ([request.rpcRegistrationRequest it_satisfiesExplicitParameters:explicitParameters
                                                                      scope:scope
                                                             fullParameters:fullParameters]) {
@@ -763,7 +769,7 @@ static iTermAPIHelper *sAPIHelperInstance;
             return request.rpcRegistrationRequest.it_stringRepresentation;
         }
     }
-    return nil;
+    return [iTermBuiltInFunctions.sharedInstance signatureOfAnyRegisteredFunctionWithName:name];
 }
 
 // Dispatches a well-formed proto buffer or gives an error if not connected.

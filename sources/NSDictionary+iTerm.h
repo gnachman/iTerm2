@@ -63,6 +63,7 @@
 // tuple is iTermTuple<KeyType, ObjectType>. Compiler won't let me write this.
 - (NSDictionary *)mapWithBlock:(iTermTuple * (^)(KeyType key, ObjectType object))block;
 - (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
+- (NSDictionary<KeyType, ObjectType> *)filterWithBlock:(BOOL (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
 - (id)it_jsonSafeValue;

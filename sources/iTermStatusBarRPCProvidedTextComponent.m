@@ -9,7 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
-#import "iTermFunctionCallParser.h"
+#import "iTermExpressionParser.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -455,7 +455,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (void)itermWebViewJavascriptError:(NSString *)errorText {
-    NSString *signature = [iTermFunctionCallParser signatureForTopLevelInvocation:self.invocation];
+    NSError *error = nil;
+    NSString *signature = [iTermExpressionParser signatureForFunctionCallInvocation:self.invocation
+                                                                              error:&error];
+    if (!signature && error) {
+        signature = error.localizedDescription;
+    }
     [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
                                                                           string:errorText];
     [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
@@ -463,7 +468,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
-    NSString *signature = [iTermFunctionCallParser signatureForTopLevelInvocation:self.invocation];
+    NSError *error = nil;
+    NSString *signature = [iTermExpressionParser signatureForFunctionCallInvocation:self.invocation
+                                                                              error:&error];
+    if (!signature && error) {
+        signature = error.localizedDescription;
+    }
     [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
                                                                           string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
 }

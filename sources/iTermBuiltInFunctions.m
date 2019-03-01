@@ -20,6 +20,14 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
             combinedArguments];
 }
 
+NSString *iTermFunctionNameFromSignature(NSString *signature) {
+    NSInteger index = [signature rangeOfString:@"("].location;
+    if (index == NSNotFound || index == 0) {
+        return nil;
+    }
+    return [signature substringWithRange:NSMakeRange(0, index)];
+}
+
 @interface iTermBuiltInFunction()
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters;
 @end
@@ -42,6 +50,11 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
         }];
     }
     return self;
+}
+
+- (NSString *)signature {
+    return iTermFunctionSignatureFromNameAndArguments(_name,
+                                                      [self.argumentsAndTypes.allKeys sortedArrayUsingSelector:@selector(compare:)]);
 }
 
 #pragma mark - File Private
@@ -87,6 +100,7 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 @end
 
 @implementation iTermBuiltInFunctions {
+    // NOTE: The keys include the namespace, but the iTermBuiltInFunction object is ignorant of it.
     NSMutableDictionary<NSString *, iTermBuiltInFunction *> *_functions;
 }
 
@@ -129,6 +143,27 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 - (BOOL)haveFunctionWithName:(NSString *)name arguments:(NSArray<NSString *> *)arguments {
     NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
     return _functions[signature] != nil;
+}
+
+- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name {
+    return [_functions.allKeys objectPassingTest:^BOOL(NSString *signature, NSUInteger index, BOOL *stop) {
+        NSString *signatureName = iTermFunctionNameFromSignature(signature);
+        return [signatureName isEqualToString:name];
+    }];
+}
+
+- (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
+    // Convert _functions: (signature -> bif) to (name -> [arg, arg, ...])
+    NSDictionary *signatureToArgs = [_functions mapValuesWithBlock:^id(NSString *signature, iTermBuiltInFunction *bif) {
+        return bif.argumentsAndTypes.allKeys;
+    }];
+    NSDictionary *nameToArgs = [signatureToArgs mapKeysWithBlock:^id(NSString *signature, id object) {
+        return iTermFunctionNameFromSignature(signature);
+    }];
+    NSDictionary *publicNameToArgs = [nameToArgs filterWithBlock:^BOOL(NSString *name, id object) {
+        return ![name hasPrefix:@"iterm2.private"];
+    }];
+    return publicNameToArgs;
 }
 
 - (void)callFunctionWithName:(NSString *)name

@@ -1,6 +1,8 @@
 """
 The iTerm2 module provides a Python interface for controlling iTerm2.
 """
+from iterm2.alert import Alert
+
 from iterm2.app import async_get_app, CreateWindowException, App, async_invoke_function
 
 from iterm2.arrangement import SavedArrangementException, Arrangement

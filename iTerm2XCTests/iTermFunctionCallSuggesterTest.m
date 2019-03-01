@@ -7,12 +7,12 @@
 
 #import <XCTest/XCTest.h>
 #import "iTermFunctionCallSuggester.h"
-#import "iTermFunctionCallParser.h"
+#import "iTermExpressionParser.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermVariableScope.h"
 
-@interface iTermFunctionCallParser(Testing)
+@interface iTermExpressionParser(Testing)
 - (instancetype)initPrivate;
 @end
 
@@ -21,7 +21,7 @@
 @end
 
 @implementation iTermFunctionCallSuggesterTest {
-    iTermFunctionCallParser *_parser;
+    iTermExpressionParser *_parser;
     iTermFunctionCallSuggester *_suggester;
 }
 
@@ -37,7 +37,7 @@
                                                                 return [NSSet setWithArray:paths];
                                                             }];
 
-    _parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
+    _parser = [[iTermExpressionParser alloc] expressionParser];
 }
 
 - (void)tearDown {

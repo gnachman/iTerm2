@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermExpressionParser.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
@@ -175,7 +176,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 
 - (void)logMessage:(NSString *)message invocation:(NSString *)invocation {
     NSError *invocationError = nil;
-    NSString *signature = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&invocationError];
+    NSString *signature = [iTermExpressionParser signatureForFunctionCallInvocation:invocation error:&invocationError];
     if (signature) {
         [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
                                                                               string:message];

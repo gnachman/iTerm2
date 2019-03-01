@@ -83,7 +83,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)echoProbeDuration;
 + (BOOL)eliminateCloseButtons;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
-+ (BOOL)evaluateSwiftyStrings;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;
 + (NSString *)fallbackLCCType;

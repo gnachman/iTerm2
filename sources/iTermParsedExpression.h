@@ -1,12 +1,13 @@
 //
-//  iTermFunctionCallParser.h
+//  iTermParsedExpression.h
 //  iTerm2SharedARC
 //
-//  Created by George Nachman on 5/20/18.
+//  Created by George Nachman on 3/1/19.
 //
 
 #import <Foundation/Foundation.h>
-#import <CoreParse/CoreParse.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 @class iTermScriptFunctionCall;
 @class iTermVariableScope;
@@ -14,7 +15,7 @@
 typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeNil,
     iTermParsedExpressionTypeArray,
-    iTermParsedExpressionTypeString,
+    iTermParsedExpressionTypeString,  // This only occurs inside interpolated string parts arrays.
     iTermParsedExpressionTypeNumber,
     iTermParsedExpressionTypeFunctionCall,
     iTermParsedExpressionTypeError,
@@ -25,12 +26,12 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 // Only one property will be set.
 @property (nonatomic, readonly) iTermParsedExpressionType expressionType;
 
-@property (nonatomic, strong, readonly) NSArray *array;
+@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *array;
 @property (nonatomic, strong, readonly) NSString *string;
 @property (nonatomic, strong, readonly) NSNumber *number;
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
-@property (nonatomic, strong, readonly) NSArray *interpolatedStringParts;
+@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *interpolatedStringParts;
 
 // This is always equal to the only set property above (or nil if none is set)
 @property (nonatomic, strong, readonly) id object;
@@ -46,26 +47,11 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithOptionalObject:(id)object;
 - (instancetype)initWithNumber:(NSNumber *)number;
 - (instancetype)initWithError:(NSError *)error;
-- (instancetype)initWithInterpolatedStringParts:(NSArray *)parts;
-- (instancetype)initWithArray:(NSArray *)array;
+- (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
+- (instancetype)initWithArray:(NSArray<iTermParsedExpression *> *)array;
 
 @end
 
-@interface iTermFunctionCallParser : NSObject <CPParserDelegate, CPTokeniserDelegate>
 
-+ (CPTokeniser *)newTokenizer;
-+ (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;
-+ (void)setEscapeReplacerInStringRecognizer:(id)stringRecogniser;
-+ (NSString *)signatureForTopLevelInvocation:(NSString *)invocation;
 
-// Use this to get an instance. Only on the main thread.
-+ (instancetype)callParser;
-+ (instancetype)expressionParser;
-
-- (instancetype)init NS_UNAVAILABLE;
-// Start gives root grammar rule name.
-- (id)initWithStart:(NSString *)start NS_DESIGNATED_INITIALIZER;
-
-- (iTermParsedExpression *)parse:(NSString *)invocation scope:(iTermVariableScope *)scope;
-
-@end
+NS_ASSUME_NONNULL_END
