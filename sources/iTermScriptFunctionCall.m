@@ -429,11 +429,13 @@
             completion(nil, nil, missing);
             return;
         }
-        NSString *signature = iTermFunctionSignatureFromNameAndArguments(self.name,
-                                                                         self->_parameters.allKeys);
-        self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithSignature:signature] copy];
+        NSDictionary<NSString *, id> *fullParameters = nil;
+        self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
+                                                                          explicitParameters:self->_parameters
+                                                                                       scope:scope
+                                                                              fullParameters:&fullParameters] copy];
         [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                                   arguments:self->_parameters
+                                                   arguments:fullParameters
                                                   completion:^(id apiResult, NSError *apiError) {
                                                       NSSet<NSString *> *missing = nil;
                                                       if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
