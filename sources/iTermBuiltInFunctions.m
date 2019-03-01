@@ -7,6 +7,7 @@
 
 #import "iTermBuiltInFunctions.h"
 
+#import "iTermAlertBuiltInFunction.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -95,6 +96,11 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 
 - (void)restoreState:(id)savedState {
     _functions = savedState;
+}
+
++ (void)registerStandardFunctions {
+    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
+    [iTermAlertBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {

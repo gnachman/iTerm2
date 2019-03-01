@@ -1149,7 +1149,7 @@ static BOOL hasBecomeActive = NO;
 
     [PTYSession registerBuiltInFunctions];
     [PTYTab registerBuiltInFunctions];
-    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
+    [iTermBuiltInFunctions registerStandardFunctions];
     
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];

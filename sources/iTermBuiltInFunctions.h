@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames);
+
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
 
@@ -38,6 +39,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 @interface iTermBuiltInFunctions : NSObject
 
 + (instancetype)sharedInstance;
++ (void)registerStandardFunctions;
 
 // for tests to temporarily add functions
 - (id)savedState;
@@ -59,8 +61,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 @end
 
-@interface iTermArrayCountBuiltInFunction : NSObject
-+ (void)registerBuiltInFunction;
+@interface iTermArrayCountBuiltInFunction : NSObject<iTermBuiltInFunction>
 @end
 
 NS_ASSUME_NONNULL_END

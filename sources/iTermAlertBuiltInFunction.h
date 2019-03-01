@@ -6,11 +6,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermBuiltInFunctions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermAlertBuiltInFunction : NSObject
-
+@interface iTermAlertBuiltInFunction : NSObject<iTermBuiltInFunction>
 @end
 
 NS_ASSUME_NONNULL_END
