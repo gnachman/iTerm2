@@ -442,7 +442,7 @@ class App:
         else:
             return json.loads(result.variable_response.values[0])
 
-async def async_invoke_function(self, invocation: str, timeout: float=-1):
+async def async_invoke_function(connection, invocation: str, timeout: float=-1):
     """
     Invoke an RPC. Could be a registered function by this or another script of a built-in function.
 
@@ -456,7 +456,7 @@ async def async_invoke_function(self, invocation: str, timeout: float=-1):
     :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
     """
     response = await iterm2.rpc.async_invoke_function(
-            self.connection,
+            connection,
             invocation,
             timeout=timeout)
     which = response.invoke_function_response.WhichOneof('disposition')
