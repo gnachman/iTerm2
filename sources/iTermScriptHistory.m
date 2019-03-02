@@ -7,6 +7,7 @@
 
 #import "iTermScriptHistory.h"
 
+#import "DebugLogging.h"
 #import "iTermAPIServer.h"
 #import "iTermAPIHelper.h"
 #import "iTermWebSocketConnection.h"
@@ -131,7 +132,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 - (void)apiDidStop:(NSNotification *)notification {
     self.terminatedByUser = YES;
     if (self.pid > 0) {
-        killpg(self.pid, 9);
+        [self kill:9];
     }
     [self stopRunning];
 }
@@ -144,11 +145,25 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     [self addOutput:@"\n*Terminate button pressed*\n"];
     self.terminatedByUser = YES;
     if (self.pid > 0) {
-        killpg(self.pid, 1);
+        [self kill:1];
     }
     [self.websocketConnection abortWithCompletion:nil];
 }
 
+- (void)kill:(int)signal {
+    pid_t pid = self.pid;
+    if (pid <= 0) {
+        return;
+    }
+    pid_t pgid = getpgid(self.pid);
+    if (pgid <= 0) {
+        DLog(@"Failed to get the process group id %@", @(errno));
+        kill(pid, signal);
+        return;
+    }
+
+    killpg(pgid, signal);
+}
 - (void)stopRunning {
     _isRunning = NO;
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
