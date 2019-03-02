@@ -30,6 +30,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`theme`
 * :doc:`tmux`
 * :doc:`zoom_on_screen`
+* :doc:`oneshot`
 
 ----
 
