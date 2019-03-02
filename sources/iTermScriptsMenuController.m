@@ -8,6 +8,7 @@
 #import "iTermScriptsMenuController.h"
 
 #import "DebugLogging.h"
+#import "iTermAPIHelper.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuildingScriptWindowController.h"
@@ -401,6 +402,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath explicitUserAction:(BOOL)explicitUserAction {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
+        if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
+            DLog(@"Not launching %@ because the API is not enabled", fullPath);
+            return;
+        }
         NSString *name = fullPath.lastPathComponent;
         NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
         [iTermAPIScriptLauncher launchScript:mainPyPath
@@ -412,6 +417,10 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     if ([[fullPath pathExtension] isEqualToString:@"py"]) {
+        if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
+            DLog(@"Not launching %@ because the API is not enabled", fullPath);
+            return;
+        }
         [iTermAPIScriptLauncher launchScript:fullPath
                           explicitUserAction:explicitUserAction];
         return;
