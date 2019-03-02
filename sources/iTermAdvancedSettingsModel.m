@@ -484,7 +484,6 @@ DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin 
 
 #define SECTION_EXPERIMENTAL @"Experimental Features: "
 
-DEFINE_BOOL(enableAPIServer, NO, SECTION_EXPERIMENTAL @"Enable websocket API server.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(killSessionsOnLogout, NO, SECTION_EXPERIMENTAL @"Kill sessions on logout.\nA possible fix for issue 4147.");
 
 // This causes problems like issue 6052, where repeats cause the IME to swallow subsequent keypresses.

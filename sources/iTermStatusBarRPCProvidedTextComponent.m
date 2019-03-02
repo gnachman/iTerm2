@@ -403,7 +403,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         return;
     }
     iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
-    [menuController launchScriptWithAbsolutePath:fullPath];
+    [menuController launchScriptWithAbsolutePath:fullPath explicitUserAction:YES];
     _dateOfLaunchToFix = [NSDate date];
     _fullPath = [fullPath copy];
 }

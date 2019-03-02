@@ -707,6 +707,10 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(annotationVisibilityDidChange:)
                                                      name:iTermAnnotationVisibilityDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(apiDidStop:)
+                                                     name:iTermAPIHelperDidStopNotification
+                                                   object:nil];
         [self.variablesScope setValue:[self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]
                      forVariableNamed:iTermVariableKeySessionTermID];
 
@@ -4655,6 +4659,14 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *dict = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:profile];
         [_tmuxController setHotkeyForWindowPane:self.tmuxPane to:dict];
     }
+}
+
+- (void)apiDidStop:(NSNotification *)notification {
+    [_promptSubscriptions removeAllObjects];
+    [_keystrokeSubscriptions removeAllObjects];
+    [_keyboardFilterSubscriptions removeAllObjects];
+    [_updateSubscriptions removeAllObjects];
+    [_customEscapeSequenceNotifications removeAllObjects];
 }
 
 - (void)apiServerUnsubscribe:(NSNotification *)notification {

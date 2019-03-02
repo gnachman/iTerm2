@@ -308,9 +308,12 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     if (_state != iTermWebSocketConnectionStateClosed) {
         DLog(@"Aborting connection");
         _state = iTermWebSocketConnectionStateClosed;
-        dispatch_async(self.delegateQueue, ^{
-            [self.delegate webSocketConnectionDidTerminate:self];
-        });
+        dispatch_queue_t queue = self.delegateQueue;
+        if (queue) {
+            dispatch_async(queue, ^{
+                [self.delegate webSocketConnectionDidTerminate:self];
+            });
+        }
         iTermHTTPConnection *connection = _connection;
         [connection threadSafeClose];
     }

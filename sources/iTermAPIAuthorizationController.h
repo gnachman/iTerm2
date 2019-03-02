@@ -33,6 +33,8 @@ typedef NS_ENUM(NSUInteger, iTermAPIAuthorizationSetting) {
 // Full command line or bundle ID of the requester.
 @property (nonatomic, readonly) NSString *fullCommandOrBundleID;
 
++ (void)resetPermissions;
+
 - (instancetype)initWithProcessID:(pid_t)pid NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

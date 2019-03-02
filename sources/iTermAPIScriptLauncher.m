@@ -28,8 +28,9 @@
 
 @implementation iTermAPIScriptLauncher
 
-+ (void)launchScript:(NSString *)filename {
-    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupPyPath:nil];
++ (void)launchScript:(NSString *)filename
+  explicitUserAction:(BOOL)explicitUserAction {
+    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupPyPath:nil explicitUserAction:explicitUserAction];
 }
 
 + (NSString *)pythonVersionForScript:(NSString *)path {
@@ -45,7 +46,8 @@
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
       withVirtualEnv:(NSString *)virtualenv
-         setupPyPath:(NSString *)setupPyPath {
+         setupPyPath:(NSString *)setupPyPath
+  explicitUserAction:(BOOL)explicitUserAction {
     if (virtualenv != nil) {
         iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
         NSString *pythonVersion = parser.pythonVersion;
@@ -54,7 +56,8 @@
         [self reallyLaunchScript:filename
                         fullPath:fullPath
                   withVirtualEnv:virtualenv
-                   pythonVersion:pythonVersion];
+                   pythonVersion:pythonVersion
+              explicitUserAction:explicitUserAction];
         return;
     }
 
@@ -67,7 +70,8 @@
             [self reallyLaunchScript:filename
                             fullPath:fullPath
                       withVirtualEnv:virtualenv
-                       pythonVersion:pythonVersion];
+                       pythonVersion:pythonVersion
+                  explicitUserAction:explicitUserAction];
         }
     }];
 }
@@ -116,9 +120,16 @@
 + (void)reallyLaunchScript:(NSString *)filename
                   fullPath:(NSString *)fullPath
             withVirtualEnv:(NSString *)virtualenv
-             pythonVersion:(NSString *)pythonVersion {
-    if (![iTermAPIHelper sharedInstance]) {
-        return;
+             pythonVersion:(NSString *)pythonVersion
+        explicitUserAction:(BOOL)explicitUserAction {
+    if (explicitUserAction) {
+        if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
+            return;
+        }
+    } else {
+        if (![iTermAPIHelper sharedInstance]) {
+            return;
+        }
     }
 
     NSString *key = [[NSUUID UUID] UUIDString];
@@ -136,7 +147,8 @@
                                           [iTermAPIScriptLauncher reallyLaunchScript:filename
                                                                             fullPath:fullPath
                                                                       withVirtualEnv:virtualenv
-                                                                       pythonVersion:pythonVersion];
+                                                                       pythonVersion:pythonVersion
+                                                                  explicitUserAction:explicitUserAction];
                                       }];
     entry.path = filename;
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];

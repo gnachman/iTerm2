@@ -98,4 +98,9 @@
     return YES;
 }
 
+- (void)close {
+    close(_fd);
+    _fd = -1;
+}
+
 @end

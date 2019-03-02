@@ -82,7 +82,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)dwcLineCache;
 + (double)echoProbeDuration;
 + (BOOL)eliminateCloseButtons;
-+ (BOOL)enableAPIServer;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)evaluateSwiftyStrings;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;

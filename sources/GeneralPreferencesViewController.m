@@ -8,8 +8,11 @@
 
 #import "GeneralPreferencesViewController.h"
 
+#import "iTermAPIAuthorizationController.h"
+#import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermNotificationCenter.h"
 #import "iTermRemotePreferences.h"
 #import "iTermShellHistoryController.h"
 #import "iTermWarning.h"
@@ -64,6 +67,9 @@ enum {
     IBOutlet NSButton *_gpuRendering;
     IBOutlet NSButton *_advancedGPU;
     iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
+
+    IBOutlet NSButton *_enableAPI;
+    IBOutlet NSButton *_resetAPIPermissions;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -214,6 +220,24 @@ enum {
         _gpuRendering.state = NSOffState;
         [self updateAdvancedGPUEnabled];
     }
+
+    info = [self defineControl:_enableAPI
+                           key:kPreferenceKeyEnableAPIServer
+                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        [weakSelf enableAPISettingDidChange];
+    };
+    [iTermPreferenceDidChangeNotification subscribe:self
+                                              block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+                                                  if ([notification.key isEqualToString:kPreferenceKeyEnableAPIServer]) {
+                                                      __typeof(self) strongSelf = weakSelf;
+                                                      if (strongSelf) {
+                                                          strongSelf->_enableAPI.state = NSOnState;
+                                                          [strongSelf updateAPIEnabled];
+                                                      }
+                                                  }
+                                              }];
+    [self updateAPIEnabled];
 
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
     [_advancedGPUWindowController window];
@@ -380,7 +404,35 @@ enum {
     }
 }
 
+- (BOOL)enableAPISettingDidChange {
+    const BOOL enabled = _enableAPI.state == NSOnState;
+    if (enabled) {
+        // Prompt the user. If they agree, or have permanently agreed, set the user default to YES.
+        if ([iTermAPIHelper confirmShouldStartServerAndUpdateUserDefaultsForced:YES]) {
+            [iTermAPIHelper sharedInstance];
+        } else {
+            return NO;
+        }
+    } else {
+        [iTermAPIHelper setEnabled:NO];
+    }
+    [self updateAPIEnabled];
+    if (enabled && ![iTermAPIHelper isEnabled]) {
+        _enableAPI.state = NSOffState;
+        return NO;
+    }
+    return YES;
+}
+
+- (void)updateAPIEnabled {
+    _resetAPIPermissions.enabled = [iTermAPIHelper isEnabled];
+}
+
 #pragma mark - Actions
+
+- (IBAction)resetAPIPermissions:(id)sender {
+    [iTermAPIAuthorizationController resetPermissions];
+}
 
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];

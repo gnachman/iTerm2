@@ -93,4 +93,6 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
 
+- (void)stop;
+
 @end

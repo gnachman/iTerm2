@@ -128,6 +128,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     iTermSocket *_socket;
     NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
+    NSMutableArray<iTermHTTPConnection *> *_pendingConnections;  // _queue
 }
 
 + (instancetype)sharedInstance {
@@ -149,6 +150,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             XLog(@"Failed to create socket");
             return nil;
         }
+        _pendingConnections = [NSMutableArray array];
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         _executionQueue = dispatch_queue_create("com.iterm2.apiexec", DISPATCH_QUEUE_SERIAL);
 
@@ -185,6 +187,27 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     });
 }
 
+- (void)stop {
+    self.delegate = nil;
+    [_socket close];
+    _socket = nil;
+    dispatch_sync(_queue, ^{
+        [self->_pendingConnections enumerateObjectsUsingBlock:^(iTermHTTPConnection * _Nonnull connection, NSUInteger idx, BOOL * _Nonnull stop) {
+            [connection threadSafeClose];
+        }];
+        [self->_pendingConnections removeAllObjects];
+        [self queueStop];
+    });
+}
+
+// _queue
+- (void)queueStop {
+    [_connections enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, iTermWebSocketConnection * _Nonnull conn, BOOL * _Nonnull stop) {
+        [conn abortWithCompletion:^{}];
+    }];
+    [_connections removeAllObjects];
+}
+
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey {
     __block NSString *result = nil;
     dispatch_sync(_queue, ^{
@@ -198,7 +221,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
-
+        [self->_pendingConnections addObject:connection];
         pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
         if (pid == -1) {
             XLog(@"Reject connection from unidentifiable process with address %@", address);
@@ -209,6 +232,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         }
 
         [self startRequestOnConnection:connection pid:pid completion:^(BOOL ok, NSString *reason) {
+            [self->_pendingConnections removeObject:connection];
             if (!ok) {
                 XLog(@"Reject unauthenticated process (pid %d): %@", pid, reason);
                 dispatch_async(connection.queue, ^{

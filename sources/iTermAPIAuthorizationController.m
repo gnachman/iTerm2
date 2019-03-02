@@ -9,6 +9,7 @@
 
 #import "iTermLSOF.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -129,6 +130,18 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 
 @implementation iTermAPIAuthorizationController {
     iTermAPIAuthRequest *_request;
+}
+
++ (void)resetPermissions {
+    if ([iTermWarning showWarningWithTitle:@"This will remove all explicitly allowed and denied programs, and you will be prompted again for each when they attempt to connect in the future."
+                                   actions:@[ @"OK", @"Cancel" ]
+                                 accessory:nil
+                                identifier:@"NoSyncResetAPIPermissions"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Reset API Permissions?"
+                                    window:nil] == kiTermWarningSelection0) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermAPIAuthorizationControllerSavedAccessSettings];
+    }
 }
 
 - (instancetype)initWithProcessID:(pid_t)pid {

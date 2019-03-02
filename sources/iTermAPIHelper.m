@@ -51,13 +51,15 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
 NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPIDidRegisterSessionTitleFunctionNotification";
 NSString *const iTermAPIDidRegisterStatusBarComponentNotification = @"iTermAPIDidRegisterStatusBarComponentNotification";
+NSString *const iTermAPIHelperDidStopNotification = @"iTermAPIHelperDidStopNotification";
+static NSString *const iTermAPIHelperEnablePythonAPIWarningIdentifier = @"NoSyncEnableAPIServer";
 
 const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
 const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 
 NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
 
-static id sAPIHelperInstance;
+static iTermAPIHelper *sAPIHelperInstance;
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -229,7 +231,7 @@ static id sAPIHelperInstance;
     // Saves the last one to avoid sending changed notifications when nothing changed.
     ITMBroadcastDomainsChangedNotification *_lastBroadcastChangeNotification;
 
-    // When adding a new dictionary of subscriptions update removeAllSubscriptionsForConnectionKey:.
+    // When adding a new dictionary of subscriptions update -removeAllSubscriptionsForConnectionKey: and -stop.
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
@@ -252,10 +254,16 @@ static id sAPIHelperInstance;
 }
 
 + (instancetype)sharedInstance {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sAPIHelperInstance = [[self alloc] initPrivate];
-    });
+    if (!sAPIHelperInstance) {
+        sAPIHelperInstance = [[self alloc] initWithExplicitUserAction:NO];
+    }
+    return sAPIHelperInstance;
+}
+
++ (instancetype)sharedInstanceFromExplicitUserAction {
+    if (!sAPIHelperInstance) {
+        sAPIHelperInstance = [[self alloc] initWithExplicitUserAction:YES];
+    }
     return sAPIHelperInstance;
 }
 
@@ -291,18 +299,32 @@ static id sAPIHelperInstance;
     return [sAPIHelperInstance statusBarComponentProviderRegistrationRequests] ?: @[];
 }
 
-- (instancetype)initPrivate {
++ (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced {
+    // It was not enabled in preferences. Ask the user. If they permanently silence this
+    // they'll need to go into prefs to enable it.
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = @"Enable Python API?";
+    warning.actionLabels = @[ @"OK", @"Cancel" ];
+    warning.identifier = iTermAPIHelperEnablePythonAPIWarningIdentifier;
+    warning.warningType = forced ? kiTermWarningTypePersistent : kiTermWarningTypePermanentlySilenceable;
+    warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
+    if ([warning runModal] == kiTermWarningSelection1) {
+        [iTermPreferences setBool:NO forKey:kPreferenceKeyEnableAPIServer];
+        return NO;
+    } else {
+        [iTermPreferences setBool:YES forKey:kPreferenceKeyEnableAPIServer];
+    }
+    return YES;
+}
+
+- (instancetype)initWithExplicitUserAction:(BOOL)force {
     self = [super init];
     if (self) {
         if (![NSApp isRunningUnitTests]) {
-            iTermWarning *warning = [[iTermWarning alloc] init];
-            warning.heading = @"Enable Python API?";
-            warning.actionLabels = @[ @"OK", @"Cancel" ];
-            warning.identifier = @"EnableAPIServer";
-            warning.warningType = kiTermWarningTypePermanentlySilenceable;
-            warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
-            if ([warning runModal] == kiTermWarningSelection1) {
-                return nil;
+            if (![iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer]) {
+                if (![iTermAPIHelper confirmShouldStartServerAndUpdateUserDefaultsForced:force]) {
+                    return nil;
+                }
             }
             _apiServer = [[iTermAPIServer alloc] init];
             _apiServer.delegate = self;
@@ -378,6 +400,47 @@ static id sAPIHelperInstance;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
++ (void)setEnabled:(BOOL)enabled {
+    [iTermWarning unsilenceIdentifier:iTermAPIHelperEnablePythonAPIWarningIdentifier
+                    ifSelectionEquals:kiTermWarningSelection0];
+    [iTermWarning unsilenceIdentifier:iTermAPIHelperEnablePythonAPIWarningIdentifier
+                    ifSelectionEquals:kiTermWarningSelection1];
+    if (enabled) {
+        [iTermPreferences setBool:YES forKey:kPreferenceKeyEnableAPIServer];
+        [self sharedInstance];
+    } else {
+        [iTermPreferences setBool:NO forKey:kPreferenceKeyEnableAPIServer];
+        [sAPIHelperInstance stop];
+        sAPIHelperInstance = nil;
+    }
+}
+
++ (BOOL)isEnabled {
+    return [iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer];
+}
+
+- (void)stop {
+    [_apiServer stop];
+    _apiServer.delegate = nil;
+    _apiServer = nil;
+    [_newSessionSubscriptions removeAllObjects];
+    [_terminateSessionSubscriptions removeAllObjects];
+    [_layoutChangeSubscriptions removeAllObjects];
+    [_focusChangeSubscriptions removeAllObjects];
+    [_broadcastDomainChangeSubscriptions removeAllObjects];
+    [_profileChangeSubscriptions removeAllObjects];
+    [_appVariableSubscriptions removeAllObjects];
+    [_tabVariableSubscriptions removeAllObjects];
+    [_windowVariableSubscriptions removeAllObjects];
+    [_sessionVariableSubscriptions removeAllObjects];
+    [_allSessionVariableSubscriptions removeAllObjects];
+    [_internalServerOriginatedRPCSubscriptions removeAllObjects];
+    [_allSessionsSubscriptions removeAllObjects];
+    [_serverOriginatedRPCCompletionBlocks removeAllObjects];
+    [_outstandingRPCs removeAllObjects];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIHelperDidStopNotification object:nil];
 }
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {

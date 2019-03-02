@@ -61,6 +61,7 @@ NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
 NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughput";
+NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
 
 NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
@@ -250,6 +251,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
                   kPreferenceKeyMetalMaximizeThroughput: @YES,
+                  kPreferenceKeyEnableAPIServer: @NO,
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

@@ -19,5 +19,6 @@
 - (void)setReuseAddr:(BOOL)reuse;
 - (BOOL)bindToAddress:(iTermSocketAddress *)address;
 - (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *))acceptBlock;
+- (void)close;
 
 @end
