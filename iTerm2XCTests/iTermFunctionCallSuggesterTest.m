@@ -37,7 +37,7 @@
                                                                 return [NSSet setWithArray:paths];
                                                             }];
 
-    _parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
+    _parser = [[iTermFunctionCallParser alloc] expressionParser];
 }
 
 - (void)tearDown {

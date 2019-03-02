@@ -18,6 +18,7 @@ extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
+@class iTermParsedExpression;
 @class iTermScriptHistoryEntry;
 @class iTermVariableScope;
 
@@ -65,9 +66,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
 - (NSString *)connectionKeyForRPCWithName:(NSString *)name
-                       explicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
+        explicitParametersWithExpressions:(NSDictionary<NSString *, iTermParsedExpression *> *)explicitParameters
                                     scope:(iTermVariableScope *)scope
-                           fullParameters:(out NSDictionary<NSString *, id> **)fullParameters;
+                           fullParameters:(out NSDictionary<NSString *, iTermParsedExpression *> **)fullParameters;
 
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
                                              format:(NSString *)format, ...;

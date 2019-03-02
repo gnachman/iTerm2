@@ -20,16 +20,16 @@
 
 @implementation iTermExpressionEvaluator {
     id _value;
-    id _object;
+    iTermParsedExpression *_parsedExpression;
     iTermVariableScope *_scope;
     NSMutableArray<iTermExpressionEvaluator *> *_innerEvaluators;
 }
 
-- (instancetype)initWithObject:(id)object
-                         scope:(iTermVariableScope *)scope {
+- (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
+                                   scope:(iTermVariableScope *)scope {
     self = [super init];
     if (self) {
-        _object = object;
+        _parsedExpression = parsedExpression;
         _scope = scope;
         _innerEvaluators = [NSMutableArray array];
     }
@@ -40,15 +40,23 @@
                                    scope:(iTermVariableScope *)scope {
     iTermParsedExpression *parsedExpression =
     [[iTermFunctionCallParser expressionParser] parse:expressionString
-                                                scope:self->_scope];
-    return [self initWithObject:parsedExpression scope:scope];
+                                                scope:scope];
+    return [self initWithParsedExpression:parsedExpression
+                                    scope:scope];
+}
+
+- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString scope:(iTermVariableScope *)scope {
+    iTermParsedExpression *parsedExpression = [iTermFunctionCallParser parsedExpressionWithInterpolatedString:interpolatedString
+                                                                                                        scope:scope];
+    return [self initWithParsedExpression:parsedExpression
+                                    scope:scope];
 }
 
 - (id)value {
     if (!_value) {
-        [self evaluateObject:_object
-                  withTimeout:0
-                  completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+        [self evaluateParsedExpression:_parsedExpression
+                           withTimeout:0
+                            completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
             self->_value = result;
             self->_error = error;
             self->_missingValues = missing;
@@ -59,63 +67,18 @@
 
 - (void)evaluateWithTimeout:(NSTimeInterval)timeout
                  completion:(void (^)(iTermExpressionEvaluator *))completion {
-    [self evaluateObject:_object
-             withTimeout:timeout
-              completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
-                  if (error) {
-                      self->_value = nil;
-                  } else {
-                      self->_value = result ?: [NSNull null];
-                  }
-                  self->_error = error;
-                  self->_missingValues = missing;
-                  completion(self);
-              }];
-}
-
-- (void)evaluateObject:(id)object
-           withTimeout:(NSTimeInterval)timeout
-            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    if (!object) {
-        completion([NSNull null], nil, nil);
-        return;
-    }
-
-    iTermParsedExpression *parsedExpression = [iTermParsedExpression castFrom:object];
-    if (parsedExpression) {
-        [self evaluateParsedExpression:parsedExpression
-                           withTimeout:timeout
-                            completion:completion];
-        return;
-    }
-
-    NSArray *array = [NSArray castFrom:object];
-    if (array) {
-        [self evaluateArray:array
-                withTimeout:timeout
-                 completion:completion];
-        return;
-    }
-
-    if ([object isKindOfClass:[NSString class]]) {
-        [self evaluateSwiftyString:object
+    [self evaluateParsedExpression:_parsedExpression
                        withTimeout:timeout
-                        completion:completion];
-        return;
-    }
-
-    NSArray<Class> *classes = @[ [NSNumber class], [NSNull class] ];
-    for (Class theClass in classes) {
-        if ([object isKindOfClass:theClass]) {
-            completion(object, nil, nil);
-            return;
-        }
-    }
-
-    NSError *error = [NSError errorWithDomain:@"com.iterm2.expression-evaluator"
-                                         code:1
-                                     userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Unrecognized type %@", [object class]]}];
-    completion(nil, error, nil);
+                        completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+                            if (error) {
+                                self->_value = nil;
+                            } else {
+                                self->_value = result ?: [NSNull null];
+                            }
+                            self->_error = error;
+                            self->_missingValues = missing;
+                            completion(self);
+                        }];
 }
 
 - (void)evaluateSwiftyString:(NSString *)string
@@ -135,7 +98,8 @@
             iTermParsedExpression *parsedExpression =
             [[iTermFunctionCallParser expressionParser] parse:substring
                                                         scope:self->_scope];
-            iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithObject:parsedExpression scope:self->_scope];
+            iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                            scope:self->_scope];
             [self->_innerEvaluators addObject:innerEvaluator];
             [innerEvaluator evaluateWithTimeout:timeout completion:^(iTermExpressionEvaluator *evaluator) {
                 [missingFunctionSignatures unionSet:evaluator.missingValues];

@@ -27,20 +27,21 @@
 
 @implementation iTermScriptFunctionCall {
     NSError *_depError;
-    NSMutableDictionary<NSString *, id> *_parameters;
+    // Maps an argument name to a parsed expression for its value.
+    NSMutableDictionary<NSString *, iTermParsedExpression *> *_argToExpression;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _parameters = [NSMutableDictionary dictionary];
+        _argToExpression = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
 - (NSString *)description {
-    NSString *params = [[_parameters.allKeys mapWithBlock:^id(NSString *name) {
-        return [NSString stringWithFormat:@"%@: %@", name, self->_parameters[name]];
+    NSString *params = [[_argToExpression.allKeys mapWithBlock:^id(NSString *name) {
+        return [NSString stringWithFormat:@"%@: %@", name, self->_argToExpression[name]];
     }] componentsJoinedByString:@", "];
     NSString *value = [NSString stringWithFormat:@"%@(%@)", self.name, params];
     return [NSString stringWithFormat:@"<Func %@>", value];
@@ -48,7 +49,7 @@
 
 - (NSString *)signature {
     return iTermFunctionSignatureFromNameAndArguments(self.name,
-                                                      _parameters.allKeys);
+                                                      _argToExpression.allKeys);
 }
 
 - (BOOL)isEqual:(id)object {
@@ -57,7 +58,7 @@
         return NO;
     }
     return ([NSObject object:_depError isEqualToObject:other->_depError] &&
-            [NSObject object:_parameters isEqualToObject:other->_parameters]);
+            [NSObject object:_argToExpression isEqualToObject:other->_argToExpression]);
 }
 
 #pragma mark - APIs
@@ -78,7 +79,8 @@
             completion:(void (^)(NSString *result,
                                  NSError *error,
                                  NSSet<NSString *> *missingFunctionSignatures))completion {
-    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithObject:string scope:scope];
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:string
+                                                                                                 scope:scope];
     [evaluator evaluateWithTimeout:timeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         completion(evaluator.value, evaluator.error, evaluator.missingValues);
     }];
@@ -220,8 +222,8 @@
     }];
 }
 
-- (void)addParameterWithName:(NSString *)name value:(id)value {
-    _parameters[name] = value;
+- (void)addParameterWithName:(NSString *)name parsedExpression:(iTermParsedExpression *)expression {
+    _argToExpression[name] = expression;
 }
 
 - (void)callWithScope:(iTermVariableScope *)scope
@@ -256,13 +258,13 @@
             completion(nil, nil, missing);
             return;
         }
-        NSDictionary<NSString *, id> *fullParameters = nil;
+        NSDictionary<NSString *, iTermParsedExpression *> *fullParameters = nil;
         self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
-                                                                          explicitParameters:self->_parameters
+                                                           explicitParametersWithExpressions:self->_argToExpression
                                                                                        scope:scope
                                                                               fullParameters:&fullParameters] copy];
         [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                                   arguments:fullParameters ?: self->_parameters  // Parameters are needed for error reporting
+                                                   arguments:[self valueDictionaryFromArgToExpressionDictionary:fullParameters ?: self->_argToExpression]  // Parameters are needed for error reporting
                                                   completion:^(id apiResult, NSError *apiError) {
                                                       NSSet<NSString *> *missing = nil;
                                                       if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
@@ -282,14 +284,14 @@
 
 - (BOOL)isBuiltinFunction {
     return [[iTermBuiltInFunctions sharedInstance] haveFunctionWithName:_name
-                                                              arguments:_parameters.allKeys];
+                                                              arguments:_argToExpression.allKeys];
 }
 
 - (void)callBuiltinFunctionWithScope:(iTermVariableScope *)scope
                            completion:(void (^)(id, NSError *))completion {
     iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
     [bif callFunctionWithName:_name
-                   parameters:_parameters
+                   parameters:[self valueDictionaryFromArgToExpressionDictionary:_argToExpression]
                         scope:scope
                    completion:completion];
 }
@@ -298,17 +300,17 @@
                         synchronous:(BOOL)synchronous
                             missing:(NSMutableSet<NSString *> *)missing
                               group:(dispatch_group_t)group {
-    [_parameters enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+    [_argToExpression enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermParsedExpression *_Nonnull parsedExpression, BOOL * _Nonnull stop) {
         if (self->_depError) {
             *stop = YES;
             return;
         }
         dispatch_group_enter(group);
-        iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithObject:obj scope:scope];
+        iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                   scope:scope];
         [evaluator evaluateWithTimeout:synchronous ? 0 : INFINITY completion:^(iTermExpressionEvaluator *evaluator){
             if (evaluator.error) {
-                iTermParsedExpression *expr = [iTermParsedExpression castFrom:obj];
-                if (expr.functionCall) {
+                if (parsedExpression.functionCall) {
                     self->_depError = [self errorForDependentCall:expr.functionCall
                                               thatFailedWithError:evaluator.error
                                                     connectionKey:self->_connectionKey];
@@ -316,7 +318,8 @@
                     self->_depError = evaluator.error;
                 }
             } else {
-                self->_parameters[key] = evaluator.value;
+#warning TODO: Save the evaluator instead of relying on a retain loop to keep it. Have another dictionary for values.
+                self->_evaluatedParameters[key] = evaluator.value;
             }
             [missing unionSet:evaluator.missingValues];
             dispatch_group_leave(group);

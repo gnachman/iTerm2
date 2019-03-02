@@ -70,8 +70,8 @@
 + (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
                                            error:(out NSError **)error;
 
-// Evaluate a string with embedded function calls like a swifty string with \(expression)s in it.
-// If you need a string that changes dynamically as its dependencies (i.e., variables) change,
+// Evaluate an interpolated string one time.
+// If you nee d a string that changes dynamically as its dependencies (i.e., variables) change,
 // use iTermSwiftyString instead.
 + (void)evaluateString:(NSString *)string
                timeout:(NSTimeInterval)timeout

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermParsedExpression;
 @class iTermVariableScope;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -18,20 +19,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSError *error;
 @property (nonatomic, readonly) NSSet<NSString *> *missingValues;
 
-// If object is an iTermParsedExpression, it is evaluated as you'd expect.
-// Strings are evaluated as swifty strings.
-// NSNumber comes back as NSNumber.
-// nil comes back as NSNull
-// Arrays get each of their elements evaluated.
-//
-// Note what this does NOT do is evaluate strings *containing* expressions!
-// A string "foo(x: y)" gets evaluated as a swifty string.
-- (instancetype)initWithObject:(id)object
-                         scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
+                                   scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 
-// This takes an expression as input, for example "foo(x:y)".
+// This takes an expression as input, for example:
+// foo(x:y)
+// "foo \(bar()) baz"
 - (instancetype)initWithExpressionString:(NSString *)expressionString
                                    scope:(iTermVariableScope *)scope;
+
+- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
+                                     scope:(iTermVariableScope *)scope;
 
 - (instancetype)init NS_UNAVAILABLE;
 
