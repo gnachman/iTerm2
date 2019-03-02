@@ -66,9 +66,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
 - (NSString *)connectionKeyForRPCWithName:(NSString *)name
-        explicitParametersWithExpressions:(NSDictionary<NSString *, iTermParsedExpression *> *)explicitParameters
+                       explicitParameters:(NSDictionary<NSString *, id> *)explicitParameters
                                     scope:(iTermVariableScope *)scope
-                           fullParameters:(out NSDictionary<NSString *, iTermParsedExpression *> **)fullParameters;
+                           fullParameters:(out NSDictionary<NSString *, id> **)fullParameters;
 
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
                                              format:(NSString *)format, ...;

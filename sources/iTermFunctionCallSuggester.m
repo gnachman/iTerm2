@@ -7,7 +7,7 @@
 
 #import "iTermFunctionCallSuggester.h"
 
-#import "iTermFunctionCallParser.h"
+#import "iTermFunctionCallParser+Private.h"
 #import "iTermGrammarProcessor.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
@@ -95,6 +95,11 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [weakSelf callWithName:[syntaxTree.children[0] identifier]
                                                      arglist:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' '.' 'Identifier' <arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:[NSString stringWithFormat:@"%@.%@", [syntaxTree.children[0] identifier], [syntaxTree.children[2] identifier]]
+                                                     arglist:syntaxTree.children[3]];
                            }];
     [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

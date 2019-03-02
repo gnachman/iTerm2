@@ -28,5 +28,7 @@
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
                                                             scope:(iTermVariableScope *)scope;
 
++ (NSString *)signatureForTopLevelInvocation:(NSString *)invocation;
+
 @end
 

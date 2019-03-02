@@ -6,23 +6,18 @@
 //
 
 #import "iTermFunctionCallParser.h"
+#import "iTermFunctionCallParser+Private.h"
 
 #import "iTermGrammarProcessor.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermScriptFunctionCall.h"
-#import "iTermScriptFunctionCallParser.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
-
-@interface iTermFunctionArgument : NSObject
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong) iTermParsedExpression *expression;
-@end
 
 @implementation iTermFunctionArgument
 @end
@@ -162,23 +157,24 @@
     [_tokenizer addTokenRecogniser:left];
 }
 
-// Returns a parsed expression with a function call or an NSError.
-- (id)parsedExpressionForFunctionCallWithName:(NSString *)name
-                                      arglist:(NSArray<iTermFunctionArgument *> *)argsArray {
+- (iTermParsedExpression *)parsedExpressionForFunctionCallWithName:(NSString *)name
+                                                           arglist:(NSArray<iTermFunctionArgument *> *)argsArray
+                                                             error:(out NSError **)error {
     iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
     call.name = name;
     for (iTermFunctionArgument *arg in argsArray) {
         if (arg.expression.expressionType == iTermParsedExpressionTypeError) {
-            return arg.expression.error;
+            if (error) {
+                *error = arg.expression.error;
+            }
+            return nil;
         }
-        assert(arg.expression.optional || arg.expression.object);
-        if (arg.expression.expressionType == iTermParsedExpressionTypeInterpolatedString) {
-            [call addParameterWithName:arg.name
-                                 value:arg.expression];
-        } else {
-            [call addParameterWithName:arg.name
-                                 value:arg.expression.object ?: [NSNull null]];
-        }
+        [call addParameterWithName:arg.name
+                  parsedExpression:arg.expression];
+    }
+
+    if (error) {
+        *error = nil;
     }
     return [[iTermParsedExpression alloc] initWithFunctionCall:call];
 }
@@ -199,19 +195,19 @@
         return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:errorReason];
     }
 
-    // The fallbackError is used only value is not legit.
+    // The fallbackError is used only when value is not legit.
     NSString *fallbackError;
     if (optional) {
+        return [[iTermParsedExpression alloc] initWithOptionalObject:value];
+    } else {
         fallbackError = [NSString stringWithFormat:@"Reference to undefined variable “%@”. Use ? to convert undefined values to null.", path];
         return [[iTermParsedExpression alloc] initWithObject:value
                                                  errorReason:fallbackError];
-    } else {
-        return [[iTermParsedExpression alloc] initWithOptionalObject:value];
     }
 }
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)interpolatedParts {
-    NSArray *coalesced =
+    NSArray<iTermParsedExpression *> *coalesced =
     [interpolatedParts reduceWithFirstValue:@[]
                                       block:
      ^id(NSArray<iTermParsedExpression *> *arraySoFar, iTermParsedExpression *expression) {
@@ -225,11 +221,11 @@
          }
          return [arraySoFar arrayByAddingObject:expression];
      }];
-    if (coalesced.count != 1) {
-        return [[iTermParsedExpression alloc] initWithInterpolatedStringParts:coalesced];
-    } else {
-        return coalesced[0];
-    }
+    return [[iTermParsedExpression alloc] initWithInterpolatedStringParts:coalesced];
+}
+
+- (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty {
+    return [self.class parsedExpressionWithInterpolatedString:swifty scope:_scope];
 }
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
@@ -292,8 +288,14 @@
     __weak __typeof(self) weakSelf = self;
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf parsedExpressionForFunctionCallWithName:(NSString *)syntaxTree.children[0]
-                                                                                arglist:syntaxTree.children[1]];
+                               NSError *error = nil;
+                               iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithName:(NSString *)syntaxTree.children[0]
+                                                                                                         arglist:syntaxTree.children[1]
+                                                                                                           error:&error];
+                               if (error) {
+                                   return [[iTermParsedExpression alloc] initWithError:error];
+                               }
+                               return result;
                            }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -392,12 +394,7 @@
     _scope = scope;
     CPTokenStream *tokenStream = [_tokenizer tokenise:invocation];
 
-    id result = [_parser parse:tokenStream];
-    if ([result isKindOfClass:[NSError class]]) {
-        return [[iTermParsedExpression alloc] initWithError:result];
-    }
-
-    iTermParsedExpression *expression = [iTermParsedExpression castFrom:result];
+    iTermParsedExpression *expression = [_parser parse:tokenStream];
     if (expression) {
         return expression;
     }
@@ -405,6 +402,7 @@
     if (_error) {
         return [[iTermParsedExpression alloc] initWithError:_error];
     }
+
     NSError *error = [NSError errorWithDomain:@"com.iterm2.parser"
                                          code:2
                                      userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];

@@ -23,12 +23,15 @@
     iTermParsedExpression *_parsedExpression;
     iTermVariableScope *_scope;
     NSMutableArray<iTermExpressionEvaluator *> *_innerEvaluators;
+    NSString *_invocation;
 }
 
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
+                              invocation:(NSString *)invocation
                                    scope:(iTermVariableScope *)scope {
     self = [super init];
     if (self) {
+        _invocation = [invocation copy];
         _parsedExpression = parsedExpression;
         _scope = scope;
         _innerEvaluators = [NSMutableArray array];
@@ -42,6 +45,7 @@
     [[iTermFunctionCallParser expressionParser] parse:expressionString
                                                 scope:scope];
     return [self initWithParsedExpression:parsedExpression
+                               invocation:expressionString
                                     scope:scope];
 }
 
@@ -49,12 +53,14 @@
     iTermParsedExpression *parsedExpression = [iTermFunctionCallParser parsedExpressionWithInterpolatedString:interpolatedString
                                                                                                         scope:scope];
     return [self initWithParsedExpression:parsedExpression
+                               invocation:interpolatedString
                                     scope:scope];
 }
 
 - (id)value {
     if (!_value) {
         [self evaluateParsedExpression:_parsedExpression
+                            invocation:_invocation
                            withTimeout:0
                             completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
             self->_value = result;
@@ -68,6 +74,7 @@
 - (void)evaluateWithTimeout:(NSTimeInterval)timeout
                  completion:(void (^)(iTermExpressionEvaluator *))completion {
     [self evaluateParsedExpression:_parsedExpression
+                        invocation:_invocation
                        withTimeout:timeout
                         completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
                             if (error) {
@@ -99,6 +106,7 @@
             [[iTermFunctionCallParser expressionParser] parse:substring
                                                         scope:self->_scope];
             iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                       invocation:string
                                                                                                             scope:self->_scope];
             [self->_innerEvaluators addObject:innerEvaluator];
             [innerEvaluator evaluateWithTimeout:timeout completion:^(iTermExpressionEvaluator *evaluator) {
@@ -126,11 +134,13 @@
 }
 
 - (void)evaluateParsedExpression:(iTermParsedExpression *)parsedExpression
+                      invocation:(NSString *)invocation
                      withTimeout:(NSTimeInterval)timeout
                       completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     switch (parsedExpression.expressionType) {
         case iTermParsedExpressionTypeFunctionCall: {
             [self performFunctionCall:parsedExpression.functionCall
+                           invocation:invocation
                           withTimeout:timeout
                            completion:completion];
             return;
@@ -138,6 +148,7 @@
 
         case iTermParsedExpressionTypeInterpolatedString: {
             [self evaluateInterpolatedStringParts:parsedExpression.interpolatedStringParts
+                                       invocation:invocation
                                       withTimeout:timeout
                                        completion:completion];
             return;
@@ -145,6 +156,7 @@
 
         case iTermParsedExpressionTypeArray: {
             [self evaluateArray:parsedExpression.array
+                     invocation:invocation
                     withTimeout:timeout
                      completion:completion];
             return;
@@ -171,16 +183,18 @@
 }
 
 - (void)performFunctionCall:(iTermScriptFunctionCall *)functionCall
+                 invocation:(NSString *)invocation
                 withTimeout:(NSTimeInterval)timeInterval
                  completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     [iTermScriptFunctionCall performFunctionCall:functionCall
-                                  fromInvocation:[_object description]
+                                  fromInvocation:invocation
                                            scope:_scope
                                          timeout:timeInterval
                                       completion:completion];
 }
 
-- (void)evaluateInterpolatedStringParts:(NSArray *)interpolatedStringParts
+- (void)evaluateInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)interpolatedStringParts
+                             invocation:(NSString *)invocation
                             withTimeout:(NSTimeInterval)timeout
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     dispatch_group_t group = NULL;
@@ -190,18 +204,22 @@
     if (timeout > 0) {
         group = dispatch_group_create();
     }
-    [interpolatedStringParts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [interpolatedStringParts enumerateObjectsUsingBlock:^(iTermParsedExpression *_Nonnull parsedExpression,
+                                                          NSUInteger idx,
+                                                          BOOL * _Nonnull stop) {
         [parts addObject:@""];
-        iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithObject:obj scope:self->_scope];
+        iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                   invocation:invocation
+                                                                                                        scope:self->_scope];
         [self->_innerEvaluators addObject:innerEvaluator];
         if (group) {
             dispatch_group_enter(group);
         }
-        [innerEvaluator evaluateWithTimeout:timeout completion:^(iTermExpressionEvaluator *evaluator){
+        [innerEvaluator evaluateWithTimeout:timeout completion:^(iTermExpressionEvaluator *evaluator) {
             [missingFunctionSignatures unionSet:evaluator.missingValues];
             if (evaluator.error) {
                 firstError = evaluator.error;
-                [self logError:evaluator.error object:obj];
+                [self logError:evaluator.error invocation:invocation];
             } else {
                 parts[idx] = [self stringFromJSONObject:evaluator.value];
             }
@@ -224,6 +242,7 @@
 }
 
 - (void)evaluateArray:(NSArray *)array
+           invocation:(NSString *)invocation
           withTimeout:(NSTimeInterval)timeInterval
            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     __block NSError *errorOut = nil;
@@ -233,8 +252,12 @@
     if (timeInterval > 0) {
         group = dispatch_group_create();
     }
-    [array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithObject:obj scope:self->_scope];
+    [array enumerateObjectsUsingBlock:^(iTermParsedExpression *_Nonnull parsedExpression,
+                                        NSUInteger idx,
+                                        BOOL * _Nonnull stop) {
+        iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                   invocation:invocation
+                                                                                                        scope:self->_scope];
         [self->_innerEvaluators addObject:innerEvaluator];
         dispatch_group_enter(group);
         __block BOOL alreadyRun = NO;
@@ -284,10 +307,10 @@
     return [NSJSONSerialization it_jsonStringForObject:jsonObject];
 }
 
-- (void)logError:(NSError *)error object:(id)obj {
+- (void)logError:(NSError *)error invocation:(NSString *)invocation {
     NSString *message =
     [NSString stringWithFormat:@"Error evaluating expression %@: %@",
-     obj, error.localizedDescription];
+     invocation, error.localizedDescription];
     [[iTermScriptHistoryEntry globalEntry] addOutput:message];
 }
 

@@ -9,7 +9,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermFunctionArgument (Private)
+@interface iTermFunctionArgument : NSObject
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, strong) iTermParsedExpression *expression;
+@end
+
+@interface iTermFunctionCallParser (Private)
 
 + (CPTokeniser *)newTokenizer;
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;

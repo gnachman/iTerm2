@@ -26,12 +26,12 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 // Only one property will be set.
 @property (nonatomic, readonly) iTermParsedExpressionType expressionType;
 
-@property (nonatomic, strong, readonly) NSArray *array;
+@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *array;
 @property (nonatomic, strong, readonly) NSString *string;
 @property (nonatomic, strong, readonly) NSNumber *number;
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
-@property (nonatomic, strong, readonly) NSArray *interpolatedStringParts;
+@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *interpolatedStringParts;
 
 // This is always equal to the only set property above (or nil if none is set)
 @property (nonatomic, strong, readonly) id object;
@@ -47,8 +47,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithOptionalObject:(id)object;
 - (instancetype)initWithNumber:(NSNumber *)number;
 - (instancetype)initWithError:(NSError *)error;
-- (instancetype)initWithInterpolatedStringParts:(NSArray *)parts;
-- (instancetype)initWithArray:(NSArray *)array;
+- (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
+- (instancetype)initWithArray:(NSArray<iTermParsedExpression *> *)array;
 
 @end
 

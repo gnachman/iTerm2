@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSSet<NSString *> *missingValues;
 
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
+                              invocation:(NSString *)invocation
                                    scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 
 // This takes an expression as input, for example:

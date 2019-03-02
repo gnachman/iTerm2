@@ -26,15 +26,16 @@
 #import <CoreParse/CoreParse.h>
 
 @implementation iTermScriptFunctionCall {
-    NSError *_depError;
     // Maps an argument name to a parsed expression for its value.
     NSMutableDictionary<NSString *, iTermParsedExpression *> *_argToExpression;
+    NSMutableArray<iTermExpressionEvaluator *> *_evaluators;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _argToExpression = [NSMutableDictionary dictionary];
+        _evaluators = [NSMutableArray array];
     }
     return self;
 }
@@ -57,7 +58,7 @@
     if (!other) {
         return NO;
     }
-    return ([NSObject object:_depError isEqualToObject:other->_depError] &&
+    return ([NSObject object:self.name isEqualToObject:other.name] &&
             [NSObject object:_argToExpression isEqualToObject:other->_argToExpression]);
 }
 
@@ -208,18 +209,22 @@
             completion(nil, error, nil);
         }];
     }
-    [functionCall callWithScope:scope synchronous:(timeout == 0) completion:^(id output, NSError *error, NSSet<NSString *> *missing) {
-        if (timeout > 0) {
-            // Not synchronous
-            if (timer == nil) {
-                // Already timed out
-                return;
-            }
-            [timer invalidate];
-            timer = nil;
-        }
-        completion(output, error, missing);
-    }];
+    [functionCall callWithScope:scope
+                     invocation:invocation
+                    synchronous:(timeout == 0)
+                     completion:
+     ^(id output, NSError *error, NSSet<NSString *> *missing) {
+         if (timeout > 0) {
+             // Not synchronous
+             if (timer == nil) {
+                 // Already timed out
+                 return;
+             }
+             [timer invalidate];
+             timer = nil;
+         }
+         completion(output, error, missing);
+     }];
 }
 
 - (void)addParameterWithName:(NSString *)name parsedExpression:(iTermParsedExpression *)expression {
@@ -227,59 +232,79 @@
 }
 
 - (void)callWithScope:(iTermVariableScope *)scope
+           invocation:(NSString *)invocation
           synchronous:(BOOL)synchronous
            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    if (_depError) {
-        completion(nil, self->_depError, nil);
+    static NSMutableArray<iTermScriptFunctionCall *> *outstandingCalls;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        outstandingCalls = [NSMutableArray array];
+    });
+    [outstandingCalls addObject:self];
+
+    __weak __typeof(self) weakSelf = self;
+
+    [self evaluateParametersWithScope:scope
+                           invocation:invocation
+                          synchronous:synchronous
+                           completion:^(NSDictionary<NSString *, id> *parameterValues,
+                                        NSError *depError,
+                                        NSSet<NSString *> *missing) {
+                               __strong __typeof(self) strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return;
+                               }
+                               [weakSelf didEvaluateParametersWithScope:scope
+                                                            synchronous:synchronous
+                                                        parameterValues:parameterValues
+                                                               depError:depError
+                                                                missing:missing
+                                                             completion:completion];
+                               [outstandingCalls removeObject:strongSelf];
+                           }];
+}
+
+- (void)didEvaluateParametersWithScope:(iTermVariableScope *)scope
+                           synchronous:(BOOL)synchronous
+                       parameterValues:(NSDictionary<NSString *, id> *)parameterValues
+                              depError:(NSError *)depError
+                               missing:(NSSet<NSString *> *)missing
+                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    if (depError) {
+        completion(nil, depError, missing);
+        return;
+    }
+    if (self.isBuiltinFunction) {
+        [self callBuiltinFunctionWithScope:scope
+                           parameterValues:parameterValues
+                                completion:^(id object, NSError *error) {
+            completion(object, error, nil);
+        }];
+        return;
+    }
+    if (synchronous) {
+        // This is useful because it causes the scope to be called for all depended-upon
+        // variables even if the function can't be executed. This makes it possible for
+        // the session name controller to build up its set of dependencies.
+        completion(nil, nil, missing);
         return;
     }
 
-    dispatch_group_t group = dispatch_group_create();
-    NSMutableSet<NSString *> *mutableMissing = [NSMutableSet set];
-    [self evaluateParametersWithScope:scope
-                          synchronous:synchronous
-                              missing:mutableMissing
-                                group:group];
-    void (^allParametersEvaluated)(NSSet<NSString *> *) = ^(NSSet<NSString *> *missing){
-        if (self->_depError) {
-            completion(nil, self->_depError, missing);
-            return;
-        }
-        if (self.isBuiltinFunction) {
-            [self callBuiltinFunctionWithScope:scope completion:^(id object, NSError *error) {
-                completion(object, error, nil);
-            }];
-            return;
-        }
-        if (synchronous) {
-            // This is useful because it causes the scope to be called for all depended-upon
-            // variables even if the function can't be executed. This makes it possible for
-            // the session name controller to build up its set of dependencies.
-            completion(nil, nil, missing);
-            return;
-        }
-        NSDictionary<NSString *, iTermParsedExpression *> *fullParameters = nil;
-        self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
-                                                           explicitParametersWithExpressions:self->_argToExpression
-                                                                                       scope:scope
-                                                                              fullParameters:&fullParameters] copy];
-        [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                                   arguments:[self valueDictionaryFromArgToExpressionDictionary:fullParameters ?: self->_argToExpression]  // Parameters are needed for error reporting
-                                                  completion:^(id apiResult, NSError *apiError) {
-                                                      NSSet<NSString *> *missing = nil;
-                                                      if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
-                                                          missing = [NSSet setWithObject:self.signature];
-                                                      }
-                                                      completion(apiResult, apiError, missing);
-                                                  }];
-    };
-    if (synchronous) {
-        allParametersEvaluated(nil);
-    } else {
-        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-            allParametersEvaluated(mutableMissing);
-        });
-    }
+    // Fill in any default values not expliciltly specified.
+    NSDictionary<NSString *, id> *fullParameters = nil;
+    self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
+                                                                      explicitParameters:parameterValues
+                                                                                   scope:scope
+                                                                          fullParameters:&fullParameters] copy];
+    [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
+                                               arguments:fullParameters
+                                              completion:^(id apiResult, NSError *apiError) {
+                                                  NSSet<NSString *> *missing = nil;
+                                                  if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
+                                                      missing = [NSSet setWithObject:self.signature];
+                                                  }
+                                                  completion(apiResult, apiError, missing);
+                                              }];
 }
 
 - (BOOL)isBuiltinFunction {
@@ -288,42 +313,75 @@
 }
 
 - (void)callBuiltinFunctionWithScope:(iTermVariableScope *)scope
+                     parameterValues:(NSDictionary<NSString *, id> *)parameterValues
                            completion:(void (^)(id, NSError *))completion {
     iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
     [bif callFunctionWithName:_name
-                   parameters:[self valueDictionaryFromArgToExpressionDictionary:_argToExpression]
+                   parameters:parameterValues
                         scope:scope
                    completion:completion];
 }
 
 - (void)evaluateParametersWithScope:(iTermVariableScope *)scope
+                         invocation:(NSString *)invocation
                         synchronous:(BOOL)synchronous
-                            missing:(NSMutableSet<NSString *> *)missing
-                              group:(dispatch_group_t)group {
+                         completion:(void (^)(NSDictionary<NSString *, id> *parameterValues,
+                                              NSError *depError,
+                                              NSSet<NSString *> *missing))completion {
+    dispatch_group_t group = dispatch_group_create();
+    NSMutableDictionary<NSString *, id> *parameterValues = [NSMutableDictionary dictionary];
+    NSMutableSet<NSString *> *missing = [NSMutableSet set];
+    __block NSError *depError = nil;
     [_argToExpression enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermParsedExpression *_Nonnull parsedExpression, BOOL * _Nonnull stop) {
-        if (self->_depError) {
-            *stop = YES;
+        dispatch_group_enter(group);
+        [self evaluateArgumentWithParsedExpression:parsedExpression
+                                        invocation:invocation
+                                             scope:scope
+                                       synchronous:synchronous
+                                        completion:^(NSError *error, id value, NSSet<NSString *> *innerMissing) {
+                                            [missing unionSet:innerMissing];
+                                            if (error) {
+                                                depError = error;
+                                                *stop = YES;
+                                            } else {
+                                                parameterValues[key] = value;
+                                            }
+                                            dispatch_group_leave(group);
+                                        }];
+    }];
+    if (synchronous) {
+        completion(parameterValues, depError, missing);
+        return;
+    }
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        completion(parameterValues, depError, missing);
+    });
+}
+
+- (void)evaluateArgumentWithParsedExpression:(iTermParsedExpression *)parsedExpression
+                                  invocation:(NSString *)invocation
+                                       scope:(iTermVariableScope *)scope
+                                 synchronous:(BOOL)synchronous
+                                  completion:(void (^)(NSError *error, id value, NSSet<NSString *> *missing))completion {
+    iTermExpressionEvaluator *parameterEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                                                   invocation:invocation
+                                                                                                        scope:scope];
+    [self->_evaluators addObject:parameterEvaluator];
+    [parameterEvaluator evaluateWithTimeout:synchronous ? 0 : INFINITY completion:^(iTermExpressionEvaluator *evaluator) {
+        if (!evaluator.error) {
+            completion(nil, evaluator.value, evaluator.missingValues);
             return;
         }
-        dispatch_group_enter(group);
-        iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
-                                                                                                   scope:scope];
-        [evaluator evaluateWithTimeout:synchronous ? 0 : INFINITY completion:^(iTermExpressionEvaluator *evaluator){
-            if (evaluator.error) {
-                if (parsedExpression.functionCall) {
-                    self->_depError = [self errorForDependentCall:expr.functionCall
-                                              thatFailedWithError:evaluator.error
-                                                    connectionKey:self->_connectionKey];
-                } else {
-                    self->_depError = evaluator.error;
-                }
-            } else {
-#warning TODO: Save the evaluator instead of relying on a retain loop to keep it. Have another dictionary for values.
-                self->_evaluatedParameters[key] = evaluator.value;
-            }
-            [missing unionSet:evaluator.missingValues];
-            dispatch_group_leave(group);
-        }];
+
+        NSError *error = nil;
+        if (parsedExpression.expressionType == iTermParsedExpressionTypeFunctionCall) {
+            error = [self errorForDependentCall:parsedExpression.functionCall
+                            thatFailedWithError:evaluator.error
+                                  connectionKey:self->_connectionKey];
+        } else {
+            error = evaluator.error;
+        }
+        completion(error, nil, evaluator.missingValues);
     }];
 }
 
