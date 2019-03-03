@@ -106,8 +106,8 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         }
     }
     if (!invocation) {
-        [self didEvaluateInvocationWithResult:@""];
-        completion(@"");
+        [self didEvaluateInvocationWithResult:@"…"];
+        completion(@"…");
         return;
     }
     [iTermScriptFunctionCall callFunction:invocation
