@@ -37,8 +37,9 @@
         case iTermParsedExpressionTypeString:
             value = self.string;
             break;
-        case iTermParsedExpressionTypeArray:
-            value = [[self.array mapWithBlock:^id(id anObject) {
+        case iTermParsedExpressionTypeArrayOfExpressions:
+        case iTermParsedExpressionTypeArrayOfValues:
+            value = [[(NSArray *)_object mapWithBlock:^id(id anObject) {
                 return [anObject description];
             }] componentsJoinedByString:@" "];
             value = [NSString stringWithFormat:@"[ %@ ]", value];
@@ -104,7 +105,7 @@
         return [self initWithNumber:object];
     }
     if ([object isKindOfClass:[NSArray class]]) {
-        return [self initWithArray:object];
+        return [self initWithArrayOfValues:object];
     }
     return [self initWithErrorCode:7 reason:errorReason];
 }
@@ -121,10 +122,19 @@
     return self;
 }
 
-- (instancetype)initWithArray:(NSArray *)array {
+- (instancetype)initWithArrayOfValues:(NSArray *)array {
     self = [super init];
     if (self) {
-        _expressionType = iTermParsedExpressionTypeArray;
+        _expressionType = iTermParsedExpressionTypeArrayOfValues;
+        _object = array;
+    }
+    return self;
+}
+
+- (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeArrayOfExpressions;
         _object = array;
     }
     return self;
@@ -157,7 +167,12 @@
     return self;
 }
 
-- (NSArray *)array {
+- (NSArray *)arrayOfValues {
+    assert([_object isKindOfClass:[NSArray class]]);
+    return _object;
+}
+
+- (NSArray *)arrayOfExpressions {
     assert([_object isKindOfClass:[NSArray class]]);
     return _object;
 }

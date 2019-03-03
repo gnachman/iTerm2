@@ -14,7 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeNil,
-    iTermParsedExpressionTypeArray,
+    iTermParsedExpressionTypeArrayOfExpressions,
+    iTermParsedExpressionTypeArrayOfValues,
     iTermParsedExpressionTypeString,  // This only occurs inside interpolated string parts arrays.
     iTermParsedExpressionTypeNumber,
     iTermParsedExpressionTypeFunctionCall,
@@ -26,7 +27,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 // Only one property will be set.
 @property (nonatomic, readonly) iTermParsedExpressionType expressionType;
 
-@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *array;
+@property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *arrayOfExpressions;
+@property (nonatomic, strong, readonly) NSArray *arrayOfValues;
 @property (nonatomic, strong, readonly) NSString *string;
 @property (nonatomic, strong, readonly) NSNumber *number;
 @property (nonatomic, strong, readonly) NSError *error;
@@ -48,7 +50,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithNumber:(NSNumber *)number;
 - (instancetype)initWithError:(NSError *)error;
 - (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
-- (instancetype)initWithArray:(NSArray<iTermParsedExpression *> *)array;
+- (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array;
+- (instancetype)initWithArrayOfValues:(NSArray *)array;
 
 @end
 

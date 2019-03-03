@@ -19,6 +19,8 @@
 #import "NSStringITerm.h"
 
 @implementation iTermExpressionEvaluator {
+    BOOL _hasBeenEvaluated;
+    BOOL _isBeingEvaluated;
     id _value;
     iTermParsedExpression *_parsedExpression;
     iTermVariableScope *_scope;
@@ -58,21 +60,21 @@
 }
 
 - (id)value {
-    if (!_value) {
-        [self evaluateParsedExpression:_parsedExpression
-                            invocation:_invocation
-                           withTimeout:0
-                            completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
-            self->_value = result;
-            self->_error = error;
-            self->_missingValues = missing;
-        }];
+    if (_hasBeenEvaluated) {
+        return _value;
     }
+#if DEBUG
+    assert(!_isBeingEvaluated);
+#endif
+    [self evaluateWithTimeout:0 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {}];
     return _value;
 }
 
 - (void)evaluateWithTimeout:(NSTimeInterval)timeout
                  completion:(void (^)(iTermExpressionEvaluator *))completion {
+    _hasBeenEvaluated = YES;
+    assert(!_isBeingEvaluated);
+    _isBeingEvaluated = YES;
     // NOTE: The completion block *must* retain self. When the timeout is nonzero and an async
     // function call must be made, iTermScriptFunctionCall will create an NSTimer that holds a
     // reference to the completion block. Until that timer is invalidated, it holds a reference
@@ -85,10 +87,11 @@
                             if (error) {
                                 self->_value = nil;
                             } else {
-                                self->_value = result ?: [NSNull null];
+                                self->_value = result;
                             }
                             self->_error = error;
                             self->_missingValues = missing;
+                            self->_isBeingEvaluated = NO;
                             completion(self);
                         }];
 }
@@ -160,13 +163,14 @@
             return;
         }
 
-        case iTermParsedExpressionTypeArray: {
-            [self evaluateArray:parsedExpression.array
+        case iTermParsedExpressionTypeArrayOfExpressions: {
+            [self evaluateArray:parsedExpression.arrayOfExpressions
                      invocation:invocation
                     withTimeout:timeout
                      completion:completion];
             return;
         }
+        case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeNumber:
             completion(parsedExpression.object, nil, nil);

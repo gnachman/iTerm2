@@ -71,7 +71,8 @@
     iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
                                                                               scope:scope];
     switch (expression.expressionType) {
-        case iTermParsedExpressionTypeArray:
+        case iTermParsedExpressionTypeArrayOfValues:
+        case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeString: {
             NSString *reason = @"Expected a function call, not a literal";
@@ -144,9 +145,9 @@
         }];
     }
     [self callWithScope:scope
-                     invocation:invocation
-                    synchronous:(timeout == 0)
-                     completion:
+             invocation:invocation
+            synchronous:(timeout == 0)
+             completion:
      ^(id output, NSError *error, NSSet<NSString *> *missing) {
          if (timeout > 0) {
              // Not synchronous

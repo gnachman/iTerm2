@@ -41,7 +41,8 @@
     switch (expression.expressionType) {
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeString:
-        case iTermParsedExpressionTypeArray:
+        case iTermParsedExpressionTypeArrayOfExpressions:
+        case iTermParsedExpressionTypeArrayOfValues:
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
                                              code:3
@@ -370,11 +371,11 @@
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= '[' ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [[iTermParsedExpression alloc] initWithArray:@[]];
+                               return [[iTermParsedExpression alloc] initWithArrayOfExpressions:@[]];
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [[iTermParsedExpression alloc] initWithArray:syntaxTree.children[1]];
+                               return [[iTermParsedExpression alloc] initWithArrayOfExpressions:syntaxTree.children[1]];
                            }];
     [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
