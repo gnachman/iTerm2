@@ -190,16 +190,17 @@ static iTermAPIHelper *sAPIHelperInstance;
     NSMutableDictionary<NSString *, id> *params = [explicitParameters mutableCopy];
     for (ITMRPCRegistrationRequest_RPCArgument *defaultArgument in self.defaultsArray) {
         NSString *name = defaultArgument.name;
+        NSString *path = defaultArgument.path;
         BOOL isOptional = NO;
-        if ([name hasSuffix:@"?"]) {
+        if ([path hasSuffix:@"?"]) {
             isOptional = YES;
-            name = [name substringToIndex:name.length - 1];
+            path = [path substringToIndex:path.length - 1];
         }
         if (params[name]) {
             // An explicit value was provided, which overrides the default.
             continue;
         }
-        id value = [scope valueForVariableName:defaultArgument.path];
+        id value = [scope valueForVariableName:path];
         if (value) {
             params[name] = value;
             continue;
@@ -207,6 +208,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         if (!isOptional) {
             return NO;
         }
+        params[name] = [NSNull null];
     }
     *fullParameters = params;
     return YES;
