@@ -8308,6 +8308,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetWindowTitle:(NSString *)title {
+    // The window name doesn't normally serve as an interpolated string, but just to be extra safe
+    // break up \(.
+    title = [title stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
 }
 
@@ -8319,7 +8322,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionIconName] ?: [self.variablesScope valueForVariableName:iTermVariableKeySessionName];
 }
 
-- (void)screenSetName:(NSString *)theName {
+- (void)screenSetIconName:(NSString *)theName {
+    // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
+    theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
 }

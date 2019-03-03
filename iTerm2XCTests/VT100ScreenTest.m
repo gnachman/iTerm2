@@ -556,7 +556,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     windowTitle_ = [[newTitle copy] autorelease];
 }
 
-- (void)screenSetName:(NSString *)name {
+- (void)screenSetIconName:(NSString *)name {
     name_ = [[name copy] autorelease];
 }
 

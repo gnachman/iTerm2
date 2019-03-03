@@ -3133,7 +3133,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetIconTitle:(NSString *)title {
     if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenSetName:title];
+        [delegate_ screenSetIconName:title];
     }
 }
 
