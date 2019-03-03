@@ -332,10 +332,14 @@ class Session:
         """
         Sets the value of properties in this session.
 
+        When you use this function the underlying profile is not modified. The session will keep a copy of its profile with these modifications.
+
         :param key: The name of the property
         :param write_only_profile: A write-only profile that has the desired changes.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        .. seealso:: Example ":ref:`copycolor`"
         """
         for key, json_value in write_only_profile.values.items():
             response = await iterm2.rpc.async_set_profile_property_json(

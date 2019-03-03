@@ -131,5 +131,5 @@ class NewSessionMonitor:
         return session_id
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await async_unsubscribe(self.__connection, self.__token)
+        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
 

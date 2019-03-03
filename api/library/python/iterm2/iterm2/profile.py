@@ -74,7 +74,14 @@ class TitleComponents(enum.Enum):
     HOST = (1 << 8)
 
 class LocalWriteOnlyProfile:
-    """A profile that can be modified but not read and does not send changes on each write."""
+    """A profile that can be modified but not read and does not send changes on each write.
+
+    You can safely create this with `LocalWriteOnlyProfile()`. Use
+    :meth:`~iterm2.Session.async_set_profile_properties` to update a session
+    without modifying the underlying profile.
+
+    .. seealso:: Example ":ref:`copycolor`"
+    """
     def __init__(self):
       self.__values = {}
 
