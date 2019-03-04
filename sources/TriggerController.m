@@ -255,7 +255,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     [textField setEditable:NO];
     [textField setSelectable:NO];
     textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-    textField.textColor = [NSColor blackColor];
+    textField.textColor = [NSColor textColor];
     textField.stringValue = string;
     [textField sizeToFit];
 
