@@ -425,9 +425,9 @@ class App:
 
     async def async_get_variable(self, name: str) -> typing.Any:
         """
-        Fetches an application variable.
+        Fetches the value of a variable from the global context.
 
-        See Badges documentation for more information on variables.
+        See `Scripting Fundamentals <https://iterm2.com/documentation-scripting-fundamentals.html>`_ for details on variables.
 
         :param name: The variable's name.
 
@@ -442,7 +442,26 @@ class App:
         else:
             return json.loads(result.variable_response.values[0])
 
-async def async_invoke_function(connection, invocation: str, timeout: float=-1):
+async def async_get_variable(connection: iterm2.connection.Connection, name: str) -> typing.Any:
+    """
+    Fetches the value of a variable from the global context.
+
+    See `Scripting Fundamentals <https://iterm2.com/documentation-scripting-fundamentals.html>`_ for details on variables.
+
+    :param name: The variable's name.
+
+    :returns: The variable's value or empty string if it is undefined.
+
+    :throws: :class:`RPCException` if something goes wrong.
+    """
+    result = await iterm2.rpc.async_variable(connection, gets=[name])
+    status = result.variable_response.status
+    if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+        raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+    else:
+        return json.loads(result.variable_response.values[0])
+
+async def async_invoke_function(connection: iterm2.connection.Connection, invocation: str, timeout: float=-1):
     """
     Invoke an RPC. Could be a registered function by this or another script of a built-in function.
 
