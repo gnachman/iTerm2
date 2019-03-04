@@ -32,6 +32,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`zoom_on_screen`
 * :doc:`oneshot`
 * :doc:`copycolor`
+* :doc:`settabcolor`
 
 ----
 
