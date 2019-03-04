@@ -591,7 +591,7 @@ class Session:
 
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
-        Invoke an RPC. Could be a registered function by this or another script of a built-in function.
+        Invoke an RPC. Could be a function registered by this or another script, or a built-in function.
 
         This invokes the RPC in the context of this session. Most user-defined RPCs are invoked in a session context (for example, invocations attached to triggers or key bindings). Default variables will be pulled from that scope. If you call a function from the wrong context it may fail because its defaults will not be set properly.
 
