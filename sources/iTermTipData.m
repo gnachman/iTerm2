@@ -263,6 +263,25 @@
             @"0071": @{ kTipTitleKey: @"Buried Sessions",
                         kTipBodyKey: @"You can “bury” a session with “Session > Bury Session.” It remains hidden until you restore it by selecting it from “Session > Buried Sessions > Your session.”" },
 
+            @"0072": @{ kTipTitleKey: @"Python API",
+                        kTipBodyKey: @"You can add custom behavior to iTerm2 using the Python API.",
+                        kTipUrlKey: @"https://iterm2.com/python-api" },
+
+            @"0073": @{ kTipTitleKey: @"Status Bar",
+                        kTipBodyKey: @"You can add a configurable status bar to your terminal windows.",
+                        kTipUrlKey: @"https://iterm2.com/3.3/documentation-status-bar.html" },
+
+            @"0074": @{ kTipTitleKey: @"Minimal Theme",
+                        kTipBodyKey: @"Try the “Minimal” theme to reduce visual clutter. You can set it in “Prefs > Appearance > General.”" },
+
+            @"0075": @{ kTipTitleKey: @"Compact Windows",
+                        kTipBodyKey: @"Try the “Compact” window style to save space by removing the window's title bar. You can configure it in “Prefs > Profiles > Window > Style.”" },
+
+            @"0076": @{ kTipTitleKey: @"Session Titles",
+                        kTipBodyKey: @"You can configure which elements are present in session titles in “Prefs > Profiles > General > Title.”" },
+
+            @"0077": @{ kTipTitleKey: @"Tab Icons",
+                        kTipBodyKey: @"Tabs can show an icon indicating the current application. Configure it in “Prefs > Profiles > General > Icon.”" },
             };
 }
 
