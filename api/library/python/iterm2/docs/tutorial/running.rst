@@ -61,6 +61,26 @@ a minimum, install the `iterm2` module.
     iTerm2 creates the `ApplicationSupport` symlink to `Application
     Support` because shell scripts may not have spaces in their paths.
 
+If you'd like your script to launch iTerm2, you'll need to use pybobjc. To install it:
+
+.. code-block:: bash
+
+    pip3 install pyobjc
+
+Then put this in your script:
+
+.. code-block:: python
+
+    import AppKit
+    bundle = "com.googlecode.iterm2"
+    if not AppKit.NSRunningApplication.runningApplicationsWithBundleIdentifier_(bundle):
+        AppKit.NSWorkspace.sharedWorkspace().launchApplication_("iTerm")
+
+The `iterm2.run_forever` or `iterm2.run_until_complete` call will block until
+it is able to make a connection, so you don't need to add any logic that waits
+for the launch to complete. Just try to connect right away.
+
+
 Auto-Run Scripts
 ----------------
 
