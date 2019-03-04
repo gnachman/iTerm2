@@ -364,7 +364,12 @@ static iTermAPIHelper *sAPIHelperInstance;
     warning.identifier = iTermAPIHelperEnablePythonAPIWarningIdentifier;
     warning.warningType = forced ? kiTermWarningTypePersistent : kiTermWarningTypePermanentlySilenceable;
     warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
-    if ([warning runModal] == kiTermWarningSelection1) {
+    static BOOL showing;
+    assert(!showing);
+    showing = YES;
+    const iTermWarningSelection selection = [warning runModal];
+    showing = NO;
+    if (selection == kiTermWarningSelection1) {
         [iTermPreferences setBool:NO forKey:kPreferenceKeyEnableAPIServer];
         return NO;
     } else {
