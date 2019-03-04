@@ -152,6 +152,7 @@ Toolbelt > Show Toolbelt                                                        
 Toolbelt > Set Default Width                                                            `Set Default Width`                                                           
 Window > Minimize                                                                       `Minimize`                                                                    
 Window > Zoom                                                                           `Zoom`                                                                        
+Window > Edit Tab Title                                                                 `Edit Tab Title`                                                              
 Window > Edit Window Title                                                              `Edit Window Title`                                                           
 Window > Merge All Windows                                                              `Merge All Windows`                                                           
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
