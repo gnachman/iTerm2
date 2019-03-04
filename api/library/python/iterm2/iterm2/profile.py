@@ -81,8 +81,8 @@ class LocalWriteOnlyProfile:
     without modifying the underlying profile.
 
     .. seealso::
-      * Example ":ref:`copycolor`"
-      * Example ":ref:`settabcolor`"
+      * Example ":ref:`copycolor_example`"
+      * Example ":ref:`settabcolor_example`"
     """
     def __init__(self):
       self.__values = {}

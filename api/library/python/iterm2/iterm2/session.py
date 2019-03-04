@@ -340,8 +340,8 @@ class Session:
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
 
         .. seealso::
-          * Example ":ref:`copycolor`"
-          * Example ":ref:`settabcolor`"
+          * Example ":ref:`copycolor_example`"
+          * Example ":ref:`settabcolor_example`"
         """
         for key, json_value in write_only_profile.values.items():
             response = await iterm2.rpc.async_set_profile_property_json(
