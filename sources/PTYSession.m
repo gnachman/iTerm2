@@ -26,6 +26,7 @@
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
 #import "iTermEchoProbe.h"
+#import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
 #import "iTermGraphicSource.h"
 #import "iTermNotificationController.h"
@@ -8983,6 +8984,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenSetBadgeFormat:(NSString *)base64Format {
     NSString *theFormat = [base64Format stringByBase64DecodingStringWithEncoding:self.encoding];
+    iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:theFormat scope:self.variablesScope];
+    if ([parsedExpression containsAnyFunctionCall]) {
+        XLog(@"Rejected control-sequence provided badge format containing function calls: %@", theFormat);
+        [self showSimpleWarningAnnouncment:@"The application attempted to set the badge to a value that would invoke a function call. For security reasons, this is not allowed and the badge was not updated."
+                                identifier:@"UnsaveBadgeFormatRejected"];
+        return;
+    }
     if (theFormat) {
         [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
         _textview.badgeLabel = [self badgeLabel];
@@ -9163,6 +9171,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (iTermQuickLookController *)quickLookController {
     return _textview.quickLookController;
+}
+
+- (void)showSimpleWarningAnnouncment:(NSString *)message
+                          identifier:(NSString *)identifier {
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:message
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"OK" ]
+                                                              completion:^(int selection) {}];
+     [self queueAnnouncement:announcement identifier:identifier];
 }
 
 - (void)offerToTurnOffMouseReportingOnHostChange {

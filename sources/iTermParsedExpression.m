@@ -202,6 +202,27 @@
     return _object;
 }
 
+- (BOOL)containsAnyFunctionCall {
+    switch (self.expressionType) {
+        case iTermParsedExpressionTypeFunctionCall:
+            return YES;
+        case iTermParsedExpressionTypeNil:
+        case iTermParsedExpressionTypeError:
+        case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeString:
+        case iTermParsedExpressionTypeArrayOfValues:
+            return NO;
+        case iTermParsedExpressionTypeArrayOfExpressions:
+            return [self.arrayOfExpressions anyWithBlock:^BOOL(iTermParsedExpression *expression) {
+                return [expression containsAnyFunctionCall];
+            }];
+        case iTermParsedExpressionTypeInterpolatedString:
+            return [self.interpolatedStringParts anyWithBlock:^BOOL(iTermParsedExpression *expression) {
+                return [expression containsAnyFunctionCall];
+            }];
+    }
+    assert(false);
+    return YES;
+}
+
 @end
-
-

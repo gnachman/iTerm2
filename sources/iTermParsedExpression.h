@@ -53,6 +53,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array;
 - (instancetype)initWithArrayOfValues:(NSArray *)array;
 
+- (BOOL)containsAnyFunctionCall;
+
 @end
 
 
