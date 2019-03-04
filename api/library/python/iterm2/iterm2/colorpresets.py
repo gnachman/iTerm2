@@ -17,7 +17,7 @@ class ColorPreset:
     class Color(iterm2.color.Color):
         """Derives from :class:`~iterm2.Color`.
 
-        Note this is `~iterm2.ColorPreset.Color`, despite how Sphinx chooses to format this documentation."""
+        Note this is is an inner class of `ColorPreset`."""
         def __init__(self, r, g, b, a, color_space, key):
             super().__init__(r, g, b, a, color_space)
             self.__key = key
