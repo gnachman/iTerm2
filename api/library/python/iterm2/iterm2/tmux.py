@@ -46,6 +46,8 @@ class TmuxConnection:
         :returns: The command's output as a string.
 
         :throws TmuxException: If the command fails for any reason or the RPC fails such as from an invalid ID.
+
+        .. seealso:: Example ":ref:`tile_example`"
         """
         response = await iterm2.rpc.async_rpc_send_tmux_command(self.__app.connection,
                                                                 self.__connection_id,

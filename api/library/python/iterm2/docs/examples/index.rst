@@ -33,6 +33,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`oneshot`
 * :doc:`copycolor`
 * :doc:`settabcolor`
+* :doc:`tile`
 
 ----
 
