@@ -80,7 +80,9 @@ class LocalWriteOnlyProfile:
     :meth:`~iterm2.Session.async_set_profile_properties` to update a session
     without modifying the underlying profile.
 
-    .. seealso:: Example ":ref:`copycolor`"
+    .. seealso::
+      * Example ":ref:`copycolor`"
+      * Example ":ref:`settabcolor`"
     """
     def __init__(self):
       self.__values = {}
