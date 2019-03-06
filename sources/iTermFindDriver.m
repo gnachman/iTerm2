@@ -7,6 +7,7 @@
 
 #import "iTermFindDriver.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
