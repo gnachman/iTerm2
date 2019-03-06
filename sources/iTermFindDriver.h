@@ -52,7 +52,8 @@
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
-        withOffset:(int)offset;
+        withOffset:(int)offset
+scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 // The search view became (in)visible.
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender;
@@ -64,8 +65,12 @@
 @property (nonatomic, weak) id<iTermFindDriverDelegate> delegate;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *viewController;
 @property (nonatomic) iTermFindMode mode;
+
+// NOTE: Permanently visible find views (those added to status bars via configuration) never
+// return YES for isVisible.
 @property (nonatomic, readonly) BOOL isVisible;
 @property (nonatomic, copy) NSString *findString;
+@property (nonatomic) BOOL needsUpdateOnFocus;
 
 - (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -89,5 +94,7 @@
 // is restored.
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
                                           mode:(iTermFindMode)mode;
+
+- (void)owningViewDidBecomeFirstResponder;
 
 @end

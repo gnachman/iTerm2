@@ -75,7 +75,8 @@
         withOffset:(int)offset
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
-totalScrollbackOverflow:(long long)totalScrollbackOverflow;
+totalScrollbackOverflow:(long long)totalScrollbackOverflow
+scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 // Remove all highlight data.
 - (void)clearHighlights;

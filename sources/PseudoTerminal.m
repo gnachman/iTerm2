@@ -3139,6 +3139,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateUseMetalInAllTabs];
     [_contentView updateDivisionViewAndWindowNumberLabel];
+    [self.currentSession.view.findDriver owningViewDidBecomeFirstResponder];
 }
 
 - (void)makeCurrentSessionFirstResponder

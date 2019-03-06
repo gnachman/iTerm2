@@ -5359,14 +5359,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
-        withOffset:(int)offset {
+        withOffset:(int)offset
+scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_findOnPageHelper findString:aString
                  forwardDirection:direction
                              mode:mode
                        withOffset:offset
                           context:[_dataSource findContext]
                     numberOfLines:[_dataSource numberOfLines]
-          totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]];
+          totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]
+               scrollToFirstResult:scrollToFirstResult];
 }
 
 - (void)clearHighlights:(BOOL)resetContext {

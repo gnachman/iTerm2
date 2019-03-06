@@ -1582,11 +1582,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
-        withOffset:(int)offset {
+        withOffset:(int)offset
+scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate findString:aString
              forwardDirection:direction
                          mode:mode
-                   withOffset:offset];
+                   withOffset:offset
+          scrollToFirstResult:scrollToFirstResult];
 }
 
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {

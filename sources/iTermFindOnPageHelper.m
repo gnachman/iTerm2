@@ -80,13 +80,14 @@
         withOffset:(int)offset
            context:(FindContext *)findContext
      numberOfLines:(int)numberOfLines
-    totalScrollbackOverflow:(long long)totalScrollbackOverflow {
+    totalScrollbackOverflow:(long long)totalScrollbackOverflow
+scrollToFirstResult:(BOOL)scrollToFirstResult {
     _searchingForward = direction;
     _findOffset = offset;
     if ([_lastStringSearchedFor isEqualToString:aString] &&
         _mode == mode) {
         _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
-        _searchingForNextResult = YES;
+        _searchingForNextResult = scrollToFirstResult;
         // I would like to call selectNextResultForward:withOffset: here, but
         // it results in drawing errors (drawing is clipped to the findbar for
         // some reason). So we return YES and continueFind is run from a timer
@@ -121,7 +122,7 @@
         // Initialize state with new values.
         _mode = mode;
         _searchResults = [[NSMutableOrderedSet alloc] init];
-        _searchingForNextResult = YES;
+        _searchingForNextResult = scrollToFirstResult;
         _lastStringSearchedFor = [aString copy];
 
         [_delegate setNeedsDisplay:YES];

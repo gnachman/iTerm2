@@ -275,6 +275,24 @@ static NSString *gSearchString;
     _lastEditTime = [NSDate timeIntervalSinceReferenceDate];
 }
 
+- (void)owningViewDidBecomeFirstResponder {
+    if (!self.needsUpdateOnFocus) {
+        return;
+    }
+    if (!self.isVisible) {
+        self.needsUpdateOnFocus = NO;
+        return;
+    }
+    DLog(@"owning view became first responder, needs update on focus, and is visible. delegate = %@", self.delegate);
+    self.needsUpdateOnFocus = NO;
+    _savedState = nil;
+    [self findSubString:_viewController.findString
+       forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
+                   mode:_state.mode
+             withOffset:-1
+    scrollToFirstResult:NO];
+}
+
 #pragma mark - Notifications
 
 - (void)loadFindStringFromSharedPasteboard:(NSNotification *)notification {
@@ -287,9 +305,13 @@ static NSString *gSearchString;
             NSString *value = [findBoard stringForType:NSStringPboardType];
             if (value && [value length] > 0) {
                 if (_savedState && ![value isEqualTo:_savedState.string]) {
+                    [self setNeedsUpdateOnFocus:YES];
                     [self restoreState];
                 }
-                _viewController.findString = value;
+                if (![value isEqualToString:_viewController.findString]) {
+                    _viewController.findString = value;
+                    self.needsUpdateOnFocus = YES;
+                }
             }
         }
     }
@@ -395,7 +417,8 @@ static NSString *gSearchString;
 - (void)findSubString:(NSString *)subString
      forwardDirection:(BOOL)direction
                  mode:(iTermFindMode)mode
-           withOffset:(int)offset {
+           withOffset:(int)offset
+  scrollToFirstResult:(BOOL)scrollToFirstResult {
     BOOL ok = NO;
     if ([_delegate canSearch]) {
         if ([subString length] <= 0) {
@@ -404,7 +427,8 @@ static NSString *gSearchString;
             [_delegate findString:subString
                  forwardDirection:direction
                              mode:mode
-                       withOffset:offset];
+                       withOffset:offset
+              scrollToFirstResult:scrollToFirstResult];
             ok = YES;
         }
     }
@@ -431,7 +455,8 @@ static NSString *gSearchString;
     [self findSubString:_savedState ? _state.string : gSearchString
        forwardDirection:YES
                    mode:_state.mode
-             withOffset:1];
+             withOffset:1
+    scrollToFirstResult:YES];
 }
 
 - (void)searchPrevious {
@@ -439,7 +464,8 @@ static NSString *gSearchString;
     [self findSubString:_savedState ? _state.string : gSearchString
        forwardDirection:NO
                    mode:_state.mode
-             withOffset:1];
+             withOffset:1
+    scrollToFirstResult:YES];
 }
 
 - (void)startDelay {
@@ -489,7 +515,8 @@ static NSString *gSearchString;
     [self findSubString:theString
        forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:_state.mode
-             withOffset:-1];
+             withOffset:-1
+    scrollToFirstResult:YES];
 }
 
 @end

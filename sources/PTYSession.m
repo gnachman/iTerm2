@@ -4976,11 +4976,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
               mode:(iTermFindMode)mode
-        withOffset:(int)offset {
+        withOffset:(int)offset
+scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
-               withOffset:offset];
+               withOffset:offset
+      scrollToFirstResult:scrollToFirstResult];
 }
 
 - (NSString *)unpaddedSelectedText {
@@ -7459,6 +7461,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)textViewDidBecomeFirstResponder {
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
+    [_view.findDriver owningViewDidBecomeFirstResponder];
 }
 
 - (void)textViewDidResignFirstResponder {

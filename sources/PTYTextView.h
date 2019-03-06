@@ -487,7 +487,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)findString:(NSString*)aString
   forwardDirection:(BOOL)direction
       mode:(iTermFindMode)mode
-        withOffset:(int)offset;
+        withOffset:(int)offset
+scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 // Remove highlighted terms from previous search.
 // If resetContext is set then the search state will get reset to empty.
