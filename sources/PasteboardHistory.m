@@ -27,6 +27,7 @@
  */
 
 #include <wctype.h>
+#import "DebugLogging.h"
 #import "PasteboardHistory.h"
 #import "NSDateFormatterExtras.h"
 #import "NSStringITerm.h"
@@ -164,6 +165,10 @@
 
 - (void)save:(NSString*)value
 {
+    if (IsSecureEventInputEnabled()) {
+        DLog(@"Not saving paste history because secure keyboard entry is enabled");
+        return;
+    }
     value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (![value length]) {
         return;
