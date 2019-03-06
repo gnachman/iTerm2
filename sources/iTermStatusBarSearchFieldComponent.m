@@ -71,11 +71,14 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
     NSView *view = self.statusBarComponentSearchViewController.view;
     const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (@available(macOS 10.14, *)) {
-        if (tabStyle == TAB_STYLE_MINIMAL &&
-            [self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
-            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        if (tabStyle == TAB_STYLE_MINIMAL) {
+            if ([self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
+                view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            } else {
+                view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            }
         } else {
-            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            view.appearance = nil;
         }
     }
 }
