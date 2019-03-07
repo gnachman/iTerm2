@@ -178,6 +178,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
+    _customCommand.cell.usesSingleLineMode = YES;
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
                           type:kPreferenceInfoTypeStringTextField];
