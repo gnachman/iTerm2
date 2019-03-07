@@ -34,5 +34,6 @@ typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
 // Immediately examine the dynamic profiles files to see if they've changed and update the model
 // if needed.
 - (void)reloadDynamicProfiles;
+- (void)revealProfileWithGUID:(NSString *)guid;
 
 @end

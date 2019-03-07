@@ -12,6 +12,9 @@
 @implementation iTermProfilePreferencesBaseViewController
 
 - (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
+    for (NSString *key in dictionary.allKeys) {
+        [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setObjectsFromDictionary:dictionary inProfile:profile model:model];
@@ -23,6 +26,7 @@
 }
 
 - (void)setObject:(NSObject *)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:model];
@@ -34,6 +38,7 @@
 }
 
 - (void)setBool:(BOOL)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setBool:value forKey:key inProfile:profile model:model];
@@ -45,6 +50,7 @@
 }
 
 - (void)setInt:(int)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setInt:value forKey:key inProfile:profile model:model];
@@ -56,6 +62,7 @@
 }
 
 - (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setInteger:value forKey:key inProfile:profile model:model];
@@ -67,6 +74,7 @@
 }
 
 - (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setUnsignedInteger:value forKey:key inProfile:profile model:model];
@@ -78,6 +86,7 @@
 }
 
 - (void)setFloat:(double)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setFloat:value forKey:key inProfile:profile model:model];
@@ -89,6 +98,7 @@
 }
 
 - (void)setDouble:(double)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setDouble:value forKey:key inProfile:profile model:model];
@@ -100,6 +110,7 @@
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)key {
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setString:value forKey:key inProfile:profile model:model];

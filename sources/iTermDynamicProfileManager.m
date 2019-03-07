@@ -23,7 +23,8 @@
 
 
 @implementation iTermDynamicProfileManager {
-  SCEvents *_events;
+    SCEvents *_events;
+    NSMutableDictionary<NSString *, NSString *> *_guidToPathMap;
 }
 
 + (instancetype)sharedInstance {
@@ -38,6 +39,7 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
+      _guidToPathMap = [[NSMutableDictionary alloc] init];
       NSString *path = [self dynamicProfilesPath];
       if (path == nil) {
           ELog(@"Dynamic profiles path is nil");
@@ -51,8 +53,19 @@
 }
 
 - (void)dealloc {
-  [_events release];
-  [super dealloc];
+    [_events release];
+    [_guidToPathMap release];
+    [super dealloc];
+}
+
+- (void)revealProfileWithGUID:(NSString *)guid {
+    NSString *fullPath = _guidToPathMap[guid];
+    if (!fullPath) {
+        [[NSWorkspace sharedWorkspace] openFile:self.dynamicProfilesPath
+                                withApplication:@"Finder"];
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
 }
 
 - (NSString *)dynamicProfilesPath {
@@ -88,6 +101,7 @@
         [fileNames addObject:file];
     }
     [fileNames sortUsingSelector:@selector(compare:)];
+
     for (NSString *file in fileNames) {
         DLog(@"Examine file %@", file);
         if ([file hasPrefix:@"."]) {
@@ -207,7 +221,9 @@
         DLog(@"Read profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
         profile = [profile dictionaryBySettingObject:filename forKey:KEY_DYNAMIC_PROFILE_FILENAME];
         [profiles addObject:profile];
-        [guids addObject:profile[KEY_GUID]];
+        NSString *guid = profile[KEY_GUID];
+        [guids addObject:guid];
+        _guidToPathMap[guid] = filename;
     }
     return YES;
 }

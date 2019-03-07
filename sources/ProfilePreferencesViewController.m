@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermDynamicProfileManager.h"
 #import "iTermFlippedView.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermProfilePreferences.h"
@@ -119,6 +120,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     BulkCopyProfilePreferencesWindowController *_bulkCopyController;
     NSRect _desiredFrame;
+    BOOL _needsWarning;
 }
 
 - (instancetype)init {
@@ -891,6 +893,50 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (BOOL)editingTmuxSession {
     return _tmuxSession;
+}
+
+- (void)profilePreferencesViewController:(iTermProfilePreferencesBaseViewController *)viewController
+                    willSetObjectWithKey:(NSString *)key {
+    if (_needsWarning) {
+        return;
+    }
+    _needsWarning = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf showWarningIfNeeded];
+    });
+}
+
+- (void)showWarningIfNeeded {
+    if (!_needsWarning) {
+        return;
+    }
+    _needsWarning = NO;
+    
+    Profile *profile = [self selectedProfile];
+    NSString *guid = [NSString castFrom:[profile objectForKey:KEY_GUID]];
+    if (!guid) {
+        return;
+    }
+    NSArray *tagsArray = [NSArray castFrom:[profile objectForKey:KEY_TAGS]];
+    if (![tagsArray containsObject:kProfileDynamicTag]) {
+        return;
+    }
+    NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
+    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. Changes made through preferences will be lost when you restart iTerm2. To modify this profile you must edit its source file.", profileName];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK", @"Reveal in Finder" ]
+                             accessory:nil
+                            identifier:@"NoSyncDynamicProfileChangeWillBeLost"
+                           silenceable:kiTermWarningTypeTemporarilySilenceable
+                               heading:@"Changes Will Be Lost"
+                                window:self.view.window];
+    if (selection == kiTermWarningSelection0) {
+        return;
+    }
+
+    [[iTermDynamicProfileManager sharedInstance] revealProfileWithGUID:guid];
 }
 
 #pragma mark - ProfilesGeneralPreferencesViewControllerDelegate
