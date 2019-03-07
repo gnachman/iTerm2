@@ -1,4 +1,5 @@
 #import "IntervalTree.h"
+#import "DebugLogging.h"
 
 static const long long kMinLocation = LLONG_MIN / 2;
 static const long long kMaxLimit = kMinLocation + LLONG_MAX;
@@ -358,6 +359,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
+    DLog(@"Add %@ at %@", object, interval);
     [interval boundsCheck];
     assert(object.entry == nil);  // Object must not belong to another tree
     IntervalTreeEntry *entry = [IntervalTreeEntry entryWithInterval:interval
@@ -376,6 +378,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)removeObject:(id<IntervalTreeObject>)object {
+    DLog(@"Remove %@\n%@", object, [NSThread callStackSymbols]);
     Interval *interval = object.entry.interval;
     long long theLocation = interval.location;
     IntervalTreeValue *value = [_tree objectForKey:@(interval.location)];

@@ -63,6 +63,11 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p code=%@ size=%@ uniqueIdentifier=%@ filename=%@ broken=%@>",
+            self.class, self, @(self.code), NSStringFromSize(self.size), self.uniqueIdentifier, self.filename, @(self.broken)];
+}
+
 - (NSString *)uniqueIdentifier {
     if (!_uniqueIdentifier) {
         _uniqueIdentifier = [[[NSUUID UUID] UUIDString] copy];

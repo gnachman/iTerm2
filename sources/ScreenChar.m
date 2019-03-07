@@ -29,6 +29,7 @@
  */
 
 #import "ScreenChar.h"
+#import "DebugLogging.h"
 #import "charmaps.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
@@ -247,6 +248,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
     imageInfo.size = NSMakeSize(width, height);
     imageInfo.inset = inset;
     gImages[@(c.code)] = imageInfo;
+    DLog(@"Assign %@ to image code %@", imageInfo, @(c.code));
 
     return c;
 }
@@ -261,9 +263,11 @@ void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     iTermImageInfo *imageInfo = gImages[@(code)];
     [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
+    DLog(@"set decoded image in %@", imageInfo);
 }
 
 void ReleaseImage(unichar code) {
+    DLog(@"ReleaseImage(%@)", @(code));
     [gImages removeObjectForKey:@(code)];
     [gEncodableImageMap removeObjectForKey:@(code)];
 }
@@ -705,6 +709,7 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
         iTermImageInfo *info = [[[iTermImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
         if (info) {
             gImages[key] = info;
+            DLog(@"Decoded restorable state for image %@: %@", key, info);
         }
     }
     ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
