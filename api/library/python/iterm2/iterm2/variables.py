@@ -50,7 +50,7 @@ class VariableMonitor:
         self.__scope = scope
         self.__name = name
         self.__identifier = identifier
-        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def callback(_connection, message):

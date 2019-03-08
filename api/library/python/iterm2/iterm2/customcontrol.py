@@ -3,6 +3,7 @@ import asyncio
 import iterm2.connection
 import iterm2.notifications
 import re
+import typing
 
 class CustomControlSequenceMonitor:
     """Registers a handler for a custom control sequence.
@@ -31,7 +32,7 @@ class CustomControlSequenceMonitor:
         self.__regex = regex
         self.__identity = identity
         self.__session_id = session_id
-        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def internal_callback(_connection, notification):
@@ -48,7 +49,7 @@ class CustomControlSequenceMonitor:
                 self.__session_id)
         return self
 
-    async def async_get(self) -> re.Match:
+    async def async_get(self) -> typing.Match:
         """
         Blocks until a matching control sequence is returned.
 

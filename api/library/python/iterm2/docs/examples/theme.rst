@@ -26,7 +26,7 @@ This script changes the color presets of all profiles when the theme changes. It
                     preset = await iterm2.ColorPreset.async_get(connection, "Light Background")
 
                 # Update the list of all profiles and iterate over them.
-                profiles=await iterm2.PartialProfile.async_get(connection)
+                profiles=await iterm2.PartialProfile.async_query(connection)
                 for partial in profiles:
                     # Fetch the full profile and then set the color preset in it.
                     profile = await partial.async_get_full_profile()

@@ -36,37 +36,37 @@ class Color:
         return self.__red
 
     @red.setter
-    def red(self, value: float):
+    def red(self, value: int):
         """Sets the color's red component."""
         self.__red = value
 
     @property
-    def green(self) -> float:
+    def green(self) -> int:
         """The color's green component."""
         return self.__green
 
     @green.setter
-    def green(self, value: float):
+    def green(self, value: int):
         """Sets the color's green component."""
         self.__green = value
 
     @property
-    def blue(self) -> float:
+    def blue(self) -> int:
         """The color's blue component."""
         return self.__blue
 
     @blue.setter
-    def blue(self, value: float):
+    def blue(self, value: int):
         """Sets the color's blue component."""
         self.__blue = value
 
     @property
-    def alpha(self) -> float:
+    def alpha(self) -> int:
         """The color's alpha component."""
         return self.__alpha
 
     @alpha.setter
-    def alpha(self, value: float):
+    def alpha(self, value: int):
         """Sets the color's alpha component."""
         self.__alpha = value
 

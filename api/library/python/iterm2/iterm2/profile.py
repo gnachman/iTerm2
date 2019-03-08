@@ -147,7 +147,7 @@ class LocalWriteOnlyProfile:
         :param value: A :class:`Color`"""
         return self._color_set("Selected Text Color", value)
 
-    def set_cursor_color(self, valu: 'iterm2.color.Color'):
+    def set_cursor_color(self, value: 'iterm2.color.Color'):
         """Sets the cursor color.
 
         :param value: A :class:`Color`"""
@@ -2813,7 +2813,7 @@ class Profile(WriteOnlyProfile):
 
     @property
     def use_csi_u(self) -> typing.Optional[bool]:
-        """REturns wehtehr keystrokes will be reported with CSI u protocol
+        """Returns wehtehr keystrokes will be reported with CSI u protocol
 
         :returns: If True, CSI u will be enabled.
         """
@@ -2833,12 +2833,14 @@ class PartialProfile(Profile):
     """Represents a profile that has only a subset of fields available for reading."""
 
     @staticmethod
-    async def async_get(
+    async def async_query(
             connection: iterm2.connection.Connection,
-            guids: typing.List[str]=None, properties: typing.List[str]=["Guid", "Name"]) -> 'PartialProfile':
-        """Fetches a list of profiles.
+            guids: typing.Optional[typing.List[str]]=None,
+            properties: typing.List[str]=["Guid", "Name"]) -> typing.List['PartialProfile']:
+        """Fetches a list of profiles by guid, populating the requested properties.
 
-        :param properties: Lists the properties to fetch. Pass None for all.
+        :param connection: The connection to send the query to.
+        :param properties: Lists the properties to fetch. Pass None for all. If you wish to fetch the full profile later, you must ensure the 'Guid' property is fetched.
         :param guids: Lists GUIDs to list. Pass None for all profiles.
 
         :returns: A list of :class:`PartialProfile` objects with only the specified properties set.
@@ -2850,7 +2852,7 @@ class PartialProfile(Profile):
         response = await iterm2.rpc.async_list_profiles(connection, guids, properties)
         profiles = []
         for responseProfile in response.list_profiles_response.profiles:
-            profile = iterm2.profile.PartialProfile(None, connection, responseProfile.properties)
+            profile = PartialProfile(None, connection, responseProfile.properties)
             profiles.append(profile)
         return profiles
 
@@ -2867,8 +2869,8 @@ class PartialProfile(Profile):
 
         .. seealso:: Example ":ref:`theme_example`"
         """
-        if self.guid is None:
-            raise
+        if not self.guid:
+            raise BadGUIDException()
         response = await iterm2.rpc.async_list_profiles(self.connection, [self.guid], None)
         if len(response.list_profiles_response.profiles) != 1:
             raise BadGUIDException()

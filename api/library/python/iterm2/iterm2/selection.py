@@ -165,6 +165,8 @@ class Selection:
 
         :param connection: A :class:`~iterm2.connection.Connection`.
         :param session_id: A string session ID.
+        :param width: The width of the session
+        :param cb: A function to call for each range, taking a WindowedCoordRange and a boolean which is true if there's a hard EOL at the end of the range.
 
         :returns: A string with the selected text.
         """

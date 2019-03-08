@@ -88,6 +88,7 @@ class Connection:
         # If none returns True it is dispatched through the helpers. Typically
         # that would be a notification.
         self.__receivers = []
+        self.__dispatch_forever_future = None
 
     def _collect_garbage(self):
         """Asyncio seems to want you to keep a reference to a task that's begin
@@ -157,6 +158,9 @@ class Connection:
             if forever:
                 await dispatch_forever_task
             dispatch_forever_task.cancel()
+            # Make sure the _async_dispatch_to_helper task gets canceled to avoid a warning.
+            for task in self.__tasks:
+                task.cancel()
 
         # This keeps you from pulling your hair out. The downside is uncertain, but
         # I do know that pulling my hair out hurts.

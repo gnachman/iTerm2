@@ -1,6 +1,7 @@
 """Provides interfaces relating to keyboard focus."""
 import asyncio
 import enum
+import iterm2.api_pb2
 import iterm2.connection
 import iterm2.notifications
 import typing
@@ -16,27 +17,22 @@ class FocusUpdateApplicationActive:
         return self.__application_active
 
 class FocusUpdateWindowChanged:
-    """Describes a change in which window is focused.
+    """Describes a change in which window is focused."""
 
-    This class defines three static constants:
+    class Reason(enum.Enum):
+        """Gives the reason for the change"""
+        TERMINAL_WINDOW_BECAME_KEY = 0  #: A terminal window received keyboard focus.
+        TERMINAL_WINDOW_IS_CURRENT = 1  #: A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
+        TERMINAL_WINDOW_RESIGNED_KEY = 2  #: A terminal window no longer has keyboard focus.
 
-    `TERMINAL_WINDOW_BECAME_KEY`: A terminal window received keyboard focus.
-    `TERMINAL_WINDOW_IS_CURRENT`: A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
-    `TERMINAL_WINDOW_RESIGNED_KEY`: A terminal window no longer has keyboard focus."""
-
-    TERMINAL_WINDOW_BECAME_KEY = 0  # A terminal window received keyboard focus.
-    TERMINAL_WINDOW_IS_CURRENT = 1  # A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
-    TERMINAL_WINDOW_RESIGNED_KEY = 2  # A terminal window no longer has keyboard focus.
-    TERMINAL_WINDOW_STRINGS = [ "WindowBecameKey", "WindowIsCurrent", "WindowResignedKey" ]
-
-    def __init__(self, window_id: str, event: str):
+    def __init__(self, window_id: str, event: Reason):
         self.__window_id = window_id
         self.__event = event
 
     def __repr__(self):
         return "Window {}: {}".format(
             self.window_id,
-            FocusUpdateWindowChanged.TERMINAL_WINDOW_STRINGS[self.event])
+            FocusUpdateWindowChanged.Reason(self.event).name)
 
     @property
     def window_id(self) -> str:
@@ -44,10 +40,10 @@ class FocusUpdateWindowChanged:
         return self.__window_id
 
     @property
-    def event(self) -> 'FocusUpdateWindowChanged':
+    def event(self) -> Reason:
         """Describes how the window's focus changed.
 
-        :returns: One of `FocusUpdateWindowChanged.TERMINAL_WINDOW_BECAME_KEY`, `FocusUpdateWindowChanged.TERMINAL_WINDOW_IS_CURRENT`, or `FocusUpdateWindowChanged.TERMINAL_WINDOW_RESIGNED_KEY`.
+        :returns: The reason for the update.
         """
         return self.__event
 
@@ -137,27 +133,22 @@ class FocusMonitor:
     """
     def __init__(self, connection: iterm2.connection.Connection):
         self.__connection = connection
-        self.__queue = []
+        self.__queue: typing.List[iterm2.api_pb2.FocusChangedNotification]  = []
 
     async def __aenter__(self):
-        async def async_callback(_connection, message):
+        async def async_callback(_connection, message: iterm2.api_pb2.FocusChangedNotification):
             """Called when focus changes."""
-            print("fasync_callback: set future's result")
             self.__queue.append(message)
             future = self.__future
             if future is None:
-                print("async_callback: return becasue reentrant")
                 # Ignore reentrant calls
                 return
 
-            self.__future = None
+            self.__future: typing.Optional[asyncio.Future] = None
             if future is not None and not future.done():
-                print("async_callback: set result")
                 temp = self.__queue[0]
                 del self.__queue[0]
                 future.set_result(temp)
-            else:
-                print("async_callback: no future or future is done")
 
         self.__token = await iterm2.notifications.async_subscribe_to_focus_change_notification(
                 self.__connection,
@@ -184,24 +175,25 @@ class FocusMonitor:
                         print("The active tab is now {}".format(update.selected_tab_changed.tab_id))
         """
         if self.__queue:
-            print("async_get_next_update: return early with 1st value from queue")
             temp = self.__queue[0]
             del self.__queue[0]
             return self.handle_proto(temp)
 
-        future = asyncio.Future()
+        future: asyncio.Future = asyncio.Future()
         self.__future = future
         await self.__future
-        proto = future.result()
+        proto: iterm2.api_pb2.FocusChangedNotification = future.result()
         self.__future = None
         return self.handle_proto(proto)
 
-    def handle_proto(self, proto):
+    def handle_proto(self, proto: iterm2.api_pb2.FocusChangedNotification):
         which = proto.WhichOneof('event')
         if which == 'application_active':
             return FocusUpdate(application_active=FocusUpdateApplicationActive(proto.application_active))
         elif which == 'window':
-            return FocusUpdate(window_changed=FocusUpdateWindowChanged(proto.window.window_id, proto.window.window_status))
+            return FocusUpdate(window_changed=FocusUpdateWindowChanged(
+                proto.window.window_id,
+                FocusUpdateWindowChanged.Reason(proto.window.window_status)))
         elif which == 'selected_tab':
             return FocusUpdate(selected_tab_changed=FocusUpdateSelectedTabChanged(proto.selected_tab))
         elif which == 'session':

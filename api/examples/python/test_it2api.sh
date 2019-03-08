@@ -75,6 +75,25 @@ expect_contains set-preset-initialized 255,255,255,255 "$($PYTHON it2api get-pro
 $PYTHON it2api send-text $FIRST_SESSION_ID "cd /etc"
 expect_contains monitor-variable /etc "$($PYTHON it2api monitor-variable --session $FIRST_SESSION_ID session.path)"
 
+expect_contains list-profiles "Default" "$($PYTHON it2api list-profiles --properties Name)"
+echo "OK switch focus to the other pane now"
+expect_contains monitor-focus "Update: Session activated: $SESSION_ID" "$($PYTHON it2api monitor-focus)"
+
+expect_nothing set-cursor-color "$($PYTHON it2api set-cursor-color "$SESSION_ID" 255,0,0)"
+expect_contains set-cursor-color 255,0,0,255 "$($PYTHON it2api get-profile-property "$SESSION_ID" cursor_color)"
+
+echo "Type FOO in the window with the red cursor"
+expect_nothing monitor-screen "$($PYTHON it2api monitor-screen "$SESSION_ID" FOO)"
+
+echo "Select the word FOO"
+echo 3
+sleep 1
+echo 2
+sleep 1
+echo 1
+echo sleep 1
+expect_contains show-selection FOO "$($PYTHON it2api show-selection "$SESSION_ID")"
+
 # Missing tests:
 # saved-arrangement
 # list-profiles

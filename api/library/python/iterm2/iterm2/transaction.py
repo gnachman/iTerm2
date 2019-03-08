@@ -2,8 +2,9 @@
 
 import iterm2.rpc
 import iterm2.connection
+import typing
 
-gCurrentTransaction = None
+gCurrentTransaction: typing.Optional['Transaction']  = None
 
 class Transaction:
     """An asyncio context manager for transactions.
@@ -42,6 +43,6 @@ class Transaction:
             gCurrentTransaction = None
 
     @staticmethod
-    def current() -> 'Transaction':
+    def current() -> typing.Optional['Transaction']:
         return gCurrentTransaction
 

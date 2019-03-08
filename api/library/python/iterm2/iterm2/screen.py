@@ -133,19 +133,21 @@ class ScreenStreamer:
         If this `ScreenStreamer` has been configured to provide screen contents, then they will be returned.
 
         :returns: A :class:`ScreenContents` (if so configured), otherwise `None`.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        future = asyncio.Future()
+        future: asyncio.Future = asyncio.Future()
         self.future = future
         await self.future
         self.future = None
 
-        if self.want_contents:
-            result = await iterm2.rpc.async_get_screen_contents(
-                self.connection,
-                self.session_id,
-                windowedCoordRange)
-            if result.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
-                return ScreenContents(result.get_buffer_response)
-            else:
-                raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status))
+        if not self.want_contents:
+            return None
+        result = await iterm2.rpc.async_get_screen_contents(
+            self.connection,
+            self.session_id,
+            None)
+        if result.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
+            return ScreenContents(result.get_buffer_response)
+        raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status))
 

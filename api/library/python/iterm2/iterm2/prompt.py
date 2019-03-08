@@ -79,7 +79,7 @@ class PromptMonitor:
     def __init__(self, connection: iterm2.connection.Connection, session_id: str):
         self.connection = connection
         self.session_id = session_id
-        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def callback(_connection, message):

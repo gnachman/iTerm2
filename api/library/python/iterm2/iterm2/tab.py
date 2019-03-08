@@ -218,6 +218,10 @@ class Tab:
         """
         window_id = await self.async_invoke_function("iterm2.move_tab_to_window()")
         app = await iterm2.app.async_get_app(self.connection)
-        return app.get_window_by_id(window_id)
+        assert(app)
+        window = app.get_window_by_id(window_id)
+        if not window:
+            raise iterm2.rpc.RPCException("No such window {}".format(window_id))
+        return window
 
 

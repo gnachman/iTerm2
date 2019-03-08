@@ -28,9 +28,9 @@ class Splitter:
         """
         self.__vertical = vertical
         # Elements are either Splitter or Session
-        self.__children = []
+        self.__children: typing.List[typing.Union['Splitter', 'Session']] = []
         # Elements are Session
-        self.__sessions = []
+        self.__sessions: typing.List['Session'] = []
 
     @staticmethod
     def from_node(node, connection):
@@ -56,7 +56,7 @@ class Splitter:
         """Are the dividers in this splitter vertical?"""
         return self.__vertical
 
-    def add_child(self, child):
+    def add_child(self, child: typing.Union['Splitter', 'Session']):
         """
         Adds one or more new sessions to a splitter.
 
@@ -196,14 +196,14 @@ class Session:
         if link is not None:
             self.__session_id = link.session.unique_identifier
             self.frame = link.session.frame
-            self.grid_size = link.session.grid_size
+            self.__grid_size = link.session.grid_size
             self.name = link.session.title
             self.buried = False
         elif summary is not None:
             self.__session_id = summary.unique_identifier
             self.name = summary.title
             self.buried = True
-            self.grid_size = None
+            self.__grid_size = None
             self.frame = None
         self.preferred_size = self.grid_size
 
@@ -220,7 +220,7 @@ class Session:
     def update_from(self, session):
         """Replace internal state with that of another session."""
         self.frame = session.frame
-        self.grid_size = session.grid_size
+        self.__grid_size = session.grid_size
         self.name = session.name
 
     def pretty_str(self, indent: str="") -> str:
@@ -322,8 +322,12 @@ class Session:
         if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
             new_session_id = result.split_pane_response.session_id[0]
             app = await iterm2.app.async_get_app(self.connection)
+            assert(app)
             await app.async_refresh()
-            return app.get_session_by_id(new_session_id)
+            session = app.get_session_by_id(new_session_id)
+            if session:
+                return session
+            raise SplitPaneException("No such session {}".format(new_session_id))
         else:
             raise SplitPaneException(
                 iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
@@ -489,6 +493,14 @@ class Session:
 
         Note: This will fail on fullscreen windows."""
         await self._async_set_property("grid_size", size.json)
+
+    @property
+    def grid_size(self) -> iterm2.util.Size:
+        """Returns the size of the visible part of the session in cells.
+
+        :returns: The size of the visible part of the session in cells.
+        """
+        return self.__grid_size
 
     async def async_set_buried(self, buried: bool) -> None:
         """Buries or disinters a session.

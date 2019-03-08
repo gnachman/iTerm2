@@ -10552,7 +10552,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         range = NSMakeRange(NSNotFound, 0);
     }
-    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, range.location, 0, range.length + 1), 0, 0);
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, range.location, 0, NSMaxRange(range)), 0, 0);
 }
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request {

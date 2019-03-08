@@ -18,7 +18,7 @@ async def async_register_web_view_tool(
     :param reveal_if_already_registered: If `True`, shows the tool on a duplicate registration attempt.
     :param url: The URL to show in the webview.
 
-    :raises: :class:`~iterm2.RPCException` if something goes wrong
+    :throws: :class:`~iterm2.RPCException` if something goes wrong
 
     .. seealso:: Example ":ref:`targeted_input_example`"
     """

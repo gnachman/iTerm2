@@ -36,7 +36,7 @@ class Window:
             connection: iterm2.connection.Connection,
             profile: str=None,
             command: str=None,
-            profile_customizations: iterm2.profile.LocalWriteOnlyProfile=None) -> 'Window':
+            profile_customizations: iterm2.profile.LocalWriteOnlyProfile=None) -> typing.Optional['Window']:
         """Creates a new window.
 
         :param connection: A :class:`~iterm2.connection.Connection`.
@@ -44,14 +44,14 @@ class Window:
         :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
         :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
 
-        :returns: A new :class:`Window`.
+        :returns: A new :class:`Window` or `None` if the session ended right away.
 
-        :throws: CreateWindowException if something went wrong.
+        :throws: `~iterm2.app.CreateWindowException` if something went wrong.
 
         .. seealso:: Example ":ref:`create_window_example`"
         """
         if command is not None:
-            p = profile.LocalWriteOnlyProfile()
+            p = iterm2.profile.LocalWriteOnlyProfile()
             p.set_use_custom_command(iterm2.profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
             p.set_command(command)
             custom_dict = p.values
@@ -71,10 +71,14 @@ class Window:
             if not app:
                 return await Window._async_load(connection, ctr.window_id)
             session = app.get_session_by_id(ctr.session_id)
+            if session is None:
+                return None
             window, _tab = app.get_tab_and_window_for_session(session)
+            if window is None:
+                return None
             return window
         else:
-            raise CreateWindowException(
+            raise iterm2.app.CreateWindowException(
                 iterm2.api_pb2.CreateTabResponse.Status.Name(
                     result.create_tab_response.status))
 
@@ -165,7 +169,7 @@ class Window:
         All provided tabs will be inserted in the given order starting at the first positions. Any tabs already belonging to this window not in the list will remain after the provided tabs.
 
         :param tabs: a list of tabs, forming the new set of tabs in this window.
-        :raises: RPCException if something goes wrong.
+        :throws: RPCException if something goes wrong.
 
         .. seealso::
             * Example ":ref:`movetab_example`"
@@ -196,6 +200,8 @@ class Window:
 
         :returns: A newly created tab, or `None` if it could not be created.
 
+        :throws: `~iterm2.app.CreateTabException` if something went wrong.
+
         .. seealso:: Example ":ref:`tmux_example`"
         """
         tmux_window_id = "{}".format(-(self.__number + 1))
@@ -208,6 +214,7 @@ class Window:
                 iterm2.api_pb2.TmuxResponse.Status.Name(response.tmux_response.status))
         tab_id = response.tmux_response.create_window.tab_id
         app = await iterm2.app.async_get_app(self.connection)
+        assert(app)
         return app.get_tab_by_id(tab_id)
 
     async def async_create_tab(
@@ -224,9 +231,9 @@ class Window:
         :param index: The index in the window where the new tab should go (0=first position, etc.)
         :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
 
-        :returns: :class:`Tab`
+        :returns: :class:`Tab` or `None` if the session closed right away.
 
-        :raises: CreateTabException if something goes wrong.
+        :throws: CreateTabException if something goes wrong.
         """
         if command is not None:
             p = iterm2.profile.LocalWriteOnlyProfile()
@@ -246,7 +253,10 @@ class Window:
         if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             session_id = result.create_tab_response.session_id
             app = await iterm2.app.async_get_app(self.connection)
+            assert(app)
             session = app.get_session_by_id(session_id)
+            if not session:
+                None
             _window, tab = app.get_tab_and_window_for_session(session)
             return tab
         else:
@@ -261,7 +271,7 @@ class Window:
 
         :returns: This window's frame. This includes window decoration such as the title bar.
 
-        :raises: :class:`GetPropertyException` if something goes wrong.
+        :throws: :class:`GetPropertyException` if something goes wrong.
         """
 
         response = await iterm2.rpc.async_get_property(self.connection, "frame", self.__window_id)
@@ -280,7 +290,7 @@ class Window:
 
         :param frame: The desired frame.
 
-        :raises: :class:`SetPropertyException` if something goes wrong.
+        :throws: :class:`SetPropertyException` if something goes wrong.
         """
         json_value = json.dumps(frame.dict)
         response = await iterm2.rpc.async_set_property(
@@ -298,7 +308,7 @@ class Window:
 
         :returns: Whether the window is full screen.
 
-        :raises: :class:`GetPropertyException` if something goes wrong.
+        :throws: :class:`GetPropertyException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_property(self.connection, "fullscreen", self.__window_id)
         status = response.get_property_response.status
@@ -314,7 +324,7 @@ class Window:
 
         :param fullscreen: Whether you wish the window to be full screen.
 
-        :raises: :class:`SetPropertyException` if something goes wrong (such as that the fullscreen status could not be changed).
+        :throws: :class:`SetPropertyException` if something goes wrong (such as that the fullscreen status could not be changed).
         """
         json_value = json.dumps(fullscreen)
         response = await iterm2.rpc.async_set_property(
@@ -367,7 +377,7 @@ class Window:
 
         :param name: The name to restore.
 
-        :raises: :class:`~iterm2.arrangement.SavedArrangementException` if the named arrangement does not exist."""
+        :throws: :class:`~iterm2.arrangement.SavedArrangementException` if the named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise iterm2.arrangement.SavedArrangementException(

@@ -287,7 +287,7 @@ class KeystrokeMonitor:
     def __init__(self, connection: iterm2.connection.Connection, session: typing.Union[None, str]=None):
         self.__connection = connection
         self.__session = session
-        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def callback(connection, notification):

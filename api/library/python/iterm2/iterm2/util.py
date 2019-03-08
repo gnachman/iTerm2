@@ -363,7 +363,7 @@ class WindowedCoordRange:
     @property
     def right(self) -> int:
         """The rightmost column allowed, or 0 if unwindowed."""
-        return self.__columnRange.location + self.__coordRange.coolumnRange.length
+        return self.__columnRange.location + self.__columnRange.length
 
     @property
     def left(self) -> int:
