@@ -56,6 +56,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     return instance;
 }
 
+- (void)awakeFromNib {
+    _callsView.textColor = [NSColor textColor];
+}
+
 - (void)makeTextViewHorizontallyScrollable:(NSTextView *)textView {
     [textView.enclosingScrollView setHasHorizontalScroller:YES];
     [textView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
