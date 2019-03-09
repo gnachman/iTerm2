@@ -113,6 +113,57 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @implementation iTermPrefsPanel
 
+- (BOOL)setFrameUsingName:(NSWindowFrameAutosaveName)name {
+    return [self setFrameUsingName:name force:NO];
+}
+
+- (NSString *)userDefaultsKeyForFrameName:(NSString *)name {
+    return [NSString stringWithFormat:@"NoSyncFrame_%@", name];
+}
+
+- (BOOL)setFrameUsingName:(NSWindowFrameAutosaveName)name force:(BOOL)force {
+    NSDictionary *dict = [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]];
+    return [self setFrameFromDict:dict];
+}
+
+- (void)saveFrameUsingName:(NSWindowFrameAutosaveName)name {
+    [[NSUserDefaults standardUserDefaults] setObject:[self dictForFrame:self.frame onScreen:self.screen]
+                                              forKey:[self userDefaultsKeyForFrameName:name]];
+}
+
+- (BOOL)setFrameFromDict:(NSDictionary *)dict {
+    if (!dict[@"topLeft"] || !dict[@"screenFrame"]) {
+        return NO;
+    }
+    const NSPoint topLeft = NSPointFromString(dict[@"topLeft"]);
+    const NSRect screenFrame = NSRectFromString(dict[@"screenFrame"]);
+
+    for (NSScreen *screen in [NSScreen screens]) {
+        if (NSEqualRects(screen.frame, screenFrame)) {
+            NSRect frame = self.frame;
+            frame.origin.x = topLeft.x;
+            frame.origin.y = topLeft.y - frame.size.height;
+            [self setFrame:frame display:NO];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (NSDictionary *)dictForFrame:(NSRect)frame onScreen:(NSScreen *)screen {
+    const NSPoint topLeft = NSMakePoint(frame.origin.x,
+                                        frame.origin.y + frame.size.height);
+    return @{ @"topLeft": NSStringFromPoint(topLeft),
+              @"screenFrame": NSStringFromRect(screen.frame) };
+}
+
+- (NSWindowPersistableFrameDescriptor)stringWithSavedFrame {
+    return nil;
+}
+
+- (void)setFrameFromString:(NSWindowPersistableFrameDescriptor)string {
+}
+
 @end
 
 @interface PreferencePanel() <NSTabViewDelegate>
