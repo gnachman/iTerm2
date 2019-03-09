@@ -18,7 +18,6 @@
 
 static NSString *const iTermAPIAuthorizationControllerSavedAccessSettings = @"iTermAPIAuthorizationControllerSavedAccessSettings";
 NSString *const iTermAPIServerAuthorizationKey = @"iTermAPIServerAuthorizationKey";
-NSString *const iTermAPIServerAuthorizationIsREPL = @"iTermAPIServerAuthorizationIsREPL";
 static NSString *const kAPIAccessAllowed = @"allowed";
 static NSString *const kAPIAccessDate = @"date";
 static NSString *const kAPINextConfirmationDate = @"next confirmation";
@@ -29,7 +28,6 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 @property (nonatomic, readonly) NSString *humanReadableName;
 @property (nonatomic, readonly) NSString *fullCommandOrBundleID;
 @property (nonatomic, readonly) NSString *keyForAuth;
-@property (nonatomic, readonly) BOOL isRepl;
 @property (nonatomic, readonly) NSString *reason;
 @property (nonatomic, readonly) BOOL identified;
 @property (nonatomic, readonly) id identity;
@@ -97,15 +95,6 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 }
 
 @end
-
-static BOOL iTermProcessIDMayBeREPL(pid_t pid) {
-    if (!pid) {
-        return NO;
-    }
-    // The parent of the connecting process should be the REPL we forked.
-    const pid_t parentPID = [iTermLSOF ppidForPid:pid];
-    return [[iTermScriptHistory sharedInstance] processIDIsREPL:parentPID];
-}
 
 @implementation iTermAPIAuthRequest {
     iTermPythonProcessAnalyzer *_analyzer;
@@ -175,7 +164,6 @@ static BOOL iTermProcessIDMayBeREPL(pid_t pid) {
                 }
 
                 _keyForAuth = [escapedIdParts componentsJoinedByString:@" "];
-                _isRepl = _analyzer.argumentParser.repl && iTermProcessIDMayBeREPL(pid);
                 if (idParts.count > 1) {
                     _humanReadableName = [[idParts subarrayFromIndex:1] componentsJoinedByString:@" "];
                 } else {
@@ -195,8 +183,7 @@ static BOOL iTermProcessIDMayBeREPL(pid_t pid) {
 
 - (id)identity {
     assert(_identified);
-    return @{ iTermAPIServerAuthorizationKey: _keyForAuth,
-              iTermAPIServerAuthorizationIsREPL: @(_isRepl) };
+    return @{ iTermAPIServerAuthorizationKey: _keyForAuth };
 }
 
 - (NSArray<NSString *> *)pythonIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
@@ -276,7 +263,7 @@ static BOOL iTermProcessIDMayBeREPL(pid_t pid) {
 }
 
 - (NSString *)key {
-    return [NSString stringWithFormat:@"is_repl=%@,api_key=%@", @(_request.isRepl), _request.keyForAuth];
+    return [NSString stringWithFormat:@"api_key=%@", _request.keyForAuth];
 }
 
 - (id)identity {

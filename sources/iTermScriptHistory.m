@@ -258,18 +258,6 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     }];
 }
 
-- (void)addREPLProcessID:(pid_t)pid {
-    [_replPIDs addObject:@(pid)];
-}
-
-- (void)removeREPLProcessID:(pid_t)pid {
-    [_replPIDs removeObject:@(pid)];
-}
-
-- (BOOL)processIDIsREPL:(pid_t)pid {
-    return [_replPIDs containsObject:@(pid)];
-}
-
 @end
 
 NS_ASSUME_NONNULL_END

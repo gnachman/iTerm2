@@ -2035,21 +2035,10 @@ static BOOL hasBecomeActive = NO;
          command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
          NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
          NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
-         __block BOOL finished = NO;
-         __block pid_t pid = 0;
-         PTYSession *session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                                                         inject:nil
-                                                                                    environment:environment
-                                                                                     completion:^{
-                                                                                         finished = YES;
-                                                                                         if (pid) {
-                                                                                             [[iTermScriptHistory sharedInstance] removeREPLProcessID:pid];
-                                                                                         }
-                                                                                     }];
-         pid = session.shell.pid;
-         if (!finished) {
-             [[iTermScriptHistory sharedInstance] addREPLProcessID:pid];
-         }
+         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                                   inject:nil
+                                                              environment:environment
+                                                               completion:nil];
     }];
 }
 
