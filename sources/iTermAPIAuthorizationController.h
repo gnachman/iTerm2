@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermNotificationCenter.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -46,6 +47,18 @@ typedef NS_ENUM(NSUInteger, iTermAPIAuthorizationSetting) {
 
 // Reset saved state for this requester. Setting will be .Unknown next time.
 - (void)removeSetting;
+
++ (NSDictionary<NSString *, NSString *> *)keyToHumanReadableNameForAllowedPrograms;
++ (void)resetAccessForKey:(NSString *)key;
++ (BOOL)settingForKey:(NSString *)key;
+
+@end
+
+@interface iTermAPIAuthorizationDidChange : iTermBaseNotification
+
++ (instancetype)notification;
++ (void)subscribe:(NSObject *)owner
+            block:(void (^)(iTermBaseNotification * _Nonnull notification))block;
 
 @end
 

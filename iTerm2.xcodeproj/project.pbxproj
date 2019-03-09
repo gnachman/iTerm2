@@ -3022,6 +3022,10 @@
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
+		A6CD8A3B22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */; };
+		A6CD8A3C22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */; };
+		A6CD8A3E22344C78007C5B39 /* iTermAPIPermissionsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A3922344C78007C5B39 /* iTermAPIPermissionsWindowController.m */; };
+		A6CD8A3F22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6CD8A3A22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib */; };
 		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
 		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
 		A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */; };
@@ -5387,6 +5391,10 @@
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
+		A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIPermissionsWindowController.h; sourceTree = "<group>"; };
+		A6CD8A3922344C78007C5B39 /* iTermAPIPermissionsWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAPIPermissionsWindowController.m; sourceTree = "<group>"; };
+		A6CD8A3A22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAPIPermissionsWindowController.xib; sourceTree = "<group>"; };
+		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = proto/Api.pbobjc.h; sourceTree = "<group>"; };
 		A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = proto/Api.pbobjc.m; sourceTree = "<group>"; };
 		A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Any.pbobjc.h; path = ThirdParty/google/protobuf/Any.pbobjc.h; sourceTree = SOURCE_ROOT; };
@@ -6643,6 +6651,9 @@
 				A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */,
 				A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */,
 				A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */,
+				A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */,
+				A6CD8A3922344C78007C5B39 /* iTermAPIPermissionsWindowController.m */,
+				A6CD8A3A22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -7499,6 +7510,7 @@
 				A67875D921D80363005AB938 /* iTermKeyboardHandler.m */,
 				53197E7C220528E40000D95D /* iTermNotificationCenter.h */,
 				53197E7D220528E40000D95D /* iTermNotificationCenter.m */,
+				A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9242,6 +9254,7 @@
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
+				A6CD8A3B22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */,
 				A6AC5D211E9036D70097C0A7 /* iTermURLMark.h in Headers */,
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
@@ -9600,6 +9613,7 @@
 				A60C034E20881E5F00FE2F1F /* iTermAPIHelper.h in Headers */,
 				A667191F1DCE36C3000CE608 /* PSMDarkHighContrastTabStyle.h in Headers */,
 				A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */,
+				A6CD8A3C22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */,
 				A6D4C26621E18CB5009CF11B /* iTermScriptInspector.h in Headers */,
 				A65D3ADB21D163B800384015 /* iTermBacktrace.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
@@ -11279,6 +11293,7 @@
 				A6E7AE80214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A67F6164214395990093940A /* graphic_monitor.png in Resources */,
 				A67F6134214395570093940A /* graphic_gulp.png in Resources */,
+				A6CD8A3F22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib in Resources */,
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
@@ -11866,6 +11881,7 @@
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
+				A6CD8A3E22344C78007C5B39 /* iTermAPIPermissionsWindowController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
