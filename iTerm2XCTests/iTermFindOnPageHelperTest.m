@@ -29,7 +29,8 @@
             withOffset:0
                context:findContext
          numberOfLines:100
-totalScrollbackOverflow:0];
+totalScrollbackOverflow:0
+   scrollToFirstResult:YES];
 }
 
 - (void)testFindRangeOfSearchResults_Random {
@@ -43,7 +44,8 @@ totalScrollbackOverflow:0];
                 withOffset:0
                    context:findContext
              numberOfLines:100
-   totalScrollbackOverflow:0];
+   totalScrollbackOverflow:0
+       scrollToFirstResult:YES];
         int x = 0;
         int n = 1 + rand() % 23;
         NSMutableArray<NSNumber *> *values = [NSMutableArray array];

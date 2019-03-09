@@ -230,7 +230,7 @@
 
 - (NSString *)it_hexEncoded {
     NSMutableString *result = [NSMutableString string];
-    unsigned char *bytes = self.bytes;
+    const unsigned char *bytes = self.bytes;
     for (NSInteger i = 0; i < self.length; i++) {
         unsigned char c = bytes[i];
         [result appendFormat:@"%02x", ((int)c) & 0xff];
