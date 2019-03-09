@@ -3650,7 +3650,7 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
                 return NSEdgeInsetsMake(0, 75 + iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth, 0, 0);
             } else {
-                return NSEdgeInsetsMake(0, 75, 0, 0);
+                return NSEdgeInsetsZero;
             }
 
         case PSMTab_LeftTab:
