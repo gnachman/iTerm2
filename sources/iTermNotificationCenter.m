@@ -6,6 +6,7 @@
 //
 
 #import "iTermNotificationCenter.h"
+#import "iTermNotificationCenter+Protected.h"
 
 #import "DebugLogging.h"
 #import "NSNull+iTerm.h"
@@ -37,10 +38,6 @@ static const char iTermNotificationTokenAssociatedObject;
     [[NSNotificationCenter defaultCenter] removeObserver:_token];
 }
 
-@end
-
-@interface iTermBaseNotification()
-- (instancetype)initPrivate NS_DESIGNATED_INITIALIZER;
 @end
 
 @implementation iTermBaseNotification

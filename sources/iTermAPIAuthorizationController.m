@@ -9,11 +9,13 @@
 
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
+#import "iTermNotificationCenter+Protected.h"
 #import "iTermPythonArgumentParser.h"
 #import "iTermScriptHistory.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 
 static NSString *const iTermAPIAuthorizationControllerSavedAccessSettings = @"iTermAPIAuthorizationControllerSavedAccessSettings";
@@ -239,6 +241,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
                                    heading:@"Reset API Permissions?"
                                     window:nil] == kiTermWarningSelection0) {
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermAPIAuthorizationControllerSavedAccessSettings];
+        [[iTermAPIAuthorizationDidChange notification] post];
     }
 }
 
@@ -251,7 +254,24 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 }
 
 - (NSDictionary *)savedSettings {
+    return [self.class savedSettings];
+}
+
++ (NSDictionary *)savedSettings {
     return [[NSUserDefaults standardUserDefaults] objectForKey:iTermAPIAuthorizationControllerSavedAccessSettings] ?: [NSDictionary dictionary];
+}
+
++ (NSDictionary<NSString *, NSString *> *)keyToHumanReadableNameForAllowedPrograms {
+    return [[self savedSettings] mapValuesWithBlock:^id(id key, NSDictionary *dict) {
+        return [dict[kAPIAccessAllowed] boolValue] ? @"Allowed" : @"Denied";
+    }];
+}
+
++ (void)resetAccessForKey:(NSString *)key {
+    NSMutableDictionary *settings = [[self savedSettings] mutableCopy];
+    [settings removeObjectForKey:key];
+    [[NSUserDefaults standardUserDefaults] setObject:settings forKey:iTermAPIAuthorizationControllerSavedAccessSettings];
+    [[iTermAPIAuthorizationDidChange notification] post];
 }
 
 - (NSString *)identificationFailureReason {
@@ -316,6 +336,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
                             kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:oneMonthInSeconds],
                             kAPIAccessLocalizedName: _request.humanReadableName };
     [[NSUserDefaults standardUserDefaults] setObject:settings forKey:iTermAPIAuthorizationControllerSavedAccessSettings];
+    [[iTermAPIAuthorizationDidChange notification] post];
 }
 
 - (void)removeSetting {
@@ -323,6 +344,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
     NSMutableDictionary *settings = [[self savedSettings] mutableCopy];
     [settings removeObjectForKey:self.key];
     [[NSUserDefaults standardUserDefaults] setObject:settings forKey:iTermAPIAuthorizationControllerSavedAccessSettings];
+    [[iTermAPIAuthorizationDidChange notification] post];
 }
 
 - (NSString *)humanReadableName {
@@ -333,6 +355,18 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 - (NSString *)fullCommandOrBundleID {
     assert(_request.identified);
     return _request.fullCommandOrBundleID;
+}
+
+@end
+
+@implementation iTermAPIAuthorizationDidChange
+
++ (instancetype)notification {
+    return [[self alloc] initPrivate];
+}
+
++ (void)subscribe:(NSObject *)owner block:(void (^)(iTermBaseNotification * _Nonnull))block {
+    [self internalSubscribe:owner withBlock:block];
 }
 
 @end

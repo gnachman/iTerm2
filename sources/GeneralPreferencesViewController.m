@@ -10,6 +10,7 @@
 
 #import "iTermAPIAuthorizationController.h"
 #import "iTermAPIHelper.h"
+#import "iTermAPIPermissionsWindowController.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNotificationCenter.h"
@@ -122,6 +123,8 @@ enum {
     IBOutlet NSButton *_useTmuxProfile;
 
     IBOutlet NSTabView *_tabView;
+
+    iTermAPIPermissionsWindowController *_apiPermissionsWindowController;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -430,7 +433,9 @@ enum {
 
 #pragma mark - Actions
 
-- (IBAction)resetAPIPermissions:(id)sender {
+- (IBAction)editAPIPermissions:(id)sender {
+    _apiPermissionsWindowController = [[iTermAPIPermissionsWindowController alloc] initWithWindowNibName:@"iTermAPIPermissionsWindowController"];
+    [self.view.window beginSheet:_apiPermissionsWindowController completionHandler:^(NSModalResponse returnCode) {}];
     [iTermAPIAuthorizationController resetPermissions];
 }
 
