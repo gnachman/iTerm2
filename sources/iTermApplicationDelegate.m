@@ -59,6 +59,7 @@
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPythonRuntimeDownloader.h"
+#import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
@@ -2021,21 +2022,34 @@ static BOOL hasBecomeActive = NO;
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:nil
                                                                                    requiredToContinue:YES
-                                                                                       withCompletion:^(BOOL ok) {
-        if (!ok) {
-            return;
-        }
-        if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
-            return;
-        }
-        NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
-        NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-        command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
-        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
-        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
-        [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                                  inject:nil
-                                                             environment:environment];
+                                                                                       withCompletion:
+     ^(BOOL ok) {
+         if (!ok) {
+             return;
+         }
+         if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
+             return;
+         }
+         NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
+         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+         NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
+         NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
+         __block BOOL finished = NO;
+         __block pid_t pid = 0;
+         PTYSession *session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                                                         inject:nil
+                                                                                    environment:environment
+                                                                                     completion:^{
+                                                                                         finished = YES;
+                                                                                         if (pid) {
+                                                                                             [[iTermScriptHistory sharedInstance] removeREPLProcessID:pid];
+                                                                                         }
+                                                                                     }];
+         pid = session.shell.pid;
+         if (!finished) {
+             [[iTermScriptHistory sharedInstance] addREPLProcessID:pid];
+         }
     }];
 }
 

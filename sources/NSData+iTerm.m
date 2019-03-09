@@ -13,6 +13,7 @@
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
+#import <CommonCrypto/CommonDigest.h>
 
 @implementation NSData (iTerm)
 
@@ -220,4 +221,20 @@
     return byte == myByte;
 }
 
+- (NSData *)it_sha256 {
+    unsigned char result[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(self.bytes, (CC_LONG)self.length, result);
+    return [NSData dataWithBytes:result
+                          length:CC_SHA256_DIGEST_LENGTH];
+}
+
+- (NSString *)it_hexEncoded {
+    NSMutableString *result = [NSMutableString string];
+    unsigned char *bytes = self.bytes;
+    for (NSInteger i = 0; i < self.length; i++) {
+        unsigned char c = bytes[i];
+        [result appendFormat:@"%02x", ((int)c) & 0xff];
+    }
+    return result;
+}
 @end

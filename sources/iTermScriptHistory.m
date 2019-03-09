@@ -206,6 +206,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 
 @implementation iTermScriptHistory {
     NSMutableArray<iTermScriptHistoryEntry *> *_entries;
+    NSMutableSet<NSNumber *> *_replPIDs;
 }
 
 + (instancetype)sharedInstance {
@@ -222,6 +223,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     if (self) {
         _entries = [NSMutableArray array];
         [_entries addObject:[iTermScriptHistoryEntry globalEntry]];
+        _replPIDs = [NSMutableSet set];
     }
     return self;
 }
@@ -254,6 +256,18 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
         return [NSObject object:entry.fullPath isEqualToObject:fullPath];
     }];
+}
+
+- (void)addREPLProcessID:(pid_t)pid {
+    [_replPIDs addObject:@(pid)];
+}
+
+- (void)removeREPLProcessID:(pid_t)pid {
+    [_replPIDs removeObject:@(pid)];
+}
+
+- (BOOL)processIDIsREPL:(pid_t)pid {
+    return [_replPIDs containsObject:@(pid)];
 }
 
 @end

@@ -1553,21 +1553,21 @@ static iTermController *gSharedInstance;
     }] count];
 }
 
-- (void)openSingleUseWindowWithCommand:(NSString *)command {
-    [self openSingleUseWindowWithCommand:command inject:nil environment:nil completion:nil];
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command {
+    return [self openSingleUseWindowWithCommand:command inject:nil environment:nil completion:nil];
 }
 
-- (void)openSingleUseWindowWithCommand:(NSString *)command
-                                inject:(NSData *)injection
-                           environment:(NSDictionary *)environment {
-    [self openSingleUseWindowWithCommand:command inject:injection environment:environment completion:nil];
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment {
+    return [self openSingleUseWindowWithCommand:command inject:injection environment:environment completion:nil];
 }
 
-- (void)openSingleUseWindowWithCommand:(NSString *)command
-                                inject:(NSData *)injection
-                           environment:(NSDictionary *)environment
-                            completion:(void (^)(void))completion {
-    [self openSingleUseWindowWithCommand:command inject:injection environment:environment pwd:nil options:0 completion:completion];
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment
+                                    completion:(void (^)(void))completion {
+    return [self openSingleUseWindowWithCommand:command inject:injection environment:environment pwd:nil options:0 completion:completion];
 }
 
 - (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command

@@ -61,6 +61,10 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;
 - (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath;
 
+- (void)addREPLProcessID:(pid_t)pid;
+- (void)removeREPLProcessID:(pid_t)pid;
+- (BOOL)processIDIsREPL:(pid_t)pid;
+
 @end
 
 NS_ASSUME_NONNULL_END

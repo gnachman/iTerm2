@@ -7,10 +7,13 @@
 
 #import "iTermAPIAuthorizationController.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermScriptHistory.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 
 static NSString *const iTermAPIAuthorizationControllerSavedAccessSettings = @"iTermAPIAuthorizationControllerSavedAccessSettings";
@@ -36,50 +39,158 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 
 @end
 
-@implementation iTermAPIAuthRequest
+typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
+    iTermPythonProcessAnalyzerResultCocoaApp,
+    iTermPythonProcessAnalyzerResultUnidentifiable,
+    iTermPythonProcessAnalyzerResultPython,
+    iTermPythonProcessAnalyzerResultNotPython
+};
+
+@interface iTermPythonProcessAnalyzer : NSObject
+@property (nonatomic, readonly) NSRunningApplication *app;
+@property (nonatomic, readonly) iTermPythonArgumentParser *argumentParser;
+@property (nonatomic, readonly) iTermPythonProcessAnalyzerResult result;
+@property (nonatomic, readonly) NSString *fullCommandOrBundleID;
+@property (nonatomic, readonly) NSString *execName;
+
++ (instancetype)forProcessID:(pid_t)pid;
+@end
+
+@implementation iTermPythonProcessAnalyzer
+
++ (instancetype)forProcessID:(pid_t)pid {
+    return [[self alloc] initWithProcessID:pid];
+}
 
 - (instancetype)initWithProcessID:(pid_t)pid {
     self = [super init];
     if (self) {
-        NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-        if (app.localizedName && app.bundleIdentifier) {
-            _humanReadableName = [app.localizedName copy];
-            _fullCommandOrBundleID = [app.bundleIdentifier copy];
-            _keyForAuth = [_fullCommandOrBundleID copy];
-        } else {
-            NSString *execName = nil;
-            _fullCommandOrBundleID = [[iTermLSOF commandForProcess:pid execName:&execName] copy];
-            if (!execName || !_fullCommandOrBundleID) {
-                _reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
+        _app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+        if (_app.localizedName && _app.bundleIdentifier) {
+            _result = iTermPythonProcessAnalyzerResultCocoaApp;
+            return self;
+        }
+        NSString *execName = nil;
+        _fullCommandOrBundleID = [[iTermLSOF commandForProcess:pid execName:&execName] copy];
+        _execName = execName;
+        if (!_execName || !_fullCommandOrBundleID) {
+            _result = iTermPythonProcessAnalyzerResultUnidentifiable;
+            return self;
+        }
+
+        NSArray<NSString *> *parts = [_fullCommandOrBundleID componentsInShellCommand];
+        NSString *maybePython = parts.firstObject.lastPathComponent;
+        if (!maybePython) {
+            _result = iTermPythonProcessAnalyzerResultNotPython;
+            return nil;
+        }
+
+        NSArray<NSString *> *pythonNames = @[ @"python", @"python3.6", @"python3.7", @"python3", @"Python" ];
+        if (![pythonNames containsObject:maybePython]) {
+            _result = iTermPythonProcessAnalyzerResultNotPython;
+            return self;
+        }
+        _argumentParser = [[iTermPythonArgumentParser alloc] initWithArgs:parts];
+        _result = iTermPythonProcessAnalyzerResultPython;
+    }
+    return self;
+}
+
+@end
+
+static BOOL iTermProcessIDMayBeREPL(pid_t pid) {
+    if (!pid) {
+        return NO;
+    }
+    // The parent of the connecting process should be the REPL we forked.
+    const pid_t parentPID = [iTermLSOF ppidForPid:pid];
+    return [[iTermScriptHistory sharedInstance] processIDIsREPL:parentPID];
+}
+
+@implementation iTermAPIAuthRequest {
+    iTermPythonProcessAnalyzer *_analyzer;
+}
+
+- (instancetype)initWithProcessID:(pid_t)pid {
+    self = [super init];
+    if (self) {
+        _analyzer = [iTermPythonProcessAnalyzer forProcessID:pid];
+        assert(_analyzer);
+        _identified = (_analyzer.result != iTermPythonProcessAnalyzerResultUnidentifiable);
+
+        // Compute the file ID, which gives a unique identifier to the executable. It combines the
+        // file device ID, inode number, and hash of the binary. This makes it hard to keep the same
+        // binary as the user has already approvide but make it do something different.
+        NSString *fileId = nil;
+        NSString *const executable = _analyzer.execName;
+        if (executable) {
+            NSError *error = nil;
+            NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:executable
+                                                                                        error:&error];
+            NSNumber *deviceId = attributes[NSFileSystemNumber];
+            NSNumber *inode = attributes[NSFileSystemFileNumber];
+            if (error || !deviceId || !inode) {
+                _reason = [NSString stringWithFormat:@"Could not stat %@: %@", _analyzer.fullCommandOrBundleID, error.localizedDescription];
+                _identified = NO;
                 return self;
             }
+            NSData *data = [NSData dataWithContentsOfFile:executable];
+            if (!data) {
+                _reason = [NSString stringWithFormat:@"Could not read executable %@", executable];
+                _identified = NO;
+                return self;
+            }
+            fileId = [NSString stringWithFormat:@"%@:%@:%@", deviceId, inode, [[data it_sha256] it_hexEncoded]];
+        }
 
-            NSArray<NSString *> *parts = [_fullCommandOrBundleID componentsInShellCommand];
-            NSString *maybePython = parts.firstObject.lastPathComponent;
+        switch (_analyzer.result) {
+            case iTermPythonProcessAnalyzerResultUnidentifiable:
+                _reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
+                break;
 
-            if ([maybePython isEqualToString:@"python"] ||
-                [maybePython isEqualToString:@"python3.6"] ||
-                [maybePython isEqualToString:@"python3"] ||
-                [maybePython isEqualToString:@"Python"]) {
-                iTermPythonArgumentParser *pythonArgumentParser = [[iTermPythonArgumentParser alloc] initWithArgs:parts];
-                NSArray<NSString *> *idParts = [self pythonIdentifierArrayWithArgParser:pythonArgumentParser];
-                NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:pythonArgumentParser];
+            case iTermPythonProcessAnalyzerResultCocoaApp:
+                _humanReadableName = [_analyzer.app.localizedName copy];
+                _keyForAuth = [_analyzer.fullCommandOrBundleID copy];
+                break;
+
+            case iTermPythonProcessAnalyzerResultNotPython:
+                _humanReadableName = _analyzer.execName.lastPathComponent;
+                _keyForAuth = _analyzer.execName;
+                break;
+
+            case iTermPythonProcessAnalyzerResultPython: {
+                NSArray<NSString *> *idParts = [self pythonIdentifierArrayWithArgParser:_analyzer.argumentParser];
+                NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:_analyzer.argumentParser];
+
+                NSString *executable = _analyzer.execName;
+                NSError *error = nil;
+                NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:executable
+                                                                                            error:&error];
+                NSNumber *deviceId = attributes[NSFileSystemNumber];
+                NSNumber *inode = attributes[NSFileSystemFileNumber];
+                if (error || !deviceId || !inode) {
+                    _reason = [NSString stringWithFormat:@"Could not stat %@: %@", _analyzer.fullCommandOrBundleID, error.localizedDescription];
+                    _identified = NO;
+                    break;
+                }
 
                 _keyForAuth = [escapedIdParts componentsJoinedByString:@" "];
-                _isRepl = pythonArgumentParser.repl;
+                _isRepl = _analyzer.argumentParser.repl && iTermProcessIDMayBeREPL(pid);
                 if (idParts.count > 1) {
                     _humanReadableName = [[idParts subarrayFromIndex:1] componentsJoinedByString:@" "];
                 } else {
                     _humanReadableName = [idParts[0] lastPathComponent];
                 }
-            } else {
-                _humanReadableName = execName.lastPathComponent;
-                _keyForAuth = execName;
+                break;
             }
         }
-        _identified = YES;
+        _keyForAuth = [NSString stringWithFormat:@"%@:%@", fileId, _keyForAuth];
     }
     return self;
+}
+
+- (NSString *)fullCommandOrBundleID {
+    return _analyzer.fullCommandOrBundleID;
 }
 
 - (id)identity {

@@ -183,14 +183,14 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
     iTermSingleUseWindowOptionsInitiallyBuried = (1 << 2),
 };
 
-- (void)openSingleUseWindowWithCommand:(NSString *)command;
-- (void)openSingleUseWindowWithCommand:(NSString *)command
-                                inject:(NSData *)injection
-                           environment:(NSDictionary *)environment;
-- (void)openSingleUseWindowWithCommand:(NSString *)command
-                                inject:(NSData *)injection
-                           environment:(NSDictionary *)environment
-                            completion:(void (^)(void))completion;
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command;
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment;
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment
+                                    completion:(void (^)(void))completion;
 - (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
                                         inject:(NSData *)injection
                                    environment:(NSDictionary *)environment

@@ -39,5 +39,7 @@
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
 - (id)it_unarchivedObject;
 - (BOOL)isEqualToByte:(unsigned char)byte;
+- (NSData *)it_sha256;
+- (NSString *)it_hexEncoded;
 
 @end
