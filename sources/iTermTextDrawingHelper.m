@@ -588,6 +588,8 @@ typedef struct iTermTextColorContext {
         MAX(0, [iTermAdvancedSettingsModel terminalVMargin] - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
 
     topMarginRect.size.height = [iTermAdvancedSettingsModel terminalVMargin];
+    [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
+                                   blendDefaultBackground:YES];
 
     if (_showStripes) {
         [self drawStripesInRect:topMarginRect];
