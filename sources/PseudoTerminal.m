@@ -3650,7 +3650,12 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
                 return NSEdgeInsetsMake(0, 75 + iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth, 0, 0);
             } else {
-                return NSEdgeInsetsZero;
+                if (@available(macOS 10.14, *)) {
+                    // Make room for stoplight buttons when there is not tab title.
+                    return NSEdgeInsetsMake(0, 75, 0, 0);
+                } else {
+                    return NSEdgeInsetsZero;
+                }
             }
 
         case PSMTab_LeftTab:
