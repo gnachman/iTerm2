@@ -17,6 +17,12 @@
 
 #import <ColorPicker/ColorPicker.h>
 
+@interface iTermPreferencesInnerTabContainerView : NSView
+@end
+
+@implementation iTermPreferencesInnerTabContainerView
+@end
+
 static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
 
 // key for userInfo dictionary of kPreferenceDidChangeFromOtherPanel notification having

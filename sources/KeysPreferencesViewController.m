@@ -48,6 +48,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSButton *_emulateUSKeyboard;
 
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
+
+    IBOutlet NSTabView *_tabView;
 }
 
 - (void)dealloc {
@@ -467,6 +469,14 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (NSTabView *)tabView {
+    return _tabView;
+}
+
+- (CGFloat)minimumWidth {
+    return 468;
 }
 
 @end
