@@ -3640,22 +3640,38 @@ ITERM_WEAKLY_REFERENCEABLE
                 return NSEdgeInsetsZero;
             }
         }
+        return [self tabBarInsetsForCompactWindow];
     } else {
         if (self.anyFullScreen || togglingLionFullScreen_) {
             return NSEdgeInsetsZero;
         }
+        return [self tabBarInsetsForNonFullscreenWindow];
     }
+}
+
+- (NSEdgeInsets)tabBarInsetsForNonFullscreenWindow NS_DEPRECATED_MAC(10_12, 10_14) {
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab:
+            return NSEdgeInsetsZero;
+
+        case PSMTab_LeftTab:
+            return NSEdgeInsetsMake(24, 0, 0, 0);
+
+        case PSMTab_BottomTab:
+            return NSEdgeInsetsZero;
+    }
+    assert(false);
+    return NSEdgeInsetsZero;
+}
+
+- (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
                 return NSEdgeInsetsMake(0, 75 + iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth, 0, 0);
             } else {
-                if (@available(macOS 10.14, *)) {
-                    // Make room for stoplight buttons when there is not tab title.
-                    return NSEdgeInsetsMake(0, 75, 0, 0);
-                } else {
-                    return NSEdgeInsetsZero;
-                }
+                // Make room for stoplight buttons when there is not tab title.
+                return NSEdgeInsetsMake(0, 75, 0, 0);
             }
 
         case PSMTab_LeftTab:
