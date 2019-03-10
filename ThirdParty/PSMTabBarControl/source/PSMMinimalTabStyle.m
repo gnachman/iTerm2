@@ -222,12 +222,6 @@
             insets.bottom = 1.0;
             insets.top = 0.5;
         }
-    } else if (selected) {
-        if (horizontalOrientation) {
-            drawFrame = YES;
-            insets.left = 0.5;
-            insets.top = 0.5;
-        }
     }
     if (drawFrame) {
         [[self backgroundColorSelected:NO highlightAmount:0] set];
