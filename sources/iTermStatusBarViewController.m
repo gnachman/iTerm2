@@ -12,6 +12,7 @@
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
+#import "iTermStatusBarPlaceholderComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarView.h"
 #import "NSArray+iTerm.h"
@@ -231,6 +232,12 @@ const CGFloat iTermStatusBarHeight = 21;
         [components addObject:spring];
         [components addObject:_temporaryRightComponent];
     }
+    if (!components.count) {
+        NSDictionary *placeholderConfiguration =
+            @{iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue: _layout.advancedConfiguration.dictionaryValue };
+        [components addObject:[[iTermStatusBarPlaceholderComponent alloc] initWithConfiguration:placeholderConfiguration
+                                                                                          scope:nil]];
+    }
     for (id<iTermStatusBarComponent> component in components) {
         iTermStatusBarContainerView *view = [self containerViewForComponent:component];
         if (view) {
@@ -311,6 +318,10 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
     [self.delegate statusBarWriteString:string];
+}
+
+- (void)statusBarComponentOpenStatusBarPreferences:(id<iTermStatusBarComponent>)component {
+    [self.delegate statusBarOpenPreferencesToComponent:nil];
 }
 
 #pragma mark - iTermStatusBarContainerViewDelegate

@@ -3026,6 +3026,8 @@
 		A6CD8A3C22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */; };
 		A6CD8A3E22344C78007C5B39 /* iTermAPIPermissionsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A3922344C78007C5B39 /* iTermAPIPermissionsWindowController.m */; };
 		A6CD8A3F22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6CD8A3A22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib */; };
+		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
+		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
 		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
 		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
 		A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */; };
@@ -5395,6 +5397,8 @@
 		A6CD8A3922344C78007C5B39 /* iTermAPIPermissionsWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAPIPermissionsWindowController.m; sourceTree = "<group>"; };
 		A6CD8A3A22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAPIPermissionsWindowController.xib; sourceTree = "<group>"; };
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
+		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
+		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
 		A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = proto/Api.pbobjc.h; sourceTree = "<group>"; };
 		A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = proto/Api.pbobjc.m; sourceTree = "<group>"; };
 		A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Any.pbobjc.h; path = ThirdParty/google/protobuf/Any.pbobjc.h; sourceTree = SOURCE_ROOT; };
@@ -7410,6 +7414,8 @@
 				5365207421433F00003C58FD /* iTermGitPollWorker.m */,
 				5365206F21433ED2003C58FD /* iTermGitState.h */,
 				5365207021433ED2003C58FD /* iTermGitState.m */,
+				A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */,
+				A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -9543,6 +9549,7 @@
 				A667190C1DCE36C3000CE608 /* iTermWeakReference.h in Headers */,
 				A6BC9B1E214A2AE900F50C09 /* iTermVariableReference.h in Headers */,
 				530AB8AB20B2013000D2AA08 /* iTermExpressionParser.h in Headers */,
+				A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */,
 				531E71F022290BA000915960 /* iTermExpressionEvaluator.h in Headers */,
 				A6153D5421F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h in Headers */,
 				A65D3AE221D16FE200384015 /* iTermBacktraceFrame.h in Headers */,
@@ -12037,6 +12044,7 @@
 				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
+				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,
 				A65429BB20CE3C9F00CE71B1 /* iTermExpressionParser.m in Sources */,
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,

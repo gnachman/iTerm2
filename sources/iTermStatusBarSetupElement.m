@@ -155,11 +155,13 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
 }
 
-
 - (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component {
     return NO;
 }
 
+- (void)statusBarComponentOpenStatusBarPreferences:(id<iTermStatusBarComponent>)component {
+    assert(NO);
+}
 
 @end
 
