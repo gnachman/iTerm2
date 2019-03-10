@@ -89,7 +89,8 @@ static NSString *const kStackKey = @"Profile Stack";
 
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
-               path:(nullable NSString *)path {
+               path:(nullable NSString *)path
+                job:(nullable NSString *)job {
     APSLog(@"APS: hostname=%@, username=%@, path=%@", hostname, username, path);
     BOOL sticky = NO;
 
@@ -97,12 +98,14 @@ static NSString *const kStackKey = @"Profile Stack";
     double scoreForCurrentProfile = [self highestScoreForProfile:currentProfile
                                                         hostname:hostname
                                                         username:username
-                                                            path:path];
+                                                            path:path
+                                                             job:job];
     double scoreForTopmostMatchingSavedProfile = 0;
     iTermSavedProfile *topmostMatchingSavedProfile =
         [[[self topmostSavedProfileMatchingHostname:hostname
                                            username:username
                                                path:path
+                                                job:job
                                               score:&scoreForTopmostMatchingSavedProfile] retain] autorelease];
     APSLog(@"Score for current profile %@ is %f. Topmost matching profile is %@ with score of %f",
            currentProfile[KEY_NAME],
@@ -125,6 +128,7 @@ static NSString *const kStackKey = @"Profile Stack";
         Profile *highestScoringProfile = [self highestScoringProfileForHostname:hostname
                                                                        username:username
                                                                            path:path
+                                                                            job:job
                                                                          sticky:&sticky
                                                                           score:&scoreOfHighestScoringProfile];
         if (highestScoringProfile && ![highestScoringProfile isEqualToProfile:currentProfile]) {
@@ -183,6 +187,7 @@ static NSString *const kStackKey = @"Profile Stack";
 - (nullable Profile *)highestScoringProfileForHostname:(NSString *)hostname
                                               username:(NSString *)username
                                                   path:(NSString *)path
+                                                   job:(NSString *)job
                                                 sticky:(BOOL *)sticky
                                                  score:(double *)scorePtr {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
@@ -201,7 +206,7 @@ static NSString *const kStackKey = @"Profile Stack";
 
     for (NSString *ruleString in ruleToProfileMap) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path];
+        double score = [rule scoreForHostname:hostname username:username path:path job:job];
         if (score > bestScore) {
             bestScore = score;
             bestProfile = ruleToProfileMap[ruleString];
@@ -234,11 +239,12 @@ static NSString *const kStackKey = @"Profile Stack";
 - (double)highestScoreForProfile:(Profile *)candidate
                         hostname:(NSString *)hostname
                         username:(NSString *)username
-                            path:(NSString *)path {
+                            path:(NSString *)path
+                             job:(NSString *)job {
     double highestScore = 0;
     for (NSString *ruleString in candidate[KEY_BOUND_HOSTS]) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path];
+        double score = [rule scoreForHostname:hostname username:username path:path job:job];
         highestScore = MAX(highestScore, score);
     }
     return highestScore;
@@ -249,9 +255,10 @@ static NSString *const kStackKey = @"Profile Stack";
 - (nullable iTermSavedProfile *)topmostSavedProfileMatchingHostname:(NSString *)hostname
                                                            username:(NSString *)username
                                                                path:(NSString *)path
+                                                                job:(NSString *)job
                                                               score:(double *)scorePtr {
     for (iTermSavedProfile *savedProfile in [_profileStack reverseObjectEnumerator]) {
-        double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path];
+        double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path job:job];
         if (score > 0) {
             if (scorePtr) {
                 *scorePtr = score;

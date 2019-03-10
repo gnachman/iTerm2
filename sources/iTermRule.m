@@ -8,11 +8,13 @@
 
 #import "iTermRule.h"
 #import "NSStringITerm.h"
+#import "RegexKitLite.h"
 
 @interface iTermRule()
 @property(nonatomic, copy) NSString *username;
 @property(nonatomic, copy) NSString *hostname;
 @property(nonatomic, copy) NSString *path;
+@property(nonatomic, copy) NSString *job;
 @property(nonatomic, readwrite) BOOL sticky;
 @end
 
@@ -28,6 +30,14 @@
     // username@*:path
     // hostname:path
     // /path
+    // &job
+    // hostname&job
+    // username@&job
+    // username@hostname&job
+    // username@hostname:path&job
+    // username@*:path&job
+    // hostname:path&job
+    // /path&job
 
     NSString *username = nil;
     NSString *hostname = nil;
@@ -38,6 +48,14 @@
         sticky = YES;
         string = [string substringFromIndex:1];
     }
+
+    NSInteger ampersand = [string rangeOfString:@"&"].location;
+    NSString *job = nil;
+    if (ampersand != NSNotFound) {
+        job = [string substringFromIndex:ampersand + 1];
+        string = [string substringToIndex:ampersand];
+    }
+
     NSUInteger atSign = [string rangeOfString:@"@"].location;
     NSUInteger colon = [string rangeOfString:@":"].location;
 
@@ -77,6 +95,7 @@
     rule.hostname = hostname;
     rule.path = path;
     rule.sticky = sticky;
+    rule.job = job;
     return rule;
 }
 
@@ -88,8 +107,8 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ path=%@>",
-            [self class], self, self.hostname, self.username, self.path];
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ path=%@ job=%@>",
+            [self class], self, self.hostname, self.username, self.path, self.job];
 }
 
 // This is a monotonically increasing function whose range is [0, 1) for the domain of nonnegative
@@ -102,16 +121,24 @@
 
 - (double)scoreForHostname:(NSString *)hostname
                   username:(NSString *)username
-                      path:(NSString *)path {
-    const int kHostExactMatchScore = 8;
-    const int kHostPartialMatchScore = 4;
-
+                      path:(NSString *)path
+                       job:(NSString *)job {
+    const int kHostExactMatchScore = 16;
+    const int kHostPartialMatchScore = 8;
+    const int kJobMatchScore = 4;
     const int kUserExactMatchScore = 2;
 
     const int kPathExactMatchScore = 1;
     const int kPathPartialMatchScore = 0;
 
     double score = 0;
+
+    if (self.job) {
+        if (![job stringMatchesGlobPattern:self.job caseSensitive:YES]) {
+            return 0;
+        }
+        score += kJobMatchScore;
+    }
 
     if (self.hostname != nil) {
         NSRange wildcardPos = [self.hostname rangeOfString:@"*"];

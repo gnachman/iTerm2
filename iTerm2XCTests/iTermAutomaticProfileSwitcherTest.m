@@ -95,6 +95,14 @@
     return @{ KEY_NAME: @"path=/*", KEY_GUID: @"15", KEY_BOUND_HOSTS: @[ @"/*" ] };
 }
 
+- (Profile *)profileJobX {
+    return @{ KEY_NAME: @"job=x", KEY_GUID: @"16", KEY_BOUND_HOSTS: @[ @"&x" ] };
+}
+
+- (Profile *)profileJobY {
+    return @{ KEY_NAME: @"job=y", KEY_GUID: @"17", KEY_BOUND_HOSTS: @[ @"&y" ] };
+}
+
 - (void)setUp {
     [super setUp];
     _callsToLoadProfile = 0;
@@ -117,80 +125,94 @@
 - (void)testSwitchesOnHostName {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostA, self.profileHostB ];
-    [_aps setHostname:@"b" username:@"whatever" path:@"whatever"];
+    [_aps setHostname:@"b" username:@"whatever" path:@"whatever" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostB]);
 }
 
 - (void)testSwitchesOnUserName {
     _profile = self.profileUserX;
     _allProfiles = @[ self.profileUserX, self.profileUserY ];
-    [_aps setHostname:@"whatever" username:@"y" path:@"whatever"];
+    [_aps setHostname:@"whatever" username:@"y" path:@"whatever" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileUserY]);
 }
 
 - (void)testSwitchesOnPath {
     _profile = self.profilePathDir1;
     _allProfiles = @[ self.profilePathDir1, self.profilePathDir2 ];
-    [_aps setHostname:@"whatever" username:@"whatever" path:@"/dir2"];
+    [_aps setHostname:@"whatever" username:@"whatever" path:@"/dir2" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profilePathDir2]);
 }
 
 - (void)testSwitchesOnWildcard {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostA, self.profileHostAllDotCom ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostAllDotCom]);
 }
 
+- (void)testSwitchesOnJob {
+    _profile = self.profileJobX;
+    _allProfiles = @[ self.profileJobX, self.profileJobY ];
+    [_aps setHostname:@"whatever" username:@"whatever" path:@"whatever" job:@"y"];
+    XCTAssert([_profile isEqualToProfile:self.profileJobY]);
+}
+
 #pragma mark Priority is correct
-// Host > User > Path
+// Host > Job > User > Path
 
 - (void)testUsernameHostnamePathOutranksUsernameHostname {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileUserGeorgeHostItermPathHome, self.profileUserGeorgeHostIterm ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileUserGeorgeHostItermPathHome]);
 }
 
 - (void)testUsernameHostnameOutranksUsernamePath {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileUserGeorgeHostIterm, self.profileUserGeorgePathHome ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileUserGeorgeHostIterm]);
+}
+
+- (void)testJobOutranksUsernamePath {
+    _profile = self.profileHostA;
+    _allProfiles = @[ self.profileJobX, self.profileUserGeorgePathHome ];
+    [_aps setHostname:@"whatever" username:@"george" path:@"/home" job:@"x"];
+    XCTAssert([_profile isEqualToProfile:self.profileJobX]);
 }
 
 - (void)testHostnamePathOutranksUsernamePath {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostItermPathHome, self.profileUserGeorgePathHome ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostItermPathHome]);
 }
 
 - (void)testHostnamePathOutranksHostname {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostItermPathHome, self.profileHostIterm ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostItermPathHome]);
 }
 
 - (void)testHostnameOutranksUsername {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostIterm, self.profileUserGeorge ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostIterm]);
 }
 
 - (void)testUsernameOutranksPath {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileUserGeorge, self.profilePathHome ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileUserGeorge]);
 }
 
 - (void)testExactHostnameOutranksWildcard {
     _profile = self.profileHostA;
     _allProfiles = @[ self.profileHostIterm, self.profileHostAllDotCom ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/home" job:@"whatever"];
     XCTAssert([_profile isEqualToProfile:self.profileHostIterm]);
 }
 
@@ -205,17 +227,20 @@
 
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/"];
+                 path:@"/"
+                  job:@"job"];
     XCTAssert([_profile isEqualToProfile:[self profileAllPaths]]);
 
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/dir1/foo"];
+                 path:@"/dir1/foo"
+                  job:@"job"];
     XCTAssert([_profile isEqualToProfile:[self profilePathDir1AndSubs]]);
 
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/dir1/foo/temp"];
+                 path:@"/dir1/foo/temp"
+                  job:@"job"];
     XCTAssert([_profile isEqualToProfile:[self profilePathDir1AndSubs]]);
 }
 
@@ -227,15 +252,18 @@
                       [self profileUserGeorgeHostItermPathHome] ];
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"bogus path"];
+                 path:@"bogus path"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/home"];
+                 path:@"/home"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com, george@iterm2.com:/home
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"bogus path"];
+                 path:@"bogus path"
+                  job:@"job"];
     // If we didn't walk the stack all the way back up we should be on george@iterm2.com
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostIterm]]);
 }
@@ -244,7 +272,7 @@
 - (void)testDontChangeProfileIfSame {
     _profile = [self profileHostIterm];
     _allProfiles = @[ [self profileHostIterm], [self profilePathDir1] ];
-    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/"];
+    [_aps setHostname:@"iterm2.com" username:@"george" path:@"/" job:@"job"];
     XCTAssertEqual(0, _callsToLoadProfile);
 }
 
@@ -256,15 +284,18 @@
                       [self profileUserGeorgeHostItermPathHome] ];
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"bogus path"];
+                 path:@"bogus path"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com
     [_aps setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/home"];
+                 path:@"/home"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com, george@iterm2.com:/home
     [_aps setHostname:@"qwerty"
              username:@"uiop"
-                 path:@"asdf"];
+                 path:@"asdf"
+                  job:@"job"];
     // Revert to initial profile.
     XCTAssert([_profile isEqualToProfile:[self profileHostIterm]]);
 }
@@ -285,25 +316,28 @@
                       [self profileUserGeorgeHostItermPathHome] ];
     [aps2 setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"bogus path"];
+                 path:@"bogus path"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostIterm]]);
 
     [aps2 setHostname:@"iterm2.com"
              username:@"george"
-                 path:@"/home"];
+                 path:@"/home"
+                  job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com, george@iterm2.com:/home
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostItermPathHome]]);
 
     // Pop one level
-    [aps2 setHostname:@"iterm2.com" username:@"george" path:@"asdf"];
+    [aps2 setHostname:@"iterm2.com" username:@"george" path:@"asdf" job:@"job"];
     // stack is now: iterm2.com, george@iterm2.com
     XCTAssert([_profile isEqualToProfile:[self profileUserGeorgeHostIterm]]);
 
     // Back to initial profile
     [aps2 setHostname:@"qwerty"
              username:@"uiop"
-                 path:@"asdf"];
+                 path:@"asdf"
+                  job:@"job"];
     // stack is now: iterm2.com
     XCTAssert([_profile isEqualToProfile:[self profileHostIterm]]);
 }

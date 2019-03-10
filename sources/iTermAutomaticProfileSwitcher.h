@@ -53,7 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Call this when the hostname, username, or path changes.
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
-               path:(nullable NSString *)path;
+               path:(nullable NSString *)path
+                job:(nullable NSString *)job;
 
 @end
 

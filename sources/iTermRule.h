@@ -12,11 +12,13 @@
 @property(nonatomic, readonly) NSString *username;
 @property(nonatomic, readonly) NSString *hostname;
 @property(nonatomic, readonly) NSString *path;
+@property(nonatomic, readonly) NSString *job;
 @property(nonatomic, readonly, getter=isSticky) BOOL sticky;
 
 + (instancetype)ruleWithString:(NSString *)string;
 - (double)scoreForHostname:(NSString *)hostname
                   username:(NSString *)username
-                      path:(NSString *)path;
+                      path:(NSString *)path
+                       job:(NSString *)job;
 
 @end

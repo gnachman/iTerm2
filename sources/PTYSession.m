@@ -4533,6 +4533,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_exited && _shell.pid > 0) {
         [self.variablesScope setValue:@(_shell.pid) forVariableNamed:iTermVariableKeySessionChildPid];
     }
+
+    [self tryAutoProfileSwitchWithHostname:self.variablesScope.hostname
+                                  username:self.variablesScope.username
+                                      path:self.variablesScope.path
+                                       job:jobName];
 }
 
 - (void)refresh {
@@ -9125,7 +9130,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
-    [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
+    [self tryAutoProfileSwitchWithHostname:host.hostname
+                                  username:host.username
+                                      path:path
+                                       job:self.variablesScope.jobName];
 
     if (hadHost) {
         [self maybeResetTerminalStateOnHostChange];
@@ -9292,8 +9300,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
                                 username:(NSString *)username
-                                    path:(NSString *)path {
-    [_automaticProfileSwitcher setHostname:hostname username:username path:path];
+                                    path:(NSString *)path
+                                     job:(NSString *)job {
+    [_automaticProfileSwitcher setHostname:hostname username:username path:path job:job];
 }
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
@@ -9303,7 +9312,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
-                                      path:newPath];
+                                      path:newPath
+                                       job:self.variablesScope.jobName];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 }
 
