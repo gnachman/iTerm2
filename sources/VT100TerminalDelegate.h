@@ -429,5 +429,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalSoftAlternateScreenModeDidChange;
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp;
+- (void)terminalAppendSixelData:(NSData *)sixelData;
 
 @end

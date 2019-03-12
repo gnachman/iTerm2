@@ -2099,6 +2099,11 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
+
+        case DCS_SIXEL:
+            [delegate_ terminalAppendSixelData:token.savedData];
+            break;
+
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;

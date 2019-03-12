@@ -167,6 +167,7 @@ typedef enum {
     // https://gitlab.com/gnachman/iterm2/wikis/synchronized-updates-spec
     DCS_BEGIN_SYNCHRONIZED_UPDATE,
     DCS_END_SYNCHRONIZED_UPDATE,
+    DCS_SIXEL,
 
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,
@@ -224,7 +225,7 @@ typedef struct {
 // For VT100_STRING
 @property(nonatomic, retain) NSString *string;
 
-// For saved data (when copying to clipboard)
+// For saved data (when copying to clipboard) or sixel payload.
 @property(nonatomic, retain) NSData *savedData;
 
 // For XTERMCC_SET_KVP.

@@ -100,7 +100,7 @@ NS_INLINE void iTermParserBacktrack(iTermParserContext *context) {
 }
 
 NS_INLINE int iTermParserNumberOfBytesUntilCharacter(iTermParserContext *context, char c) {
-    unsigned char *pointer = memchr(context->datap, '\n', context->datalen);
+    unsigned char *pointer = memchr(context->datap, c, context->datalen);
     if (!pointer) {
         return -1;
     } else {

@@ -20,6 +20,7 @@
 #import "VT100DCSParser.h"
 #import "DebugLogging.h"
 #import "NSStringITerm.h"
+#import "VT100SixelParser.h"
 #import "VT100StateMachine.h"
 #import "VT100TmuxParser.h"
 
@@ -423,6 +424,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         if (_hook && !_hookFinished) {
             DLog(@"Sending input to hook %@", _hook);
             _hookFinished = [_hook handleInput:context token:result];
+            if (_hookFinished) {
+                [self unhook];
+            }
         } else {
             [_stateMachine handleCharacter:iTermParserConsume(context)];
             if ([_stateMachine.currentState.identifier isEqual:@(kVT100DCSStatePassthrough)] &&
@@ -448,23 +452,40 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 }
 
 - (void)hook {
-    if ([self compactSequence] == MAKE_COMPACT_SEQUENCE(0, 0, 'p') &&
-        [[self parameters] isEqual:@[ @"1000" ]]) {
-        VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
-        if (token) {
-            token->type = DCS_TMUX_HOOK;
-            _uniqueID = [[[NSUUID UUID] UUIDString] copy];
-            token.string = _uniqueID;
-        }
+    switch ([self compactSequence]) {
+    case MAKE_COMPACT_SEQUENCE(0, 0, 'p'):
+        if ([[self parameters] isEqual:@[ @"1000" ]]) {
+            VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
+            if (token) {
+                token->type = DCS_TMUX_HOOK;
+                _uniqueID = [[[NSUUID UUID] UUIDString] copy];
+                token.string = _uniqueID;
+            }
 
-        _hook = [[VT100TmuxParser alloc] init];
-        _hookFinished = NO;
+            _hook = [[VT100TmuxParser alloc] init];
+            _hookFinished = NO;
+        }
+        break;
+
+        case MAKE_COMPACT_SEQUENCE(0, 0, 'q'): {
+            VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
+            if (token) {
+                token->type = VT100_SKIP;
+                _uniqueID = [[[NSUUID UUID] UUIDString] copy];
+                token.string = _uniqueID;
+            }
+
+            _hook = [[VT100SixelParser alloc] initWithParameters:[self parameters]];
+            _hookFinished = NO;
+        }
     }
 }
 
 - (void)unhook {
     _hook = nil;
     _uniqueID = nil;
+    [_parameterString deleteCharactersInRange:NSMakeRange(0, _parameterString.length)];
+    _stateMachine.currentState = _stateMachine.groundState;
 }
 
 // Force the ground state. Used when force-quitting tmux mode.
@@ -519,6 +540,11 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                 [self unhook];
                 token->type = VT100_SKIP;
             }
+            break;
+
+        case MAKE_COMPACT_SEQUENCE(0, 0, 'q'):
+            [self unhook];
+            token->type = VT100_SKIP;
             break;
 
         case MAKE_COMPACT_SEQUENCE(0, 0, 't'):

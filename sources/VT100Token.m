@@ -195,7 +195,8 @@
                           @(TMUX_EXIT):                       @"TMUX_EXIT",
                           @(DCS_TMUX_CODE_WRAP):              @"DCS_TMUX_CODE_WRAP",
                           @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP",
-                          @(DCS_REQUEST_TERMCAP_TERMINFO):    @"DCS_REQUEST_TERMCAP_TERMINFO", };
+                          @(DCS_REQUEST_TERMCAP_TERMINFO):    @"DCS_REQUEST_TERMCAP_TERMINFO",
+                          @(DCS_SIXEL):                       @"DCS_SIXEL" };
     NSString *name = map[@(type)];
     if (name) {
         return name;

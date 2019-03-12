@@ -3896,6 +3896,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addURLMarkAtLineAfterCursorWithCode:code];
 }
 
+- (void)terminalAppendSixelData:(NSData *)data {
+    [self appendImageAtCursorWithName:@"Sixel Image"
+                                width:0
+                                units:kVT100TerminalUnitsAuto
+                               height:0
+                                units:kVT100TerminalUnitsAuto
+                  preserveAspectRatio:YES
+                                inset:NSEdgeInsetsZero
+                                image:nil
+                                 data:data];
+}
+
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
         DLog(@"Inline file received");

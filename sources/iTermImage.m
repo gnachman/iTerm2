@@ -11,6 +11,7 @@
 #import "iTermImageDecoderDriver.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "sixel.h"
 
 static const CGFloat kMaxDimension = 10000;
 
@@ -25,9 +26,9 @@ static const CGFloat kMaxDimension = 10000;
 #endif
 
 @interface iTermImage()
-@property(nonatomic, retain) NSMutableArray<NSNumber *> *delays;
+@property(nonatomic, strong) NSMutableArray<NSNumber *> *delays;
 @property(nonatomic, readwrite) NSSize size;
-@property(nonatomic, retain) NSMutableArray<NSImage *> *images;
+@property(nonatomic, strong) NSMutableArray<NSImage *> *images;
 @end
 
 #if DECODE_IMAGES_IN_PROCESS
@@ -36,7 +37,7 @@ static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
     if (properties) {
         NSDictionary *gifProperties = (NSDictionary *)CFDictionaryGetValue(properties,
                                                                            kCGImagePropertyGIFDictionary);
-        gifProperties = [[gifProperties copy] autorelease];
+        gifProperties = [gifProperties copy];
         CFRelease(properties);
         return gifProperties;
     } else {
@@ -68,24 +69,88 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     iTermImage *image = [[iTermImage alloc] init];
     image.size = nativeImage.size;
     [image.images addObject:nativeImage];
-    return [image autorelease];
+    return image;
 }
 
 + (instancetype)imageWithCompressedData:(NSData *)compressedData {
-
+    char *bytes = (char *)compressedData.bytes;
+    if (compressedData.length > 2 &&
+        bytes[0] == 27 &&
+        bytes[1] == 'P') {
+        return [[iTermImage alloc] initWithSixelData:compressedData];
+    }
 #if DECODE_IMAGES_IN_PROCESS
     NSLog(@"** WARNING: Decompressing image in-process **");
-    return [[[iTermImage alloc] initWithData:compressedData] autorelease];
+    return [[iTermImage alloc] initWithData:compressedData];
 #endif
 
-    iTermImageDecoderDriver *driver = [[[iTermImageDecoderDriver alloc] init] autorelease];
+    iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
     NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
     if (jsonData) {
-        return [[[iTermImage alloc] initWithJson:jsonData] autorelease];
+        return [[iTermImage alloc] initWithJson:jsonData];
     } else {
         return nil;
     }
 }
+
+- (instancetype)initWithSixelData:(NSData *)sixel {
+    self = [super init];
+    if (self) {
+        sixel_decoder_t *decoder;
+        SIXELSTATUS status = sixel_decoder_new(&decoder, NULL);
+        if (status != SIXEL_OK) {
+            return nil;
+        }
+
+        _images = [NSMutableArray array];
+        sixel_decoder_unref(decoder);
+        NSImage *image = [self decodeImageData:sixel withDecoder:decoder];
+        if (!image) {
+            return nil;
+        }
+        [_images addObject:image];
+        _size = image.size;
+    }
+    return self;
+}
+
+- (NSImage *)decodeImageData:(NSData *)data withDecoder:(sixel_decoder_t *)decoder {
+    unsigned char *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    unsigned char *palette = NULL;  // argb
+    int ncolors = 0;
+    SIXELSTATUS status = sixel_decode_raw((unsigned char *)[[data mutableCopy] mutableBytes],
+                                          data.length,
+                                          &pixels,
+                                          &width,
+                                          &height,
+                                          &palette,
+                                          &ncolors,
+                                          NULL);
+    if (status != SIXEL_OK || ncolors <= 0) {
+        return nil;
+    }
+
+    const int limit = ncolors - 1;
+    NSMutableData *rgbaData = [NSMutableData dataWithLength:width * height * 4];
+    unsigned char *rgba = rgbaData.mutableBytes;
+    const int stride = 3;
+    for (int i = 0; i < width * height; i++) {
+        const unsigned char index = MAX(0, MIN(pixels[i], limit));
+        rgba[i * 4 + 0] = palette[index * stride + 0];
+        rgba[i * 4 + 1] = palette[index * stride + 1];
+        rgba[i * 4 + 2] = palette[index * stride + 2];
+        rgba[i * 4 + 3] = 0xff;
+    }
+    return [NSImage imageWithRawData:rgbaData
+                                size:NSMakeSize(width, height)
+                       bitsPerSample:8
+                     samplesPerPixel:4
+                            hasAlpha:YES
+                      colorSpaceName:NSDeviceRGBColorSpace];
+}
+
 
 - (instancetype)init {
     self = [super init];
@@ -100,7 +165,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {
-        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
+        NSImage *image = [[NSImage alloc] initWithData:data];
         CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data,
                                                               (CFDictionaryRef)@{});
         size_t count = CGImageSourceGetCount(source);
@@ -139,9 +204,9 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
                 double totalDelay = 0;
                 for (size_t i = 0; i < count; ++i) {
                     CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
-                    NSImage *image = [[[NSImage alloc] initWithCGImage:imageRef
-                                                                  size:NSMakeSize(CGImageGetWidth(imageRef),
-                                                                                  CGImageGetHeight(imageRef))] autorelease];
+                    NSImage *image = [[NSImage alloc] initWithCGImage:imageRef
+                                                                 size:NSMakeSize(CGImageGetWidth(imageRef),
+                                                                                 CGImageGetHeight(imageRef))];
                     if (!image) {
                         if (imageRef) {
                             CFRelease(imageRef);
@@ -253,12 +318,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     DLog(@"Successfully inited iTermImage");
 
     return self;
-}
-
-- (void)dealloc {
-    [_images release];
-    [_delays release];
-    [super dealloc];
 }
 
 @end
