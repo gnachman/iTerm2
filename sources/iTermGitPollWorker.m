@@ -206,6 +206,7 @@ typedef void (^iTermGitCallback)(iTermGitState *);
     [_readData setLength:0];
     _commandRunner = nil;
     [_queue removeAllObjects];
+    [_outstanding removeAllObjects];
 }
 
 - (void)scriptDied:(NSInteger)generation {
