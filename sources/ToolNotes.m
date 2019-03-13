@@ -26,7 +26,6 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    NSLog(@"%@", NSStringFromSelector(menuItem.action));
     if (menuItem.action == @selector(performFindPanelAction:)) {
         if (menuItem.tag == NSFindPanelActionSetFindString) {
             return self.selectedRanges.count > 0 || self.selectedRange.length > 0;
