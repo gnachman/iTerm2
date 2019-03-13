@@ -113,7 +113,7 @@ static NSString *gSearchString;
 
 - (void)setFindString:(NSString *)setFindString {
     _viewController.findString = setFindString;
-    [self loadFindStringFromSharedPasteboard:nil];
+    [self loadFindStringIntoSharedPasteboard:setFindString];
 }
 
 - (NSString *)findString {
