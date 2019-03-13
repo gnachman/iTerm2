@@ -62,6 +62,7 @@
 #import "iTermSessionHotkeyController.h"
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
+#import "iTermSetFindStringNotification.h"
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
@@ -712,6 +713,12 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(apiDidStop:)
                                                      name:iTermAPIHelperDidStopNotification
                                                    object:nil];
+
+        [iTermSetFindStringNotification subscribe:self
+                                            block:^(iTermSetFindStringNotification * _Nonnull notification) {
+                                                [weakSelf useStringForFind:notification.string];
+                                            }];
+
         [self.variablesScope setValue:[self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]
                      forVariableNamed:iTermVariableKeySessionTermID];
 

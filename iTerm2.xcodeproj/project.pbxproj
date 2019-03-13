@@ -2202,6 +2202,8 @@
 		A67D19512237045C00BD0D4D /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A67D1953223704C400BD0D4D /* VT100SixelParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A67D1952223704C400BD0D4D /* VT100SixelParser.m */; };
 		A67D19582237289900BD0D4D /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
+		A67D19792238D50800BD0D4D /* iTermSetFindStringNotification.h in Headers */ = {isa = PBXBuildFile; fileRef = A67D19772238D50800BD0D4D /* iTermSetFindStringNotification.h */; };
+		A67D197A2238D50800BD0D4D /* iTermSetFindStringNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = A67D19782238D50800BD0D4D /* iTermSetFindStringNotification.m */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
 		A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
@@ -4948,6 +4950,8 @@
 		A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = TmuxDashboard.xib; path = Interfaces/TmuxDashboard.xib; sourceTree = "<group>"; };
 		A67D194E2237045C00BD0D4D /* libsixel.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsixel.a; path = ThirdParty/libsixel/lib/libsixel.a; sourceTree = "<group>"; };
 		A67D1952223704C400BD0D4D /* VT100SixelParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100SixelParser.m; sourceTree = "<group>"; };
+		A67D19772238D50800BD0D4D /* iTermSetFindStringNotification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSetFindStringNotification.h; sourceTree = "<group>"; };
+		A67D19782238D50800BD0D4D /* iTermSetFindStringNotification.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSetFindStringNotification.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; tabWidth = 4; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; tabWidth = 4; };
 		A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsAdvanced.png; path = images/PrefsAdvanced.png; sourceTree = "<group>"; };
@@ -5911,6 +5915,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A67D19762238D4DD00BD0D4D /* Notifications */,
 				A6BF034D21E1763D0097DA86 /* Language */,
 				A6B413FE211A488D00D28207 /* CompactWindowStyle */,
 				A630116220E606D0008114B7 /* StatusBar */,
@@ -7719,6 +7724,15 @@
 				53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */,
 			);
 			name = Infrastructure;
+			sourceTree = "<group>";
+		};
+		A67D19762238D4DD00BD0D4D /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				A67D19772238D50800BD0D4D /* iTermSetFindStringNotification.h */,
+				A67D19782238D50800BD0D4D /* iTermSetFindStringNotification.m */,
+			);
+			name = Notifications;
 			sourceTree = "<group>";
 		};
 		A67F57C31B0930AD00B4F135 /* Shell Launcher/FD Client/Server */ = {
@@ -9850,6 +9864,7 @@
 				A6BF035421E179380097DA86 /* iTermVariableHistory.h in Headers */,
 				A6D8973A22154A8800325F6A /* AnnotateTrigger.h in Headers */,
 				A6D1784521BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h in Headers */,
+				A67D19792238D50800BD0D4D /* iTermSetFindStringNotification.h in Headers */,
 				5370678821C9D2780088D0F3 /* SIGPolicy.h in Headers */,
 				A623D9541F8B04890011F8C3 /* iTermMetalGlue.h in Headers */,
 				A6BF035C21E179BD0097DA86 /* iTermWeakVariables.h in Headers */,
@@ -12123,6 +12138,7 @@
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
+				A67D197A2238D50800BD0D4D /* iTermSetFindStringNotification.m in Sources */,
 				A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */,
 				A62EEDA720E025F300943DE3 /* iTermSetupPyParser.m in Sources */,
 				A67D1953223704C400BD0D4D /* VT100SixelParser.m in Sources */,

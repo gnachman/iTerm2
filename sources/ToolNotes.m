@@ -7,7 +7,9 @@
 //
 
 #import "ToolNotes.h"
+#import "iTermSetFindStringNotification.h"
 #import "NSFileManager+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PTYWindow.h"
 #import "PseudoTerminal.h"
@@ -21,6 +23,31 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 
 - (void)paste:(id)sender {
     [self pasteAsPlainText:sender];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    NSLog(@"%@", NSStringFromSelector(menuItem.action));
+    if (menuItem.action == @selector(performFindPanelAction:)) {
+        if (menuItem.tag == NSFindPanelActionSetFindString) {
+            return self.selectedRanges.count > 0 || self.selectedRange.length > 0;
+        }
+    }
+    return [super validateMenuItem:menuItem];
+}
+
+- (void)performFindPanelAction:(id)sender {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:sender];
+    if (!menuItem) {
+        return;
+    }
+    if (menuItem.tag == NSFindPanelActionSetFindString) {
+        NSString *string = [self.string substringWithRange:self.selectedRange];
+        if (string.length == 0) {
+            return;
+        }
+        [[iTermSetFindStringNotification notificationWithString:string] post];
+    }
+    [super performFindPanelAction:sender];
 }
 
 @end

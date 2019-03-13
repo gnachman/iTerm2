@@ -8696,7 +8696,6 @@ ITERM_WEAKLY_REFERENCEABLE
     } else if ([item action] == @selector(showFindPanel:) ||
                [item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||
-               [item action] == @selector(findWithSelection:) ||
                [item action] == @selector(jumpToSelection:) ||
                [item action] == @selector(findUrls:)) {
         result = ([self currentSession] != nil);
@@ -9348,18 +9347,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self currentSession] searchNext];
     }
 }
-
-- (IBAction)findWithSelection:(id)sender {
-    NSString* selection = [[[self currentSession] textview] selectedText];
-    if (selection) {
-        for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
-            for (PTYSession* session in [pty allSessions]) {
-                [session useStringForFind:selection];
-            }
-        }
-    }
-}
-
 - (IBAction)jumpToSelection:(id)sender
 {
     PTYTextView *textView = [[self currentSession] textview];

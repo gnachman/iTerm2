@@ -29,6 +29,7 @@
 #import "iTermScrollAccumulator.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
+#import "iTermSetFindStringNotification.h"
 #import "iTermShellHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
@@ -3570,6 +3571,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
+        [item action]==@selector(performFindPanelAction:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
@@ -3638,6 +3640,35 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     return NO;
 }
+
+- (IBAction)performFindPanelAction:(id)sender {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:sender];
+    if (!menuItem) {
+        return;
+    }
+    switch ((NSFindPanelAction)menuItem.tag) {
+        case NSFindPanelActionNext:
+        case NSFindPanelActionReplace:
+        case NSFindPanelActionPrevious:
+        case NSFindPanelActionSelectAll:
+        case NSFindPanelActionReplaceAll:
+        case NSFindPanelActionShowFindPanel:
+        case NSFindPanelActionReplaceAndFind:
+        case NSFindPanelActionSelectAllInSelection:
+        case NSFindPanelActionReplaceAllInSelection:
+            // For now we use a nonstandard way of doing these things for no good reason.
+            // This will be fixed over time.
+            return;
+        case NSFindPanelActionSetFindString: {
+            NSString *selection = [self selectedText];
+            if (selection) {
+                [[iTermSetFindStringNotification notificationWithString:selection] post];
+            }
+            break;
+        }
+    }
+}
+
 
 - (IBAction)terminalStateToggleAlternateScreen:(id)sender {
     [self.delegate textViewToggleTerminalStateForMenuItem:sender];

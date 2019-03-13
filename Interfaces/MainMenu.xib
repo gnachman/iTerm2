@@ -490,9 +490,9 @@ DQ
                                                 <action selector="findPrevious:" target="-1" id="768"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Use Selection for Find" keyEquivalent="e" identifier="Find.Use Selection for Find" id="758">
+                                        <menuItem title="Use Selection for Find" tag="7" keyEquivalent="e" identifier="Find.Use Selection for Find" id="758">
                                             <connections>
-                                                <action selector="findWithSelection:" target="-1" id="769"/>
+                                                <action selector="performFindPanelAction:" target="-1" id="Vts-fb-OCE"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Jump to Selection" keyEquivalent="j" identifier="Find.Jump to Selection" id="764">
