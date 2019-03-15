@@ -33,6 +33,7 @@
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "RegexKitLite.h"
+#include <sys/utsname.h>
 
 NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
 NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";
@@ -259,19 +260,105 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     [self launchAppWithBundleIdentifier:bundleIdentifier args:@[ path ]];
 }
 
-- (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
+- (NSBundle *)applicationBundleWithIdentifier:(NSString *)bundleIdentifier {
     NSString *bundlePath =
         [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier];
     NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-    NSString *executable = [bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
+    return bundle;
+}
+
+- (NSString *)executableInApplicationBundle:(NSBundle *)bundle {
+    NSString *executable = [bundle.bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
     executable = [executable stringByAppendingPathComponent:
                             [bundle objectForInfoDictionaryKey:(id)kCFBundleExecutableKey]];
-    if (bundle && executable) {
-        DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, args);
-        [self launchTaskWithPath:executable arguments:args wait:NO];
-    } else {
-        DLog(@"Not launching bundle=%@ executable=%@", bundle, executable);
+    return executable;
+}
+
+- (NSString *)emacsClientInApplicationBundle:(NSBundle *)bundle {
+    DLog(@"Trying to find emacsclient in %@", bundle.bundlePath);
+    struct utsname uts;
+    int status = uname(&uts);
+    if (status) {
+        DLog(@"Failed to get uname: %s", strerror(errno));
+        return nil;
     }
+    NSString *arch = [NSString stringWithUTF8String:uts.machine];
+    
+    NSOperatingSystemVersion version = [[NSProcessInfo processInfo] operatingSystemVersion];
+    NSMutableArray<NSString *> *bindirs = [NSMutableArray array];
+    NSURL *folder = [NSURL fileURLWithPath:[bundle.bundlePath stringByAppendingPathComponent:@"Contents/MacOS"]];
+    for (NSURL *url in [NSFileManager.defaultManager enumeratorAtURL:folder
+                                          includingPropertiesForKeys:nil
+                                                             options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                        errorHandler:nil]) {
+        NSString *file = url.path.lastPathComponent;
+        DLog(@"Consider: %@", file);
+        if (![file hasPrefix:@"bin-"]) {
+            DLog(@"Reject: does not start with bin-");
+            continue;
+        }
+        BOOL isdir = NO;
+        [[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isdir];
+        if (!isdir) {
+            DLog(@"Reject: not a folder");
+            continue;
+        }
+        [bindirs addObject:file];
+    }
+    
+    // bin-i386-10_5
+    NSString *regex = @"^bin-([^-]+)-([0-9]+)_([0-9]+)$";
+    NSArray<NSString *> *contenders = [bindirs filteredArrayUsingBlock:^BOOL(NSString *dir) {
+        NSArray<NSString *> *captures = [[dir arrayOfCaptureComponentsMatchedByRegex:regex] firstObject];
+        DLog(@"Captures for %@ are %@", dir, captures);
+        if (captures.count != 4) {
+            return NO;
+        }
+        if (![captures[1] isEqualToString:arch]) {
+            return NO;
+        }
+        if ([captures[2] integerValue] != version.majorVersion) {
+            return NO;
+        }
+        if ([captures[3] integerValue] > version.minorVersion) {
+            return NO;
+        }
+        DLog(@"It's a keeper");
+        return YES;
+    }];
+    
+    NSString *best = [contenders maxWithBlock:^NSComparisonResult(NSString *obj1, NSString *obj2) {
+        NSArray<NSString *> *cap1 = [obj1 arrayOfCaptureComponentsMatchedByRegex:regex].firstObject;
+        NSArray<NSString *> *cap2 = [obj2 arrayOfCaptureComponentsMatchedByRegex:regex].firstObject;
+        
+        NSInteger minor1 = [cap1[3] integerValue];
+        NSInteger minor2 = [cap2[3] integerValue];
+        return [@(minor1) compare:@(minor2)];
+    }];
+    DLog(@"Best is %@", best);
+    if (!best) {
+        return nil;
+    }
+    NSString *executable = [bundle.bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
+    executable = [executable stringByAppendingPathComponent:best];
+    executable = [executable stringByAppendingPathComponent:@"emacsclient"];
+    DLog(@"I guess emacsclient is %@", executable);
+    return executable;
+}
+
+- (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
+    NSBundle *bundle = [self applicationBundleWithIdentifier:bundleIdentifier];
+    if (!bundle) {
+        DLog(@"No bundle for %@", bundleIdentifier);
+        return;
+    }
+    NSString *executable = [self executableInApplicationBundle:bundle];
+    if (!executable) {
+        DLog(@"No executable for %@ in %@", bundleIdentifier, bundle);
+        return;
+    }
+    DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, args);
+    [self launchTaskWithPath:executable arguments:args wait:NO];
 }
 
 - (void)launchVSCodeWithPath:(NSString *)path {
@@ -297,7 +384,39 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (void)launchEmacsWithArguments:(NSArray *)args {
-    [self launchAppWithBundleIdentifier:kEmacsAppIdentifier args:[@[ @"emacs" ] arrayByAddingObjectsFromArray:args]];
+    // Try to find emacsclient.
+    NSBundle *bundle = [self applicationBundleWithIdentifier:kEmacsAppIdentifier];
+    if (!bundle) {
+        DLog(@"Failed to find emacs bundle");
+        return;
+    }
+    NSString *emacsClient = [self emacsClientInApplicationBundle:bundle];
+    if (!emacsClient) {
+        DLog(@"No emacsClient in %@", bundle);
+        DLog(@"Launching emacs the old-fashioned way");
+        [self launchAppWithBundleIdentifier:kEmacsAppIdentifier
+                                       args:[@[ @"emacs" ] arrayByAddingObjectsFromArray:args]];
+        return;
+    }
+
+    // Find the regular emacs exectuable to fall back to
+    NSString *emacs = [self executableInApplicationBundle:bundle];
+    if (!emacs) {
+        DLog(@"No executable for emacs in %@", bundle);
+        return;
+    }
+    NSArray<NSString *> *fallbackParts = [@[ emacs, args ] flattenedArray];
+    NSString *fallback = [[fallbackParts mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }] componentsJoinedByString:@" "];
+    
+    // Run emacsclient -a "emacs <args>" <args>
+    // That'll use emacsclient if possible and fall back to real emacs if it fails.
+    // Normally it will fail unless you've enabled the daemon.
+    [self launchTaskWithPath:emacsClient
+                   arguments:[@[ @"-a", fallback, args] flattenedArray]
+                        wait:NO];
+
 }
 
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
