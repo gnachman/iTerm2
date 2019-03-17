@@ -7871,6 +7871,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.currentSession.statusBarViewController;
 }
 
+- (BOOL)rootTerminalViewWindowHasFullSizeContentView {
+    return [PseudoTerminal windowTypeHasFullSizeContentView:windowType_];
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];

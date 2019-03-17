@@ -44,6 +44,7 @@
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
+- (BOOL)rootTerminalViewWindowHasFullSizeContentView;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
