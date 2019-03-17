@@ -1197,5 +1197,3 @@ typedef enum {
 }
 
 @end
-
-

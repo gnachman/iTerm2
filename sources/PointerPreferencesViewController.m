@@ -13,6 +13,8 @@ NSString *const kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotific
 NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPointerPrefsSemanticHistoryEnabledChangedNotification";
 
 @implementation PointerPreferencesViewController {
+    IBOutlet NSTabView *_tabView;
+
     // Cmd-click to launch url.
     IBOutlet NSButton *_cmdSelection;
 
@@ -75,6 +77,14 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
     [self defineControl:_doubleClickPerformsSmartSelection
                     key:kPreferenceKeyDoubleClickPerformsSmartSelection
                    type:kPreferenceInfoTypeCheckbox];
+}
+
+- (NSTabView *)tabView {
+    return _tabView;
+}
+
+- (CGFloat)minimumWidth {
+    return 186;
 }
 
 @end
