@@ -808,7 +808,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
@@ -877,11 +877,11 @@ Gw
                                 </tableView>
                             </subviews>
                         </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="5782">
+                        <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5782">
                             <rect key="frame" x="1" y="248" width="762" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="5781">
+                        <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5781">
                             <rect key="frame" x="509" y="17" width="15" height="99"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
@@ -980,7 +980,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1036,11 +1036,11 @@ DQ
                                 </tableView>
                             </subviews>
                         </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
+                        <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
                             <rect key="frame" x="1" y="116" width="523" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
+                        <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
                             <rect key="frame" x="509" y="17" width="15" height="99"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
@@ -1196,7 +1196,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -1260,11 +1260,11 @@ DQ
                                 </tableView>
                             </subviews>
                         </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="6282">
+                        <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="6282">
                             <rect key="frame" x="1" y="116" width="531" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="6281">
+                        <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="6281">
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
@@ -3777,11 +3777,11 @@ DQ
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="5660">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5660">
                         <rect key="frame" x="1" y="80" width="523" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="5659">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5659">
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -4442,11 +4442,11 @@ DQ
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="PuK-Zm-kQk">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="PuK-Zm-kQk">
                         <rect key="frame" x="1" y="119" width="223" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="e2n-ov-yNp">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="e2n-ov-yNp">
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -5523,204 +5523,19 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
-                        <tabViewItem label="Remap Modifiers" identifier="1" id="ZPU-LD-eKa">
-                            <view key="view" id="cf3-jz-e1B">
+                        <tabViewItem label="Key Bindings" identifier="" id="Nxa-UI-aa0">
+                            <view key="view" id="Hvj-tK-pw4">
                                 <rect key="frame" x="10" y="33" width="899" height="384"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
-                                    <customView id="hJ4-9y-ajU" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="231" y="233" width="438" height="148"/>
+                                    <customView id="djo-Ir-CU7" customClass="iTermPreferencesInnerTabContainerView">
+                                        <rect key="frame" x="162" y="-3" width="576" height="384"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3673">
-                                                <rect key="frame" x="75" y="124" width="143" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Control (⌃) key:" id="3674">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <popUpButton verticalHuggingPriority="750" id="4392">
-                                                <rect key="frame" x="221" y="68" width="163" height="26"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
-                                                    <menu key="menu" title="OtherViews" id="4402">
-                                                        <items>
-                                                            <menuItem title="⌃ Control" tag="1" id="4406"/>
-                                                            <menuItem title="⌥ Left Option" tag="2" id="4404">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌥ Right Option" state="on" tag="3" id="4407">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Left Command" tag="7" id="4405">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Right Command" tag="8" id="4403">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="6qy-Dl-JmM"/>
-                                                    <outlet property="nextKeyView" destination="4393" id="5291"/>
-                                                </connections>
-                                            </popUpButton>
-                                            <popUpButton verticalHuggingPriority="750" id="4410">
-                                                <rect key="frame" x="221" y="17" width="163" height="26"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
-                                                    <menu key="menu" title="OtherViews" id="4412">
-                                                        <items>
-                                                            <menuItem title="⌃ Control" tag="1" id="4416"/>
-                                                            <menuItem title="⌥ Left Option" tag="2" id="4414">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌥ Right Option" tag="3" id="4417">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Left Command" tag="7" id="4415">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Right Command" state="on" tag="8" id="4413">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="w5i-9b-C8Y"/>
-                                                    <outlet property="nextKeyView" destination="4118" id="5293"/>
-                                                </connections>
-                                            </popUpButton>
-                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3677">
-                                                <rect key="frame" x="65" y="49" width="153" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left command (⌘) key:" id="3678">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3689">
-                                                <rect key="frame" x="75" y="99" width="143" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left option (⌥) key:" id="3690">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <popUpButton verticalHuggingPriority="750" id="4393">
-                                                <rect key="frame" x="221" y="43" width="163" height="26"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
-                                                    <menu key="menu" title="OtherViews" id="4395">
-                                                        <items>
-                                                            <menuItem title="⌃ Control" tag="1" id="4397"/>
-                                                            <menuItem title="⌥ Left Option" tag="2" id="4399">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌥ Right Option" tag="3" id="4396">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Left Command" state="on" tag="7" id="4398">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Right Command" tag="8" id="4400">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="DBf-W5-736"/>
-                                                </connections>
-                                            </popUpButton>
-                                            <popUpButton verticalHuggingPriority="750" id="4383">
-                                                <rect key="frame" x="221" y="93" width="163" height="26"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
-                                                    <menu key="menu" title="OtherViews" id="4385">
-                                                        <items>
-                                                            <menuItem title="⌃ Control" tag="1" id="4389"/>
-                                                            <menuItem title="⌥ Left Option" state="on" tag="2" id="4387">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌥ Right Option" tag="3" id="4390">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Left Command" tag="7" id="4388">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Right Command" tag="8" id="4386">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="nh1-K6-IOF"/>
-                                                    <outlet property="nextKeyView" destination="4392" id="5290"/>
-                                                </connections>
-                                            </popUpButton>
-                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4335">
-                                                <rect key="frame" x="55" y="23" width="163" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right command (⌘) key:" id="4343">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3675">
-                                                <rect key="frame" x="72" y="74" width="146" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right option (⌥) key:" id="3676">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <popUpButton verticalHuggingPriority="750" id="4237">
-                                                <rect key="frame" x="221" y="118" width="163" height="26"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
-                                                    <menu key="menu" title="OtherViews" id="4239">
-                                                        <items>
-                                                            <menuItem title="⌃ Control" tag="1" id="4242"/>
-                                                            <menuItem title="⌥ Left Option" tag="2" id="4244">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌥ Right Option" tag="3" id="4240">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Left Command" tag="7" id="4243">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                            <menuItem title="⌘ Right Command" tag="8" id="4345">
-                                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                                            </menuItem>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="QbI-Zr-Gk1"/>
-                                                    <outlet property="nextKeyView" destination="4383" id="5289"/>
-                                                </connections>
-                                            </popUpButton>
+                                            <customView id="zLA-QA-WQd">
+                                                <rect key="frame" x="20" y="13" width="536" height="371"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </customView>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -5944,19 +5759,204 @@ DQ
                                 </subviews>
                             </view>
                         </tabViewItem>
-                        <tabViewItem label="Key Bindings" identifier="" id="Nxa-UI-aa0">
-                            <view key="view" id="Hvj-tK-pw4">
+                        <tabViewItem label="Remap Modifiers" identifier="1" id="ZPU-LD-eKa">
+                            <view key="view" id="cf3-jz-e1B">
                                 <rect key="frame" x="10" y="33" width="899" height="384"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
-                                    <customView id="djo-Ir-CU7" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="162" y="-3" width="576" height="384"/>
+                                    <customView id="hJ4-9y-ajU" customClass="iTermPreferencesInnerTabContainerView">
+                                        <rect key="frame" x="231" y="233" width="438" height="148"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <customView id="zLA-QA-WQd">
-                                                <rect key="frame" x="20" y="13" width="536" height="371"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            </customView>
+                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3673">
+                                                <rect key="frame" x="75" y="124" width="143" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Control (⌃) key:" id="3674">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" id="4392">
+                                                <rect key="frame" x="221" y="68" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="4402">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="4406"/>
+                                                            <menuItem title="⌥ Left Option" tag="2" id="4404">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" state="on" tag="3" id="4407">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" tag="7" id="4405">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" tag="8" id="4403">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="6qy-Dl-JmM"/>
+                                                    <outlet property="nextKeyView" destination="4393" id="5291"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <popUpButton verticalHuggingPriority="750" id="4410">
+                                                <rect key="frame" x="221" y="17" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="4412">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="4416"/>
+                                                            <menuItem title="⌥ Left Option" tag="2" id="4414">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" tag="3" id="4417">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" tag="7" id="4415">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" state="on" tag="8" id="4413">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="w5i-9b-C8Y"/>
+                                                    <outlet property="nextKeyView" destination="4118" id="5293"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3677">
+                                                <rect key="frame" x="65" y="49" width="153" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left command (⌘) key:" id="3678">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3689">
+                                                <rect key="frame" x="75" y="99" width="143" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left option (⌥) key:" id="3690">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" id="4393">
+                                                <rect key="frame" x="221" y="43" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="4395">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="4397"/>
+                                                            <menuItem title="⌥ Left Option" tag="2" id="4399">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" tag="3" id="4396">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" state="on" tag="7" id="4398">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" tag="8" id="4400">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="DBf-W5-736"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <popUpButton verticalHuggingPriority="750" id="4383">
+                                                <rect key="frame" x="221" y="93" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="4385">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="4389"/>
+                                                            <menuItem title="⌥ Left Option" state="on" tag="2" id="4387">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" tag="3" id="4390">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" tag="7" id="4388">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" tag="8" id="4386">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="nh1-K6-IOF"/>
+                                                    <outlet property="nextKeyView" destination="4392" id="5290"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4335">
+                                                <rect key="frame" x="55" y="23" width="163" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right command (⌘) key:" id="4343">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3675">
+                                                <rect key="frame" x="72" y="74" width="146" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right option (⌥) key:" id="3676">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" id="4237">
+                                                <rect key="frame" x="221" y="118" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="4239">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="4242"/>
+                                                            <menuItem title="⌥ Left Option" tag="2" id="4244">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" tag="3" id="4240">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" tag="7" id="4243">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" tag="8" id="4345">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="QbI-Zr-Gk1"/>
+                                                    <outlet property="nextKeyView" destination="4383" id="5289"/>
+                                                </connections>
+                                            </popUpButton>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -5980,7 +5980,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -6023,11 +6023,11 @@ DQ
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="5561">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5561">
                         <rect key="frame" x="1" y="76" width="144" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="5560">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5560">
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -6040,11 +6040,11 @@ DQ
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="1" y="1" width="627" height="381"/>
+                        <rect key="frame" x="3" y="3" width="623" height="379"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="5" width="619" height="374"/>
+                                <rect key="frame" x="4" y="3" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>
@@ -6094,7 +6094,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="0.0" width="849" height="245"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
@@ -6137,11 +6137,11 @@ DQ
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="6092">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="6092">
                         <rect key="frame" x="1" y="306" width="499" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="6094">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="6094">
                         <rect key="frame" x="386" y="17" width="15" height="257"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -6281,7 +6281,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -6324,11 +6324,11 @@ DQ
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="mOQ-4W-YMC">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="mOQ-4W-YMC">
                         <rect key="frame" x="1" y="347" width="950" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="PSV-IV-BSD">
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="PSV-IV-BSD">
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
