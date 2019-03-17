@@ -6797,8 +6797,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
-    if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && _mouseDownWasFirstMouse) {
-        return NO;
+    if (event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) {
+        if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
+            return NO;
+        }
     }
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
         return NO;
