@@ -405,7 +405,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         DLog(@"No executable for emacs in %@", bundle);
         return;
     }
-    NSArray<NSString *> *fallbackParts = [@[ emacs, args ] flattenedArray];
+    NSArray<NSString *> *fallbackParts = @[ emacs ];
     NSString *fallback = [[fallbackParts mapWithBlock:^id(NSString *anObject) {
         return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
     }] componentsJoinedByString:@" "];
@@ -414,7 +414,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // That'll use emacsclient if possible and fall back to real emacs if it fails.
     // Normally it will fail unless you've enabled the daemon.
     [self launchTaskWithPath:emacsClient
-                   arguments:[@[ @"-a", fallback, args] flattenedArray]
+                   arguments:[@[ @"-n", @"-a", fallback, args] flattenedArray]
                         wait:NO];
 
 }
