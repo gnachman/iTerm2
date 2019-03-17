@@ -260,13 +260,8 @@
 
     token = [self tokenForDataWithFormat:@"%%exit\n"];
     XCTAssert(token->type == TMUX_EXIT);
-    XCTAssert(_parser.isHooked);
-    XCTAssert(_context.datalen == 0);
-    XCTAssert(_parser.state == kVT100DCSStatePassthrough);
-
-    token = [self tokenForDataWithFormat:@"\e\\"];
-    XCTAssert(token->type == VT100_SKIP);
     XCTAssert(!_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
     XCTAssert(_parser.state == kVT100DCSStateGround);
 }
 
@@ -323,14 +318,9 @@
 
     token = [self tokenForDataWithFormat:@"%%exit\r\n"];
     XCTAssert(token->type == TMUX_EXIT);
-    XCTAssert(_parser.isHooked);
-    XCTAssert(_context.datalen == 0);
-    [_savedState removeAllObjects];
-
-    token = [self tokenForDataWithFormat:@"%c\\", VT100CC_ESC];
-    XCTAssert(token->type == VT100_SKIP);
     XCTAssert(!_parser.isHooked);
     XCTAssert(_context.datalen == 0);
+    [_savedState removeAllObjects];
 }
 
 -  (void)testDCSTmuxWrap {
