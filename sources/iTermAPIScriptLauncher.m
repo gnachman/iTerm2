@@ -15,7 +15,7 @@
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
-#import "iTermSetupPyParser.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -30,12 +30,12 @@
 
 + (void)launchScript:(NSString *)filename
   explicitUserAction:(BOOL)explicitUserAction {
-    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupPyPath:nil explicitUserAction:explicitUserAction];
+    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupCfgPath:nil explicitUserAction:explicitUserAction];
 }
 
 + (NSString *)pythonVersionForScript:(NSString *)path {
-    NSString *setupPyPath = [path stringByAppendingPathComponent:@"setup.py"];
-    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
+    NSString *setupCfgPath = [path stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
     if (parser) {
         return parser.pythonVersion;
     } else {
@@ -46,10 +46,10 @@
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
       withVirtualEnv:(NSString *)virtualenv
-         setupPyPath:(NSString *)setupPyPath
+        setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction {
     if (virtualenv != nil) {
-        iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
+        iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
         NSString *pythonVersion = parser.pythonVersion;
         // Launching a full environment script: do not check for a newer version, as it is frozen and
         // downloading wouldn't affect it anyway.

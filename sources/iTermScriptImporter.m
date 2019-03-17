@@ -208,9 +208,15 @@ static BOOL sInstallingScript;
         return;
     }
 
-    iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir];
+    BOOL deprecated = NO;
+    iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir
+                                                                deprecated:&deprecated];
     if (!archive) {
-        completion(@"Archive does not contain a valid iTerm2 script", NO, nil);
+        if (deprecated) {
+            completion(@"This archive was created by an older version of iTerm2. This kind of archive is no longer supported and cannot be installed.", NO, nil);
+        } else {
+            completion(@"Archive does not contain a valid iTerm2 script", NO, nil);
+        }
         return;
     }
 

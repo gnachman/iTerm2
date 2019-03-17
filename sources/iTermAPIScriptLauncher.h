@@ -16,7 +16,7 @@
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
       withVirtualEnv:(NSString *)virtualenv
-         setupPyPath:(NSString *)setupPyPath
+        setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction;
 
 + (NSString *)environmentForScript:(NSString *)path checkForMain:(BOOL)checkForMain;

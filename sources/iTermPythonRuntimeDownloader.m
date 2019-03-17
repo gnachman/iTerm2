@@ -14,7 +14,7 @@
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermRateLimitedUpdate.h"
-#import "iTermSetupPyParser.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermSignatureVerifier.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -514,8 +514,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                   eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
                       dependencies:(NSArray<NSString *> *)dependencies
-                     createSetupPy:(BOOL)createSetupPy
-                        completion:(void (^)(BOOL))completion {
+                    createSetupCfg:(BOOL)createSetupCfg
+                        completion:(void (^)(iTermInstallPythonStatus))completion {
     NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion
                                     creatingSymlinkIfNeeded:NO];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -535,7 +535,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!ok) {
                 XLog(@"Failed to link %@ to %@: %@", source, destination, error);
-                completion(NO);
+                completion(iTermInstallPythonStatusGeneralFailure);
                 return;
             }
 
@@ -578,6 +578,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                     alert.accessoryView = accessory;
 
                     [alert runModal];
+                    completion(iTermInstallPythonStatusDependencyFailed);
+                    return;
                 }
 
                 NSString *pythonVersionToUse = pythonVersion ?: [self.class latestPythonVersion];
@@ -586,16 +588,17 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                     alert.messageText = @"Could not determine Python version";
                     alert.informativeText = @"Please file an issue report.";
                     [alert runModal];
+                    completion(iTermInstallPythonStatusGeneralFailure);
                     return;
                 }
-                if (createSetupPy) {
-                    [iTermSetupPyParser writeSetupPyToFile:[container.path stringByAppendingPathComponent:@"setup.py"]
-                                                      name:container.path.lastPathComponent
-                                              dependencies:dependencies
-                                       ensureiTerm2Present:YES
-                                             pythonVersion:pythonVersionToUse];
+                if (createSetupCfg) {
+                    [iTermSetupCfgParser writeSetupCfgToFile:[container.path stringByAppendingPathComponent:@"setup.cfg"]
+                                                        name:container.path.lastPathComponent
+                                                dependencies:dependencies
+                                         ensureiTerm2Present:YES
+                                               pythonVersion:pythonVersionToUse];
                 }
-                completion(YES);
+                completion(iTermInstallPythonStatusOK);
             }];
         });
     });
@@ -650,6 +653,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                pythonVersion:pythonVersion
                withArguments:@[ @"install", dependencies.firstObject ]
                   completion:^(BOOL thisOK, NSData *output) {
+                      if (!thisOK) {
+                          completion(@[ dependencies.firstObject ], @[ output ?: [NSData data] ]);
+                          return;
+                      }
                       [self installDependencies:[dependencies subarrayFromIndex:1]
                                              to:container
                                   pythonVersion:pythonVersion

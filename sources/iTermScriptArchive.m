@@ -8,7 +8,7 @@
 #import "iTermScriptArchive.h"
 
 #import "iTermPythonRuntimeDownloader.h"
-#import "iTermSetupPyParser.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -17,7 +17,8 @@
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
-NSString *const iTermScriptSetupPyName = @"setup.py";
+NSString *const iTermScriptSetupCfgName = @"setup.cfg";
+NSString *const iTermScriptDeprecatedSetupPyName = @"setup.py";
 NSString *const iTermScriptMetadataName = @"metadata.json";
 
 @interface iTermScriptArchive()
@@ -61,7 +62,11 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     return topLevelItems;
 }
 
-+ (instancetype)archiveFromContainer:(NSString *)container {
++ (instancetype)archiveFromContainer:(NSString *)container
+                          deprecated:(out BOOL *)deprecatedPtr {
+    if (deprecatedPtr) {
+        *deprecatedPtr = NO;
+    }
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSArray<NSString *> *topLevelItems = [self absolutePathsOfNonDotFilesIn:container];
     if (topLevelItems.count != 1) {
@@ -85,10 +90,11 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     if (innerItems.count < 2) {
         return nil;
     }
-    // Maps a boolean number to an item name. True key = setup.py, false key = not setup.py
-    NSString *setupPy = [topLevelItem stringByAppendingPathComponent:iTermScriptSetupPyName];
+    // Maps a boolean number to an item name. True key = setup.cfg, false key = not setup.py
+    NSString *setupCfg = [topLevelItem stringByAppendingPathComponent:iTermScriptSetupCfgName];
+    NSString *deprecatedSetupPy = [topLevelItem stringByAppendingPathComponent:iTermScriptDeprecatedSetupPyName];
     NSString *metadata = [topLevelItem stringByAppendingPathComponent:iTermScriptMetadataName];
-    NSArray<NSString *> *requiredFiles = @[ setupPy ];
+    NSArray<NSString *> *requiredFiles = @[ setupCfg ];
     NSArray<NSString *> *optionalFiles = @[ metadata ];
     NSString *folder = nil;
 
@@ -103,6 +109,11 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
         if (folder == nil && [fileManager itemIsDirectory:item]) {
             folder = item;
             continue;
+        }
+        if ([item isEqualToString:deprecatedSetupPy]) {
+            if (deprecatedPtr) {
+                *deprecatedPtr = YES;
+            }
         }
         return nil;
     }
@@ -163,10 +174,10 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 - (void)installFullEnvironmentTrusted:(BOOL)trusted completion:(void (^)(NSError *, NSURL *location))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
 
-    NSString *setupPy = [from stringByAppendingPathComponent:iTermScriptSetupPyName];
-    iTermSetupPyParser *setupParser = [[iTermSetupPyParser alloc] initWithPath:setupPy];
+    NSString *setupCfg = [from stringByAppendingPathComponent:iTermScriptSetupCfgName];
+    iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
     if (!setupParser) {
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Cannot find setup.py" };
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Cannot find setup.cfg" };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
         return;
@@ -186,12 +197,34 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     } else {
         to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];
     }
+
+    // Create a symlink from the final location to the temporary location so shebangs will work.
+    // First try to remove a dangling link.
+    if ([[[[NSFileManager defaultManager] attributesOfItemAtPath:to error:nil] fileType] isEqualToString:NSFileTypeSymbolicLink]) {
+        NSString *expanded = [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:to error:nil];
+        if (expanded && ![[NSFileManager defaultManager] fileExistsAtPath:expanded]) {
+            [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
+        }
+    }
+
+    NSError *error = nil;
+    [[NSFileManager defaultManager] createSymbolicLinkAtPath:to
+                                         withDestinationPath:from
+                                                       error:&error];
+    if (error) {
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Could not write to %@", to] };
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
+        completion(error, nil);
+        return;
+    }
+
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:setupParser.pythonVersion
                                                                                    requiredToContinue:YES
                                                                                        withCompletion:
      ^(BOOL downloadedOk) {
          if (!downloadedOk) {
+             [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
              NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Python Runtime not downloaded" };
              NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:3 userInfo:userInfo];
              completion(error, nil);
@@ -202,9 +235,9 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                                   eventualLocation:toURL
                                                                      pythonVersion:setupParser.pythonVersion
                                                                       dependencies:dependencies
-                                                                     createSetupPy:NO
-                                                                        completion:^(BOOL ok) {
-                                                                            [self didInstallPythonRuntime:ok
+                                                                    createSetupCfg:NO
+                                                                        completion:^(iTermInstallPythonStatus status) {
+                                                                            [self didInstallPythonRuntime:status
                                                                                                      from:from
                                                                                                        to:to
                                                                                                completion:
@@ -216,19 +249,32 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
      }];
 }
 
-- (void)didInstallPythonRuntime:(BOOL)ok
+- (void)didInstallPythonRuntime:(iTermInstallPythonStatus)status
                            from:(NSString *)from
                              to:(NSString *)to
                      completion:(void (^)(NSError *))completion {
-    if (!ok) {
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Failed to install Python Runtime" };
-        NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
-        completion(error);
-        return;
+    [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
+    switch (status) {
+        case iTermInstallPythonStatusOK:
+            break;
+        case iTermInstallPythonStatusGeneralFailure: {
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Failed to install Python Runtime" };
+            NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
+            completion(error);
+            return;
+        }
+        case iTermInstallPythonStatusDependencyFailed: {
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Failed to install Python package" };
+            NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:2 userInfo:userInfo];
+            completion(error);
+            return;
+        }
     }
 
     // Finally, move it to its destination.
     NSFileManager *fileManager = [NSFileManager defaultManager];
+    // Remove the symlink that should have been dropped there.
+    [fileManager removeItemAtPath:to error:nil];
     NSError *error = nil;
     [fileManager moveItemAtPath:from
                          toPath:to

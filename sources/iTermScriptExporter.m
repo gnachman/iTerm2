@@ -9,7 +9,7 @@
 
 #import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
-#import "iTermSetupPyParser.h"
+#import "iTermSetupCfgParser.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -96,14 +96,14 @@
     NSArray<NSURL *> *sourceURLs;
     NSURL *destinationFolder = [NSURL fileURLWithPath:[[NSFileManager defaultManager] desktopDirectory]];
 
-    NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.py"].path;
-    iTermSetupPyParser *setupParser = [[iTermSetupPyParser alloc] initWithPath:absSetupPath];
+    NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.cfg"].path;
+    iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:absSetupPath];
     if (setupParser.dependenciesError) {
-        completion(@"Could not parse install_requires in setup.py", nil);
+        completion(@"Could not parse install_requires in setup.cfg", nil);
         return;
     }
 
-    sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
+    sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.cfg"],
                     [relativeURL URLByAppendingPathComponent:name] ];
     NSURL *metadata = [relativeURL URLByAppendingPathComponent:@"metadata.json"];
     if (signingIdentity) {
@@ -157,11 +157,11 @@
 + (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL
                         named:(NSString *)name
           toFullEnvironmentIn:(NSString *)destination {
-    [iTermSetupPyParser writeSetupPyToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.py"]]
-                                      name:name
-                              dependencies:@[]
-                       ensureiTerm2Present:YES
-                             pythonVersion:[iTermPythonRuntimeDownloader latestPythonVersion]];
+    [iTermSetupCfgParser writeSetupCfgToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.cfg"]]
+                                        name:name
+                                dependencies:@[]
+                         ensureiTerm2Present:YES
+                               pythonVersion:[iTermPythonRuntimeDownloader latestPythonVersion]];
     NSString *sourceFolder = [destination stringByAppendingPathComponent:name];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     [fileManager createDirectoryAtPath:sourceFolder
@@ -190,14 +190,14 @@
         return YES;
     }
     if (isDirectory) {
-        // Legal scripts must have a setup.py, iterm2env, and appropriately named source folder and file.
-        NSString *setupPy = [url.path stringByAppendingPathComponent:@"setup.py"];
+        // Legal scripts must have a setup.cfg, iterm2env, and appropriately named source folder and file.
+        NSString *setupCfg = [url.path stringByAppendingPathComponent:@"setup.cfg"];
         NSString *iterm2env = [url.path stringByAppendingPathComponent:@"iterm2env"];
         NSString *name = url.path.lastPathComponent;
         NSString *folder = [url.path stringByAppendingPathComponent:name];
         NSString *mainPy = [folder stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"py"]];
 
-        if  ([fileManager fileExistsAtPath:setupPy] &&
+        if  ([fileManager fileExistsAtPath:setupCfg] &&
              [fileManager fileExistsAtPath:iterm2env] &&
              [fileManager fileExistsAtPath:mainPy]) {
             if (fullEnvironment) {

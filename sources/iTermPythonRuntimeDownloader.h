@@ -40,13 +40,19 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 - (NSString *)pyenvAt:(NSString *)root pythonVersion:(NSString *)pythonVersion;
 - (NSString *)pip3At:(NSString *)root pythonVersion:(NSString *)pythonVersion;
 
+typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
+    iTermInstallPythonStatusOK,
+    iTermInstallPythonStatusDependencyFailed,
+    iTermInstallPythonStatusGeneralFailure
+};
+
 // Install a copy of the current environment somewhere.
 - (void)installPythonEnvironmentTo:(NSURL *)container
                   eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
                       dependencies:(NSArray<NSString *> *)dependencies
-                     createSetupPy:(BOOL)createSetupPy
-                        completion:(void (^)(BOOL))completion;
+                    createSetupCfg:(BOOL)createSetupCfg
+                        completion:(void (^)(iTermInstallPythonStatus))completion;
 
 - (void)runPip3InContainer:(NSURL *)container
              pythonVersion:(NSString *)pythonVersion

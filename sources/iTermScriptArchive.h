@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-extern NSString *const iTermScriptSetupPyName;
+extern NSString *const iTermScriptSetupCfgName;
 
 // Helps install archived scripts.
 @interface iTermScriptArchive : NSObject
@@ -16,7 +16,8 @@ extern NSString *const iTermScriptSetupPyName;
 @property (nonatomic, readonly) BOOL fullEnvironment;
 @property (nonatomic, readonly) NSDictionary *metadata;
 
-+ (instancetype)archiveFromContainer:(NSString *)container;
++ (instancetype)archiveFromContainer:(NSString *)container
+                          deprecated:(out BOOL *)deprecatedPtr;
 - (void)installTrusted:(BOOL)trusted withCompletion:(void (^)(NSError *, NSURL *location))completion;
 
 @end

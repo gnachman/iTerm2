@@ -11,7 +11,7 @@
 #import "iTermController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptsMenuController.h"
-#import "iTermSetupPyParser.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermTuple.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
@@ -145,7 +145,7 @@
     _checkForUpdate.enabled = NO;
     _remove.enabled = NO;
     _selectedScriptPath = _scripts[index];
-    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:[_scripts[index] stringByAppendingPathComponent:@"setup.py"]];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:[_scripts[index] stringByAppendingPathComponent:@"setup.cfg"]];
     _packageTuples = [[parser.dependencies mapWithBlock:^id(NSString *dep) {
         iTermTuple *tuple = [iTermTuple tupleWithObject:dep andObject:@""];
         return tuple;
@@ -235,13 +235,13 @@
         return;
     }
 
-    NSString *path = [selectedScriptPath stringByAppendingPathComponent:@"setup.py"];
-    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:path];
-    [iTermSetupPyParser writeSetupPyToFile:path
-                                      name:parser.name
-                              dependencies:[parser.dependencies arrayByRemovingObject:package]
-                       ensureiTerm2Present:NO
-                             pythonVersion:parser.pythonVersion];
+    NSString *path = [selectedScriptPath stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
+    [iTermSetupCfgParser writeSetupCfgToFile:path
+                                        name:parser.name
+                                dependencies:[parser.dependencies arrayByRemovingObject:package]
+                         ensureiTerm2Present:NO
+                               pythonVersion:parser.pythonVersion];
 
     [self didSelectScriptAtIndex:_scriptsButton.indexOfSelectedItem];
 }
@@ -332,13 +332,13 @@
     if (![selectedScriptPath isEqualToString:_selectedScriptPath]) {
         return;
     }
-    NSString *path = [selectedScriptPath stringByAppendingPathComponent:@"setup.py"];
-    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:path];
-    [iTermSetupPyParser writeSetupPyToFile:path
-                                      name:parser.name
-                              dependencies:[parser.dependencies arrayByAddingObject:newDependencyName]
-                       ensureiTerm2Present:NO
-                             pythonVersion:parser.pythonVersion];
+    NSString *path = [selectedScriptPath stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
+    [iTermSetupCfgParser writeSetupCfgToFile:path
+                                        name:parser.name
+                                dependencies:[parser.dependencies arrayByAddingObject:newDependencyName]
+                         ensureiTerm2Present:NO
+                               pythonVersion:parser.pythonVersion];
     [self didSelectScriptAtIndex:_scriptsButton.selectedTag];
 }
 
@@ -442,14 +442,14 @@
     }
 
     _pythonVersion = selectedVersion;
-    NSString *path = [_selectedScriptPath stringByAppendingPathComponent:@"setup.py"];
-    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:path];
+    NSString *path = [_selectedScriptPath stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
     NSArray<NSString *> *dependencies = [parser.dependencies copy];
-    [iTermSetupPyParser writeSetupPyToFile:path
-                                      name:parser.name
-                              dependencies:@[]
-                       ensureiTerm2Present:NO
-                             pythonVersion:_pythonVersion];
+    [iTermSetupCfgParser writeSetupCfgToFile:path
+                                        name:parser.name
+                                dependencies:@[]
+                         ensureiTerm2Present:NO
+                               pythonVersion:_pythonVersion];
     NSString *selectedScriptPath = [_selectedScriptPath copy];
     [self installPackages:dependencies selectedScriptPath:selectedScriptPath];
 }

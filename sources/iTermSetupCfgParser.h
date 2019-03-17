@@ -1,5 +1,5 @@
 //
-//  iTermSetupPyParser.h
+//  iTermSetupCfgParser.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 6/24/18.
@@ -11,7 +11,7 @@
 // have a chance to inspect what they installed before it has the chance to do any damage.
 // It wants a install_requires=[...] all one one line containing a list of strings quoted with '
 // or " and delimited by commas. Version numbers aren't supported, but that could be added later.
-@interface iTermSetupPyParser : NSObject
+@interface iTermSetupCfgParser : NSObject
 
 @property (nonatomic, readonly) NSArray<NSString *> *dependencies;
 
@@ -21,8 +21,9 @@
 @property (nonatomic, readonly) NSString *content;
 @property (nonatomic, readonly) NSString *pythonVersion;
 @property (nonatomic, readonly) NSString *name;
+@property (nonatomic) NSNumber *minimumEnvironmentVersion;
 
-+ (void)writeSetupPyToFile:(NSString *)file
++ (void)writeSetupCfgToFile:(NSString *)file
                       name:(NSString *)name
               dependencies:(NSArray<NSString *> *)dependencies
        ensureiTerm2Present:(BOOL)ensureiTerm2Present

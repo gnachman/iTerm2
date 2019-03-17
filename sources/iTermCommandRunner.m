@@ -122,6 +122,8 @@
     @try {
         [_task launch];
     } @catch (NSException *e) {
+        NSLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
+        DLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
         if (self.completion) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.completion(-1);
