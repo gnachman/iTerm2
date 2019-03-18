@@ -2009,8 +2009,9 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)installPythonRuntime:(id)sender {  // Explicit request from menu item
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
+                                                                            minimumEnvironmentVersion:0
                                                                                    requiredToContinue:NO
-                                                                                       withCompletion:^(BOOL ok) {}];
+                                                                                       withCompletion:^(iTermPythonRuntimeDownloaderStatus ok) {}];
 }
 
 - (IBAction)buildScriptMenu:(id)sender {
@@ -2021,11 +2022,20 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)openREPL:(id)sender {
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:nil
+                                                                            minimumEnvironmentVersion:0
                                                                                    requiredToContinue:YES
                                                                                        withCompletion:
-     ^(BOOL ok) {
-         if (!ok) {
-             return;
+     ^(iTermPythonRuntimeDownloaderStatus status) {
+         switch (status) {
+             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+             case iTermPythonRuntimeDownloaderStatusUnknown:
+             case iTermPythonRuntimeDownloaderStatusWorking:
+             case iTermPythonRuntimeDownloaderStatusError:
+                 return;
+             case iTermPythonRuntimeDownloaderStatusNotNeeded:
+             case iTermPythonRuntimeDownloaderStatusDownloaded:
+                 break;
          }
          if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
              return;

@@ -517,12 +517,24 @@ NS_ASSUME_NONNULL_BEGIN
     if (url) {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
+                                                                                minimumEnvironmentVersion:0
                                                                                        requiredToContinue:YES
-                                                                                           withCompletion:^(BOOL ok) {
-            if (!ok) {
-                return;
-            }
-            [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:pythonVersion];
+                                                                                           withCompletion:
+         ^(iTermPythonRuntimeDownloaderStatus status) {
+             switch (status) {
+                 case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+                 case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+                 case iTermPythonRuntimeDownloaderStatusUnknown:
+                 case iTermPythonRuntimeDownloaderStatusWorking:
+                 case iTermPythonRuntimeDownloaderStatusError: {
+                     return;
+                 }
+
+                 case iTermPythonRuntimeDownloaderStatusNotNeeded:
+                 case iTermPythonRuntimeDownloaderStatusDownloaded:
+                     break;
+             }
+             [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:pythonVersion];
         }];
     }
 }
@@ -546,6 +558,7 @@ NS_ASSUME_NONNULL_BEGIN
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
                                                                  eventualLocation:folder
                                                                     pythonVersion:pythonVersion
+                                                               environmentVersion:[[iTermPythonRuntimeDownloader sharedInstance] installedVersionWithPythonVersion:pythonVersion]
                                                                      dependencies:dependencies
                                                                    createSetupCfg:YES
                                                                        completion:

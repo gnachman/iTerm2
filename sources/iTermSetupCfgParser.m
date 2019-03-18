@@ -21,7 +21,8 @@
                        name:(NSString *)name
                dependencies:(NSArray<NSString *> *)dependencies
         ensureiTerm2Present:(BOOL)ensureiTerm2Present
-              pythonVersion:(NSString *)pythonVersion {
+              pythonVersion:(NSString *)pythonVersion
+         environmentVersion:(NSInteger)environmentVersion {
     assert(pythonVersion);
 
     NSString *sanitizedPythonVersion = pythonVersion;
@@ -41,12 +42,16 @@
                           @"[options]\n"
                           @"scripts=%@/%@.py\n"
                           @"install_requires=%@\n"
-                          @"python_requires = =%@\n",
+                          @"python_requires = =%@\n"
+                          @"\n"
+                          @"[iterm2]\n"
+                          @"environment = >=%@\n",
                           name,
                           name,
                           name,
                           [[NSSet setWithArray:dependencies].allObjects componentsJoinedByString:@"; "],
-                          sanitizedPythonVersion];
+                          sanitizedPythonVersion,
+                          @(environmentVersion)];
     [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
@@ -95,6 +100,11 @@ static int iTermSetupCfgParserIniHandler(void *user,
         if (trimmed.length > 0) {
             [_installRequiresParts addObject:trimmed];
         }
+        return;
+    }
+    if ([section isEqualToString:@"iterm2"] && [name isEqualToString:@"environment"]) {
+        [self computeMininumEnvironmentVersion:value];
+        return;
     }
 }
 
@@ -120,6 +130,13 @@ static int iTermSetupCfgParserIniHandler(void *user,
         return [anObject stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }];
     _dependencies = [[NSSet setWithArray:names] allObjects];
+}
+
+- (void)computeMininumEnvironmentVersion:(NSString *)value {
+    if (![value hasPrefix:@">="]) {
+        return;
+    }
+    _minimumEnvironmentVersion = [[value substringFromIndex:2] integerValue];
 }
 
 @end

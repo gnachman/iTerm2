@@ -157,11 +157,13 @@
 + (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL
                         named:(NSString *)name
           toFullEnvironmentIn:(NSString *)destination {
+    NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion];
     [iTermSetupCfgParser writeSetupCfgToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.cfg"]]
                                         name:name
                                 dependencies:@[]
                          ensureiTerm2Present:YES
-                               pythonVersion:[iTermPythonRuntimeDownloader latestPythonVersion]];
+                               pythonVersion:pythonVersion
+                          environmentVersion:[[iTermPythonRuntimeDownloader sharedInstance] installedVersionWithPythonVersion:pythonVersion]];
     NSString *sourceFolder = [destination stringByAppendingPathComponent:name];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     [fileManager createDirectoryAtPath:sourceFolder

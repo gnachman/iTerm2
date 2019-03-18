@@ -241,7 +241,8 @@
                                         name:parser.name
                                 dependencies:[parser.dependencies arrayByRemovingObject:package]
                          ensureiTerm2Present:NO
-                               pythonVersion:parser.pythonVersion];
+                               pythonVersion:parser.pythonVersion
+                          environmentVersion:parser.minimumEnvironmentVersion];
 
     [self didSelectScriptAtIndex:_scriptsButton.indexOfSelectedItem];
 }
@@ -338,7 +339,8 @@
                                         name:parser.name
                                 dependencies:[parser.dependencies arrayByAddingObject:newDependencyName]
                          ensureiTerm2Present:NO
-                               pythonVersion:parser.pythonVersion];
+                               pythonVersion:parser.pythonVersion
+                          environmentVersion:parser.minimumEnvironmentVersion];
     [self didSelectScriptAtIndex:_scriptsButton.selectedTag];
 }
 
@@ -449,7 +451,8 @@
                                         name:parser.name
                                 dependencies:@[]
                          ensureiTerm2Present:NO
-                               pythonVersion:_pythonVersion];
+                               pythonVersion:_pythonVersion
+                          environmentVersion:parser.minimumEnvironmentVersion];
     NSString *selectedScriptPath = [_selectedScriptPath copy];
     [self installPackages:dependencies selectedScriptPath:selectedScriptPath];
 }

@@ -220,20 +220,34 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:setupParser.pythonVersion
+                                                                            minimumEnvironmentVersion:setupParser.minimumEnvironmentVersion
                                                                                    requiredToContinue:YES
                                                                                        withCompletion:
-     ^(BOOL downloadedOk) {
-         if (!downloadedOk) {
-             [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
-             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Python Runtime not downloaded" };
-             NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:3 userInfo:userInfo];
-             completion(error, nil);
-             return;
+     ^(iTermPythonRuntimeDownloaderStatus status) {
+         switch (status) {
+             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+             case iTermPythonRuntimeDownloaderStatusUnknown:
+             case iTermPythonRuntimeDownloaderStatusWorking:
+             case iTermPythonRuntimeDownloaderStatusError: {
+                 [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
+                 NSString *reason = [self errorReasonForRuntimeDownloaderStatus:status];
+                 NSString *description = [NSString stringWithFormat:@"Python Runtime not downloaded: %@", reason];
+                 NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description };
+                 NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:3 userInfo:userInfo];
+                 completion(error, nil);
+                 return;
+             }
+
+             case iTermPythonRuntimeDownloaderStatusNotNeeded:
+             case iTermPythonRuntimeDownloaderStatusDownloaded:
+                 break;
          }
          NSURL *toURL = [NSURL fileURLWithPath:to];
          [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:[NSURL fileURLWithPath:from]
                                                                   eventualLocation:toURL
                                                                      pythonVersion:setupParser.pythonVersion
+                                                                environmentVersion:setupParser.minimumEnvironmentVersion
                                                                       dependencies:dependencies
                                                                     createSetupCfg:NO
                                                                         completion:^(iTermInstallPythonStatus status) {
@@ -247,6 +261,23 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                                              }];
                                                                         }];
      }];
+}
+
+- (NSString *)errorReasonForRuntimeDownloaderStatus:(iTermPythonRuntimeDownloaderStatus)status {
+    switch (status) {
+        case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+            return @"Requested version not available";
+        case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+            return @"Canceled by user";
+        case iTermPythonRuntimeDownloaderStatusUnknown:
+        case iTermPythonRuntimeDownloaderStatusWorking:
+            return @"An unknown problem occurred";
+        case iTermPythonRuntimeDownloaderStatusError:
+            return @"Network error";
+        case iTermPythonRuntimeDownloaderStatusNotNeeded:
+        case iTermPythonRuntimeDownloaderStatusDownloaded:
+            return nil;
+    }
 }
 
 - (void)didInstallPythonRuntime:(iTermInstallPythonStatus)status

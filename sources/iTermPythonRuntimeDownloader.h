@@ -9,6 +9,27 @@
 
 extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification;
 
+typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
+    // Internal only
+    iTermPythonRuntimeDownloaderStatusUnknown,
+    iTermPythonRuntimeDownloaderStatusWorking,
+
+    // Current version satisfies requirements
+    iTermPythonRuntimeDownloaderStatusNotNeeded,
+
+    // New version was downloaded
+    iTermPythonRuntimeDownloaderStatusDownloaded,
+
+    // User canceled download
+    iTermPythonRuntimeDownloaderStatusCanceledByUser,
+
+    // Asked for a version that's not available
+    iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound,
+
+    // Something else went wrong (e.g., download failed)
+    iTermPythonRuntimeDownloaderStatusError,
+};
+
 @interface iTermPythonRuntimeDownloader : NSObject
 
 @property (nonatomic, readonly) BOOL isPythonRuntimeInstalled;
@@ -33,8 +54,9 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 // This downloads only if the minimum version is not installed.
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm
                                              pythonVersion:(NSString *)pythonVersion
+                                 minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion
                                         requiredToContinue:(BOOL)requiredToContinue
-                                            withCompletion:(void (^)(BOOL))completion;
+                                            withCompletion:(void (^)(iTermPythonRuntimeDownloaderStatus))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.
 - (NSString *)pyenvAt:(NSString *)root pythonVersion:(NSString *)pythonVersion;
@@ -50,6 +72,7 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
 - (void)installPythonEnvironmentTo:(NSURL *)container
                   eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
+                environmentVersion:(NSInteger)environmentVersion
                       dependencies:(NSArray<NSString *> *)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
                         completion:(void (^)(iTermInstallPythonStatus))completion;
@@ -59,5 +82,7 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
              withArguments:(NSArray<NSString *> *)arguments
                 completion:(void (^)(BOOL ok, NSData *output))completion;
 
+// Max environment version for the given optional pythonVersion.
+- (int)installedVersionWithPythonVersion:(NSString *)pythonVersion;
 
 @end

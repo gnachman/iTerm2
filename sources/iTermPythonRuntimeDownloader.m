@@ -30,7 +30,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 @implementation iTermPythonRuntimeDownloader {
     iTermOptionalComponentDownloadWindowController *_downloadController;
     dispatch_group_t _downloadGroup;
-    BOOL _didDownload;  // Set when _downloadGroup notified.
+    iTermPythonRuntimeDownloaderStatus _status;  // Set when _downloadGroup notified.
     dispatch_queue_t _queue;  // Used to serialize installs
     iTermPersistentRateLimitedUpdate *_checkForUpdateRateLimit;
 }
@@ -131,12 +131,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     return [NSURL fileURLWithPath:path];
 }
 
-- (BOOL)shouldDownloadEnvironmentForPythonVersion:(NSString *)pythonVersion {
-    return ([self installedVersionWithPythonVersion:pythonVersion] < iTermMinimumPythonEnvironmentVersion);
+- (BOOL)shouldDownloadEnvironmentForPythonVersion:(NSString *)pythonVersion
+                        minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion {
+    return ([self installedVersionWithPythonVersion:pythonVersion] < MAX(minimumEnvironmentVersion, iTermMinimumPythonEnvironmentVersion));
 }
 
 - (BOOL)isPythonRuntimeInstalled {
-    return ![self shouldDownloadEnvironmentForPythonVersion:nil];
+    return ![self shouldDownloadEnvironmentForPythonVersion:nil
+                                  minimumEnvironmentVersion:0];
 }
 
 // Returns 0 if no version is installed, otherwise returns the installed version of the python runtime.
@@ -189,21 +191,23 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm
                                              pythonVersion:(NSString *)pythonVersion
+                                 minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion
                                         requiredToContinue:(BOOL)requiredToContinue
-                                            withCompletion:(void (^)(BOOL))completion {
-    if (![self shouldDownloadEnvironmentForPythonVersion:pythonVersion]) {
+                                            withCompletion:(void (^)(iTermPythonRuntimeDownloaderStatus))completion {
+    if (![self shouldDownloadEnvironmentForPythonVersion:pythonVersion
+                               minimumEnvironmentVersion:minimumEnvironmentVersion]) {
         [self performPeriodicUpgradeCheck];
-        completion(YES);
+        completion(iTermPythonRuntimeDownloaderStatusNotNeeded);
         return;
     }
 
-    [self checkForNewerVersionThan:[self installedVersionWithPythonVersion:pythonVersion]
+    [self checkForNewerVersionThan:MAX(minimumEnvironmentVersion, [self installedVersionWithPythonVersion:pythonVersion])
                           silently:YES
                            confirm:confirm
                 requiredToContinue:requiredToContinue
                      pythonVersion:pythonVersion];
     dispatch_group_notify(self->_downloadGroup, dispatch_get_main_queue(), ^{
-        completion(self->_didDownload);
+        completion(self->_status);
     });
 }
 
@@ -228,94 +232,103 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                          confirm:(BOOL)confirm
               requiredToContinue:(BOOL)requiredToContinue
                    pythonVersion:(NSString *)pythonVersion {
-    BOOL shouldBeginDownload = NO;
-    if (!_downloadController) {
-        _downloadGroup = dispatch_group_create();
-        dispatch_group_enter(_downloadGroup);
-        _downloadController = [[iTermOptionalComponentDownloadWindowController alloc] initWithWindowNibName:@"iTermOptionalComponentDownloadWindowController"];
-        shouldBeginDownload = YES;
-    } else if (!_downloadController.currentPhase) {
-        shouldBeginDownload = YES;
-    }
-
-    if (shouldBeginDownload) {
-        __block BOOL declined = NO;
-        __block BOOL raiseOnCompletion = (!silent || !confirm);
-        NSURL *url = [NSURL URLWithString:[iTermAdvancedSettingsModel pythonRuntimeDownloadURL]];
-        __weak __typeof(self) weakSelf = self;
-        __block BOOL stillNeedsConfirmation = confirm;
-        iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url
-                                                                             requestedPythonVersion:pythonVersion
-                                                                                   nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
-            iTermPythonRuntimeDownloader *strongSelf = weakSelf;
-            if (!strongSelf) {
-                return nil;
-            }
-            iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
-            if (mphase.version <= installedVersion) {
-                return nil;
-            }
-            if (stillNeedsConfirmation) {
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Download Python Runtime?";
-                if (requiredToContinue) {
-                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 29 MB. OK to download it now?";
-                } else {
-                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 30 MB. OK to download it now?";
-                }
-                [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
-                [alert addButtonWithTitle:@"Cancel"];
-                if ([alert runModal] == NSAlertSecondButtonReturn) {
-                    declined = YES;
-                    return nil;
-                }
-                stillNeedsConfirmation = NO;
-            }
-            if (silent) {
-                [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
-                raiseOnCompletion = YES;
-            }
-            return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
-                                                          version:mphase.version
-                                                expectedSignature:mphase.signature
-                                           requestedPythonVersion:mphase.requestedPythonVersion
-                                                 expectedVersions:mphase.pythonVersionsInArchive
-                                                 nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *completedPhase) {
-                                                     const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase];
-                                                     if (!shouldContinue) {
-                                                         return nil;
-                                                     }
-                                                     return [[iTermInstallingPhase alloc] initWithURL:nil title:@"Download Finished" nextPhaseFactory:nil];
-                                                 }];
-        }];
-        _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
-            if (lastPhase.error) {
-                [weakSelf showDownloadFailedAlertWithError:lastPhase.error
-                                             pythonVersion:pythonVersion
-                                        requiredToContinue:requiredToContinue];
-                return;
-            }
-            if (lastPhase == manifestPhase) {
-                iTermPythonRuntimeDownloader *strongSelf = weakSelf;
-                [strongSelf didStopCheckAfterReceivingManifestBecauseDeclined:declined
-                                                            raiseOnCompletion:raiseOnCompletion];
-            }
-        };
-        if (!silent) {
-            [_downloadController.window makeKeyAndOrderFront:nil];
-        }
-        [_downloadController beginPhase:manifestPhase];
-    } else if (_downloadController.isWindowLoaded && !_downloadController.window.visible) {
+    if (_status == iTermPythonRuntimeDownloaderStatusWorking) {
         // Already existed and had a current phase.
         [[_downloadController window] makeKeyAndOrderFront:nil];
+        return;
     }
+
+    _status = iTermPythonRuntimeDownloaderStatusWorking;
+    _downloadGroup = dispatch_group_create();
+    dispatch_group_t group = _downloadGroup;
+    dispatch_group_enter(_downloadGroup);
+    if (_downloadController.isWindowLoaded) {
+        [_downloadController.window close];
+    }
+    _downloadController = [[iTermOptionalComponentDownloadWindowController alloc] initWithWindowNibName:@"iTermOptionalComponentDownloadWindowController"];
+    __block BOOL declined = NO;
+    __block BOOL raiseOnCompletion = (!silent || !confirm);
+    NSURL *url = [NSURL URLWithString:[iTermAdvancedSettingsModel pythonRuntimeDownloadURL]];
+    __weak __typeof(self) weakSelf = self;
+    __block BOOL stillNeedsConfirmation = confirm;
+    iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url
+                                                                         requestedPythonVersion:pythonVersion
+                                                                               nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
+        iTermPythonRuntimeDownloader *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return nil;
+        }
+        iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
+        if (mphase.version <= installedVersion) {
+            strongSelf->_status = iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound;
+            dispatch_group_leave(group);
+            return nil;
+        }
+        if (stillNeedsConfirmation) {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Download Python Runtime?";
+            if (requiredToContinue) {
+                alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 30 MB. OK to download it now?";
+            } else {
+                alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 30 MB. OK to download it now?";
+            }
+            [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
+            [alert addButtonWithTitle:@"Cancel"];
+            if ([alert runModal] == NSAlertSecondButtonReturn) {
+                declined = YES;
+                dispatch_group_leave(group);
+                strongSelf->_status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
+                return nil;
+            }
+            stillNeedsConfirmation = NO;
+        }
+        if (silent) {
+            [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
+            raiseOnCompletion = YES;
+        }
+        return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
+                                                      version:mphase.version
+                                            expectedSignature:mphase.signature
+                                       requestedPythonVersion:mphase.requestedPythonVersion
+                                             expectedVersions:mphase.pythonVersionsInArchive
+                                             nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *completedPhase) {
+                                                 const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase];
+                                                 if (!shouldContinue) {
+                                                     return nil;
+                                                 }
+                                                 return [[iTermInstallingPhase alloc] initWithURL:nil title:@"Download Finished" nextPhaseFactory:nil];
+                                             }];
+    }];
+    _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
+        if (lastPhase.error) {
+            [weakSelf showDownloadFailedAlertWithError:lastPhase.error
+                                         pythonVersion:pythonVersion
+                                    requiredToContinue:requiredToContinue];
+            return;
+        }
+        if (lastPhase == manifestPhase) {
+            iTermPythonRuntimeDownloader *strongSelf = weakSelf;
+            [strongSelf didStopCheckAfterReceivingManifestBecauseDeclined:declined
+                                                        raiseOnCompletion:raiseOnCompletion];
+        }
+    };
+    if (!silent) {
+        [_downloadController.window makeKeyAndOrderFront:nil];
+    }
+    [_downloadController beginPhase:manifestPhase];
 }
 
 - (void)didStopCheckAfterReceivingManifestBecauseDeclined:(BOOL)declined
                                         raiseOnCompletion:(BOOL)raiseOnCompletion {
     if (declined) {
+        _status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
         [_downloadController close];
         return;
+    }
+    if (_status == iTermPythonRuntimeDownloaderStatusWorking) {
+        // You can get here when the manifest download completes and it decides not to keep going,
+        // for example if the requested version was not available.
+        _status = iTermPythonRuntimeDownloaderStatusNotNeeded;
     }
     [_downloadController showMessage:@"✅ The Python runtime is up to date."];
     if (raiseOnCompletion) {
@@ -334,9 +347,11 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [_downloadController close];
             return YES;
         }
+        _status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
         alert.messageText = @"Download Canceled";
         reason = @"";
     } else {
+        _status = iTermPythonRuntimeDownloaderStatusError;
         alert.messageText = @"Python Runtime Unavailable";
         reason = [NSString stringWithFormat:@"\n\nThe download failed: %@", error.localizedDescription];
     }
@@ -356,12 +371,16 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     if (!payloadPhase || payloadPhase.error) {
         [_downloadController.window makeKeyAndOrderFront:nil];
         [[iTermNotificationController sharedInstance] notify:@"Download failed ☹️"];
+        _status = iTermPythonRuntimeDownloaderStatusError;
+        dispatch_group_leave(self->_downloadGroup);
         return NO;
     }
     NSString *tempfile = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iterm2-pyenv" suffix:@".zip"];
     const BOOL ok = [self writeInputStream:payloadPhase.stream toFile:tempfile];
     if (!ok) {
         [[iTermNotificationController sharedInstance] notify:@"Could not extract archive ☹️"];
+        _status = iTermPythonRuntimeDownloaderStatusError;
+        dispatch_group_leave(self->_downloadGroup);
         return NO;
     }
 
@@ -376,6 +395,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         alert.messageText = @"Signature Verification Failed";
         alert.informativeText = [NSString stringWithFormat:@"The Python runtime's signature failed validation: %@", verifyError.localizedDescription];
         [alert runModal];
+        _status = iTermPythonRuntimeDownloaderStatusError;
+        dispatch_group_leave(self->_downloadGroup);
     } else {
         [self installPythonEnvironmentFromZip:tempfile
                                runtimeVersion:payloadPhase.version
@@ -387,14 +408,16 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                  [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
                  [self->_downloadController.window close];
                  self->_downloadController = nil;
-                 self->_didDownload = ok;
+                 self->_status = ok ? iTermPythonRuntimeDownloaderStatusDownloaded : iTermPythonRuntimeDownloaderStatusError;
                  dispatch_group_leave(self->_downloadGroup);
-             } else {
-                 NSAlert *alert = [[NSAlert alloc] init];
-                 alert.messageText = @"Error unzipping python environment";
-                 alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
-                 [alert runModal];
+                 return;
              }
+             NSAlert *alert = [[NSAlert alloc] init];
+             alert.messageText = @"Error unzipping python environment";
+             alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
+             [alert runModal];
+             self->_status = iTermPythonRuntimeDownloaderStatusError;
+             dispatch_group_leave(self->_downloadGroup);
          }];
     }
     return YES;
@@ -513,6 +536,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (void)installPythonEnvironmentTo:(NSURL *)container
                   eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
+                environmentVersion:(NSInteger)environmentVersion
                       dependencies:(NSArray<NSString *> *)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
                         completion:(void (^)(iTermInstallPythonStatus))completion {
@@ -596,7 +620,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                                         name:container.path.lastPathComponent
                                                 dependencies:dependencies
                                          ensureiTerm2Present:YES
-                                               pythonVersion:pythonVersionToUse];
+                                               pythonVersion:pythonVersionToUse
+                                          environmentVersion:environmentVersion];
                 }
                 completion(iTermInstallPythonStatusOK);
             }];

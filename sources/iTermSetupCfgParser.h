@@ -21,13 +21,15 @@
 @property (nonatomic, readonly) NSString *content;
 @property (nonatomic, readonly) NSString *pythonVersion;
 @property (nonatomic, readonly) NSString *name;
-@property (nonatomic) NSNumber *minimumEnvironmentVersion;
+@property (nonatomic) NSInteger minimumEnvironmentVersion;
 
 + (void)writeSetupCfgToFile:(NSString *)file
-                      name:(NSString *)name
-              dependencies:(NSArray<NSString *> *)dependencies
-       ensureiTerm2Present:(BOOL)ensureiTerm2Present
-             pythonVersion:(NSString *)pythonVersion;
+                       name:(NSString *)name
+               dependencies:(NSArray<NSString *> *)dependencies
+        ensureiTerm2Present:(BOOL)ensureiTerm2Present
+              pythonVersion:(NSString *)pythonVersion
+         environmentVersion:(NSInteger)environmentVersion;
+
 - (instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

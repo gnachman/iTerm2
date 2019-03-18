@@ -64,14 +64,25 @@
     NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:pythonVersion
+                                                                            minimumEnvironmentVersion:0
                                                                                    requiredToContinue:YES
-                                                                                       withCompletion:^(BOOL ok) {
-        if (ok) {
-            [self reallyLaunchScript:filename
-                            fullPath:fullPath
-                      withVirtualEnv:virtualenv
-                       pythonVersion:pythonVersion
-                  explicitUserAction:explicitUserAction];
+                                                                                       withCompletion:
+     ^(iTermPythonRuntimeDownloaderStatus status) {
+         switch (status) {
+             case iTermPythonRuntimeDownloaderStatusNotNeeded:
+             case iTermPythonRuntimeDownloaderStatusDownloaded:
+                 [self reallyLaunchScript:filename
+                                 fullPath:fullPath
+                           withVirtualEnv:virtualenv
+                            pythonVersion:pythonVersion
+                       explicitUserAction:explicitUserAction];
+                 break;
+             case iTermPythonRuntimeDownloaderStatusError:
+             case iTermPythonRuntimeDownloaderStatusUnknown:
+             case iTermPythonRuntimeDownloaderStatusWorking:
+             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+                 break;
         }
     }];
 }
