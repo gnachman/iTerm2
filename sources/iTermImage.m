@@ -180,7 +180,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
                 if (source) {
                     CFRelease(source);
                 }
-                [self release];
                 return nil;
             }
         }
