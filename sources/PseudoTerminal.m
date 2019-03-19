@@ -7851,6 +7851,24 @@ ITERM_WEAKLY_REFERENCEABLE
     return [PseudoTerminal windowTypeHasFullSizeContentView:windowType_];
 }
 
+- (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop {
+    if ([PseudoTerminal windowTypeHasFullSizeContentView:windowType_]) {
+        return YES;
+    }
+    if (!self.anyFullScreen) {
+        return NO;
+    }
+    BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+    if (!topTabBar) {
+        return NO;
+    }
+    if ([PseudoTerminal windowTypeHasFullSizeContentView:savedWindowType_]) {
+        // The tab bar is not a titlebar accessory
+        return YES;
+    }
+    return NO;
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style = [[iTermTheme sharedInstance] tabStyleWithDelegate:self
                                                           effectiveAppearance:self.window.effectiveAppearance];

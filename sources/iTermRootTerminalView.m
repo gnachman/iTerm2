@@ -752,7 +752,7 @@ typedef struct {
 - (BOOL)shouldLeaveEmptyAreaAtTop {
     return (_tabBarControlOnLoan &&
             [self tabBarShouldBeVisibleWithAdditionalTabs:0] &&
-            [self.delegate rootTerminalViewWindowHasFullSizeContentView]);
+            [self.delegate rootTerminalViewShouldLeaveEmptyAreaAtTop]);
 }
 
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
@@ -1228,19 +1228,25 @@ typedef struct {
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {
-    if (@available(macOS 10.14, *)) {
-        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        if (preferredStyle == TAB_STYLE_MINIMAL) {
+    if (@available(macOS 10.14, *)) {} else {
+        return YES;
+    }
+    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return YES;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_BottomTab:
+        case PSMTab_LeftTab:
             return YES;
-        }
-        if ([_delegate anyFullScreen] || [_delegate enteringLionFullscreen]) {
-            return NO;
-        }
-        if (![_delegate rootTerminalViewWindowHasFullSizeContentView]) {
-            return YES;
-        }
+
+        case PSMTab_TopTab:
+            break;
+    }
+    if ([_delegate anyFullScreen] || [_delegate enteringLionFullscreen]) {
         return NO;
     }
+
     return YES;
 }
 
