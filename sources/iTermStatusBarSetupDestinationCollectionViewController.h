@@ -15,6 +15,8 @@
 
 @property (nonatomic, copy) NSArray<iTermStatusBarSetupElement *> *elements;
 @property (nonatomic, strong) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
+@property (nonatomic, strong) NSColor *defaultBackgroundColor;
+@property (nonatomic, strong) NSColor *defaultTextColor;
 
 - (void)setLayout:(iTermStatusBarLayout *)layout;
 - (NSDictionary *)layoutDictionary;

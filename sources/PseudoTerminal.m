@@ -56,6 +56,7 @@
 #import "iTermSwiftyStringGraph.h"
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
+#import "iTermTheme.h"
 #import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
 #import "iTermVariableReference.h"
@@ -1500,38 +1501,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (id<PSMTabStyle>)terminalWindowTabStyle {
+    return _contentView.tabBarControl.style;
+}
+
 - (NSColor *)terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (self.shouldUseMinimalStyle) {
-        PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
-        DLog(@"> begin Computing decoration color");
-        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor windowIsMainAndAppIsActive:(self.window.isMainWindow && NSApp.isActive)];
-        DLog(@"< end Computing decoration color");
-    } else {
-        CGFloat whiteLevel;
-        switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_MINIMAL:
-                assert(NO);
-
-            case TAB_STYLE_LIGHT:
-                whiteLevel = 0.2;
-                break;
-
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                whiteLevel = 0;
-                break;
-
-            case TAB_STYLE_DARK:
-                whiteLevel = 0.8;
-                break;
-
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                whiteLevel = 1;
-                break;
-        }
-        return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
-    }
+    return [[iTermTheme sharedInstance] terminalWindowDecorationTextColorForBackgroundColor:backgroundColor
+                                                                        effectiveAppearance:self.window.effectiveAppearance
+                                                                                   tabStyle:_contentView.tabBarControl.style
+                                                                              mainAndActive:(self.window.isMainWindow && NSApp.isActive)];
 }
 
 - (BOOL)shouldUseMinimalStyle {
@@ -7768,10 +7746,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSColor *)rootTerminalViewTabBarBackgroundColor {
     // This is for the fake title bar and for the status bar background color.
-    if (self.currentSession.tabColor) {
-        return self.currentSession.tabColor;
-    }
-    return [_contentView.tabBarControl.style backgroundColorSelected:YES highlightAmount:0];
+    return [[iTermTheme sharedInstance] tabBarBackgroundColorForTabColor:self.currentSession.tabColor
+                                                                   style:_contentView.tabBarControl.style];
 }
 
 - (NSColor *)windowDecorationColor {
@@ -7876,47 +7852,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateTabBarStyle {
-    id<PSMTabStyle> style;
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (preferredStyle == TAB_STYLE_MINIMAL) {
-        style = [[[PSMMinimalTabStyle alloc] init] autorelease];
-        [(PSMMinimalTabStyle *)style setDelegate:self];
-    } else {
-        iTermPreferencesTabStyle tabStyle = preferredStyle;
-        switch (preferredStyle) {
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_MINIMAL:
-                // 10.14 path
-                tabStyle = [self.window.effectiveAppearance it_tabStyle:preferredStyle];
-
-            case TAB_STYLE_LIGHT:
-            case TAB_STYLE_DARK:
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                // Use the stated style. it_tabStyle assumes you want a style based on the current
-                // appearance but this is the one case where that is not true.
-                // If there is only one tab and it has a dark tab color the style will be adjusted
-                // later in the call to updateTabColors.
-                break;
-        }
-        switch (tabStyle) {
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_MINIMAL:
-                assert(NO);
-            case TAB_STYLE_LIGHT:
-                style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
-                break;
-            case TAB_STYLE_DARK:
-                style = [[[PSMDarkTabStyle alloc] init] autorelease];
-                break;
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                style = [[[PSMLightHighContrastTabStyle alloc] init] autorelease];
-                break;
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                style = [[[PSMDarkHighContrastTabStyle alloc] init] autorelease];
-                break;
-        }
-    }
+    id<PSMTabStyle> style = [[iTermTheme sharedInstance] tabStyleWithDelegate:self
+                                                          effectiveAppearance:self.window.effectiveAppearance];
     [_contentView.tabBarControl setStyle:style];
     [self updateTabColors];
     if (@available(macOS 10.14, *)) {

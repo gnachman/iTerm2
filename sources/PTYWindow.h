@@ -29,6 +29,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermWeakReference.h"
 
+@protocol PSMTabStyle;
 @class PTYTab;
 @class PTYSession;
 
@@ -52,6 +53,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (BOOL)terminalWindowShouldConstrainFrameToScreen;
 - (NSColor *)terminalWindowDecorationBackgroundColor;
 - (NSColor *)terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
+- (id<PSMTabStyle>)terminalWindowTabStyle;
 - (NSColor *)terminalWindowDecorationControlColor;
 - (BOOL)terminalWindowUseMinimalStyle;
 - (BOOL)ptyWindowFullScreen;
@@ -70,6 +72,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
+- (id<PSMTabStyle>)it_tabStyle;
 - (NSColor *)it_terminalWindowDecorationControlColor;
 - (BOOL)it_terminalWindowUseMinimalStyle;
 

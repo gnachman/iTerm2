@@ -451,6 +451,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.ptyDelegate terminalWindowDecorationBackgroundColor];
 }
 
+- (id<PSMTabStyle>)it_tabStyle {
+    return [self.ptyDelegate terminalWindowTabStyle];
+}
+
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor {
     return [self.ptyDelegate terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor];
 }

@@ -205,13 +205,12 @@
            atIndexPath:(NSIndexPath *)indexPath {
     const NSInteger index = [indexPath indexAtPosition:1];
     item.textField.attributedStringValue = [_elements[index] exemplarWithBackgroundColor:_advancedConfiguration.backgroundColor
-                                                                               textColor:_advancedConfiguration.defaultTextColor
+                                                                               textColor:_advancedConfiguration.defaultTextColor ?: self.defaultTextColor
                                                                              defaultFont:_advancedConfiguration.font];
 
     item.hideDetail = YES;
     item.textField.toolTip = _elements[index].detailedDescription;
-    item.backgroundColor = _elements[index].component.statusBarBackgroundColor ?: _advancedConfiguration.backgroundColor;
-
+    item.backgroundColor = _elements[index].component.statusBarBackgroundColor ?: _advancedConfiguration.backgroundColor ?: self.defaultBackgroundColor;
 }
 
 - (NSCollectionViewItem *)collectionView:(NSCollectionView *)collectionView

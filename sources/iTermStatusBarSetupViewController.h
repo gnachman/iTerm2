@@ -13,6 +13,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermStatusBarSetupViewController : NSViewController 
 @property (nonatomic, readonly) NSDictionary *layoutDictionary;
 @property (nonatomic, readonly) BOOL ok;
+@property (nonatomic, strong) NSColor *defaultBackgroundColor;
+@property (nonatomic, strong) NSColor *defaultTextColor;
 
 - (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary
                                    darkBackground:(BOOL)darkbackground

@@ -12,6 +12,7 @@
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
+#import "iTermTheme.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
@@ -830,114 +831,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (NSColor *)backgroundColorForDecorativeSubviews {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    NSColor *tabColor = self.tabColor;
-    if (tabColor) {
-        CGFloat hue = tabColor.hueComponent;
-        CGFloat saturation = tabColor.saturationComponent;
-        CGFloat brightness = tabColor.brightnessComponent;
-        if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-            tabColor = [_delegate sessionViewBackgroundColor];
-        } else {
-            switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
-                case TAB_STYLE_AUTOMATIC:
-                case TAB_STYLE_MINIMAL:
-                    assert(NO);
-                case TAB_STYLE_LIGHT:
-                    tabColor = [NSColor colorWithCalibratedHue:hue
-                                                    saturation:saturation * .5
-                                                    brightness:MAX(0.7, brightness)
-                                                         alpha:1];
-                    break;
-                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                    tabColor = [NSColor colorWithCalibratedHue:hue
-                                                    saturation:saturation * .25
-                                                    brightness:MAX(0.85, brightness)
-                                                         alpha:1];
-                    break;
-                case TAB_STYLE_DARK:
-                    tabColor = [NSColor colorWithCalibratedHue:hue
-                                                    saturation:saturation * .75
-                                                    brightness:MIN(0.3, brightness)
-                                                         alpha:1];
-                    break;
-                case TAB_STYLE_DARK_HIGH_CONTRAST:
-                    tabColor = [NSColor colorWithCalibratedHue:hue
-                                                    saturation:saturation * .95
-                                                    brightness:MIN(0.15, brightness)
-                                                         alpha:1];
-                    break;
-            }
-        }
-        if ([_delegate sessionViewTerminalIsFirstResponder]) {
-            return tabColor;
-        } else {
-            return [tabColor it_colorByDimmingByAmount:0.3];
-        }
-    } else {
-        return [self dimmedBackgroundColorWithAppearance:self.effectiveAppearance];
-    }
-}
-
-- (NSColor *)dimmedBackgroundColorWithAppearance:(NSAppearance *)appearance {
-    const BOOL inactive = ![_delegate sessionViewTerminalIsFirstResponder];
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        NSColor *color = [_delegate sessionViewBackgroundColor];
-        if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
-            return color;
-        }
-        if (inactive) {
-            return [color colorDimmedBy:[self adjustedDimmingAmount]
-                       towardsGrayLevel:0.5];
-        } else {
-            return color;
-        }
-    }
-    CGFloat whiteLevel = 0;
-    switch ([appearance it_tabStyle:preferredStyle]) {
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_MINIMAL:
-            assert(NO);
-        case TAB_STYLE_LIGHT:
-            if (inactive) {
-                // Not selected
-                whiteLevel = 0.58;
-            } else {
-                // selected
-                whiteLevel = 0.70;
-            }
-            break;
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            if (inactive) {
-                // Not selected
-                whiteLevel = 0.68;
-            } else {
-                // selected
-                whiteLevel = 0.80;
-            }
-            break;
-        case TAB_STYLE_DARK:
-            if (inactive) {
-                // Not selected
-                whiteLevel = 0.18;
-            } else {
-                // selected
-                whiteLevel = 0.27;
-            }
-            break;
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            if (inactive) {
-                // Not selected
-                whiteLevel = 0.08;
-            } else {
-                // selected
-                whiteLevel = 0.17;
-            }
-            break;
-    }
-    
-    return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
+    return [[iTermTheme sharedInstance] backgroundColorForDecorativeSubviewsInSessionWithTabColor:self.tabColor
+                                                                              effectiveAppearance:self.effectiveAppearance
+                                                                           sessionBackgroundColor:[_delegate sessionViewBackgroundColor]
+                                                                                 isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
+                                                                            adjustedDimmingAmount:[self adjustedDimmingAmount]];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {

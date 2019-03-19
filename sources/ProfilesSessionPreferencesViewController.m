@@ -8,12 +8,15 @@
 
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermColorMap.h"
 #import "iTermStatusBarSetupViewController.h"
+#import "iTermTheme.h"
 #import "iTermWarning.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "PSMMinimalTabStyle.h"
 #import "PreferencePanel.h"
 
 @interface iTermStatusBarSetupPanel : NSPanel
@@ -36,7 +39,7 @@
 
 @end
 
-@interface ProfilesSessionPreferencesViewController () <NSTableViewDelegate, NSTableViewDataSource>
+@interface ProfilesSessionPreferencesViewController () <NSTableViewDelegate, NSTableViewDataSource, PSMMinimalTabStyleDelegate>
 @end
 
 @implementation ProfilesSessionPreferencesViewController {
@@ -249,6 +252,53 @@
     }
 }
 
+- (iTermColorMap *)colorMap {
+    iTermColorMap *colorMap = [[iTermColorMap alloc] init];
+    colorMap.mutingAmount = [self floatForKey:KEY_CURSOR_BOOST];
+    colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    colorMap.minimumContrast = [self floatForKey:KEY_MINIMUM_CONTRAST];
+    return colorMap;
+}
+
+- (id<PSMTabStyle>)tabStyle {
+    return [[iTermTheme sharedInstance] tabStyleWithDelegate:self
+                                         effectiveAppearance:self.view.window.effectiveAppearance];
+}
+
+- (NSColor *)sessionBackgroundColor {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_BACKGROUND_COLOR]];
+    if (!dict) {
+        return [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
+    }
+    return [dict colorValue];
+}
+
+- (NSColor *)tabColor {
+    if (![self boolForKey:KEY_USE_TAB_COLOR]) {
+        return nil;
+    }
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_TAB_COLOR]];
+    if (!dict) {
+        return nil;
+    }
+    return [dict colorValue];
+}
+
+- (NSAppearance *)appearanceForCurrentTheme {
+    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
+            return self.view.effectiveAppearance;
+    }
+}
+
 - (IBAction)configureStatusBar:(id)sender {
     NSDictionary *layoutDictionary = [NSDictionary castFrom:[self objectForKey:KEY_STATUS_BAR_LAYOUT]] ?: @{};
     NSDictionary *colorDict = [NSDictionary castFrom:[self objectForKey:KEY_BACKGROUND_COLOR]];
@@ -257,6 +307,16 @@
         [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary
                                                              darkBackground:dark
                                                                allowRainbow:[self allowRainbow]];
+    _statusBarSetupViewController.defaultTextColor = [[iTermTheme sharedInstance] statusBarTextColorForEffectiveAppearance:[self appearanceForCurrentTheme]
+                                                                                                                  colorMap:[self colorMap]
+                                                                                                                  tabStyle:[self tabStyle]
+                                                                                                             mainAndActive:YES];
+    _statusBarSetupViewController.defaultBackgroundColor = [[iTermTheme sharedInstance] statusBarContainerBackgroundColorForTabColor:[self tabColor]
+                                                                                                                 effectiveAppearance:[self appearanceForCurrentTheme]
+                                                                                                                            tabStyle:[self tabStyle]
+                                                                                                              sessionBackgroundColor:[self sessionBackgroundColor]
+                                                                                                                    isFirstResponder:YES
+                                                                                                               adjustedDimmingAmount:0];
 
     _statusBarSetupWindow =
         [[iTermStatusBarSetupPanel alloc] initWithContentRect:_statusBarSetupViewController.view.frame
@@ -423,6 +483,12 @@
 
 - (BOOL)logDirIsWritable {
     return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue]];
+}
+
+#pragma mark - PSMMinimalTabStyleDelegate
+
+- (NSColor *)minimalTabStyleBackgroundColor {
+    return [self sessionBackgroundColor];
 }
 
 @end

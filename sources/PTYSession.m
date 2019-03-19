@@ -73,6 +73,7 @@
 #import "iTermSwiftyStringGraph.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
+#import "iTermTheme.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermUpdateCadenceController.h"
@@ -10896,16 +10897,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermStatusBarViewControllerDelegate
 
 - (NSColor *)textColorForStatusBar {
-    if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        NSColor *color = [self.view.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:nil];
-        return [_colorMap colorByDimmingTextColor:[color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]]];
-    } else if (@available(macOS 10.14, *)) {
-        return [NSColor labelColor];
-    } else if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-        return [NSColor colorWithWhite:0.75 alpha:1];
-    } else {
-        return [NSColor blackColor];
-    }
+    return [[iTermTheme sharedInstance] statusBarTextColorForEffectiveAppearance:_view.effectiveAppearance
+                                                                        colorMap:_colorMap
+                                                                        tabStyle:[self.view.window.ptyWindow it_tabStyle]
+                                                                   mainAndActive:(self.view.window.isMainWindow && NSApp.isActive)];
 }
 
 - (NSColor *)statusBarDefaultTextColor {

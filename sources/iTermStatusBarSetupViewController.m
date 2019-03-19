@@ -128,6 +128,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)awakeFromNib {
+    _destinationViewController.defaultBackgroundColor = self.defaultBackgroundColor;
+    _destinationViewController.defaultTextColor = self.defaultTextColor;
+
     [self loadElements];
     for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {
         iTermStatusBarSetupElement *element = [self newElementForProviderRegistrationRequest:request];
