@@ -10920,6 +10920,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)updateStatusBarStyle {
     [_statusBarViewController updateColors];
+    [self invalidateStatusBar];
 }
 
 - (NSFont *)statusBarTerminalFont {
