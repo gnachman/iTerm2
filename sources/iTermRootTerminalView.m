@@ -209,6 +209,19 @@ typedef struct {
     }
 }
 
+- (void)mouseUp:(NSEvent *)event {
+    if (!_windowTitleLabel.hidden && event.clickCount == 2) {
+        const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+        const CGFloat titleBarHeight = _tabBarControl.height;
+        NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
+        if (NSPointInRect(point, rect)) {
+            [self.window performZoom:nil];
+            return;
+        }
+    }
+    [super mouseUp:event];
+}
+
 - (BOOL)mouseDownCanMoveWindow {
     return YES;
 }
@@ -1211,7 +1224,7 @@ typedef struct {
 }
 
 - (BOOL)iTermTabBarCanDragWindow {
-    return[ _delegate iTermTabBarCanDragWindow];
+    return [_delegate iTermTabBarCanDragWindow];
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {
