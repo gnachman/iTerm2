@@ -6,9 +6,87 @@
 //
 
 #import "iTermOnboardingWindowController.h"
+
+#import "ITAddressBookMgr.h"
+#import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
+#import "PTYSession.h"
+#import "PreferencePanel.h"
+#import "ProfileModel.h"
+#import "SessionView.h"
 
 static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown";
+
+static void iTermTryMinimalCompact(NSWindow *window) {
+    const iTermPreferencesTabStyle savedTabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    [iTermPreferences setInt:TAB_STYLE_MINIMAL forKey:kPreferenceKeyTabStyle];
+
+    ProfileModel *model = [ProfileModel sharedInstance];
+    Profile *profile = [model defaultBookmark];
+
+    const iTermWindowType savedWindowType = [iTermProfilePreferences integerForKey:KEY_WINDOW_TYPE inProfile:profile];
+    [iTermProfilePreferences setInteger:WINDOW_TYPE_COMPACT forKey:KEY_WINDOW_TYPE inProfile:profile model:model];
+
+    PTYSession *session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+    [session.view.window performZoom:nil];
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Minimal Theme & Compact Windows"];
+    [alert setInformativeText:@"The theme has been changed to minimal and your default profile’s window type has been changed to Compact."];
+    [alert addButtonWithTitle:@"Save"];
+    [alert addButtonWithTitle:@"Restore"];
+    [alert setAlertStyle:NSAlertStyleInformational];
+
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSAlertFirstButtonReturn) {
+            return;
+        };
+        [iTermPreferences setInt:savedTabStyle forKey:kPreferenceKeyTabStyle];
+        [iTermProfilePreferences setInteger:savedWindowType forKey:KEY_WINDOW_TYPE inProfile:profile model:model];
+    }];
+}
+
+static void iTermTryStatusBar(NSWindow *window) {
+    ProfileModel *model = [ProfileModel sharedInstance];
+    Profile *profile = [model defaultBookmark];
+    [iTermProfilePreferences setBool:YES forKey:KEY_SHOW_STATUS_BAR inProfile:profile model:model];
+    [[PreferencePanel sharedInstance] openToProfileWithGuid:[[model defaultBookmark] objectForKey:KEY_GUID]
+                             andEditComponentWithIdentifier:nil
+                                                       tmux:NO
+                                                      scope:nil];
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Status Bar"];
+    [alert setInformativeText:@"The status bar setup panel has been opened, and the status bar is now enabled for your default profile. Add some components by dragging them to the bottom section to try it out."];
+    [alert addButtonWithTitle:@"OK"];
+    [alert setAlertStyle:NSAlertStyleInformational];
+
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+    }];
+}
+
+static void iTermTrySessionTitles() {
+    ProfileModel *model = [ProfileModel sharedInstance];
+    [[PreferencePanel sharedInstance] openToProfileWithGuid:[[model defaultBookmark] objectForKey:KEY_GUID]
+                                           selectGeneralTab:YES
+                                                       tmux:NO
+                                                      scope:nil];
+}
+
+static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
+    if ([path isEqualToString:@"/minimal-compact"]) {
+        iTermTryMinimalCompact(window);
+        return;
+    }
+    if ([path isEqualToString:@"/statusbar"]) {
+        iTermTryStatusBar(window);
+    }
+
+    if ([path isEqualToString:@"/session-titles"]) {
+        iTermTrySessionTitles();
+    }
+}
 
 @interface iTermOnboardingView : NSView
 @end
@@ -16,13 +94,47 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
 @implementation iTermOnboardingView
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor whiteColor] set];
+    [[NSColor textBackgroundColor] set];
     NSRectFill(dirtyRect);
 }
 
 @end
 
-@interface iTermOnboardingWindowController ()<NSPageControllerDelegate>
+@interface iTermOnboardingTextField : NSTextField
+@end
+
+@implementation iTermOnboardingTextField
+
+// For some stupid reason links aren't clickable in this window. It's probably
+// because of the type of panel. I don't feel light spending hours fighting
+// with Cocoa's undocumented insolence so let's just route around the damage.
+- (void)mouseUp:(NSEvent *)event {
+    NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+
+    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:self.attributedStringValue];
+    NSTextContainer *textContainer = [[NSTextContainer alloc] initWithContainerSize:self.bounds.size];
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
+
+    NSInteger index = [layoutManager characterIndexForPoint:point inTextContainer:textContainer fractionOfDistanceBetweenInsertionPoints:nil];
+    if (index >= 0 && index < self.attributedStringValue.length) {
+        NSDictionary *attributes = [self.attributedStringValue attributesAtIndex:index effectiveRange:nil];
+        NSURL *url = attributes[NSLinkAttributeName];
+        if (url) {
+            if ([url.scheme isEqualToString:@"iterm2whatsnew"]) {
+                iTermOpenWhatsNewURL(url.path, self.window);
+            } else {
+                [[NSWorkspace sharedWorkspace] openURL:url];
+            }
+            return;
+        }
+    }
+    [super mouseUp:event];
+}
+@end
+
+@interface iTermOnboardingWindowController ()<NSPageControllerDelegate, NSTextViewDelegate>
 
 @end
 
@@ -42,6 +154,11 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
     NSArray<NSView *> *_pageIndicators;
     IBOutlet NSButton *_previousPageButton;
     IBOutlet NSButton *_nextPageButton;
+
+    IBOutlet NSTextField *_textField1;
+    IBOutlet NSTextField *_textField2;
+    IBOutlet NSTextField *_textField3;
+    IBOutlet NSTextField *_textField4;
 }
 
 + (BOOL)hasBeenShown {
@@ -74,6 +191,26 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
 }
 
 - (void)awakeFromNib {
+    NSString *url1 = @"iterm2whatsnew:/minimal-compact";
+    NSMutableAttributedString *attributedString = _textField1.attributedStringValue.mutableCopy;
+    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url1 title:@"Try it now!"]];
+    _textField1.attributedStringValue = attributedString;
+
+    NSString *url2 = @"iterm2whatsnew:/statusbar";
+    attributedString = _textField2.attributedStringValue.mutableCopy;
+    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url2 title:@"Try it now!"]];
+    _textField2.attributedStringValue = attributedString;
+
+    NSString *url3 = @"iterm2whatsnew:/session-titles";
+    attributedString = _textField3.attributedStringValue.mutableCopy;
+    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url3 title:@"Try it now!"]];
+    _textField3.attributedStringValue = attributedString;
+
+    NSString *url4 = @"https://iterm2.com/python-api";
+    attributedString = _textField4.attributedStringValue.mutableCopy;
+    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url4 title:@"Learn more."]];
+    _textField4.attributedStringValue = attributedString;
+
     _views = @[ [self wrap:_view1], [self wrap:_view2], [self wrap:_view3], [self wrap:_view4] ];
     _pageIndicators = @[ _pageIndicator1, _pageIndicator2, _pageIndicator3, _pageIndicator4 ];
     _pageController.arrangedObjects = @[ @0, @1, @2, @3 ];
@@ -85,6 +222,13 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
     }
     [self updateButtons];
     [self.class suppressFutureShowings];
+}
+
+- (NSAttributedString *)attributedStringWithLinkToURL:(NSString *)urlString title:(NSString *)title {
+    NSDictionary *linkAttributes = @{ NSLinkAttributeName: [NSURL URLWithString:urlString] };
+    NSString *localizedTitle = title;
+    return [[NSAttributedString alloc] initWithString:localizedTitle
+                                           attributes:linkAttributes];
 }
 
 - (IBAction)previousPage:(id)sender {
