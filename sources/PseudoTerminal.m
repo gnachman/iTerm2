@@ -9526,6 +9526,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.currentSession.guid isEqualToString:guid];
 }
 
+- (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action {
+    [self.currentSession applyAction:action];
+}
+
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }

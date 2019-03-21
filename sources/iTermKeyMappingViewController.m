@@ -120,8 +120,8 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 - (void)editActionWindowCompletionHandler:(iTermEditKeyActionWindowController *)editActionWindowController {
     if (editActionWindowController.ok) {
         [_delegate keyMapping:self
-                 didChangeKey:editActionWindowController.isTouchBarItem ? editActionWindowController.touchBarItemID : editActionWindowController.currentKeyCombination
-               isTouchBarItem:editActionWindowController.isTouchBarItem
+                 didChangeKey:editActionWindowController.identifier
+               isTouchBarItem:editActionWindowController.mode == iTermEditKeyActionWindowControllerModeTouchBarItem
                       atIndex:[_tableView selectedRow]
                      toAction:editActionWindowController.action
                     parameter:editActionWindowController.parameterValue
@@ -151,7 +151,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     iTermEditKeyActionWindowController *editActionWindowController;
     editActionWindowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp];
     editActionWindowController.isNewMapping = YES;
-    editActionWindowController.isTouchBarItem = YES;
+    editActionWindowController.mode = iTermEditKeyActionWindowControllerModeTouchBarItem;
     editActionWindowController.touchBarItemID = [iTermTouchBarIDPrefix stringByAppendingString:[NSString uuid]];
     editActionWindowController.action = KEY_ACTION_IGNORE;
     [self presentEditActionSheet:editActionWindowController];
@@ -204,7 +204,6 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
         dict = [_delegate keyMappingTouchBarItems];
     }
     _editActionWindowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp];
-    _editActionWindowController.isTouchBarItem = isTouchBarItem;
     if (isTouchBarItem) {
         _editActionWindowController.label = [iTermKeyBindingMgr touchBarLabelForBinding:dict[selectedKey]];
     }
@@ -216,6 +215,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     }
     _editActionWindowController.parameterValue = dict[selectedKey][@"Text"];
     _editActionWindowController.action = [dict[selectedKey][@"Action"] intValue];
+    _editActionWindowController.mode = isTouchBarItem ? iTermEditKeyActionWindowControllerModeTouchBarItem : iTermEditKeyActionWindowControllerModeKeyboardShortcut;
     [self presentEditActionSheet:_editActionWindowController];
 }
 

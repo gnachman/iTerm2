@@ -7,6 +7,7 @@
 #import "iTermDragHandleView.h"
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
+#import "iTermToolActions.h"
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
 #import "iTermTuple.h"
@@ -22,6 +23,7 @@
 #import "ToolProfiles.h"
 #import "ToolWebView.h"
 
+NSString *const kActionsToolName = @"Actions";
 NSString *const kCapturedOutputToolName = @"Captured Output";
 NSString *const kCommandHistoryToolName = @"Command History";
 NSString *const kRecentDirectoriesToolName = @"Recent Directories";
@@ -58,6 +60,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
 + (void)initialize {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
+    [iTermToolbeltView registerToolWithName:kActionsToolName withClass:[iTermToolActions class]];
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
     [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];

@@ -10,6 +10,7 @@
 @class ToolDirectoriesView;
 @class ToolbeltSplitView;
 
+extern NSString *const kActionsToolName;
 extern NSString *const kCapturedOutputToolName;
 extern NSString *const kCommandHistoryToolName;
 extern NSString *const kRecentDirectoriesToolName;

@@ -7,6 +7,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
+#import "iTermActionsModel.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplication.h"
@@ -6463,6 +6464,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                     window:self.view.window];
                                    }
                                }];
+}
+
+- (void)applyAction:(iTermAction *)action {
+    [self performKeyBindingAction:action.action parameter:action.parameter event:nil];
 }
 
 // This is limited to the actions that don't need any existing session

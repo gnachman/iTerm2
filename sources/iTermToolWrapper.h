@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class CapturedOutput;
+@class iTermAction;
 @class iTermMark;
 @class VT100RemoteHost;
 @class ToolCommandHistoryView;
@@ -30,6 +31,7 @@
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;
+- (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action;
 
 @end
 
