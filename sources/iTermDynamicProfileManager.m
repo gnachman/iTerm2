@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
 #import "NSFileManager+iTerm.h"
@@ -69,6 +70,9 @@
 }
 
 - (NSString *)dynamicProfilesPath {
+    if ([[iTermAdvancedSettingsModel dynamicProfilesPath] length]) {
+        return [[iTermAdvancedSettingsModel dynamicProfilesPath] stringByExpandingTildeInPath];
+    }
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *appSupport = [fileManager applicationSupportDirectory];
     NSString *thePath = [appSupport stringByAppendingPathComponent:@"DynamicProfiles"];

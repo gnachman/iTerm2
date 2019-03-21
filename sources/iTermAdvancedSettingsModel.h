@@ -80,6 +80,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)downloadsDirectory;
 + (BOOL)drawOutlineAroundCursor;
 + (BOOL)dwcLineCache;
++ (NSString *)dynamicProfilesPath;
 + (double)echoProbeDuration;
 + (BOOL)eliminateCloseButtons;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;

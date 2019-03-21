@@ -319,6 +319,7 @@ DEFINE_BOOL(alertsIndicateShortcuts, NO, SECTION_GENERAL @"Buttons in modal aler
 DEFINE_BOOL(showHintsInSplitPaneMenuItems, NO, SECTION_GENERAL @"Show hints in split pane menu items to indicate horizontal vs vertical semantics.\nYou must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(useOldStyleDropDownViews, NO, SECTION_GENERAL @"Use old-style find and paste progress indicator views.\nThis change will only affect new windows.");
 DEFINE_BOOL(loadFromFindPasteboard, YES, SECTION_GENERAL @"Synchronize search queries across windows and applications.\nNormally, when you enter a search query in a Find field all find fields in all applications get updated to hold the same value. This is utter nonsense, and can be disabled by setting this preference to No.");
+DEFINE_STRING(dynamicProfilesPath, @"", SECTION_GENERAL @"Path to folder with dynamic profiles.\nWhen empty, ~/Library/Application Support/iTerm2/DynamicProfiles will be used. You must restart iTerm2 after modifying this setting.");
 
 #pragma mark - Drawing
 
