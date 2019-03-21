@@ -391,7 +391,9 @@ static NSString *sPreviousVersion;
         dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup),
                   kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder),
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
-                  kPreferenceKeyTabStyle: BLOCK(computedTabStyle) };
+                  kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
+                  kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
+                  };
     }
     return dict;
 }
@@ -583,6 +585,21 @@ static NSString *sPreviousVersion;
     } else {
         return @(TAB_STYLE_LIGHT);
     }
+}
+
++ (NSNumber *)computedUseMetal {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyUseMetal];
+    if (value) {
+        return value;
+    }
+
+    if (@available(macOS 10.13, *)) {
+        return @YES;
+    }
+
+    // Off by default on 10.12 because it's slow.
+    return @NO;
 }
 
 + (iTermUserDefaultsObserver *)sharedObserver {
