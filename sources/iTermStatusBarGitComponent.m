@@ -18,6 +18,7 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -200,6 +201,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         thinSpace = [self attributedStringWithString:@"\u2009"];
     });
 
+    if (_gitPoller.state.xcode.length > 0) {
+        return [self attributedStringWithString:@"⚠️"];
+    }
     NSAttributedString *branch = _gitPoller.state.branch ? [self attributedStringWithString:_gitPoller.state.branch] : nil;
     if (!branch) {
         return nil;
@@ -305,6 +309,17 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         item.target = self;
         [menu addItem:item];
         [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
+        return;
+    }
+
+    if (_gitPoller.state.xcode.length > 0) {
+        [iTermWarning showWarningWithTitle:[_gitPoller.state.xcode stringByReplacingOccurrencesOfString:@"\t" withString:@"\n"]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"GitPollerXcodeWarning"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Running git"
+                                    window:containingView.window];
         return;
     }
 

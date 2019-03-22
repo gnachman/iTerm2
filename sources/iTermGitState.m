@@ -11,6 +11,7 @@
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermGitState *theCopy = [[iTermGitState alloc] init];
+    theCopy.xcode = self.xcode.copy;
     theCopy.pushArrow = self.pushArrow.copy;
     theCopy.pullArrow = self.pullArrow.copy;
     theCopy.branch = self.branch.copy;

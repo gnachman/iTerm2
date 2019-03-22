@@ -178,6 +178,7 @@ typedef void (^iTermGitCallback)(iTermGitState *);
 
     DLog(@"Parsed dict:\n%@", dict);
     iTermGitState *state = [[iTermGitState alloc] init];
+    state.xcode = dict[@"XCODE"];
     state.dirty = [dict[@"DIRTY"] isEqualToString:@"dirty"];
     state.pushArrow = dict[@"PUSH"];
     state.pullArrow = dict[@"PULL"];
