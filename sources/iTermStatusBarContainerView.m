@@ -77,12 +77,6 @@ NS_ASSUME_NONNULL_BEGIN
     [_component statusBarComponentDidClickWithView:_view];
 }
 
-- (void)mouseDown:(NSEvent *)event {
-    if ([_component statusBarComponentHandlesClicks]) {
-        [_component statusBarComponentMouseDownWithView:_view];
-    }
-}
-
 - (CGFloat)minX {
     NSImage *icon = _component.statusBarComponentIcon;
     const BOOL hasIcon = (icon != nil);
