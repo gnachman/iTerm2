@@ -80,6 +80,8 @@
 }
 
 - (void)viewDidAppear {
+    _forceQuit.enabled = (_outlineView.selectedRow != -1);
+
     if (!_timer) {
         __weak __typeof(self) weakSelf = self;
         _timer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
