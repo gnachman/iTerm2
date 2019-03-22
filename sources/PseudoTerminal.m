@@ -384,7 +384,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Keeps the touch bar from updating on every keypress which is distracting.
-    iTermRateLimitedUpdate *_touchBarRateLimitedUpdate;
+    iTermRateLimitedIdleUpdate *_touchBarRateLimitedUpdate;
     NSString *_previousTouchBarWord;
 
     BOOL _windowWasJustCreated;
@@ -9465,7 +9465,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_previousTouchBarWord release];
     _previousTouchBarWord = [word copy];
     if (_touchBarRateLimitedUpdate == nil) {
-        _touchBarRateLimitedUpdate = [[iTermRateLimitedUpdate alloc] init];
+        _touchBarRateLimitedUpdate = [[iTermRateLimitedIdleUpdate alloc] init];
         _touchBarRateLimitedUpdate.minimumInterval = 0.5;
     }
     [_touchBarRateLimitedUpdate performRateLimitedBlock:^{

@@ -18,9 +18,6 @@
 // Performs the block immediately, or perhaps after up to minimumInterval time.
 - (void)performRateLimitedBlock:(void (^)(void))block;
 
-// Returns whether the block was performed. Does *not* perform it after an update when it returns NO.
-- (BOOL)tryPerformRateLimitedBlock:(void (^)(void))block;
-
 // A target/action version of the above.
 - (void)performRateLimitedSelector:(SEL)selector
                           onTarget:(id)target
@@ -34,5 +31,9 @@
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithName:(NSString *)name NS_DESIGNATED_INITIALIZER;
 
+@end
+
+// Only updates after a period of idleness equal to the minimumInterval
+@interface iTermRateLimitedIdleUpdate : iTermRateLimitedUpdate
 @end
 

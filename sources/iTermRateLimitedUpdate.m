@@ -26,6 +26,7 @@
 }
 
 - (void)scheduleTimerAfterDelay:(NSTimeInterval)delay {
+    [_timer invalidate];
     _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
                                                   target:self
                                                 selector:@selector(performBlockIfNeeded:)
@@ -51,16 +52,6 @@
     }
 }
 
-- (BOOL)tryPerformRateLimitedBlock:(void (^)(void))block {
-    if (_timer == nil) {
-        block();
-        [self scheduleTimer];
-        return YES;
-    } else {
-        return NO;
-    }
-}
-
 - (void)performRateLimitedSelector:(SEL)selector
                           onTarget:(id)target
                         withObject:(id)object {
@@ -83,6 +74,16 @@
         [self scheduleTimer];
     }
 }
+
+@end
+
+@implementation iTermRateLimitedIdleUpdate
+
+- (void)performRateLimitedBlock:(void (^)(void))block {
+    [self scheduleTimer];
+    [super performRateLimitedBlock:block];
+}
+
 
 @end
 
