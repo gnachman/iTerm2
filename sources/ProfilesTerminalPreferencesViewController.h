@@ -10,4 +10,6 @@
 
 @interface ProfilesTerminalPreferencesViewController : iTermProfilePreferencesBaseViewController
 
+- (void)layoutSubviewsForEditCurrentSessionMode;
+
 @end

@@ -251,6 +251,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     _generalTab.view = _generalViewController.view;
     [_windowViewController layoutSubviewsForEditCurrentSessionMode];
     [_sessionViewController layoutSubviewsForEditCurrentSessionMode];
+    [_terminalViewController layoutSubviewsForEditCurrentSessionMode];
     [_advancedViewController layoutSubviewsForEditCurrentSessionMode];
     [_keysViewController layoutSubviewsForEditCurrentSessionMode];
     NSRect newFrame = _tabViewWrapperView.superview.bounds;

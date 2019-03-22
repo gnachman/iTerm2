@@ -191,6 +191,11 @@
                    type:kPreferenceInfoTypeCheckbox];
 }
 
+- (void)layoutSubviewsForEditCurrentSessionMode {
+    _terminalType.enabled = NO;
+    _setLocaleVars.enabled = NO;
+}
+
 #pragma mark - Character Encoding
 
 - (void)populateEncodings {
