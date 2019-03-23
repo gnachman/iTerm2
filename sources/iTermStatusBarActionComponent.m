@@ -8,6 +8,7 @@
 #import "iTermStatusBarActionComponent.h"
 #import "iTermActionsModel.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 
 static NSString *const iTermStatusBarActionKey = @"action";
 
@@ -49,7 +50,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
     NSColor *textColor = self.textColor;
     if (textColor) {
         NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        [style setAlignment:NSTextAlignmentCenter];
+        [style setAlignment:NSTextAlignmentLeft];
         NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
                                       NSParagraphStyleAttributeName: style };
         NSAttributedString *attrString = [[NSAttributedString alloc]initWithString:self.action.title
@@ -146,7 +147,9 @@ static NSString *const iTermStatusBarActionKey = @"action";
     [self updateTitleInButton:self.button];
 }
 
-#pragma mark - iTermStatusBarComponent
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconAction" forClass:[self class]];
+}
 
 - (NSView *)statusBarComponentView {
     NSButton *button = self.button;

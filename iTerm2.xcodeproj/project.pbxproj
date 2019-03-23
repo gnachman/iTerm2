@@ -1519,6 +1519,12 @@
 		A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A618FFC42245F6A300B8FD88 /* iTermStatusBarActionComponent.m */; };
 		A618FFC92245F89900B8FD88 /* iTermStatusBarKnobActionViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A618FFC72245F89900B8FD88 /* iTermStatusBarKnobActionViewController.h */; };
 		A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A618FFC82245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m */; };
+		A618FFCD224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */; };
+		A618FFCE224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */; };
+		A618FFCF224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */; };
+		A618FFD0224602F800B8FD88 /* StatusBarIconAction.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */; };
+		A618FFD1224602F800B8FD88 /* StatusBarIconAction.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */; };
+		A618FFD2224602F800B8FD88 /* StatusBarIconAction.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */; };
 		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
@@ -4499,6 +4505,8 @@
 		A618FFC42245F6A300B8FD88 /* iTermStatusBarActionComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarActionComponent.m; sourceTree = "<group>"; };
 		A618FFC72245F89900B8FD88 /* iTermStatusBarKnobActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarKnobActionViewController.h; sourceTree = "<group>"; };
 		A618FFC82245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarKnobActionViewController.m; sourceTree = "<group>"; };
+		A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconAction@2x.png"; path = "images/StatusBarIcons/StatusBarIconAction@2x.png"; sourceTree = "<group>"; };
+		A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconAction.png; path = images/StatusBarIcons/StatusBarIconAction.png; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
 		A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableDictionary+Profile.h"; sourceTree = "<group>"; };
@@ -6461,6 +6469,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */,
+				A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */,
 				A61BB46722001E650027F47D /* iTermRecordingIcon.icns */,
 				A6AC04C521F0FDBC00CD2774 /* PopoverIcon.png */,
 				A6AC04C421F0FDBC00CD2774 /* PopoverIcon@2x.png */,
@@ -10372,6 +10382,7 @@
 				A6E7AEB1214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				A67D0D761A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
+				A618FFD2224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				1D6ED99719AEA20D005A7799 /* Warning.png in Resources */,
 				A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A6F7A74E213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
@@ -10427,6 +10438,7 @@
 				A61BB46621CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				A6E7AE9A214394DD00DE9F3B /* graphic_code.png in Resources */,
+				A618FFCF224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
 				A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */,
 				A6F7A72D213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
 				1DBBA5E31B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
@@ -10678,6 +10690,7 @@
 				1D44D0491CC7F5A600BE5630 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */,
 				1D44CF9E1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBoxSelection.png in Resources */,
 				A67F61F1214395D50093940A /* graphic_zip@2x.png in Resources */,
+				A618FFCE224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
 				1D44CF881CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-test24BitColor.png in Resources */,
 				1D44CFD61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_onIsland.png in Resources */,
 				1D44D0131CC7F5A600BE5630 /* PTYTextViewTest-golden-testEmoji.png in Resources */,
@@ -11014,6 +11027,7 @@
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				1D44D0931CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				1D44CFC51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNote.png in Resources */,
+				A618FFD1224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				1D44D0571CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBasicDraw.png in Resources */,
 				53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				1D44CFAB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
@@ -11375,6 +11389,7 @@
 				A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A6E7AE80214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A67F6164214395990093940A /* graphic_monitor.png in Resources */,
+				A618FFD0224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				A67F6134214395570093940A /* graphic_gulp.png in Resources */,
 				A6CD8A3F22344C78007C5B39 /* iTermAPIPermissionsWindowController.xib in Resources */,
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
@@ -11456,6 +11471,7 @@
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
 				A65B72AC1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				A67F61E4214395D50093940A /* graphic_vim.png in Resources */,
+				A618FFCD224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A6F7A74C213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */,
