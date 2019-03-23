@@ -10974,6 +10974,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                  model:model];
 }
 
+- (void)statusBarPerformAction:(iTermAction *)action {
+    [self applyAction:action];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

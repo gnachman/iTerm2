@@ -20,6 +20,7 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared background color";
 static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 
+@class iTermAction;
 @protocol iTermStatusBarComponent;
 @class iTermVariableScope;
 
@@ -33,6 +34,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (BOOL)statusBarComponentTerminalBackgroundColorIsDark:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string;
 - (void)statusBarComponentOpenStatusBarPreferences:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponentPerformAction:(iTermAction *)action;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>

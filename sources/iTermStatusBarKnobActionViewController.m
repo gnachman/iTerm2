@@ -1,0 +1,85 @@
+//
+//  iTermStatusBarKnobActionViewController.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 3/22/19.
+//
+
+#import "iTermStatusBarKnobActionViewController.h"
+
+#import "iTermActionsModel.h"
+#import "iTermEditKeyActionWindowController.h"
+
+@interface iTermStatusBarKnobActionViewController ()
+
+@end
+
+@implementation iTermStatusBarKnobActionViewController {
+    NSButton *_button;
+    iTermEditKeyActionWindowController *_windowController;
+}
+
+- (instancetype)init {
+    return [super initWithNibName:nil bundle:nil];
+}
+
+- (void)loadView {
+    self.view = [[NSView alloc] init];
+}
+
+- (void)viewDidLoad {
+    _button = [[NSButton alloc] init];
+    [_button setButtonType:NSMomentaryPushInButton];
+    [_button setTarget:self];
+    [_button setAction:@selector(buttonPressed:)];
+    [_button setTitle:@"Configure…"];
+    [_button setBezelStyle:NSTexturedRoundedBezelStyle];
+    [_button sizeToFit];
+    [self.view addSubview:_button];
+    [self sizeToFit];
+}
+
+- (void)setDescription:(NSString *)description placeholder:(nonnull NSString *)placeholder {
+}
+
+- (void)sizeToFit {
+    [_button sizeToFit];
+    NSRect frame = self.view.frame;
+    frame.size = _button.bounds.size;
+    self.view.frame = frame;
+}
+
+- (CGFloat)controlOffset {
+    return 0;
+}
+
+- (void)buttonPressed:(id)sender {
+    [_windowController close];
+    _windowController = [self newEditKeyActionWindowControllerForAction:[[iTermAction alloc] initWithDictionary:_value]];
+}
+- (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
+    iTermEditKeyActionWindowController *windowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession];
+    if (action) {
+        windowController.label = action.title;
+        windowController.isNewMapping = NO;
+    } else {
+        windowController.isNewMapping = YES;
+    }
+    windowController.parameterValue = action.parameter;
+    windowController.action = action.action;
+    windowController.mode = iTermEditKeyActionWindowControllerModeUnbound;
+    [self.view.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
+        [self editActionDidComplete:action];
+    }];
+    return windowController;
+}
+
+- (void)editActionDidComplete:(iTermAction *)original {
+    if (_windowController.ok) {
+        _value = _windowController.unboundAction.dictionaryValue;
+    }
+    [_windowController.window close];
+    _windowController = nil;
+}
+
+@end

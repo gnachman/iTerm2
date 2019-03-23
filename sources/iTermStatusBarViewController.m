@@ -324,6 +324,10 @@ const CGFloat iTermStatusBarHeight = 21;
     [self.delegate statusBarOpenPreferencesToComponent:nil];
 }
 
+- (void)statusBarComponentPerformAction:(iTermAction *)action {
+    [self.delegate statusBarPerformAction:action];
+}
+
 #pragma mark - iTermStatusBarContainerViewDelegate
 
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component {

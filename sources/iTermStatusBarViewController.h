@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern const CGFloat iTermStatusBarHeight;
 
+@class iTermAction;
 @class iTermStatusBarLayout;
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
@@ -28,6 +29,7 @@ extern const CGFloat iTermStatusBarHeight;
 - (void)statusBarDidUpdate;
 - (void)statusBarSetLayout:(iTermStatusBarLayout *)layout;
 - (void)statusBarOpenPreferencesToComponent:(nullable id<iTermStatusBarComponent>)component;
+- (void)statusBarPerformAction:(iTermAction *)action;
 @end
 
 @protocol iTermStatusBarContainer<NSObject>
