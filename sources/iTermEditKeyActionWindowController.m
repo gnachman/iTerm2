@@ -42,6 +42,7 @@
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
+    iTermFunctionCallTextFieldDelegate *_labelDelegate;
 }
 
 - (instancetype)initWithContext:(iTermVariablesSuggestionContext)context {
@@ -158,7 +159,7 @@
             [self removeActionsRequiringKeyBinding];
             break;
         case iTermEditKeyActionWindowControllerModeUnbound:
-            _touchBarLabel.placeholderString = @"Title";
+            _touchBarLabel.placeholderString = self.titleIsInterpolated ? @"Title (Interpolated String)" : @"Title";
             [self removeActionsRequiringKeyBinding];
             break;
     }
@@ -207,6 +208,14 @@
     switch (self.mode) {
         case iTermEditKeyActionWindowControllerModeUnbound:
             _keyboardShortcutLabel.stringValue = @"Title";
+            if (self.titleIsInterpolated) {
+                if (!_labelDelegate) {
+                    _labelDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                                                        passthrough:nil
+                                                                                      functionsOnly:NO];
+                }
+                _touchBarLabel.delegate = _labelDelegate;
+            }
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;

@@ -159,6 +159,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return _advancedConfiguration.backgroundColor;
 }
 
+- (CGFloat)defaultMinimumWidth {
+    return 0;
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)minMaxWidthKnobs {
     iTermStatusBarComponentKnob *maxWidthKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Maximum Width:"
@@ -170,7 +174,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Minimum Width:"
                                                       type:iTermStatusBarComponentKnobTypeDouble
                                                placeholder:@""
-                                              defaultValue:0
+                                              defaultValue:[@(self.defaultMinimumWidth) stringValue]
                                                        key:iTermStatusBarMinimumWidthKey];
     return @[minWidthKnob, maxWidthKnob];
 }
@@ -178,7 +182,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 - (CGFloat)clampedWidth:(CGFloat)width {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     CGFloat max = [knobValues[iTermStatusBarMaximumWidthKey] ?: @(INFINITY) doubleValue];
-    CGFloat min = [knobValues[iTermStatusBarMinimumWidthKey] ?: @0 doubleValue];
+    CGFloat min = [knobValues[iTermStatusBarMinimumWidthKey] ?: @(self.defaultMinimumWidth) doubleValue];
     return MIN(max,
                MAX(min,
                    width));

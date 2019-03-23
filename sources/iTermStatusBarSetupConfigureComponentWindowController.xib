@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -14,26 +14,18 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="480" height="270"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView identifier="nscolo" horizontalHuggingPriority="750" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1z-I2-A5b" customClass="iTermStatusBarSetupConfigureComponentContainerView">
-                        <rect key="frame" x="20" y="61" width="440" height="164"/>
+                        <rect key="frame" x="20" y="61" width="440" height="189"/>
                     </customView>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kw3-mU-ASY">
-                        <rect key="frame" x="18" y="233" width="138" height="17"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Configure Component" id="IpC-Xq-CKv">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lNf-WV-Iwe">
                         <rect key="frame" x="407" y="13" width="59" height="32"/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="13T-Vf-Een">
@@ -62,10 +54,9 @@ Gw
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="i1z-I2-A5b" firstAttribute="top" secondItem="kw3-mU-ASY" secondAttribute="bottom" constant="8" id="30h-Pt-i61"/>
-                    <constraint firstItem="kw3-mU-ASY" firstAttribute="top" secondItem="se5-gp-TjO" secondAttribute="top" constant="20" id="7XF-PL-I1J"/>
                     <constraint firstItem="lNf-WV-Iwe" firstAttribute="leading" secondItem="3S8-IZ-5Tt" secondAttribute="trailing" constant="12" id="9bl-fc-wWi"/>
                     <constraint firstItem="3S8-IZ-5Tt" firstAttribute="top" secondItem="lNf-WV-Iwe" secondAttribute="top" id="DZ2-L2-gQI"/>
+                    <constraint firstItem="i1z-I2-A5b" firstAttribute="top" secondItem="se5-gp-TjO" secondAttribute="top" constant="20" id="Huy-36-LBT"/>
                     <constraint firstAttribute="trailing" secondItem="i1z-I2-A5b" secondAttribute="trailing" constant="20" id="RcY-r6-mbE"/>
                     <constraint firstAttribute="trailing" secondItem="lNf-WV-Iwe" secondAttribute="trailing" constant="20" id="X0F-2Z-qUg"/>
                     <constraint firstItem="i1z-I2-A5b" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" constant="20" id="bAe-5j-x73"/>

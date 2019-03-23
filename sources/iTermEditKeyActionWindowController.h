@@ -14,6 +14,7 @@
 
 @interface iTermEditKeyActionWindowController : NSWindowController
 
+@property(nonatomic) BOOL titleIsInterpolated;
 @property(nonatomic, copy) NSString *currentKeyCombination;
 @property(nonatomic, copy) NSString *touchBarItemID;
 @property(nonatomic, readonly) NSString *identifier;  // currentKeyCombination, touchBarItemId, or nil

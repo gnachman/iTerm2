@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarActionComponent.h"
 #import "iTermActionsModel.h"
+#import "iTermSwiftyString.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 
@@ -14,6 +15,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 @implementation iTermStatusBarActionComponent {
     NSButton *_button;
+    iTermSwiftyString *_swiftyString;
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
@@ -35,7 +37,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedTextColorKey];
-    return @[ actionKnob, textColorKnob, backgroundColorKnob ];
+    return [@[ actionKnob, textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[self minMaxWidthKnobs]];
 }
 
 - (NSDictionary *)actionDictionary {
@@ -46,26 +48,39 @@ static NSString *const iTermStatusBarActionKey = @"action";
     return [[iTermAction alloc] initWithDictionary:self.actionDictionary];
 }
 
-- (void)updateTitleInButton:(NSButton *)button {
+- (void)updateTitleInButton {
+    if (_swiftyString) {
+        _swiftyString.swiftyString = self.action.title;
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _swiftyString = [[iTermSwiftyString alloc] initWithString:self.action.title ?: @""
+                                                        scope:self.scope
+                                                     observer:^(NSString * _Nonnull newValue) {
+                                                         [weakSelf swiftyStringDidChangeTo:newValue];
+                                                     }];
+}
+
+- (void)swiftyStringDidChangeTo:(NSString *)title {
     NSColor *textColor = self.textColor;
     if (textColor) {
         NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
         [style setAlignment:NSTextAlignmentLeft];
+        style.lineBreakMode = NSLineBreakByTruncatingTail;
         NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
                                       NSParagraphStyleAttributeName: style };
-        NSAttributedString *attrString = [[NSAttributedString alloc]initWithString:self.action.title
+        NSAttributedString *attrString = [[NSAttributedString alloc]initWithString:title
                                                                         attributes:attributes];
-        [button setAttributedTitle:attrString];
+        [_button setAttributedTitle:attrString];
     } else {
-        button.title = self.action.title;
+        _button.title = title;
     }
+    [self.delegate statusBarComponentPreferredSizeDidChange:self];
 }
 
 - (NSButton *)newButton {
     NSButton *button = [[NSButton alloc] initWithFrame:NSZeroRect];
     button.controlSize = NSControlSizeRegular;
-
-    [self updateTitleInButton:button];
 
     NSColor *color = self.backgroundColor;
     button.bezelColor = color;
@@ -100,28 +115,39 @@ static NSString *const iTermStatusBarActionKey = @"action";
 - (NSButton *)button {
     if (!_button) {
         _button = [self newButton];
+        [self updateTitleInButton];
     }
     return _button;
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
-    return _button.frame.size.width;
+    return [self clampedWidth:_button.fittingSize.width];
 }
 
-- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
-    [_button sizeToFit];
+- (CGFloat)defaultMinimumWidth {
+    return 30;
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return [self.button fittingSize].width;
+    return [self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarMinimumWidthKey] doubleValue];
 }
 
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
+    const CGFloat preferredWidth = self.button.fittingSize.width;
+    if (preferredWidth <= width) {
+        [self.button sizeToFit];
+        return;
+    }
+    NSRect frame = self.button.frame;
+    frame.size.width = width;
+    self.button.frame = frame;
+}
 - (NSString *)statusBarComponentShortDescription {
     return @"Custom Action";
 }
 
 - (BOOL)statusBarComponentCanStretch {
-    return NO;
+    return YES;
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
@@ -144,7 +170,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 - (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
     [super setDelegate:delegate];
-    [self updateTitleInButton:self.button];
+    [self updateTitleInButton];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -153,7 +179,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 - (NSView *)statusBarComponentView {
     NSButton *button = self.button;
-    [self updateTitleInButton:button];
+    [self updateTitleInButton];
     return button;
 }
 

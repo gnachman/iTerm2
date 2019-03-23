@@ -37,6 +37,7 @@ extern const double iTermStatusBarBaseComponentDefaultPriority;
 - (CGFloat)clampedWidth:(CGFloat)width;
 + (NSDictionary *)defaultMinMaxWidthKnobValues;
 - (iTermStatusBarComponentKnob *)newPriorityKnob;
+- (CGFloat)defaultMinimumWidth;
 
 @end
 

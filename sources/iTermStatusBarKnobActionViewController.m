@@ -32,7 +32,7 @@
     [_button setButtonType:NSMomentaryPushInButton];
     [_button setTarget:self];
     [_button setAction:@selector(buttonPressed:)];
-    [_button setTitle:@"Configure…"];
+    [_button setTitle:@"Configure Action…"];
     [_button setBezelStyle:NSTexturedRoundedBezelStyle];
     [_button sizeToFit];
     [self.view addSubview:_button];
@@ -50,15 +50,17 @@
 }
 
 - (CGFloat)controlOffset {
-    return 0;
+    return _button.bounds.size.width - 32;
 }
 
 - (void)buttonPressed:(id)sender {
     [_windowController close];
     _windowController = [self newEditKeyActionWindowControllerForAction:[[iTermAction alloc] initWithDictionary:_value]];
 }
+
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
     iTermEditKeyActionWindowController *windowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession];
+    windowController.titleIsInterpolated = YES;
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;
