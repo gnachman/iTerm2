@@ -2,28 +2,40 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-        <key>NSAppTransportSecurity</key>
-        <dict>
-                <key>NSExceptionDomains</key>
-                <dict>
-                        <key>127.0.0.1</key>
-                        <dict>
-                                <key>NSExceptionAllowsInsecureHTTPLoads</key>
-                                <true/>
-                        </dict>
-                        <key>localhost</key>
-                        <dict>
-                                <key>NSExceptionAllowsInsecureHTTPLoads</key>
-                                <true/>
-                        </dict>
-                </dict>
-        </dict>
+        <key>NSAppTransportSecurity</key>  
+        <dict>  
+            <key>NSExceptionDomains</key>  
+            <dict>  
+                <key>127.0.0.1</key>  
+                <dict>  
+                    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
+                    <true/>  
+                </dict>  
+                <key>localhost</key>  
+                <dict>  
+                    <key>NSExceptionAllowsInsecureHTTPLoads</key>  
+                    <true/>  
+                </dict>  
+            </dict>  
+        </dict> 
         <key>NSHumanReadableCopyright</key>
         <string>GPL v2</string>
         <key>CFBundleDevelopmentRegion</key>
         <string>English</string>
         <key>CFBundleDocumentTypes</key>
         <array>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itr</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTermRecordingIcon.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Recording</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
@@ -54,18 +66,6 @@
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
-                                <string>itr</string>
-                        </array>
-                        <key>CFBundleTypeIconFile</key>
-                        <string>iTermRecordingIcon.icns</string>
-                        <key>CFBundleTypeName</key>
-                        <string>iTerm2 Recording</string>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                </dict>
-                <dict>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
                                 <string>itermcolors</string>
                         </array>
                         <key>CFBundleTypeIconFile</key>
@@ -76,24 +76,30 @@
                         <string>Editor</string>
                 </dict>
                 <dict>
-                        <key>CFBundleTypeRole</key>
-                        <string>Shell</string>
-                        <key>LSItemContentTypes</key>
-                        <array>
-                                <string>public.unix-executable</string>
-                        </array>
-                </dict>
-                <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
-                                <string>its</string>
+                                <string>itermscript</string>
                         </array>
                         <key>CFBundleTypeIconFile</key>
                         <string>iTerm2Script.icns</string>
                         <key>CFBundleTypeName</key>
                         <string>iTerm2 Script</string>
                         <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
+                        <string>Viewer</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                          <string>public.data</string>
+                        </array>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeRole</key>
+                        <string>Shell</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                                <string>public.unix-executable</string>
+                        </array>
                 </dict>
         </array>
         <key>NSSystemAdministrationUsageDescription</key>
