@@ -14,7 +14,10 @@ Focus
    :members: tab_id
 
 .. autoclass:: iterm2.FocusUpdateWindowChanged
-   :members: window_id, event, TERMINAL_WINDOW_BECAME_KEY, TERMINAL_WINDOW_IS_CURRENT, TERMINAL_WINDOW_RESIGNED_KEY
+   :members: window_id, event
+
+.. autoclass:: iterm2::FocusUpdateWindowChanged.Reason
+   :members: TERMINAL_WINDOW_BECAME_KEY, TERMINAL_WINDOW_IS_CURRENT, TERMINAL_WINDOW_RESIGNED_KEY
 
 .. autoclass:: iterm2.FocusUpdateApplicationActive
    :members: application_active

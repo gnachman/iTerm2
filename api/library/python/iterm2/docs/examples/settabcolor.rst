@@ -1,4 +1,5 @@
 .. _settabcolor_example:
+
 Set Tab Color
 -------------
 

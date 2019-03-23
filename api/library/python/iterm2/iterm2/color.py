@@ -1,7 +1,7 @@
 import enum
 
 class ColorSpace(enum.Enum):
-    """Describes the color space of a :ref:`Color`."""
+    """Describes the color space of a :ref:`iterm2.Color`."""
     SRGB="sRGB" #: SRGB color space
     CALIBRATED="Calibrated"  #: Device color space
 

@@ -9,7 +9,7 @@ class Alert:
     :param title: The title, shown in bold at the top.
     :param subtitle: The informative text, which may be more than one line long.
 
-    .. seealso:: Example ":ref:`oneshot`"
+    .. seealso:: Example ":ref:`oneshot_example`"
     """
     def __init__(self, title, subtitle):
         self.__title = title

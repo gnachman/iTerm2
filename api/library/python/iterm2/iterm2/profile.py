@@ -965,7 +965,7 @@ class WriteOnlyProfile:
             * Example ":ref:`colorhost_example`"
             * Example ":ref:`random_color_example`"
             * Example ":ref:`theme_example`"
-            * Example ":ref:`darknight`"
+            * Example ":ref:`darknight_example`"
         """
         coros = []
         for value in preset.values:
@@ -2847,7 +2847,7 @@ class PartialProfile(Profile):
 
         .. seealso::
             * Example ":ref:`theme_example`"
-            * Example ":ref:`darknight`"
+            * Example ":ref:`darknight_example`"
         """
         response = await iterm2.rpc.async_list_profiles(connection, guids, properties)
         profiles = []
