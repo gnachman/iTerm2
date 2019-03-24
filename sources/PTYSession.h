@@ -794,6 +794,7 @@ typedef enum {
 - (void)updateStatusBarStyle;
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
+- (void)didUseShellIntegration;
 
 #pragma mark - API
 

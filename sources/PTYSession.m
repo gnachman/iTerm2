@@ -9424,7 +9424,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
-    _shellIntegrationEverUsed = YES;
+    [self didUseShellIntegration];
     BOOL hadCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
@@ -9457,7 +9457,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    _shellIntegrationEverUsed = YES;
+    [self didUseShellIntegration];
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
@@ -9747,6 +9747,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         return [n boolValue];
     }
+}
+
+- (void)didUseShellIntegration {
+    _shellIntegrationEverUsed = YES;
 }
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
