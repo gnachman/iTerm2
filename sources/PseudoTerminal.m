@@ -9427,6 +9427,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (preferredStyle == TAB_STYLE_MINIMAL) {
         [self.contentView setNeedsDisplay:YES];
+        [_contentView.tabBarControl backgroundColorWillChange];
     }
     [self updateWindowShadow:self.ptyWindow];
 }

@@ -48,6 +48,21 @@
     return @"Minimal";
 }
 
+- (NSAppearance *)accessoryAppearance NS_AVAILABLE_MAC(10_14) {
+    if (self.backgroundIsDark) {
+        return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    } else {
+        return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    }
+}
+
+- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow {
+    if (withOverflow) {
+        return [super rightMarginForTabBarControlWithOverflow:YES];
+    }
+    return 0;
+}
+
 - (NSColor *)tabBarColor {
     NSColor *minimalStyleColor = [self.delegate minimalTabStyleBackgroundColor];
     DLog(@"Computing tab bar color. delegate=%@ minimalStyleColor=%@", self.delegate, minimalStyleColor);
@@ -363,8 +378,9 @@
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
           clipRect:(NSRect)clipRect
-        horizontal:(BOOL)horizontal {
-    [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal];
+        horizontal:(BOOL)horizontal
+      withOverflow:(BOOL)withOverflow {
+    [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal withOverflow:withOverflow];
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
     
     NSRect (^inset)(NSRect) = ^NSRect(NSRect rect) {
@@ -386,9 +402,9 @@
                                       0,
                                       [self leftMarginForTabBarControl] - 0.5,
                                       bar.height));
-        afterRect = inset(NSMakeRect(bar.frame.size.width - self.rightMarginForTabBarControl,
+        afterRect = inset(NSMakeRect(bar.frame.size.width - [self rightMarginForTabBarControlWithOverflow:withOverflow],
                                      0,
-                                     self.rightMarginForTabBarControl - 1,
+                                     [self rightMarginForTabBarControlWithOverflow:withOverflow] - 1,
                                      bar.height));
     } else {
         beforeRect = inset(NSMakeRect(0,

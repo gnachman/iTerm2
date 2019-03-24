@@ -7,46 +7,14 @@
 //
 
 #import "PSMYosemiteTabStyle.h"
+
+#import "NSColor+PSM.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 #import <objc/runtime.h>
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
-
-@interface NSColor (PSMYosemiteTabStyle)
-
-- (NSColor *)it_srgbForColorInWindow:(NSWindow *)window;
-
-@end
-
-@implementation NSColor (PSMYosemiteTabStyle)
-
-// http://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
-// http://alienryderflex.com/hsp.html
-- (NSColor *)it_srgbForColorInWindow:(NSWindow *)window {
-    if ([self isEqual:window.backgroundColor]) {
-        if ([window.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-            return [NSColor colorWithSRGBRed:0.25 green:0.25 blue:0.25 alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:0.75 green:0.75 blue:0.75 alpha:1];
-        }
-    } else {
-        return [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-    }
-}
-
-- (CGFloat)it_hspBrightness {
-    NSColor *safeColor = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-    const CGFloat r = safeColor.redComponent;
-    const CGFloat g = safeColor.greenComponent;
-    const CGFloat b = safeColor.blueComponent;
-    return sqrt(r * r * .241 +
-                g * g * .691 +
-                b * b * .068);
-}
-
-@end
 
 @interface NSAttributedString(PSM)
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
@@ -166,14 +134,18 @@
             [NSApp isActive]);
 }
 
+- (NSAppearance *)accessoryAppearance {
+    return nil;
+}
+
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
     return self.tabBar.insets.left;
 }
 
-- (float)rightMarginForTabBarControl {
-    // Leaves space for overflow control.
+- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow {
+    // This style always leaves space for overflow control.
     return 24.0f;
 }
 
@@ -1152,7 +1124,8 @@
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
           clipRect:(NSRect)clipRect
-        horizontal:(BOOL)horizontal {
+        horizontal:(BOOL)horizontal
+      withOverflow:(BOOL)withOverflow {
     if (_orientation != [bar orientation]) {
         _orientation = [bar orientation];
     }

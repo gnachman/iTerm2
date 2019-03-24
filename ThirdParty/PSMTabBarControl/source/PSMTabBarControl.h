@@ -244,5 +244,6 @@ enum {
 - (void)moveTabAtIndex:(NSInteger)sourceIndex
               toTabBar:(PSMTabBarControl *)destinationTabBar
                atIndex:(NSInteger)destinationIndex;
+- (void)backgroundColorWillChange;
 
 @end
