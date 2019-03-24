@@ -827,11 +827,11 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     int lines __attribute__((unused)) = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSAssert(lines >= 0, @"Negative lines");
 
+    [selection clearSelection];
     // An immediate refresh is needed so that the size of textview can be
     // adjusted to fit the new size
     DebugLog(@"setSize setDirty");
     [delegate_ screenNeedsRedraw];
-    [selection clearSelection];
     if (couldHaveSelection) {
         NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
         for (iTermSubSelection* sub in newSubSelections) {
