@@ -11,7 +11,7 @@ control iTerm2 and extend its behavior.
 
 .. warning::
 
-   This is under active development. APIs will change without notice.
+   During the Beta period, APIs may change occasionally.
 
 **Getting Started**
 
