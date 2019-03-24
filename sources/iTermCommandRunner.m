@@ -167,13 +167,15 @@
     }
 
     while (inData.length) {
-        DLog(@"runCommand: Read %@", inData);
-        [self didReadData:inData];
-        if (!self.outputHandler) {
-            DLog(@"%@: %@", [task.arguments componentsJoinedByString:@" "],
-                 [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
+        @autoreleasepool {
+            DLog(@"runCommand: Read %@", inData);
+            [self didReadData:inData];
+            if (!self.outputHandler) {
+                DLog(@"%@: %@", [task.arguments componentsJoinedByString:@" "],
+                     [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
+            }
+            DLog(@"runCommand: Reading");
         }
-        DLog(@"runCommand: Reading");
         @try {
             inData = [readHandle availableData];
         } @catch (NSException *e) {
