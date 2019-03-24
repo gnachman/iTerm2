@@ -130,7 +130,7 @@
     NSDictionary *dictionary = [NSDictionary castFrom:self];
     if (dictionary) {
         for (NSObject *key in dictionary) {
-            if (![key it_isSafeForPlist]) {
+            if (![key isKindOfClass:[NSString class]]) {
                 return NO;
             }
             if (![dictionary[key] it_isSafeForPlist]) {

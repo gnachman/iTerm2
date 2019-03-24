@@ -82,8 +82,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *knobs = [super statusBarComponentDefaultKnobs];
     knobs = [knobs dictionaryByMergingDictionary:@{ iTermStatusBarFixedSpacerComponentWidthKnob: @5 }];
-    knobs = [knobs dictionaryBySettingObject:iTermStatusBarPriorityKey
-                                      forKey:@(iTermStatusBarBaseComponentDefaultPriority)];
+    knobs = [knobs dictionaryBySettingObject:@(iTermStatusBarBaseComponentDefaultPriority)
+                                      forKey:iTermStatusBarPriorityKey];
     return knobs;
 }
 
