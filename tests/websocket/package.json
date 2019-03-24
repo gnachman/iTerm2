@@ -3,7 +3,7 @@
     "version": "1.1.0",
     "dependencies": {
         "protobufjs": "~5.0.1",
-        "ws": "~0.4",
+        "ws": ">=1.1.1",
         "open": "0.0.3"
     },
     "engines": {
