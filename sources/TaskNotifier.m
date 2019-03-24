@@ -351,6 +351,9 @@ void UnblockTaskNotifier(void) {
 
         [[NSNotificationCenter defaultCenter] postNotificationName:kTaskNotifierDidSpin object:nil];
 
+        [autoreleasePool drain];
+        autoreleasePool = [[NSAutoreleasePool alloc] init];
+
         // Poll...
         if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
             switch(errno) {
