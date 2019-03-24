@@ -118,7 +118,7 @@ make Beta
 
 BUILDTYPE=Beta
 
-Build $BUILDTYPE "" "OS 10.10+" "This is the recommended beta build for most users." "" "--deep"
+Build $BUILDTYPE "" "OS 10.12+" "This is the recommended beta build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
