@@ -332,6 +332,9 @@ typedef struct {
     if (!needCustomButtons) {
         [_standardWindowButtonsView removeFromSuperview];
         _standardWindowButtonsView = nil;
+        for (int i = 0; i < self.numberOfWindowButtons; i++) {
+            [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:NO];
+        }
         return;
     }
     if (_standardWindowButtonsView) {

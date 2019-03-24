@@ -4738,6 +4738,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _didEnterLionFullscreen = nil;
     }
     [self updateTouchBarIfNeeded:NO];
+
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
