@@ -7218,7 +7218,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // way SessionView and TextViewWrapper don't have to worry about whether a background image is
 // present.
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
-                                 viewRect:(NSRect)rect
+                                 viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground {
     if (!_backgroundDrawingHelper) {
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
@@ -7227,16 +7227,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:self.view
-                                                   viewRect:rect
+                                                   viewRect:dirtyRect
                                                 contentRect:self.view.contentRect
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:NO];
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
+        NSRect windowVisibleRect = [self.view insetRect:container.bounds];
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:container
-                                                   viewRect:NSIntersectionRect(rect, view.enclosingScrollView.documentVisibleRect)
-                                                contentRect:container.bounds
+                                                   viewRect:NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect)
+                                                contentRect:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:YES];
     }

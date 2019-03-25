@@ -24,13 +24,13 @@ typedef struct {
 
 - (void)drawBackgroundImageInView:(NSView *)view
                         container:(NSView *)container
-                         viewRect:(NSRect)rect
+                         viewRect:(NSRect)dirtyRect
                       contentRect:(NSRect)contentRect
            blendDefaultBackground:(BOOL)blendDefaultBackground
                              flip:(BOOL)shouldFlip {
     const BOOL debug = NO;
     const iTermBackgroundDraws draws = [self drawsForBackgroundImageInView:view
-                                                                  viewRect:rect
+                                                                  viewRect:dirtyRect
                                                              containerView:container
                                                                contentRect:contentRect
                                                     blendDefaultBackground:blendDefaultBackground];
@@ -77,78 +77,80 @@ typedef struct {
     
     if (debug) {
         NSBezierPath *path = [NSBezierPath bezierPath];
-        [path moveToPoint:rect.origin];
-        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [path moveToPoint:dirtyRect.origin];
+        [path lineToPoint:NSMakePoint(NSMaxX(dirtyRect), NSMaxY(dirtyRect))];
         [[NSColor redColor] set];
         [path setLineWidth:1];
         [path stroke];
-        NSFrameRect(rect);
-        NSRect localRect = [container convertRect:rect fromView:view];
+        NSFrameRect(dirtyRect);
+        NSRect localRect = [container convertRect:dirtyRect fromView:view];
         NSString *s = [NSString stringWithFormat:@"rect=%@ local=%@ src=%@ dst=%@",
-                       NSStringFromRect(rect),
+                       NSStringFromRect(dirtyRect),
                        NSStringFromRect(localRect),
                        NSStringFromRect(NSIntegralRect(draws.imageSourceRect)),
                        NSStringFromRect(NSIntegralRect(draws.imageDestinationRect))];
 
         [[NSColor whiteColor] set];
-        NSRectFill(NSMakeRect(100, rect.origin.y+20, 600, 24));
+        NSRectFill(NSMakeRect(100, dirtyRect.origin.y+20, 600, 24));
 
-        [s drawAtPoint:NSMakePoint(100, rect.origin.y+20) withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor] }];
+        [s drawAtPoint:NSMakePoint(100, dirtyRect.origin.y+20) withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor] }];
     }
 }
 
 - (iTermBackgroundDraws)drawsForBackgroundImageInView:(NSView *)view
-                                             viewRect:(NSRect)rect
+                                             viewRect:(NSRect)dirtyRect
                                         containerView:(NSView *)containerView
-                                          contentRect:(NSRect)contentRect
+                                          contentRect:(NSRect)windowVisibleAreaRect
                                blendDefaultBackground:(BOOL)blendDefaultBackground {
     iTermBackgroundDraws result;
     NSImage *backgroundImage = [self.delegate backgroundDrawingHelperImage];
     result.image = backgroundImage;
     if (!backgroundImage && blendDefaultBackground) {
         // No image, so just draw background color.
-        result.solidBackgroundColorRect = rect;
+        result.solidBackgroundColorRect = dirtyRect;
         return result;
     }
     result.solidBackgroundColorRect = NSZeroRect;
     
     if (backgroundImage) {
-        NSRect localRect = [containerView convertRect:rect fromView:view];
+        NSRect dirtyRectInContainerCoords = [containerView convertRect:dirtyRect fromView:view];
+        dirtyRectInContainerCoords.origin.x -= windowVisibleAreaRect.origin.x;
+        dirtyRectInContainerCoords.origin.y -= windowVisibleAreaRect.origin.y;
         NSImage *image;
         NSRect sourceRect;
         result.boxes[0] = NSZeroRect;
         result.boxes[1] = NSZeroRect;
-        NSRect drawRect = rect;
-        NSRect imageRect = rect;
+        NSRect drawRect = dirtyRect;
+        NSRect imageRect = dirtyRect;
 
         switch ([self.delegate backgroundDrawingHelperBackgroundImageMode]) {
             case iTermBackgroundImageModeStretch:
                 image = backgroundImage;
                 sourceRect = [self sourceRectForImageSize:image.size
-                                                 viewSize:contentRect.size
-                                          destinationRect:localRect];
+                                                 viewSize:windowVisibleAreaRect.size
+                                          destinationRect:dirtyRectInContainerCoords];
                 break;
                 
             case iTermBackgroundImageModeTile:
-                image = [self patternedImageForViewOfSize:contentRect.size];
+                image = [self patternedImageForViewOfSize:windowVisibleAreaRect.size];
                 sourceRect = [self sourceRectForImageSize:image.size
-                                                 viewSize:contentRect.size
-                                          destinationRect:localRect];
+                                                 viewSize:windowVisibleAreaRect.size
+                                          destinationRect:dirtyRectInContainerCoords];
                 break;
                 
             case iTermBackgroundImageModeScaleAspectFill:
                 image = backgroundImage;
                 sourceRect = [self scaleAspectFillSourceRectForImageSize:image.size
-                                                             contentRect:contentRect
-                                                         destinationRect:localRect];
+                                                             contentRect:windowVisibleAreaRect
+                                                         destinationRect:dirtyRectInContainerCoords];
                 break;
                 
             case iTermBackgroundImageModeScaleAspectFit:
                 image = backgroundImage;
-                localRect = NSIntersectionRect(localRect, containerView.bounds);
+                dirtyRectInContainerCoords = NSIntersectionRect(dirtyRectInContainerCoords, containerView.bounds);
                 sourceRect = [self scaleAspectFitSourceRectForForImageSize:image.size
-                                                                  viewSize:contentRect.size
-                                                           destinationRect:localRect
+                                                                  viewSize:windowVisibleAreaRect.size
+                                                           destinationRect:dirtyRectInContainerCoords
                                                                   drawRect:&drawRect
                                                                   boxRect1:&result.boxes[0]
                                                                   boxRect2:&result.boxes[1]

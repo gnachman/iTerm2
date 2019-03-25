@@ -217,6 +217,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // The frame excluding the per-pane titlebar.
 - (NSRect)contentRect;
 
+// Insets the rect by the titlebar and status bar if they are present.
+- (NSRect)insetRect:(NSRect)rect;
+
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement;
 
 - (void)createSplitSelectionView;

@@ -898,20 +898,24 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-- (NSRect)contentRect {
+- (NSRect)insetRect:(NSRect)rect {
     CGFloat topInset = 0;
     CGFloat bottomInset = 0;
-    
-    NSRect frame = self.frame;
+
     if (_showTitle) {
         topInset = kTitleHeight;
     }
     if (_showBottomStatusBar) {
         bottomInset = iTermStatusBarHeight;
     }
+    NSRect frame = rect;
     frame.origin.y += bottomInset;
     frame.size.height -= (topInset + bottomInset);
     return frame;
+}
+
+- (NSRect)contentRect {
+    return [self insetRect:self.frame];
 }
 
 - (void)createSplitSelectionView {
