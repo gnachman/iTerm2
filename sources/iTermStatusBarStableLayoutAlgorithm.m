@@ -18,7 +18,7 @@
 
 - (iTermStatusBarContainerView *)containerViewWithLargestMinimumWidthFromViews:(NSArray<iTermStatusBarContainerView *> *)views {
     return [views maxWithBlock:^NSComparisonResult(iTermStatusBarContainerView *obj1, iTermStatusBarContainerView *obj2) {
-        return [@(obj1.component.statusBarComponentMinimumWidth) compare:@(obj2.component.statusBarComponentMinimumWidth)];
+        return [@(obj1.minimumWidthIncludingIcon) compare:@(obj2.minimumWidthIncludingIcon)];
     }];
 }
 
@@ -53,7 +53,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views {
     iTermStatusBarContainerView *viewWithLargestMinimumWidth = [self containerViewWithLargestMinimumWidthFromViews:views];
-    const CGFloat largestMinimumSize = viewWithLargestMinimumWidth.component.statusBarComponentMinimumWidth;
+    const CGFloat largestMinimumSize = viewWithLargestMinimumWidth.minimumWidthIncludingIcon;
     NSArray<iTermStatusBarContainerView *> *viewsExFixedSpacers = [self viewsExcludingFixedSpacers:views];
     const CGFloat widthOfAllFixedSpacers = [self widthOfFixedSpacersAmongViews:views];
     return largestMinimumSize * viewsExFixedSpacers.count + widthOfAllFixedSpacers;
@@ -121,8 +121,8 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
             }
 
             // Tiebreak nonspacers by minimum width
-            aScore = a.component.statusBarComponentMinimumWidth;
-            bScore = b.component.statusBarComponentMinimumWidth;
+            aScore = a.minimumWidthIncludingIcon;
+            bScore = b.minimumWidthIncludingIcon;
             result = [@(aScore) compare:@(bScore)];
             if (result != NSOrderedSame) {
                 return result;
@@ -180,7 +180,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
         if (![view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
             return partialSum;
         }
-        return @(partialSum.doubleValue + view.component.statusBarComponentMinimumWidth);
+        return @(partialSum.doubleValue + view.minimumWidthIncludingIcon);
     }] doubleValue];
 }
 
@@ -201,13 +201,13 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     }
     const CGFloat singleUnitWidth = totalWidth / views.count;
     const CGFloat sumOfPreferredSizesOfPreallocatedViews = [[views mapWithBlock:^id(iTermStatusBarContainerView *view) {
-        return @(MAX(singleUnitWidth, view.component.statusBarComponentMinimumWidth));
+        return @(MAX(singleUnitWidth, view.minimumWidthIncludingIcon));
     }] sumOfNumbers];
     if (sumOfPreferredSizesOfPreallocatedViews <= totalWidth) {
         // Can use larger of min width or the standard 1-unit size for all preallocated views.
         __block CGFloat preallocation = 0;
         [preallocatedViews enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-            const CGFloat width = MAX(singleUnitWidth, view.component.statusBarComponentMinimumWidth);
+            const CGFloat width = MAX(singleUnitWidth, view.minimumWidthIncludingIcon);
             view.desiredWidth = width;
             preallocation += width;
         }];
@@ -239,7 +239,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     // Allocate minimum widths
     [viewsExPreallocatedViews enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
-            view.desiredWidth = view.component.statusBarComponentMinimumWidth;
+            view.desiredWidth = view.minimumWidthIncludingIcon;
             return;
         }
         view.desiredWidth = apportionment * view.component.statusBarComponentSpringConstant;

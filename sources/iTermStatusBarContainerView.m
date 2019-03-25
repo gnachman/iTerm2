@@ -73,6 +73,14 @@ NS_ASSUME_NONNULL_BEGIN
     [_timer invalidate];
 }
 
+- (CGFloat)minimumWidthIncludingIcon {
+    if (self.component.statusBarComponentIcon) {
+        return self.component.statusBarComponentMinimumWidth + iTermStatusBarViewControllerIconWidth + iTermStatusBarViewControllerMargin;
+    } else {
+        return self.component.statusBarComponentMinimumWidth + iTermStatusBarViewControllerMargin;
+    }
+}
+
 - (void)clickRecognized:(id)sender {
     [_component statusBarComponentDidClickWithView:_view];
 }
