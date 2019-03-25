@@ -83,12 +83,14 @@
                                                    effectiveAppearance:(NSAppearance *)effectiveAppearance
                                                 sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                       isFirstResponder:(BOOL)isFirstResponder
+                                                           dimOnlyText:(BOOL)dimOnlyText
                                                  adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (!tabColor) {
         return [self dimmedBackgroundColorWithAppearance:effectiveAppearance
                                   sessionBackgroundColor:sessionBackgroundColor
                                         isFirstResponder:isFirstResponder
+                                             dimOnlyText:dimOnlyText
                                    adjustedDimmingAmount:adjustedDimmingAmount];
     }
     NSColor *undimmedColor;
@@ -121,12 +123,14 @@
                                                           tabStyle:(id<PSMTabStyle>)tabStyle
                                             sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                   isFirstResponder:(BOOL)isFirstResponder
+                                                       dimOnlyText:(BOOL)dimOnlyText
                                              adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
     if ([iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
         return [self backgroundColorForDecorativeSubviewsInSessionWithTabColor:tabColor
                                                            effectiveAppearance:effectiveAppearance
                                                         sessionBackgroundColor:sessionBackgroundColor
                                                               isFirstResponder:isFirstResponder
+                                                                   dimOnlyText:dimOnlyText
                                                          adjustedDimmingAmount:adjustedDimmingAmount];
     } else {
         return [self tabBarBackgroundColorForTabColor:tabColor
@@ -244,6 +248,7 @@
 - (NSColor *)dimmedBackgroundColorWithAppearance:(NSAppearance *)appearance
                           sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                 isFirstResponder:(BOOL)isFirstResponder
+                                     dimOnlyText:(BOOL)dimOnlyText
                            adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
     const BOOL inactive = !isFirstResponder;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -252,7 +257,7 @@
         if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
             return color;
         }
-        if (inactive) {
+        if (inactive && !dimOnlyText) {
             return [color colorDimmedBy:adjustedDimmingAmount
                        towardsGrayLevel:0.5];
         } else {

@@ -835,6 +835,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                                               effectiveAppearance:self.effectiveAppearance
                                                                            sessionBackgroundColor:[_delegate sessionViewBackgroundColor]
                                                                                  isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
+                                                                                      dimOnlyText:[_delegate sessionViewShouldDimOnlyText]
                                                                             adjustedDimmingAmount:[self adjustedDimmingAmount]];
 }
 

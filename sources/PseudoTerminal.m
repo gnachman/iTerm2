@@ -3093,6 +3093,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // update the cursor
     [[self currentSession] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
+    [_contentView setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
 
     // Start the timers back up
@@ -3504,6 +3505,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
+    [_contentView setNeedsDisplay:YES];
 
     // Note that if you have multiple displays you can see a lion fullscreen window when it's
     // not key.
@@ -6134,32 +6136,34 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.tabView;
 }
 
-- (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
-    typedef id (^iTermTabSettingsProvider)(void);
-    static NSDictionary<PSMTabBarControlOptionKey, iTermTabSettingsProvider> *providers;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        providers = @{
-                      PSMTabBarControlOptionColoredSelectedTabOutlineStrength: ^id() {
-                          return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
-                      },
-                      PSMTabBarControlOptionMinimalStyleBackgroundColorDifference: ^id() {
-                          return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
-                      },
-                      PSMTabBarControlOptionColoredUnselectedTabTextProminence: ^id() {
-                          return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
-                      },
-                      PSMTabBarControlOptionColoredMinimalOutlineStrength: ^id() {
-                          return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
-                      }, };
-        [providers retain];
-    });
-    iTermTabSettingsProvider provider = providers[option];
-    if (provider) {
-        return provider();
-    } else {
-        return nil;
+static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
+    if (tabView.window.isKeyWindow) {
+        return 0;
     }
+    if (![iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows]) {
+        return 0;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+        return 0;
+    }
+    CGFloat value = [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
+    CGFloat clamped = MAX(MIN(0.9, value), 0);
+    return clamped;
+}
+
+- (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
+    if ([option isEqualToString:PSMTabBarControlOptionColoredSelectedTabOutlineStrength]) {
+        return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference]) {
+        return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionColoredUnselectedTabTextProminence]) {
+        return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {
+        return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionDimmingAmount]) {
+        return @(iTermDimmingAmount(tabView));
+    }
+    return nil;
 }
 
 - (BOOL)isInitialized

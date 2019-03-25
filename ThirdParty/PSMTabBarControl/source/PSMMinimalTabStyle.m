@@ -66,7 +66,7 @@
 - (NSColor *)tabBarColor {
     NSColor *minimalStyleColor = [self.delegate minimalTabStyleBackgroundColor];
     DLog(@"Computing tab bar color. delegate=%@ minimalStyleColor=%@", self.delegate, minimalStyleColor);
-    return minimalStyleColor ?: [NSColor blackColor];
+    return [self colorByDimmingColor:minimalStyleColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]];
 }
 
 - (BOOL)backgroundIsDark {
@@ -111,7 +111,7 @@
 - (NSColor *)nonSelectedTabColor {
     const double difference = [[self.tabBar.delegate tabView:self.tabBar
                                                valueOfOption:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference] doubleValue];
-    return [self.tabBarColor psm_nonSelectedColorWithDifference:difference];
+    return [self colorByDimmingColor:[self.tabBarColor psm_nonSelectedColorWithDifference:difference]];
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
@@ -125,6 +125,21 @@
         return color;
     }
     color = [color psm_highlightedColor:highlightAmount];
+
+    return color;
+}
+
+- (NSColor *)colorByDimmingColor:(NSColor *)color {
+    const CGFloat dimmingAmount = [[self.tabBar.delegate tabView:self.tabBar
+                                                   valueOfOption:PSMTabBarControlOptionDimmingAmount] doubleValue];
+    if (dimmingAmount > 0) {
+        CGFloat components[4];
+        [color getComponents:components];
+        for (int i = 0; i < 3; i++) {
+            components[i] = dimmingAmount * 0.5 + (1 - dimmingAmount) * components[i];
+        }
+        return [NSColor colorWithColorSpace:color.colorSpace components:components count:4];
+    }
     return color;
 }
 
@@ -375,6 +390,34 @@
     return nil;
 }
 
+- (PSMTabBarCell *)selectedCellInTabBarControl:(PSMTabBarControl *)bar {
+    for (PSMTabBarCell *cell in bar.cells) {
+        if (cell.state == NSOnState) {
+            return cell;
+        }
+    }
+    return nil;
+}
+
+- (NSInteger)selectedIndex:(PSMTabBarControl *)bar {
+    PSMTabBarCell *cell = [self selectedCellInTabBarControl:bar];
+    if (cell.isInOverflowMenu) {
+        return NSNotFound;
+    }
+    return [bar.cells indexOfObject:cell];
+}
+
+- (NSInteger)numberOfVisibleCells:(PSMTabBarControl *)bar {
+    NSInteger i = 0;
+    for (PSMTabBarCell *cell in bar.cells) {
+        if (cell.isInOverflowMenu) {
+            return i;
+        }
+        i++;
+    }
+    return i;
+}
+
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
           clipRect:(NSRect)clipRect
@@ -382,127 +425,223 @@
       withOverflow:(BOOL)withOverflow {
     [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal withOverflow:withOverflow];
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
-    
-    NSRect (^inset)(NSRect) = ^NSRect(NSRect rect) {
-        const CGFloat leftInset = horizontalOrientation ? 0.0 : 1.0;
-        const CGFloat rightInset = horizontalOrientation ? -0.5 : 0.5;
-        const CGFloat topInset = horizontalOrientation ? 0.5 : 0.5;
-        rect.origin.x += leftInset;
-        rect.origin.y += topInset;
-        rect.size.width -= leftInset + rightInset;
-        rect.size.height -= topInset + 0.5;
-        return rect;
-    };
-    NSRect beforeRect;
-    NSRect selectedRect = NSZeroRect;
-    NSRect afterRect;
-    NSInteger selectedIndex = -1;
-    if (bar.orientation == PSMTabBarHorizontalOrientation) {
-        beforeRect = inset(NSMakeRect(0.5,
-                                      0,
-                                      [self leftMarginForTabBarControl] - 0.5,
-                                      bar.height));
-        afterRect = inset(NSMakeRect(bar.frame.size.width - [self rightMarginForTabBarControlWithOverflow:withOverflow],
-                                     0,
-                                     [self rightMarginForTabBarControlWithOverflow:withOverflow] - 1,
-                                     bar.height));
-    } else {
-        beforeRect = inset(NSMakeRect(0,
-                                      0.5,
-                                      bar.frame.size.width,
-                                      self.topMarginForTabBarControl - 0.5));
-        PSMTabBarCell *lastCell = [self lastVisibleCell];
-        afterRect = inset(NSMakeRect(0,
-                                     NSMaxY(lastCell.frame),
-                                     NSWidth(lastCell.frame) - 1,
-                                     NSHeight(bar.frame) - NSMaxY(lastCell.frame)));
-    }
-    NSRect *current = &beforeRect;
-    
-    NSInteger i = 0;
-    for (PSMTabBarCell *cell in [bar cells]) {
-        if ([cell isInOverflowMenu]) {
-            continue;
-        }
-        NSRect rect = inset(cell.frame);
-        if (cell.state == NSOnState) {
-            selectedIndex = i;
-            current = &selectedRect;
-        } else if (current == &selectedRect) {
-            current = &afterRect;
-        }
-        *current = NSUnionRect(*current, rect);
-        i++;
-    }
-    const BOOL lastIsSelected = (current == &selectedRect);
 
-    NSBezierPath *path = [NSBezierPath bezierPath];
-    if (bar.orientation == PSMTabBarHorizontalOrientation) {
-        if (bar.tabLocation == PSMTab_TopTab) {
-            if (selectedIndex == 0) {
-                if (NSEqualRects(selectedRect, NSZeroRect)) {
-                    [path moveToPoint:NSMakePoint(NSMaxX(afterRect), NSMaxY(afterRect))];
-                } else {
-                    [path moveToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
-                }
-            } else {
-                [path moveToPoint:NSMakePoint(NSMinX(beforeRect), NSMaxY(beforeRect))];
-            }
-            if (!NSEqualRects(selectedRect, NSZeroRect)) {
-                if (selectedIndex > 0) {
-                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
-                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
-                    [path moveToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
-                }
-                if (!lastIsSelected) {
-                    [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
-                }
-            }
-            if (!lastIsSelected) {
-                [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMaxY(afterRect))];
-            }
+    const NSInteger selectedIndex = [self selectedIndex:bar];
+    const NSInteger numberOfVisibleCells = [self numberOfVisibleCells:bar];
+
+    if (!horizontalOrientation) {
+        if (bar.cells.count == 1) {
+            [self drawOutlineAroundVerticalTabBarWithOneTab:bar];
+        } else if (selectedIndex == 0) {
+            [self drawOutlineAroundVerticalTabBarWithFirstTabSelected:bar];
         } else {
-            // Bottom
-            const BOOL leftTruncated = (beforeRect.size.width <= 0);
-            if (leftTruncated) {
-                [path moveToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
-            } else {
-                [path moveToPoint:NSMakePoint(NSMinX(beforeRect), NSMinY(beforeRect))];
-            }
-            if (!NSEqualRects(selectedRect, NSZeroRect)) {
-                if (!leftTruncated) {
-                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
-                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
-                }
-                if (!lastIsSelected) {
-                    [path moveToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
-                    [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
-                }
-            }
-            if (!lastIsSelected) {
-                [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMinY(afterRect))];
-            }
+            [self drawOutlineAroundVerticalTabBarWithInteriorTabSelected:bar];
+        }
+    } else if (bar.tabLocation == PSMTab_TopTab) {
+        if (bar.cells.count == 1) {
+            [self drawOutlineAroundTopTabBarWithOneTab:bar];
+        } else if (selectedIndex == 0) {
+            [self drawOutlineAroundTopTabBarWithFirstTabSelected:bar];
+        } else if (selectedIndex == numberOfVisibleCells - 1) {
+            [self drawOutlineAroundTopTabBarWithLastTabSelected:bar];
+        } else {
+            [self drawOutlineAroundTopTabBarWithInteriorTabSelected:bar];
         }
     } else {
-        // Vertical orientation
-        const BOOL firstIsSelected = [self firstTabIsSelected];
-        if (firstIsSelected) {
-            [path moveToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
+        if (bar.cells.count == 1) {
+            [self drawOutlineAroundBottomTabBarWithOneTab:bar];
+        } else if (selectedIndex == 0) {
+            [self drawOutlineAroundBottomTabBarWithFirstTabSelected:bar];
+        } else if (selectedIndex == numberOfVisibleCells - 1) {
+            [self drawOutlineAroundBottomTabBarWithLastTabSelected:bar];
         } else {
-            [path moveToPoint:NSMakePoint(NSMaxX(beforeRect), NSMinY(beforeRect))];
+            [self drawOutlineAroundBottomTabBarWithInteriorTabSelected:bar];
         }
-        if (!NSEqualRects(selectedRect, NSZeroRect)) {
-            if (!firstIsSelected) {
-                [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
-                [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
-            }
-            [path moveToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
-            [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
-        }
-        [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMaxY(afterRect))];
     }
+}
+
+#pragma mark Draw outline around bottom tab bar
+
+- (void)drawOutlineAroundBottomTabBarWithOneTab:(PSMTabBarControl *)bar {
+}
+
+- (void)drawOutlineAroundBottomTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineAfterSelectedTabInBottomTabBar:bar];
+}
+
+- (void)drawOutlineAroundBottomTabBarWithLastTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineBeforeSelectedTabInBottomTabBar:bar];
+    [self drawOutlineAfterSelectedTabInBottomTabBar:bar];
+}
+
+- (void)drawOutlineAroundBottomTabBarWithInteriorTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineBeforeSelectedTabInBottomTabBar:bar];
+    [self drawOutlineAfterSelectedTabInBottomTabBar:bar];
+}
+
+- (void)drawOutlineAfterSelectedTabInBottomTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    if (!cell || cell.isInOverflowMenu) {
+        return;
+    }
+    const CGFloat left = NSMaxX(cell.frame) + 0.5;
+    const CGFloat top = 0.5;
+    const CGFloat right = NSMaxX(bar.frame) - 0.5;
+    const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
+
+    [path moveToPoint:NSMakePoint(left, bottom)];
+    [path lineToPoint:NSMakePoint(left, top)];
+    [path lineToPoint:NSMakePoint(right, top)];
+
     [[self outlineColor] set];
     [path stroke];
+}
+
+- (void)drawOutlineBeforeSelectedTabInBottomTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    NSRect frame = cell.frame;
+    if (!cell || cell.isInOverflowMenu) {
+        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:YES],
+                           0,
+                           [self rightMarginForTabBarControlWithOverflow:YES],
+                           NSHeight(bar.frame));
+    }
+    const CGFloat left = 0.5;
+    const CGFloat top = 0.5;
+    const CGFloat right = NSMinX(frame) - 0.5;
+    const CGFloat bottom = NSMaxY(frame) - 0.5;
+
+    [path moveToPoint:NSMakePoint(left, top)];
+    [path lineToPoint:NSMakePoint(right, top)];
+    [path lineToPoint:NSMakePoint(right, bottom)];
+
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+
+#pragma mark Draw outline around top tab bar
+
+- (void)drawOutlineAroundTopTabBarWithOneTab:(PSMTabBarControl *)bar {
+}
+
+- (void)drawOutlineAroundTopTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineAfterSelectedTabInTopTabBar:bar];
+}
+
+- (void)drawOutlineAroundTopTabBarWithLastTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+    [self drawOutlineAfterSelectedTabInTopTabBar:bar];
+}
+
+- (void)drawOutlineAroundTopTabBarWithInteriorTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+    [self drawOutlineAfterSelectedTabInTopTabBar:bar];
+}
+
+- (void)drawOutlineAfterSelectedTabInTopTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    if (!cell || cell.isInOverflowMenu) {
+        return;
+    }
+    const CGFloat left = NSMaxX(cell.frame) + 0.5;
+    const CGFloat top = 0.5;
+    const CGFloat right = NSMaxX(bar.frame);
+    const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
+
+    [path moveToPoint:NSMakePoint(left, top)];
+    [path lineToPoint:NSMakePoint(left, bottom)];
+    [path lineToPoint:NSMakePoint(right, bottom)];
+
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+- (void)drawOutlineBeforeSelectedTabInTopTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    NSRect frame = cell.frame;
+    if (!cell || cell.isInOverflowMenu) {
+        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:YES],
+                           0,
+                           [self rightMarginForTabBarControlWithOverflow:YES],
+                           NSHeight(bar.frame));
+    }
+    const CGFloat left = 0;
+    const CGFloat top = 0.5;
+    const CGFloat right = NSMinX(frame) - 0.5;
+    const CGFloat bottom = NSMaxY(frame) - 0.5;
+
+    [path moveToPoint:NSMakePoint(left, bottom)];
+    [path lineToPoint:NSMakePoint(right, bottom)];
+    [path lineToPoint:NSMakePoint(right, top)];
+
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+#pragma mark Draw outline around vertical tab bar
+
+- (void)drawOutlineAroundVerticalTabBarWithOneTab:(PSMTabBarControl *)bar {
+    [self drawOutlineAroundVerticalTabBarWithFirstTabSelected:bar];
+}
+
+- (void)drawOutlineAroundVerticalTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineUnderSelectedTabInVerticalTabBar:bar];
+}
+
+- (void)drawOutlineAboveSelectedTabInVerticalTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    NSRect frame = cell.frame;
+    if (!cell || cell.isInOverflowMenu) {
+        frame = NSMakeRect(0,
+                           NSMaxY(bar.frame) - bar.height,
+                           NSWidth(bar.frame),
+                           bar.height);
+    }
+    const CGFloat top = 0.5;
+    const CGFloat right = bar.frame.size.width - 0.5;
+    const CGFloat bottom = NSMinY(frame) + 0.5;
+
+    [path moveToPoint:NSMakePoint(right, top)];
+    [path lineToPoint:NSMakePoint(right, bottom)];
+    [path lineToPoint:NSMakePoint(0, bottom)];
+
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+- (void)drawOutlineUnderSelectedTabInVerticalTabBar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    if (!cell || cell.isInOverflowMenu) {
+        return;
+    }
+    const CGFloat top = NSMaxY(cell.frame) - 0.5;
+    const CGFloat right = bar.frame.size.width - 0.5;
+    const CGFloat bottom = NSMaxY(bar.frame) - 0.5;
+
+    [path moveToPoint:NSMakePoint(0, top)];
+    [path lineToPoint:NSMakePoint(right, top)];
+    [path lineToPoint:NSMakePoint(right, bottom)];
+
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+- (void)drawOutlineAroundVerticalTabBarWithInteriorTabSelected:(PSMTabBarControl *)bar {
+    [self drawOutlineAboveSelectedTabInVerticalTabBar:bar];
+    [self drawOutlineUnderSelectedTabInVerticalTabBar:bar];
 }
 
 - (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor

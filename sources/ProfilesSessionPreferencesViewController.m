@@ -316,6 +316,7 @@
                                                                                                                             tabStyle:[self tabStyle]
                                                                                                               sessionBackgroundColor:[self sessionBackgroundColor]
                                                                                                                     isFirstResponder:YES
+                                                                                                                         dimOnlyText:[self boolForKey:kPreferenceKeyDimOnlyText]
                                                                                                                adjustedDimmingAmount:0];
 
     _statusBarSetupWindow =

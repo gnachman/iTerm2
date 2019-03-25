@@ -91,6 +91,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 // Is this session's text view the first responder?
 - (BOOL)sessionViewTerminalIsFirstResponder;
+- (BOOL)sessionViewShouldDimOnlyText;
 - (NSColor *)sessionViewBackgroundColor;
 
 // Gives the tab color for this session.

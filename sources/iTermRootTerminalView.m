@@ -382,8 +382,9 @@ typedef struct {
     if (@available(macOS 10.14, *)) {
         if ([_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
             // Draw background color for fake title bar.
-            [[_delegate rootTerminalViewTabBarBackgroundColor] set];
+            NSColor *const backgroundColor = [_delegate rootTerminalViewTabBarBackgroundColor];
             const CGFloat height = [_delegate rootTerminalViewHeightOfTabBar:self];
+            [backgroundColor set];
             NSRectFill(NSMakeRect(0,
                                   self.frame.size.height - height,
                                   self.frame.size.width,

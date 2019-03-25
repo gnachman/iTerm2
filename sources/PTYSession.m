@@ -10219,7 +10219,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
-    return _textview.window.firstResponder == _textview;
+    return (_textview.window.firstResponder == _textview &&
+            [NSApp isActive] &&
+            _textview.window.isKeyWindow);
+}
+
+- (BOOL)sessionViewShouldDimOnlyText {
+    return [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 - (NSColor *)sessionViewTabColor {

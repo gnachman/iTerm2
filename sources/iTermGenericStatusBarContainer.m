@@ -42,4 +42,30 @@
     NSRectFill(dirtyRect);
 }
 
+- (void)viewDidMoveToWindow {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (self.window) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(redraw)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:self.window];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(redraw)
+                                                     name:NSWindowDidResignKeyNotification
+                                                   object:self.window];
+    }
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(redraw)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(redraw)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:nil];
+}
+
+- (void)redraw {
+    [self setNeedsDisplay:YES];
+}
+
 @end
