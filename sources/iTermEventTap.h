@@ -52,6 +52,9 @@
 // remapping delegate is set to nil.
 @interface iTermFlagsChangedEventTap : iTermEventTap
 
+// WARNING: This will create the event tap. Use sharedInstanceCreatingIfNeeded: if you don't want
+// it created at all.
 + (instancetype)sharedInstance;
++ (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded;
 
 @end

@@ -101,7 +101,7 @@
 
 - (void)stopRemappingModifiers {
     [_keyDown setRemappingDelegate:nil];
-    [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:nil];
+    [[iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO] setRemappingDelegate:nil];
 }
 
 - (void)requestAccessibilityPermission {
