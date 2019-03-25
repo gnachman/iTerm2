@@ -145,9 +145,9 @@ const CGFloat iTermStatusBarHeight = 21;
     _updating++;
     [_visibleContainerViews enumerateObjectsUsingBlock:
      ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-         view.frame = NSMakeRect(view.desiredOrigin,
+         view.frame = NSMakeRect(round(view.desiredOrigin),
                                  iTermStatusBarViewControllerBottomMargin,
-                                 view.desiredWidth,
+                                 ceil(view.desiredWidth),
                                  iTermStatusBarViewControllerContainerHeight);
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
          [view layoutSubviews];
