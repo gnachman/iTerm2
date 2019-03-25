@@ -20,11 +20,11 @@ namespace iTerm2 {
         TexturePageCollection(id<MTLDevice> device,
                               const vector_uint2 cellSize,
                               const int pageCapacity,
-                              const int maximumSize) :
+                              const int maximumNumberOfPages) :
         _device(device),
         _cellSize(cellSize),
         _pageCapacity(pageCapacity),
-        _maximumSize(maximumSize),
+        _maximumNumberOfPages(maximumNumberOfPages),
         _openPage(NULL) { }
 
         virtual ~TexturePageCollection() {
@@ -69,6 +69,8 @@ namespace iTerm2 {
                 const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji, context);
                 result->push_back(entry);
             }
+            DLog(@"Added %@. Count is now %@", glyphKey.description(), @(_allPages.size() * _pageCapacity));
+
             return result;
         }
 
@@ -79,8 +81,10 @@ namespace iTerm2 {
         // Discard least-recently used texture pages.
         void prune_if_needed() {
             if (is_over_maximum_size()) {
-                ELog(@"Pruning. Have %@/%@ glyphs", @(_pageCapacity * _allPages.size()), @(_maximumSize));
-
+                ELog(@"Pruning. Have %@ pages. Each page stores up to %@ glyphs. Max pages is %@",
+                     @(_allPages.size()),
+                     @(_pageCapacity),
+                     @(_maximumNumberOfPages));
                 // Create a copy of texture pages sorted by recency of use (from least recent to most).
                 std::vector<TexturePage *> pages;
                 std::copy(_allPages.begin(), _allPages.end(), std::back_inserter(pages));
@@ -167,7 +171,7 @@ namespace iTerm2 {
         }
 
         bool is_over_maximum_size() const {
-            return _allPages.size() * _pageCapacity > _maximumSize;
+            return _allPages.size() > _maximumNumberOfPages;
         }
 
     private:
@@ -177,7 +181,7 @@ namespace iTerm2 {
         id<MTLDevice> _device;
         const vector_uint2 _cellSize;
         const int _pageCapacity;
-        const int _maximumSize;
+        const int _maximumNumberOfPages;
         std::unordered_map<GlyphKey, std::vector<const GlyphEntry *> *> _pages;
         std::set<TexturePage *> _allPages;
         TexturePage *_openPage;
