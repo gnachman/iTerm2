@@ -871,6 +871,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
+    return;
     // left
     if (svFrame.origin.x > 0) {
         [self drawBackgroundInRect:NSMakeRect(0, 0, svFrame.origin.x, self.frame.size.height)];
@@ -898,7 +899,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-- (NSRect)insetRect:(NSRect)rect {
+- (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped {
     CGFloat topInset = 0;
     CGFloat bottomInset = 0;
 
@@ -908,6 +909,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar) {
         bottomInset = iTermStatusBarHeight;
     }
+    if (flipped) {
+        CGFloat temp;
+        temp = topInset;
+        topInset = bottomInset;
+        bottomInset = temp;
+    }
     NSRect frame = rect;
     frame.origin.y += bottomInset;
     frame.size.height -= (topInset + bottomInset);
@@ -915,7 +922,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (NSRect)contentRect {
-    return [self insetRect:self.frame];
+    return [self insetRect:self.frame
+                   flipped:NO];
 }
 
 - (void)createSplitSelectionView {

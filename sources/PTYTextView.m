@@ -1195,6 +1195,8 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawRect:(NSRect)rect {
+    [self.delegate textViewDrawBackgroundImageInView:self viewRect:self.enclosingScrollView.documentVisibleRect blendDefaultBackground:NO];
+    return;
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];

@@ -78,6 +78,7 @@
             return;
         }
     }
+    return;
     [child_.delegate textViewDrawBackgroundImageInView:self
                                               viewRect:rect
                                 blendDefaultBackground:YES];
