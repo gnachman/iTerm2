@@ -48,6 +48,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength =
     @"PSMTabBarControlOptionColoredMinimalOutlineStrength";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence = @"PSMTabBarControlOptionColoredUnselectedTabTextProminence";
 PSMTabBarControlOptionKey PSMTabBarControlOptionDimmingAmount = @"PSMTabBarControlOptionDimmingAmount";
+PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab = @"PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

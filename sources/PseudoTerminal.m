@@ -6162,6 +6162,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
     } else if ([option isEqualToString:PSMTabBarControlOptionDimmingAmount]) {
         return @(iTermDimmingAmount(tabView));
+    } else if ([option isEqualToString:PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab]) {
+        return @([iTermAdvancedSettingsModel minimalTabStyleTreatLeftInsetAsPartOfFirstTab]);
     }
     return nil;
 }

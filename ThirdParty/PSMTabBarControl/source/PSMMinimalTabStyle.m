@@ -295,9 +295,14 @@
     return self.lastVisibleCell.state == NSOnState;
 }
 
+- (BOOL)treatLeftInsetAsPartOfFirstTab {
+    return [[self.tabBar.delegate tabView:self.tabBar
+                            valueOfOption:PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab] boolValue];
+}
+
 - (void)drawStartInset {
     NSColor *color;
-    if (self.firstTabIsSelected) {
+    if (self.firstTabIsSelected && self.treatLeftInsetAsPartOfFirstTab) {
         color = [self selectedTabColor];
     } else {
         color = [self nonSelectedTabColor];
@@ -530,6 +535,9 @@
 }
 
 - (void)drawOutlineAroundTopTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
+    if (!self.treatLeftInsetAsPartOfFirstTab) {
+        [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+    }
     [self drawOutlineAfterSelectedTabInTopTabBar:bar];
 }
 
