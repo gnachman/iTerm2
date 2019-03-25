@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable NSString *)stringValue {
-    return @"Tap to configure status bar";
+    return @"Click here to configure status bar";
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
