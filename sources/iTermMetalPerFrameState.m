@@ -93,7 +93,7 @@ typedef struct {
     NSInteger _numberOfScrollbackLines;
     long long _firstVisibleAbsoluteLineNumber;
     long long _lastVisibleAbsoluteLineNumber;
-    NSSize _containerSize;
+    NSRect _containerRect;
     NSRect _relativeFrame;
 
     // Badge
@@ -184,7 +184,7 @@ typedef struct {
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
     _relativeFrame = textView.delegate.textViewRelativeFrame;
-    _containerSize = textView.delegate.textViewContainerSize;
+    _containerRect = textView.delegate.textViewContainerRect;
 }
 
 - (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -1173,8 +1173,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _rows[y]->_screenCharLine;
 }
 
-- (CGSize)containerSize {
-    return _containerSize;
+- (CGRect)containerRect {
+    return _containerRect;
 }
 
 - (CGRect)relativeFrame {

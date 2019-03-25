@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setImage:(NSImage *)image
             mode:(iTermBackgroundImageMode)mode
            frame:(CGRect)frame
-   containerSize:(CGSize)containerSize
+   containerRect:(CGRect)containerRect
            color:(vector_float4)defaultBackgroundColor
          context:(nullable iTermMetalBufferPoolContext *)context;
 

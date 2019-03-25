@@ -209,7 +209,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewResetTerminal;
 - (CGRect)textViewRelativeFrame;
-- (CGSize)textViewContainerSize;
+- (CGRect)textViewContainerRect;
 - (CGFloat)textViewBadgeTopMargin;
 - (CGFloat)textViewBadgeRightMargin;
 @end

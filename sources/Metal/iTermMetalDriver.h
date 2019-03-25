@@ -114,7 +114,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (const iTermData *const)lineForRow:(int)y;
 
 - (CGRect)relativeFrame;
-- (CGSize)containerSize;
+- (CGRect)containerRect;
 
 @end
 

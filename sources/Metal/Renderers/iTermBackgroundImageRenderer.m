@@ -3,6 +3,7 @@
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBackgroundDrawingHelper.h"
 #import "iTermShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -13,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL repeat;
 @property (nonatomic) NSSize imageSize;
 @property (nonatomic) CGRect frame;
-@property (nonatomic) CGSize containerSize;
+@property (nonatomic) CGRect containerFrame;
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box1;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box2;
@@ -47,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSImage *_image;
     id<MTLTexture> _texture;
     CGRect _frame;
-    CGSize _containerSize;
+    CGRect _containerFrame;
     vector_float4 _color;
 }
 
@@ -82,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setImage:(NSImage *)image
             mode:(iTermBackgroundImageMode)mode
            frame:(CGRect)frame
-   containerSize:(CGSize)containerSize
+   containerRect:(CGRect)containerRect
            color:(vector_float4)defaultBackgroundColor
          context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
@@ -90,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _frame = frame;
     _color = defaultBackgroundColor;
-    _containerSize = containerSize;
+    _containerFrame = containerRect;
     _image = image;
     _mode = mode;
 }
@@ -210,7 +211,7 @@ NS_ASSUME_NONNULL_BEGIN
     tState.repeat = (_mode == iTermBackgroundImageModeTile);
     tState.frame = _frame;
     tState.defaultBackgroundColor = _color;
-    tState.containerSize = _containerSize;
+    tState.containerFrame = _containerFrame;
 }
 
 - (void)loadVertexBuffer:(iTermBackgroundImageRendererTransientState *)tState {
@@ -248,8 +249,10 @@ NS_ASSUME_NONNULL_BEGIN
     // pixel coordinates
     CGRect textureFrame;
     const CGRect frame = tState.frame;
-    const CGSize containerSize = CGSizeMake(tState.containerSize.width * scale,
-                                            tState.containerSize.height * scale);
+    const CGRect containerRect = CGRectMake(tState.containerFrame.origin.x * scale,
+                                            tState.containerFrame.origin.y * scale,
+                                            tState.containerFrame.size.width * scale,
+                                            tState.containerFrame.size.height * scale);
     const CGFloat containerHeight = viewHeight / frame.size.height;
     const CGFloat containerWidth = viewWidth / frame.size.width;
     const CGFloat containerAspectRatio = containerWidth / containerHeight;
@@ -263,81 +266,31 @@ NS_ASSUME_NONNULL_BEGIN
             break;
             
         case iTermBackgroundImageModeTile:
-            textureFrame = CGRectMake(frame.origin.x * containerSize.width,
-                                      frame.origin.y * containerSize.height,
+            textureFrame = CGRectMake(frame.origin.x * containerRect.size.width,
+                                      frame.origin.y * containerRect.size.height,
                                       viewportSize.width,
                                       viewportSize.height);
             break;
             
         case iTermBackgroundImageModeScaleAspectFit: {
-            const CGRect myFrameInContainer = CGRectMake(frame.origin.x * containerSize.width,
-                                                         frame.origin.y * containerSize.height,
-                                                         frame.size.width * containerSize.width,
-                                                         frame.size.height * containerSize.height);
-            CGRect globalQuadFrame;
-            CGFloat globalLetterboxHeight = 0;
-            CGFloat globalPillarboxWidth = 0;
-            CGRect globalBox1 = CGRectZero;
-            CGRect globalBox2 = CGRectZero;
-            if (imageAspectRatio > containerAspectRatio) {
-                // Image is wide relative to view.
-                // There will be letterboxes top and bottom.
-                globalLetterboxHeight = (containerHeight - containerWidth / imageAspectRatio) / 2.0;
-                globalQuadFrame = CGRectMake(minX,
-                                             minY + globalLetterboxHeight,
-                                             containerWidth,
-                                             containerHeight - globalLetterboxHeight * 2);
-                globalBox1 = CGRectMake(0, 0, containerWidth, globalLetterboxHeight);
-                globalBox2 = CGRectMake(0, containerSize.height - globalLetterboxHeight, containerWidth, globalLetterboxHeight);
-            } else {
-                // Image is tall relative to view.
-                // There will be pillarboxes left and right.
-                globalPillarboxWidth = (containerWidth - containerHeight * imageAspectRatio) / 2.0;
-                globalQuadFrame = CGRectMake(minX + globalPillarboxWidth,
-                                             minY,
-                                             containerWidth - globalPillarboxWidth * 2,
-                                             containerHeight);
-                globalBox1 = CGRectMake(0, 0, globalPillarboxWidth, containerHeight);
-                globalBox2 = CGRectMake(containerWidth - globalPillarboxWidth, 0, globalPillarboxWidth, containerHeight);
-            }
-            CGRect box1 = CGRectIntersection(globalBox1, myFrameInContainer);
-            box1.origin.x -= myFrameInContainer.origin.x;
-            box1.origin.y -= myFrameInContainer.origin.y;
-            CGRect box2 = CGRectIntersection(globalBox2, myFrameInContainer);
-            box2.origin.x -= myFrameInContainer.origin.x;
-            box2.origin.y -= myFrameInContainer.origin.y;
-            tState.box1 = [self boxBufferWithRect:box1 box:1 poolContext:tState.poolContext];
-            tState.box2 = [self boxBufferWithRect:box2 box:2 poolContext:tState.poolContext];
-
-            quadFrame = CGRectIntersection(myFrameInContainer, globalQuadFrame);
-            quadFrame.origin.x -= myFrameInContainer.origin.x;
-            quadFrame.origin.y -= myFrameInContainer.origin.y;
-
-            // Constructs a rect giving what the texture frame *would* be if it extended corner to corner. That means
-            // if there are letterboxes/pillarboxes then the origin will have a negative x or y value and a width or
-            // height more than 1. If there is no letterbox/pillarbox the rect will be (0,0,1,1).
-            const CGRect relativeGlobalTextureFrame =
-                CGRectMake(-globalPillarboxWidth / globalQuadFrame.size.width,
-                           -globalLetterboxHeight / globalQuadFrame.size.height,
-                           containerWidth / globalQuadFrame.size.width,
-                           containerHeight / globalQuadFrame.size.height);
-            
-            // Converts the relativeGlobalTextureFrame to pixel space where the origin (0,0) is the origin of where
-            // the top-left pixel of the quad that's actually drawn will be.
-            const CGRect globalTextureFrameInQuadSpace =
-                CGRectMake(relativeGlobalTextureFrame.origin.x * containerWidth,
-                           relativeGlobalTextureFrame.origin.y * containerHeight,
-                           relativeGlobalTextureFrame.size.width * containerWidth,
-                           relativeGlobalTextureFrame.size.height * containerHeight);
-            
-            // This gives the pixel-space texture coordinates that will be in this view
-            const CGRect myTextureFrame = CGRectIntersection(globalTextureFrameInQuadSpace, myFrameInContainer);
-            
-            // Convert from pixel space to texture space.
-            textureFrame = CGRectMake(myTextureFrame.origin.x / containerWidth * nativeTextureSize.width,
-                                      myTextureFrame.origin.y / containerHeight * nativeTextureSize.height,
-                                      myTextureFrame.size.width / containerWidth * nativeTextureSize.width,
-                                      myTextureFrame.size.height / containerHeight * nativeTextureSize.height);
+            CGRect drawRect;
+            const CGRect myFrameInContainer = CGRectMake(containerRect.origin.x + frame.origin.x * containerRect.size.width,
+                                                         containerRect.origin.y + frame.origin.y * containerRect.size.height,
+                                                         frame.size.width * containerRect.size.width,
+                                                         frame.size.height * containerRect.size.height);
+            textureFrame =
+            [iTermBackgroundDrawingHelper scaleAspectFitSourceRectForForImageSize:nativeTextureSize
+                                                                  destinationRect:containerRect
+                                                                        dirtyRect:myFrameInContainer
+                                                                         drawRect:&drawRect
+                                                                         boxRect1:nil
+                                                                         boxRect2:nil];
+            quadFrame = drawRect;
+            // Convert the quadFrame to my coordinate system.
+            quadFrame.origin.x = drawRect.origin.x - frame.origin.x * containerRect.size.width - containerRect.origin.x;
+            quadFrame.origin.y = drawRect.origin.y - frame.origin.y * containerRect.size.height - containerRect.origin.y;
+            quadFrame.size.width = drawRect.size.width;
+            quadFrame.size.height = drawRect.size.height;
             break;
         }
             
@@ -356,27 +309,10 @@ NS_ASSUME_NONNULL_BEGIN
                 const CGFloat crop = (nativeTextureSize.height - height) / 2.0;
                 globalTextureFrame = CGRectMake(0, crop, nativeTextureSize.width, height);
             }
-            const CGRect myFrameInContainer = CGRectMake(frame.origin.x * containerSize.width,
-                                                         frame.origin.y * containerSize.height,
-                                                         frame.size.width * containerSize.width,
-                                                         frame.size.height * containerSize.height);
-            const CGRect relativeGlobalTextureFrame =
-                CGRectMake(globalTextureFrame.origin.x / nativeTextureSize.width,
-                           globalTextureFrame.origin.y / nativeTextureSize.height,
-                           globalTextureFrame.size.width / nativeTextureSize.width,
-                           globalTextureFrame.size.height / nativeTextureSize.height);
-            const CGRect globalTextureFrameInQuadSpace =
-                CGRectMake(relativeGlobalTextureFrame.origin.x * containerWidth,
-                           relativeGlobalTextureFrame.origin.y * containerHeight,
-                           relativeGlobalTextureFrame.size.width * containerWidth,
-                           relativeGlobalTextureFrame.size.height * containerHeight);
-            // This gives the pixel-space texture coordinates that will be in this view
-            const CGRect myTextureFrame = CGRectIntersection(globalTextureFrameInQuadSpace, myFrameInContainer);
-            // Convert from pixel space to texture space.
-            textureFrame = CGRectMake(myTextureFrame.origin.x / containerWidth * nativeTextureSize.width,
-                                      myTextureFrame.origin.y / containerHeight * nativeTextureSize.height,
-                                      myTextureFrame.size.width / containerWidth * nativeTextureSize.width,
-                                      myTextureFrame.size.height / containerHeight * nativeTextureSize.height);
+            textureFrame = CGRectMake(frame.origin.x * globalTextureFrame.size.width + globalTextureFrame.origin.x,
+                                      frame.origin.y * globalTextureFrame.size.height + globalTextureFrame.origin.y,
+                                      frame.size.width * globalTextureFrame.size.width,
+                                      frame.size.height * globalTextureFrame.size.height);
             break;
         }
     }

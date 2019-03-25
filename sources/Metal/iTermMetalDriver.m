@@ -918,7 +918,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [_backgroundImageRenderer setImage:backgroundImage
                                   mode:mode
                                  frame:frameData.perFrameState.relativeFrame
-                         containerSize:frameData.perFrameState.containerSize
+                         containerRect:frameData.perFrameState.containerRect
                                  color:frameData.perFrameState.defaultBackgroundColor
                                context:frameData.framePoolContext];
 }

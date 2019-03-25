@@ -7218,25 +7218,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // way SessionView and TextViewWrapper don't have to worry about whether a background image is
 // present.
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
-                                 viewRect:(NSRect)rect
+                                 viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground {
     if (!_backgroundDrawingHelper) {
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
         _backgroundDrawingHelper.delegate = self;
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        NSRect contentRect = self.view.contentRect;
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:self.view
-                                                   viewRect:rect
-                                                contentRect:self.view.contentRect
+                                                  dirtyRect:dirtyRect
+                                     visibleRectInContainer:NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height)
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:NO];
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
+        NSRect windowVisibleRect = [self.view insetRect:container.bounds
+                                                flipped:YES];
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:container
-                                                   viewRect:NSIntersectionRect(rect, view.enclosingScrollView.documentVisibleRect)
-                                                contentRect:container.bounds
+                                                  dirtyRect:NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect)
+                                     visibleRectInContainer:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:YES];
     }
@@ -7247,20 +7250,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return CGRectMake(0, 0, 1, 1);
     }
     NSView *container = [self.delegate sessionContainerView:self];
-    const NSRect viewRect = [container convertRect:self.view.bounds fromView:self.view];
-    const NSRect containerBounds = container.bounds;
+    const NSRect sessionViewFrameInContainer = [container convertRect:self.view.bounds fromView:self.view];
+    NSRect viewRect = [self.view insetRect:sessionViewFrameInContainer
+                                   flipped:YES];
+    NSRect containerBounds = [self.view insetRect:container.bounds
+                                          flipped:YES];
+    viewRect.origin.x -= containerBounds.origin.x;
+    viewRect.origin.y -= containerBounds.origin.y;
+
     return CGRectMake(viewRect.origin.x / containerBounds.size.width,
                       viewRect.origin.y / containerBounds.size.height,
                       viewRect.size.width / containerBounds.size.width,
                       viewRect.size.height / containerBounds.size.height);
 }
 
-- (CGSize)textViewContainerSize {
+- (CGRect)textViewContainerRect {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-        return self.view.scrollview.frame.size;
+        return self.view.scrollview.frame;
     }
     NSView *container = [self.delegate sessionContainerView:self];
-    return container.bounds.size;
+    return [self.view insetRect:container.bounds flipped:YES];
 }
 
 - (NSImage *)textViewBackgroundImage {
