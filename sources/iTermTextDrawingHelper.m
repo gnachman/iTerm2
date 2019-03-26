@@ -653,6 +653,18 @@ typedef struct iTermTextColorContext {
                                                     coordRange.end.x - coordRange.start.x)
                                       y:y];
     }
+
+    // Highlight cursor column if the cursor is in this column and it's on.
+    int cursorCol = _cursorCoord.x;
+    const BOOL drawVCursorGuide = (self.highlightCursorCol &&
+                                   cursorCol >= coordRange.start.x &&
+                                   cursorCol < coordRange.end.x);
+    if (drawVCursorGuide) {
+        CGFloat x = cursorCol * _cellSize.width;
+        [self drawCursorGuideForRows:NSMakeRange(coordRange.start.y,
+                                                 coordRange.end.y - coordRange.start.y)
+                                   x:x];
+    }
 }
 
 - (void)drawCursorGuideForColumns:(NSRange)range y:(CGFloat)yOrigin {
@@ -671,6 +683,26 @@ typedef struct iTermTextColorContext {
     NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     rect.origin.y += _cellSize.height - 1;
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+}
+
+- (void)drawCursorGuideForRows:(NSRange)range x:(CGFloat)xOrigin {
+    if (!_cursorVisible) {
+        return;
+    }
+    [_cursorGuideColor set];
+    NSPoint textOrigin = NSMakePoint(xOrigin + [iTermAdvancedSettingsModel terminalMargin],
+                                     [iTermAdvancedSettingsModel terminalMargin] + range.location * _cellSize.height);
+    NSRect rect = NSMakeRect(textOrigin.x,
+                             textOrigin.y,
+                             _cellSize.width,
+                             range.length * _cellSize.height);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+
+    rect.size.width = 1;
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+
+    rect.origin.x += _cellSize.width - 1;
     NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 }
 
