@@ -1545,6 +1545,7 @@ DQ
                 <outlet property="_useSmartCursorColor" destination="4889" id="GhQ-EU-ndl"/>
                 <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
                 <outlet property="_useUnderlineColor" destination="Cqf-RZ-UnO" id="HoY-6m-xxx"/>
+                <outlet property="_useVGuide" destination="CDY-GW-Oi5" id="31z-FX-BPt"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
                 <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
@@ -2272,7 +2273,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <customView id="Yny-j0-8Wk" customClass="CPKColorWell">
-                    <rect key="frame" x="304" y="73" width="32" height="21"/>
+                    <rect key="frame" x="304" y="84" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
@@ -2323,7 +2324,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <button id="Rpk-o3-4ec">
-                    <rect key="frame" x="193" y="74" width="105" height="18"/>
+                    <rect key="frame" x="173" y="85" width="105" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Cursor guide" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Ai2-im-FjJ">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2332,6 +2333,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="p8i-eM-oBc" id="IhP-Ds-PqB"/>
                         <outlet property="nextKeyView" destination="4896" id="kw5-A8-LVc"/>
+                    </connections>
+                </button>
+                <button id="CDY-GW-Oi5" userLabel="Use Vertical Guide">
+                    <rect key="frame" x="173" y="65" width="148" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Vertical cursor guide" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Co-vY-kv7">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="p8i-eM-oBc" id="T94-1y-jPl"/>
+                        <outlet property="nextKeyView" destination="4896" id="H8S-V8-cYY"/>
                     </connections>
                 </button>
                 <customView id="2286" customClass="CPKColorWell">

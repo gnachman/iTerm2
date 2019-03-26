@@ -366,6 +366,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalSetCursorVisible:(BOOL)visible;
 
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight;
+- (void)terminalSetHighlightCursorCol:(BOOL)highlight;
 
 // FinalTerm features
 - (void)terminalPromptDidStart;

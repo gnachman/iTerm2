@@ -581,6 +581,14 @@ static const int kDragThreshold = 3;
     return _drawingHelper.highlightCursorLine;
 }
 
+- (void)setHighlightCursorCol:(BOOL)highlightCursorCol {
+    _drawingHelper.highlightCursorCol = highlightCursorCol;
+}
+
+- (BOOL)highlightCursorCol {
+    return _drawingHelper.highlightCursorCol;
+}
+
 - (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
     _drawingHelper.useNonAsciiFont = useNonAsciiFont;
     _useNonAsciiFont = useNonAsciiFont;

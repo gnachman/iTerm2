@@ -141,7 +141,7 @@
                                      textures:@{ @(iTermTextureIndexPrimary): tState.texture } ];
     }
 
-    if (tState.col >= 0 && self.enabled) {
+    if (tState.col >= 0 && self.venabled) {
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6

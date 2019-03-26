@@ -235,6 +235,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // Draw a highlight along the entire line the cursor is on.
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
+// Draw a highlight along the entire column the cursor is in.
+@property(nonatomic, assign) BOOL highlightCursorCol;
+
 // Use the non-ascii font? If not set, use the regular font for all characters.
 @property(nonatomic, assign) BOOL useNonAsciiFont;
 
