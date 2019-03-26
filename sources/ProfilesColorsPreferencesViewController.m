@@ -79,7 +79,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSMenu *_presetsMenu;
 
     IBOutlet NSButton *_useGuide;
-    IBOutlet NSButton *_useVGuide;
+    IBOutlet NSButton *_useVerticalGuide;
     IBOutlet CPKColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
@@ -204,8 +204,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_useVGuide
-                    key:KEY_USE_VERT_CURSOR_GUIDE
+    [self defineControl:_useVerticalGuide
+                    key:KEY_USE_VERTICAL_CURSOR_GUIDE
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBrightBold

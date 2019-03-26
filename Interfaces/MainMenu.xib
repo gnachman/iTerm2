@@ -671,7 +671,7 @@ Gw
                             <menuItem title="Show Vertical Cursor Guide" identifier="Show Vertical Cursor Guide" id="pPk-Wb-7b8">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="toggleVCursorGuide:" target="-1" id="9p8-5y-S8s"/>
+                                    <action selector="toggleVerticalCursorGuide:" target="-1" id="I31-ik-Ak8"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Show Timestamps" keyEquivalent="E" identifier="Show Timestamps" id="TnF-kz-Lf0">

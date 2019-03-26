@@ -1471,7 +1471,7 @@ DQ
                 <outlet property="_useSmartCursorColor" destination="4889" id="GhQ-EU-ndl"/>
                 <outlet property="_useTabColor" destination="j7F-r8-oes" id="HoY-6m-E99"/>
                 <outlet property="_useUnderlineColor" destination="Cqf-RZ-UnO" id="HoY-6m-xxx"/>
-                <outlet property="_useVGuide" destination="CDY-GW-Oi5" id="31z-FX-BPt"/>
+                <outlet property="_useVerticalGuide" destination="CDY-GW-Oi5" id="31z-FX-BPt"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="NFg-pP-EcM"/>
                 <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
