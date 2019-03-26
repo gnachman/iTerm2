@@ -149,13 +149,13 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 
                 case kTransferrableFileStatusFinishedSuccessfully:
                     [[iTermNotificationController sharedInstance] notify:
-                        [NSString stringWithFormat:@"%@ of “%@” finished!",
+                        [NSString stringWithFormat:@"%@ finished for “%@”.",
                             self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
                     break;
 
                 case kTransferrableFileStatusFinishedWithError:
                     [[iTermNotificationController sharedInstance] notify:
-                     [NSString stringWithFormat:@"%@ of “%@” failed.",
+                     [NSString stringWithFormat:@"%@ failed for “%@”.",
                       self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
             }
         }
