@@ -185,9 +185,13 @@
 - (void)screenSetCursorVisible:(BOOL)visible;
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight;
+- (void)screenSetHighlightCursorColumn:(BOOL)highlight;
 
 // Only called if the trackCursorLineMovement property is set.
 - (void)screenCursorDidMoveToLine:(int)line;
+
+// Only called if the trackCursorColMovement property is set.
+- (void)screenCursorDidMoveToColumn:(int)column;
 
 // Returns if there is a view.
 - (BOOL)screenHasView;

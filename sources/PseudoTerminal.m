@@ -1793,6 +1793,11 @@ ITERM_WEAKLY_REFERENCEABLE
   session.highlightCursorLine = !session.highlightCursorLine;
 }
 
+- (IBAction)toggleVerticalCursorGuide:(id)sender {
+    PTYSession *session = [self currentSession];
+    session.highlightCursorColumn = !session.highlightCursorColumn;
+}
+
 - (IBAction)toggleSelectionRespectsSoftBoundaries:(id)sender {
     iTermController *controller = [iTermController sharedInstance];
     controller.selectionRespectsSoftBoundaries = !controller.selectionRespectsSoftBoundaries;
@@ -8641,6 +8646,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([item action] == @selector(toggleCursorGuide:)) {
         PTYSession *session = [self currentSession];
         [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
+        result = YES;
+    } else if ([item action] == @selector(toggleVerticalCursorGuide:)) {
+        PTYSession *session = [self currentSession];
+        [item setState:session.highlightCursorColumn ? NSOnState : NSOffState];
         result = YES;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];

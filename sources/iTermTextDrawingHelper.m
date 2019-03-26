@@ -644,14 +644,38 @@ typedef struct iTermTextColorContext {
 
     // Highlight cursor line if the cursor is on this line and it's on.
     int cursorLine = _cursorCoord.y + _numberOfScrollbackLines;
-    const BOOL drawCursorGuide = (self.highlightCursorLine &&
-                                  cursorLine >= coordRange.start.y &&
-                                  cursorLine < coordRange.end.y);
-    if (drawCursorGuide) {
+    int cursorColumn = _cursorCoord.x;
+    const BOOL drawHorizontalCursorGuide = (self.highlightCursorLine &&
+                                            cursorLine >= coordRange.start.y &&
+                                            cursorLine < coordRange.end.y);
+    const BOOL drawVerticalCursorGuide = (self.highlightCursorColumn &&
+                                          cursorColumn >= coordRange.start.x &&
+                                          cursorColumn < coordRange.end.x);
+
+    if (drawHorizontalCursorGuide && !drawVerticalCursorGuide) {
         CGFloat y = cursorLine * _cellSize.height;
         [self drawCursorGuideForColumns:NSMakeRange(coordRange.start.x,
                                                     coordRange.end.x - coordRange.start.x)
                                       y:y];
+    } else if (!drawHorizontalCursorGuide && drawVerticalCursorGuide) {
+        CGFloat x = cursorColumn * _cellSize.width;
+        [self drawCursorGuideForRows:NSMakeRange(coordRange.start.y,
+                                                 coordRange.end.y - coordRange.start.y)
+                                   x:x];
+        [self.delegate setNeedsDisplay:YES];
+    } else if (drawHorizontalCursorGuide && drawVerticalCursorGuide) {
+        CGFloat x = cursorColumn * _cellSize.width;
+        CGFloat y = cursorLine * _cellSize.height;
+        [self drawCursorGuideForColumns:NSMakeRange(coordRange.start.x,
+                                                    coordRange.end.x - coordRange.start.x)
+                                      y:y];
+        [self drawCursorGuideForRows:NSMakeRange(coordRange.start.y,
+                                                 cursorLine - coordRange.start.y)
+                                   x:x];
+        [self drawCursorGuideForRows:NSMakeRange(cursorLine + 1,
+                                                 coordRange.end.y - _cursorCoord.y)
+                                   x:x];
+        [self.delegate setNeedsDisplay:YES];
     }
 }
 
@@ -671,6 +695,26 @@ typedef struct iTermTextColorContext {
     NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     rect.origin.y += _cellSize.height - 1;
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+}
+
+- (void)drawCursorGuideForRows:(NSRange)range x:(CGFloat)xOrigin {
+    if (!_cursorVisible) {
+        return;
+    }
+    [_cursorGuideColor set];
+    NSPoint textOrigin = NSMakePoint(xOrigin + [iTermAdvancedSettingsModel terminalMargin],
+                                     range.location * _cellSize.height);
+    NSRect rect = NSMakeRect(textOrigin.x,
+                             textOrigin.y,
+                             _cellSize.width,
+                             range.length * _cellSize.height);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+
+    rect.size.width = 1;
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+
+    rect.origin.x += _cellSize.width - 1;
     NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 }
 

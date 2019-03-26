@@ -581,6 +581,14 @@ static const int kDragThreshold = 3;
     return _drawingHelper.highlightCursorLine;
 }
 
+- (void)setHighlightCursorColumn:(BOOL)highlightCursorColumn {
+    _drawingHelper.highlightCursorColumn = highlightCursorColumn;
+}
+
+- (BOOL)highlightCursorColumn {
+    return _drawingHelper.highlightCursorColumn;
+}
+
 - (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
     _drawingHelper.useNonAsciiFont = useNonAsciiFont;
     _useNonAsciiFont = useNonAsciiFont;
@@ -968,6 +976,16 @@ static const int kDragThreshold = 3;
 - (void)setNeedsDisplayOnLine:(int)line
 {
     [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, _dataSource.width)];
+}
+
+- (void)setNeedsDisplayOnColumn:(int)column {
+    // We can only draw whole lines, not individual characters.  Consequently
+    // a request to redraw a column should only cause an update if there is
+    // something in the column outside the row that needs an update, such as the
+    // vertical cursor guide.
+    if ([self highlightCursorColumn]) {
+        [self setNeedsDisplayOnColumn:column inRange:VT100GridRangeMake(0, _dataSource.height)];
+    }
 }
 
 // Overrides an NSView method.
@@ -6399,6 +6417,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Line %d is dirty in range [%d, %d), set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self setNeedsDisplayInRect:dirtyRect];
+}
+
+- (void)setNeedsDisplayOnColumn:(int)x inRange:(VT100GridRange)range {
+    // We can only draw whole lines, not individual characters.  Consequently
+    // a request to redraw a column should only cause an update if there is
+    // something in the column outside the row that needs an update, such as the
+    // vertical cursor guide.
+    if ([self highlightCursorColumn]) {
+        [self setNeedsDisplay:YES];
+    }
 }
 
 // WARNING: Do not call this function directly. Call

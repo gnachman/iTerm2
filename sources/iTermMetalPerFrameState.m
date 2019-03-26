@@ -578,8 +578,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_fullScreenFlashColor;
 }
 
-- (BOOL)cursorGuideEnabled {
-    return _configuration->_cursorGuideColor && _configuration->_cursorGuideEnabled;
+- (BOOL)cursorHorizontalGuideEnabled {
+    return _configuration->_cursorGuideColor && _configuration->_cursorHorizontalGuideEnabled;
+}
+
+- (BOOL)cursorVerticalGuideEnabled {
+    return _configuration->_cursorGuideColor && _configuration->_cursorVerticalGuideEnabled;
 }
 
 - (NSColor *)cursorGuideColor {

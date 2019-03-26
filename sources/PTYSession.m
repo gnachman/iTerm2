@@ -208,6 +208,7 @@ static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of 
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE = @"Vertical Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
@@ -1156,6 +1157,9 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE]) {
+            aSession.textview.highlightCursorColumn = [arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] boolValue];
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
         aSession.lastRemoteHost = aSession.screen.lastRemoteHost;
@@ -3289,6 +3293,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];
+    _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                             inProfile:_profile];
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile
@@ -3471,6 +3477,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];
+        _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                                 inProfile:aDict];
     }
 
     for (i = 0; i < 16; i++) {
@@ -4197,6 +4205,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [NSDictionary dictionaryWithGridCoordRange:range];
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
+        result[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] = @(_textview.highlightCursorColumn);
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] = @(self.lastDirectoryIsUnsuitableForOldPWD);
@@ -8210,8 +8219,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];
+    _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                                inProfile:_profile];
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
+    _screen.trackCursorColumnMovement = NO;
 }
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
@@ -8480,6 +8492,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)highlightCursorLine {
     return _textview.highlightCursorLine;
+}
+
+- (void)screenCursorDidMoveToColumn:(int)column {
+    if (_textview.cursorVisible) {
+        [_textview setNeedsDisplayOnColumn:column];
+    }
+}
+
+- (void)screenSetHighlightCursorColumn:(BOOL)highlight {
+    _cursorGuideSettingHasChanged = YES;
+    self.highlightCursorColumn = highlight;
+}
+
+- (void)setHighlightCursorColumn:(BOOL)highlight {
+    _cursorGuideSettingHasChanged = YES;
+    _textview.highlightCursorColumn = highlight;
+    [_textview setNeedsDisplay:YES];
+    _screen.trackCursorColumnMovement = highlight;
+}
+
+- (BOOL)highlightCursorColumn {
+    return _textview.highlightCursorColumn;
 }
 
 - (BOOL)screenHasView {
