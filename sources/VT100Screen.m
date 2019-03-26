@@ -52,6 +52,7 @@ NSString *const kScreenStateCommandStartYKey = @"Command Start Y";
 NSString *const kScreenStateNextCommandOutputStartKey = @"Output Start";
 NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
 NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
+NSString *const kScreenStateTrackCursorColMovementKey = @"Track Cursor Col";
 NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
 NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
 NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
@@ -5307,6 +5308,12 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
+- (void)gridCursorDidChangeCol {
+    if (_trackCursorColMovement) {
+        [delegate_ screenCursorDidMoveToCol:currentGrid_.cursorX];
+    }
+}
+
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
     return _normalization;
 }
@@ -5364,6 +5371,7 @@ static void SwapInt(int *a, int *b) {
             kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
             kScreenStateCursorVisibleKey: @(_cursorVisible),
             kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
+            kScreenStateTrackCursorColMovementKey: @(_trackCursorColMovement),
             kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
             kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
             kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
@@ -5478,6 +5486,7 @@ static void SwapInt(int *a, int *b) {
         _startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
+        _trackCursorColMovement = [screenState[kScreenStateTrackCursorColMovementKey] boolValue];
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
         _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 

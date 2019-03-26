@@ -8313,6 +8313,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                              inProfile:_profile];
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
+    _screen.trackCursorColMovement = NO;
 }
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {

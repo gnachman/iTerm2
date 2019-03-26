@@ -53,6 +53,9 @@ do { \
 - (void)gridCursorDidChangeLine {
 }
 
+- (void)gridCursorDidChangeCol {
+}
+
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
     return iTermUnicodeNormalizationNone;
 }

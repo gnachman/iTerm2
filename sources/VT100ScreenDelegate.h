@@ -190,6 +190,9 @@
 // Only called if the trackCursorLineMovement property is set.
 - (void)screenCursorDidMoveToLine:(int)line;
 
+// Only called if the trackCursorColMovement property is set.
+- (void)screenCursorDidMoveToCol:(int)col;
+
 // Returns if there is a view.
 - (BOOL)screenHasView;
 
