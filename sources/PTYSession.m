@@ -7235,7 +7235,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
         NSRect windowVisibleRect = [self.view insetRect:container.bounds
-                                                flipped:YES];
+                                                flipped:YES
+                                 includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:container
                                                   dirtyRect:NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect)
@@ -7252,9 +7253,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSView *container = [self.delegate sessionContainerView:self];
     const NSRect sessionViewFrameInContainer = [container convertRect:self.view.bounds fromView:self.view];
     NSRect viewRect = [self.view insetRect:sessionViewFrameInContainer
-                                   flipped:YES];
+                                   flipped:YES
+                    includeBottomStatusBar:YES];
     NSRect containerBounds = [self.view insetRect:container.bounds
-                                          flipped:YES];
+                                          flipped:YES
+                           includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
     viewRect.origin.x -= containerBounds.origin.x;
     viewRect.origin.y -= containerBounds.origin.y;
 
@@ -7269,7 +7272,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return self.view.scrollview.frame;
     }
     NSView *container = [self.delegate sessionContainerView:self];
-    return [self.view insetRect:container.bounds flipped:YES];
+    return [self.view insetRect:container.bounds
+                        flipped:YES
+         includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
 }
 
 - (NSImage *)textViewBackgroundImage {

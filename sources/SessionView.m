@@ -898,14 +898,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-- (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped {
+- (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped includeBottomStatusBar:(BOOL)includeBottomStatusBar {
     CGFloat topInset = 0;
     CGFloat bottomInset = 0;
 
     if (_showTitle) {
         topInset = kTitleHeight;
     }
-    if (_showBottomStatusBar) {
+    // Most callers don't inset for per-pane status bars because not all panes
+    // might have status bars and this function is used to compute the window's
+    // inset.
+    if (_showBottomStatusBar && includeBottomStatusBar) {
         bottomInset = iTermStatusBarHeight;
     }
     if (flipped) {
@@ -922,7 +925,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (NSRect)contentRect {
     return [self insetRect:self.frame
-                   flipped:NO];
+                   flipped:NO
+    includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
 }
 
 - (void)createSplitSelectionView {

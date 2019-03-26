@@ -218,7 +218,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (NSRect)contentRect;
 
 // Insets the rect by the titlebar and status bar if they are present.
-- (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped;
+- (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped includeBottomStatusBar:(BOOL)includeBottomStatusBar;
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement;
 
