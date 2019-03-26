@@ -46,6 +46,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRendererTransientState : NSObject
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
+@property (nonatomic, strong) id<MTLBuffer> vvertexBuffer;
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
 @property (nonatomic, weak) iTermMetalDebugInfo *debugInfo;
 @property (nonatomic, strong) NSImage *renderedOutputForDebugging;

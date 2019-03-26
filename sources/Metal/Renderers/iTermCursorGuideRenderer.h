@@ -1,12 +1,12 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermMetalCellRenderer.h"
+#import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCursorGuideRendererTransientState : iTermMetalCellRendererTransientState
-// set to -1 if cursor's row is not currently visible.
-- (void)setRow:(int)row;
+- (void)setCursorCoord:(VT100GridCoord)coord within:(VT100GridSize)bounds;
 @end
 
 @interface iTermCursorGuideRenderer : NSObject<iTermMetalCellRenderer>
