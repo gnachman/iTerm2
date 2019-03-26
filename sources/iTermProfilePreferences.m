@@ -367,7 +367,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
                   KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
                   KEY_SESSION_HOTKEY: @{},
-                  KEY_TITLE_COMPONENTS : @(iTermTitleComponentsProfileName),
+                  KEY_TITLE_COMPONENTS : @(iTermTitleComponentsSessionName),
                   KEY_TITLE_FUNC: [NSNull null],
                   KEY_SHOW_STATUS_BAR: @NO,
                   KEY_STATUS_BAR_LAYOUT: @{},
@@ -634,6 +634,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         } else {
             titleComponents |= iTermTitleComponentsSessionName;
         }
+    } else {
+        titleComponents |= iTermTitleComponentsSessionName;
     }
 
     return @(titleComponents);
