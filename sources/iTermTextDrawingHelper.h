@@ -180,6 +180,9 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Should the cursor guide be shown?
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
+// Should the vertical cursor guide be shown?
+@property(nonatomic, assign) BOOL highlightCursorColumn;
+
 // Minimum contrast level, 0-1.
 @property(nonatomic, assign) double minimumContrast;
 

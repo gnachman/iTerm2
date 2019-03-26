@@ -422,6 +422,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL hasSelection;
 
 @property(nonatomic, assign) BOOL highlightCursorLine;
+@property(nonatomic, assign) BOOL highlightCursorColumn;
 
 // Used to help remember total ordering on views while one is maximized
 @property(nonatomic, assign) NSPoint savedRootRelativeOrigin;

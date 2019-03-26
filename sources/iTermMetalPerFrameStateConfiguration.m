@@ -55,7 +55,8 @@ static vector_float4 VectorForColor(NSColor *color) {
     _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
     // Cursor guide
-    _cursorGuideEnabled = drawingHelper.highlightCursorLine;
+    _cursorHorizontalGuideEnabled = drawingHelper.highlightCursorLine;
+    _cursorVerticalGuideEnabled = drawingHelper.highlightCursorColumn;
     _cursorGuideColor = drawingHelper.cursorGuideColor;
 
     // Background image
