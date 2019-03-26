@@ -464,6 +464,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // onscreen is blinking.
 - (BOOL)refresh;
 - (void)setNeedsDisplayOnLine:(int)line;
+- (void)setNeedsDisplayOnCol:(int)col;
 
 // selection
 - (IBAction)selectAll:(id)sender;

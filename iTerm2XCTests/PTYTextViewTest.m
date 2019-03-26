@@ -991,6 +991,21 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           size:VT100GridSizeMake(5, 5)];
 }
 
+// Draws a cursor guide on the col with b.
+- (void)testVCursorGuide {
+    [self doGoldenTestForInput:@"abcd\x1b[2A"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                                  helper.highlightCursorCol = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:YES
+                          size:VT100GridSizeMake(5, 5)];
+}
+
 // Draws a badge which blends with nondefault background colors.
 - (void)testBadge {
     [self doGoldenTestForInput:@"\n\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\x1b[42mabc"
