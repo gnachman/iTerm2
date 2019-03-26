@@ -62,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
     // Cursor
     BOOL _shouldDrawFilledInCursor;
     BOOL _cursorGuideEnabled;
+    BOOL _cursorVGuideEnabled;
 
     // Size
     VT100GridSize _gridSize;
