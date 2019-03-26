@@ -114,7 +114,7 @@ typedef struct {
     
     if (backgroundImage) {
         const NSRect dirtyRectInContainerCoords = [containerView convertRect:dirtyRect fromView:view];
-        NSRect dirtyRectInAdjustedContainerCoords;
+        NSRect dirtyRectInAdjustedContainerCoords = dirtyRectInContainerCoords;
         dirtyRectInAdjustedContainerCoords.origin.x -= windowVisibleAreaRect.origin.x;
         dirtyRectInAdjustedContainerCoords.origin.y -= windowVisibleAreaRect.origin.y;
         NSImage *image;
