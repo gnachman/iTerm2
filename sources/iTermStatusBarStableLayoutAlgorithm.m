@@ -250,6 +250,7 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     NSArray<iTermStatusBarContainerView *> *visibleContainerViews = [self visibleContainerViewsAllowingEqualSpacing];
 
     [self updateDesiredWidthsForViews:visibleContainerViews];
+    [self makeWidthsAndOriginsIntegers:visibleContainerViews];
     return visibleContainerViews;
 }
 

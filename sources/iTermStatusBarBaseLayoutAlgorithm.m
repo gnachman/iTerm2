@@ -243,11 +243,19 @@
     return [self viewsFrom:prioritized keepingOrderIn:_containerViews];
 }
 
+- (void)makeWidthsAndOriginsIntegers:(NSArray<iTermStatusBarContainerView *> *)views {
+    for (iTermStatusBarContainerView *view in views) {
+        view.desiredOrigin = floor(view.desiredOrigin);
+        view.desiredWidth = ceil(view.desiredWidth);
+    }
+}
+
 // Returns non-hidden container views that all satisfy their minimum width requirement.
 - (NSArray<iTermStatusBarContainerView *> *)visibleContainerViews {
     NSArray<iTermStatusBarContainerView *> *unhiddenViews = [self unhiddenContainerViews];
     NSArray<iTermStatusBarContainerView *> *visibleContainerViews = [self fittingSubsetOfContainerViewsFrom:unhiddenViews];
     [self updateDesiredWidthsForViews:visibleContainerViews];
+    [self makeWidthsAndOriginsIntegers:visibleContainerViews];
     return visibleContainerViews;
 }
 
