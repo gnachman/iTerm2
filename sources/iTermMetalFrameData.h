@@ -163,7 +163,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
-- (void)createpostmultipliedRenderPassDescriptor NS_AVAILABLE_MAC(10_14);
 - (void)createIntermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #if ENABLE_USE_TEMPORARY_TEXTURE
 - (void)createTemporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);;

@@ -10234,7 +10234,7 @@
 		0464AB0C006CD2EC7F000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1010;
+				LastUpgradeCheck = 1020;
 				TargetAttributes = {
 					1D6ED85219AEA20D005A7799 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -10272,14 +10272,8 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
-				English,
-				Japanese,
-				French,
-				German,
-				Chinese,
 				zh_CN,
 				zh_TW,
-				Korean,
 				en,
 				Base,
 			);
