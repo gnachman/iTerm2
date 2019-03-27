@@ -241,6 +241,9 @@
                                                     userInfo:nil
                                                      repeats:YES];
     } else if (_dragTabWindow) {
+        if (![control.delegate tabViewDragShouldExitWindow:control.tabView]) {
+            return;
+        }
         // create a new floating drag window
         if (!_dragViewWindow) {
             NSImage *viewImage = nil;

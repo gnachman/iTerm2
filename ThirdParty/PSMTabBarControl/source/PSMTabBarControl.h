@@ -101,6 +101,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInse
 - (NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(unsigned int *)styleMask;
 - (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point;
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem;
+- (BOOL)tabViewDragShouldExitWindow:(NSTabView *)tabView;
 
 //Overflow menu validation
 - (BOOL)tabView:(NSTabView *)aTabView validateOverflowMenuItem:(NSMenuItem *)menuItem forTabViewItem:(NSTabViewItem *)tabViewItem;

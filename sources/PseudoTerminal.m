@@ -5501,6 +5501,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return viewImage;
 }
 
+- (BOOL)tabViewDragShouldExitWindow:(NSTabView *)tabView {
+    return [iTermAdvancedSettingsModel allowDragOfTabIntoNewWindow];
+}
+
 - (NSImage *)tabView:(NSTabView *)aTabView
     imageForTabViewItem:(NSTabViewItem *)tabViewItem
               styleMask:(unsigned int *)styleMask {
