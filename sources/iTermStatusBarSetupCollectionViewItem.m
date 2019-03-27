@@ -6,6 +6,7 @@
 //
 
 #import "iTermStatusBarSetupCollectionViewItem.h"
+#import "NSView+iTerm.h"
 
 @interface iTermStatusBarSetupCollectionViewItem ()
 
@@ -54,11 +55,11 @@
 
     NSRect textFieldFrame = self.textField.frame;
     textFieldFrame.size = self.textField.fittingSize;
-    self.textField.frame = textFieldFrame;
+    self.textField.frame = [self.view retinaRoundRect:textFieldFrame];
 
     NSRect descriptionFrame = _description.frame;
     descriptionFrame.size = _description.fittingSize;
-    _description.frame = descriptionFrame;
+    _description.frame = [self.view retinaRoundRect:descriptionFrame];
 
     const CGFloat descriptionWidth = self.hideDetail ? 0 : _description.frame.size.width;
     const NSSize textFieldSize = NSMakeSize(MAX(textFieldFrame.size.width, descriptionWidth),
@@ -67,25 +68,25 @@
     const CGFloat totalWidth = textFieldSize.width + _textFieldInsets.left + _textFieldInsets.right;
 
     const CGFloat boxMinY = self.hideDetail ? 0 : _boxMinY;
-    self.view.frame = NSMakeRect(self.view.frame.origin.x,
-                                 self.view.frame.origin.y,
-                                 totalWidth,
-                                 boxMinY + _box.frame.size.height);
+    self.view.frame = [self.view retinaRoundRect:NSMakeRect(self.view.frame.origin.x,
+                                                            self.view.frame.origin.y,
+                                                            totalWidth,
+                                                            boxMinY + _box.frame.size.height)];
 
     const CGFloat boxWidth = textFieldFrame.size.width + _textFieldInsets.left + _textFieldInsets.right;
-    _box.frame = NSMakeRect(round((totalWidth - boxWidth) / 2),
-                            boxMinY,
-                            boxWidth,
-                            textFieldSize.height + _textFieldInsets.top + _textFieldInsets.bottom);
-    self.textField.frame = NSMakeRect(_textFieldInsets.left,
-                                      _textFieldInsets.bottom,
-                                      textFieldSize.width,
-                                      textFieldSize.height);
+    _box.frame = [self.view retinaRoundRect:NSMakeRect(round((totalWidth - boxWidth) / 2),
+                                                       boxMinY,
+                                                       boxWidth,
+                                                       textFieldSize.height + _textFieldInsets.top + _textFieldInsets.bottom)];
+    self.textField.frame = [self.view retinaRoundRect:NSMakeRect(_textFieldInsets.left,
+                                                                 _textFieldInsets.bottom,
+                                                                 textFieldSize.width,
+                                                                 textFieldSize.height)];
     if (!self.hideDetail) {
-        _description.frame = NSMakeRect(_textFieldInsets.left,
-                                        _descriptionMinY,
-                                        textFieldSize.width,
-                                        _description.frame.size.height);
+        _description.frame = [self.view retinaRoundRect:NSMakeRect(_textFieldInsets.left,
+                                                                   _descriptionMinY,
+                                                                   textFieldSize.width,
+                                                                   _description.frame.size.height)];
     }
 }
 

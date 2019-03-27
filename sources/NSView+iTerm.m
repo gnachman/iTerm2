@@ -114,4 +114,24 @@
     return round(scale * value) / scale;
 }
 
+- (CGFloat)retinaRoundUp:(CGFloat)value {
+    NSWindow *window = self.window;
+    CGFloat scale = window.backingScaleFactor;
+    if (!scale) {
+        scale = [[NSScreen mainScreen] backingScaleFactor];
+    }
+    if (!scale) {
+        scale = 1;
+    }
+    return ceil(scale * value) / scale;
+}
+
+- (CGRect)retinaRoundRect:(CGRect)rect {
+    NSRect result = NSMakeRect([self retinaRound:NSMinX(rect)],
+                               [self retinaRound:NSMinY(rect)],
+                               [self retinaRoundUp:NSWidth(rect)],
+                               [self retinaRoundUp:NSHeight(rect)]);
+    return result;
+}
+
 @end

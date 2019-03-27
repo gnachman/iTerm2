@@ -12,6 +12,7 @@
 #import "NSImageView+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
+#import "NSView+iTerm.h"
 
 const CGFloat iTermStatusBarViewControllerIconWidth = 17;
 
@@ -138,10 +139,10 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat myHeight = self.frame.size.height;
     const CGFloat viewWidth = _view.frame.size.width;
     DLog(@"set frame of view %@ for component %@ width to %@", _view, self.component, @(viewWidth));
-    _view.frame = NSMakeRect(self.minX,
-                             (myHeight - viewHeight) / 2 + _component.statusBarComponentVerticalOffset,
-                             self.preferredWidthForComponentView,
-                             viewHeight);
+    _view.frame = NSMakeRect([self retinaRound:self.minX],
+                             [self retinaRound:(myHeight - viewHeight) / 2 + _component.statusBarComponentVerticalOffset],
+                             [self retinaRoundUp:self.preferredWidthForComponentView],
+                             [self retinaRoundUp:viewHeight]);
 }
 
 - (void)viewDidMoveToWindow {
