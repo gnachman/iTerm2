@@ -1,6 +1,7 @@
 #import "PTYSession+Scripting.h"
 
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
@@ -330,6 +331,10 @@
 
 - (void)setAnswerBackString:(NSString *)string {
     [self setSessionSpecificProfileValues:@{ KEY_ANSWERBACK_STRING: string ?: @"" }];
+}
+
+- (void)setName:(NSString *)name {
+    self.variablesScope.autoNameFormat = name;
 }
 
 #pragma mark ANSI Colors
