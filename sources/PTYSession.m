@@ -1757,29 +1757,38 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (iTermPromptOnCloseReason *)promptOnCloseReason {
+    DLog(@"entered");
     if (_exited) {
         return [iTermPromptOnCloseReason noReason];
     }
     switch ([[_profile objectForKey:KEY_PROMPT_CLOSE] intValue]) {
         case PROMPT_ALWAYS:
+            DLog(@"prompt always");
             return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 
         case PROMPT_NEVER:
+            DLog(@"prompt never");
             return [iTermPromptOnCloseReason noReason];
 
         case PROMPT_EX_JOBS: {
+            DLog(@"Prompt ex jobs");
             if (self.isTmuxClient) {
+                DLog(@"is tmux client");
                 return [iTermPromptOnCloseReason tmuxClientsAlwaysPromptBecauseJobsAreNotExposed];
             }
             NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
+            DLog(@"jobs that don't require prompting: %@", jobsThatDontRequirePrompting);
             for (NSString *childName in [self childJobNames]) {
+                DLog(@"Check child %@", childName);
                 if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
+                    DLog(@"    not on the ignore list");
                     // This job is not in the ignore list.
                     [blockingJobs addObject:childName];
                 }
             }
             if (blockingJobs.count > 0) {
+                DLog(@"Blocked by jobs: %@", blockingJobs);
                 return [iTermPromptOnCloseReason profile:_profile blockedByJobs:blockingJobs];
             } else {
                 // All jobs were in the ignore list.
