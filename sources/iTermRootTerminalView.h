@@ -30,6 +30,7 @@
 - (NSEdgeInsets)tabBarInsets;
 - (BOOL)exitingLionFullscreen;
 - (BOOL)enteringLionFullscreen;
+- (BOOL)lionFullScreen;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;

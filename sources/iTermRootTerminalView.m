@@ -1247,7 +1247,7 @@ typedef struct {
         case PSMTab_TopTab:
             break;
     }
-    if ([_delegate anyFullScreen] || [_delegate enteringLionFullscreen]) {
+    if ([_delegate lionFullScreen] || [_delegate enteringLionFullscreen]) {
         return NO;
     }
 
