@@ -313,9 +313,9 @@
 - (void)drawEndInset {
     NSColor *color;
     PSMTabBarControl *bar = self.tabBar;
-    const BOOL lastOfManyIsSelected = (self.lastTabIsSelected && !self.firstTabIsSelected);
-    const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
-    if ((horizontal && self.lastTabIsSelected) || (!horizontal && lastOfManyIsSelected)) {
+    PSMTabBarCell *cell = [self selectedCellInTabBarControl:bar];
+    if (cell == nil || cell.isInOverflowMenu) {
+        // Must be one of the overflow tabs
         color = [self selectedTabColor];
     } else {
         color = [self nonSelectedTabColor];
