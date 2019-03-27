@@ -247,7 +247,7 @@
         // create a new floating drag window
         if (!_dragViewWindow) {
             NSImage *viewImage = nil;
-            unsigned int styleMask = NSWindowStyleMaskBorderless;
+            NSWindowStyleMask styleMask = NSWindowStyleMaskBorderless;
 
             if ([control delegate] &&
                 [[control delegate] respondsToSelector:@selector(tabView:imageForTabViewItem:styleMask:)]) {
@@ -267,12 +267,17 @@
                 if ([control orientation] == PSMTabBarHorizontalOrientation) {
                     distanceFromWindowTopLeftToControlTopLeft =
                         NSMakeSize(controlFrameInWindowCoords.origin.x,
-                                   control.window.frame.size.height - NSMaxY(controlFrameInWindowCoords) - control.frame.size.height);
+                                   control.window.frame.size.height - NSMaxY(controlFrameInWindowCoords)/* - control.frame.size.height*/);
                 } else {
                     distanceFromWindowTopLeftToControlTopLeft = NSZeroSize;
                 }
-                _dragWindowOffset = NSMakeSize(draggedCellFrame.origin.x + _dragTabOffset.width + distanceFromWindowTopLeftToControlTopLeft.width,
-                                               draggedCellFrame.origin.y - _dragTabOffset.height + distanceFromWindowTopLeftToControlTopLeft.height);
+                _dragWindowOffset = NSMakeSize(draggedCellFrame.origin.x +  // Position of cell relative to tab bar
+                                               _dragTabOffset.width +
+                                               distanceFromWindowTopLeftToControlTopLeft.width,
+                                               draggedCellFrame.origin.y -
+                                               _dragTabOffset.height +
+                                               distanceFromWindowTopLeftToControlTopLeft.height);
+
                 // _dragWindowOffset.height gives distance from top of window to mouse
                 [viewImage lockFocus];
 
@@ -282,10 +287,18 @@
                                         [viewImage size].height - drawOffset.y);
 
                 if ([control orientation] == PSMTabBarHorizontalOrientation) {
-                    drawPoint.y += self.height - [tabImage size].height;
-                    drawOffset.y -= self.height - [tabImage size].height;
+                    switch (control.tabLocation) {
+                        case PSMTab_TopTab:
+                        case PSMTab_LeftTab:
+                            drawPoint.y = viewImage.size.height - self.draggedCell.frame.size.height;
+                            break;
+                        case PSMTab_BottomTab:
+                            drawPoint.y = 0;
+                            break;
+                    }
                 } else {
                     drawPoint.x += [control frame].size.width - [tabImage size].width;
+                    drawPoint.y -= control.insets.top;
                 }
 
                 [tabImage drawAtPoint:drawPoint
@@ -305,19 +318,20 @@
 
             if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
                 _dragWindowOffset.height += self.height;
-            } else if (!(styleMask & NSWindowStyleMaskTitled)) {
-                _dragWindowOffset.height += 22;
+            } else if (styleMask & NSWindowStyleMaskFullSizeContentView) {
+               _dragWindowOffset.height += self.draggedCell.frame.size.height;
             }
 
             _dragViewWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:[self draggedCell]
                                                                     image:viewImage
-                                                                styleMask:styleMask] retain];
+                                                                styleMask:NSWindowStyleMaskBorderless] retain];
             [_dragViewWindow setAlphaValue:0.0];
         }
 
-        NSPoint windowOrigin = [_dragTabWindow frame].origin;
-        windowOrigin.x -= _dragWindowOffset.width;
-        windowOrigin.y += _dragWindowOffset.height;
+        const NSPoint bottomLeftOfTabWindow = [_dragTabWindow frame].origin;
+        const NSPoint windowOrigin = NSMakePoint(bottomLeftOfTabWindow.x + _dragWindowOffset.width,
+                                                 bottomLeftOfTabWindow.y + _dragWindowOffset.height);
+
         [_dragViewWindow setFrameTopLeftPoint:windowOrigin];
         [_dragViewWindow orderWindow:NSWindowBelow relativeTo:[_dragTabWindow windowNumber]];
 

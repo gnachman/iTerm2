@@ -21,6 +21,7 @@
     if ( (self = [super initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO]) ) {
         _cell = [cell retain];
         _imageView = [[[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
+        self.backgroundColor = [NSColor clearColor];
         [self setContentView:_imageView];
         [self setLevel:NSStatusWindowLevel];
         [self setIgnoresMouseEvents:YES];

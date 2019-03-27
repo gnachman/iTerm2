@@ -182,9 +182,7 @@
     dragRect.size.width++;
 
     if ([cell tabState] & PSMTab_SelectedMask) {
-        if (tabOrientation == PSMTabBarHorizontalOrientation) {
-            dragRect.size.height -= 2.0;
-        } else {
+        if (tabOrientation != PSMTabBarHorizontalOrientation) {
             dragRect.size.height += 1.0;
             dragRect.origin.y -= 1.0;
             dragRect.origin.x += 2.0;

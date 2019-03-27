@@ -2181,32 +2181,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     NSImage* viewImage = [[NSImage alloc] initWithSize:viewSize];
     [viewImage lockFocus];
-    [[NSColor windowBackgroundColor] set];
+    [[NSColor clearColor] set];
     NSRectFill(NSMakeRect(0, 0, viewSize.width, viewSize.height));
     [viewImage unlockFocus];
 
     [self _recursiveDrawSplit:root_ inImage:viewImage atOrigin:NSMakePoint(xOrigin, yOrigin)];
-
-    // Draw over where the tab bar would usually be
-    [viewImage lockFocus];
-    [[NSColor windowBackgroundColor] set];
-    tabFrame.origin.y += yOffset;
-    if (withSpaceForFrame) {
-        NSRectFill(tabFrame);
-
-        // Draw the background flipped, which is actually the right way up
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform scaleXBy:1.0 yBy:-1.0];
-        [transform concat];
-        tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        PSMTabBarControl *control = (PSMTabBarControl *)[[realParentWindow_ tabView] delegate];
-        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
-                                                          color:nil
-                                                     horizontal:horizontal];
-        [transform invert];
-        [transform concat];
-    }
-    [viewImage unlockFocus];
 
     return viewImage;
 }

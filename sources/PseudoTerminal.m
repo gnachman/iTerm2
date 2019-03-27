@@ -5472,27 +5472,6 @@ ITERM_WEAKLY_REFERENCEABLE
                      fraction:1.0];
     [viewImage unlockFocus];
 
-    // Draw over where the tab bar would usually be.
-    [viewImage lockFocus];
-    [[NSColor windowBackgroundColor] set];
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-        tabFrame.origin.y += viewRect.size.height;
-    }
-    NSRectFill(tabFrame);
-    // Draw the background flipped, which is actually the right way up
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform scaleXBy:1.0 yBy:-1.0];
-    [transform concat];
-    tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-    PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
-    [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
-                                                      color:nil
-                                                 horizontal:isHorizontal];
-    [transform invert];
-    [transform concat];
-
-    [viewImage unlockFocus];
-
     return viewImage;
 }
 
@@ -5506,9 +5485,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSImage *)tabView:(NSTabView *)aTabView
-    imageForTabViewItem:(NSTabViewItem *)tabViewItem
-              styleMask:(unsigned int *)styleMask {
-    *styleMask = NSWindowStyleMaskBorderless;
+ imageForTabViewItem:(NSTabViewItem *)tabViewItem
+           styleMask:(NSWindowStyleMask *)styleMask {
+    *styleMask = self.window.styleMask;
 
     NSImage *viewImage;
     if (tabViewItem == [aTabView selectedTabViewItem]) {
