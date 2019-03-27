@@ -198,7 +198,7 @@
     };
 
     _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
-                                                                                    passthrough:nil
+                                                                                    passthrough:self
                                                                                   functionsOnly:NO];
     _customWindowTitle.delegate = _customWindowTitleDelegate;
     [self defineControl:_customWindowTitle
