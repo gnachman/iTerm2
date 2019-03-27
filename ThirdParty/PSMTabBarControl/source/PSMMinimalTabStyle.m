@@ -6,7 +6,7 @@
 //
 
 #import "PSMMinimalTabStyle.h"
-
+#import "PSMOverflowPopUpButton.h"
 
 @implementation NSColor(PSMMinimalTabStyle)
 
@@ -276,7 +276,7 @@
         return;
     }
 
-    [super drawBackgroundInRect:rect color:backgroundColor horizontal:horizontal];
+    [super drawBackgroundInRect:rect color:[self nonSelectedTabColor] horizontal:horizontal];
 
     [self drawStartInset];
     [self drawEndInset];
@@ -373,6 +373,14 @@
                           self.tabBar.frame.size.width - NSMaxX(cell.frame),
                           cell.frame.size.height);
     } else {
+        // Vertical tab bar
+        if (!self.tabBar.overflowPopUpButton.isHidden) {
+            // Popup button visible, so end inset equals its frame
+            return NSMakeRect(0,
+                              NSHeight(self.tabBar.frame) - NSHeight(cell.frame),
+                              NSWidth(cell.frame),
+                              NSHeight(cell.frame));
+        }
         return NSMakeRect(0,
                           NSMaxY(cell.frame),
                           NSWidth(cell.frame),

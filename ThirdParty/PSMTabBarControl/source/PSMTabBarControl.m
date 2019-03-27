@@ -904,7 +904,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPart
                 currentOrigin += cellRect.size.height;
             } else {
                 // Out of room, the remaining tabs go into overflow.
-                if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < 17) {
+                if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < cellRect.size.height) {
                     [newOrigins removeLastObject];
                 }
                 break;
