@@ -598,10 +598,16 @@
 #pragma mark Draw outline around vertical tab bar
 
 - (void)drawOutlineAroundVerticalTabBarWithOneTab:(PSMTabBarControl *)bar {
+    if (!self.treatLeftInsetAsPartOfFirstTab) {
+        [self drawOutlineAboveSelectedTabInVerticalTabBar:bar];
+    }
     [self drawOutlineAroundVerticalTabBarWithFirstTabSelected:bar];
 }
 
 - (void)drawOutlineAroundVerticalTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
+    if (!self.treatLeftInsetAsPartOfFirstTab) {
+        [self drawOutlineAboveSelectedTabInVerticalTabBar:bar];
+    }
     [self drawOutlineUnderSelectedTabInVerticalTabBar:bar];
 }
 
