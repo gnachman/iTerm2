@@ -54,7 +54,7 @@ def RPC(func):
 
     The decorated coroutine will have a `async_register` value that you must call to complete the registration. `async_register` takes one required argument, the :class:`~iterm2.connection.Connection`. It also takes one optional argument, which is a timeout. The `timeout` is a value in seconds. If not given, the default timeout will be used. When waiting for an RPC to return, iTerm2 will stop waiting for the RPC after the timeout elapses.
 
-    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`iterm2.Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `~iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
+    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`iterm2.Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
 
     .. seealso::
         * Example ":ref:`badgetitle_example`"
@@ -103,7 +103,7 @@ def RPC(func):
     return func
 
 def TitleProviderRPC(func):
-    """A decorator (like :func:`~iterm2.registration.RPC`) that registers a session title provider.
+    """A decorator that prepares a function for registration as a session title provider. Similar to :func:`~iterm2.registration.RPC`.
 
     A session title provider is a function that gets called to compute the title of a session. It may be called frequently, whenever the session title is deemed to need recomputation. Once registered, it appears as an option in the list of title settings in preferences.
 
@@ -111,7 +111,7 @@ def TitleProviderRPC(func):
 
     It must return a string.
 
-    Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider. Then it takes a unique identifier, a string, which must be unique among all title providers.
+    Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider. The third is a string identifier, which must be unique among all title providers. The identifier should be a reverse DNS name, like `com.example.my-title-provider`. As long as the identifier remains the same from one version to the next, the display name and function signature may change.
 
     .. seealso:: Example ":ref:`georges_title_example`"
 
