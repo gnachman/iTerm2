@@ -63,7 +63,7 @@ a default value of an argument of your RPC changes.
 
 If some variable might not be defined, you should put a `?` after its name to signify that a
 value of `None` is allowed. Variables are detailed in
-`Badges <https://www.iterm2.com/documentation-badges.html>`_.
+`Scripting Fundamentals <https://www.iterm2.com/documentation-scripting-fundamentals.html>`_.
 
 Force Reevaluation
 ------------------
@@ -115,12 +115,66 @@ If you want to change the title in response to some external action, such as a t
 Installation
 ------------
 
-As this script is a long-running daemon, you'll want to put it in
+Since a title provider is a long-running daemon, you'll want to put it in
 `~/Library/Application Support/iTerm2/Scripts/AutoLaunch` folder.
 
 Next, you need to configure your session's profile to use the hook. Once it's been registered properly it will appear as an option in **Preferences > Profiles > General > Title**. Select it there:
 
 .. image:: choose_custom_session_title.png
+
+Custom Status Bar Component
+---------------------------
+
+A custom status bar component is another kind of hook. Like a title provider, it
+lives in a long-running daemon. It registers an RPC that provides the text to
+display in the status bar component. It may also register a second RPC to handle
+clicks in the status bar component.
+
+Here's a simple status bar component that shows whether mouse reporting is on:
+
+.. code-block:: python
+
+    import asyncio
+    import iterm2
+
+    async def main(connection):
+        component = iterm2.StatusBarComponent(
+            short_description="Mouse Mode",
+            detailed_description="Indicates if mouse reporting is enabled",
+            knobs=[],
+            exemplar="[mouse on]",
+            update_cadence=None,
+            identifier="com.iterm2.example.mouse-mode")
+
+        # This function gets called when the mouseReportingMode variable
+        # changes.
+        @iterm2.StatusBarRPC
+        async def coro(
+                knobs,
+                reporting=iterm2.Reference("mouseReportingMode")):
+            if reporting < 0:
+                return " "
+            else:
+                return "🐭"
+
+        # Register the component.
+        await component.async_register(connection, coro)
+
+    iterm2.run_forever(main)
+
+When this script is running, a new status bar component becomes available in
+*Prefs > Profiles > Session > Configure Status Bar*.
+
+Like a title provider, the registered function will be called when its
+references change. The string it returns will go in the status bar.
+
+Status bar components can also be invoked periodically, by passing a number of
+seconds to the `update_cadence` argument of `StatusBarComponent`'s initializer.
+
+Status bar components can also define configuration settings, called knobs.
+
+For more information, see :class:`iterm2.StatusBarComponent`. There are also a
+number of status bar components in the :doc:`/examples/index`.
 
 Troubleshooting
 ---------------

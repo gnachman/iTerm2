@@ -103,7 +103,7 @@ class StatusBarComponent:
     """Describes a script-provided status bar component showing a text value provided by a user-provided coroutine.
 
     :param short_description: Short description shown below the component in the picker UI.
-    :param detailed_description: Tool tip for th component in the picker UI.
+    :param detailed_description: Tool tip for the component in the picker UI.
     :param knobs: List of configuration knobs. See the various Knob classes for details.
     :param exemplar: Example value to show in the picker UI as the sample content of the component.
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
@@ -113,6 +113,7 @@ class StatusBarComponent:
         * Example ":ref:`escindicator_example`"
         * Example ":ref:`jsonpretty_example`"
         * Example ":ref:`mousemode_example`"
+        * Example ":ref:`statusbar_example`"
     """
     def __init__(self,
             short_description: str,

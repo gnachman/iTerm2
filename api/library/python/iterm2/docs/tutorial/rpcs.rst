@@ -32,7 +32,7 @@ This script shows a working example:
 A lot of this should look familiar from the :doc:`daemons` example. Let's focus
 on the parts we haven't seen before.
 
-This call registers the RPC:
+This call defines the RPC:
 
 .. code-block:: python
 
@@ -42,6 +42,8 @@ This call registers the RPC:
 This function definition is modified by the `@iterm2.RPC` decorator. It adds a
 `register` value to the function which is a coroutine that registers the
 function as an RPC. Here's how you call it:
+
+.. code-block:: python
 
         await clear_all_sessions.async_register(connection)
 
@@ -77,6 +79,10 @@ The function invocation will not be made if the variable is undefined.
 If you'd prefer a value of `None` instead in such a case, use a question mark
 to indicate an optional value, like this: `Reference("id?")`.
 
+The "id" is a variable that exists in the session's scope. To learn more about
+how variables work and which variables are defined, see
+`Scripting Fundamentals <https://www.iterm2.com/documentation-scripting-fundamentals.html>`_
+
 Invocation
 ----------
 
@@ -95,9 +101,10 @@ You can also bind a trigger to invoke a function automatically:
 REPL
 ----
 
-To test RPCs in the REPL, you need to give the iterm2 library a chance to read
-the request from the connection to iTerm2. The simplest way is to tell it to
-watch for requests for a set period of time, like this:
+You can test RPCs defined in the REPL. First, define them as usual. When the
+RPC gets invoked, the REPL must allow the event loop to run so it can handle
+the request from iTerm2. The simplest way is to tell it to watch for requests
+for a set period of time, like this:
 
 .. code-block:: python
 
@@ -105,7 +112,7 @@ watch for requests for a set period of time, like this:
 
 The argument of `1` is how long to wait in seconds. Requests to execute
 registered functions wait in a queue until they can be handled. That means you
-can press a key in iTerm2 to call the RPC and then do
+can press a key in iTerm2 to invoke the RPC and then do
 `async_dispatch_for_duration(0.1)` and it will be handled immediately.
 
 Arguments
@@ -122,7 +129,7 @@ Here's what a function invocation might look like:
 
 .. code-block:: python
 
-    function_name(session: id, favorite_number: 123, nickname: "Joe")
+    my_function_name(session: id, favorite_number: 123, nickname: "Joe")
 
 The name of the function and the name of each argument is an *Identifier*.
 Identifiers begin with a letter and may contain letters, numbers, and
@@ -130,7 +137,8 @@ underscore. Every character must be ASCII.
 
 Each argument must have a distinct name.
 
-The value passed to an argument can take one of four types:
+The value passed to an argument must be an expression. The most common types of
+expressions are:
 
 1. A *variable reference*, like `id`.
 
@@ -140,7 +148,7 @@ takes a string value that uniquely identifies a session. Others, beginning with
 `user.` may be defined by the user.
 
 For a full list of the iTerm2-defined variables, see
-`Badges <https://www.iterm2.com/documentation-badges.html>`_.
+`Variables <https://www.iterm2.com/documentation-variables.html>`_.
 
 To set a user-defined variable, you can use a control sequence or call
 :meth:`iterm2.Session.async_set_variable`. Variables can take any type JSON can
@@ -161,11 +169,17 @@ can use scientific notation.
 
 3. A string, like `"Joe"`.
 
-Strings are escaped like JSON, using backslash.
+Strings are escaped like JSON, using backslash. Strings may contain embedded
+expressions. For more information on this, see the *Interpolated Strings*
+section of
+`Scripting Fundamentals <https://www.iterm2.com/documentation-scripting-fundamentals.html>`_.
 
 4. The result of a function call.
 
 For more details, see Composition_.
+
+`Scripting Fundamentals <https://www.iterm2.com/documentation-scripting-fundamentals.html>`_
+goes in to more detail on expressions.
 
 Timeouts
 --------
