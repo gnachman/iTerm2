@@ -191,10 +191,15 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 }
 
 - (void)awakeFromNib {
-    NSString *url1 = @"iterm2whatsnew:/minimal-compact";
-    NSMutableAttributedString *attributedString = _textField1.attributedStringValue.mutableCopy;
-    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url1 title:@"Try it now!"]];
-    _textField1.attributedStringValue = attributedString;
+    NSMutableAttributedString *attributedString;
+    if (@available(macOS 10.14, *)) {
+        NSString *url1 = @"iterm2whatsnew:/minimal-compact";
+        NSMutableAttributedString *attributedString = _textField1.attributedStringValue.mutableCopy;
+        [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url1 title:@"Try it now!"]];
+        _textField1.attributedStringValue = attributedString;
+    } else {
+        _textField1.stringValue = [_textField1.stringValue stringByAppendingString:@"Available on macOS 10.14."];
+    }
 
     NSString *url2 = @"iterm2whatsnew:/statusbar";
     attributedString = _textField2.attributedStringValue.mutableCopy;
