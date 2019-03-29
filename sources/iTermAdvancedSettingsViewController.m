@@ -9,6 +9,7 @@
 #import "iTermAdvancedSettingsViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -124,6 +125,7 @@ static NSDictionary *gIntrospection;
     IBOutlet NSTableView *_tableView;
 
     NSArray *_filteredAdvancedSettings;
+    NSArray<iTermPreferencesSearchDocument *> *_docs;
 }
 
 + (NSDictionary *)settingsDictionary {
@@ -601,6 +603,44 @@ static NSDictionary *gIntrospection;
     if (rowView) {
         textField.backgroundStyle = [rowView interiorBackgroundStyle];
     }
+}
+
+#pragma mark - iTermSearchableViewController
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    if (!_docs) {
+        _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
+            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:dict[kAdvancedSettingDescription]
+                                                                                               identifier:dict[kAdvancedSettingIdentifier]
+                                                                                           keywordPhrases:@[]];
+            doc.owner = self;
+            return doc;
+        }];
+    }
+    return _docs;
+}
+
+- (NSInteger)indexOfIdentifier:(NSString *)identifier {
+    return [self.filteredAdvancedSettings indexOfObjectPassingTest:^BOOL(NSDictionary * _Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return NO;
+        }
+        return [dict[kAdvancedSettingIdentifier] isEqualToString:identifier];
+    }];
+}
+
+- (void)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document {
+    NSUInteger index = [self indexOfIdentifier:document.identifier];
+    if (index == NSNotFound) {
+        _filteredAdvancedSettings = nil;
+        [_tableView reloadData];
+        index = [self indexOfIdentifier:document.identifier];
+        if (index == NSNotFound) {
+            return;
+        }
+    }
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    [_tableView scrollRowToVisible:index];
 }
 
 @end

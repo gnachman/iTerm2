@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermPreferences.h"
+#import "iTermSearchableViewController.h"
 #import "PreferenceInfo.h"
 
 // Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
@@ -17,7 +18,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
-@interface iTermPreferencesBaseViewController : NSViewController<NSTabViewDelegate>
+@interface iTermPreferencesBaseViewController : NSViewController<iTermSearchableViewController, NSTabViewDelegate>
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;

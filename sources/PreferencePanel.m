@@ -80,10 +80,14 @@
 #import "iTermKeyMappingViewController.h"
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
+#import "iTermPreferencesSearch.h"
 #import "iTermRemotePreferences.h"
+#import "iTermPreferencesSearchEngineResultsWindowController.h"
+#import "iTermSearchableViewController.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
@@ -167,9 +171,15 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (void)setFrameFromString:(NSWindowPersistableFrameDescriptor)string {
 }
 
+// Animated window changes call this a lot of times fast. Dumber than iOS, but occasionally comprehensible!
+- (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
+    [super setFrame:frameRect display:flag];
+    [self.prefsPanelDelegate prefsPanelDidChangeFrameTo:frameRect];
+}
+
 @end
 
-@interface PreferencePanel() <NSTabViewDelegate>
+@interface PreferencePanel() <iTermPrefsPanelDelegate, iTermPreferencesSearchEngineResultsWindowControllerDelegate, NSSearchFieldDelegate, NSTabViewDelegate>
 
 @end
 
@@ -201,13 +211,17 @@ static PreferencePanel *gSessionsPreferencePanel;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
     IBOutlet NSToolbarItem *_flexibleSpaceToolbarItem;
     NSToolbarItem *_searchFieldToolbarItem;
-
+    NSDictionary<NSString *, NSString *> *_keywords;
+    NSDictionary<NSString *, id<iTermSearchableViewController>> *_keywordToViewController;
     // This class is not well named. It is a view controller for the window
     // arrangements tab. It's also a singleton :(
     IBOutlet WindowArrangements *arrangements_;
     NSSize _standardSize;
     NSInteger _disableResize;
     BOOL _tmux;
+
+    iTermPreferencesSearchEngine *_searchEngine;
+    iTermPreferencesSearchEngineResultsWindowController *_serpWindowController;
 }
 
 + (instancetype)sharedInstance {
@@ -273,6 +287,9 @@ static PreferencePanel *gSessionsPreferencePanel;
     } else {
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
     }
+
+    iTermPrefsPanel *panel = (iTermPrefsPanel *)self.window;
+    panel.prefsPanelDelegate = self;
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -427,6 +444,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                         object:self];
 }
 
+- (void)updateSERPOrigin {
+    NSPoint point = [self.window convertPointToScreen:[_searchFieldToolbarItem.view convertPoint:NSMakePoint(0, NSHeight(_searchFieldToolbarItem.view.bounds))
+                                                                                          toView:nil]];
+    point.y -= 1;
+    [_serpWindowController.window setFrameTopLeftPoint:point];
+}
+
 #pragma mark - Handle calls to current first responder
 
 // Shell>Close
@@ -503,6 +527,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     _searchFieldToolbarItem = [[NSToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
 
     NSSearchField *searchField = [[NSSearchField alloc] init];
+    searchField.delegate = self;
     [searchField sizeToFit];
 
 //    [_searchFieldToolbarItem setLabel:@"Search"];
@@ -570,6 +595,31 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 #pragma mark - NSTabViewDelegate
 
+- (NSTabViewItem *)tabViewItemForViewController:(id)viewController {
+    if (viewController == _generalPreferencesViewController) {
+        return _globalTabViewItem;
+    }
+    if (viewController == _appearancePreferencesViewController) {
+        return _appearanceTabViewItem;
+    }
+    if (viewController == _keysViewController) {
+        return _keyboardTabViewItem;
+    }
+    if (viewController == arrangements_) {
+        return _arrangementsTabViewItem;
+    }
+    if (viewController == _profilesViewController) {
+        return _bookmarksTabViewItem;
+    }
+    if (viewController == _pointerViewController) {
+        return _mouseTabViewItem;
+    }
+    if (viewController == _advancedViewController) {
+        return _advancedTabViewItem;
+    }
+    return nil;
+}
+
 - (iTermPreferencesBaseViewController *)viewControllerForTabViewItem:(NSTabViewItem *)tabViewItem {
     if (tabViewItem == _globalTabViewItem) {
         return _generalPreferencesViewController;
@@ -631,5 +681,98 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [[self window] setFrame:rect display:YES animate:animated];
 }
 
-@end
+#pragma mark - NSSearchFieldDelegate
 
+- (void)controlTextDidChange:(NSNotification *)obj {
+    _serpWindowController.documents = [self searchResults];
+}
+
+- (NSArray<id<iTermSearchableViewController>> *)searchableViewControllers {
+    return @[_generalPreferencesViewController,
+             _appearancePreferencesViewController,
+             _keysViewController,
+             _profilesViewController,
+             _pointerViewController,
+             _advancedViewController];
+}
+
+- (void)buildSearchEngineIfNeeded {
+    if (_searchEngine) {
+        return;
+    }
+    _searchEngine = [[iTermPreferencesSearchEngine alloc] init];
+
+    for (id<iTermSearchableViewController> viewController in self.searchableViewControllers) {
+        for (iTermPreferencesSearchDocument *doc in [viewController searchableViewControllerDocuments]) {
+            [_searchEngine addDocumentToIndex:doc];
+        }
+    }
+}
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchResults {
+    [self buildSearchEngineIfNeeded];
+    NSSearchField *searchField = (NSSearchField *)_searchFieldToolbarItem.view;
+    return [_searchEngine documentsMatchingQuery:searchField.stringValue];
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    [_serpWindowController close];
+    _serpWindowController = nil;
+}
+
+- (void)controlTextDidBeginEditing:(NSNotification *)obj {
+    [_serpWindowController close];
+    _serpWindowController = [[iTermPreferencesSearchEngineResultsWindowController alloc] initWithWindowNibName:@"iTermPreferencesSearchEngineResultsWindowController"];
+    _serpWindowController.delegate = self;
+    [self updateSERPOrigin];
+    [self.window addChildWindow:_serpWindowController.window
+                        ordered:NSWindowAbove];
+    _serpWindowController.documents = [self searchResults];
+}
+
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
+    if (commandSelector == @selector(moveDown:)) {
+        [_serpWindowController moveDown:nil];
+        return YES;
+    } else if (commandSelector == @selector(moveUp:)) {
+        [_serpWindowController moveUp:nil];
+        return YES;
+    }
+    return NO;
+}
+
+#pragma mark - iTermPrefsPanelDelegate
+
+- (void)prefsPanelDidChangeFrameTo:(NSRect)newFrame {
+    [self updateSERPOrigin];
+}
+
+#pragma mark - iTermPreferencesSearchEngineResultsWindowControllerDelegate
+
+- (void)selectTabForViewController:(id<iTermSearchableViewController>)viewController {
+    NSTabViewItem *tabViewItem = [self tabViewItemForViewController:viewController];
+    if (!tabViewItem) {
+        return;
+    }
+    [_tabView selectTabViewItem:tabViewItem];
+}
+
+- (void)preferencesSearchEngineResultsDidSelectDocument:(iTermPreferencesSearchDocument *)document {
+    id<iTermSearchableViewController> viewController = document.owner;
+    if (!viewController) {
+        return;
+    }
+    [self selectTabForViewController:viewController];
+    [viewController searchableViewControllerRevealItemForDocument:document];
+}
+
+- (void)preferencesSearchEngineResultsDidActivateDocument:(iTermPreferencesSearchDocument *)document {
+    id<iTermSearchableViewController> viewController = document.owner;
+    if (!viewController) {
+        return;
+    }
+    [self selectTabForViewController:viewController];
+    [viewController searchableViewControllerRevealItemForDocument:document];
+}
+
+@end

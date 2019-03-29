@@ -13,6 +13,7 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 
 #import <ColorPicker/ColorPicker.h>
@@ -35,11 +36,11 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 @end
 
 @implementation iTermPreferencesBaseViewController {
-    // Maps NSControl* -> PreferenceInfo*.
-    NSMapTable *_keyMap;
+    NSMapTable<NSControl *, PreferenceInfo *> *_keyMap;
     // Set of all defined keys (KEY_XXX).
     NSMutableSet *_keys;
 
+    NSMutableArray<iTermPreferencesSearchDocument *> *_docs;
     NSRect _desiredFrame;
 }
 
@@ -50,6 +51,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                             valueOptions:NSPointerFunctionsStrongMemory
                                                 capacity:16];
         _keys = [[NSMutableSet alloc] init];
+        _docs = [NSMutableArray array];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(preferenceDidChangeFromOtherPanel:)
                                                      name:kPreferenceDidChangeFromOtherPanel
@@ -291,6 +293,13 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     info.onUpdate = update;
     [_keyMap setObject:info forKey:control];
     [_keys addObject:key];
+
+    iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:key
+                                                                                       identifier:key
+                                                                                   keywordPhrases:@[ key ]];
+    doc.owner = self;
+    [_docs addObject:doc];
+    info.searchDocument = doc;
     [self updateValueForInfo:info];
 
     return info;
@@ -668,6 +677,34 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     assert(self.tabView);
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+}
+
+#pragma mark - iTermSearchableViewController
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    return _docs;
+}
+
+- (void)revealControl:(NSControl *)control {
+    // Is there an inner tab container view?
+    for (NSTabViewItem *item in self.tabView.tabViewItems) {
+        NSView *view = item.view;
+        if ([view containsDescendant:control]) {
+            [self.tabView selectTabViewItem:item];
+            return;
+        }
+    }
+}
+
+- (void)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document {
+    NSString *key = document.identifier;
+    for (NSControl *control in _keyMap) {
+        PreferenceInfo *info = [_keyMap objectForKey:control];
+        if ([key isEqualToString:info.key]) {
+            [self revealControl:control];
+            return;
+        }
+    }
 }
 
 @end

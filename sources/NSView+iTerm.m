@@ -134,4 +134,13 @@
     return result;
 }
 
+- (BOOL)containsDescendant:(NSView *)possibleDescendant {
+    for (NSView *subview in self.subviews) {
+        if (subview == possibleDescendant || [subview containsDescendant:possibleDescendant]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 @end

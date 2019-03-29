@@ -62,7 +62,12 @@ extern CGFloat iTermSharedPreferencePanelWindowMinimumWidth;
 
 void LoadPrefsFromCustomFolder(void);
 
+@protocol iTermPrefsPanelDelegate<NSObject>
+- (void)prefsPanelDidChangeFrameTo:(NSRect)newFrame;
+@end
+
 @interface iTermPrefsPanel : NSPanel
+@property (nonatomic, weak) id<iTermPrefsPanelDelegate> prefsPanelDelegate;
 @end
 
 @interface PreferencePanel : NSWindowController <
