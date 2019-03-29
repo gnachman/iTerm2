@@ -9,6 +9,7 @@
 #import "iTermAdvancedSettingsViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -124,6 +125,7 @@ static NSDictionary *gIntrospection;
     IBOutlet NSTableView *_tableView;
 
     NSArray *_filteredAdvancedSettings;
+    NSArray<iTermPreferencesSearchDocument *> *_docs;
 }
 
 + (NSDictionary *)settingsDictionary {
@@ -601,6 +603,73 @@ static NSDictionary *gIntrospection;
     if (rowView) {
         textField.backgroundStyle = [rowView interiorBackgroundStyle];
     }
+}
+
+#pragma mark - iTermSearchableViewController
+
+- (NSString *)documentOwnerIdentifier {
+    return NSStringFromClass(self.class);
+}
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    if (!_docs) {
+        NSArray *phrases = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
+            return dict[kAdvancedSettingDescription];
+        }];
+        _docs = @[  [iTermPreferencesSearchDocument documentWithDisplayName:@"Advanced Preferences…"
+                                                                 identifier:@"Advanced Preferences"
+                                                             keywordPhrases:phrases]];
+        _docs[0].ownerIdentifier = self.documentOwnerIdentifier;
+    }
+    return _docs;
+}
+
+// To expose all advanced prefs to global search, use this to create the documents returned by
+// searchableViewControllerDocuments
+- (NSArray<iTermPreferencesSearchDocument *> *)allDocuments {
+    if (!_docs) {
+        _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
+            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:dict[kAdvancedSettingDescription]
+                                                                                               identifier:dict[kAdvancedSettingIdentifier]
+                                                                                           keywordPhrases:@[]];
+            doc.ownerIdentifier = self.documentOwnerIdentifier;
+            return doc;
+        }];
+    }
+    return _docs;
+}
+
+- (NSInteger)indexOfIdentifier:(NSString *)identifier {
+    return [self.filteredAdvancedSettings indexOfObjectPassingTest:^BOOL(NSDictionary * _Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return NO;
+        }
+        return [dict[kAdvancedSettingIdentifier] isEqualToString:identifier];
+    }];
+}
+
+- (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document
+                                                 forQuery:(NSString *)query
+                                            willChangeTab:(BOOL *)willChangeTab {
+    *willChangeTab = NO;
+    NSUInteger index = [self indexOfIdentifier:document.identifier];
+    if (index == NSNotFound) {
+        // Remove the existing search query and try again
+        _filteredAdvancedSettings = nil;
+        [_tableView reloadData];
+        index = [self indexOfIdentifier:document.identifier];
+        
+        if (index == NSNotFound) {
+            // Pull the query from the prefs search engine and try again
+            _searchField.stringValue = query;
+            _filteredAdvancedSettings = nil;
+            [_tableView reloadData];
+            return _tableView.enclosingScrollView;
+        }
+    }
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    [_tableView scrollRowToVisible:index];
+    return [_tableView viewAtColumn:0 row:index makeIfNecessary:YES];
 }
 
 @end

@@ -14,7 +14,9 @@
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
-    _originalSize = frame.size;
+    if (self) {
+        _originalSize = frame.size;
+    }
     return self;
 }
 

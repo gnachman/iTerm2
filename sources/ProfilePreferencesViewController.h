@@ -63,4 +63,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
 - (void)invalidateSavedSize;
 
+- (BOOL)hasViewController:(NSViewController *)viewController;
+- (id<iTermSearchableViewController>)viewControllerWithOwnerIdentifier:(NSString *)ownerIdentifier;
+
 @end

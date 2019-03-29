@@ -28,6 +28,7 @@
 
 @implementation ProfilesWindowPreferencesViewController {
     IBOutlet NSSlider *_transparency;
+    IBOutlet NSTextField *_transparencyLabel;
     IBOutlet NSButton *_useBlur;
     IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
@@ -35,6 +36,7 @@
     IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageMode;
     IBOutlet NSSlider *_blendAmount;
+    IBOutlet NSTextField *_blendAmountLabel;
     IBOutlet NSTextField *_columnsField;
     IBOutlet NSTextField *_rowsField;
     IBOutlet NSButton *_hideAfterOpening;
@@ -74,6 +76,7 @@
     PreferenceInfo *info;
     info = [self defineControl:_transparency
                            key:KEY_TRANSPARENCY
+                   relatedView:_transparencyLabel
                           type:kPreferenceInfoTypeSlider];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -88,10 +91,12 @@
 
     [self defineControl:_initialUseTransparency
                     key:KEY_INITIAL_USE_TRANSPARENCY
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBlur
                            key:KEY_BLUR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -103,10 +108,12 @@
 
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
+            displayName:@"Blur radius"
                    type:kPreferenceInfoTypeSlider];
 
     info = [self defineControl:_backgroundImageMode
                            key:KEY_BACKGROUND_IMAGE_MODE
+                   displayName:@"Background image scaling mode"
                           type:kPreferenceInfoTypePopup];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -139,34 +146,41 @@
 
     [self defineControl:_blendAmount
                     key:KEY_BLEND
+            displayName:@"Background image blending"
                    type:kPreferenceInfoTypeSlider];
 
     info = [self defineControl:_columnsField
                            key:KEY_COLUMNS
+                   displayName:@"Window width in columns"
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
 
     info = [self defineControl:_rowsField
                            key:KEY_ROWS
+                   displayName:@"Window height in rows"
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
 
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_windowStyle
                     key:KEY_WINDOW_TYPE
+            displayName:@"Window style for new windows"
                    type:kPreferenceInfoTypePopup];
 
     [self defineControl:_screen
                     key:KEY_SCREEN
+            displayName:@"Initial screen for new windows"
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self screenDidChange]; }
                  update:^BOOL{ [weakSelf updateScreen]; return YES; }];
 
     info = [self defineControl:_space
                            key:KEY_SPACE
+                   displayName:@"Initial desktop/space for new windows"
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -180,29 +194,38 @@
 
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_transparencyAffectsOnlyDefaultBackgroundColor
                     key:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useCustomWindowTitle
                            key:KEY_USE_CUSTOM_WINDOW_TITLE
+                   displayName:@"Enable custom window title for new windows"
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^{
         [weakSelf updateCustomWindowTitleEnabled];
     };
-
+    
+    [self addViewToSearchIndex:_useBackgroundImage
+                   displayName:@"Background image enabled"
+                       phrases:@[]
+                           key:nil];
     _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                                     passthrough:self
                                                                                   functionsOnly:NO];
     _customWindowTitle.delegate = _customWindowTitleDelegate;
     [self defineControl:_customWindowTitle
                     key:KEY_CUSTOM_WINDOW_TITLE
+            displayName:@"Custom window title for new windows"
                    type:kPreferenceInfoTypeStringTextField];
     [self updateCustomWindowTitleEnabled];
 }

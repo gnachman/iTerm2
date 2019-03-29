@@ -28,6 +28,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 @implementation ProfilesKeysPreferencesViewController {
     IBOutlet NSMatrix *_optionKeySends;
     IBOutlet NSMatrix *_rightOptionKeySends;
+    IBOutlet NSTextField *_optionKeySendsLabel;
+    IBOutlet NSTextField *_rightOptionKeySendsLabel;
     IBOutlet NSButton *_deleteSendsCtrlHButton;
     IBOutlet NSButton *_applicationKeypadAllowed;
     IBOutlet NSButton *_hasHotkey;
@@ -50,6 +52,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     __weak __typeof(self) weakSelf = self;
     [self defineControl:_optionKeySends
                     key:KEY_OPTION_KEY_SENDS
+            relatedView:_optionKeySendsLabel
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{
@@ -64,6 +67,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
     [self defineControl:_rightOptionKeySends
                     key:KEY_RIGHT_OPTION_KEY_SENDS
+            relatedView:_rightOptionKeySendsLabel
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
                  update:^BOOL{
@@ -78,10 +82,12 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
     [self defineControl:_applicationKeypadAllowed
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     PreferenceInfo *info = [self defineControl:_useLibTickit
                                            key:KEY_USE_LIBTICKIT_PROTOCOL
+                                   relatedView:nil
                                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^{
         [weakSelf didToggleLibtickit];
@@ -89,6 +95,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
     info = [self defineControl:_hasHotkey
                            key:KEY_HAS_HOTKEY
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         if ([[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS] length]) {
@@ -103,6 +110,16 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
             strongSelf->_configureHotKey.enabled = strongSelf->_hasHotkey.state == NSOnState;
         }
     };
+
+    [self addViewToSearchIndex:_configureHotKey
+                   displayName:@"Configure hotkey window"
+                       phrases:@[]
+                           key:nil];
+
+    [self addViewToSearchIndex:_keyMappingViewController.view
+                   displayName:@"Profile key bindings"
+                       phrases:@[ @"mapping", @"shortcuts", @"touch bar", @"preset", @"xterm", @"natural", @"terminal.app compatibility", @"numeric keypad" ]
+                           key:nil];
 
     [self updateDeleteSendsCtrlH];
     [_keyMappingViewController hideAddTouchBarItem];

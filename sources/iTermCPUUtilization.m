@@ -73,6 +73,9 @@ typedef struct {
     _last = current;
 
     double value = [self utilizationInDelta:delta];
+    if (value != value) {
+        return;
+    }
     [_publisher publish:@(value)];
 }
 

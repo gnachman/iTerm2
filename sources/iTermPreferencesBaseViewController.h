@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermPreferences.h"
+#import "iTermSearchableViewController.h"
 #import "PreferenceInfo.h"
 
 // Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
@@ -17,7 +18,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
-@interface iTermPreferencesBaseViewController : NSViewController<NSTabViewDelegate>
+@interface iTermPreferencesBaseViewController : NSViewController<iTermSearchableViewController, NSTabViewDelegate>
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;
@@ -29,15 +30,47 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // Bind a preference control to a key defined in iTermPreferences.
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type;
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
+                             type:(PreferenceInfoType)type;
+
+- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control
+                                          key:(NSString *)key
+                                         type:(PreferenceInfoType)type;
 
 // Define a control with a custom settingChanged and update handler. If they're both not null then
 // the default value is not type checked.
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update;
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update;
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                      displayName:(NSString *)forceDisplayName
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update
+                       searchable:(BOOL)searchable;
+
+- (void)addViewToSearchIndex:(NSView *)control
+                 displayName:(NSString *)displayName
+                     phrases:(NSArray<NSString *> *)phrases
+                         key:(NSString *)key;
 
 #pragma mark - IBActions
 

@@ -118,15 +118,59 @@
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type {
+    assert(self.delegate);
+    return [super defineControl:control key:key relatedView:relatedView type:type];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
+                             type:(PreferenceInfoType)type {
+    assert(self.delegate);
+    return [super defineControl:control key:key displayName:displayName type:type];
+}
+
+- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control
+                                          key:(NSString *)key
+                                         type:(PreferenceInfoType)type {
+    assert(self.delegate);
+    return [super defineUnsearchableControl:control key:key type:type];
+}
+
+// Define a control with a custom settingChanged and update handler. If they're both not null then
+// the default value is not type checked.
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update {
     assert(self.delegate);
-    return [super defineControl:control
-                            key:key
-                           type:type
-                 settingChanged:settingChanged
-                         update:update];
+    return [super defineControl:control key:key relatedView:relatedView type:type settingChanged:settingChanged update:update];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update {
+    assert(self.delegate);
+    return [super defineControl:control key:key displayName:displayName type:type settingChanged:settingChanged update:update];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                      displayName:(NSString *)forceDisplayName
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update
+                       searchable:(BOOL)searchable {
+    assert(self.delegate);
+    return [super defineControl:control key:key relatedView:relatedView displayName:forceDisplayName type:type settingChanged:settingChanged update:update searchable:searchable];
 }
 
 - (BOOL)shouldUpdateOtherPanels {
@@ -149,6 +193,48 @@
         PreferenceInfo *info = [self infoForControl:control];
         [self updateValueForInfo:info];
     }
+}
+
+- (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document
+                                                 forQuery:(NSString *)query
+                                            willChangeTab:(BOOL *)willChangeTab {
+    const BOOL didChange = [self.delegate profilePreferencesRevealViewController:self];
+    NSView *view = [super searchableViewControllerRevealItemForDocument:document
+                                                               forQuery:query
+                                                          willChangeTab:willChangeTab];
+
+    [self scrollViewToVisible:view];
+
+    *willChangeTab = didChange;
+    return view;
+}
+
+- (void)scrollViewToVisible:(NSView *)view {
+    if (!view.enclosingScrollView) {
+        return;
+    }
+
+    // Find the outermost scroll view
+    NSView *temp = view;
+    NSScrollView *outermostScrollview = nil;
+    while (temp.enclosingScrollView) {
+        outermostScrollview = temp.enclosingScrollView;
+        temp = outermostScrollview;
+    }
+
+    // Decide whether we're scrolling view or its enclosing scrollview to visible. This happens when
+    // view is a tableview.
+    NSView *viewToScroll;
+    if (view.enclosingScrollView == outermostScrollview) {
+        viewToScroll = view;
+    } else {
+        viewToScroll = view.enclosingScrollView;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [viewToScroll scrollRectToVisible:viewToScroll.bounds];
+    });
+
 }
 
 @end

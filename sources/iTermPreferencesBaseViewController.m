@@ -13,6 +13,7 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 
 #import <ColorPicker/ColorPicker.h>
@@ -35,12 +36,14 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 @end
 
 @implementation iTermPreferencesBaseViewController {
-    // Maps NSControl* -> PreferenceInfo*.
-    NSMapTable *_keyMap;
+    NSMapTable<NSControl *, PreferenceInfo *> *_keyMap;
     // Set of all defined keys (KEY_XXX).
     NSMutableSet *_keys;
 
+    NSMutableArray<iTermPreferencesSearchDocument *> *_docs;
     NSRect _desiredFrame;
+
+    NSPointerArray *_otherSearchableViews;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -50,6 +53,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                             valueOptions:NSPointerFunctionsStrongMemory
                                                 capacity:16];
         _keys = [[NSMutableSet alloc] init];
+        _docs = [NSMutableArray array];
+        _otherSearchableViews = [NSPointerArray weakObjectsPointerArray];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(preferenceDidChangeFromOtherPanel:)
                                                      name:kPreferenceDidChangeFromOtherPanel
@@ -262,20 +267,105 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      displayName:(NSString *)displayName
                              type:(PreferenceInfoType)type {
     return [self defineControl:control
                            key:key
+                   relatedView:nil
+                   displayName:displayName
                           type:type
                 settingChanged:NULL
-                        update:NULL];
+                        update:NULL
+                    searchable:YES];
 }
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type {
+    return [self defineControl:control
+                           key:key
+                   relatedView:relatedView
+                   displayName:nil
+                          type:type
+                settingChanged:NULL
+                        update:NULL
+                    searchable:YES];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update {
-    assert(![_keyMap objectForKey:key]);
+    return [self defineControl:control
+                           key:key
+                   relatedView:nil
+                   displayName:displayName
+                          type:type
+                settingChanged:settingChanged
+                        update:update
+                    searchable:YES];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update {
+    return [self defineControl:control
+                           key:key
+                   relatedView:relatedView
+                   displayName:nil
+                          type:type
+                settingChanged:settingChanged
+                        update:update
+                    searchable:YES];
+}
+
+- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type {
+    return [self defineControl:control
+                           key:key
+                   relatedView:nil
+                   displayName:nil
+                          type:type
+                settingChanged:nil
+                        update:nil
+                    searchable:NO];
+}
+
+- (void)addViewToSearchIndex:(NSView *)view
+                 displayName:(NSString *)displayName
+                     phrases:(NSArray<NSString *> *)phrases
+                         key:(NSString *)key {
+    NSString *nonnilKey = key ?: [[NSUUID UUID] UUIDString];
+    if (displayName) {
+        iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:displayName
+                                                                                           identifier:nonnilKey
+                                                                                       keywordPhrases:phrases];
+        doc.ownerIdentifier = self.documentOwnerIdentifier;
+        [_docs addObject:doc];
+    } else {
+        NSLog(@"Warning: no display name for %@", key);
+    }
+    if (!key) {
+        assert(!view.accessibilityIdentifier);
+        view.accessibilityIdentifier = nonnilKey;
+        [_otherSearchableViews addPointer:(__bridge void *)view];
+    }
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                      displayName:(NSString *)forceDisplayName
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update
+                       searchable:(BOOL)searchable {
+    assert(![_keyMap objectForKey:(id)key]);
     assert(key);
     assert(control);
     assert([self keyHasDefaultValue:key]);
@@ -291,9 +381,119 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     info.onUpdate = update;
     [_keyMap setObject:info forKey:control];
     [_keys addObject:key];
+
+    if (searchable) {
+        NSMutableArray<NSString *> *phrases = [NSMutableArray array];
+        NSString *inferredDisplayName = [self displayNameForControl:control
+                                                        relatedView:relatedView
+                                                               type:type
+                                                            phrases:phrases];
+        NSString *displayName = forceDisplayName ?: inferredDisplayName;
+        [self addViewToSearchIndex:control
+                       displayName:displayName
+                           phrases:phrases
+                               key:key];
+    }
+
     [self updateValueForInfo:info];
 
     return info;
+}
+
+- (NSString *)displayNameForControl:(NSControl *)control
+                        relatedView:(NSView *)relatedView
+                               type:(PreferenceInfoType)type
+                            phrases:(NSMutableArray<NSString *> *)phrases {
+    NSString *displayName = nil;
+    if (control.toolTip) {
+        [phrases addObject:control.toolTip];
+    }
+    NSPopUpButton *popup = [NSPopUpButton castFrom:control];
+    if (popup) {
+        if (popup.title) {
+            displayName = popup.title;
+            [phrases addObject:popup.title];
+        }
+        for (NSMenuItem *item in popup.menu.itemArray) {
+            [phrases addObject:item.title];
+        }
+    }
+    NSMatrix *matrix = [NSMatrix castFrom:control];
+    if (matrix) {
+        for (NSInteger y = 0; y < matrix.numberOfRows; y++) {
+            for (NSInteger x = 0; x < matrix.numberOfColumns; x++) {
+                NSCell *cell = [matrix cellAtRow:y column:x];
+                NSString *title = [cell title];
+                if (title) {
+                    [phrases addObject:title];
+                }
+            }
+        }
+    }
+    NSButton *button = [NSButton castFrom:control];
+    if (button) {
+        NSString *title = button.title;
+        if (title) {
+            displayName = title;
+            [phrases addObject:title];
+        }
+    }
+    NSSlider *slider = [NSSlider castFrom:control];
+    if (slider) {
+        [phrases addObject:@"slider"];
+    }
+    CPKColorWell *colorWell = [CPKColorWell castFrom:control];
+    if (colorWell) {
+        [phrases addObject:@"color"];
+    }
+    NSTextField *textField = [NSTextField castFrom:control];
+    if (textField) {
+        if (textField.placeholderString) {
+            [phrases addObject:textField.placeholderString];
+        }
+    }
+    switch (type) {
+        case kPreferenceInfoTypePopup:
+        case kPreferenceInfoTypeMatrix:
+        case kPreferenceInfoTypeSlider:
+        case kPreferenceInfoTypeInvertedCheckbox:
+        case kPreferenceInfoTypeCheckbox:
+        case kPreferenceInfoTypeColorWell:
+        case kPreferenceInfoTypeTokenField:
+        case kPreferenceInfoTypeDoubleTextField:
+        case kPreferenceInfoTypeStringTextField:
+        case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypeUnsignedIntegerPopup:
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
+            break;
+
+        case kPreferenceInfoTypeRadioButton: {
+            for (NSView *subview in control.subviews) {
+                NSButton *button = [NSButton castFrom:subview];
+                if (!button) {
+                    continue;
+                }
+                NSString *title = button.title;
+                if (title) {
+                    [phrases addObject:title];
+                }
+            }
+            break;
+        }
+    }
+    NSTextField *relatedTextField = [NSTextField castFrom:relatedView];
+    NSString *relatedPhrase = relatedTextField.stringValue;
+    if (!relatedPhrase) {
+        relatedPhrase = [NSButton castFrom:relatedView].title;
+    }
+    if (relatedPhrase) {
+        relatedPhrase = [relatedPhrase stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@": "]];
+        [phrases addObject:relatedPhrase];
+        displayName = relatedPhrase;
+    }
+    displayName = [displayName stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@": "]];
+
+    return displayName;
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
@@ -639,6 +839,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     CGSize tabViewSize = NSMakeSize(MAX(kTabViewMinWidth, theView.bounds.size.width) + inset,
                                     theView.bounds.size.height + bottomMargin);
     NSRect frame = [self windowFrameForTabViewSize:tabViewSize tabView:tabView];
+    frame.size.width = MAX(iTermSharedPreferencePanelWindowMinimumWidth, frame.size.width);
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
     }
@@ -667,6 +868,53 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     assert(self.tabView);
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+}
+
+#pragma mark - iTermSearchableViewController
+
+- (NSString *)documentOwnerIdentifier {
+    return NSStringFromClass(self.class);
+}
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    return _docs;
+}
+
+- (BOOL)revealControl:(NSControl *)control {
+    // Is there an inner tab container view?
+    for (NSTabViewItem *item in self.tabView.tabViewItems) {
+        NSView *view = item.view;
+        if ([view containsDescendant:control]) {
+            if (self.tabView.selectedTabViewItem != item) {
+                [self.tabView selectTabViewItem:item];
+                return YES;
+            } else {
+                return NO;
+            }
+        }
+    }
+    return NO;
+}
+
+- (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document
+                                                 forQuery:(NSString *)query
+                                            willChangeTab:(BOOL *)willChangeTab {
+    *willChangeTab = NO;
+    NSString *key = document.identifier;
+    for (NSControl *control in _keyMap) {
+        PreferenceInfo *info = [_keyMap objectForKey:control];
+        if ([key isEqualToString:info.key]) {
+            *willChangeTab = [self revealControl:control];
+            return control;
+        }
+    }
+    for (NSControl *control in _otherSearchableViews) {
+        if ([control.accessibilityIdentifier isEqualToString:document.identifier]) {
+            *willChangeTab = [self revealControl:control];
+            return control;
+        }
+    }
+    return nil;
 }
 
 @end

@@ -30,12 +30,14 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *_cursorType;
+    IBOutlet NSTextField *_cursorTypeLabel;
     IBOutlet NSButton *_blinkingCursor;
     IBOutlet NSButton *_useBoldFont;
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
+    IBOutlet NSTextField *_normalizationLabel;
     IBOutlet NSSlider *_horizontalSpacing;
     IBOutlet NSSlider *_verticalSpacing;
     IBOutlet NSButton *_useNonAsciiFont;
@@ -49,6 +51,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_subpixelAA;
     IBOutlet NSButton *_powerline;
     
+    IBOutlet NSButton *_fontButton;
+
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
     IBOutlet NSTextField *_nonAsciiFontDescription;
@@ -88,6 +92,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     __weak __typeof(self) weakSelf = self;
     [self defineControl:_cursorType
                     key:KEY_CURSOR_TYPE
+            displayName:@"Cursor style"
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self setInt:[[sender selectedCell] tag] forKey:KEY_CURSOR_TYPE]; }
                  update:^BOOL{
@@ -101,34 +106,41 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_blinkingCursor
                     key:KEY_BLINKING_CURSOR
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_useBoldFont
                     key:KEY_USE_BOLD_FONT
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_thinStrokes
                     key:KEY_THIN_STROKES
+            relatedView:_thinStrokesLabel
                    type:kPreferenceInfoTypePopup];
 
     [self defineControl:_blinkAllowed
                     key:KEY_BLINK_ALLOWED
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_asciiLigatures
                     key:KEY_ASCII_LIGATURES
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_nonAsciiLigatures
-                    key:KEY_NON_ASCII_LIGATURES
-                   type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_nonAsciiLigatures
+                                key:KEY_NON_ASCII_LIGATURES
+                               type:kPreferenceInfoTypeCheckbox];
 
     PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
                                            key:KEY_AMBIGUOUS_DOUBLE_WIDTH
+                                   relatedView:nil
                                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -162,6 +174,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_normalization
                     key:KEY_UNICODE_NORMALIZATION
+            relatedView:_normalizationLabel
                    type:kPreferenceInfoTypePopup];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -170,6 +183,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                                                object:nil];
     [self defineControl:_unicodeVersion9
                     key:KEY_UNICODE_VERSION
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox
          settingChanged:^(id sender) {
              __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -189,39 +203,46 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                  }];
 
 
-    info = [self defineControl:_horizontalSpacing
-                           key:KEY_HORIZONTAL_SPACING
-                          type:kPreferenceInfoTypeSlider];
+    info = [self defineUnsearchableControl:_horizontalSpacing
+                                       key:KEY_HORIZONTAL_SPACING
+                                      type:kPreferenceInfoTypeSlider];
     info.observer = ^{
         [weakSelf fontAccessorySliderDidChange];
     };
 
-    info = [self defineControl:_verticalSpacing
-                           key:KEY_VERTICAL_SPACING
-                          type:kPreferenceInfoTypeSlider];
+    info = [self defineUnsearchableControl:_verticalSpacing
+                                       key:KEY_VERTICAL_SPACING
+                                      type:kPreferenceInfoTypeSlider];
     info.observer = ^{
         [weakSelf fontAccessorySliderDidChange];
     };
 
     info = [self defineControl:_useNonAsciiFont
                            key:KEY_USE_NONASCII_FONT
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateNonAsciiFontViewVisibility]; };
 
     info = [self defineControl:_asciiAntiAliased
                            key:KEY_ASCII_ANTI_ALIASED
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateWarnings]; };
 
-    info = [self defineControl:_nonasciiAntiAliased
-                           key:KEY_NONASCII_ANTI_ALIASED
-                          type:kPreferenceInfoTypeCheckbox];
+    info = [self defineUnsearchableControl:_nonasciiAntiAliased
+                                       key:KEY_NONASCII_ANTI_ALIASED
+                                      type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateWarnings]; };
 
     [self defineControl:_powerline
                     key:KEY_POWERLINE
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
+    
+    [self addViewToSearchIndex:_fontButton
+                   displayName:@"Font"
+                       phrases:@[ @"typeface", @"horizontal spacing", @"vertical spacing" ]
+                           key:nil];
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];
 }

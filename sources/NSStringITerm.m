@@ -2144,6 +2144,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (NSArray<NSString *> *)it_normalizedTokens {
+    NSMutableArray<NSString *> *tokens = [NSMutableArray array];
+    [self enumerateSubstringsInRange:NSMakeRange(0, self.length)
+                             options:NSStringEnumerationByWords
+                          usingBlock:^(NSString * _Nullable substring, NSRange substringRange, NSRange enclosingRange, BOOL * _Nonnull stop) {
+                              [tokens addObject:[substring localizedLowercaseString]];
+                          }];
+    return tokens;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

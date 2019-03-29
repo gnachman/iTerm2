@@ -49,6 +49,21 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_underlineColor;
     IBOutlet CPKColorWell *_badgeColor;
 
+    IBOutlet NSTextField *_ansi0ColorLabel;
+    IBOutlet NSTextField *_ansi1ColorLabel;
+    IBOutlet NSTextField *_ansi2ColorLabel;
+    IBOutlet NSTextField *_ansi3ColorLabel;
+    IBOutlet NSTextField *_ansi4ColorLabel;
+    IBOutlet NSTextField *_ansi5ColorLabel;
+    IBOutlet NSTextField *_ansi6ColorLabel;
+    IBOutlet NSTextField *_ansi7ColorLabel;
+    IBOutlet NSTextField *_foregroundColorLabel;
+    IBOutlet NSTextField *_backgroundColorLabel;
+    IBOutlet NSTextField *_linkColorLabel;
+    IBOutlet NSTextField *_selectionColorLabel;
+    IBOutlet NSTextField *_selectedTextColorLabel;
+    IBOutlet NSTextField *_badgeColorLabel;
+
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
 
@@ -58,6 +73,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     IBOutlet NSSlider *_minimumContrast;
     IBOutlet NSSlider *_cursorBoost;
+    IBOutlet NSTextField *_minimumContrastLabel;
+    IBOutlet NSTextField *_cursorBoostLabel;
 
     IBOutlet NSMenu *_presetsMenu;
 
@@ -122,9 +139,18 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [self rebuildColorPresetsMenu];
 
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
+    NSDictionary *relatedViews = [self colorWellRelatedViews];
     for (NSString *key in colorWellDictionary) {
         CPKColorWell *colorWell = colorWellDictionary[key];
-        [self defineControl:colorWell key:key type:kPreferenceInfoTypeColorWell];
+        NSTextField *relatedView = relatedViews[key];
+        [self defineControl:colorWell
+                        key:key
+                relatedView:nil
+                displayName:[NSString stringWithFormat:@"%@ color", relatedView.stringValue]
+                       type:kPreferenceInfoTypeColorWell
+             settingChanged:nil
+                     update:nil
+                 searchable:relatedView != nil];
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
@@ -145,36 +171,48 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     __weak __typeof(self) weakSelf = self;
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_useUnderlineColor
                            key:KEY_USE_UNDERLINE_COLOR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_minimumContrast
                            key:KEY_MINIMUM_CONTRAST
+                   relatedView:_minimumContrastLabel
                           type:kPreferenceInfoTypeSlider];
     info.observer = ^() { [weakSelf maybeWarnAboutExcessiveContrast]; };
 
     [self defineControl:_cursorBoost
                     key:KEY_CURSOR_BOOST
+            relatedView:_cursorBoostLabel
                    type:kPreferenceInfoTypeSlider];
 
     [self defineControl:_useGuide
                     key:KEY_USE_CURSOR_GUIDE
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBrightBold
                            key:KEY_USE_BOLD_COLOR
+                   displayName:@"Custom color for bold text"
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
+
+    [self addViewToSearchIndex:_presetsPopupButton
+                   displayName:@"Color presets"
+                       phrases:@[]
+                           key:nil];
 
     [self maybeWarnAboutExcessiveContrast];
     [self updateColorControlsEnabled];
@@ -232,6 +270,24 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_UNDERLINE_COLOR: _underlineColor,
               KEY_CURSOR_GUIDE_COLOR: _guideColor,
               KEY_BADGE_COLOR: _badgeColor };
+}
+
+- (NSDictionary *)colorWellRelatedViews {
+    return @{ KEY_ANSI_0_COLOR: _ansi0ColorLabel,
+              KEY_ANSI_1_COLOR: _ansi1ColorLabel,
+              KEY_ANSI_2_COLOR: _ansi2ColorLabel,
+              KEY_ANSI_3_COLOR: _ansi3ColorLabel,
+              KEY_ANSI_4_COLOR: _ansi4ColorLabel,
+              KEY_ANSI_5_COLOR: _ansi5ColorLabel,
+              KEY_ANSI_6_COLOR: _ansi6ColorLabel,
+              KEY_ANSI_7_COLOR: _ansi7ColorLabel,
+              KEY_FOREGROUND_COLOR: _foregroundColorLabel,
+              KEY_BACKGROUND_COLOR: _backgroundColorLabel,
+              KEY_SELECTION_COLOR: _selectionColorLabel,
+              KEY_SELECTED_TEXT_COLOR: _selectedTextColorLabel,
+              KEY_CURSOR_COLOR: _cursorColorLabel,
+              KEY_CURSOR_TEXT_COLOR: _cursorTextColorLabel,
+              KEY_BADGE_COLOR: _badgeColorLabel };
 }
 
 #pragma mark - Color Presets

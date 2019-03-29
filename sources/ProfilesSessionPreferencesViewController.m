@@ -87,33 +87,51 @@
     __weak __typeof(self) weakSelf = self;
     [self defineControl:_closeSessionsOnEnd
                     key:KEY_CLOSE_SESSIONS_ON_END
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_alwaysWarn
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
+            displayName:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
+             searchable:NO];
 
     [self defineControl:_neverWarn
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
+            displayName:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
+             searchable:NO];
 
     [self defineControl:_warnIfJobsBesides
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
+            displayName:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
-
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
+             searchable:NO];
+    
+    [self addViewToSearchIndex:_warnContainer
+                   displayName:@"Prompt before closing profile"
+                       phrases:@[ @"Always prompt before closing profile",
+                                  @"Never prompt before closing profile",
+                                  @"Prompt before closing profile if running jobs"]
+                           key:nil];
     [self defineControl:_undoTimeout
                     key:KEY_UNDO_TIMEOUT
+            displayName:@"Undo close session timeout"
                    type:kPreferenceInfoTypeIntegerTextField];
 
     PreferenceInfo *info;
     info = [self defineControl:_autoLog
                            key:KEY_AUTOLOG
+                   displayName:@"Directory to automatically log sessions to"
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -125,13 +143,14 @@
         [strongSelf updateLogDirWarning];
     };
 
-    info = [self defineControl:_logDir
-                           key:KEY_LOGDIR
-                          type:kPreferenceInfoTypeStringTextField];
+    info = [self defineUnsearchableControl:_logDir
+                                       key:KEY_LOGDIR
+                                      type:kPreferenceInfoTypeStringTextField];
     info.observer = ^() { [weakSelf updateLogDirWarning]; };
 
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
+                   displayName:@"Send ASCII code when idle?"
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -176,21 +195,25 @@
 
     info = [self defineControl:_idleCode
                            key:KEY_IDLE_CODE
+                   displayName:@"Send character periodically while idle"
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
 
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
+            displayName:@"Time between sending charactesr when idle"
                    type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
 
     [self defineControl:_reduceFlicker
                     key:KEY_REDUCE_FLICKER
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_statusBarEnabled
                            key:KEY_SHOW_STATUS_BAR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -201,6 +224,11 @@
                                                    [strongSelf boolForKey:KEY_SHOW_STATUS_BAR]);
     };
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    [self addViewToSearchIndex:_configureStatusBar
+                   displayName:@"Configure status bar"
+                       phrases:@[]
+                           key:nil];
 }
 
 // Ensure the anti-idle period's value is constrained to the legal range.

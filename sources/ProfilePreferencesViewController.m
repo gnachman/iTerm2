@@ -24,6 +24,7 @@
 #import "NSDictionary+Profile.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
 #import "ProfilesAdvancedPreferencesViewController.h"
@@ -162,6 +163,17 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 #pragma mark - NSViewController
 
+- (NSArray *)tabViewTuples {
+    return @[ @[ _generalTab, _generalViewController.view ],
+              @[ _colorsTab, _colorsViewController.view ],
+              @[ _textTab, _textViewController.view ],
+              @[ _windowTab, _windowViewController.view ],
+              @[ _terminalTab, _terminalViewController.view ],
+              @[ _sessionTab, _sessionViewController.view ],
+              @[ _keysTab, _keysViewController.view ],
+              @[ _advancedTab, _advancedViewController.view ] ];
+}
+
 - (void)awakeFromNib {
     [_profilesListView setUnderlyingDatasource:[_delegate profilePreferencesModel]];
 
@@ -180,14 +192,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         [_profilesListView selectRowIndex:0];
     }
 
-    NSArray *tabViewTuples = @[ @[ _generalTab, _generalViewController.view ],
-                                @[ _colorsTab, _colorsViewController.view ],
-                                @[ _textTab, _textViewController.view ],
-                                @[ _windowTab, _windowViewController.view ],
-                                @[ _terminalTab, _terminalViewController.view ],
-                                @[ _sessionTab, _sessionViewController.view ],
-                                @[ _keysTab, _keysViewController.view ],
-                                @[ _advancedTab, _advancedViewController.view ] ];
+    NSArray *tabViewTuples = [self tabViewTuples];
     for (NSArray *tuple in tabViewTuples) {
         NSTabViewItem *tabViewItem = tuple[0];
         NSView *view = tuple[1];
@@ -414,6 +419,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
               _advancedViewController ];
 }
 
+- (BOOL)hasViewController:(NSViewController *)viewController {
+    return [self.tabViewControllers containsObject:viewController];
+}
+
+- (id<iTermSearchableViewController>)viewControllerWithOwnerIdentifier:(NSString *)ownerIdentifier {
+    return [[self tabViewControllers] objectPassingTest:^BOOL(id<iTermSearchableViewController> vc, NSUInteger index, BOOL *stop) {
+        return [vc.documentOwnerIdentifier isEqualToString:ownerIdentifier];
+    }];
+}
+
 - (void)updateSubviewsForProfile:(Profile *)profile {
     ProfileModel *model = [_delegate profilePreferencesModel];
     if ([model numberOfBookmarks] < 2 || !profile) {
@@ -477,6 +492,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
     frame.origin.y = windowTopLeft.y - frame.size.height;
+    frame.size.width = MAX(iTermSharedPreferencePanelWindowMinimumWidth, frame.size.width);
 
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
@@ -878,6 +894,19 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 #pragma mark - iTermProfilesPreferencesBaseViewControllerDelegate
 
+- (BOOL)profilePreferencesRevealViewController:(iTermProfilePreferencesBaseViewController *)viewController {
+    for (NSArray *tuple in [self tabViewTuples]) {
+        NSTabViewItem *item = tuple[0];
+        NSView *view = tuple[1];
+        if (viewController.view == view) {
+            BOOL changing = item != _tabView.selectedTabViewItem;
+            [_tabView selectTabViewItem:item];
+            return changing;
+        }
+    }
+    return NO;
+}
+
 - (Profile *)profilePreferencesCurrentProfile {
     return [self selectedProfile];
 }
@@ -969,6 +998,39 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+}
+
+#pragma mark - iTermSearchableViewController
+
+- (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    return [[[self tabViewControllers] mapWithBlock:^id(id<iTermSearchableViewController> vc) {
+        return [vc searchableViewControllerDocuments];
+    }] flattenedArray];
+}
+
+- (void)revealControl:(NSControl *)control {
+    // Is there an inner tab container view?
+    for (NSTabViewItem *item in self.tabView.tabViewItems) {
+        NSView *view = item.view;
+        if ([view containsDescendant:control]) {
+            [self.tabView selectTabViewItem:item];
+            return;
+        }
+    }
+}
+
+- (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document
+                                                 forQuery:(NSString *)query
+                                            willChangeTab:(BOOL *)willChangeTab {
+    for (id<iTermSearchableViewController> vc in [self tabViewControllers]) {
+        NSView *view = [vc searchableViewControllerRevealItemForDocument:document
+                                                                forQuery:query
+                                                           willChangeTab:willChangeTab];
+        if (view) {
+            return view;
+        }
+    }
+    return nil;
 }
 
 @end

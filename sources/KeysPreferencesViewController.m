@@ -34,13 +34,24 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSPopUpButton *_leftCommandButton;
     IBOutlet NSPopUpButton *_rightCommandButton;
 
+    IBOutlet NSTextField *_controlButtonLabel;
+    IBOutlet NSTextField *_leftOptionButtonLabel;
+    IBOutlet NSTextField *_rightOptionButtonLabel;
+    IBOutlet NSTextField *_leftCommandButtonLabel;
+    IBOutlet NSTextField *_rightCommandButtonLabel;
+
     IBOutlet NSPopUpButton *_switchPaneModifierButton;
     IBOutlet NSPopUpButton *_switchTabModifierButton;
     IBOutlet NSPopUpButton *_switchWindowModifierButton;
 
+    IBOutlet NSTextField *_switchPaneModifierButtonLabel;
+    IBOutlet NSTextField *_switchTabModifierButtonLabel;
+    IBOutlet NSTextField *_switchWindowModifierButtonLabel;
+
+    IBOutlet NSView *_keyMappingView;
+    
     // Hotkey
     IBOutlet NSButton *_hotkeyEnabled;
-    IBOutlet NSView *_horizontalLine;
     IBOutlet NSTextField *_shortcutOverloaded;
     IBOutlet NSTextField *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
@@ -62,26 +73,31 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     // Modifier remapping
     info = [self defineControl:_controlButton
                            key:kPreferenceKeyControlRemapping
+                   relatedView:_controlButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_leftOptionButton
                            key:kPreferenceKeyLeftOptionRemapping
+                   relatedView:_leftOptionButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_rightOptionButton
                            key:kPreferenceKeyRightOptionRemapping
+                   relatedView:_rightOptionButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_leftCommandButton
                            key:kPreferenceKeyLeftCommandRemapping
+                   relatedView:_leftCommandButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_rightCommandButton
                            key:kPreferenceKeyRightCommandRemapping
+                   relatedView:_rightCommandButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
@@ -89,6 +105,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     // Modifiers for switching tabs/windows/panes.
     info = [self defineControl:_switchPaneModifierButton
                            key:kPreferenceKeySwitchPaneModifier
+                   relatedView:_switchPaneModifierButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -103,6 +120,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     info = [self defineControl:_switchTabModifierButton
                            key:kPreferenceKeySwitchTabModifier
+                   relatedView:_switchTabModifierButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -117,6 +135,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     info = [self defineControl:_switchWindowModifierButton
                            key:kPreferenceKeySwitchWindowModifier
+                   relatedView:_switchWindowModifierButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -132,6 +151,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_hotkeyEnabled
                            key:kPreferenceKeyHotkeyEnabled
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf hotkeyEnabledDidChange]; };
     info.observer = ^() { [weakSelf updateHotkeyViews]; };
@@ -139,7 +159,14 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     [self defineControl:_emulateUSKeyboard
                     key:kPreferenceKeyEmulateUSKeyboard
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self addViewToSearchIndex:_keyMappingView
+                   displayName:@"Global key bindings"
+                       phrases:@[ @"mapping", @"shortcuts", @"touch bar", @"preset", @"xterm", @"natural", @"terminal.app compatibility", @"numeric keypad" ]
+                           key:nil];
+
 }
 
 - (void)viewWillAppear {
@@ -160,7 +187,6 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)updateDuplicateWarning {
     NSArray<iTermHotKeyDescriptor *> *descriptors = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
     _shortcutOverloaded.hidden = ![descriptors containsObject:[self hotkeyDescriptor]];
-    _horizontalLine.hidden = !_shortcutOverloaded.hidden;
 }
 
 - (void)ensureUniquenessOfModifierForButton:(NSPopUpButton *)buttonThatChanged

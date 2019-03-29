@@ -25,6 +25,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeRadioButton
 };
 
+@class iTermPreferencesSearchDocument;
 
 @interface PreferenceInfo : NSObject
 
@@ -32,6 +33,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 @property(nonatomic) PreferenceInfoType type;
 @property(nonatomic, strong) NSControl *control;
 @property(nonatomic) NSRange range;  // For integer fields, the range of legal values.
+@property(nonatomic, readonly) NSArray<NSString *> *searchKeywords;
 
 // If set to YES, don't process changes until keyboard focus exits the control. Defaults to NO.
 // Only supported on controls of type kPreferenceInfoTypeIntegerTextField.

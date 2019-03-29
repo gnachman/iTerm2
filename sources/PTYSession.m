@@ -1828,11 +1828,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:self.sessionId forVariableNamed:iTermVariableKeySessionTermID];
 }
 
-- (void)didEvaluateAutoName:(NSString *)evaluated {
-    // This should be the only place that autoName is assigned to.
-    [self.variablesScope setValue:evaluated forVariableNamed:iTermVariableKeySessionAutoName];
-}
-
 - (void)triggerDidChangeNameTo:(NSString *)newName {
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
                                                     iTermVariableKeySessionAutoNameFormat: newName }];

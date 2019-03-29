@@ -18,6 +18,7 @@
     info.key = key;
     info.type = type;
     info.control = control;
+    info->_searchKeywords = @[ key ];
     return info;
 }
 

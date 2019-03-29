@@ -7,9 +7,10 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermSearchableViewController.h"
 
 extern BOOL gIntrospecting;
 
-@interface iTermAdvancedSettingsViewController : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
+@interface iTermAdvancedSettingsViewController : NSViewController <iTermSearchableViewController, NSTableViewDataSource, NSTableViewDelegate>
 
 @end

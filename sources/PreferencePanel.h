@@ -44,6 +44,8 @@ extern NSString *const kPreferencePanelWillCloseNotification;
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
 
+extern CGFloat iTermSharedPreferencePanelWindowMinimumWidth;
+
 // Constants for KEY_PROMPT_CLOSE
 // Never prompt on close
 #define PROMPT_NEVER 0
@@ -60,7 +62,13 @@ extern NSString *const kReloadAllProfiles;
 
 void LoadPrefsFromCustomFolder(void);
 
+@protocol iTermPrefsPanelDelegate<NSObject>
+- (void)prefsPanelDidChangeFrameTo:(NSRect)newFrame;
+- (void)responderWillBecomeFirstResponder:(NSResponder *)responder;
+@end
+
 @interface iTermPrefsPanel : NSPanel
+@property (nonatomic, weak) id<iTermPrefsPanelDelegate> prefsPanelDelegate;
 @end
 
 @interface PreferencePanel : NSWindowController <
