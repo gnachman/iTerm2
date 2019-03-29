@@ -47,19 +47,18 @@
                                                                  scrollerStyle:scrollView.scrollerStyle].height;
     CGFloat desiredHeight = [NSPanel frameRectForContentRect:NSMakeRect(0, 0, 100, desiredContentHeight)
                                                    styleMask:self.window.styleMask].size.height;
-    if (frame.size.height == desiredHeight) {
-        return;
-    }
     if (_documents.count == 0) {
         self.window.alphaValue = 0;
         return;
     }
     const BOOL wasVisible = (self.window.alphaValue == 1);
-    CGFloat changeInHeight = desiredHeight - frame.size.height;
-    frame.size.height = desiredHeight;
-    frame.origin.y -= changeInHeight;
+    if (frame.size.height != desiredHeight) {
+        CGFloat changeInHeight = desiredHeight - frame.size.height;
+        frame.size.height = desiredHeight;
+        frame.origin.y -= changeInHeight;
 
-    [self.window setFrame:frame display:YES animate:wasVisible];
+        [self.window setFrame:frame display:YES animate:wasVisible];
+    }
     if (!wasVisible) {
         self.window.alphaValue = 1;
     }

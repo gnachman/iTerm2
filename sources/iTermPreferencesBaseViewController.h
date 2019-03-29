@@ -30,10 +30,22 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // Bind a preference control to a key defined in iTermPreferences.
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type;
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
                              type:(PreferenceInfoType)type;
 
 // Define a control with a custom settingChanged and update handler. If they're both not null then
 // the default value is not type checked.
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update;
+
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
                              type:(PreferenceInfoType)type

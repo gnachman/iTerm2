@@ -254,12 +254,18 @@
 
 - (NSInteger)firstIndexForKeyword:(iTermPreferencesSearchKeyword *)keyword {
     NSArray<iTermPreferencesSearchKeyword *> *keywords = (NSArray<iTermPreferencesSearchKeyword *> *)_index;
-    return [keywords indexOfObject:keyword
-                     inSortedRange:NSMakeRange(0, _index.count)
-                           options:NSBinarySearchingInsertionIndex
-                   usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-                       return [obj1 compare:obj2];
-                   }];
+    NSInteger index = [keywords indexOfObject:keyword
+                                inSortedRange:NSMakeRange(0, _index.count)
+                                      options:NSBinarySearchingInsertionIndex
+                              usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+                                  return [obj1 compare:obj2];
+                              }];
+    if (index > 0) {
+        if ([keyword.keyword isEqualToString:keywords[index - 1].keyword]) {
+            return index - 1;
+        }
+    }
+    return index;
 }
 
 @end

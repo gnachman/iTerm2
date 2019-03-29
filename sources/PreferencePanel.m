@@ -752,6 +752,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (void)selectTabForViewController:(id<iTermSearchableViewController>)viewController {
     NSTabViewItem *tabViewItem = [self tabViewItemForViewController:viewController];
     if (!tabViewItem) {
+        if ([viewController isKindOfClass:[iTermProfilePreferencesBaseViewController class]]) {
+            [_tabView selectTabViewItem:_bookmarksTabViewItem];
+            return;
+        }
         return;
     }
     [_tabView selectTabViewItem:tabViewItem];

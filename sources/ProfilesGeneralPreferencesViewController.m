@@ -57,6 +57,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     // Controls
     IBOutlet NSTextField *_profileNameField;
+    IBOutlet NSTextField *_profileNameFieldLabel;
+
     IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
@@ -69,6 +71,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
     IBOutlet NSPopUpButton *_urlSchemes;
     IBOutlet NSTextField *_badgeText;
+    IBOutlet NSTextField *_badgeLabel;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
@@ -76,6 +79,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_windowTitleTextFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
     IBOutlet NSPopUpButton *_icon;
+    IBOutlet NSTextField *_iconLabel;
     IBOutlet NSImageView *_imageWell;
     IBOutlet NSTextField *_tabTitle;
     IBOutlet NSTextField *_windowTitle;
@@ -88,6 +92,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_copySettingsToProfile;
     IBOutlet NSButton *_copyProfileToSession;
     IBOutlet NSPopUpButton *_titleSettings;
+    IBOutlet NSTextField *_titleSettingsLabel;
     IBOutlet NSButton *_customTitleHelp;
 
     BOOL _profileNameChangePending;
@@ -109,6 +114,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
+                   relatedView:_profileNameFieldLabel
                           type:kPreferenceInfoTypeStringTextField];
     __weak PreferenceInfo *weakInfo = info;
     info.customSettingChangedHandler = ^(id sender) {
@@ -152,6 +158,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_icon
                            key:KEY_ICON
+                   relatedView:_iconLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^{
         [weakSelf iconDidChange];
@@ -164,16 +171,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
+            relatedView:_shortcutLabel
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf setShortcutValueToSelectedItem]; }
                  update:^BOOL { [weakSelf updateShortcutTitles]; return YES; }];
 
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
+            relatedView:_tagsLabel
                    type:kPreferenceInfoTypeTokenField];
 
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
+            relatedView:_commandLabel
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
@@ -192,20 +202,24 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_sendTextAtStart
                     key:KEY_INITIAL_TEXT
+            relatedView:_sendTextAtStartLabel
                    type:kPreferenceInfoTypeStringTextField];
 
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY
+            relatedView:_directoryLabel
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [weakSelf directoryTypeDidChange]; }
                  update:^BOOL { [weakSelf updateDirectoryType]; return YES; }];
 
     [self defineControl:_customDirectory
                     key:KEY_WORKING_DIRECTORY
+            relatedView:nil
                    type:kPreferenceInfoTypeStringTextField];
 
     [self defineControl:_badgeText
                     key:KEY_BADGE_FORMAT
+            relatedView:_badgeLabel
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
         [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
@@ -236,6 +250,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
+            relatedView:_titleSettingsLabel
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {

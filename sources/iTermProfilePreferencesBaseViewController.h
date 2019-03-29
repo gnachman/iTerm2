@@ -20,6 +20,7 @@
 - (BOOL)editingTmuxSession;
 - (void)profilePreferencesViewController:(iTermProfilePreferencesBaseViewController *)viewController
                     willSetObjectWithKey:(NSString *)key;
+- (void)profilePreferencesRevealViewController:(iTermProfilePreferencesBaseViewController *)viewController;
 @end
 
 @interface iTermProfilePreferencesBaseViewController : iTermPreferencesBaseViewController

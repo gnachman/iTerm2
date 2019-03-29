@@ -608,6 +608,10 @@ static NSDictionary *gIntrospection;
 #pragma mark - iTermSearchableViewController
 
 - (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
+    const BOOL enableSearch = NO;
+    if (!enableSearch) {
+        return @[];
+    }
     if (!_docs) {
         _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
             iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:dict[kAdvancedSettingDescription]

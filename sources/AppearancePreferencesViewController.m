@@ -20,11 +20,14 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
     IBOutlet NSPopUpButton *_tabStyle;
+    IBOutlet NSTextField *_tabStyleLabel;
 
     // Tab position within window. See TAB_POSITION_XXX defines.
     IBOutlet NSPopUpButton *_tabPosition;
+    IBOutlet NSTextField *_tabPositionLabel;
 
     IBOutlet NSPopUpButton *_statusBarPosition;
+    IBOutlet NSTextField *_statusBarPositionLabel;
 
     IBOutlet NSButton *_perPaneStatusBars;
 
@@ -70,6 +73,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Dimming amount.
     IBOutlet NSSlider *_dimmingAmount;
+    IBOutlet NSTextField *_dimmingAmountLabel;
 
     // Dim inactive split panes.
     IBOutlet NSButton *_dimInactiveSplitPanes;
@@ -101,6 +105,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     __weak __typeof(self) weakSelf = self;
     info = [self defineControl:_tabPosition
                            key:kPreferenceKeyTabPosition
+                   relatedView:_tabPositionLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
@@ -115,15 +120,19 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     
     info = [self defineControl:_statusBarPosition
                            key:kPreferenceKeyStatusBarPosition
+                   relatedView:_statusBarPositionLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^{ [weakSelf postRefreshNotification]; };
+
     info = [self defineControl:_perPaneStatusBars
                            key:kPreferenceKeySeparateStatusBarsPerPane
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^{ [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle
+                   relatedView:_tabStyleLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         [weakSelf postRefreshNotification];
@@ -133,6 +142,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar
+                   relatedView:nil
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() {
         [weakSelf postRefreshNotification];
@@ -141,45 +151,54 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_preserveWindowSizeWhenTabBarVisibilityChanges
                            key:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber
+                   relatedView:nil
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideTabCloseButton
                            key:kPreferenceKeyHideTabCloseButton
+                   relatedView:nil
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideActivityIndicator
                            key:kPreferenceKeyHideTabActivityIndicator
+                   relatedView:nil
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_showNewOutputIndicator
                            key:kPreferenceKeyShowNewOutputIndicator
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_showPaneTitles
                            key:kPreferenceKeyShowPaneTitles
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_separateBackgroundImages
                            key:kPreferenceKeyPerPaneBackgroundImage
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideMenuBarInFullscreen
                            key:kPreferenceKeyHideMenuBarInFullscreen
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
     
     info = [self defineControl:_uiElement
                            key:kPreferenceKeyUIElement
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         BOOL isOn = [sender state] == NSOnState;
@@ -217,11 +236,13 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [self updateHiddenAndEnabled];
 
     info = [self defineControl:_showTabBarInFullscreen
                            key:kPreferenceKeyShowFullscreenTabBar
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() {
         [[NSNotificationCenter defaultCenter] postNotificationName:kShowFullscreenTabsSettingDidChange
@@ -236,56 +257,67 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_stretchTabsToFillBar
                            key:kPreferenceKeyStretchTabsToFillBar
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postUpdateLabelsNotification]; };
 
     info = [self defineControl:_dimOnlyText
                            key:kPreferenceKeyDimOnlyText
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_dimmingAmount
                            key:kPreferenceKeyDimmingAmount
+                   relatedView:_dimmingAmountLabel
                           type:kPreferenceInfoTypeSlider];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_dimInactiveSplitPanes
                            key:kPreferenceKeyDimInactiveSplitPanes
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_dimBackgroundWindows
                            key:kPreferenceKeyDimBackgroundWindows
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_showWindowBorder
                            key:kPreferenceKeyShowWindowBorder
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideScrollbar
                            key:kPreferenceKeyHideScrollbar
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_disableFullscreenTransparency
                            key:kPreferenceKeyDisableFullscreenTransparencyByDefault
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_enableDivisionView
                            key:kPreferenceKeyEnableDivisionView
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_enableProxyIcon
                            key:kPreferenceKeyEnableProxyIcon
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
     [self updateProxyIconEnabled];

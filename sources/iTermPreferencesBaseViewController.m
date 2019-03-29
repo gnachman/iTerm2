@@ -262,11 +262,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
-                              key:(NSString *)key
-                             type:(PreferenceInfoType)type {
+- (PreferenceInfo *)defineControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type {
     return [self defineControl:control
                            key:key
+                   relatedView:nil
                           type:type
                 settingChanged:NULL
                         update:NULL];
@@ -274,10 +273,32 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                             type:(PreferenceInfoType)type {
+    return [self defineControl:control
+                           key:key
+                   relatedView:relatedView
+                          type:type
+                settingChanged:NULL
+                        update:NULL];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type settingChanged:(void (^)(id))settingChanged update:(BOOL (^)(void))update {
+    return [self defineControl:control
+                           key:key
+                   relatedView:nil
+                          type:type
+                settingChanged:settingChanged
+                        update:update];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update {
-    assert(![_keyMap objectForKey:key]);
+    assert(![_keyMap objectForKey:(id)key]);
     assert(key);
     assert(control);
     assert([self keyHasDefaultValue:key]);
@@ -294,15 +315,116 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     [_keyMap setObject:info forKey:control];
     [_keys addObject:key];
 
-    iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:key
-                                                                                       identifier:key
-                                                                                   keywordPhrases:@[ key ]];
-    doc.owner = self;
-    [_docs addObject:doc];
-    info.searchDocument = doc;
+    NSMutableArray<NSString *> *phrases = [NSMutableArray array];
+    NSString *displayName = [self displayNameForControl:control
+                                            relatedView:relatedView
+                                                   type:type
+                                                phrases:phrases];
+
+    if (displayName) {
+        iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:displayName
+                                                                                           identifier:key
+                                                                                       keywordPhrases:phrases];
+        doc.owner = self;
+        [_docs addObject:doc];
+        info.searchDocument = doc;
+    } else {
+        NSLog(@"Warning: no display name for %@", key);
+    }
     [self updateValueForInfo:info];
 
     return info;
+}
+
+- (NSString *)displayNameForControl:(NSControl *)control
+                        relatedView:(NSView *)relatedView
+                               type:(PreferenceInfoType)type
+                            phrases:(NSMutableArray<NSString *> *)phrases {
+    NSString *displayName = nil;
+    NSTextField *relatedTextField = [NSTextField castFrom:relatedView];
+    if (control.toolTip) {
+        [phrases addObject:control.toolTip];
+    }
+    NSPopUpButton *popup = [NSPopUpButton castFrom:control];
+    if (popup) {
+        if (popup.title) {
+            displayName = popup.title;
+            [phrases addObject:popup.title];
+        }
+        for (NSMenuItem *item in popup.menu.itemArray) {
+            [phrases addObject:item.title];
+        }
+    }
+    NSMatrix *matrix = [NSMatrix castFrom:control];
+    if (matrix) {
+        for (NSInteger y = 0; y < matrix.numberOfRows; y++) {
+            for (NSInteger x = 0; x < matrix.numberOfColumns; x++) {
+                NSCell *cell = [matrix cellAtRow:y column:x];
+                NSString *title = [cell title];
+                if (title) {
+                    [phrases addObject:title];
+                }
+            }
+        }
+    }
+    NSButton *button = [NSButton castFrom:control];
+    if (button) {
+        NSString *title = button.title;
+        if (title) {
+            displayName = title;
+            [phrases addObject:title];
+        }
+    }
+    NSSlider *slider = [NSSlider castFrom:control];
+    if (slider) {
+        [phrases addObject:@"slider"];
+    }
+    CPKColorWell *colorWell = [CPKColorWell castFrom:control];
+    if (colorWell) {
+        [phrases addObject:@"color"];
+    }
+    NSTextField *textField = [NSTextField castFrom:control];
+    if (textField) {
+        if (textField.placeholderString) {
+            [phrases addObject:textField.placeholderString];
+        }
+    }
+    switch (type) {
+        case kPreferenceInfoTypePopup:
+        case kPreferenceInfoTypeMatrix:
+        case kPreferenceInfoTypeSlider:
+        case kPreferenceInfoTypeInvertedCheckbox:
+        case kPreferenceInfoTypeCheckbox:
+        case kPreferenceInfoTypeColorWell:
+        case kPreferenceInfoTypeTokenField:
+        case kPreferenceInfoTypeDoubleTextField:
+        case kPreferenceInfoTypeStringTextField:
+        case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypeUnsignedIntegerPopup:
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
+            break;
+
+        case kPreferenceInfoTypeRadioButton: {
+            for (NSView *subview in control.subviews) {
+                NSButton *button = [NSButton castFrom:subview];
+                if (!button) {
+                    continue;
+                }
+                NSString *title = button.title;
+                if (title) {
+                    [phrases addObject:title];
+                }
+            }
+            break;
+        }
+    }
+    NSString *relatedPhrase = relatedTextField.stringValue;
+    if (relatedPhrase) {
+        relatedPhrase = [relatedPhrase stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@": "]];
+        [phrases addObject:relatedPhrase];
+        displayName = relatedPhrase;
+    }
+    return displayName;
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {

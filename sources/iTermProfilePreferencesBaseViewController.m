@@ -151,4 +151,9 @@
     }
 }
 
+- (void)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document {
+    [self.delegate profilePreferencesRevealViewController:self];
+    [super searchableViewControllerRevealItemForDocument:document];
+}
+
 @end

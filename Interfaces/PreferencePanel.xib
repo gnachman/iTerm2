@@ -1346,13 +1346,16 @@ DQ
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_gpuRendering" destination="YoO-mR-uX5" id="bAe-EI-JTs"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
+                <outlet property="_irMemoryLabel" destination="5053" id="uKW-nY-Haw"/>
                 <outlet property="_lionStyleFullscreen" destination="5319" id="1Ja-r1-AWt"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
                 <outlet property="_openDefaultWindowArrangementItem" destination="nMp-ky-1KX" id="H1m-F8-Rz9"/>
                 <outlet property="_openTmuxWindows" destination="6337" id="tZ3-C1-Lj2"/>
+                <outlet property="_openTmuxWindowsLabel" destination="rci-Sr-fks" id="nig-jB-f2V"/>
                 <outlet property="_openWindowsAtStartup" destination="cZL-gb-ECo" id="aHs-NQ-9ge"/>
+                <outlet property="_openWindowsAtStartupLabel" destination="64T-Y0-ROF" id="TPA-5Q-wbe"/>
                 <outlet property="_prefsCustomFolder" destination="5616" id="GlX-Oe-rRX"/>
                 <outlet property="_prefsDirWarning" destination="5628" id="HjH-wN-ecG"/>
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
@@ -1365,6 +1368,7 @@ DQ
                 <outlet property="_tabView" destination="CuK-St-ACL" id="BwT-A2-44D"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
+                <outlet property="_wordCharsLabel" destination="2095" id="skH-XY-s6r"/>
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
             </connections>
         </customObject>
@@ -1374,6 +1378,7 @@ DQ
                 <outlet property="_dimInactiveSplitPanes" destination="4560" id="rO0-eh-PYK"/>
                 <outlet property="_dimOnlyText" destination="5330" id="2OE-k6-8S9"/>
                 <outlet property="_dimmingAmount" destination="5337" id="Pwn-Ta-ZhW"/>
+                <outlet property="_dimmingAmountLabel" destination="5339" id="3WP-HY-Alu"/>
                 <outlet property="_disableFullscreenTransparency" destination="5753" id="Ibc-LY-vU4"/>
                 <outlet property="_enableDivisionView" destination="tyx-QN-l9J" id="xDl-eU-ywR"/>
                 <outlet property="_enableProxyIcon" destination="6Pr-69-fM1" id="0ul-fx-Xb8"/>
@@ -1392,9 +1397,12 @@ DQ
                 <outlet property="_showTabBarInFullscreen" destination="e4x-7h-mzh" id="21B-SP-LU5"/>
                 <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
                 <outlet property="_statusBarPosition" destination="Cjh-dQ-HBQ" id="uIH-25-Bdn"/>
+                <outlet property="_statusBarPositionLabel" destination="ghv-jZ-ql9" id="g5R-6w-pdL"/>
                 <outlet property="_stretchTabsToFillBar" destination="q7y-hG-x0m" id="HPi-ia-0YJ"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
+                <outlet property="_tabPositionLabel" destination="sxm-tG-syy" id="L5d-yS-rWq"/>
                 <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
+                <outlet property="_tabStyleLabel" destination="ThU-HR-f8F" id="cJn-Ll-T5a"/>
                 <outlet property="_tabView" destination="W2g-ef-8zn" id="vt5-hg-gLc"/>
                 <outlet property="_uiElement" destination="zde-kb-c7t" id="kdn-MM-Kyo"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
@@ -1466,6 +1474,7 @@ DQ
         <customObject id="dVg-Ac-SiZ" userLabel="Prefs&gt;Profiles&gt;General View Controller" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
                 <outlet property="_advancedWorkingDirWindowController" destination="Cct-nR-QI7" id="BT2-8e-6Md"/>
+                <outlet property="_badgeLabel" destination="nUa-Y1-jO4" id="86p-e0-92K"/>
                 <outlet property="_badgeText" destination="sa9-oD-SMc" id="MvW-wP-hbS"/>
                 <outlet property="_badgeTextForEditCurrentSession" destination="YD4-m8-MP1" id="ePA-nZ-uue"/>
                 <outlet property="_basicsLabel" destination="3247" id="Uel-UZ-Vvt"/>
@@ -1480,10 +1489,12 @@ DQ
                 <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
                 <outlet property="_editCurrentSessionView" destination="IUK-Yc-d7G" id="6ba-10-vJC"/>
                 <outlet property="_icon" destination="PFt-ce-pWw" id="c3d-ut-Tk1"/>
+                <outlet property="_iconLabel" destination="Xzz-Fo-TWV" id="JMy-Cp-2Y2"/>
                 <outlet property="_imageWell" destination="CNi-xf-qcd" id="ta5-Ti-xEy"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileNameFieldForEditCurrentSession" destination="12133" id="5Kd-KE-2zg"/>
+                <outlet property="_profileNameFieldLabel" destination="2134" id="egs-WO-Ucn"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
                 <outlet property="_profiles" destination="15766" id="mhp-qy-IXj"/>
                 <outlet property="_schemesHeaderLabel" destination="5033" id="zvx-Dj-J4p"/>
@@ -1497,6 +1508,7 @@ DQ
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
                 <outlet property="_titleSettings" destination="2VF-JO-c2O" id="ICH-hq-e0E"/>
                 <outlet property="_titleSettingsForEditCurrentSession" destination="srn-wx-IXg" id="oUv-eH-70S"/>
+                <outlet property="_titleSettingsLabel" destination="iet-o6-fEv" id="pSm-Js-qHS"/>
                 <outlet property="_urlSchemes" destination="5037" id="lLd-os-fwk"/>
                 <outlet property="_windowTitle" destination="DWA-qh-SID" id="C4F-iK-KXg"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
@@ -3752,7 +3764,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -4417,7 +4429,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -5212,7 +5224,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="5753">
-                                                <rect key="frame" x="19" y="55" width="354" height="18"/>
+                                                <rect key="frame" x="18" y="55" width="354" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Disable transparency for fullscreen windows by default" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5754">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5235,7 +5247,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4561">
-                                                <rect key="frame" x="19" y="73" width="113" height="18"/>
+                                                <rect key="frame" x="18" y="73" width="113" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Hide scrollbars" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4564">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5247,7 +5259,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="tyx-QN-l9J">
-                                                <rect key="frame" x="19" y="36" width="354" height="18"/>
+                                                <rect key="frame" x="18" y="36" width="354" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show line under title bar when the tab bar is not visible" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="fyA-Fd-O2Q">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5985,7 +5997,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -6221,7 +6233,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <clipView key="contentView" id="2zv-hI-Vxj">
                                                     <rect key="frame" x="1" y="0.0" width="849" height="284"/>
-                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                                             <rect key="frame" x="0.0" y="0.0" width="849" height="267"/>
