@@ -44,6 +44,8 @@ extern NSString *const kPreferencePanelWillCloseNotification;
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
 
+extern CGFloat iTermSharedPreferencePanelWindowMinimumWidth;
+
 // Constants for KEY_PROMPT_CLOSE
 // Never prompt on close
 #define PROMPT_NEVER 0

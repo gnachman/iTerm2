@@ -107,6 +107,9 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 NSString *const kPreferencePanelDidLoadNotification = @"kPreferencePanelDidLoadNotification";
 NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCloseNotification";
 
+static NSString *const iTermPreferencePanelSearchFieldToolbarItemIdentifier = @"iTermPreferencePanelSearchFieldToolbarItemIdentifier";
+CGFloat iTermSharedPreferencePanelWindowMinimumWidth = 560;
+
 // Strong references to the two preference panels.
 static PreferencePanel *gSharedPreferencePanel;
 static PreferencePanel *gSessionsPreferencePanel;
@@ -196,6 +199,8 @@ static PreferencePanel *gSessionsPreferencePanel;
     IBOutlet NSTabViewItem *_mouseTabViewItem;
     IBOutlet NSToolbarItem *_advancedToolbarItem;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
+    IBOutlet NSToolbarItem *_flexibleSpaceToolbarItem;
+    NSToolbarItem *_searchFieldToolbarItem;
 
     // This class is not well named. It is a view controller for the window
     // arrangements tab. It's also a singleton :(
@@ -489,12 +494,27 @@ andEditComponentWithIdentifier:(NSString *)identifier
               [_keyboardToolbarItem itemIdentifier],
               [_arrangementsToolbarItem itemIdentifier],
               [_mouseToolbarItem itemIdentifier],
-              [_advancedToolbarItem itemIdentifier] ];
+              [_advancedToolbarItem itemIdentifier],
+              [_flexibleSpaceToolbarItem itemIdentifier],
+              iTermPreferencePanelSearchFieldToolbarItemIdentifier];
+}
+
+- (void)createSearchField {
+    _searchFieldToolbarItem = [[NSToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
+
+    NSSearchField *searchField = [[NSSearchField alloc] init];
+    [searchField sizeToFit];
+
+//    [_searchFieldToolbarItem setLabel:@"Search"];
+    [_searchFieldToolbarItem setView:searchField];
 }
 
 - (NSDictionary *)toolbarIdentifierToItemDictionary {
     if (!_globalToolbarItem) {
         return @{};
+    }
+    if (!_searchFieldToolbarItem) {
+        [self createSearchField];
     }
     return @{ [_globalToolbarItem itemIdentifier]: _globalToolbarItem,
               [_appearanceToolbarItem itemIdentifier]: _appearanceToolbarItem,
@@ -502,7 +522,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
               [_keyboardToolbarItem itemIdentifier]: _keyboardToolbarItem,
               [_arrangementsToolbarItem itemIdentifier]: _arrangementsToolbarItem,
               [_mouseToolbarItem itemIdentifier]: _mouseToolbarItem,
-              [_advancedToolbarItem itemIdentifier]: _advancedToolbarItem };
+              [_advancedToolbarItem itemIdentifier]: _advancedToolbarItem,
+              iTermPreferencePanelSearchFieldToolbarItemIdentifier: _searchFieldToolbarItem };
 }
 
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar
@@ -606,6 +627,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     rect.size.width += 26;
     rect.origin = topLeft;
     rect.origin.y -= rect.size.height;
+    rect.size.width = MAX(iTermSharedPreferencePanelWindowMinimumWidth, rect.size.width);
     [[self window] setFrame:rect display:YES animate:animated];
 }
 

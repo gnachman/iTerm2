@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -18,6 +18,7 @@
                 <outlet property="_arrangementsToolbarItem" destination="5890" id="2RT-x5-vvx"/>
                 <outlet property="_bookmarksTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
                 <outlet property="_bookmarksToolbarItem" destination="5886" id="2yS-fU-fSr"/>
+                <outlet property="_flexibleSpaceToolbarItem" destination="gT5-w7-yWc" id="Acr-j3-4A7"/>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_globalTabViewItem" destination="1944" id="EaV-nW-mSM"/>
                 <outlet property="_globalToolbarItem" destination="5887" id="1KD-pS-eBt"/>
@@ -642,6 +643,7 @@ Gw
                             <action selector="showAdvancedTabView:" target="-2" id="f9X-n8-IcJ"/>
                         </connections>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="gT5-w7-yWc"/>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="5887"/>
@@ -651,6 +653,7 @@ Gw
                     <toolbarItem reference="6056"/>
                     <toolbarItem reference="5890"/>
                     <toolbarItem reference="gtg-rw-6h8"/>
+                    <toolbarItem reference="gT5-w7-yWc"/>
                 </defaultToolbarItems>
                 <connections>
                     <outlet property="delegate" destination="-2" id="5896"/>
