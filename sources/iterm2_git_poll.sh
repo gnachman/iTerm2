@@ -30,6 +30,7 @@ dirty() {
 counts() {
     OUTPUT=$("$GIT_BINARY" rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)
     if (($?)); then
+        echo "error"
         return
     fi
     echo "$OUTPUT"

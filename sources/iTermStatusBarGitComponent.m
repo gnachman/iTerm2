@@ -209,8 +209,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         return nil;
     }
 
-    NSAttributedString *upCount = _gitPoller.state.pushArrow.length ? [self attributedStringWithString:_gitPoller.state.pushArrow] : nil;
-    NSAttributedString *downCount = _gitPoller.state.pullArrow.length ? [self attributedStringWithString:_gitPoller.state.pullArrow] : nil;
+    NSAttributedString *upCount = _gitPoller.state.pushArrow.integerValue > 0 ? [self attributedStringWithString:_gitPoller.state.pushArrow] : nil;
+    NSAttributedString *downCount = _gitPoller.state.pullArrow.integerValue > 0 ? [self attributedStringWithString:_gitPoller.state.pullArrow] : nil;
 
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:branch];
@@ -352,8 +352,12 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         addItem(@"Add & Commit", @selector(addAndCommit:), state.dirty);
         addItem(@"Stash", @selector(stash:), state.dirty);
         addItem(@"Log", @selector(log:), state.dirty);
-        addItem([NSString stringWithFormat:@"Push origin %@", state.branch], @selector(push:), state.pushArrow.intValue > 0);
-        addItem([NSString stringWithFormat:@"Pull origin %@", state.branch], @selector(pull:), !state.dirty);
+        addItem([NSString stringWithFormat:@"Push origin %@", state.branch],
+                @selector(push:),
+                state.pushArrow.intValue > 0 || [state.pushArrow isEqualToString:@"error"]);
+        addItem([NSString stringWithFormat:@"Pull origin %@", state.branch],
+                @selector(pull:),
+                !state.dirty);
         [menu addItem:[NSMenuItem separatorItem]];
         for (NSString *branch in [branches it_arrayByKeepingFirstN:7]) {
             if (branch.length == 0) {
