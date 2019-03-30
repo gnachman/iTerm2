@@ -1413,18 +1413,26 @@ DQ
             <connections>
                 <outlet property="_configureHotKeyWindow" destination="yqL-PV-QBa" id="ujI-sN-AKS"/>
                 <outlet property="_controlButton" destination="4237" id="rOx-d6-9bm"/>
+                <outlet property="_controlButtonLabel" destination="3673" id="RLd-dc-IoT"/>
                 <outlet property="_emulateUSKeyboard" destination="xcI-Ej-rao" id="ikw-qr-450"/>
                 <outlet property="_hotkeyEnabled" destination="5104" id="QVB-Xu-fmz"/>
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
+                <outlet property="_leftCommandButtonLabel" destination="3677" id="UYl-D3-ufT"/>
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
+                <outlet property="_leftOptionButtonLabel" destination="3689" id="DKy-sQ-KLh"/>
                 <outlet property="_rightCommandButton" destination="4410" id="xeL-Ll-jEw"/>
+                <outlet property="_rightCommandButtonLabel" destination="4335" id="B5y-Bj-9pM"/>
                 <outlet property="_rightOptionButton" destination="4392" id="zkG-aT-oOV"/>
+                <outlet property="_rightOptionButtonLabel" destination="3675" id="35v-7p-6fu"/>
                 <outlet property="_shortcutOverloaded" destination="6qd-z9-t1q" id="8cO-cF-n8h"/>
                 <outlet property="_switchPaneModifierButton" destination="LXv-KO-6t6" id="WEu-r7-Lu6"/>
+                <outlet property="_switchPaneModifierButtonLabel" destination="Z54-N2-Thm" id="3Ft-9W-6da"/>
                 <outlet property="_switchTabModifierButton" destination="4118" id="m16-Tk-0hv"/>
+                <outlet property="_switchTabModifierButtonLabel" destination="4219" id="OX8-N9-NEK"/>
                 <outlet property="_switchWindowModifierButton" destination="4269" id="LkQ-lj-KIU"/>
+                <outlet property="_switchWindowModifierButtonLabel" destination="4223" id="HB9-N5-jcJ"/>
                 <outlet property="_tabView" destination="8E3-yy-qfF" id="Rfw-LQ-xgo"/>
                 <outlet property="view" destination="Z7N-XT-vVo" id="hpk-zq-hqx"/>
             </connections>
@@ -1677,9 +1685,11 @@ DQ
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
                 <outlet property="_allowTitleSetting" destination="xih-tE-Xk7" id="mDx-e5-6YC"/>
                 <outlet property="_answerBackString" destination="tcJ-V2-9Fd" id="wc8-xa-PRR"/>
+                <outlet property="_answerBackStringLabel" destination="Fzk-rB-88j" id="xcc-hw-dLN"/>
                 <outlet property="_bellAlert" destination="O5A-H9-sKq" id="Mhv-zY-a7H"/>
                 <outlet property="_bellIconInTabs" destination="2403" id="B95-D8-cC5"/>
                 <outlet property="_characterEncoding" destination="2390" id="SiG-ub-R7K"/>
+                <outlet property="_characterEncodingLabel" destination="2391" id="Ink-6l-bq3"/>
                 <outlet property="_disableAltScreen" destination="5081" id="DvY-uh-omh"/>
                 <outlet property="_disablePrinting" destination="5633" id="ehN-F7-zlE"/>
                 <outlet property="_disableWindowResizing" destination="5004" id="w7d-0W-f00"/>
@@ -1690,6 +1700,7 @@ DQ
                 <outlet property="_idleAlert" destination="bxF-vz-pm1" id="Iel-jC-qBT"/>
                 <outlet property="_newOutputAlert" destination="gMB-do-VHw" id="qmv-9x-Gu3"/>
                 <outlet property="_numScrollbackLines" destination="2401" id="zuf-vS-xWC"/>
+                <outlet property="_numScrollbackLinesLabel" destination="2400" id="C5H-Ka-UBA"/>
                 <outlet property="_postNotifications" destination="2404" id="19Y-du-c7A"/>
                 <outlet property="_scrollbackInAlternateScreen" destination="5758" id="Wzb-92-pab"/>
                 <outlet property="_scrollbackWithStatusBar" destination="5154" id="GTO-ta-yjN"/>
@@ -1699,6 +1710,7 @@ DQ
                 <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>
                 <outlet property="_terminalGeneratedAlerts" destination="pot-jK-a8U" id="BZL-Lh-M8N"/>
                 <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
+                <outlet property="_terminalTypeLabel" destination="2393" id="h9G-Sr-1z6"/>
                 <outlet property="_unlimitedScrollback" destination="3647" id="3g4-2U-Gbv"/>
                 <outlet property="_xtermMouseReporting" destination="2402" id="kB0-i0-VKF"/>
                 <outlet property="_xtermMouseReportingAllowMouseWheel" destination="EMG-WL-JwE" id="1Dc-fP-KhQ"/>
@@ -5568,11 +5580,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="EcE-gz-HD4" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="230" y="248" width="441" height="133"/>
+                                        <rect key="frame" x="213" y="248" width="473" height="133"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" id="4118">
-                                                <rect key="frame" x="195" y="70" width="161" height="26"/>
+                                                <rect key="frame" x="238" y="70" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4137" id="4129">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5600,25 +5612,25 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4223">
-                                                <rect key="frame" x="63" y="106" width="123" height="17"/>
+                                                <rect key="frame" x="41" y="106" width="188" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="To switch windows:" id="4224">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut to activate a window:" id="4224">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="Z54-N2-Thm">
-                                                <rect key="frame" x="51" y="44" width="135" height="17"/>
+                                                <rect key="frame" x="31" y="44" width="198" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="To switch split panes:" id="wrs-RL-mgS">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut to choose a split pane:" id="wrs-RL-mgS">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" id="4269">
-                                                <rect key="frame" x="195" y="101" width="161" height="26"/>
+                                                <rect key="frame" x="238" y="101" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4273" id="4270">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5646,7 +5658,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="E3b-pG-bV9">
-                                                <rect key="frame" x="364" y="13" width="25" height="25"/>
+                                                <rect key="frame" x="407" y="13" width="25" height="25"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Pf3-LY-bNG">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5657,7 +5669,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" id="xcI-Ej-rao">
-                                                <rect key="frame" x="195" y="18" width="161" height="18"/>
+                                                <rect key="frame" x="238" y="18" width="161" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Emulate U.S. Keyboard" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="UTO-Uf-SmK">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5668,7 +5680,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <popUpButton verticalHuggingPriority="750" id="LXv-KO-6t6">
-                                                <rect key="frame" x="195" y="39" width="161" height="26"/>
+                                                <rect key="frame" x="238" y="39" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌥⌘ Number" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="a9h-ca-fto" id="T7I-ty-osf">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5696,9 +5708,9 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4219">
-                                                <rect key="frame" x="91" y="76" width="95" height="17"/>
+                                                <rect key="frame" x="78" y="76" width="151" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="To switch tabs:" id="4220">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut to select a tab:" id="4220">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5790,9 +5802,9 @@ DQ
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3673">
-                                                <rect key="frame" x="75" y="124" width="143" height="17"/>
+                                                <rect key="frame" x="57" y="124" width="161" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Control (⌃) key:" id="3674">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap control (⌃) key to:" id="3674">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5857,18 +5869,18 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3677">
-                                                <rect key="frame" x="65" y="49" width="153" height="17"/>
+                                                <rect key="frame" x="16" y="49" width="202" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left command (⌘) key:" id="3678">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left command (⌘) key to:" id="3678">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3689">
-                                                <rect key="frame" x="75" y="99" width="143" height="17"/>
+                                                <rect key="frame" x="38" y="99" width="180" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Left option (⌥) key:" id="3690">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left option (⌥) key to:" id="3690">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5932,18 +5944,18 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4335">
-                                                <rect key="frame" x="55" y="23" width="163" height="17"/>
+                                                <rect key="frame" x="8" y="23" width="210" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right command (⌘) key:" id="4343">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right command (⌘) key to:" id="4343">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="3675">
-                                                <rect key="frame" x="72" y="74" width="146" height="17"/>
+                                                <rect key="frame" x="29" y="74" width="189" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Right option (⌥) key:" id="3676">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right option (⌥) key to:" id="3676">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
