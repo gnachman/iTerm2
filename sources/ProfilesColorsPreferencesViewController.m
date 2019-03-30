@@ -124,7 +124,9 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     for (NSString *key in colorWellDictionary) {
         CPKColorWell *colorWell = colorWellDictionary[key];
-        [self defineControl:colorWell key:key type:kPreferenceInfoTypeColorWell];
+        [self defineControl:colorWell
+                        key:key
+                       type:kPreferenceInfoTypeColorWell];
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;

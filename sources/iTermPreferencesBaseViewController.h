@@ -35,7 +35,12 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
                              type:(PreferenceInfoType)type;
+
+- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control
+                                          key:(NSString *)key
+                                         type:(PreferenceInfoType)type;
 
 // Define a control with a custom settingChanged and update handler. If they're both not null then
 // the default value is not type checked.
@@ -48,6 +53,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key
+                      displayName:(NSString *)displayName // for search
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update;

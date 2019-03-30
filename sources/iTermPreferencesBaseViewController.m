@@ -262,10 +262,14 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type {
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName
+                             type:(PreferenceInfoType)type {
     return [self defineControl:control
                            key:key
                    relatedView:nil
+                   displayName:displayName
                           type:type
                 settingChanged:NULL
                         update:NULL];
@@ -283,13 +287,20 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                         update:NULL];
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type settingChanged:(void (^)(id))settingChanged update:(BOOL (^)(void))update {
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      displayName:(NSString *)displayName
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update {
     return [self defineControl:control
                            key:key
                    relatedView:nil
+                   displayName:displayName
                           type:type
                 settingChanged:settingChanged
-                        update:update];
+                        update:update
+                    searchable:YES];
 }
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
@@ -298,6 +309,35 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update {
+    return [self defineControl:control
+                           key:key
+                   relatedView:relatedView
+                   displayName:nil
+                          type:type
+                settingChanged:settingChanged
+                        update:update
+                    searchable:YES];
+}
+
+- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type {
+    return [self defineControl:control
+                           key:key
+                   relatedView:nil
+                   displayName:nil
+                          type:type
+                settingChanged:nil
+                        update:nil
+                    searchable:NO];
+}
+
+- (PreferenceInfo *)defineControl:(NSControl *)control
+                              key:(NSString *)key
+                      relatedView:(NSView *)relatedView
+                      displayName:(NSString *)forceDisplayName
+                             type:(PreferenceInfoType)type
+                   settingChanged:(void (^)(id))settingChanged
+                           update:(BOOL (^)(void))update
+                       searchable:(BOOL)searchable {
     assert(![_keyMap objectForKey:(id)key]);
     assert(key);
     assert(control);
@@ -315,22 +355,25 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     [_keyMap setObject:info forKey:control];
     [_keys addObject:key];
 
-    NSMutableArray<NSString *> *phrases = [NSMutableArray array];
-    NSString *displayName = [self displayNameForControl:control
-                                            relatedView:relatedView
-                                                   type:type
-                                                phrases:phrases];
+    if (searchable) {
+        NSMutableArray<NSString *> *phrases = [NSMutableArray array];
+        NSString *displayName = forceDisplayName ?: [self displayNameForControl:control
+                                                                    relatedView:relatedView
+                                                                           type:type
+                                                                        phrases:phrases];
 
-    if (displayName) {
-        iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:displayName
-                                                                                           identifier:key
-                                                                                       keywordPhrases:phrases];
-        doc.owner = self;
-        [_docs addObject:doc];
-        info.searchDocument = doc;
-    } else {
-        NSLog(@"Warning: no display name for %@", key);
+        if (displayName) {
+            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:displayName
+                                                                                               identifier:key
+                                                                                           keywordPhrases:phrases];
+            doc.owner = self;
+            [_docs addObject:doc];
+            info.searchDocument = doc;
+        } else {
+            NSLog(@"Warning: no display name for %@", key);
+        }
     }
+
     [self updateValueForInfo:info];
 
     return info;

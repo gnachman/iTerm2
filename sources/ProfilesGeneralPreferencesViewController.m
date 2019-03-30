@@ -114,7 +114,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
-                   relatedView:_profileNameFieldLabel
+                   displayName:@"Profile name"
                           type:kPreferenceInfoTypeStringTextField];
     __weak PreferenceInfo *weakInfo = info;
     info.customSettingChangedHandler = ^(id sender) {
@@ -135,9 +135,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
     };
 
-    info = [self defineControl:_profileNameFieldForEditCurrentSession
-                           key:KEY_NAME
-                          type:kPreferenceInfoTypeStringTextField];
+    info = [self defineUnsearchableControl:_profileNameFieldForEditCurrentSession
+                                       key:KEY_NAME
+                                      type:kPreferenceInfoTypeStringTextField];
     info.willChange = ^() {
         __strong __typeof(weakSelf) strongSelf = self;
         if (!strongSelf) {
@@ -171,19 +171,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
-            relatedView:_shortcutLabel
+            displayName:@"Open profile shortcut keystroke"
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf setShortcutValueToSelectedItem]; }
                  update:^BOOL { [weakSelf updateShortcutTitles]; return YES; }];
 
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
-            relatedView:_tagsLabel
+            displayName:@"Profile tags"
                    type:kPreferenceInfoTypeTokenField];
 
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
-            relatedView:_commandLabel
+            displayName:@"Profile uses login shell or custom command"
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
@@ -191,6 +191,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     _customCommand.cell.usesSingleLineMode = YES;
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
+                   displayName:@"Profile customc ommand"
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL {
         __strong __typeof(weakSelf) strongSelf = self;
@@ -207,19 +208,18 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY
-            relatedView:_directoryLabel
+            displayName:@"Profile initial working directory"
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [weakSelf directoryTypeDidChange]; }
                  update:^BOOL { [weakSelf updateDirectoryType]; return YES; }];
 
-    [self defineControl:_customDirectory
-                    key:KEY_WORKING_DIRECTORY
-            relatedView:nil
-                   type:kPreferenceInfoTypeStringTextField];
+    [self defineUnsearchableControl:_customDirectory
+                                key:KEY_WORKING_DIRECTORY
+                               type:kPreferenceInfoTypeStringTextField];
 
     [self defineControl:_badgeText
                     key:KEY_BADGE_FORMAT
-            relatedView:_badgeLabel
+            displayName:@"Profile badge"
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
         [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
@@ -227,9 +227,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                          functionsOnly:NO];
     _badgeText.delegate = _badgeTextFieldDelegate;
 
-    [self defineControl:_badgeTextForEditCurrentSession
-                    key:KEY_BADGE_FORMAT
-                   type:kPreferenceInfoTypeStringTextField];
+    [self defineUnsearchableControl:_badgeTextForEditCurrentSession
+                                key:KEY_BADGE_FORMAT
+                               type:kPreferenceInfoTypeStringTextField];
     _badgeTextForEditCurrentSessionFieldDelegate =
         [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
                                                            passthrough:_badgeTextForEditCurrentSession.delegate
@@ -250,7 +250,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
-            relatedView:_titleSettingsLabel
+            displayName:@"Profile title options"
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
@@ -258,15 +258,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                      [self updateSelectedTitleComponents];
                      return YES;
                  }];
-    [self defineControl:_titleSettingsForEditCurrentSession
-                    key:KEY_TITLE_COMPONENTS
-                   type:kPreferenceInfoTypePopup
-         settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
-                 update:^BOOL {
-                     [self updateTitleSettingsMenu];
-                     [self updateSelectedTitleComponents];
-                     return YES;
-                 }];
+    [self defineUnsearchableControl:_titleSettingsForEditCurrentSession
+                                key:KEY_TITLE_COMPONENTS
+                               type:kPreferenceInfoTypePopup
+                     settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
+                             update:^BOOL {
+                                 [self updateTitleSettingsMenu];
+                                 [self updateSelectedTitleComponents];
+                                 return YES;
+                             }];
     [self updateSelectedTitleComponents];
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
