@@ -87,22 +87,26 @@
     __weak __typeof(self) weakSelf = self;
     [self defineControl:_closeSessionsOnEnd
                     key:KEY_CLOSE_SESSIONS_ON_END
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_alwaysWarn
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
 
     [self defineControl:_neverWarn
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
 
     [self defineControl:_warnIfJobsBesides
                     key:KEY_PROMPT_CLOSE
+            relatedView:nil
                    type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
@@ -114,6 +118,7 @@
     PreferenceInfo *info;
     info = [self defineControl:_autoLog
                            key:KEY_AUTOLOG
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -127,11 +132,13 @@
 
     info = [self defineControl:_logDir
                            key:KEY_LOGDIR
+                   relatedView:nil
                           type:kPreferenceInfoTypeStringTextField];
     info.observer = ^() { [weakSelf updateLogDirWarning]; };
 
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -181,16 +188,19 @@
 
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
+            relatedView:nil
                    type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
 
     [self defineControl:_reduceFlicker
                     key:KEY_REDUCE_FLICKER
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_statusBarEnabled
                            key:KEY_SHOW_STATUS_BAR
+                   relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
