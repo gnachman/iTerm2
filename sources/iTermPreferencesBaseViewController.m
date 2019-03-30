@@ -341,7 +341,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                type:(PreferenceInfoType)type
                             phrases:(NSMutableArray<NSString *> *)phrases {
     NSString *displayName = nil;
-    NSTextField *relatedTextField = [NSTextField castFrom:relatedView];
     if (control.toolTip) {
         [phrases addObject:control.toolTip];
     }
@@ -418,12 +417,18 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             break;
         }
     }
+    NSTextField *relatedTextField = [NSTextField castFrom:relatedView];
     NSString *relatedPhrase = relatedTextField.stringValue;
+    if (!relatedPhrase) {
+        relatedPhrase = [NSButton castFrom:relatedView].title;
+    }
     if (relatedPhrase) {
         relatedPhrase = [relatedPhrase stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@": "]];
         [phrases addObject:relatedPhrase];
         displayName = relatedPhrase;
     }
+    displayName = [displayName stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@": "]];
+
     return displayName;
 }
 

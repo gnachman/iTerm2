@@ -1604,6 +1604,7 @@ DQ
                 <outlet property="_backgroundImageMode" destination="TfM-qR-99a" id="6E7-ta-mrr"/>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
+                <outlet property="_blendAmountLabel" destination="6324" id="TOM-PK-pqI"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
@@ -1622,6 +1623,7 @@ DQ
                 <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_transparencyAffectsOnlyDefaultBackgroundColor" destination="fwj-4Y-nja" id="caf-eb-abe"/>
+                <outlet property="_transparencyLabel" destination="4975" id="cbr-i4-IkD"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="_useCustomWindowTitle" destination="54y-dV-lgv" id="Fqi-lb-bV7"/>
