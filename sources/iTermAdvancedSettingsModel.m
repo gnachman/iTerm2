@@ -501,14 +501,14 @@ DEFINE_BOOL(showMetalFPSmeter, NO, SECTION_EXPERIMENTAL @"Show FPS meter\nRequir
 DEFINE_BOOL(disableMetalWhenIdle, NO, SECTION_EXPERIMENTAL @"Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
 DEFINE_BOOL(proportionalScrollWheelReporting, YES, SECTION_EXPERIMENTAL @"Report multiple mouse scroll events when scrolling quickly?");
-DEFINE_BOOL(useModernScrollWheelAccumulator, NO, SECTION_EXPERIMENTAL @"Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
+DEFINE_BOOL(useModernScrollWheelAccumulator, YES, SECTION_EXPERIMENTAL @"Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
 DEFINE_BOOL(resetSGROnPrompt, YES, SECTION_EXPERIMENTAL @"Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 DEFINE_BOOL(retinaInlineImages, YES, SECTION_EXPERIMENTAL @"Show inline images at Retina resolution.");
 DEFINE_BOOL(throttleMetalConcurrentFrames, YES, SECTION_EXPERIMENTAL @"Reduce number of frames in flight when GPU can't produce drawables quickly.");
 DEFINE_BOOL(metalDeferCurrentDrawable, NO, SECTION_EXPERIMENTAL @"Defer invoking currentDrawable.\nThis may improve overall performance at the cost of a lower frame rate.");
-DEFINE_BOOL(sshURLsSupportPath, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"SSH URLs respect the path.\nThey run the command: ssh -t \"cd $$PATH$$; exec \\$SHELL -l\"");
-DEFINE_BOOL(useDivorcedProfileToSplit, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"When splitting a pane, use the profile with local modifications, not the backing profile.");
-DEFINE_BOOL(synergyModifierRemappingEnabled, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Support modifier remapping for keystrokes originated by Synergy.");
+DEFINE_BOOL(sshURLsSupportPath, YES, SECTION_EXPERIMENTAL @"SSH URLs respect the path.\nThey run the command: ssh -t \"cd $$PATH$$; exec \\$SHELL -l\"");
+DEFINE_BOOL(useDivorcedProfileToSplit, YES, SECTION_EXPERIMENTAL @"When splitting a pane, use the profile with local modifications, not the backing profile.");
+DEFINE_BOOL(synergyModifierRemappingEnabled, YES, SECTION_EXPERIMENTAL @"Support modifier remapping for keystrokes originated by Synergy.");
 DEFINE_BOOL(shouldSetLCTerminal, YES, SECTION_EXPERIMENTAL @"Set LC_TERMINAL=iTerm2.\nopenssh and mosh pass this to hosts you connect to. It communicates the current terminal emulator. This is useful for enabling terminal emulator-specific features.");
 DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell icon when a session becomes active.\nWhen off, you must type in the session to clear the bell icon.");
 
