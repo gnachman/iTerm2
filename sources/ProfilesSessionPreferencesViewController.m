@@ -271,13 +271,8 @@
 }
 
 - (BOOL)allowRainbow {
-    if (@available(macOS 10.14, *)) {
-        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        const iTermWindowType windowType = [self intForKey:KEY_WINDOW_TYPE];
-        return (preferredStyle == TAB_STYLE_MINIMAL && windowType == WINDOW_TYPE_COMPACT);
-    } else {
-        return NO;
-    }
+    // I was going to make this an easter egg but it was revealed by the Whats New screenshot.
+    return YES;
 }
 
 - (iTermColorMap *)colorMap {
