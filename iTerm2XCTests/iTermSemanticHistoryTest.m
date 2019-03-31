@@ -1145,6 +1145,35 @@
 }
 
 
+// Regression test for issue 7635
+- (void)testColonTextAfterLineNumber {
+    int numCharsFromPrefix;
+    int numCharsFromSuffix;
+    NSString *kWorkingDirectory = @"/directory";
+    NSString *kRelativeFilename = @"file.rb";
+    NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+    NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"file"
+                                                                            suffix:@".rb:7:in `new`"
+                                                                  workingDirectory:kWorkingDirectory
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                              charsTakenFromSuffix:&numCharsFromSuffix
+                                                                    trimWhitespace:NO];
+    XCTAssertEqualObjects(@"file.rb:7", path);
+
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:path
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    XCTAssertEqualObjects(actual, @"/directory/file.rb");
+    XCTAssertEqualObjects(lineNumber, @"7");
+    XCTAssertNil(columnNumber);
+}
+
 #warning This test fails, but fixing it would change how raw actions work in edge cases where there is punctuation or brackets. I'll delay that until 3.1.
 #if 0
 - (void)testPathOfExistingFile_QuestionableSuffix {

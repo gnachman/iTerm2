@@ -153,14 +153,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return path;
 }
 
-- (NSArray<NSString *> *)lineAndColumnNumberRegexes {
-    return @[ @":(\\d+):(\\d+)",
-              @":(\\d+)",
-              @"\\[(\\d+), ?(\\d+)]",
-              @"\", line (\\d+), column (\\d+)",
-              @"\\((\\d+), ?(\\d+)\\)" ];
-}
-
 - (void)extractFromSuffix:(NSString *)suffix lineNumber:(NSString **)lineNumber columnNumber:(NSString **)columnNumber {
     NSArray<NSString *> *regexes = [[self lineAndColumnNumberRegexes] mapWithBlock:^id(NSString *anObject) {
         return [@"^" stringByAppendingString:anObject];
@@ -694,7 +686,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSArray<NSString *> *)splitString:(NSString *)string {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     __block NSRange lastRange = NSMakeRange(0, 0);
-    [string enumerateStringsMatchedByRegex:@"([^\t ()]*)([\t ()])"
+    [string enumerateStringsMatchedByRegex:@"([^\t ():]*)([\t ():])"
                                    options:0
                                    inRange:NSMakeRange(0, string.length)
                                      error:nil
@@ -825,9 +817,18 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return nil;
 }
 
+- (NSArray<NSString *> *)lineAndColumnNumberRegexes {
+    return @[ @":(\\d+):(\\d+)",
+              @":(\\d+)",
+              @"\\[(\\d+), ?(\\d+)]",
+              @"\", line (\\d+), column (\\d+)",
+              @"\\((\\d+), ?(\\d+)\\)" ];
+}
+
 - (NSString *)columnAndLineNumberFromChunks:(NSArray<NSString *> *)afterChunks {
     NSString *suffix = [afterChunks componentsJoinedByString:@""];
-    NSArray<NSString *> *regexes = @[ @"^(:\\d+)",
+    NSArray<NSString *> *regexes = @[ @"^(:\\d+:\\d+)",
+                                      @"^(:\\d+)",
                                       @"^(\\[\\d+, ?\\d+])",
                                       @"^(\", line \\d+, column \\d+)",
                                       @"^(\\(\\d+, ?\\d+\\))"];
