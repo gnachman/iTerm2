@@ -224,13 +224,22 @@
     }
 
     NSSet<NSNumber *> *docids = [self commonDocIDsAmongCursors:cursors];
-    return [self documentsSortedByDisplayNameForWithDocIDs:docids];
+    NSDictionary<NSString *, NSArray<NSNumber *> *> *identifierToDocids = [docids.allObjects classifyWithBlock:^id(NSNumber *docid) {
+        return self->_docs[docid].identifier;
+    }];
+    docids = [NSSet setWithArray:[identifierToDocids.allValues mapWithBlock:^id(NSArray<NSNumber *> *docids) {
+        return docids.firstObject;
+    }]];
+    return [self documentsSortedByDisplayNameWithDocIDs:docids];
 }
 
-- (NSArray<iTermPreferencesSearchDocument *> *)documentsSortedByDisplayNameForWithDocIDs:(NSSet<NSNumber *> *)docids {
+- (NSArray<iTermPreferencesSearchDocument *> *)documentsSortedByDisplayNameWithDocIDs:(NSSet<NSNumber *> *)docids {
     return [[docids.allObjects mapWithBlock:^id(NSNumber *docid) {
         return self->_docs[docid];
     }] sortedArrayUsingComparator:^NSComparisonResult(iTermPreferencesSearchDocument * _Nonnull doc1, iTermPreferencesSearchDocument * _Nonnull doc2) {
+        if (doc1.queryIndependentScore != doc2.queryIndependentScore) {
+            return [@(doc2.queryIndependentScore) compare:@(doc1.queryIndependentScore)];
+        }
         return [doc1.displayName localizedCaseInsensitiveCompare:doc2.displayName];
     }];
 }

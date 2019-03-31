@@ -613,25 +613,11 @@ static NSDictionary *gIntrospection;
 
 - (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
     if (!_docs) {
-        NSArray *phrases = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
-            return dict[kAdvancedSettingDescription];
-        }];
-        _docs = @[  [iTermPreferencesSearchDocument documentWithDisplayName:@"Advanced Preferences…"
-                                                                 identifier:@"Advanced Preferences"
-                                                             keywordPhrases:phrases]];
-        _docs[0].ownerIdentifier = self.documentOwnerIdentifier;
-    }
-    return _docs;
-}
-
-// To expose all advanced prefs to global search, use this to create the documents returned by
-// searchableViewControllerDocuments
-- (NSArray<iTermPreferencesSearchDocument *> *)allDocuments {
-    if (!_docs) {
         _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
-            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:dict[kAdvancedSettingDescription]
-                                                                                               identifier:dict[kAdvancedSettingIdentifier]
-                                                                                           keywordPhrases:@[]];
+            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:@"Advanced Preferences…"  // dict[kAdvancedSettingDescription]
+                                                                                               identifier:@"Advanced Preferences"  // dict[kAdvancedSettingIdentifier]
+                                                                                           keywordPhrases:@[ dict[kAdvancedSettingDescription] ]];
+            doc.queryIndependentScore = -1;
             doc.ownerIdentifier = self.documentOwnerIdentifier;
             return doc;
         }];

@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<NSString *> *allKeywords;
 @property (nonatomic, readonly) NSNumber *docid;
 @property (nonatomic, strong) NSString *ownerIdentifier;
+@property (nonatomic) double queryIndependentScore;
 
 + (instancetype)documentWithDisplayName:(NSString *)displayName
                              identifier:(NSString *)identifier
