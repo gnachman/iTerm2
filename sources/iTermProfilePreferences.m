@@ -537,7 +537,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     dispatch_once(&onceToken, ^{
         iTermStatusBarLayout *layout;
         layout = [[iTermStatusBarLayout alloc] initWithScope:nil];
-        layout.advancedConfiguration.separatorColor = [NSColor colorWithRed:0 green:0 blue:0 alpha:0.25];
         defaultValue = layout.dictionaryValue;
     });
     return defaultValue;

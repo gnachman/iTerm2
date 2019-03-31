@@ -2816,7 +2816,6 @@
 		A6C762BF1B45C52B00E3C992 /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
 		A6C762C01B45C52B00E3C992 /* NSStringITerm.m in Sources */ = {isa = PBXBuildFile; fileRef = E8E901A202743CA303A80106 /* NSStringITerm.m */; };
 		A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
-		A6C762C21B45C52B00E3C992 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6C762C31B45C52B00E3C992 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
 		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A6C762C51B45C52B00E3C992 /* Coprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD9B142E5FBB00275650 /* Coprocess.m */; };
@@ -3167,6 +3166,7 @@
 		A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */; };
 		A6DBC05120073CBA00F1466D /* NSResponder+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */; };
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
+		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
@@ -10294,6 +10294,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
+				English,
 				zh_CN,
 				zh_TW,
 				en,
@@ -12173,6 +12174,7 @@
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A6180D7121A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.m in Sources */,
 				53E9DFE3220D52B00070C9C0 /* ScriptTrigger.m in Sources */,
+				A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */,
 				53E9DFE0220D518E0070C9C0 /* AlertTrigger.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
@@ -12506,7 +12508,6 @@
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
 				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,
-				A6C762C21B45C52B00E3C992 /* NSView+iTerm.m in Sources */,
 				A6C762D31B45C52B00E3C992 /* LineBlock.mm in Sources */,
 				A6C762F91B45C52B00E3C992 /* iTermExposeView.m in Sources */,
 				A6C762E51B45C52B00E3C992 /* TextViewWrapper.m in Sources */,

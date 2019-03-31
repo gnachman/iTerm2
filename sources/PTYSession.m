@@ -10947,7 +10947,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         return nil;
     }
-    return _statusBarViewController.layout.advancedConfiguration.separatorColor;
+    NSColor *color = _statusBarViewController.layout.advancedConfiguration.separatorColor;
+    if (color) {
+        return color;
+    }
+
+    const CGFloat alpha = 0.25;
+    if (@available(macOS 10.14, *)) {
+        NSAppearance *appearance = nil;
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+                break;
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+                break;
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:  // shouldn't happen
+                appearance = [NSApp effectiveAppearance];
+                break;
+        }
+        return [[[self textColorForStatusBar] it_colorWithAppearance:appearance] colorWithAlphaComponent:alpha];
+    } else {
+        return [[self textColorForStatusBar] colorWithAlphaComponent:alpha];
+    }
 }
 
 - (NSColor *)statusBarBackgroundColor {

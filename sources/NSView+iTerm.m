@@ -12,7 +12,7 @@
 @implementation NSView (iTerm)
 
 - (NSImage *)snapshot {
-    return [[[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]] autorelease];
+    return [[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]];
 }
 
 - (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
@@ -39,8 +39,8 @@
     NSRect frame1 = subview1.frame;
     NSRect frame2 = subview2.frame;
 
-    NSView *filler1 = [[[NSView alloc] initWithFrame:subview1.frame] autorelease];
-    NSView *filler2 = [[[NSView alloc] initWithFrame:subview2.frame] autorelease];
+    NSView *filler1 = [[NSView alloc] initWithFrame:subview1.frame];
+    NSView *filler2 = [[NSView alloc] initWithFrame:subview2.frame];
 
     [self replaceSubview:subview1 with:filler1];
     [self replaceSubview:subview2 with:filler2];
@@ -66,11 +66,9 @@
                                           completion:^(BOOL finished) {
                                               delayedPerform.completed = YES;
                                               completion(finished);
-                                              [delayedPerform release];
                                           }];
                        } else {
                            completion(NO);
-                           [delayedPerform release];
                        }
                    });
     return delayedPerform;
