@@ -26,21 +26,27 @@
     if (self.length == 0) {
         return self;
     }
-    NSDictionary *immutableAttributes = [self attributesAtIndex:0 effectiveRange:nil];
+    NSInteger representativeIndex = self.length;
+    representativeIndex = MAX(0, representativeIndex - 1);
+    NSDictionary *immutableAttributes = [self attributesAtIndex:representativeIndex effectiveRange:nil];
     if (!immutableAttributes) {
         return self;
     }
 
-    NSMutableDictionary *attributes = [[immutableAttributes mutableCopy] autorelease];
-    NSMutableParagraphStyle *paragraphStyle = [[attributes[NSParagraphStyleAttributeName] mutableCopy] autorelease];
-    if (!paragraphStyle) {
-        paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
-    }
-    paragraphStyle.alignment = textAlignment;
-    NSMutableAttributedString *temp = [[self mutableCopy] autorelease];
-    attributes[NSParagraphStyleAttributeName] = paragraphStyle;
-    [temp setAttributes:attributes range:NSMakeRange(0, temp.length)];
-    return temp;
+    NSMutableAttributedString *mutableCopy = [[self mutableCopy] autorelease];
+    [self enumerateAttributesInRange:NSMakeRange(0, self.length)
+                             options:0
+                          usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
+                              NSMutableParagraphStyle *paragraphStyle = [[attrs[NSParagraphStyleAttributeName] mutableCopy] autorelease];
+                              if (!paragraphStyle) {
+                                  paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+                              }
+                              paragraphStyle.alignment = textAlignment;
+                              NSMutableDictionary *updatedAttrs = [[attrs mutableCopy] autorelease];
+                              updatedAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
+                              [mutableCopy setAttributes:updatedAttrs range:range];
+                          }];
+    return mutableCopy;
 }
 
 @end
