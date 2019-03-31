@@ -3668,11 +3668,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tabBarAlwaysVisible {
-    if (@available(macOS 10.14, *)) {
-        if (togglingLionFullScreen_ || [self lionFullScreen]) {
-            return YES;
-        }
-    }
     return ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
 }
 
@@ -4671,11 +4666,25 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+// Returns whether a permanent (i.e., not flashing) tabbar ought to be drawn while in full screen.
+// It does not check if you're already in full screen.
+- (BOOL)shouldShowPermanentFullScreenTabBar {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+        return NO;
+    }
+
+    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] && self.tabs.count == 1) {
+        return NO;
+    }
+
+    return YES;
+}
+
 - (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
     if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
         NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
-        if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+        if ([self shouldShowPermanentFullScreenTabBar]) {
             [viewController setFullScreenMinHeight:_contentView.tabBarControl.frame.size.height];
         } else {
             [viewController setFullScreenMinHeight:0];
@@ -5608,6 +5617,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
     [self invalidateRestorableState];
+    if (@available(macOS 10.14, *)) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] && (self.lionFullScreen || togglingLionFullScreen_)) {
+            // Hiding tabbar in fullscreen on 10.14 is extra work because it's a titlebar accessory.
+            [self updateTabBarStyle];
+        }
+    }
 }
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
