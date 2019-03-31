@@ -169,11 +169,14 @@
         NSRect containingFrame = cell.frame;
         const BOOL isHorizontal = bar.orientation == PSMTabBarHorizontalOrientation;
         if (isHorizontal) {
-            if (bar.cells.lastObject == cell) {
+            if (bar.cells.lastObject == cell && bar.stretchCellsToFit) {
                 containingFrame = NSMakeRect(NSMinX(cell.frame),
                                              0,
                                              bar.frame.size.width - NSMinX(cell.frame),
                                              bar.height);
+            }
+            if (bar.cells.firstObject == cell && self.treatLeftInsetAsPartOfFirstTab) {
+                containingFrame = NSMakeRect(0, 0, NSMaxX(containingFrame), NSHeight(containingFrame));
             }
             containingFrame.origin.x += 0.5;
             containingFrame.size.width -= 0.5;
@@ -540,6 +543,9 @@
 #pragma mark Draw outline around top tab bar
 
 - (void)drawOutlineAroundTopTabBarWithOneTab:(PSMTabBarControl *)bar {
+    if (!self.treatLeftInsetAsPartOfFirstTab) {
+        [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+    }
 }
 
 - (void)drawOutlineAroundTopTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
