@@ -406,6 +406,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _lockTransientTitle;
 
     NSMutableArray *_toggleFullScreenModeCompletionBlocks;
+
+    BOOL _windowNeedsInitialSize;
 }
 
 @synthesize scope = _scope;
@@ -882,6 +884,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     _windowTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue) {
         [weakSelf setWindowTitle];
     };
+    _windowNeedsInitialSize = YES;
     DLog(@"Done initializing PseudoTerminal %@", self);
 }
 
@@ -5553,7 +5556,10 @@ ITERM_WEAKLY_REFERENCEABLE
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
-        if (![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+        if (_windowNeedsInitialSize || ![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+            if (_windowNeedsInitialSize) {
+                DLog(@"Perform initial fitWindowToTabs");
+            }
             [self fitWindowToTabs];
         }
         [self repositionWidgets];
@@ -7146,6 +7152,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
+    _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {
         return;
     }
