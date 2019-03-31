@@ -1780,6 +1780,9 @@ ITERM_WEAKLY_REFERENCEABLE
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
             DLog(@"jobs that don't require prompting: %@", jobsThatDontRequirePrompting);
             for (NSString *childName in [self childJobNames]) {
+                if ([childName isEqualToString:@"login"]) {
+                    continue;
+                }
                 DLog(@"Check child %@", childName);
                 if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
                     DLog(@"    not on the ignore list");
