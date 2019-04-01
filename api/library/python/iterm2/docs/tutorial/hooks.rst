@@ -176,30 +176,7 @@ Status bar components can also define configuration settings, called knobs.
 For more information, see :class:`iterm2.StatusBarComponent`. There are also a
 number of status bar components in the :doc:`/examples/index`.
 
-Troubleshooting
----------------
-
-If anything goes wrong, remember to check the Script Console (**Scripts >
-Manager > Console**). Pick your script on the left to view its output. Some
-errors are also logged to the *iTerm2 App* history in the script console if
-they cannot be tied to a running script.
-
-Use print statements to write to the console. This is an essential technique
-for debugging script issues.
-
-If a session title provider is not registered, the title will show an ellipsis: `…`.
-
-If a status bar provider is not registered or has some other problem (such as
-an exception), it will show a ladybug: `🐞`. You can click on the ladybug to
-get more details about the error.
-
-Always catch exceptions in an async task. One of Python's rough edges is that
-these exceptions are silently swallowed and you will pull all your hair out
-trying to understand what is wrong.
-
-Take care to mark references optional by suffixing them with a `?` when they
-might not exist, as is the case for `user.update_my_title_provider?` the
-example above.
+Continue to the next section, :doc:`troubleshooting`.
 
 ----
 
@@ -214,6 +191,7 @@ Other Sections
     * :doc:`daemons`
     * :doc:`rpcs`
     * Hooks
+    * :doc:`troubleshooting`
 
 Indices and tables
 ==================

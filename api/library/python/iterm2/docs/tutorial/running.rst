@@ -136,6 +136,7 @@ Other Sections
     * :doc:`daemons`
     * :doc:`rpcs`
     * :doc:`hooks`
+    * :doc:`troubleshooting`
 
 Indices and tables
 ==================

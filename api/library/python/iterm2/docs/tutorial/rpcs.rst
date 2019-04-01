@@ -245,6 +245,7 @@ Other Sections
     * :doc:`daemons`
     * RPCs
     * :doc:`hooks`
+    * :doc:`troubleshooting`
 
 Indices and tables
 ==================
