@@ -942,7 +942,7 @@ static iTermController *gSharedInstance;
 
 - (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
-        int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
+        int windowType = iTermSanitizedWindowType([[aDict objectForKey:KEY_WINDOW_TYPE] intValue]);
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
             [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;

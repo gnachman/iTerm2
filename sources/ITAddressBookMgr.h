@@ -291,6 +291,17 @@ typedef enum {
     WINDOW_TYPE_ACCESSORY = 14
 } iTermWindowType;
 
+NS_INLINE iTermWindowType iTermSanitizedWindowType(iTermWindowType unsafeWindowType) {
+    if (@available(macOS 10.14, *)) {
+        return unsafeWindowType;
+    } else {
+        if (unsafeWindowType == WINDOW_TYPE_COMPACT) {
+            return WINDOW_TYPE_NORMAL;
+        }
+        return unsafeWindowType;
+    }
+}
+
 typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,
   iTermTabObject,

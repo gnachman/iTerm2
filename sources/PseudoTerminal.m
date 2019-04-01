@@ -600,11 +600,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 }
 
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
-                                 windowType:(iTermWindowType)windowType
-                            savedWindowType:(iTermWindowType)savedWindowType
+                                 windowType:(iTermWindowType)unsafeWindowType
+                            savedWindowType:(iTermWindowType)unsafeSavedWindowType
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    iTermWindowType windowType = iTermSanitizedWindowType(unsafeWindowType);
+    iTermWindowType savedWindowType = iTermSanitizedWindowType(unsafeSavedWindowType);
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
