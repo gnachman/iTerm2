@@ -33,8 +33,17 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
     return self;
 }
 
+- (BOOL)isProcessTrustedWithPrompt:(BOOL)prompt {
+    return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)@{(__bridge id)kAXTrustedCheckOptionPrompt: @(prompt)});
+}
+
 - (void)secureInputDidChange:(NSNotification *)notification {
-    [self setEnabled:[self shouldBeEnabled]];
+    // Avoid trying to enable it if the process is not trusted because this gets called when the
+    // app is activated/deactivated
+    const BOOL shouldBeEnabled = self.shouldBeEnabled;
+    if (!shouldBeEnabled || [self isProcessTrustedWithPrompt:NO]) {
+        [self setEnabled:shouldBeEnabled];
+    }
 }
 
 #pragma mark - APIs
