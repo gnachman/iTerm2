@@ -644,7 +644,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
         return YES;
     }
-    if (!_cursorGuideRenderer.rendererDisabled && (frameData.perFrameState.cursorGuideEnabled ||
+    if (!_cursorGuideRenderer.rendererDisabled && (frameData.perFrameState.cursorHorizontalGuideEnabled ||
                                                    frameData.perFrameState.cursorVerticalGuideEnabled)) {
         return YES;
     }
@@ -970,7 +970,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     [_cursorGuideRenderer setColor:frameData.perFrameState.cursorGuideColor];
-    _cursorGuideRenderer.enabled = frameData.perFrameState.cursorGuideEnabled;
+    _cursorGuideRenderer.horizontalEnabled = frameData.perFrameState.cursorHorizontalGuideEnabled;
     _cursorGuideRenderer.verticalEnabled = frameData.perFrameState.cursorVerticalGuideEnabled;
 }
 

@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Cursor
     BOOL _shouldDrawFilledInCursor;
-    BOOL _cursorGuideEnabled;
+    BOOL _cursorHorizontalGuideEnabled;
     BOOL _cursorVerticalGuideEnabled;
 
     // Size

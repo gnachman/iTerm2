@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCursorGuideRenderer : NSObject<iTermMetalCellRenderer>
 
-@property (nonatomic) BOOL enabled;
+@property (nonatomic) BOOL horizontalEnabled;
 @property (nonatomic) BOOL verticalEnabled;
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;

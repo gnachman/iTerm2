@@ -98,7 +98,7 @@
 
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    if (!_enabled) {
+    if (!_horizontalEnabled && !_verticalEnabled) {
         return nil;
     }
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
@@ -131,7 +131,7 @@
     }
 
     [tState initializeVerticesWithPool:_cellRenderer.verticesPool];
-    if (tState.row >= 0 && self.enabled) {
+    if (tState.row >= 0 && self.horizontalEnabled) {
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
