@@ -1187,7 +1187,7 @@ ITERM_WEAKLY_REFERENCEABLE
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
         if (arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE]) {
-            aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] boolValue];
+            aSession.textview.highlightCursorColumn = [arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] boolValue];
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
         aSession.lastRemoteHost = aSession.screen.lastRemoteHost;
