@@ -108,6 +108,7 @@
     NSInteger row = _tableView.selectedRow + 1;
     if (row < _documents.count) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        [_tableView scrollRowToVisible:row];
     }
 }
 
@@ -115,6 +116,7 @@
     NSInteger row = _tableView.selectedRow - 1;
     if (row >= 0) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        [_tableView scrollRowToVisible:row];
     }
 }
 

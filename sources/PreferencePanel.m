@@ -178,6 +178,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (void)drawRect:(NSRect)dirtyRect {
     if (@available(macOS 10.14, *)) {
         [self mojaveDrawRect:dirtyRect];
+        return;
     }
     [[NSColor clearColor] set];
     NSRectFill(dirtyRect);
