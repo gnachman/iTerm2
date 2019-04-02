@@ -748,10 +748,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenCursorDidMoveToLine:(int)line {
 }
 
-- (void)screenSetHighlightCursorCol:(BOOL)highlight {
+- (void)screenSetHighlightCursorColumn:(BOOL)highlight {
 }
 
-- (void)screenCursorDidMoveToCol:(int)line {
+- (void)screenCursorDidMoveToColumn:(int)line {
 }
 
 - (void)screenSaveScrollPosition {

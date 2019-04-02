@@ -3,17 +3,17 @@
 @interface iTermCursorGuideRendererTransientState()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) int row;
-@property (nonatomic) int col;
+@property (nonatomic) int column;
 @end
 
 @implementation iTermCursorGuideRendererTransientState {
     int _row;
-    int _col;
+    int _column;
 }
 
 - (void)setCursorCoord:(VT100GridCoord)coord within:(VT100GridSize)bounds {
     _row = (0 <= coord.y && coord.y < bounds.height) ? coord.y : -1;
-    _col = (0 <= coord.x && coord.x < bounds.width)  ? coord.x : -1;
+    _column = (0 <= coord.x && coord.x < bounds.width)  ? coord.x : -1;
 }
 
 - (void)initializeVerticesWithPool:(iTermMetalBufferPool *)verticesPool {
@@ -39,22 +39,22 @@
                                                      withBytes:vertices
                                                 checkIfChanged:YES];
 
-    const CGRect vQuad = CGRectMake(self.margins.left + self.col * cellSize.width,
-                                    self.margins.top,
-                                    cellSize.width,
-                                    cellSize.height * gridSize.height);
-    const iTermVertex vvertices[] = {
-        { { CGRectGetMaxX(vQuad), CGRectGetMinY(vQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(vQuad), CGRectGetMinY(vQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(vQuad), CGRectGetMaxY(vQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+    const CGRect verticalGuideQuad = CGRectMake(self.margins.left + self.column * cellSize.width,
+                                                self.margins.top,
+                                                cellSize.width,
+                                                cellSize.height * gridSize.height);
+    const iTermVertex verticalGuideVertices[] = {
+        { { CGRectGetMaxX(verticalGuideQuad), CGRectGetMinY(verticalGuideQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(verticalGuideQuad), CGRectGetMinY(verticalGuideQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(verticalGuideQuad), CGRectGetMaxY(verticalGuideQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
 
-        { { CGRectGetMaxX(vQuad), CGRectGetMinY(vQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-        { { CGRectGetMinX(vQuad), CGRectGetMaxY(vQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        { { CGRectGetMaxX(vQuad), CGRectGetMaxY(vQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(verticalGuideQuad), CGRectGetMinY(verticalGuideQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMinX(verticalGuideQuad), CGRectGetMaxY(verticalGuideQuad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMaxX(verticalGuideQuad), CGRectGetMaxY(verticalGuideQuad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
     };
-    self.vvertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
-                                                      withBytes:vvertices
-                                                 checkIfChanged:YES];
+    self.verticalGuideVertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
+                                                                  withBytes:verticalGuideVertices
+                                                             checkIfChanged:YES];
 }
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
@@ -126,7 +126,7 @@
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermCursorGuideRendererTransientState *tState = transientState;
-    if (tState.row < 0 || tState.col < 0) {
+    if (tState.row < 0 || tState.column < 0) {
         return;
     }
 
@@ -141,12 +141,12 @@
                                      textures:@{ @(iTermTextureIndexPrimary): tState.texture } ];
     }
 
-    if (tState.col >= 0 && self.venabled) {
+    if (tState.column >= 0 && self.verticalEnabled) {
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
                                  numberOfPIUs:0
-                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vvertexBuffer }
+                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.verticalGuideVertexBuffer }
                               fragmentBuffers:@{}
                                      textures:@{ @(iTermTextureIndexPrimary): tState.texture } ];
     }

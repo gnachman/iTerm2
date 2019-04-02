@@ -53,7 +53,7 @@ do { \
 - (void)gridCursorDidChangeLine {
 }
 
-- (void)gridCursorDidChangeCol {
+- (void)gridCursorDidChangeColumn {
 }
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {

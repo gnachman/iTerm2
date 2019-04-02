@@ -582,8 +582,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_cursorGuideColor && _configuration->_cursorGuideEnabled;
 }
 
-- (BOOL)cursorVGuideEnabled {
-    return _configuration->_cursorGuideColor && _configuration->_cursorVGuideEnabled;
+- (BOOL)cursorVerticalGuideEnabled {
+    return _configuration->_cursorGuideColor && _configuration->_cursorVerticalGuideEnabled;
 }
 
 - (NSColor *)cursorGuideColor {

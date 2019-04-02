@@ -655,12 +655,12 @@ typedef struct iTermTextColorContext {
     }
 
     // Highlight cursor column if the cursor is in this column and it's on.
-    int cursorCol = _cursorCoord.x;
-    const BOOL drawVCursorGuide = (self.highlightCursorCol &&
-                                   cursorCol >= coordRange.start.x &&
-                                   cursorCol < coordRange.end.x);
-    if (drawVCursorGuide) {
-        CGFloat x = cursorCol * _cellSize.width;
+    int cursorColumn = _cursorCoord.x;
+    const BOOL drawVerticalCursorGuide = (self.highlightCursorColumn &&
+                                          cursorColumn >= coordRange.start.x &&
+                                          cursorColumn < coordRange.end.x);
+    if (drawVerticalCursorGuide) {
+        CGFloat x = cursorColumn * _cellSize.width;
         [self drawCursorGuideForRows:NSMakeRange(coordRange.start.y,
                                                  coordRange.end.y - coordRange.start.y)
                                    x:x];

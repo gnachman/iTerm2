@@ -644,8 +644,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
         return YES;
     }
-    if (!_cursorGuideRenderer.rendererDisabled && (frameData.perFrameState.cursorGuideEnabled
-                                                   || frameData.perFrameState.cursorVGuideEnabled)) {
+    if (!_cursorGuideRenderer.rendererDisabled && (frameData.perFrameState.cursorGuideEnabled ||
+                                                   frameData.perFrameState.cursorVerticalGuideEnabled)) {
         return YES;
     }
 
@@ -971,7 +971,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     [_cursorGuideRenderer setColor:frameData.perFrameState.cursorGuideColor];
     _cursorGuideRenderer.enabled = frameData.perFrameState.cursorGuideEnabled;
-    _cursorGuideRenderer.venabled = frameData.perFrameState.cursorVGuideEnabled;
+    _cursorGuideRenderer.verticalEnabled = frameData.perFrameState.cursorVerticalGuideEnabled;
 }
 
 - (void)updateTimestampsRendererForFrameData:(iTermMetalFrameData *)frameData {

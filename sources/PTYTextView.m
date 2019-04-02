@@ -581,12 +581,12 @@ static const int kDragThreshold = 3;
     return _drawingHelper.highlightCursorLine;
 }
 
-- (void)setHighlightCursorCol:(BOOL)highlightCursorCol {
-    _drawingHelper.highlightCursorCol = highlightCursorCol;
+- (void)setHighlightCursorColumn:(BOOL)highlightCursorColumn {
+    _drawingHelper.highlightCursorColumn = highlightCursorColumn;
 }
 
-- (BOOL)highlightCursorCol {
-    return _drawingHelper.highlightCursorCol;
+- (BOOL)highlightCursorColumn {
+    return _drawingHelper.highlightCursorColumn;
 }
 
 - (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
@@ -978,9 +978,8 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, _dataSource.width)];
 }
 
-- (void)setNeedsDisplayOnCol:(int)col
-{
-    [self setNeedsDisplayOnCol:col inRange:VT100GridRangeMake(0, _dataSource.height)];
+- (void)setNeedsDisplayOnColumn:(int)col {
+    [self setNeedsDisplayOnColumn:col inRange:VT100GridRangeMake(0, _dataSource.height)];
 }
 
 // Overrides an NSView method.
@@ -6407,7 +6406,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self setNeedsDisplayInRect:dirtyRect];
 }
 
-- (void)setNeedsDisplayOnCol:(int)x inRange:(VT100GridRange)range {
+- (void)setNeedsDisplayOnColumn:(int)x inRange:(VT100GridRange)range {
     NSRect dirtyRect;
     const int y = range.location;
     const int maxY = range.location + range.length;

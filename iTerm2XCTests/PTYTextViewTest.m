@@ -992,13 +992,13 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 // Draws a cursor guide on the col with b.
-- (void)testVCursorGuide {
+- (void)testVerticalCursorGuide {
     [self doGoldenTestForInput:@"abcd\x1b[2A"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
                                   helper.shouldDrawFilledInCursor = YES;
-                                  helper.highlightCursorCol = YES;
+                                  helper.highlightCursorColumn = YES;
                               };
                           }
               profileOverrides:nil
