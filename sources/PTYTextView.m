@@ -978,8 +978,8 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplayOnLine:line inRange:VT100GridRangeMake(0, _dataSource.width)];
 }
 
-- (void)setNeedsDisplayOnColumn:(int)col {
-    [self setNeedsDisplayOnColumn:col inRange:VT100GridRangeMake(0, _dataSource.height)];
+- (void)setNeedsDisplayOnColumn:(int)column {
+    [self setNeedsDisplayOnColumn:column inRange:VT100GridRangeMake(0, _dataSource.height)];
 }
 
 // Overrides an NSView method.
