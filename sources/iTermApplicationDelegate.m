@@ -652,8 +652,9 @@ static BOOL hasBecomeActive = NO;
 {
     DLog(@"applicationShouldTerminateAfterLastWindowClosed called");
     NSArray *terminals = [[iTermController sharedInstance] terminals];
-    if (terminals.count == 1 && [terminals[0] isHotKeyWindow]) {
-        // The last window wasn't really closed, it was just the hotkey window getting ordered out.
+    if (terminals.count > 0) {
+        // The last window wasn't really closed, it was just the hotkey window getting ordered out or a window entering fullscreen.
+        DLog(@"Not quitting automatically. Terminals are %@", terminals);
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
