@@ -208,6 +208,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     NSMutableArray<PTYSession *> *_sessionsWithDeferredFontChanges;
     iTermVariableScope<iTermTabScope> *_variablesScope;
+
+    // Capture of the session reading order when a session is maximized.
+    // Used so next/previous session will work consistently post-maximization.
+    NSArray<NSString *> *_orderedGUIDs;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -759,6 +763,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSArray *)orderedSessions {
     if ([iTermAdvancedSettingsModel navigatePanesInReadingOrder]) {
+        if (self.isMaximized) {
+            return [_orderedGUIDs mapWithBlock:^id(NSString *guid) {
+                return [self sessionWithGUID:guid];
+            }];
+        }
         BOOL useTrueReadingOrder = !root_.isVertical;
         return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
             NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
@@ -3727,6 +3736,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     assert(!savedArrangement_);
     assert(!idMap_);
     assert(!isMaximized_);
+
+    _orderedGUIDs = [[self orderedSessions] mapWithBlock:^id(PTYSession *session) {
+        return session.guid;
+    }];
 
     SessionView* temp = [activeSession_ view];
     savedSize_ = [temp frame].size;
