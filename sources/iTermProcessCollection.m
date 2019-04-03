@@ -130,6 +130,15 @@
     }
 }
 
+- (NSArray<iTermProcessInfo *> *)descendantsSkippingLevels:(NSInteger)levels {
+    if (levels < 0) {
+        return [self flattenedTree];
+    }
+    return [_children flatMapWithBlock:^id(iTermProcessInfo *child) {
+        return [child descendantsSkippingLevels:levels - 1];
+    }];
+}
+
 - (void)doSlowLookup {
     dispatch_once(&_once, ^{
         BOOL fg;

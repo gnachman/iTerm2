@@ -1741,16 +1741,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return @[];
     }
 
-    NSArray<iTermProcessInfo *> *startingInfos;
+    NSInteger levelsToSkip = 0;
     if ([info.name isEqualToString:@"login"]) {
-        startingInfos = @[info];
-    } else {
-        startingInfos = info.children ?: @[];
+        levelsToSkip++;
     }
 
-    NSArray<iTermProcessInfo *> *allInfos = [startingInfos flatMapWithBlock:^id(iTermProcessInfo *info) {
-        return info.flattenedTree;
-    }];
+    NSArray<iTermProcessInfo *> *allInfos = [info descendantsSkippingLevels:levelsToSkip];
     return [allInfos mapWithBlock:^id(iTermProcessInfo *info) {
         return info.name;
     }];
@@ -1780,9 +1776,6 @@ ITERM_WEAKLY_REFERENCEABLE
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
             DLog(@"jobs that don't require prompting: %@", jobsThatDontRequirePrompting);
             for (NSString *childName in [self childJobNames]) {
-                if ([childName isEqualToString:@"login"]) {
-                    continue;
-                }
                 DLog(@"Check child %@", childName);
                 if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
                     DLog(@"    not on the ignore list");

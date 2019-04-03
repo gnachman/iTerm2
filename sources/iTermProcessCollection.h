@@ -25,6 +25,9 @@
 
 // This is to be used by tests
 - (void)privateSetIsForegroundJob;
+
+- (NSArray<iTermProcessInfo *> *)descendantsSkippingLevels:(NSInteger)levels;
+
 @end
 
 @interface iTermProcessCollection : NSObject
