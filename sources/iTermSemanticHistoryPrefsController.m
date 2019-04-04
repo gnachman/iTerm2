@@ -8,7 +8,11 @@
 
 #import "iTermSemanticHistoryPrefsController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermSemanticHistoryController.h"
 #import "iTermTextPopoverViewController.h"
+#import "iTermVariableHistory.h"
+#import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
@@ -56,6 +60,7 @@ static NSString *const iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClic
     IBOutlet NSTextField *text_;
     IBOutlet NSPopUpButton *editors_;
     IBOutlet NSTextField *caveat_;
+    IBOutlet iTermFunctionCallTextFieldDelegate *_textFieldDelegate;
 
     iTermTextPopoverViewController *_popoverVC;
 }
@@ -174,6 +179,25 @@ enum {
                                              selector:@selector(showPopover)
                                                  name:iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink
                                                object:nil];
+    NSSet<NSString *>* (^fallbackSource)(NSString *) = [iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession];
+    NSArray *mine = @[kSemanticHistoryPathSubstitutionKey,
+                      kSemanticHistoryPrefixSubstitutionKey,
+                      kSemanticHistorySuffixSubstitutionKey,
+                      kSemanticHistoryWorkingDirectorySubstitutionKey,
+                      kSemanticHistoryLineNumberKey,
+                      kSemanticHistoryColumnNumberKey];
+    _textFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:^NSSet<NSString *> *(NSString *prefix) {
+        NSArray *filtered = [mine filteredArrayUsingBlock:^BOOL(NSString *path) {
+            return [path it_hasPrefix:prefix];
+        }];
+        NSMutableSet *result = [NSMutableSet setWithArray:filtered];
+        [result unionSet:fallbackSource(prefix)];
+        return result;
+    }
+                                                                            passthrough:self
+                                                                          functionsOnly:NO];
+    text_.delegate = _textFieldDelegate;
+
     NSDictionary *names = @{ kSublimeText3Identifier: @"Sublime Text 3",
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",

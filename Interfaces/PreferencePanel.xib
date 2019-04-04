@@ -4440,9 +4440,6 @@ DQ
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="5949" id="fxC-np-Rm3"/>
-                    </connections>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" id="5943">
                     <rect key="frame" x="209" y="296" width="199" height="26"/>
