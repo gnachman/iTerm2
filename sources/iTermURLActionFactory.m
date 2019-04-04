@@ -269,6 +269,7 @@
                                   smartRange.coordRange.end)) {
             NSString *name = smartMatch.components[0];
             URLAction *action = [URLAction urlActionToOpenExistingFile:name];
+            action.rawFilename = name;
             action.range = smartRange;
             action.fullPath = name;
             action.workingDirectory = workingDirectory;
