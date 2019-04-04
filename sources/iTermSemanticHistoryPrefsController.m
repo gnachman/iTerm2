@@ -8,6 +8,8 @@
 
 #import "iTermSemanticHistoryPrefsController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermTextPopoverViewController.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
 
@@ -32,12 +34,30 @@ NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
+static NSString *const iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink = @"iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink";
+
+@interface iTermSemanticHistoryPrefsControllerCaveatTextField : NSTextField
+@end
+
+@implementation iTermSemanticHistoryPrefsControllerCaveatTextField
+- (BOOL)textView:(NSTextView *)textView clickedOnLink:(id)link atIndex:(NSUInteger)charIndex {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink
+                                                        object:link];
+    return YES;
+}
+@end
+
+@interface iTermSemanticHistoryPrefsController()
+@end
+
 @implementation iTermSemanticHistoryPrefsController {
     NSString *guid_;
     IBOutlet NSPopUpButton *action_;
     IBOutlet NSTextField *text_;
     IBOutlet NSPopUpButton *editors_;
     IBOutlet NSTextField *caveat_;
+
+    iTermTextPopoverViewController *_popoverVC;
 }
 
 enum {
@@ -150,6 +170,10 @@ enum {
 }
 
 - (void)awakeFromNib {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(showPopover)
+                                                 name:iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink
+                                               object:nil];
     NSDictionary *names = @{ kSublimeText3Identifier: @"Sublime Text 3",
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",
@@ -183,6 +207,9 @@ enum {
         NSMenuItem *item = items[name];
         [editors_.menu addItem:item];
     }
+
+    // Necessary to make links work
+    caveat_.allowsEditingTextAttributes = YES;
 
     [self actionChanged:nil];
 }
@@ -229,6 +256,50 @@ enum {
     [_delegate semanticHistoryPrefsControllerSettingChanged:self];
 }
 
+- (NSAttributedString *)attributedStringWithLearnMoreLinkAfterText:(NSString *)text {
+    NSDictionary *attributes = @{ NSFontAttributeName: caveat_.font ?: [NSFont systemFontOfSize:[NSFont smallSystemFontSize]] };
+    NSAttributedString *legacy = [NSAttributedString attributedStringWithString:text
+                                                                     attributes:attributes];
+    NSAttributedString *learnMore = [NSAttributedString attributedStringWithLinkToURL:@"iterm2-private://semantic-history-learn-more/" string:@"Learn more"];
+    NSArray<NSAttributedString *> *parts = @[ legacy, learnMore ];
+    return [NSAttributedString attributedStringWithAttributedStrings:parts];
+}
+
+- (NSString *)detailTextForCurrentMode {
+    NSString *subs =
+    @"You can provide substitutions as follows:\n"
+    @"  \\1 will be replaced with the filename.\n"
+    @"  \\2 will be replaced with the line number.\n"
+    @"  \\3 will be replaced with the text before the click.\n"
+    @"  \\4 will be replaced with the text after the click.\n"
+    @"  \\5 will be replaced with the working directory.\n"
+    @"\n"
+    @"This is also an interpolated string evaluated in the context of the current session. In addition to the usual variables, the following substitutions are available:\n"
+    @"  \\(semanticHistory.path) will be replaced with the filename.\n"
+    @"  \\(semanticHistory.lineNumber) will be replaced with the line number.\n"
+    @"  \\(semanticHistory.columnNumber) will be replaced with the column number.\n"
+    @"  \\(semanticHistory.prefix) will be replaced with the text before the click.\n"
+    @"  \\(semanticHistory.suffix) will be replaced with the text after the click.\n"
+    @"  \\(semanticHistory.workingDirectory) will be replaced with the working directory.\n";
+
+    switch ([[action_ selectedItem] tag]) {
+        case 1:
+        case 3:
+            break;
+
+        case 5:
+            return [@"In this mode semantic history will be activated on any click, even if you click on something that is not an existing file.\n"
+                    stringByAppendingString:subs];
+
+        case 2:
+        case 4:
+        case 6:
+            return [@"In this mode semantic history will only be activated when you click on an existing file name.\n"
+                    stringByAppendingString:subs];
+    }
+    return @"";
+}
+
 - (IBAction)actionChanged:(id)sender
 {
     BOOL hideText = YES;
@@ -240,12 +311,16 @@ enum {
             hideCaveat = NO;
             break;
 
-        case 2:
+        case 2: {
             [[text_ cell] setPlaceholderString:@"Enter URL."];
-            [caveat_ setStringValue:@"When you activate Semantic History on a filename, the browser opens a URL.\nUse \\1 for the filename you clicked on and \\2 for the line number."];
+            NSString *text =
+            @"When you activate Semantic History on a filename, the browser opens a URL.\n"
+            @"Use \\1 for the filename you clicked on and \\2 for the line number. ";
+            caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;
             break;
+        }
 
         case 3:
             hideEditors = NO;
@@ -253,26 +328,42 @@ enum {
             hideCaveat = NO;
             break;
 
-        case 4:
+        case 4: {
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
-            hideCaveat = NO;
-            hideText = NO;
-            break;
+            NSString *text =
+            @"Command runs when you activate Semantic History on any filename. "
+            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. "
+            @"You can also use interpolated string syntax. ";
 
-        case 5:
-            [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename). Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+            caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;
             break;
+        }
 
-        case 6:
+        case 5: {
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
+
+            NSString *text =
+            @"Command runs when you activate Semantic History on any text, even if it's not a valid filename. "
+            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+
+            caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;
             break;
+        }
+
+        case 6: {
+            [[text_ cell] setPlaceholderString:@"Enter command"];
+            NSString *text =
+            @"Coprocess runs when you activate Semantic History on any filename. "
+            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+            caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
+            hideCaveat = NO;
+            hideText = NO;
+            break;
+        }
     }
     if (caveat_.isHidden != hideCaveat) {
         [caveat_ setHidden:hideCaveat];
@@ -341,6 +432,25 @@ enum {
     text_.enabled = enabled;
     editors_.enabled = enabled;
     caveat_.enabled = enabled;
+}
+
+- (void)showPopover {
+    [_popoverVC.popover close];
+    _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    _popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [_popoverVC view];
+    _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    if (@available(macOS 10.14, *)) {
+        _popoverVC.textView.drawsBackground = NO;
+    }
+    [_popoverVC appendString:[self detailTextForCurrentMode]];
+    NSRect frame = _popoverVC.view.frame;
+    frame.size.width = 550;
+    _popoverVC.view.frame = frame;
+    [_popoverVC.popover showRelativeToRect:text_.bounds
+                                    ofView:text_
+                             preferredEdge:NSRectEdgeMaxY];
 }
 
 @end

@@ -2498,7 +2498,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:prefix
                                                                suffix:suffix
                                                                  path:path
-                                                     workingDirectory:workingDirectory];
+                                                     workingDirectory:workingDirectory
+                                                           lineNumber:lineNumber
+                                                         columnNumber:columnNumber];
     return [self.semanticHistoryController openPath:path
                                       orRawFilename:rawFileName
                                       substitutions:subs
@@ -2509,13 +2511,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSDictionary *)semanticHistorySubstitutionsWithPrefix:(NSString *)prefix
                                                   suffix:(NSString *)suffix
                                                     path:(NSString *)path
-                                        workingDirectory:(NSString *)workingDirectory {
+                                        workingDirectory:(NSString *)workingDirectory
+                                              lineNumber:(NSString *)lineNumber
+                                            columnNumber:(NSString *)columnNumber {
     NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
     NSDictionary *semanticHistorySubs =
         @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
            kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
            kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"" };
+           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
+           kSemanticHistoryLineNumberKey: lineNumber ?: @"",
+           kSemanticHistoryColumnNumberKey: columnNumber ?: @""
+           };
     [subs addEntriesFromDictionary:semanticHistorySubs];
     return subs;
 }

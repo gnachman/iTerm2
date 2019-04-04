@@ -23,8 +23,8 @@
 }
 
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes {
-    [self appendAttributedString:[[[NSAttributedString alloc] initWithString:string
-                                                                  attributes:attributes] autorelease]];
+    [self appendAttributedString:[[NSAttributedString alloc] initWithString:string
+                                                                 attributes:attributes]];
 }
 
 - (void)trimTrailingWhitespace {
@@ -51,7 +51,21 @@
 @implementation NSAttributedString (iTerm)
 
 + (instancetype)attributedStringWithString:(NSString *)string attributes:(NSDictionary *)attributes {
-    return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+    return [[NSAttributedString alloc] initWithString:string attributes:attributes];
+}
+
++ (instancetype)attributedStringWithLinkToURL:(NSString *)urlString string:(NSString *)string {
+    NSDictionary *linkAttributes = @{ NSLinkAttributeName: [NSURL URLWithString:urlString] };
+    return [[NSAttributedString alloc] initWithString:string
+                                           attributes:linkAttributes];
+}
+
++ (instancetype)attributedStringWithAttributedStrings:(NSArray<NSAttributedString *> *)strings {
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    for (NSAttributedString *attributedString in strings) {
+        [result appendAttributedString:attributedString];
+    }
+    return result;
 }
 
 - (CGFloat)heightForWidth:(CGFloat)maxWidth {
@@ -61,10 +75,10 @@
 
     NSSize size = NSMakeSize(maxWidth, FLT_MAX);
     NSTextContainer *textContainer =
-        [[[NSTextContainer alloc] initWithContainerSize:size] autorelease];
+        [[NSTextContainer alloc] initWithContainerSize:size];
     NSTextStorage *textStorage =
-        [[[NSTextStorage alloc] initWithAttributedString:self] autorelease];
-    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+        [[NSTextStorage alloc] initWithAttributedString:self];
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
 
     [layoutManager addTextContainer:textContainer];
     [textStorage addLayoutManager:layoutManager];

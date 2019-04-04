@@ -31,6 +31,8 @@ extern NSString *const kSemanticHistoryPathSubstitutionKey;
 extern NSString *const kSemanticHistoryPrefixSubstitutionKey;
 extern NSString *const kSemanticHistorySuffixSubstitutionKey;
 extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
+extern NSString *const kSemanticHistoryLineNumberKey;
+extern NSString *const kSemanticHistoryColumnNumberKey;
 
 @protocol iTermSemanticHistoryControllerDelegate <NSObject>
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;

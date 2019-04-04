@@ -39,6 +39,8 @@ NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
 NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";
 NSString *const kSemanticHistorySuffixSubstitutionKey = @"semanticHistory.suffix";
 NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHistory.workingDirectory";
+NSString *const kSemanticHistoryLineNumberKey = @"semanticHistory.lineNumber";
+NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber";
 
 @implementation iTermSemanticHistoryController
 

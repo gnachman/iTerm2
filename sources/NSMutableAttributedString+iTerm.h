@@ -19,6 +19,8 @@
 
 @interface NSAttributedString (iTerm)
 
++ (instancetype)attributedStringWithAttributedStrings:(NSArray<NSAttributedString *> *)strings;
++ (instancetype)attributedStringWithLinkToURL:(NSString *)urlString string:(NSString *)string;
 + (instancetype)attributedStringWithString:(NSString *)string attributes:(NSDictionary *)attributes;
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
 - (CGFloat)heightForWidth:(CGFloat)maxWidth;
