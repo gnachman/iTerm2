@@ -32,4 +32,7 @@ api/library/python/iterm2/dist
 
 # Python egg metadata, regenerated from source files by setuptools.
 api/library/python/iterm2/*.egg-info
+api/library/python/iterm2/.mypy_cache
+api/library/python/iterm2/_unstubbed
+api/library/python/iterm2/docs/_build
 
