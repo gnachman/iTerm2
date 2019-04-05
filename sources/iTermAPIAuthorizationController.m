@@ -66,7 +66,12 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
     self = [super init];
     if (self) {
         _app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-        if (_app.localizedName && _app.bundleIdentifier) {
+
+        // Note: The org.python.python bundle is PyObjC's wrapper app. We can parse its arguments ok.
+        if (_app.localizedName &&
+            _app.bundleIdentifier &&
+            ![_app.bundleIdentifier isEqualToString:@"org.python.python"]) {
+            _fullCommandOrBundleID = _app.bundleIdentifier;
             _result = iTermPythonProcessAnalyzerResultCocoaApp;
             return self;
         }
