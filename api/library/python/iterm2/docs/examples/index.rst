@@ -103,6 +103,13 @@ Demonstrates registering a function and adjusting profiles' values.
 
 Demonstrates changing a session's local profile without updating the underlying profile.
 
+:doc:`set_title_forever`
+`````````````````````````
+
+Demonstrates setting a session's name. Also demonstrates a script that's meant
+to be run from the command line that will launch iTerm2 and wait until it's
+able to connect before proceeding.
+
 
 -----------------------
 Keyboard
