@@ -1067,7 +1067,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 
     iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
                                                                            prompt:@"Full Command"
-                                                                          message:controller.fullCommandOrBundleID];
+                                                                          message:controller.fullCommandOrBundleID ?: @"Unknown application"];
     accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
     accessory.textView.selectable = YES;
     accessory.requestLayout = ^{
