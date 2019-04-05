@@ -91,17 +91,17 @@ class Connection:
         self.__dispatch_forever_future = None
 
     def _collect_garbage(self):
-        """Asyncio seems to want you to keep a reference to a task that's begin
+        """Asyncio seems to want you to keep a reference to a task that's being
         run with ensure_future. If you don't, it says "task was destroyed but
         it is still pending". So, ok, we'll keep references around until we
         don't need to any more."""
         self.__tasks = list(filter(lambda t: not t.done(), self.__tasks))
 
-    def run_until_complete(self, coro):
-        self.run(False, coro)
+    def run_until_complete(self, coro, retry):
+        self.run(False, coro, retry)
 
-    def run_forever(self, coro):
-        self.run(True, coro)
+    def run_forever(self, coro, retry):
+        self.run(True, coro, retry)
 
     def set_message_in_future(self, loop, message, future):
         assert future is not None
@@ -141,18 +141,22 @@ class Connection:
             traceback.print_exc()
             raise
 
-    def run(self, forever, coro):
+    def run(self, forever, coro, retry):
         """
         Convenience method to start a program.
 
         Connects to the API endpoint, begins an asyncio event loop, and runs the
         passed in coroutine. Exceptions will be caught and printed to stdout.
 
+        :param forever: Don't terminate after main returns?
         :param coro: A coroutine (async function) to run after connecting.
+        :param retry: Keep trying to connect until it succeeds?
         """
         loop = asyncio.get_event_loop()
 
         async def async_main(connection):
+            # Set __tasks here in case coro returns before _async_dispatch_forever starts.
+            self.__tasks = []
             dispatch_forever_task = asyncio.ensure_future(self._async_dispatch_forever(connection, loop))
             await coro(connection)
             if forever:
@@ -166,7 +170,7 @@ class Connection:
         # I do know that pulling my hair out hurts.
         loop.set_debug(True)
         self.loop = loop
-        loop.run_until_complete(self.async_connect(async_main))
+        loop.run_until_complete(self.async_connect(async_main, retry))
 
 
     async def async_send_message(self, message):
@@ -230,7 +234,7 @@ class Connection:
             except Exception:
                 raise
 
-    async def async_connect(self, coro):
+    async def async_connect(self, coro, retry=False):
         """
         Establishes a websocket connection.
 
@@ -244,29 +248,44 @@ class Connection:
         of this program with its entry in the scripting console.
 
         :param coro: A coroutine to run once connected.
+        :param retry: Keep trying to connect until it succeeds?
         """
-        async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
-            self.websocket = websocket
+        done = False
+        while not done:
             try:
-                await coro(self)
-            except Exception as _err:
-                traceback.print_exc()
-                sys.exit(1)
+                async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
+                    done = True
+                    self.websocket = websocket
+                    try:
+                        await coro(self)
+                    except Exception as _err:
+                        traceback.print_exc()
+                        sys.exit(1)
+            except OSError as e:
+                # https://github.com/aaugustin/websockets/issues/593
+                if retry:
+                    await asyncio.sleep(0.5)
+                else:
+                    done = True
+                    raise
 
 
-def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
+def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False) -> None:
     """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     After `coro` returns this function will return.
 
-    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value."""
-    Connection().run_until_complete(coro)
+    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value.
+    :param retry: Keep trying to connect until it succeeds?
+    """
+    Connection().run_until_complete(coro, retry)
 
-def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
+def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False) -> None:
     """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     This function never returns.
 
     :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value.
+    :param retry: Keep trying to connect until it succeeds?
     """
-    Connection().run_forever(coro)
+    Connection().run_forever(coro, retry)
