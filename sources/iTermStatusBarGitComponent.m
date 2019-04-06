@@ -18,6 +18,7 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
@@ -62,6 +63,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     iTermCommandRunner *_logRunner;
     iTermTextPopoverViewController *_popoverVC;
     NSView *_view;
+    iTermRemoteGitStateObserver *_remoteObserver;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -87,6 +89,11 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         _lastCommandRef.onChangeBlock = ^{
             [weakSelf bumpIfLastCommandWasGit];
         };
+        _remoteObserver = [[iTermRemoteGitStateObserver alloc] initWithScope:scope
+                                                                       block:^{
+                                                                           [weakSelf updatePollerEnabled];
+                                                                           [weakSelf statusBarComponentUpdate];
+                                                                       }];
         gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
         [self updatePollerEnabled];
     };
@@ -175,8 +182,23 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes];
 }
 
+- (BOOL)onLocalhost {
+    NSString *localhostName = [[iTermLocalHostNameGuesser sharedInstance] name];
+    NSString *currentHostname = self.scope.hostname;
+    DLog(@"git poller current hostname is %@, localhost is %@", currentHostname, localhostName);
+    return [localhostName isEqualToString:currentHostname];
+}
+
+- (iTermGitState *)currentState {
+    if ([self onLocalhost]) {
+        return _gitPoller.state;
+    } else {
+        return [[iTermGitState alloc] initWithScope:self.scope];
+    }
+}
+
 - (BOOL)pollerReady {
-    return _gitPoller.state && _gitPoller.enabled;
+    return self.currentState && _gitPoller.enabled;
 }
 
 - (nullable NSAttributedString *)attributedStringValue {
@@ -201,32 +223,32 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         thinSpace = [self attributedStringWithString:@"\u2009"];
     });
 
-    if (_gitPoller.state.xcode.length > 0) {
+    if (self.currentState.xcode.length > 0) {
         return [self attributedStringWithString:@"⚠️"];
     }
-    NSAttributedString *branch = _gitPoller.state.branch ? [self attributedStringWithString:_gitPoller.state.branch] : nil;
+    NSAttributedString *branch = self.currentState.branch ? [self attributedStringWithString:self.currentState.branch] : nil;
     if (!branch) {
         return nil;
     }
 
-    NSAttributedString *upCount = _gitPoller.state.pushArrow.integerValue > 0 ? [self attributedStringWithString:_gitPoller.state.pushArrow] : nil;
-    NSAttributedString *downCount = _gitPoller.state.pullArrow.integerValue > 0 ? [self attributedStringWithString:_gitPoller.state.pullArrow] : nil;
+    NSAttributedString *upCount = self.currentState.pushArrow.integerValue > 0 ? [self attributedStringWithString:self.currentState.pushArrow] : nil;
+    NSAttributedString *downCount = self.currentState.pullArrow.integerValue > 0 ? [self attributedStringWithString:self.currentState.pullArrow] : nil;
 
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:branch];
 
-    if (_gitPoller.state.dirty) {
+    if (self.currentState.dirty) {
         [result appendAttributedString:thinSpace];
         [result appendAttributedString:dirtyImage];
     }
 
-    if (_gitPoller.state.pushArrow.integerValue > 0) {
+    if (self.currentState.pushArrow.integerValue > 0) {
         [result appendAttributedString:enSpace];
         [result appendAttributedString:upImage];
         [result appendAttributedString:upCount];
     }
 
-    if (_gitPoller.state.pullArrow.integerValue > 0) {
+    if (self.currentState.pullArrow.integerValue > 0) {
         [result appendAttributedString:enSpace];
         [result appendAttributedString:downImage];
         [result appendAttributedString:downCount];
@@ -240,10 +262,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (void)updatePollerEnabled {
-    NSString *currentHostname = [self.scope valueForVariableName:iTermVariableKeySessionHostname];
-    NSString *localhostName = [[iTermLocalHostNameGuesser sharedInstance] name];
-    DLog(@"git poller current hostname is %@, localhost is %@", currentHostname, localhostName);
-    _gitPoller.enabled = [localhostName isEqualToString:currentHostname];
+    _gitPoller.enabled = [self onLocalhost] || [[iTermGitState alloc] initWithScope:self.scope];
 }
 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
@@ -312,8 +331,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         return;
     }
 
-    if (_gitPoller.state.xcode.length > 0) {
-        [iTermWarning showWarningWithTitle:[_gitPoller.state.xcode stringByReplacingOccurrencesOfString:@"\t" withString:@"\n"]
+    if (self.currentState.xcode.length > 0) {
+        [iTermWarning showWarningWithTitle:[self.currentState.xcode stringByReplacingOccurrencesOfString:@"\t" withString:@"\n"]
                                    actions:@[ @"OK" ]
                                  accessory:nil
                                 identifier:@"GitPollerXcodeWarning"
@@ -323,10 +342,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         return;
     }
 
-    if (_gitPoller.state.branch.length == 0) {
+    if (self.currentState.branch.length == 0) {
         return;
     }
-    iTermGitState *state = _gitPoller.state.copy;
+    iTermGitState *state = self.currentState.copy;
     NSString *directory = _gitPoller.currentDirectory;
     __weak __typeof(self) weakSelf = self;
     [self fetchRecentBranchesWithTimeout:0.5 completion:^(NSArray<NSString *> *branches) {
@@ -351,7 +370,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         addItem(@"Commit", @selector(commit:), state.dirty);
         addItem(@"Add & Commit", @selector(addAndCommit:), state.dirty);
         addItem(@"Stash", @selector(stash:), state.dirty);
-        addItem(@"Log", @selector(log:), state.dirty);
+        addItem(@"Log", @selector(log:), YES);
         addItem([NSString stringWithFormat:@"Push origin %@", state.branch],
                 @selector(push:),
                 state.pushArrow.intValue > 0 || [state.pushArrow isEqualToString:@"error"]);
@@ -451,11 +470,16 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
         [_logRunner terminate];
     }
 
+    NSArray<NSString *> *args = @[ @"log" ];
+    if (!self.onLocalhost) {
+        [self runGitOnRemoteHost:args];
+        return;
+    }
     [self showPopover];
     NSMenuItem *menuItem = sender;
     iTermGitMenuItemContext *context = menuItem.representedObject;
     _logRunner = [[iTermCommandRunner alloc] initWithCommand:@"/usr/bin/git"
-                                               withArguments:@[ @"log" ]
+                                               withArguments:args
                                                         path:context.directory];
     iTermTextPopoverViewController *popoverVC = _popoverVC;
     __weak __typeof(_logRunner) weakLogRunner = _logRunner;
@@ -473,6 +497,7 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     };
     [_logRunner runWithTimeout:5];
 }
+
 - (void)commit:(id)sender {
     NSMenuItem *menuItem = sender;
     iTermGitMenuItemContext *context = menuItem.representedObject;
@@ -518,10 +543,35 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
                                  bury:YES];
 }
 
+- (void)runGitOnRemoteHost:(NSArray<NSString *> *)args {
+    NSArray<NSString *> *quotedArgs = [args mapWithBlock:^id(NSString *arg) {
+        return [arg stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }];
+    NSString *command = [NSString stringWithFormat:@"git %@", [quotedArgs componentsJoinedByString:@" "]];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Looks like you're sshed somewhere. OK to send the command “%@”?", command]
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"GitPollerSshWarning"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Send Command?"
+                                window:self.statusBarComponentView.window];
+    if (selection == kiTermWarningSelection0) {
+        [self.delegate statusBarComponent:self writeString:[command stringByAppendingString:@"\n"]];
+    }
+}
+
 - (void)runGitInWindowWithArguments:(NSArray<NSString *> *)args pwd:(NSString *)pwd status:(NSString *)status bury:(BOOL)bury {
     if (_status) {
+        DLog(@"Not running command because status is %@", _status);
         return;
     }
+    
+    if (!self.onLocalhost) {
+        [self runGitOnRemoteHost:args];
+        return;
+    }
+    
     _status = status;
     [self updateTextFieldIfNeeded];
     NSArray<NSString *> *escaped = [args mapWithBlock:^id(NSString *arg) {

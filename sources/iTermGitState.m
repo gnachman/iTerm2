@@ -6,8 +6,39 @@
 //
 
 #import "iTermGitState.h"
+#import "iTermVariableReference.h"
+#import "iTermVariableScope.h"
+#import "NSArray+iTerm.h"
+
+static NSString *const iTermGitStateVariableNameGitBranch = @"user.gitBranch";
+static NSString *const iTermGitStateVariableNameGitPushCount = @"user.gitPushCount";
+static NSString *const iTermGitStateVariableNameGitPullCount = @"user.gitPullCount";
+static NSString *const iTermGitStateVariableNameGitDirty = @"user.gitDirty";
+
+static NSArray<NSString *> *iTermGitStatePaths(void) {
+    return @[ iTermGitStateVariableNameGitBranch,
+              iTermGitStateVariableNameGitPushCount,
+              iTermGitStateVariableNameGitPullCount,
+              iTermGitStateVariableNameGitDirty ];
+}
 
 @implementation iTermGitState
+
+- (instancetype)initWithScope:(iTermVariableScope *)scope {
+    self = [self init];
+    if (self) {
+        for (NSString *path in iTermGitStatePaths()) {
+            if (![scope valueForVariableName:path]) {
+                return nil;
+            }
+        }
+        _branch = [scope valueForVariableName:iTermGitStateVariableNameGitBranch];
+        _pushArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPushCount];
+        _pullArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPullCount];
+        _dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] boolValue];
+    }
+    return self;
+}
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermGitState *theCopy = [[iTermGitState alloc] init];
@@ -17,6 +48,26 @@
     theCopy.branch = self.branch.copy;
     theCopy.dirty = self.dirty;
     return theCopy;
+}
+
+@end
+
+@implementation iTermRemoteGitStateObserver {
+    NSArray<iTermVariableReference *> *_refs;
+}
+
+- (instancetype)initWithScope:(iTermVariableScope *)scope
+                        block:(void (^)(void))block {
+    self = [super init];
+    if (self) {
+        NSArray<NSString *> *paths = iTermGitStatePaths();
+        _refs = [paths mapWithBlock:^id(NSString *path) {
+            iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path scope:scope];
+            ref.onChangeBlock = block;
+            return ref;
+        }];
+    }
+    return self;
 }
 
 @end
