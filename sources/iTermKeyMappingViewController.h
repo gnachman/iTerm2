@@ -45,6 +45,7 @@
 
 @property(nonatomic, weak) IBOutlet id<iTermKeyMappingViewControllerDelegate> delegate;
 @property(nonatomic, strong) IBOutlet NSView *placeholderView;
+@property(nonatomic) BOOL hapticFeedbackForEscEnabled;
 
 - (void)hideAddTouchBarItem;
 

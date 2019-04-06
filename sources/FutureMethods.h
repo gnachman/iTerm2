@@ -31,6 +31,20 @@ CPSStealKeyFocusFunction *GetCPSStealKeyFocusFunction(void);
 // Returns a function pointer to CPSReleaseKeyFocus(), or nil.
 CPSReleaseKeyFocusFunction *GetCPSReleaseKeyFocusFunction(void);
 
+#pragma mark - MultitouchSupport
+
+typedef CFTypeRef MTActuatorCreateFromDeviceIDFunction(UInt64 deviceID);
+typedef IOReturn MTActuatorOpenFunction(CFTypeRef actuatorRef);
+typedef IOReturn MTActuatorCloseFunction(CFTypeRef actuatorRef);
+typedef IOReturn MTActuatorActuateFunction(CFTypeRef actuatorRef, SInt32 actuationID, UInt32 unknown1, Float32 unknown2, Float32 unknown3);
+typedef bool MTActuatorIsOpenFunction(CFTypeRef actuatorRef);
+
+MTActuatorCreateFromDeviceIDFunction *iTermGetMTActuatorCreateFromDeviceIDFunction(void);
+MTActuatorOpenFunction *iTermGetMTActuatorOpenFunction(void);
+MTActuatorCloseFunction *iTermGetMTActuatorCloseFunction(void);
+MTActuatorActuateFunction *iTermGetMTActuatorActuateFunction(void);
+MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void);
+
 NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) NS_AVAILABLE_MAC(10_14) {
     static dispatch_once_t onceToken;
     static BOOL subpixelAAEnabled;

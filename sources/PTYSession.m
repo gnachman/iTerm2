@@ -31,6 +31,7 @@
 #import "iTermFindDriver.h"
 #import "iTermGraphicSource.h"
 #import "iTermNotificationController.h"
+#import "iTermHapticActuator.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
 #import "iTermInitialDirectory.h"
@@ -6893,9 +6894,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
 }
 
+- (void)actuateHapticFeedbackForEvent:(NSEvent *)event {
+    if (event.keyCode != kVK_Escape) {
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableHapticFeedbackForEsc]) {
+        return;
+    }
+    // This isn't quite right because you might be using an external keyboard.
+    // Looks like you have to use an event tap to detect touches on the bar,
+    // which requires user consent.
+    if (!IsTouchBarAvailable()) {
+        return;
+    }
+    if (event.type == NSEventTypeKeyDown) {
+        [[iTermHapticActuator sharedActuator] actuateTouchDownFeedback];
+        return;
+    }
+    if (event.type == NSEventTypeKeyUp && event.keyCode == kVK_Escape) {
+        [[iTermHapticActuator sharedActuator] actuateTouchUpFeedback];
+        return;
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {
+    [self actuateHapticFeedbackForEvent:event];
+    
     if (event.charactersIgnoringModifiers.length == 0) {
         return;
     }

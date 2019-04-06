@@ -107,6 +107,7 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
+NSString *const kPreferenceKeyEnableHapticFeedbackForEsc = @"HapticFeedbackForEsc";
 
 NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
 NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
@@ -301,6 +302,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotKeyTogglesWindow_Deprecated: @NO,
                   kPreferenceKeyHotkeyProfileGuid_Deprecated: [NSNull null],
                   kPreferenceKeyHotkeyAutoHides_Deprecated: @YES,
+                  kPreferenceKeyEnableHapticFeedbackForEsc: @NO,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,

@@ -9,12 +9,14 @@
 #import "iTermKeyMappingViewController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermEditKeyActionWindowController.h"
+#import "iTermPreferences.h"
 #import "PreferencePanel.h"
 
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 @implementation iTermKeyMappingViewController {
     IBOutlet NSButton *_addTouchBarItem;
+    IBOutlet NSButton *_hapticFeedbackForEsc;
     IBOutlet NSTableView *_tableView;
     IBOutlet NSTableColumn *_keyCombinationColumn;
     IBOutlet NSTableColumn *_actionColumn;
@@ -38,6 +40,20 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     _tableView.delegate = nil;
     _tableView.dataSource = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)awakeFromNib {
+    self.hapticFeedbackForEscEnabled = [iTermPreferences boolForKey:kPreferenceKeyEnableHapticFeedbackForEsc];
+}
+
+- (void)setHapticFeedbackForEscEnabled:(BOOL)hapticFeedbackForEscEnabled {
+    _hapticFeedbackForEsc.state = hapticFeedbackForEscEnabled ? NSOnState : NSOffState;
+    [iTermPreferences setBool:hapticFeedbackForEscEnabled
+                       forKey:kPreferenceKeyEnableHapticFeedbackForEsc];
+}
+
+- (BOOL)hapticFeedbackForEscEnabled {
+    return _hapticFeedbackForEsc.state == NSOnState;
 }
 
 - (void)keyBindingsChanged {
@@ -65,6 +81,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (void)hideAddTouchBarItem {
     _addTouchBarItem.hidden = YES;
+    _hapticFeedbackForEsc.hidden = YES;
 }
 
 #pragma mark - NSTableViewDataSource
@@ -222,6 +239,11 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 - (IBAction)loadPresets:(id)sender {
     [_delegate keyMapping:self loadPresetsNamed:[[sender selectedItem] title]];
     [_tableView reloadData];
+}
+
+- (IBAction)hapticFeedbackToggled:(id)sender {
+    [iTermPreferences setBool:_hapticFeedbackForEsc.state == NSOnState
+                       forKey:kPreferenceKeyEnableHapticFeedbackForEsc];
 }
 
 @end

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -10,6 +10,7 @@
             <connections>
                 <outlet property="_actionColumn" destination="8iu-ei-TS7" id="Gcv-RR-t3T"/>
                 <outlet property="_addTouchBarItem" destination="mE2-Fe-MAY" id="p0R-31-Bdr"/>
+                <outlet property="_hapticFeedbackForEsc" destination="i1u-NS-Se6" id="SMx-JS-0ax"/>
                 <outlet property="_keyCombinationColumn" destination="Qlz-bw-G7W" id="cSj-S6-11C"/>
                 <outlet property="_presetsPopup" destination="G8O-KW-SKT" id="kIL-c2-Euc"/>
                 <outlet property="_removeMappingButton" destination="csN-Fw-hKk" id="FuP-tp-Nfr"/>
@@ -72,11 +73,11 @@
                             </tableView>
                         </subviews>
                     </clipView>
-                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
                         <rect key="frame" x="-100" y="-100" width="266" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
+                    <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
                         <rect key="frame" x="508" y="17" width="16" height="228"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
@@ -130,7 +131,7 @@
                         <action selector="loadPresets:" target="-2" id="vvS-N2-cM0"/>
                     </connections>
                 </popUpButton>
-                <button misplaced="YES" id="mE2-Fe-MAY">
+                <button id="mE2-Fe-MAY">
                     <rect key="frame" x="394" y="3" width="131" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" title="Add Touch Bar Item" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="2Vc-Od-Zym">
@@ -140,6 +141,17 @@
                     <connections>
                         <action selector="addTouchBarItem:" target="-2" id="ldc-TE-cdk"/>
                         <outlet property="nextKeyView" destination="csN-Fw-hKk" id="pDo-gD-8zm"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" id="i1u-NS-Se6">
+                    <rect key="frame" x="221" y="6" width="167" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    <buttonCell key="cell" type="check" title="Haptic feedback for esc" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hyq-kR-ntE">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="hapticFeedbackToggled:" target="-2" id="o5G-NU-xUA"/>
                     </connections>
                 </button>
             </subviews>
