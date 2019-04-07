@@ -979,7 +979,13 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setNeedsDisplayOnColumn:(int)column {
-    [self setNeedsDisplayOnColumn:column inRange:VT100GridRangeMake(0, _dataSource.height)];
+    // We can only draw whole lines, not individual characters.  Consequently
+    // a request to redraw a column should only cause an update if there is
+    // something in the column outside the row that needs an update, such as the
+    // vertical cursor guide.
+    if ([self highlightCursorColumn]) {
+        [self setNeedsDisplayOnColumn:column inRange:VT100GridRangeMake(0, _dataSource.height)];
+    }
 }
 
 // Overrides an NSView method.
@@ -6414,21 +6420,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setNeedsDisplayOnColumn:(int)x inRange:(VT100GridRange)range {
-    NSRect dirtyRect;
-    const int y = range.location;
-    const int maxY = range.location + range.length;
-
-    dirtyRect.origin.y = [iTermAdvancedSettingsModel terminalMargin] + y * _lineHeight; // _charHeightWithoutSpacing;
-    dirtyRect.origin.x = x * _charWidth;
-    dirtyRect.size.height = (maxY - y) * _lineHeight; //- _charHeightWithoutSpacing;
-    dirtyRect.size.width = _charWidth;
-
-    // Expand the rect in case we're drawing a changed cell with an oversize glyph.
-    dirtyRect = [self rectWithHalo:dirtyRect];
-
-    DLog(@"Column %d is dirty in range [%d, %d), set rect %@ dirty",
-         x, y, maxY, [NSValue valueWithRect:dirtyRect]);
-    [self setNeedsDisplayInRect:dirtyRect];
+    // We can only draw whole lines, not individual characters.  Consequently
+    // a request to redraw a column should only cause an update if there is
+    // something in the column outside the row that needs an update, such as the
+    // vertical cursor guide.
+    if ([self highlightCursorColumn]) {
+        [self setNeedsDisplay:YES];
+    }
 }
 
 // WARNING: Do not call this function directly. Call
