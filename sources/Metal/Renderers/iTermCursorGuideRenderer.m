@@ -14,6 +14,26 @@
     id<MTLBuffer> _upperVertexBuffer, _lowerVertexBuffer;
 }
 
+- (id<MTLBuffer>)tessellateRect:(CGRect)rect withTexture:(CGRect)textureRect withPool:(iTermMetalBufferPool *)verticesPool {
+    // Tesselates an axis-aligned rectangle into a sequence of vertices
+    // representing two adjacent triangles that share the diagonal of the
+    // rectangle:
+    //  top-right, top-left, bottom-left, top-right, bottom-left, bottom-right
+    const iTermVertex vertices[] = {
+        // Pixel Positions                              Texture Coordinates
+        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMinY(textureRect) } },
+        { { CGRectGetMinX(rect), CGRectGetMinY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMinY(textureRect) } },
+        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMaxY(textureRect) } },
+
+        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMinY(textureRect) } },
+        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMaxY(textureRect) } },
+        { { CGRectGetMaxX(rect), CGRectGetMaxY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMaxY(textureRect) } },
+    };
+    return [verticesPool requestBufferFromContext:self.poolContext
+                                        withBytes:vertices
+                                   checkIfChanged:YES];
+}
+
 - (void)setCursorCoord:(VT100GridCoord)coord {
     VT100GridSize bounds = self.cellConfiguration.gridSize;
     _row = (0 <= coord.y && coord.y < bounds.height) ? coord.y : -1;
@@ -32,65 +52,29 @@
     CGFloat viewMaxX = viewMinX + cellSize.width*gridSize.width, viewMaxY = viewMinY + cellSize.height*gridSize.height;
 
     CGFloat cursorMinX = self.margins.left + self.column * cellSize.width, cursorMinY = self.margins.top + (gridSize.height - self.row - 1) * cellSize.height;
-    CGFloat cursorMaxX = cursorMinX + cellSize.width, cursorMaxY = cursorMinY + cellSize.height;
+    CGFloat cursorMaxY = cursorMinY + cellSize.height;
 
     if (horizontal) {
-        const iTermVertex vertices[] = {
-            // Pixel Positions                              Texture Coordinates
-            { { viewMaxX, cursorMinY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { viewMinX, cursorMinY }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { viewMinX, cursorMaxY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-
-            { { viewMaxX, cursorMinY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { viewMinX, cursorMaxY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-            { { viewMaxX, cursorMaxY }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        };
-        self.horizontalVertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
-                                                                   withBytes:vertices
-                                                              checkIfChanged:YES];
+        self.horizontalVertexBuffer = [self tessellateRect:CGRectMake(viewMinX, cursorMinY,
+                                                                     viewMaxX - viewMinX, cellSize.height)
+                                              withTexture:textureFrame
+                                                 withPool:verticesPool];
     }
 
     if (horizontal && vertical) {
-        const iTermVertex lowerVertices[] = {
-            // Pixel Positions                              Texture Coordinates
-            { { cursorMaxX, viewMinY },   { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMinY },   { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, cursorMinY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-
-            { { cursorMaxX, viewMinY },   { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, cursorMinY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-            { { cursorMaxX, cursorMinY }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        };
-        self.lowerVertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
-                                                              withBytes:lowerVertices
-                                                         checkIfChanged:YES];
-        const iTermVertex upperVertices[] = {
-            // Pixel Positions                              Texture Coordinates
-            { { cursorMaxX, cursorMaxY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, cursorMaxY }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMaxY },   { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-
-            { { cursorMaxX, cursorMaxY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMaxY },   { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-            { { cursorMaxX, viewMaxY },   { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        };
-        self.upperVertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
-                                                              withBytes:upperVertices
-                                                         checkIfChanged:YES];
+        self.lowerVertexBuffer = [self tessellateRect:CGRectMake(cursorMinX, viewMinY,
+                                                                cellSize.width, cursorMinY - viewMinY)
+                                         withTexture:textureFrame
+                                            withPool:verticesPool];
+        self.upperVertexBuffer = [self tessellateRect:CGRectMake(cursorMinX, cursorMaxY,
+                                                                cellSize.width, viewMaxY - cursorMaxY)
+                                         withTexture:textureFrame
+                                            withPool:verticesPool];
     } else if (vertical) {
-        const iTermVertex vertices[] = {
-            // Pixel Positions                              Texture Coordinates
-            { { cursorMaxX, viewMinY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMinY }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMaxY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-
-            { { cursorMaxX, viewMinY }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
-            { { cursorMinX, viewMaxY }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
-            { { cursorMaxX, viewMaxY }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
-        };
-        self.verticalVertexBuffer = [verticesPool requestBufferFromContext:self.poolContext
-                                                                 withBytes:vertices
-                                                            checkIfChanged:YES];
+        self.verticalVertexBuffer = [self tessellateRect:CGRectMake(cursorMinX, viewMinY,
+                                                                   cellSize.width, viewMaxY - viewMinY)
+                                            withTexture:textureFrame
+                                               withPool:verticesPool];
     }
 }
 
