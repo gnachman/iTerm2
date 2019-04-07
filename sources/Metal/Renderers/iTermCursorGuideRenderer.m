@@ -193,7 +193,7 @@
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.lowerVertexBuffer }
                               fragmentBuffers:@{}
                                      textures:@{ @(iTermTextureIndexPrimary): tState.verticalTexture } ];
-    } else if (tState.row >= 0 && self.horizontalEnabled && !self.verticalEnabled) {
+    } else if (tState.row >= 0 && self.horizontalEnabled) {
         [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:TRUE vertical:FALSE];
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
@@ -202,7 +202,7 @@
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.horizontalVertexBuffer }
                               fragmentBuffers:@{}
                                      textures:@{ @(iTermTextureIndexPrimary): tState.horizontalTexture } ];
-    } else if (tState.column >= 0 && !self.horizontalEnabled && self.verticalEnabled) {
+    } else if (tState.column >= 0 && self.verticalEnabled) {
         [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:FALSE vertical:TRUE];
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
