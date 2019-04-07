@@ -27,7 +27,6 @@
     IBOutlet NSButton *_xtermMouseReporting;
     IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
     IBOutlet NSButton *_allowTitleReporting;
-    IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_disableWindowResizing;
@@ -133,11 +132,6 @@
 
     [self defineControl:_allowTitleReporting
                     key:KEY_ALLOW_TITLE_REPORTING
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-
-    [self defineControl:_allowTitleSetting
-                    key:KEY_ALLOW_TITLE_SETTING
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

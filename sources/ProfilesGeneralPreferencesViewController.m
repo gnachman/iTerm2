@@ -84,6 +84,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSImageView *_imageWell;
     IBOutlet NSTextField *_tabTitle;
     IBOutlet NSTextField *_windowTitle;
+    IBOutlet NSButton *_allowTitleSetting;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
@@ -113,6 +114,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
 
+    [self defineControl:_allowTitleSetting
+                    key:KEY_ALLOW_TITLE_SETTING
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
                    displayName:@"Profile name"
