@@ -14,7 +14,8 @@
     id<MTLBuffer> _upperVertexBuffer, _lowerVertexBuffer;
 }
 
-- (void)setCursorCoord:(VT100GridCoord)coord within:(VT100GridSize)bounds {
+- (void)setCursorCoord:(VT100GridCoord)coord {
+    VT100GridSize bounds = self.cellConfiguration.gridSize;
     _row = (0 <= coord.y && coord.y < bounds.height) ? coord.y : -1;
     _column = (0 <= coord.x && coord.x < bounds.width)  ? coord.x : -1;
 }

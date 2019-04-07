@@ -1222,7 +1222,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateCursorGuideRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermCursorGuideRendererTransientState *tState = [frameData transientStateForRenderer:_cursorGuideRenderer];
     VT100GridCoord coord = frameData.perFrameState.metalDriverCursorInfo.coord;
-    [tState setCursorCoord:coord within:frameData.gridSize];
+    [tState setCursorCoord:coord];
 }
 
 - (void)populateTimestampsRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {

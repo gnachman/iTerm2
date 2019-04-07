@@ -6,7 +6,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCursorGuideRendererTransientState : iTermMetalCellRendererTransientState
-- (void)setCursorCoord:(VT100GridCoord)coord within:(VT100GridSize)bounds;
+- (void)setCursorCoord:(VT100GridCoord)coord;
 @end
 
 @interface iTermCursorGuideRenderer : NSObject<iTermMetalCellRenderer>
