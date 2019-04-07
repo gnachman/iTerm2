@@ -62,7 +62,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
     IBOutlet NSPopUpButton *_profileShortcut;
     IBOutlet NSTokenField *_tagsTokenField;
-    IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
+    IBOutlet NSPopUpButton *_commandType;  // Login shell vs custom command
     IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
     IBOutlet NSTextField *_sendTextAtStart;
     IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
@@ -191,7 +191,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
             displayName:@"Profile uses login shell or custom command"
-                   type:kPreferenceInfoTypeMatrix
+                   type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
@@ -205,7 +205,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         if (!strongSelf) {
             return NO;
         }
-        return [strongSelf->_commandType.selectedCell tag] == kCommandTypeCustomTag;
+        return strongSelf->_commandType.selectedTag == kCommandTypeCustomTag;
     };
 
     [self defineControl:_sendTextAtStart
@@ -466,6 +466,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
 }
 
+- (void)updateEnabledState {
+    [super updateEnabledState];
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        _customCommand.enabled = YES;
+    } else {
+        _customCommand.enabled = NO;
+    }
+}
+
 #pragma mark - Badge
 
 - (IBAction)configureBadge:(id)sender {
@@ -623,7 +632,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Command Type
 
 - (void)commandTypeDidChange {
-    NSInteger tag = [[_commandType selectedCell] tag];
+    NSInteger tag = _commandType.selectedTag;
     NSString *value;
     if (tag == kCommandTypeCustomTag) {
         value = kProfilePreferenceCommandTypeCustomValue;
@@ -637,9 +646,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateCommandType {
     NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
     if ([value isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
-        [_commandType selectCellWithTag:kCommandTypeCustomTag];
+        [_commandType selectItemWithTag:kCommandTypeCustomTag];
     } else {
-        [_commandType selectCellWithTag:kCommandTypeLoginShellTag];
+        [_commandType selectItemWithTag:kCommandTypeLoginShellTag];
     }
     [self updateEnabledState];
 }
