@@ -40,6 +40,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
+#import "iTermSoundPlayer.h"
 #import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
 #import "iTermLocalHostNameGuesser.h"
@@ -508,6 +509,8 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _useLibTickit;
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
+    
+    BOOL _showingVisualIndicatorForEsc;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -6894,17 +6897,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
 }
 
-- (void)actuateHapticFeedbackForEvent:(NSEvent *)event {
+- (BOOL)eventNeedsMitigation:(NSEvent *)event {
     if (event.keyCode != kVK_Escape) {
-        return;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceKeyEnableHapticFeedbackForEsc]) {
-        return;
+        return NO;
     }
     // This isn't quite right because you might be using an external keyboard.
     // Looks like you have to use an event tap to detect touches on the bar,
     // which requires user consent.
     if (!IsTouchBarAvailable()) {
+        return NO;
+    }
+
+    return YES;
+}
+
+- (void)actuateHapticFeedbackForEvent:(NSEvent *)event {
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableHapticFeedbackForEsc]) {
         return;
     }
     if (event.type == NSEventTypeKeyDown) {
@@ -6917,10 +6925,60 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)playSoundForEvent:(NSEvent *)event {
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableSoundForEsc]) {
+        return;
+    }
+    if (event.type == NSEventTypeKeyDown) {
+        [[iTermSoundPlayer keyClick] play];
+    }
+}
+
+- (void)showVisualIndicatorForEvent:(NSEvent *)event {
+    if (_showingVisualIndicatorForEsc) {
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyVisualIndicatorForEsc]) {
+        return;
+    }
+    _showingVisualIndicatorForEsc = YES;
+    
+    NSNumber *savedCursorTypeSetting = [iTermProfilePreferences objectForKey:KEY_CURSOR_TYPE inProfile:self.profile];
+    NSDictionary *dict = @{ KEY_CURSOR_TYPE: savedCursorTypeSetting };
+    
+    ITermCursorType temporaryType;
+    if (savedCursorTypeSetting.integerValue == CURSOR_BOX) {
+        temporaryType = CURSOR_UNDERLINE;
+    } else {
+        temporaryType = CURSOR_BOX;
+    }
+
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TYPE: @(temporaryType) }];
+    [_textview setCursorNeedsDisplay];
+    
+    [self retain];
+    [dict retain];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 / 15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self setSessionSpecificProfileValues:dict];
+        self->_showingVisualIndicatorForEsc = NO;
+        [dict release];
+        [self release];
+    });
+}
+
+- (void)mitigateTouchBarStupidityForEvent:(NSEvent *)event {
+    if (![self eventNeedsMitigation:event]) {
+        return;
+    }
+    [self actuateHapticFeedbackForEvent:event];
+    [self playSoundForEvent:event];
+    [self showVisualIndicatorForEvent:event];
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {
-    [self actuateHapticFeedbackForEvent:event];
+    [self mitigateTouchBarStupidityForEvent:event];
     
     if (event.charactersIgnoringModifiers.length == 0) {
         return;

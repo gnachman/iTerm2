@@ -174,26 +174,21 @@
         [strongSelf->_filterAlertsButton setEnabled:sendNotifications];
     };
 
-    [self defineControl:_bellAlert
-                    key:KEY_SEND_BELL_ALERT
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_idleAlert
-                    key:KEY_SEND_IDLE_ALERT
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_newOutputAlert
-                    key:KEY_SEND_NEW_OUTPUT_ALERT
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_sessionEndedAlert
-                    key:KEY_SEND_SESSION_ENDED_ALERT
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_terminalGeneratedAlerts
-                    key:KEY_SEND_TERMINAL_GENERATED_ALERT
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_bellAlert
+                                key:KEY_SEND_BELL_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_idleAlert
+                                key:KEY_SEND_IDLE_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_newOutputAlert
+                                key:KEY_SEND_NEW_OUTPUT_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_sessionEndedAlert
+                                key:KEY_SEND_SESSION_ENDED_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_terminalGeneratedAlerts
+                                key:KEY_SEND_TERMINAL_GENERATED_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL

@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class iTermKeyMappingViewController;
+@class iTermPreferencesBaseViewController;
 
 @protocol iTermKeyMappingViewControllerDelegate <NSObject>
 
@@ -46,7 +47,10 @@
 @property(nonatomic, weak) IBOutlet id<iTermKeyMappingViewControllerDelegate> delegate;
 @property(nonatomic, strong) IBOutlet NSView *placeholderView;
 @property(nonatomic) BOOL hapticFeedbackForEscEnabled;
+@property(nonatomic) BOOL soundForEscEnabled;
+@property(nonatomic) BOOL visualIndicatorForEscEnabled;
 
 - (void)hideAddTouchBarItem;
+- (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc;
 
 @end

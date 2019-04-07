@@ -48,6 +48,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSTextField *_switchTabModifierButtonLabel;
     IBOutlet NSTextField *_switchWindowModifierButtonLabel;
 
+    IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     IBOutlet NSView *_keyMappingView;
     
     // Hotkey
@@ -70,6 +71,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)awakeFromNib {
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
+
+    [_keyMappingViewController addViewsToSearchIndex:self];
+
     // Modifier remapping
     info = [self defineControl:_controlButton
                            key:kPreferenceKeyControlRemapping

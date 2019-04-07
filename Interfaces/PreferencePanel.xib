@@ -1420,6 +1420,7 @@ DQ
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
                 <outlet property="_keyMappingView" destination="zLA-QA-WQd" id="SJH-CO-sM8"/>
+                <outlet property="_keyMappingViewController" destination="Go1-4j-VZ4" id="SjN-Ah-cyq"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
                 <outlet property="_leftCommandButtonLabel" destination="3677" id="UYl-D3-ufT"/>
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
@@ -4468,7 +4469,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>

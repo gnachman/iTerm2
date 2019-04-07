@@ -2668,6 +2668,26 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     _oldCursorPosition = _cursorCoord;
 }
 
+- (NSColor *)blockCursorFillColorRespectingSmartSelection {
+    if (_useSmartCursorColor) {
+        screen_char_t *theLine;
+        if (_cursorCoord.y >= 0) {
+            theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
+        } else {
+            theLine = [self.delegate drawingHelperLineAtIndex:_cursorCoord.y + _numberOfScrollbackLines];
+        }
+        BOOL isDoubleWidth;
+        screen_char_t screenChar = [self charForCursorAtColumn:_cursorCoord.x
+                                                        inLine:theLine
+                                                   doubleWidth:&isDoubleWidth];
+        iTermSmartCursorColor *smartCursorColor = [[[iTermSmartCursorColor alloc] init] autorelease];
+        smartCursorColor.delegate = self;
+        return [smartCursorColor backgroundColorForCharacter:screenChar];
+    } else {
+        return self.backgroundColorForCursor;
+    }
+}
+
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor at:(VT100GridCoord)cursorCoord outline:(BOOL)outline {
     // Get the character that's under the cursor.
     screen_char_t *theLine;

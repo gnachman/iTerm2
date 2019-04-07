@@ -10,6 +10,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermEditKeyActionWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermPreferencesBaseViewController.h"
 #import "PreferencePanel.h"
 
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
@@ -17,12 +18,16 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 @implementation iTermKeyMappingViewController {
     IBOutlet NSButton *_addTouchBarItem;
     IBOutlet NSButton *_hapticFeedbackForEsc;
+    IBOutlet NSButton *_soundForEsc;
+    IBOutlet NSButton *_visualIndicatorForEsc;
     IBOutlet NSTableView *_tableView;
     IBOutlet NSTableColumn *_keyCombinationColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSButton *_removeMappingButton;
     IBOutlet NSPopUpButton *_presetsPopup;
     iTermEditKeyActionWindowController *_editActionWindowController;
+    IBOutlet NSButton *_touchBarMitigationsButton;
+    IBOutlet NSPanel *_touchBarMitigationsPanel;
 }
 
 - (instancetype)init {
@@ -44,6 +49,8 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (void)awakeFromNib {
     self.hapticFeedbackForEscEnabled = [iTermPreferences boolForKey:kPreferenceKeyEnableHapticFeedbackForEsc];
+    self.soundForEscEnabled = [iTermPreferences boolForKey:kPreferenceKeyEnableSoundForEsc];
+    self.visualIndicatorForEscEnabled = [iTermPreferences boolForKey:kPreferenceKeyVisualIndicatorForEsc];
 }
 
 - (void)setHapticFeedbackForEscEnabled:(BOOL)hapticFeedbackForEscEnabled {
@@ -54,6 +61,26 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (BOOL)hapticFeedbackForEscEnabled {
     return _hapticFeedbackForEsc.state == NSOnState;
+}
+
+- (void)setSoundForEscEnabled:(BOOL)enabled {
+    _soundForEsc.state = enabled ? NSOnState : NSOffState;
+    [iTermPreferences setBool:enabled
+                       forKey:kPreferenceKeyEnableSoundForEsc];
+}
+
+- (BOOL)soundForEscEnabled {
+    return _soundForEsc.state == NSOnState;
+}
+
+- (void)setVisualIndicatorForEscEnabled:(BOOL)enabled {
+    _visualIndicatorForEsc.state = enabled ? NSOnState : NSOffState;
+    [iTermPreferences setBool:enabled
+                       forKey:kPreferenceKeyVisualIndicatorForEsc];
+}
+
+- (BOOL)visualIndicatorForEscEnabled {
+    return _visualIndicatorForEsc.state == NSOnState;
 }
 
 - (void)keyBindingsChanged {
@@ -81,7 +108,24 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (void)hideAddTouchBarItem {
     _addTouchBarItem.hidden = YES;
-    _hapticFeedbackForEsc.hidden = YES;
+    _touchBarMitigationsButton.hidden = YES;
+}
+
+- (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc {
+    [vc addViewToSearchIndex:_addTouchBarItem
+                 displayName:@"Add touch bar item"
+                     phrases:@[]
+                         key:nil];
+    [vc addViewToSearchIndex:_presetsPopup
+                 displayName:@"Key binding presets"
+                     phrases:@[]
+                         key:nil];
+    [vc addViewToSearchIndex:_touchBarMitigationsButton
+                 displayName:@"Touch bar mitigations"
+                     phrases:@[ @"Haptic feedback for esc key",
+                                @"Key click sound for esc key",
+                                @"Visual indicator for esc key" ]
+                         key:_touchBarMitigationsButton.accessibilityIdentifier];
 }
 
 #pragma mark - NSTableViewDataSource
@@ -244,6 +288,24 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 - (IBAction)hapticFeedbackToggled:(id)sender {
     [iTermPreferences setBool:_hapticFeedbackForEsc.state == NSOnState
                        forKey:kPreferenceKeyEnableHapticFeedbackForEsc];
+}
+
+- (IBAction)soundForEscToggled:(id)sender {
+    [iTermPreferences setBool:_soundForEsc.state == NSOnState
+                       forKey:kPreferenceKeyEnableSoundForEsc];
+}
+
+- (IBAction)visualIndicatorForEscToggled:(id)sender {
+    [iTermPreferences setBool:_visualIndicatorForEsc.state == NSOnState
+                       forKey:kPreferenceKeyVisualIndicatorForEsc];
+}
+
+- (IBAction)showTouchBarMitigationsPanel:(id)sender {
+    [self.view.window beginSheet:_touchBarMitigationsPanel completionHandler:nil];
+}
+
+- (IBAction)dismissTouchBarMitigations:(id)sender {
+    [self.view.window endSheet:_touchBarMitigationsPanel];
 }
 
 @end

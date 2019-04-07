@@ -1180,6 +1180,11 @@
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		5300984C2259365B00A69348 /* iTermHapticActuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5300984A2259365B00A69348 /* iTermHapticActuator.h */; };
 		5300984D2259365B00A69348 /* iTermHapticActuator.m in Sources */ = {isa = PBXBuildFile; fileRef = 5300984B2259365B00A69348 /* iTermHapticActuator.m */; };
+		530098502259A44D00A69348 /* iTermSoundPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5300984E2259A44D00A69348 /* iTermSoundPlayer.h */; };
+		530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5300984F2259A44D00A69348 /* iTermSoundPlayer.m */; };
+		530098532259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
+		530098542259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
+		530098552259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
 		530AB7B420A615D900D2AA08 /* iTermPythonArgumentParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */; };
 		530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */; };
 		530AB7B820A6242C00D2AA08 /* iTermAPIAuthorizationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */; };
@@ -4095,6 +4100,9 @@
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		5300984A2259365B00A69348 /* iTermHapticActuator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHapticActuator.h; sourceTree = "<group>"; };
 		5300984B2259365B00A69348 /* iTermHapticActuator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermHapticActuator.m; sourceTree = "<group>"; };
+		5300984E2259A44D00A69348 /* iTermSoundPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSoundPlayer.h; sourceTree = "<group>"; };
+		5300984F2259A44D00A69348 /* iTermSoundPlayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSoundPlayer.m; sourceTree = "<group>"; };
+		530098522259AAEF00A69348 /* keyclick.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; name = keyclick.m4a; path = OtherResources/keyclick.m4a; sourceTree = "<group>"; };
 		530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPythonArgumentParser.h; sourceTree = "<group>"; };
 		530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonArgumentParser.m; sourceTree = "<group>"; };
 		530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIAuthorizationController.h; sourceTree = "<group>"; };
@@ -6456,6 +6464,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				530098522259AAEF00A69348 /* keyclick.m4a */,
 				A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */,
 				A6FE8D14209541BC00B5C648 /* rsa_pub.pem */,
 				A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */,
@@ -8317,6 +8326,8 @@
 				53E8F36E2244A58800F3770F /* iTermActionsModel.m */,
 				5300984A2259365B00A69348 /* iTermHapticActuator.h */,
 				5300984B2259365B00A69348 /* iTermHapticActuator.m */,
+				5300984E2259A44D00A69348 /* iTermSoundPlayer.h */,
+				5300984F2259A44D00A69348 /* iTermSoundPlayer.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9738,6 +9749,7 @@
 				A65D3ADB21D163B800384015 /* iTermBacktrace.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
+				530098502259A44D00A69348 /* iTermSoundPlayer.h in Headers */,
 				A69C9337212108E900531438 /* iTermsStatusBarComposerViewController.h in Headers */,
 				530AB89620AFDF5000D2AA08 /* iTermScriptFunctionCall.h in Headers */,
 				A6FE8D12209528F400B5C648 /* iTermPythonRuntimeDownloader.h in Headers */,
@@ -10581,6 +10593,7 @@
 				1D6ED9DC19AEA20D005A7799 /* PrefsGeneral.png in Resources */,
 				A6E7AE5A214394CA00DE9F3B /* graphic_bq@2x.png in Resources */,
 				A67F61BD214395C60093940A /* graphic_shell@2x.png in Resources */,
+				530098552259AAEF00A69348 /* keyclick.m4a in Resources */,
 				1D6ED9DD19AEA20D005A7799 /* NewOutput.png in Resources */,
 				A67D0D6D1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A6F7A73C213CB143004DE961 /* StatusBarIconClock.png in Resources */,
@@ -10795,6 +10808,7 @@
 				A623D94F1F8984710011F8C3 /* key@2x.png in Resources */,
 				1D44D0891CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testRegionStartingWithDWCRight.png in Resources */,
 				1D44D05B1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextVisible.png in Resources */,
+				530098542259AAEF00A69348 /* keyclick.m4a in Resources */,
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */,
 				1D44D07C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testIME.png in Resources */,
@@ -11347,6 +11361,7 @@
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
 				A6EC47C421EC682B000E1321 /* CompactMinimalWindowScreenshot.png in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
+				530098532259AAEF00A69348 /* keyclick.m4a in Resources */,
 				5376CB3C220D2E4300FE7476 /* git.sb in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
@@ -12230,6 +12245,7 @@
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
 				535EA51220D82A9C00FC81E0 /* PTYSplitView.m in Sources */,
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
+				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,

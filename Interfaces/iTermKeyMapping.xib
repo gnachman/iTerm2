@@ -10,11 +10,15 @@
             <connections>
                 <outlet property="_actionColumn" destination="8iu-ei-TS7" id="Gcv-RR-t3T"/>
                 <outlet property="_addTouchBarItem" destination="mE2-Fe-MAY" id="p0R-31-Bdr"/>
-                <outlet property="_hapticFeedbackForEsc" destination="i1u-NS-Se6" id="SMx-JS-0ax"/>
+                <outlet property="_hapticFeedbackForEsc" destination="qMI-f8-C8U" id="fEo-tg-Txk"/>
                 <outlet property="_keyCombinationColumn" destination="Qlz-bw-G7W" id="cSj-S6-11C"/>
                 <outlet property="_presetsPopup" destination="G8O-KW-SKT" id="kIL-c2-Euc"/>
                 <outlet property="_removeMappingButton" destination="csN-Fw-hKk" id="FuP-tp-Nfr"/>
+                <outlet property="_soundForEsc" destination="3GM-j0-23l" id="ix6-YI-Oxc"/>
                 <outlet property="_tableView" destination="ba5-LU-f2s" id="7XC-cR-Fwj"/>
+                <outlet property="_touchBarMitigationsButton" destination="j8M-h4-JJ5" id="Vep-7d-i1p"/>
+                <outlet property="_touchBarMitigationsPanel" destination="hXF-74-1ll" id="suS-lU-qqV"/>
+                <outlet property="_visualIndicatorForEsc" destination="qxR-eD-9hV" id="Hob-6g-GSh"/>
                 <outlet property="view" destination="c22-O7-iKe" id="slU-R5-NcX"/>
             </connections>
         </customObject>
@@ -143,20 +147,81 @@
                         <outlet property="nextKeyView" destination="csN-Fw-hKk" id="pDo-gD-8zm"/>
                     </connections>
                 </button>
-                <button verticalHuggingPriority="750" id="i1u-NS-Se6">
-                    <rect key="frame" x="221" y="6" width="167" height="18"/>
+                <button id="j8M-h4-JJ5">
+                    <rect key="frame" x="264" y="3" width="131" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="check" title="Haptic feedback for esc" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hyq-kR-ntE">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
+                    <buttonCell key="cell" type="square" title="Touch Bar Mitigations" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="j1Y-sT-5wz">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
                     <connections>
-                        <action selector="hapticFeedbackToggled:" target="-2" id="o5G-NU-xUA"/>
+                        <action selector="showTouchBarMitigationsPanel:" target="-2" id="0fs-x1-nf9"/>
+                        <outlet property="nextKeyView" destination="csN-Fw-hKk" id="LYF-Ts-YIk"/>
                     </connections>
                 </button>
             </subviews>
             <point key="canvasLocation" x="139.5" y="168.5"/>
         </customView>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="hXF-74-1ll" customClass="NSPanel">
+            <windowStyleMask key="styleMask" utility="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="167" y="107" width="276" height="135"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+            <view key="contentView" id="vOR-jf-pJQ">
+                <rect key="frame" x="0.0" y="0.0" width="276" height="135"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <button verticalHuggingPriority="750" id="qMI-f8-C8U">
+                        <rect key="frame" x="18" y="99" width="238" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Haptic feedback when pressing esc" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="T2e-te-qXU">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="hapticFeedbackToggled:" target="-2" id="nVj-Rt-f1b"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" id="3GM-j0-23l">
+                        <rect key="frame" x="18" y="79" width="146" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Key click for esc key" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ziz-Lx-Vmu">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="soundForEscToggled:" target="-2" id="fTE-Di-jGL"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" id="qxR-eD-9hV">
+                        <rect key="frame" x="18" y="59" width="165" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Visual esc key indicator" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jDm-YT-6t1">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="visualIndicatorForEscToggled:" target="-2" id="x63-uK-6mM"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" id="Og2-ad-nCU">
+                        <rect key="frame" x="179" y="13" width="81" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="vfN-hY-QgP">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="dismissTouchBarMitigations:" target="-2" id="iMy-hI-gEE"/>
+                        </connections>
+                    </button>
+                </subviews>
+            </view>
+            <point key="canvasLocation" x="-356" y="-171.5"/>
+        </window>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>

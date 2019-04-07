@@ -290,6 +290,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property (nonatomic) CGFloat badgeTopMargin;
 @property (nonatomic) CGFloat badgeRightMargin;
 
+@property (nonatomic, readonly) NSColor *blockCursorFillColorRespectingSmartSelection;
+
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
 // destinationFrameSize: size of the scrollview's content view
