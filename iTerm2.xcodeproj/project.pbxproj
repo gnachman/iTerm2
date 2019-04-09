@@ -1901,6 +1901,15 @@
 		A663013119D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A663013219D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
+		A666130A225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A666130B225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A666130C225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A666130F225CFF7200840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */ = {isa = PBXBuildFile; fileRef = A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */; };
 		A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */ = {isa = PBXBuildFile; fileRef = A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */; };
@@ -3555,6 +3564,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
+				A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */,
 				1D6EDB0219AEA20D005A7799 /* Sparkle.framework in CopyFiles */,
 			);
@@ -3567,6 +3577,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
+				A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */,
 				1DAAE593180FAD9A0061611B /* Sparkle.framework in CopyFiles */,
 			);
@@ -3582,6 +3593,7 @@
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
+				A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4855,6 +4867,7 @@
 		A663012719D0864C004AF81C /* SCEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvents.m; path = SCEvents/Source/SCEvents.m; sourceTree = "<group>"; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
+		A6661309225CFF5A00840E89 /* BetterFontPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BetterFontPicker.framework; path = BetterFontPicker/BetterFontPicker.framework; sourceTree = "<group>"; };
 		A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Session.h"; sourceTree = "<group>"; };
 		A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermVariableScope+Session.m"; sourceTree = "<group>"; };
 		A666D5EA221A1D9D00D6184A /* iTermVariableScope+Tab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Tab.h"; sourceTree = "<group>"; };
@@ -5842,9 +5855,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */,
+				A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624231919CF6DE000182C08 /* NMSSH.framework in Frameworks */,
 				A624231219CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
+				A666130C225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				530AB89B20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				A67D19512237045C00BD0D4D /* libsixel.a in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
@@ -5865,10 +5880,12 @@
 				A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				530AB89A20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
+				A666130F225CFF7200840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
+				A666130B225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
@@ -5895,9 +5912,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				A67D194F2237045C00BD0D4D /* libsixel.a in Frameworks */,
+				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
+				A666130A225CFF5A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
@@ -7031,6 +7050,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6661309225CFF5A00840E89 /* BetterFontPicker.framework */,
 				A67D194E2237045C00BD0D4D /* libsixel.a */,
 				A608CCF2214DE6E8007A7B87 /* XCTest.framework */,
 				530AB89820AFF21200D2AA08 /* CoreParse.framework */,
@@ -12881,6 +12901,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -12903,7 +12924,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -12953,6 +12974,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -12975,7 +12997,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13022,6 +13044,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13043,7 +13066,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13088,6 +13111,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13109,7 +13133,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13164,6 +13188,7 @@
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -13188,7 +13213,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13241,6 +13266,7 @@
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -13258,7 +13284,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13311,6 +13337,7 @@
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -13328,7 +13355,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13533,6 +13560,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13554,7 +13582,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13616,6 +13644,7 @@
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -13633,7 +13662,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -13710,6 +13739,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13731,7 +13761,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -14596,6 +14626,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -14618,7 +14649,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -14675,6 +14706,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -14696,7 +14728,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
