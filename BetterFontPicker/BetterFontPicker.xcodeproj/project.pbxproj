@@ -1,0 +1,580 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A66612F6225C6E3B00840E89 /* Affordance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66612F5225C6E3B00840E89 /* Affordance.swift */; };
+		A66612F8225C6E4F00840E89 /* FontPickerPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66612F7225C6E4F00840E89 /* FontPickerPanel.swift */; };
+		A66612FC225C708800840E89 /* FontFamilyMemberPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66612FB225C708800840E89 /* FontFamilyMemberPickerView.swift */; };
+		A66612FE225C782E00840E89 /* SizePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66612FD225C782E00840E89 /* SizePickerView.swift */; };
+		A6661300225C7C8000840E89 /* FontPickerCompositeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66612FF225C7C8000840E89 /* FontPickerCompositeView.swift */; };
+		A6661305225CF57D00840E89 /* VerticalSpacingIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6661301225CF57C00840E89 /* VerticalSpacingIcon.png */; };
+		A6661306225CF57D00840E89 /* VerticalSpacingIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6661302225CF57C00840E89 /* VerticalSpacingIcon@2x.png */; };
+		A6661307225CF57D00840E89 /* HorizontalSpacingIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6661303225CF57C00840E89 /* HorizontalSpacingIcon.png */; };
+		A6661308225CF57D00840E89 /* HorizontalSpacingIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6661304225CF57D00840E89 /* HorizontalSpacingIcon@2x.png */; };
+		A6B00D1C225AC60600536A68 /* StarTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B00D1B225AC60600536A68 /* StarTableViewCell.swift */; };
+		A6B00D25225ACA8D00536A68 /* EmptyStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D1F225AC79A00536A68 /* EmptyStar@2x.png */; };
+		A6B00D26225ACA8D00536A68 /* EmptyStar.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D1D225AC79900536A68 /* EmptyStar.png */; };
+		A6B00D27225ACA8D00536A68 /* FilledStar.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D1E225AC79A00536A68 /* FilledStar.png */; };
+		A6B00D28225ACA8D00536A68 /* FilledStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D20225AC79A00536A68 /* FilledStar@2x.png */; };
+		A6B00D2C225B056000536A68 /* FontListTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B00D2B225B056000536A68 /* FontListTableView.swift */; };
+		A6DBE791225A565700144200 /* BetterFontPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBE78F225A565700144200 /* BetterFontPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A6DBE79A225A56A100144200 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE799225A56A100144200 /* MainViewController.swift */; };
+		A6DBE79C225A56D300144200 /* MainViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE79B225A56D300144200 /* MainViewController.xib */; };
+		A6DBE79E225A575D00144200 /* FavoritesDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE79D225A575D00144200 /* FavoritesDataSource.swift */; };
+		A6DBE7A0225A59EB00144200 /* RecentsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE79F225A59EB00144200 /* RecentsDataSource.swift */; };
+		A6DBE7A2225A5A9400144200 /* SystemFontsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7A1225A5A9400144200 /* SystemFontsDataSource.swift */; };
+		A6DBE7A4225AAE5E00144200 /* TableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7A3225AAE5E00144200 /* TableViewController.swift */; };
+		A6DBE7A6225AB24A00144200 /* FontListDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7A5225AB24A00144200 /* FontListDataSource.swift */; };
+		A6DBE7AA225AB4F000144200 /* SeparatorDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7A9225AB4F000144200 /* SeparatorDataSource.swift */; };
+		A6DBE7AC225AB8C300144200 /* SeparatorTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7AB225AB8C300144200 /* SeparatorTableViewCell.swift */; };
+		A6DBE7B4225ABC5F00144200 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE7B3225ABC5F00144200 /* AppDelegate.swift */; };
+		A6DBE7B6225ABC6000144200 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE7B5225ABC6000144200 /* Assets.xcassets */; };
+		A6DBE7B9225ABC6000144200 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE7B7225ABC6000144200 /* MainMenu.xib */; };
+		A6DBE7C0225ABC7000144200 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6DBE78C225A565700144200 /* BetterFontPicker.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A66612F5225C6E3B00840E89 /* Affordance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Affordance.swift; sourceTree = "<group>"; };
+		A66612F7225C6E4F00840E89 /* FontPickerPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontPickerPanel.swift; sourceTree = "<group>"; };
+		A66612FB225C708800840E89 /* FontFamilyMemberPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontFamilyMemberPickerView.swift; sourceTree = "<group>"; };
+		A66612FD225C782E00840E89 /* SizePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizePickerView.swift; sourceTree = "<group>"; };
+		A66612FF225C7C8000840E89 /* FontPickerCompositeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontPickerCompositeView.swift; sourceTree = "<group>"; };
+		A6661301225CF57C00840E89 /* VerticalSpacingIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = VerticalSpacingIcon.png; sourceTree = "<group>"; };
+		A6661302225CF57C00840E89 /* VerticalSpacingIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "VerticalSpacingIcon@2x.png"; sourceTree = "<group>"; };
+		A6661303225CF57C00840E89 /* HorizontalSpacingIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = HorizontalSpacingIcon.png; sourceTree = "<group>"; };
+		A6661304225CF57D00840E89 /* HorizontalSpacingIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "HorizontalSpacingIcon@2x.png"; sourceTree = "<group>"; };
+		A6B00D1B225AC60600536A68 /* StarTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarTableViewCell.swift; sourceTree = "<group>"; };
+		A6B00D1D225AC79900536A68 /* EmptyStar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = EmptyStar.png; sourceTree = "<group>"; };
+		A6B00D1E225AC79A00536A68 /* FilledStar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = FilledStar.png; sourceTree = "<group>"; };
+		A6B00D1F225AC79A00536A68 /* EmptyStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "EmptyStar@2x.png"; sourceTree = "<group>"; };
+		A6B00D20225AC79A00536A68 /* FilledStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FilledStar@2x.png"; sourceTree = "<group>"; };
+		A6B00D2B225B056000536A68 /* FontListTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontListTableView.swift; sourceTree = "<group>"; };
+		A6DBE78C225A565700144200 /* BetterFontPicker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BetterFontPicker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6DBE78F225A565700144200 /* BetterFontPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BetterFontPicker.h; sourceTree = "<group>"; };
+		A6DBE790225A565700144200 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6DBE799225A56A100144200 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		A6DBE79B225A56D300144200 /* MainViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainViewController.xib; sourceTree = "<group>"; };
+		A6DBE79D225A575D00144200 /* FavoritesDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesDataSource.swift; sourceTree = "<group>"; };
+		A6DBE79F225A59EB00144200 /* RecentsDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentsDataSource.swift; sourceTree = "<group>"; };
+		A6DBE7A1225A5A9400144200 /* SystemFontsDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemFontsDataSource.swift; sourceTree = "<group>"; };
+		A6DBE7A3225AAE5E00144200 /* TableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableViewController.swift; sourceTree = "<group>"; };
+		A6DBE7A5225AB24A00144200 /* FontListDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontListDataSource.swift; sourceTree = "<group>"; };
+		A6DBE7A9225AB4F000144200 /* SeparatorDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeparatorDataSource.swift; sourceTree = "<group>"; };
+		A6DBE7AB225AB8C300144200 /* SeparatorTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeparatorTableViewCell.swift; sourceTree = "<group>"; };
+		A6DBE7B1225ABC5F00144200 /* BetterFontPickerDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BetterFontPickerDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6DBE7B3225ABC5F00144200 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A6DBE7B5225ABC6000144200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A6DBE7B8225ABC6000144200 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		A6DBE7BA225ABC6000144200 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6DBE7BB225ABC6000144200 /* BetterfontPickerDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BetterfontPickerDemo.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A6DBE789225A565700144200 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6DBE7AE225ABC5F00144200 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6DBE7C0225ABC7000144200 /* BetterFontPicker.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A6DBE782225A565700144200 = {
+			isa = PBXGroup;
+			children = (
+				A6DBE78E225A565700144200 /* BetterFontPicker */,
+				A6DBE7B2225ABC5F00144200 /* BetterfontPickerDemo */,
+				A6DBE78D225A565700144200 /* Products */,
+				A6DBE7BF225ABC7000144200 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		A6DBE78D225A565700144200 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A6DBE78C225A565700144200 /* BetterFontPicker.framework */,
+				A6DBE7B1225ABC5F00144200 /* BetterFontPickerDemo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A6DBE78E225A565700144200 /* BetterFontPicker */ = {
+			isa = PBXGroup;
+			children = (
+				A6661303225CF57C00840E89 /* HorizontalSpacingIcon.png */,
+				A6661304225CF57D00840E89 /* HorizontalSpacingIcon@2x.png */,
+				A6661301225CF57C00840E89 /* VerticalSpacingIcon.png */,
+				A6661302225CF57C00840E89 /* VerticalSpacingIcon@2x.png */,
+				A6B00D1D225AC79900536A68 /* EmptyStar.png */,
+				A6B00D1F225AC79A00536A68 /* EmptyStar@2x.png */,
+				A6B00D1E225AC79A00536A68 /* FilledStar.png */,
+				A6B00D20225AC79A00536A68 /* FilledStar@2x.png */,
+				A6DBE78F225A565700144200 /* BetterFontPicker.h */,
+				A6DBE790225A565700144200 /* Info.plist */,
+				A6DBE799225A56A100144200 /* MainViewController.swift */,
+				A6DBE79B225A56D300144200 /* MainViewController.xib */,
+				A6DBE79D225A575D00144200 /* FavoritesDataSource.swift */,
+				A6DBE79F225A59EB00144200 /* RecentsDataSource.swift */,
+				A6DBE7A1225A5A9400144200 /* SystemFontsDataSource.swift */,
+				A6DBE7A3225AAE5E00144200 /* TableViewController.swift */,
+				A6DBE7A5225AB24A00144200 /* FontListDataSource.swift */,
+				A6DBE7A9225AB4F000144200 /* SeparatorDataSource.swift */,
+				A6DBE7AB225AB8C300144200 /* SeparatorTableViewCell.swift */,
+				A6B00D1B225AC60600536A68 /* StarTableViewCell.swift */,
+				A6B00D2B225B056000536A68 /* FontListTableView.swift */,
+				A66612F5225C6E3B00840E89 /* Affordance.swift */,
+				A66612F7225C6E4F00840E89 /* FontPickerPanel.swift */,
+				A66612FB225C708800840E89 /* FontFamilyMemberPickerView.swift */,
+				A66612FD225C782E00840E89 /* SizePickerView.swift */,
+				A66612FF225C7C8000840E89 /* FontPickerCompositeView.swift */,
+			);
+			path = BetterFontPicker;
+			sourceTree = "<group>";
+		};
+		A6DBE7B2225ABC5F00144200 /* BetterfontPickerDemo */ = {
+			isa = PBXGroup;
+			children = (
+				A6DBE7B3225ABC5F00144200 /* AppDelegate.swift */,
+				A6DBE7B5225ABC6000144200 /* Assets.xcassets */,
+				A6DBE7B7225ABC6000144200 /* MainMenu.xib */,
+				A6DBE7BA225ABC6000144200 /* Info.plist */,
+				A6DBE7BB225ABC6000144200 /* BetterfontPickerDemo.entitlements */,
+			);
+			path = BetterfontPickerDemo;
+			sourceTree = "<group>";
+		};
+		A6DBE7BF225ABC7000144200 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		A6DBE787225A565700144200 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6DBE791225A565700144200 /* BetterFontPicker.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		A6DBE78B225A565700144200 /* BetterFontPicker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6DBE794225A565700144200 /* Build configuration list for PBXNativeTarget "BetterFontPicker" */;
+			buildPhases = (
+				A6DBE787225A565700144200 /* Headers */,
+				A6DBE788225A565700144200 /* Sources */,
+				A6DBE789225A565700144200 /* Frameworks */,
+				A6DBE78A225A565700144200 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BetterFontPicker;
+			productName = BetterFontPicker;
+			productReference = A6DBE78C225A565700144200 /* BetterFontPicker.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		A6DBE7B0225ABC5F00144200 /* BetterFontPickerDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6DBE7BC225ABC6000144200 /* Build configuration list for PBXNativeTarget "BetterFontPickerDemo" */;
+			buildPhases = (
+				A6DBE7AD225ABC5F00144200 /* Sources */,
+				A6DBE7AE225ABC5F00144200 /* Frameworks */,
+				A6DBE7AF225ABC5F00144200 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BetterFontPickerDemo;
+			productName = BetterfontPickerDemo;
+			productReference = A6DBE7B1225ABC5F00144200 /* BetterFontPickerDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A6DBE783225A565700144200 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1020;
+				LastUpgradeCheck = 1020;
+				ORGANIZATIONNAME = "George Nachman";
+				TargetAttributes = {
+					A6DBE78B225A565700144200 = {
+						CreatedOnToolsVersion = 10.2;
+						LastSwiftMigration = 1020;
+					};
+					A6DBE7B0225ABC5F00144200 = {
+						CreatedOnToolsVersion = 10.2;
+					};
+				};
+			};
+			buildConfigurationList = A6DBE786225A565700144200 /* Build configuration list for PBXProject "BetterFontPicker" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A6DBE782225A565700144200;
+			productRefGroup = A6DBE78D225A565700144200 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A6DBE78B225A565700144200 /* BetterFontPicker */,
+				A6DBE7B0225ABC5F00144200 /* BetterFontPickerDemo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A6DBE78A225A565700144200 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6661306225CF57D00840E89 /* VerticalSpacingIcon@2x.png in Resources */,
+				A6B00D25225ACA8D00536A68 /* EmptyStar@2x.png in Resources */,
+				A6DBE79C225A56D300144200 /* MainViewController.xib in Resources */,
+				A6B00D26225ACA8D00536A68 /* EmptyStar.png in Resources */,
+				A6661308225CF57D00840E89 /* HorizontalSpacingIcon@2x.png in Resources */,
+				A6661307225CF57D00840E89 /* HorizontalSpacingIcon.png in Resources */,
+				A6B00D27225ACA8D00536A68 /* FilledStar.png in Resources */,
+				A6661305225CF57D00840E89 /* VerticalSpacingIcon.png in Resources */,
+				A6B00D28225ACA8D00536A68 /* FilledStar@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6DBE7AF225ABC5F00144200 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6DBE7B6225ABC6000144200 /* Assets.xcassets in Resources */,
+				A6DBE7B9225ABC6000144200 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A6DBE788225A565700144200 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6DBE7AA225AB4F000144200 /* SeparatorDataSource.swift in Sources */,
+				A66612FE225C782E00840E89 /* SizePickerView.swift in Sources */,
+				A6DBE7A2225A5A9400144200 /* SystemFontsDataSource.swift in Sources */,
+				A6DBE7A6225AB24A00144200 /* FontListDataSource.swift in Sources */,
+				A6DBE7AC225AB8C300144200 /* SeparatorTableViewCell.swift in Sources */,
+				A6B00D2C225B056000536A68 /* FontListTableView.swift in Sources */,
+				A6DBE7A0225A59EB00144200 /* RecentsDataSource.swift in Sources */,
+				A66612F6225C6E3B00840E89 /* Affordance.swift in Sources */,
+				A6DBE79E225A575D00144200 /* FavoritesDataSource.swift in Sources */,
+				A6DBE7A4225AAE5E00144200 /* TableViewController.swift in Sources */,
+				A66612F8225C6E4F00840E89 /* FontPickerPanel.swift in Sources */,
+				A6B00D1C225AC60600536A68 /* StarTableViewCell.swift in Sources */,
+				A6661300225C7C8000840E89 /* FontPickerCompositeView.swift in Sources */,
+				A66612FC225C708800840E89 /* FontFamilyMemberPickerView.swift in Sources */,
+				A6DBE79A225A56A100144200 /* MainViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6DBE7AD225ABC5F00144200 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6DBE7B4225ABC5F00144200 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A6DBE7B7225ABC6000144200 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A6DBE7B8225ABC6000144200 /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A6DBE792225A565700144200 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		A6DBE793225A565700144200 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		A6DBE795225A565700144200 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = BetterFontPicker/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.BetterFontPicker;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A6DBE796225A565700144200 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = BetterFontPicker/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.BetterFontPicker;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A6DBE7BD225ABC6000144200 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BetterfontPickerDemo/BetterfontPickerDemo.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = BetterfontPickerDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.BetterfontPickerDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A6DBE7BE225ABC6000144200 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BetterfontPickerDemo/BetterfontPickerDemo.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = BetterfontPickerDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.BetterfontPickerDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A6DBE786225A565700144200 /* Build configuration list for PBXProject "BetterFontPicker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6DBE792225A565700144200 /* Debug */,
+				A6DBE793225A565700144200 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A6DBE794225A565700144200 /* Build configuration list for PBXNativeTarget "BetterFontPicker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6DBE795225A565700144200 /* Debug */,
+				A6DBE796225A565700144200 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A6DBE7BC225ABC6000144200 /* Build configuration list for PBXNativeTarget "BetterFontPickerDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6DBE7BD225ABC6000144200 /* Debug */,
+				A6DBE7BE225ABC6000144200 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A6DBE783225A565700144200 /* Project object */;
+}
