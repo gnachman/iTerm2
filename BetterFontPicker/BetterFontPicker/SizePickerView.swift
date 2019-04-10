@@ -18,15 +18,9 @@ public protocol SizePickerViewDelegate: NSObjectProtocol {
 public class SizePickerView: NSView, NSTextFieldDelegate {
     @objc public weak var delegate: SizePickerViewDelegate?
     private var internalSize = 12
-    var size: Int {
+    @objc public var size: Int {
         set {
-            if newValue <= 0 {
-                return
-            }
-            internalSize = newValue
-            textField.integerValue = internalSize
-            stepper.integerValue = internalSize
-            delegate?.sizePickerView(self, didChangeSizeTo: internalSize)
+            internalSet(newValue, withSideEffects: false)
         }
         get {
             return internalSize
@@ -35,8 +29,14 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
     public override var fittingSize: NSSize {
         return NSSize(width: 54.0, height: 27.0)
     }
-    let textField = NSTextField()
+    @objc public let textField = NSTextField()
     let stepper = NSStepper()
+
+    @objc
+    public func clamp(min: Int, max: Int) {
+        stepper.minValue = Double(min)
+        stepper.maxValue = Double(max)
+    }
 
     public override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -63,6 +63,18 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
         layoutSubviews()
     }
 
+    private func internalSet(_ newValue: Int, withSideEffects: Bool) {
+        if newValue <= 0 {
+            return
+        }
+        internalSize = newValue
+        textField.integerValue = internalSize
+        stepper.integerValue = internalSize
+        if withSideEffects {
+            delegate?.sizePickerView(self, didChangeSizeTo: internalSize)
+        }
+    }
+
     private func layoutSubviews() {
         textField.sizeToFit()
         stepper.sizeToFit()
@@ -87,15 +99,14 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
     @objc(stepper:)
     public func stepper(_ sender: Any?) {
         let stepper = sender as! NSStepper
-        size = stepper.integerValue
+        internalSet(stepper.integerValue, withSideEffects: true)
+    }
+
+    public func controlTextDidEndEditing(_ obj: Notification) {
+        internalSet(textField.integerValue, withSideEffects: true)
     }
 
     public func controlTextDidChange(_ obj: Notification) {
-        size = textField.integerValue
-    }
-
-    @objc(setSize:)
-    public func set(size: Int) {
-        self.size = size
+        internalSet(textField.integerValue, withSideEffects: false)
     }
 }

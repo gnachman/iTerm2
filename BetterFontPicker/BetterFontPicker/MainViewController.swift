@@ -68,12 +68,14 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
     @IBOutlet public weak var tableView: FontListTableView!
     @IBOutlet public weak var searchField: NSSearchField!
     @objc(delegate) @IBOutlet public weak var delegate: MainViewControllerDelegate?
+    private var internalFamilyName: String?
     public var fontFamilyName: String? {
         get {
-            return tableViewController.selectedName
+            return internalFamilyName
         }
         set {
-            tableViewController.select(name: newValue)
+            internalFamilyName = newValue
+            tableViewController?.select(name: newValue)
         }
     }
     public var insets: NSEdgeInsets {
@@ -84,7 +86,7 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
                             right: NSMaxX(view.bounds) - NSMaxX(frame))
     }
 
-    var tableViewController: TableViewController!
+    var tableViewController: TableViewController?
 
     init() {
         super.init(nibName: "MainViewController", bundle: Bundle(for: MainViewController.self))
@@ -100,12 +102,12 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
 
     public override func awakeFromNib() {
         tableViewController = TableViewController(tableView: tableView)
-        tableViewController.delegate = self
+        tableViewController?.delegate = self
     }
 
     @objc(controlTextDidChange:)
     public func controlTextDidChange(_ obj: Notification) {
-        tableViewController.filter = searchField.stringValue
+        tableViewController?.filter = searchField.stringValue
     }
 
     public override func viewWillAppear() {
@@ -115,6 +117,7 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
 
     func tableViewController(_ tableViewController: TableViewController,
                              didSelectFontWithName name: String) {
+        internalFamilyName = name
         delegate?.mainViewController(self, didSelectFontWithName: name)
         view.window?.orderOut(nil)
     }

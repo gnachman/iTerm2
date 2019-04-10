@@ -33,14 +33,24 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
     }
 
     private let vc = MainViewController()
-    private let panel = FontPickerPanel(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
-                                        styleMask: [.resizable, .fullSizeContentView],
-                                        backing: .buffered,
-                                        defer: true)
+    private var internalPanel: FontPickerPanel?
+    private var panel: FontPickerPanel {
+        get {
+            if let internalPanel = internalPanel {
+                return internalPanel
+            }
+            let newPanel = FontPickerPanel(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+                                           styleMask: [.resizable, .fullSizeContentView],
+                                           backing: .buffered,
+                                           defer: true)
+            newPanel.orderOut(nil)
+            newPanel.contentView?.addSubview(vc.view)
+            internalPanel = newPanel
+            return newPanel
+        }
+    }
 
     private func postInit() {
-        panel.orderOut(nil)
-        panel.contentView?.addSubview(vc.view)
         vc.delegate = self
         title = "Select Font"
     }
@@ -65,6 +75,12 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
         super.init(frame: NSRect.zero)
         postInit()
     }
+
+    deinit {
+        if let internalPanel = internalPanel {
+            internalPanel.close()
+        }
+    }
     
     override public func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         menu.cancelTrackingWithoutAnimation()
@@ -73,6 +89,7 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
 
     public func set(familyName name: String) {
         vc.fontFamilyName = name
+        title = name
     }
 
     private func showPicker() {

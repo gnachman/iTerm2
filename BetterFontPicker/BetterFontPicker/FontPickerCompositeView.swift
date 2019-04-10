@@ -16,21 +16,24 @@ public protocol FontPickerCompositeViewDelegate: NSObjectProtocol {
 
 @objc(BFPCompositeView)
 public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemberPickerViewDelegate, SizePickerViewDelegate {
-    public weak var delegate: FontPickerCompositeViewDelegate?
+    @objc public weak var delegate: FontPickerCompositeViewDelegate?
     private var accessories: [NSView] = []
-    let affordance = Affordance()
+    @objc public let affordance = Affordance()
     let memberPicker = FontFamilyMemberPickerView()
     let sizePicker = SizePickerView()
-    private(set) public var horizontalSpacing: SizePickerView? = nil
-    private(set) public var verticalSpacing: SizePickerView? = nil
+    @objc private(set) public var horizontalSpacing: SizePickerView? = nil
+    @objc private(set) public var verticalSpacing: SizePickerView? = nil
 
-    var font: NSFont? {
+    @objc public var font: NSFont? {
         set {
+            let temp = delegate
+            delegate = nil
             if let font = newValue, let familyName = font.familyName {
                 affordance.set(familyName: familyName)
                 memberPicker.set(member: font.fontName)
-                sizePicker.set(size: Int(font.pointSize))
+                sizePicker.size = Int(font.pointSize)
             }
+            delegate = temp
         }
         get {
             guard let name = memberPicker.selectedFontName else {
@@ -71,6 +74,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         layoutSubviews()
     }
 
+    @objc(addHorizontalSpacingAccessoryWithInitialValue:)
     public func addHorizontalSpacingAccessory(_ initialValue: Int) -> SizePickerView {
         let view = SizePickerView()
         horizontalSpacing = view
@@ -81,6 +85,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         return view
     }
 
+    @objc(addVerticalSpacingAccessoryWithInitialValue:)
     public func addVerticalSpacingAccessory(_ initialValue: Int) -> SizePickerView {
         let view = SizePickerView()
         verticalSpacing = view

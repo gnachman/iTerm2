@@ -1,0 +1,11 @@
+framework module BetterFontPicker {
+  umbrella header "BetterFontPicker.h"
+
+  export *
+  module * { export * }
+}
+
+module BetterFontPicker.Swift {
+    header "BetterFontPicker-Swift.h"
+    requires objc
+}
