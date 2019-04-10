@@ -392,11 +392,21 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model {
+    [self setObject:object forKey:key inProfile:profile model:model withSideEffects:YES];
+}
+
++ (void)setObject:(id)object
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model
+  withSideEffects:(BOOL)withSideEffects {
     [model setObject:object forKey:key inBookmark:profile];
-    [model flush];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
-                                                        object:nil
-                                                      userInfo:nil];
+    if (withSideEffects) {
+        [model flush];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                            object:nil
+                                                          userInfo:nil];
+    }
 }
 
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary

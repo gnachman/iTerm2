@@ -142,5 +142,6 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // Override this if you have a tab view.
 - (NSTabView *)tabView;
 - (CGFloat)minimumWidth;
+- (void)saveDeferredUpdates;
 
 @end

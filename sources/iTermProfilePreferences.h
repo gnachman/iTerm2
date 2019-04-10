@@ -79,6 +79,12 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
         inProfile:(Profile *)profile
             model:(ProfileModel *)model;
 
++ (void)setObject:(id)object
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model
+  withSideEffects:(BOOL)withSideEffects;
+
 // This is used for ensuring that all controls have default values.
 + (BOOL)keyHasDefaultValue:(NSString *)key;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;

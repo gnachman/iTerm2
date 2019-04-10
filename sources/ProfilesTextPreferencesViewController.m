@@ -17,11 +17,9 @@
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "PTYFontInfo.h"
+#import <BetterFontPicker/BetterFontPicker-Swift.h>
 
-// Tag on button to open font picker for non-ascii font.
-static NSInteger kNonAsciiFontButtonTag = 1;
-
-@interface ProfilesTextPreferencesViewController ()
+@interface ProfilesTextPreferencesViewController ()<BFPCompositeViewDelegate, BFPSizePickerViewDelegate>
 @property(nonatomic, strong) NSFont *normalFont;
 @property(nonatomic, strong) NSFont *nonAsciiFont;
 @end
@@ -38,8 +36,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
     IBOutlet NSTextField *_normalizationLabel;
-    IBOutlet NSSlider *_horizontalSpacing;
-    IBOutlet NSSlider *_verticalSpacing;
     IBOutlet NSButton *_useNonAsciiFont;
     IBOutlet NSButton *_asciiAntiAliased;
     IBOutlet NSButton *_nonasciiAntiAliased;
@@ -50,12 +46,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_nonAsciiLigatures;
     IBOutlet NSButton *_subpixelAA;
     IBOutlet NSButton *_powerline;
-    
-    IBOutlet NSButton *_fontButton;
-
-    // Labels indicating current font. Not registered as controls.
-    IBOutlet NSTextField *_normalFontDescription;
-    IBOutlet NSTextField *_nonAsciiFontDescription;
+    IBOutlet BFPCompositeView *_asciiFontPicker;
+    IBOutlet BFPCompositeView *_nonASCIIFontPicker;
+    BFPSizePickerView *_horizontalSpacingView;
+    BFPSizePickerView *_verticalSpacingView;
 
     // Warning labels
     IBOutlet NSTextField *_normalFontWantsAntialiasing;
@@ -63,15 +57,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     // Hide this view to hide all non-ASCII font settings.
     IBOutlet NSView *_nonAsciiFontView;
-
-    // If set, the font picker was last opened to change the non-ascii font.
-    // Used to interpret messages from it.
-    BOOL _fontPickerIsForNonAsciiFont;
-
-    // This view is added to the font panel.
-    IBOutlet NSView *_displayFontAccessoryView;
-    IBOutlet NSTextField *_horizontalSpacingAccessoryTextField;
-    IBOutlet NSTextField *_verticalSpacingAccessoryTextField;
 
     CGFloat _heightWithNonAsciiControls;
     CGFloat _heightWithoutNonAsciiControls;
@@ -203,19 +188,45 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                  }];
 
 
-    info = [self defineUnsearchableControl:_horizontalSpacing
-                                       key:KEY_HORIZONTAL_SPACING
-                                      type:kPreferenceInfoTypeSlider];
-    info.observer = ^{
-        [weakSelf fontAccessorySliderDidChange];
-    };
+    _asciiFontPicker.delegate = self;
+    _nonASCIIFontPicker.delegate = self;
+    _horizontalSpacingView = [_asciiFontPicker addHorizontalSpacingAccessoryWithInitialValue:[self doubleForKey:KEY_HORIZONTAL_SPACING] * 100];
+    _horizontalSpacingView.delegate = self;
+    [_horizontalSpacingView clampWithMin:50 max:200];
+    _verticalSpacingView = [_asciiFontPicker addVerticalSpacingAccessoryWithInitialValue:[self doubleForKey:KEY_VERTICAL_SPACING] * 100];
+    _verticalSpacingView.delegate = self;
+    [_verticalSpacingView clampWithMin:50 max:200];
+    [self defineControl:_asciiFontPicker.horizontalSpacing.textField
+                    key:KEY_HORIZONTAL_SPACING
+            relatedView:nil
+            displayName:@"Horizontal spacing"
+                   type:kPreferenceInfoTypeIntegerTextField
+         settingChanged:^(id sender) { assert(false); }
+                 update:^BOOL{
+                     __strong __typeof(weakSelf) strongSelf = weakSelf;
+                     if (!strongSelf) {
+                         return NO;
+                     }
+                     strongSelf->_asciiFontPicker.horizontalSpacing.size = [self doubleForKey:KEY_HORIZONTAL_SPACING] * 100;
+                     return YES;
+                 }
+             searchable:YES];
 
-    info = [self defineUnsearchableControl:_verticalSpacing
-                                       key:KEY_VERTICAL_SPACING
-                                      type:kPreferenceInfoTypeSlider];
-    info.observer = ^{
-        [weakSelf fontAccessorySliderDidChange];
-    };
+    [self defineControl:_asciiFontPicker.verticalSpacing.textField
+                    key:KEY_VERTICAL_SPACING
+            relatedView:nil
+            displayName:@"Vertical spacing"
+                   type:kPreferenceInfoTypeIntegerTextField
+         settingChanged:^(id sender) { assert(false); }
+                 update:^BOOL{
+                     __strong __typeof(weakSelf) strongSelf = weakSelf;
+                     if (!strongSelf) {
+                         return NO;
+                     }
+                     strongSelf->_asciiFontPicker.verticalSpacing.size = [self doubleForKey:KEY_VERTICAL_SPACING] * 100;
+                     return YES;
+                 }
+             searchable:YES];
 
     info = [self defineControl:_useNonAsciiFont
                            key:KEY_USE_NONASCII_FONT
@@ -238,39 +249,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     key:KEY_POWERLINE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-    
-    [self addViewToSearchIndex:_fontButton
-                   displayName:@"Font"
-                       phrases:@[ @"typeface", @"horizontal spacing", @"vertical spacing" ]
-                           key:nil];
-    [self updateFontsDescriptions];
+
+    [self updateFontsDescriptionsIncludingSpacing:YES];
     [self updateNonAsciiFontViewVisibility];
-}
-
-- (void)fontAccessorySliderDidChange {
-    _horizontalSpacingAccessoryTextField.intValue = _horizontalSpacing.doubleValue * 100;
-    _verticalSpacingAccessoryTextField.intValue = _verticalSpacing.doubleValue * 100;
-}
-
-- (void)controlTextDidEndEditing:(NSNotification *)notification {
-    NSTextField *control = [notification object];
-    NSString *key = nil;
-    NSSlider *slider;
-    if (control == _horizontalSpacingAccessoryTextField) {
-        key = KEY_HORIZONTAL_SPACING;
-        slider = _horizontalSpacing;
-    } else if (control == _verticalSpacingAccessoryTextField) {
-        key = KEY_VERTICAL_SPACING;
-        slider = _verticalSpacing;
-    }
-    if (key) {
-        const int clamped = MIN(MAX(control.intValue, 50), 200);
-        const double value = clamped / 100.0;
-        [self setFloat:value forKey:key];
-        slider.doubleValue = value;
-        control.intValue = clamped;
-    }
-    [super controlTextDidEndEditing:notification];
 }
 
 - (void)unicodeVersionDidChange {
@@ -284,7 +265,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)reloadProfile {
     [super reloadProfile];
-    [self updateFontsDescriptions];
+    [self updateFontsDescriptionsIncludingSpacing:YES];
     [self updateNonAsciiFontViewVisibility];
 }
 
@@ -307,28 +288,18 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     }
 }
 
-- (void)updateFontsDescriptions {
+- (void)updateFontsDescriptionsIncludingSpacing:(BOOL)includingSpacing {
     // Update the fonts.
     self.normalFont = [[self stringForKey:KEY_NORMAL_FONT] fontValue];
     self.nonAsciiFont = [[self stringForKey:KEY_NON_ASCII_FONT] fontValue];
 
-    // Update the descriptions.
-    NSString *fontName;
-    if (_normalFont != nil) {
-        fontName = [NSString stringWithFormat: @"%gpt %@",
-                    [_normalFont pointSize], [_normalFont displayName]];
-    } else {
-        fontName = @"Unknown Font";
-    }
-    [_normalFontDescription setStringValue:fontName];
-
-    if (_nonAsciiFont != nil) {
-        fontName = [NSString stringWithFormat: @"%gpt %@",
-                    [_nonAsciiFont pointSize], [_nonAsciiFont displayName]];
-    } else {
-        fontName = @"Unknown Font";
-    }
-    [_nonAsciiFontDescription setStringValue:fontName];
+    // Update the controls.
+    const double horizontalSpacing = round([self doubleForKey:KEY_HORIZONTAL_SPACING] * 100);
+    _asciiFontPicker.horizontalSpacing.size = horizontalSpacing;
+    const double verticalSpacing = round([self doubleForKey:KEY_VERTICAL_SPACING] * 100);
+    _asciiFontPicker.verticalSpacing.size = verticalSpacing;
+    _asciiFontPicker.font = _normalFont;
+    _nonASCIIFontPicker.font = _nonAsciiFont;
 
     if (self.normalFont.it_defaultLigatures) {
         _asciiLigatures.state = NSOnState;
@@ -376,11 +347,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 #pragma mark - Actions
 
-- (IBAction)openFontPicker:(id)sender {
-    _fontPickerIsForNonAsciiFont = ([sender tag] == kNonAsciiFontButtonTag);
-    [self showFontPanel];
-}
-
 - (IBAction)didToggleSubpixelAntiAliasing:(id)sender {
     NSString *const key = @"CGFontRenderingFontSmoothingDisabled";
     if (_subpixelAA.state == NSOffState) {
@@ -395,42 +361,57 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self updateWarnings];
 }
 
-#pragma mark - NSFontPanel and NSFontManager
-
-- (void)showFontPanel {
-    // make sure we get the messages from the NSFontManager
-    [[self.view window] makeFirstResponder:self];
-
-    NSFontPanel* aFontPanel = [[NSFontManager sharedFontManager] fontPanel: YES];
-    [aFontPanel setAccessoryView:_displayFontAccessoryView];
-    NSFont *theFont = (_fontPickerIsForNonAsciiFont ? _nonAsciiFont : _normalFont);
-    [[NSFontManager sharedFontManager] setSelectedFont:theFont isMultiple:NO];
-    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
-}
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
-#pragma clang diagnostic pop
-    return kValidModesForFontPanel;
-}
-
-// sent by NSFontManager up the responder chain
-- (void)changeFont:(id)fontManager {
-    if (_fontPickerIsForNonAsciiFont) {
-        [self setString:[[fontManager convertFont:_nonAsciiFont] stringValue]
-                 forKey:KEY_NON_ASCII_FONT];
-    } else {
-        [self setString:[[fontManager convertFont:_normalFont] stringValue]
-                 forKey:KEY_NORMAL_FONT];
-    }
-    [self updateFontsDescriptions];
-}
-
 #pragma mark - Notifications
 
 - (void)reloadProfiles {
-    [self updateFontsDescriptions];
+    [self updateFontsDescriptionsIncludingSpacing:YES];
+}
+
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
+    NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
+    if ([key isEqualToString:KEY_NORMAL_FONT]) {
+        _asciiFontPicker.font = [self stringForKey:KEY_NORMAL_FONT].fontValue;
+    } else if ([key isEqualToString:KEY_NON_ASCII_FONT]) {
+        _nonASCIIFontPicker.font = [self stringForKey:KEY_NON_ASCII_FONT].fontValue;
+    }
+    [super preferenceDidChangeFromOtherPanel:notification];
+}
+
+#pragma mark - BFPCompositeViewDelegate
+
+- (void)fontPickerCompositeView:(BFPCompositeView *)view didSelectFont:(NSFont *)font {
+    NSString *key;
+    if (view == _asciiFontPicker) {
+        key = KEY_NORMAL_FONT;
+    } else {
+        assert(view == _nonASCIIFontPicker);
+        key = KEY_NON_ASCII_FONT;
+    }
+    [self setString:view.font.stringValue
+             forKey:key];
+    [self updateFontsDescriptionsIncludingSpacing:YES];
+}
+
+#pragma mark - BFPSizePickerViewDelegate
+
+- (void)sizePickerView:(BFPSizePickerView *)sizePickerView didChangeSizeTo:(NSInteger)size {
+    [self saveChangesFromFontPicker];
+}
+
+- (void)saveDeferredUpdates {
+    [self.view.window makeFirstResponder:nil];
+    [self saveChangesFromFontPicker];
+    [super saveDeferredUpdates];
+}
+
+- (void)saveChangesFromFontPicker {
+    NSInteger (^clamp)(NSInteger value) = ^NSInteger(NSInteger value) {
+        return MIN(MAX(value, 50), 200);
+    };
+    [self setObjectsFromDictionary:@{ KEY_HORIZONTAL_SPACING: @(clamp(_asciiFontPicker.horizontalSpacing.size) / 100.0),
+                                      KEY_VERTICAL_SPACING: @(clamp(_asciiFontPicker.verticalSpacing.size) / 100.0),
+                                      KEY_NORMAL_FONT: _asciiFontPicker.font.stringValue,
+                                      KEY_NON_ASCII_FONT: _nonASCIIFontPicker.font.stringValue }];
 }
 
 @end

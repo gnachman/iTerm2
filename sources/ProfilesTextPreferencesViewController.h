@@ -10,6 +10,4 @@
 
 @interface ProfilesTextPreferencesViewController : iTermProfilePreferencesBaseViewController
 
-- (void)changeFont:(id)fontManager;
-
 @end
