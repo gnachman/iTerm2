@@ -3423,6 +3423,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self.parentWindow fitWindowToTab:self];
     } else {
         [self recursiveAdjustSubviews:root_];
+        for (PTYSession *session in self.sessions) {
+            [self fitSessionToCurrentViewSize:session];
+        }
     }
 }
 
