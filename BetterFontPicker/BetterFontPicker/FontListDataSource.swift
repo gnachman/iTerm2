@@ -8,7 +8,8 @@
 
 import Foundation
 
-protocol FontListDataSource: class {
+@objc(BFPFontListDataSource)
+public protocol FontListDataSource: NSObjectProtocol {
     var isSeparator: Bool { get }
     var names: [String] { get }
     var filter: String { get set }

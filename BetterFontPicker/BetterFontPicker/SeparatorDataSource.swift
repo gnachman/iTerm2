@@ -8,7 +8,7 @@
 
 import Foundation
 
-class SeparatorDataSource: FontListDataSource {
+class SeparatorDataSource: NSObject, FontListDataSource {
     var filter = ""
     var isSeparator: Bool {
         return true

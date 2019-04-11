@@ -12,11 +12,13 @@ import Cocoa
 protocol TableViewControllerDelegate: NSObjectProtocol {
     func tableViewController(_ tableViewController: TableViewController,
                              didSelectFontWithName name: String)
+    func tableViewControllerDataSources(_ tableViewController: TableViewController) -> [FontListDataSource]
 }
 
 @objc(BFPTableViewController)
 public class TableViewController: NSViewController, FavoritesDataSourceDelegate, FontListTableViewDelegate, NSTableViewDataSource, NSTableViewDelegate, RecentsDataSourceDelegate {
     weak var delegate: TableViewControllerDelegate?
+    private var systemFontDataSources: [FontListDataSource] = [SystemFontsDataSource()]
     private(set) var selectedName: String? = nil
 
     private let starColumnIdentifier = NSUserInterfaceItemIdentifier("star")
@@ -32,7 +34,10 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
     private var dataSources: [FontListDataSource] {
         if dirty {
             dirty = false
-            let possibleDataSources: [FontListDataSource] = [ favorites, recents, fixedPitch, variablePitch ]
+            if let updatedDataSources = delegate?.tableViewControllerDataSources(self) {
+                systemFontDataSources = updatedDataSources
+            }
+            let possibleDataSources: [FontListDataSource] = [ favorites, recents ] + systemFontDataSources
             for dataSource in possibleDataSources {
                 dataSource.filter = internalFilter
             }
@@ -66,8 +71,9 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
 
     // MARK:- Initializers
 
-    init(tableView: FontListTableView) {
+    init(tableView: FontListTableView, delegate: TableViewControllerDelegate?) {
         self.tableView = tableView
+        self.delegate = delegate
 
         super.init(nibName: nil, bundle: nil)
 
@@ -165,6 +171,10 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         tableView.endUpdates()
 
         delegate?.tableViewController(self, didSelectFontWithName: name)
+    }
+
+    func invalidateDataSources() {
+        dirty = true
     }
 
     // MARK:- Model

@@ -40,7 +40,7 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
         }
     }
 
-    private let vc = MainViewController()
+    let vc = MainViewController()
     private var internalPanel: FontPickerPanel?
     private var panel: FontPickerPanel {
         get {

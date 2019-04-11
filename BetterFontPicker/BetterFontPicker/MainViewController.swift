@@ -68,6 +68,11 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
     @IBOutlet public weak var tableView: FontListTableView!
     @IBOutlet public weak var searchField: NSSearchField!
     @objc(delegate) @IBOutlet public weak var delegate: MainViewControllerDelegate?
+    @objc public var systemFontDataSources: [FontListDataSource] = [SystemFontsDataSource()] {
+        didSet {
+            tableViewController?.invalidateDataSources()
+        }
+    }
     private var internalFamilyName: String?
     public var fontFamilyName: String? {
         get {
@@ -86,7 +91,7 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
                             right: NSMaxX(view.bounds) - NSMaxX(frame))
     }
 
-    var tableViewController: TableViewController?
+    public var tableViewController: TableViewController?
 
     init() {
         super.init(nibName: "MainViewController", bundle: Bundle(for: MainViewController.self))
@@ -101,8 +106,7 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
     }
 
     public override func awakeFromNib() {
-        tableViewController = TableViewController(tableView: tableView)
-        tableViewController?.delegate = self
+        tableViewController = TableViewController(tableView: tableView, delegate: self)
     }
 
     @objc(controlTextDidChange:)
@@ -120,5 +124,9 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
         internalFamilyName = name
         delegate?.mainViewController(self, didSelectFontWithName: name)
         view.window?.orderOut(nil)
+    }
+
+    func tableViewControllerDataSources(_ tableViewController: TableViewController) -> [FontListDataSource] {
+        return systemFontDataSources
     }
 }

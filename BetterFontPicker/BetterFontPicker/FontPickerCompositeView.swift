@@ -24,6 +24,23 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc private(set) public var horizontalSpacing: SizePickerView? = nil
     @objc private(set) public var verticalSpacing: SizePickerView? = nil
 
+    @objc(BFPCompositeViewMode)
+    public enum Mode: Int {
+        case normal
+        case fixedPitch
+    }
+    @objc public var mode: Mode = .normal {
+        didSet {
+            switch mode {
+            case .normal:
+                affordance.vc.systemFontDataSources = [SystemFontsDataSource()]
+            case .fixedPitch:
+                affordance.vc.systemFontDataSources = [
+                    SystemFontsDataSource(requiringTraits: .fixedPitchFontMask),
+                    SystemFontsDataSource(excludingTraits: .fixedPitchFontMask)]
+            }
+        }
+    }
     @objc public var font: NSFont? {
         set {
             let temp = delegate
