@@ -22,32 +22,35 @@ fileprivate extension BidirectionalCollection where Element == String {
 
 @objc(BFPSystemFontsDataSource)
 class SystemFontsDataSource: NSObject, FontListDataSource {
+    private static var monospaceAndVariableFamilyNames: ([String], [String]) = {  // monospace, variable pitch
+        var monospace: Set<String> = []
+        var variable: Set<String> = []
+        for descriptor in  NSFontCollection.withAllAvailableDescriptors.matchingDescriptors ?? [] {
+            if let name = descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String {
+                if monospace.contains(name) || variable.contains(name) {
+                    // The call to symbolicTraits is slow so avoid doing it more than needed.
+                    continue
+                }
+                if descriptor.symbolicTraits.contains(.monoSpace) {
+                    monospace.insert(name)
+                } else {
+                    variable.insert(name)
+                }
+            }
+        }
+        return (Array(monospace).sortedLocalized(),
+                Array(variable).sortedLocalized())
+    }()
     private let pointSize = CGFloat(12)
     private lazy var matchingFonts: [String] = {
         switch traitMask {
         case .all:
             return NSFontManager.shared.availableFontFamilies.sortedLocalized()
         case .fixedPitch:
-            let descriptors: [NSFontDescriptor] = NSFontCollection.withAllAvailableDescriptors.matchingDescriptors?.filter({ (descriptor) -> Bool in
-                return descriptor.symbolicTraits.contains(.monoSpace)
-            }) ?? []
-            let maybeFamilyNames = descriptors.map { (descriptor) -> String in
-                return descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String ?? ""
-            }
-            return Array(Set(maybeFamilyNames.filter { (string) in
-                return !string.isEmpty
-            })).sortedLocalized()
+            return SystemFontsDataSource.monospaceAndVariableFamilyNames.0
 
         case .variablePitch:
-            let descriptors: [NSFontDescriptor] = NSFontCollection.withAllAvailableDescriptors.matchingDescriptors?.filter({ (descriptor) -> Bool in
-                return !descriptor.symbolicTraits.contains(.monoSpace)
-            }) ?? []
-            let maybeFamilyNames = descriptors.map { (descriptor) -> String in
-                return descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String ?? ""
-            }
-            return Array(Set(maybeFamilyNames.filter { (string) in
-                return !string.isEmpty
-            })).sortedLocalized()
+            return SystemFontsDataSource.monospaceAndVariableFamilyNames.1
         }
     }()
 
