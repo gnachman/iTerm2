@@ -264,6 +264,7 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect OBJC_DESIGNATED_INITIALIZER;
 - (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)decoder OBJC_DESIGNATED_INITIALIZER;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize;
+- (void)removeSizePicker;
 - (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (void)affordance:(BFPAffordance * _Nonnull)affordance didSelectFontFamily:(NSString * _Nonnull)fontFamily;

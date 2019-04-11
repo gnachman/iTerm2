@@ -19,8 +19,8 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc public weak var delegate: FontPickerCompositeViewDelegate?
     private var accessories: [NSView] = []
     @objc public let affordance = Affordance()
-    let memberPicker = FontFamilyMemberPickerView()
-    let sizePicker = SizePickerView()
+    var memberPicker: FontFamilyMemberPickerView? = FontFamilyMemberPickerView()
+    var sizePicker: SizePickerView? = SizePickerView()
     @objc private(set) public var horizontalSpacing: SizePickerView? = nil
     @objc private(set) public var verticalSpacing: SizePickerView? = nil
 
@@ -29,18 +29,21 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             let temp = delegate
             delegate = nil
             if let font = newValue, let familyName = font.familyName {
-                affordance.set(familyName: familyName)
-                memberPicker.set(member: font.fontName)
-                sizePicker.size = Int(font.pointSize)
+                affordance.familyName = familyName
+                memberPicker?.set(member: font.fontName)
+                sizePicker?.size = Int(font.pointSize)
             }
             delegate = temp
         }
         get {
+            guard let memberPicker = memberPicker else {
+                return affordance.font
+            }
             guard let name = memberPicker.selectedFontName else {
                 return nil
             }
             return NSFont(name: name,
-                          size: CGFloat(sizePicker.size))
+                          size: CGFloat(sizePicker?.size ?? 12))
         }
     }
     public init(font: NSFont) {
@@ -61,17 +64,37 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
 
     private func postInit() {
         affordance.delegate = self
-        memberPicker.delegate = self
-        sizePicker.delegate = self
+        memberPicker?.delegate = self
+        sizePicker?.delegate = self
         addSubview(affordance)
-        addSubview(memberPicker)
-        addSubview(sizePicker)
-        affordance.memberPicker = memberPicker
+        if let memberPicker = memberPicker {
+            addSubview(memberPicker)
+            affordance.memberPicker = memberPicker
+        }
+        if let sizePicker = sizePicker {
+            addSubview(sizePicker)
+        }
         layoutSubviews()
     }
 
     public override func resizeSubviews(withOldSize oldSize: NSSize) {
         layoutSubviews()
+    }
+
+    @objc public func removeSizePicker() {
+        if let sizePicker = sizePicker {
+            sizePicker.removeFromSuperview()
+            self.sizePicker = nil
+            layoutSubviews()
+        }
+    }
+
+    @objc public func removeMemberPicker() {
+        if let memberPicker = memberPicker {
+            memberPicker.removeFromSuperview()
+            self.memberPicker = nil
+            layoutSubviews()
+        }
     }
 
     @objc(addHorizontalSpacingAccessoryWithInitialValue:)
@@ -114,17 +137,36 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
         totalAccessoryWidth += max(0.0, CGFloat(accessories.count - 1)) * margin
 
-        let sizePickerWidth = CGFloat(54.0)
-        let memberPickerWidth = CGFloat(125.0)
-        let width = bounds.size.width
-        let affordanceWidth = max(200.0, width - sizePickerWidth - memberPickerWidth - totalAccessoryWidth - margin * 2.0)
+        let sizePickerWidth: CGFloat = sizePicker == nil ? CGFloat(0) : CGFloat(54.0)
+        var numViews = 1
+        if sizePicker != nil {
+            numViews += 1
+        }
+        if memberPicker != nil {
+            numViews += 1
+        }
+        let memberPickerWidth: CGFloat = memberPicker == nil ? CGFloat(0) : CGFloat(125.0)
+        let width: CGFloat = bounds.size.width
+
+        // This would be a let constant but the Swift compiler can't type check it in a reasonable amount of time.
+        var preferredWidth: CGFloat = width
+        preferredWidth -= sizePickerWidth
+        preferredWidth -= memberPickerWidth
+        preferredWidth -= totalAccessoryWidth
+        preferredWidth -= margin * CGFloat(numViews)
+
+        let affordanceWidth = max(200.0, preferredWidth)
         var x = CGFloat(0)
         affordance.frame = NSRect(x: x, y: CGFloat(0), width: affordanceWidth, height: CGFloat(25))
         x += affordanceWidth + margin
-        memberPicker.frame = NSRect(x: x, y: CGFloat(0), width: memberPickerWidth, height: CGFloat(25))
-        x += memberPickerWidth + margin
-        sizePicker.frame =  NSRect(x: x, y: CGFloat(0), width: sizePickerWidth, height: CGFloat(27))
-        x += sizePickerWidth + margin
+        if let memberPicker = memberPicker {
+            memberPicker.frame = NSRect(x: x, y: CGFloat(0), width: memberPickerWidth, height: CGFloat(25))
+            x += memberPickerWidth + margin
+        }
+        if let sizePicker = sizePicker {
+            sizePicker.frame =  NSRect(x: x, y: CGFloat(0), width: sizePickerWidth, height: CGFloat(27))
+            x += sizePickerWidth + margin
+        }
 
         for accessory in accessories {
             let size = accessory.fittingSize

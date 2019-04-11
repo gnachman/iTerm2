@@ -16,7 +16,15 @@ public protocol AffordanceDelegate: class {
 @objc(BFPAffordance)
 public class Affordance : NSPopUpButton, MainViewControllerDelegate {
     @objc public weak var delegate: AffordanceDelegate?
-    
+    @objc public var familyName: String? {
+        get {
+            return vc.fontFamilyName
+        }
+        set {
+            vc.fontFamilyName = newValue
+            title = newValue ?? ""
+        }
+    }
     public weak var memberPicker: FontFamilyMemberPickerView? = nil {
         didSet {
             guard let memberPicker = memberPicker else {
@@ -85,11 +93,6 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
     override public func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         menu.cancelTrackingWithoutAnimation()
         showPicker()
-    }
-
-    public func set(familyName name: String) {
-        vc.fontFamilyName = name
-        title = name
     }
 
     private func showPicker() {

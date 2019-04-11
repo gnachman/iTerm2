@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView?.addSubview(compositeView)
         compositeView.addHorizontalSpacingAccessory(2)
         compositeView.addVerticalSpacingAccessory(1)
+        compositeView.removeMemberPicker()
         compositeView.frame = NSRect(x: 0, y: 0, width: 550, height: 27)
     }
     func applicationDidFinishLaunching(_ aNotification: Notification) {
