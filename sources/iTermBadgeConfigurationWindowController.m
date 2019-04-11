@@ -14,25 +14,14 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import <BetterFontPicker/BetterFontPicker-Swift.h>
 
 static const CGFloat iTermBadgeConfigurationBadgeViewInset = 3;
-static NSString *const iTermBadgeConfigurationWindowWillChangeFirstResponderNotification = @"iTermBadgeConfigurationWindowWillChangeFirstResponderNotification";
 
 @interface iTermBadgeConfigurationWindow : NSWindow
 @end
 
 @implementation iTermBadgeConfigurationWindow
-
-- (BOOL)makeFirstResponder:(NSResponder *)responder {
-    const BOOL result = [super makeFirstResponder:responder];
-    if (result) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermBadgeConfigurationWindowWillChangeFirstResponderNotification
-                                                            object:self
-                                                          userInfo:@{ @"responder": responder ?: [NSNull null] }];
-    }
-    return result;
-}
-
 @end
 
 @protocol iTermBadgeConfigurationBadgeViewDelegate<NSObject>
@@ -43,7 +32,6 @@ static NSString *const iTermBadgeConfigurationWindowWillChangeFirstResponderNoti
 
 @interface iTermBadgeConfigurationBadgeView : NSBox<iTermBadgeLabelDelegate>
 @property (nonatomic, weak) id<iTermBadgeConfigurationBadgeViewDelegate> delegate;
-@property (nonatomic) BOOL fontPanelOpen;
 @end
 
 typedef struct {
@@ -82,22 +70,6 @@ typedef struct {
 
 - (void)awakeFromNib {
     _badge.viewSize = self.bounds.size;
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(firstResponderWillChange:)
-                                                 name:iTermBadgeConfigurationWindowWillChangeFirstResponderNotification
-                                               object:self.window];
-}
-
-- (void)firstResponderWillChange:(NSNotification *)notification {
-    if (!_fontPanelOpen) {
-        return;
-    }
-    id responder = notification.userInfo[@"responder"];
-    if ([responder isKindOfClass:[NSNull class]] || responder == self.window) {
-        return;
-    }
-    _fontPanelOpen = NO;
-    [[[NSFontManager sharedFontManager] fontPanel:NO] close];
 }
 
 - (void)setDelegate:(id<iTermBadgeConfigurationBadgeViewDelegate>)delegate {
@@ -374,8 +346,7 @@ typedef struct {
 
 @end
 
-@interface iTermBadgeConfigurationWindowController ()<iTermBadgeConfigurationBadgeViewDelegate, NSTextFieldDelegate>
-@property (nonatomic, strong) IBOutlet NSTextField *fontNameLabel;
+@interface iTermBadgeConfigurationWindowController ()<iTermBadgeConfigurationBadgeViewDelegate, NSTextFieldDelegate, BFPCompositeViewDelegate>
 @property (nonatomic, strong) IBOutlet NSTextField *maxWidthTextField;
 @property (nonatomic, strong) IBOutlet NSTextField *maxHeightTextField;
 @property (nonatomic, strong) IBOutlet NSTextField *rightMarginTextField;
@@ -388,6 +359,7 @@ typedef struct {
     NSMutableDictionary *_profileMutations;
     NSString *_fontName;
     BOOL _ignoreFrameChange;
+    IBOutlet BFPCompositeView *_fontPicker;
 }
 
 - (instancetype)initWithProfile:(Profile *)profile {
@@ -434,7 +406,10 @@ typedef struct {
     const CGFloat maxWidth = [iTermProfilePreferences doubleForKey:KEY_BADGE_MAX_WIDTH inProfile:_profile];
     const CGFloat maxHeight = [iTermProfilePreferences doubleForKey:KEY_BADGE_MAX_HEIGHT inProfile:_profile];
 
-    _fontNameLabel.stringValue = self.font.fontName;
+    _fontPicker.font = self.font;
+    _fontPicker.delegate = self;
+    [_fontPicker removeSizePicker];
+    [_fontPicker removeMemberPicker];
     _maxWidthTextField.doubleValue = MIN(0.95, maxWidth) * 100.0;
     _maxHeightTextField.doubleValue = MIN(0.95, maxHeight) * 100.0;
     _rightMarginTextField.doubleValue = MAX(0, rightMargin);
@@ -472,33 +447,6 @@ typedef struct {
               KEY_BADGE_FONT: _fontName ?: @"" };
 }
 
-- (void)changeFont:(nullable id)sender {
-    NSFont *font = [sender convertFont:self.font];
-    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
-        font = [[NSFontManager sharedFontManager] convertFont:font toHaveTrait:NSBoldFontMask];
-    }
-    _fontName = font.fontName;
-    [_badgeView reload];
-}
-
-- (IBAction)openFontPanel:(id)sender {
-    self.window.nextResponder = self;
-    [[NSFontManager sharedFontManager] fontPanel:YES];
-    [[NSFontManager sharedFontManager] setSelectedFont:self.font isMultiple:NO];
-    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
-    [self.window makeFirstResponder:nil];
-    self.badgeView.fontPanelOpen = YES;
-}
-
-- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
-    return NSFontPanelCollectionModeMask;
-}
-
-- (BOOL)validateProposedFirstResponder:(NSResponder *)responder forEvent:(NSEvent *)event {
-    BOOL result = [super validateProposedFirstResponder:responder forEvent:event];
-    return result;
-}
-
 - (void)setBadgeFrameFromTextFields {
     [self updateWindowFrame];
 
@@ -520,16 +468,10 @@ typedef struct {
 
 - (IBAction)ok:(id)sender {
     _ok = YES;
-    if (_badgeView.fontPanelOpen) {
-        [[[NSFontManager sharedFontManager] fontPanel:NO] close];
-    }
     [self.window.sheetParent endSheet:self.window];
 }
 
 - (IBAction)cancel:(id)sender {
-    if (_badgeView.fontPanelOpen) {
-        [[[NSFontManager sharedFontManager] fontPanel:NO] close];
-    }
     [self.window.sheetParent endSheet:self.window];
 }
 
@@ -561,6 +503,17 @@ typedef struct {
 
 - (NSFont *)badgeViewFont {
     return [self font];
+}
+
+#pragma mark - BFPCompositeViewDelegate
+
+- (void)fontPickerCompositeView:(BFPCompositeView * _Nonnull)view didSelectFont:(NSFont * _Nonnull)selectedFont {
+    NSFont *font = selectedFont;
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
+        font = [[NSFontManager sharedFontManager] convertFont:font toHaveTrait:NSBoldFontMask];
+    }
+    _fontName = font.fontName;
+    [_badgeView reload];
 }
 
 @end

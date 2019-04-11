@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermBadgeConfigurationWindowController">
             <connections>
+                <outlet property="_fontPicker" destination="Vet-fX-Tzt" id="85L-Os-MgX"/>
                 <outlet property="badgeView" destination="bkD-NC-Lgo" id="VOd-c5-d2k"/>
                 <outlet property="fakeSessionView" destination="qav-US-B5y" id="nUk-TH-xY3"/>
-                <outlet property="fontNameLabel" destination="1j7-tv-b5C" id="wfq-fn-8LD"/>
                 <outlet property="maxHeightTextField" destination="xf4-KM-Q0d" id="Oqb-sn-pQh"/>
                 <outlet property="maxWidthTextField" destination="YoR-1d-cUl" id="raD-RY-sWu"/>
                 <outlet property="rightMarginTextField" destination="tmu-Jm-bid" id="waN-yp-vPX"/>
@@ -24,21 +24,21 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="480" height="383"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="480" height="383"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="383"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <box fixedFrame="YES" boxType="custom" borderType="bezel" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="qav-US-B5y">
-                        <rect key="frame" x="20" y="133" width="440" height="230"/>
+                        <rect key="frame" x="20" y="136" width="440" height="227"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <view key="contentView" ambiguous="YES" id="eBq-9B-9zC">
-                            <rect key="frame" x="1" y="1" width="438" height="228"/>
+                            <rect key="frame" x="1" y="1" width="438" height="225"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <box fixedFrame="YES" borderType="none" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="bkD-NC-Lgo" customClass="iTermBadgeConfigurationBadgeView">
-                                    <rect key="frame" x="250" y="94" width="177" height="116"/>
+                                    <rect key="frame" x="250" y="92" width="177" height="116"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     <view key="contentView" ambiguous="YES" id="9yq-QM-xqp">
                                         <rect key="frame" x="0.0" y="0.0" width="177" height="116"/>
@@ -59,39 +59,10 @@
                         </view>
                         <color key="borderColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                     </box>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1j7-tv-b5C">
-                        <rect key="frame" x="215" y="107" width="247" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Font Name" id="vmz-Ym-4bb">
-                            <font key="font" usesAppearanceFont="YES"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nYG-Hz-Xfa">
-                        <rect key="frame" x="128" y="97" width="87" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <buttonCell key="cell" type="push" title="Change" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2Ig-Q0-Itf">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="openFontPanel:" target="-2" id="DaI-0X-1jw"/>
-                        </connections>
-                    </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KYc-0V-4hc">
                         <rect key="frame" x="18" y="79" width="110" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Maximum Width:" id="aOH-8A-NdL">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6cQ-i5-nxq">
-                        <rect key="frame" x="18" y="107" width="110" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Font:" id="a30-hn-0EQ">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -218,6 +189,10 @@ Gw
                             <outlet property="delegate" destination="-2" id="mrS-ss-9fZ"/>
                         </connections>
                     </textField>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vet-fX-Tzt" customClass="BFPCompositeView">
+                        <rect key="frame" x="20" y="104" width="440" height="27"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </customView>
                 </subviews>
             </view>
             <connections>

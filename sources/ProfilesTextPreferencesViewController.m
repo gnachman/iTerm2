@@ -189,7 +189,9 @@
 
 
     _asciiFontPicker.delegate = self;
+    _asciiFontPicker.mode = BFPCompositeViewModeFixedPitch;
     _nonASCIIFontPicker.delegate = self;
+    _nonASCIIFontPicker.mode = BFPCompositeViewModeFixedPitch;
     _horizontalSpacingView = [_asciiFontPicker addHorizontalSpacingAccessoryWithInitialValue:[self doubleForKey:KEY_HORIZONTAL_SPACING] * 100];
     _horizontalSpacingView.delegate = self;
     [_horizontalSpacingView clampWithMin:50 max:200];
