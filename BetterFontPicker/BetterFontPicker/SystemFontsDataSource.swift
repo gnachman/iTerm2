@@ -27,27 +27,34 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
         switch traitMask {
         case .all:
             return NSFontManager.shared.availableFontFamilies.sortedLocalized()
-        case .requiresTraits(let mask):
-            return NSFontManager.shared.availableFontFamilies.filter({ (name) -> Bool in
-                guard let font = NSFont(name: name, size: pointSize) else {
-                    return false
-                }
-                return NSFontManager.shared.traits(of: font).contains(mask)
-            }).sortedLocalized()
-        case .excludesTraits(let mask):
-            return NSFontManager.shared.availableFontFamilies.filter({ (name) -> Bool in
-                guard let font = NSFont(name: name, size: pointSize) else {
-                    return false
-                }
-                return !NSFontManager.shared.traits(of: font).contains(mask)
-            }).sortedLocalized()
+        case .fixedPitch:
+            let descriptors: [NSFontDescriptor] = NSFontCollection.withAllAvailableDescriptors.matchingDescriptors?.filter({ (descriptor) -> Bool in
+                return descriptor.symbolicTraits.contains(.monoSpace)
+            }) ?? []
+            let maybeFamilyNames = descriptors.map { (descriptor) -> String in
+                return descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String ?? ""
+            }
+            return Array(Set(maybeFamilyNames.filter { (string) in
+                return !string.isEmpty
+            })).sortedLocalized()
+
+        case .variablePitch:
+            let descriptors: [NSFontDescriptor] = NSFontCollection.withAllAvailableDescriptors.matchingDescriptors?.filter({ (descriptor) -> Bool in
+                return !descriptor.symbolicTraits.contains(.monoSpace)
+            }) ?? []
+            let maybeFamilyNames = descriptors.map { (descriptor) -> String in
+                return descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String ?? ""
+            }
+            return Array(Set(maybeFamilyNames.filter { (string) in
+                return !string.isEmpty
+            })).sortedLocalized()
         }
     }()
 
     weak var delegate: SystemFontsDataSourceDelegate?
     enum Filter {
-        case requiresTraits(NSFontTraitMask)
-        case excludesTraits(NSFontTraitMask)
+        case fixedPitch
+        case variablePitch
         case all
     }
     private let traitMask: Filter
@@ -76,16 +83,8 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
         postInit()
     }
 
-    init(excludingTraits mask: NSFontTraitMask) {
-        traitMask = .excludesTraits(mask)
-
-        super.init()
-
-        postInit()
-    }
-
-    init(requiringTraits mask: NSFontTraitMask) {
-        traitMask = .requiresTraits(mask)
+    init(filter: Filter) {
+        traitMask = filter
 
         super.init()
 

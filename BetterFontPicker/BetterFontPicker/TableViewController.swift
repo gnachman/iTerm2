@@ -27,8 +27,8 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
     private let tableView: NSTableView
     private let favorites = FavoritesDataSource()
     private let recents = RecentsDataSource()
-    private let fixedPitch = SystemFontsDataSource(requiringTraits: .fixedPitchFontMask)
-    private let variablePitch = SystemFontsDataSource(excludingTraits: .fixedPitchFontMask)
+    private let fixedPitch = SystemFontsDataSource(filter: .fixedPitch)
+    private let variablePitch = SystemFontsDataSource(filter: .variablePitch)
     private var dirty = true
     private var internalDataSources: [FontListDataSource] = []
     private var dataSources: [FontListDataSource] {

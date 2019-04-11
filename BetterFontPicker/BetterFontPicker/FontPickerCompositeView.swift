@@ -36,8 +36,8 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
                 affordance.vc.systemFontDataSources = [SystemFontsDataSource()]
             case .fixedPitch:
                 affordance.vc.systemFontDataSources = [
-                    SystemFontsDataSource(requiringTraits: .fixedPitchFontMask),
-                    SystemFontsDataSource(excludingTraits: .fixedPitchFontMask)]
+                    SystemFontsDataSource(filter: .fixedPitch),
+                    SystemFontsDataSource(filter: .variablePitch) ]
             }
         }
     }
