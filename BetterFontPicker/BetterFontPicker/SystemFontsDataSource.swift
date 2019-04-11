@@ -22,7 +22,11 @@ fileprivate extension BidirectionalCollection where Element == String {
 
 @objc(BFPSystemFontsDataSource)
 class SystemFontsDataSource: NSObject, FontListDataSource {
-    private static var monospaceAndVariableFamilyNames: ([String], [String]) = {  // monospace, variable pitch
+    private static var internalMonospaceAndVariableFamilyNames: ([String], [String])? = nil
+    private static var monospaceAndVariableFamilyNames: ([String], [String]) {  // monospace, variable pitch
+        if let result = internalMonospaceAndVariableFamilyNames {
+            return result
+        }
         var monospace: Set<String> = []
         var variable: Set<String> = []
         for descriptor in  NSFontCollection.withAllAvailableDescriptors.matchingDescriptors ?? [] {
@@ -38,9 +42,11 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
                 }
             }
         }
-        return (Array(monospace).sortedLocalized(),
-                Array(variable).sortedLocalized())
-    }()
+        let newValue = (Array(monospace).sortedLocalized(),
+                        Array(variable).sortedLocalized())
+        internalMonospaceAndVariableFamilyNames = newValue
+        return newValue
+    }
     private let pointSize = CGFloat(12)
     private lazy var matchingFonts: [String] = {
         switch traitMask {

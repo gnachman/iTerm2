@@ -54,7 +54,11 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
         get {
             guard let memberPicker = memberPicker else {
-                return affordance.font
+                guard let familyName = affordance.familyName else {
+                    return nil
+                }
+                return NSFont(name: familyName,
+                              size: CGFloat(sizePicker?.size ?? 12))
             }
             guard let name = memberPicker.selectedFontName else {
                 return nil
@@ -109,6 +113,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc public func removeMemberPicker() {
         if let memberPicker = memberPicker {
             memberPicker.removeFromSuperview()
+            self.memberPicker?.delegate = nil
             self.memberPicker = nil
             layoutSubviews()
         }

@@ -107,6 +107,9 @@ public class MainViewController: NSViewController, NSTextFieldDelegate, TableVie
 
     public override func awakeFromNib() {
         tableViewController = TableViewController(tableView: tableView, delegate: self)
+        if let name = fontFamilyName {
+            tableViewController?.select(name: name)
+        }
     }
 
     @objc(controlTextDidChange:)

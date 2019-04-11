@@ -202,6 +202,7 @@ SWIFT_PROTOCOL_NAMED("MainViewControllerDelegate")
 SWIFT_CLASS_NAMED("Affordance")
 @interface BFPAffordance : NSPopUpButton <BFPMainViewControllerDelegate>
 @property (nonatomic, weak) id <BFPAffordanceDelegate> _Nullable delegate;
+@property (nonatomic, copy) NSString * _Nullable familyName;
 @property (nonatomic, copy) NSString * _Nonnull title;
 - (nonnull instancetype)initWithFrame:(NSRect)buttonFrame pullsDown:(BOOL)flag OBJC_DESIGNATED_INITIALIZER;
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect SWIFT_UNAVAILABLE;
@@ -236,6 +237,14 @@ SWIFT_PROTOCOL_NAMED("FontFamilyMemberPickerViewDelegate")
 @end
 
 
+SWIFT_PROTOCOL_NAMED("FontListDataSource")
+@protocol BFPFontListDataSource <NSObject>
+@property (nonatomic, readonly) BOOL isSeparator;
+@property (nonatomic, readonly, copy) NSArray<NSString *> * _Nonnull names;
+@property (nonatomic, copy) NSString * _Nonnull filter;
+@end
+
+
 SWIFT_CLASS_NAMED("FontListTableView")
 @interface BFPFontListTableView : NSTableView
 - (void)keyDown:(NSEvent * _Nonnull)event;
@@ -252,6 +261,7 @@ SWIFT_PROTOCOL_NAMED("SizePickerViewDelegate")
 @end
 
 @protocol BFPCompositeViewDelegate;
+enum BFPCompositeViewMode : NSInteger;
 @class NSFont;
 
 SWIFT_CLASS_NAMED("FontPickerCompositeView")
@@ -260,17 +270,24 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 @property (nonatomic, readonly, strong) BFPAffordance * _Nonnull affordance;
 @property (nonatomic, readonly, strong) BFPSizePickerView * _Nullable horizontalSpacing;
 @property (nonatomic, readonly, strong) BFPSizePickerView * _Nullable verticalSpacing;
+@property (nonatomic) enum BFPCompositeViewMode mode;
 @property (nonatomic, strong) NSFont * _Nullable font;
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect OBJC_DESIGNATED_INITIALIZER;
 - (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)decoder OBJC_DESIGNATED_INITIALIZER;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize;
 - (void)removeSizePicker;
+- (void)removeMemberPicker;
 - (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (void)affordance:(BFPAffordance * _Nonnull)affordance didSelectFontFamily:(NSString * _Nonnull)fontFamily;
 - (void)fontFamilyMemberPickerView:(BFPFontFamilyMemberPickerView * _Nonnull)fontFamilyMemberPickerView didSelectFontName:(NSString * _Nonnull)name;
 - (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(NSInteger)size;
 @end
+
+typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", closed) {
+  BFPCompositeViewModeNormal = 0,
+  BFPCompositeViewModeFixedPitch = 1,
+};
 
 
 SWIFT_PROTOCOL_NAMED("FontPickerCompositeViewDelegate")
@@ -295,6 +312,7 @@ SWIFT_CLASS_NAMED("MainViewController")
 @property (nonatomic, weak) IBOutlet BFPFontListTableView * _Null_unspecified tableView;
 @property (nonatomic, weak) IBOutlet NSSearchField * _Null_unspecified searchField;
 @property (nonatomic, weak) IBOutlet id <BFPMainViewControllerDelegate> _Nullable delegate;
+@property (nonatomic, copy) NSArray<id <BFPFontListDataSource>> * _Nonnull systemFontDataSources;
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 - (nonnull instancetype)initWithNibName:(NSNibName _Nullable)nibNameOrNil bundle:(NSBundle * _Nullable)nibBundleOrNil SWIFT_UNAVAILABLE;
