@@ -76,7 +76,11 @@ class Connection:
         """
         connection = Connection()
         cookie, key = _cookie_and_key()
-        connection.websocket = await websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols())
+        connection.websocket = await websockets.connect(
+                _uri(),
+                ping_interval=None,
+                extra_headers=_headers(),
+                subprotocols=_subprotocols())
         connection.__dispatch_forever_future = asyncio.ensure_future(connection._async_dispatch_forever(connection, asyncio.get_event_loop()))
         return connection
 
@@ -253,7 +257,11 @@ class Connection:
         done = False
         while not done:
             try:
-                async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
+                async with websockets.connect(
+                        _uri(),
+                        ping_interval=None,
+                        extra_headers=_headers(),
+                        subprotocols=_subprotocols()) as websocket:
                     done = True
                     self.websocket = websocket
                     try:
