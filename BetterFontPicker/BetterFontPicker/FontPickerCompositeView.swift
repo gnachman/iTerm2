@@ -6,7 +6,7 @@
 //  Copyright © 2019 George Nachman. All rights reserved.
 //
 
-import Foundation
+import Cocoa
 
 @objc(BFPCompositeViewDelegate)
 public protocol FontPickerCompositeViewDelegate: NSObjectProtocol {
@@ -125,7 +125,12 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         horizontalSpacing = view
         view.size = initialValue
         let bundle = Bundle(for: FontPickerCompositeView.self)
-        add(accessory: NSImageView(image: bundle.image(forResource: NSImage.Name("HorizontalSpacingIcon"))!))
+        let imageView = NSImageView(image: bundle.image(forResource: NSImage.Name("HorizontalSpacingIcon"))!)
+        if #available(macOS 10.14, *) {
+            imageView.image?.isTemplate = true
+            imageView.contentTintColor = NSColor.labelColor
+        }
+        add(accessory: imageView)
         add(accessory: view)
         return view
     }
@@ -136,7 +141,12 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         verticalSpacing = view
         view.size = initialValue
         let bundle = Bundle(for: FontPickerCompositeView.self)
-        add(accessory: NSImageView(image: bundle.image(forResource: NSImage.Name("VerticalSpacingIcon"))!))
+        let imageView = NSImageView(image: bundle.image(forResource: NSImage.Name("VerticalSpacingIcon"))!)
+        if #available(macOS 10.14, *) {
+            imageView.image?.isTemplate = true
+            imageView.contentTintColor = NSColor.labelColor
+        }
+        add(accessory: imageView)
         add(accessory: view)
         return view
     }

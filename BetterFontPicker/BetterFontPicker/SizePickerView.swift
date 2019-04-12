@@ -6,7 +6,7 @@
 //  Copyright © 2019 George Nachman. All rights reserved.
 //
 
-import Foundation
+import Cocoa
 
 @objc(BFPSizePickerViewDelegate)
 public protocol SizePickerViewDelegate: NSObjectProtocol {
