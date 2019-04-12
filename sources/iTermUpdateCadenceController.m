@@ -121,26 +121,42 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
          @(state.slowFrameRate),
          @(state.liveResizing));
 
+    // state.active means that it needs periodic redraws OR the tab label is changing.
+    // idle means no input has been received on the PTY in a while (3 seconds by default).
+    // assignment to self.isActive is used to update whether Metal is in use, when it's disabled while idle.
     self.isActive = (state.active || !state.idle);
-    BOOL effectivelyActive = (_isActive || [NSApp isActive]);
-    if (effectivelyActive && state.visible) {
-        if (state.useAdaptiveFrameRate) {
-            const NSInteger kThroughputLimit = state.adaptiveFrameRateThroughputThreshold;
-            const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
-            if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
-                DLog(@"select fast cadence");
-                [self setUpdateCadence:kFastUpdateCadence liveResizing:state.liveResizing force:force];
-            } else {
-                DLog(@"select slow frame rate");
-                [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
-            }
-        } else {
-            DLog(@"select active update cadence");
-            [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
-        }
-    } else {
+
+    if (!self.isActive) {
+        // Periodic redraws not needed (i.e., nothing is blinking) and the session is idle. It doesn't matter
+        // if the app itself is active because there's nothing to do so use the background update cadence.
+        DLog(@"select background update cadence because the session is idle");
+        [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
+        return;
+    }
+
+    // visible means the session belongs to the visible tab.
+    if (!state.visible) {
+        // Although self.isActive is true, the session is not visible so there's no point redrawing it.
         DLog(@"select background update cadence");
         [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
+        return;
+    }
+
+    if (!state.useAdaptiveFrameRate) {
+        // The session is visible and self.active is true (it needs redraws or it's not idle).
+        DLog(@"select active update cadence");
+        [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
+    }
+
+    // Adaptive framerate path - the session is active and visible
+    const NSInteger kThroughputLimit = state.adaptiveFrameRateThroughputThreshold;
+    const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
+    if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
+        DLog(@"select fast cadence");
+        [self setUpdateCadence:kFastUpdateCadence liveResizing:state.liveResizing force:force];
+    } else {
+        DLog(@"select slow frame rate");
+        [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
     }
 }
 
