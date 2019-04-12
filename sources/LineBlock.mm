@@ -16,7 +16,7 @@ extern "C" {
 #import "RegexKitLite.h"
 #import "iTermAdvancedSettingsModel.h"
 }
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
@@ -37,6 +37,39 @@ static NSInteger LineBlockNextGeneration = -1;
 void EnableDoubleWidthCharacterLineCache() {
     gEnableDoubleWidthCharacterLineCache = YES;
 }
+
+struct iTermNumFullLinesCacheKey {
+    int offset;
+    int length;
+    int width;
+
+    iTermNumFullLinesCacheKey(const int &xOffset,
+                              const int &xLength,
+                              const int &xWidth) :
+        offset(xOffset),
+        length(xLength),
+        width(xWidth) { }
+
+    bool operator==(const iTermNumFullLinesCacheKey &other) const {
+        return (offset == other.offset &&
+                length == other.length &&
+                width == other.width);
+    }
+};
+
+struct iTermNumFullLinesCacheKeyHasher {
+    std::size_t operator()(const iTermNumFullLinesCacheKey& k) const {
+        // djb2
+        std::size_t hash = 5381;
+        hash *= 33;
+        hash ^= k.offset;
+        hash *= 33;
+        hash ^= k.length;
+        hash *= 33;
+        hash ^= k.width;
+        return hash;
+    }
+};
 
 @implementation LineBlock {
     // The raw lines, end-to-end. There is no delimiter between each line.
@@ -72,7 +105,7 @@ void EnableDoubleWidthCharacterLineCache() {
     int cached_numlines_width;
 
     // Keys are (offset from raw_buffer, length to examine, width).
-    std::map<std::tuple<int, int, int>, int> _numberOfFullLinesCache;
+    std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
     std::vector<void *> _observers;
 }
@@ -327,7 +360,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 - (int)numberOfFullLinesFromOffset:(int)offset
                             length:(int)length
                              width:(int)width {
-    auto key = std::tuple<int, int, int>(offset, length, width);
+    auto key = iTermNumFullLinesCacheKey(offset, length, width);
     int result;
     auto insertResult = _numberOfFullLinesCache.insert(std::make_pair(key, -1));
     auto it = insertResult.first;
