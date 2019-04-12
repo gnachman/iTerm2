@@ -1129,6 +1129,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 // Don't replace nonterminals.
                 continue;
             }
+            if (!attachedToServer && [key isEqualToString:iTermVariableKeySessionTTY]) {
+                // When starting a new session, don't restore the tty. We *do* want to restore it
+                // when attaching to a session restoration server, though. We have a reasonable
+                // believe that it's the same process and therefore the same TTY.
+                continue;
+            }
             [aSession.variablesScope setValue:variables[key] forVariableNamed:key];
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
