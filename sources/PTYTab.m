@@ -3086,6 +3086,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (PTYSession *session in self.sessions) {
         [session.variablesScope setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
     }
+    if (tmuxWindowName != nil) {
+        self.variablesScope.tabTitleOverrideFormat = tmuxWindowName;
+    }
     [self updateTabTitle];
 }
 

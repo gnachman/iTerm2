@@ -5923,7 +5923,13 @@ ITERM_WEAKLY_REFERENCEABLE
         [titleTextField.window makeFirstResponder:titleTextField];
     });
     if ([alert runModal] == NSAlertFirstButtonReturn) {
-        self.currentTab.variablesScope.tabTitleOverrideFormat = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+        if (self.currentTab.tmuxTab) {
+            [self.currentTab.tmuxController renameWindowWithId:self.currentTab.tmuxWindow
+                                                     inSession:nil
+                                                        toName:titleTextField.stringValue];
+        } else {
+            self.currentTab.variablesScope.tabTitleOverrideFormat = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+        }
     }
 }
 
