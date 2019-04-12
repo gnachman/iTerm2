@@ -147,7 +147,7 @@ NS_ASSUME_NONNULL_BEGIN
         NSMenuItem *item = container.itemArray[i];
         if (item.submenu) {
             [self addMenuItemsIn:item.submenu fromIndex:0 toArray:result path:[path stringByAppendingPathComponent:item.title]];
-        } else {
+        } else if (!item.isAlternate) {
             [result addObject:[path stringByAppendingPathComponent:item.title]];
         }
     }
