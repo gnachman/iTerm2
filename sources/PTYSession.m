@@ -10399,7 +10399,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDoubleClickOnTitleBar {
-    [self.delegate sessionDoubleClickOnTitleBar];
+    [self.delegate sessionDoubleClickOnTitleBar:self];
 }
 
 - (void)sessionViewBecomeFirstResponder {

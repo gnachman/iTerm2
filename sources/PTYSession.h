@@ -187,7 +187,7 @@ typedef enum {
 - (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
 
 // User double clicked on title bar
-- (void)sessionDoubleClickOnTitleBar;
+- (void)sessionDoubleClickOnTitleBar:(PTYSession *)session;
 
 // Returns the 0-based pane number to use in $ITERM_SESSION_ID.
 - (NSUInteger)sessionPaneNumber:(PTYSession *)session;

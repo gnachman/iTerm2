@@ -5179,10 +5179,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _isDraggingSplitInTmuxTab;
 }
 
-- (void)sessionDoubleClickOnTitleBar {
+- (void)sessionDoubleClickOnTitleBar:(PTYSession *)session {
     if (self.isMaximized) {
         [self unmaximize];
     } else {
+        [self setActiveSession:session];
         [self maximize];
     }
 }
