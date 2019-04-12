@@ -248,5 +248,7 @@ enum {
               toTabBar:(PSMTabBarControl *)destinationTabBar
                atIndex:(NSInteger)destinationIndex;
 - (void)backgroundColorWillChange;
+- (id)cellForPoint:(NSPoint)point
+         cellFrame:(NSRectPointer)outFrame;
 
 @end
