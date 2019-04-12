@@ -137,6 +137,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 - (void)registerFunction:(iTermBuiltInFunction *)function namespace:(NSString *)namespace {
     NSString *name = namespace ? [NSString stringWithFormat:@"%@.%@", namespace, function.name] : function.name;
     NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, function.argumentsAndTypes.allKeys);
+    assert(!_functions[signature]);
     _functions[signature] = function;
 }
 

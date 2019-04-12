@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
                              tmux:(nullable NSString *)tmuxVariable
                          iconName:(NSString *)iconName
                        windowName:(NSString *)windowName
-                       components:(iTermTitleComponents)titleComponents;
+                       components:(iTermTitleComponents)titleComponents
+                    isWindowTitle:(BOOL)isWindowTitle;
 
 
 @end
