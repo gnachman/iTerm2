@@ -3749,6 +3749,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     idMap_ = [[NSMutableDictionary alloc] init];
     savedArrangement_ = [self arrangementConstructingIdMap:YES contents:NO];
+    DLog(@"Saved arrangement for maximization:\n%@", savedArrangement_);
     isMaximized_ = YES;
 
     NSRect oldRootFrame = [root_ frame];
@@ -3809,6 +3810,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [formerlyMaximizedSessionView setFrameSize:savedSize_];
 
     // Build a tree with splitters and SessionViews/PTYSessions from idMap.
+    DLog(@"Saved arrangement for UNmaximization:\n%@", savedArrangement_);
     NSSplitView *newRoot = [PTYTab _recursiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]
                                                     fromIdMap:idMap_
                                                    sessionMap:nil
