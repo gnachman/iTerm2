@@ -11090,6 +11090,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview setNeedsDisplay:YES];
+    if (!handler.enabled && _queuedTokens.count) {
+        CVector vector;
+        CVectorCreate(&vector, 100);
+        [self executeTokens:&vector bytesHandled:0];
+    }
 }
 
 - (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
