@@ -303,6 +303,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByAppendingVariablePathComponent:(NSString *)component;
 - (NSArray<NSString *> *)it_normalizedTokens;
+- (double)it_localizedDoubleValue;
 
 @end
 

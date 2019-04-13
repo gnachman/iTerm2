@@ -2154,6 +2154,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return tokens;
 }
 
+- (double)it_localizedDoubleValue {
+    NSScanner *scanner = [NSScanner localizedScannerWithString:self];
+    double d;
+    if (![scanner scanDouble:&d]) {
+        return 0;
+    }
+    return d;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
