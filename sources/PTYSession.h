@@ -795,6 +795,7 @@ typedef enum {
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
 - (void)didUseShellIntegration;
+- (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 
 #pragma mark - API
 

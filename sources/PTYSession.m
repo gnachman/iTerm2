@@ -24,6 +24,7 @@
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermController.h"
+#import "iTermCopyModeHandler.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
 #import "iTermEchoProbe.h"
@@ -255,6 +256,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermBackgroundDrawingHelperDelegate,
     iTermBadgeLabelDelegate,
     iTermCoprocessDelegate,
+    iTermCopyModeHandlerDelegate,
     iTermHotKeyNavigableSession,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
@@ -474,7 +476,7 @@ static const NSUInteger kMaxHosts = 100;
 
     uint32_t _autoLogId;
 
-    iTermCopyModeState *_copyModeState;
+    iTermCopyModeHandler *_copyModeHandler;
 
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
@@ -565,6 +567,8 @@ static const NSUInteger kMaxHosts = 100;
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
+        _copyModeHandler = [[iTermCopyModeHandler alloc] init];
+        _copyModeHandler.delegate = self;
 
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
         // TODO: How do slower machines fare?
@@ -806,7 +810,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions release];
     [_customEscapeSequenceNotifications release];
 
-    [_copyModeState release];
+    [_copyModeHandler release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_autoNameSwiftyString release];
@@ -960,47 +964,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)educateAboutCopyMode {
-    [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Copy Mode"
-                                                                     detail:@"Copy Mode lets you make a selection with the keyboard. Click to view the manual."
-                                                                        URL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]];
+- (void)setCopyMode:(BOOL)copyMode {
+    _copyModeHandler.enabled = copyMode;
 }
 
-- (void)setCopyMode:(BOOL)copyMode {
-    if (copyMode) {
-        NSString *const key = @"NoSyncHaveUsedCopyMode";
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) {
-            [self educateAboutCopyMode];
-        }
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
-    }
+- (BOOL)copyMode {
+    return _copyModeHandler.enabled;
+}
 
-    _copyMode = copyMode;
-    [_copyModeState autorelease];
-    if (copyMode) {
-        _copyModeState = [[iTermCopyModeState alloc] init];
-        _copyModeState.coord = VT100GridCoordMake(_screen.cursorX - 1,
-                                                  _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
-        _copyModeState.numberOfLines = _screen.numberOfLines;
-        _copyModeState.textView = _textview;
-
-        if (_textview.selection.allSubSelections.count == 1) {
-            [_textview.window makeFirstResponder:_textview];
-            iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
-            _copyModeState.start = sub.range.coordRange.start;
-            _copyModeState.coord = sub.range.coordRange.end;
-            _copyModeState.selecting = YES;
-            _copyModeState.start = sub.range.coordRange.start;
-            _copyModeState.coord = sub.range.coordRange.end;
-        }
-        [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
-    } else {
-        if (_textview.selection.live) {
-            [_textview.selection endLiveSelection];
-        }
-        _copyModeState = nil;
-    }
-    [_textview setNeedsDisplay:YES];  // TODO optimize
+- (BOOL)copyModeConsumesEvent:(NSEvent *)event {
+    return [_copyModeHandler wouldHandleEvent:event];
 }
 
 - (void)coprocessChanged
@@ -2368,162 +2341,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
 }
 
-- (void)handleKeyPressInCopyMode:(NSEvent *)event {
-    [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
-    BOOL wasSelecting = _copyModeState.selecting;
-    NSString *string = event.charactersIgnoringModifiers;
-    unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
-    NSUInteger mask = (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagCommand);
-    BOOL moved = NO;
-    if ((event.modifierFlags & mask) == NSEventModifierFlagControl) {
-        switch (code) {
-            case 'b':  // ^B
-                moved = [_copyModeState pageUp];
-                break;
-            case 'f': // ^F
-                moved = [_copyModeState pageDown];
-                break;
-            case ' ':
-                _copyModeState.selecting = !_copyModeState.selecting;
-                _copyModeState.mode = kiTermSelectionModeCharacter;
-                break;
-            case 'c':
-                self.copyMode = NO;
-                break;
-            case 'g':
-                self.copyMode = NO;
-                break;
-            case 'k':
-                [_textview copySelectionAccordingToUserPreferences];
-                self.copyMode = NO;
-                break;
-            case 'v':
-                _copyModeState.selecting = !_copyModeState.selecting;
-                _copyModeState.mode = kiTermSelectionModeBox;
-                break;
-        }
-    } else if ((event.modifierFlags & mask) == NSEventModifierFlagOption) {
-        switch (code) {
-            case 'b':
-            case NSLeftArrowFunctionKey:
-                moved = [_copyModeState moveBackwardWord];
-                break;
-
-            case 'f':
-            case NSRightArrowFunctionKey:
-                moved = [_copyModeState moveForwardWord];
-                break;
-            case 'm':
-                moved = [_copyModeState moveToStartOfIndentation];
-                break;
-        }
-    } else if ((event.modifierFlags & mask) == 0) {
-        switch (code) {
-            case NSPageUpFunctionKey:
-                moved = [_copyModeState pageUp];
-                break;
-            case NSPageDownFunctionKey:
-                moved = [_copyModeState pageDown];
-                break;
-            case '\t':
-                if (event.modifierFlags & NSEventModifierFlagShift) {
-                    moved = [_copyModeState moveBackwardWord];
-                } else {
-                    moved = [_copyModeState moveForwardWord];
-                }
-                break;
-            case '\n':
-            case '\r':
-                moved = [_copyModeState moveToStartOfNextLine];
-                break;
-            case 27:
-            case 'q':
-                self.copyMode = NO;
-                _copyModeState.selecting = NO;
-                moved = YES;
-                break;
-            case ' ':
-            case 'v':
-                _copyModeState.selecting = !_copyModeState.selecting;
-                _copyModeState.mode = kiTermSelectionModeCharacter;
-                break;
-            case 'b':
-                moved = [_copyModeState moveBackwardWord];
-                break;
-            case '0':
-                moved = [_copyModeState moveToStartOfLine];
-                break;
-            case 'H':
-                moved = [_copyModeState moveToTopOfVisibleArea];
-                break;
-            case 'G':
-                moved = [_copyModeState moveToEnd];
-                break;
-            case 'L':
-                moved = [_copyModeState moveToBottomOfVisibleArea];
-                break;
-            case 'M':
-                moved = [_copyModeState moveToMiddleOfVisibleArea];
-                break;
-            case 'V':
-                _copyModeState.selecting = !_copyModeState.selecting;
-                _copyModeState.mode = kiTermSelectionModeLine;
-                break;
-            case 'g':
-                moved = [_copyModeState moveToStart];
-                break;
-            case 'h':
-            case NSLeftArrowFunctionKey:
-                moved = [_copyModeState moveLeft];
-                break;
-            case 'j':
-            case NSDownArrowFunctionKey:
-                moved = [_copyModeState moveDown];
-                break;
-            case 'k':
-            case NSUpArrowFunctionKey:
-                moved = [_copyModeState moveUp];
-                break;
-            case 'l':
-            case NSRightArrowFunctionKey:
-                moved = [_copyModeState moveRight];
-                break;
-            case 'o':
-                [_copyModeState swap];
-                moved = YES;
-                break;
-            case 'w':
-                moved = [_copyModeState moveForwardWord];
-                break;
-            case 'y':
-                [_textview copySelectionAccordingToUserPreferences];
-                self.copyMode = NO;
-                break;
-            case '/':
-                [self showFindPanel];
-                break;
-            case '[':
-                moved = [_copyModeState previousMark];
-                break;
-            case ']':
-                moved = [_copyModeState nextMark];
-                break;
-            case '^':
-                moved = [_copyModeState moveToStartOfIndentation];
-                break;
-            case '$':
-                moved = [_copyModeState moveToEndOfLine];
-                break;
-        }
-    }
-    if (moved || (_copyModeState.selecting != wasSelecting)) {
-        if (self.copyMode) {
-            [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
-        }
-        [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
-    }
-}
-
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
     const unichar unicode = [event.characters length] > 0 ? [event.characters characterAtIndex:0] : 0;
     [self handleCharacterPressedInTmuxGateway:unicode];
@@ -2712,7 +2529,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Session %@ begins executing tokens", self);
     int n = CVectorCount(vector);
 
-    if (_shell.paused || _copyMode) {
+    if (_shell.paused || _copyModeHandler.enabled) {
         // Session was closed or is not accepting new tokens because it's in copy mode. These can
         // be handled later (unclose or exit copy mode), so queue them up.
         for (int i = 0; i < n; i++) {
@@ -6372,9 +6189,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
     if (accept) {
-        if (_copyMode) {
-            [self handleKeyPressInCopyMode:event];
-            return NO;
+        if (_copyModeHandler.enabled) {
+            if ([_copyModeHandler handleEvent:event]) {
+                return NO;
+            } else {
+                if ([self hasActionableKeyMappingForEvent:event] &&
+                    ![self hasTextSendingKeyMappingForEvent:event]) {
+                    return YES;
+                }
+            }
         }
         if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
             [self didInferEndOfCommand];
@@ -7918,15 +7741,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewCopyMode {
-    return _copyMode;
+    return _copyModeHandler.enabled;
 }
 
 - (BOOL)textViewCopyModeSelecting {
-    return _copyModeState.selecting;
+    return _copyModeHandler.state.selecting;
 }
 
 - (VT100GridCoord)textViewCopyModeCursorCoord {
-    return _copyModeState.coord;
+    return _copyModeHandler.state.coord;
 }
 
 - (BOOL)textViewPasswordInput {
@@ -7940,9 +7763,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
-    if (_copyMode) {
-        _copyModeState.coord = range.start;
-        _copyModeState.start = range.end;
+    if (_copyModeHandler.enabled) {
+        _copyModeHandler.state.coord = range.start;
+        _copyModeHandler.state.start = range.end;
         [self.textview setNeedsDisplay:YES];
     }
 }
@@ -11261,6 +11084,54 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const CGFloat width = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_WIDTH inProfile:self.profile];
     const CGFloat height = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:self.profile];
     return NSMakeSize(width, height);
+}
+
+#pragma mark - iTermCopyModeHandlerDelegate
+
+- (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+    [_textview setNeedsDisplay:YES];
+}
+
+- (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+    iTermCopyModeState *state = [[iTermCopyModeState alloc] init];
+    state.coord = VT100GridCoordMake(_screen.cursorX - 1,
+                                     _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
+    state.numberOfLines = _screen.numberOfLines;
+    state.textView = _textview;
+
+    if (_textview.selection.allSubSelections.count == 1) {
+        [_textview.window makeFirstResponder:_textview];
+        iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
+        state.start = sub.range.coordRange.start;
+        state.coord = sub.range.coordRange.end;
+        state.selecting = YES;
+        state.start = sub.range.coordRange.start;
+        state.coord = sub.range.coordRange.end;
+    }
+    [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(state.coord.y, 1)];
+    return state;
+}
+
+- (void)copyModeHandlerDidExitCopyMode:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+    if (_textview.selection.live) {
+        [_textview.selection endLiveSelection];
+    }
+}
+
+- (void)copyModeHandler:(iTermCopyModeHandler *)handler redrawLine:(int)line NOT_COPY_FAMILY {
+    [self.textview setNeedsDisplayOnLine:line];
+}
+
+- (void)copyModeHandlerShowFindPanel:(iTermCopyModeHandler *)handler {
+    [self showFindPanel];
+}
+
+- (void)copyModeHandler:(iTermCopyModeHandler *)handler revealLine:(int)line NOT_COPY_FAMILY {
+    [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(line, 1)];
+}
+
+- (void)copyModeHandlerCopySelection:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+    [_textview copySelectionAccordingToUserPreferences];
 }
 
 @end

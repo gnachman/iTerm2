@@ -2082,6 +2082,8 @@
 		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
 		A673BFE51E176AA400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A673BFEC1E1A13E600FA2386 /* iTermSetTitleTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */; };
+		A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */; };
+		A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */; };
 		A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A675271B213DB6E800035F2B /* NSImageView+iTerm.h */; };
 		A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A675271C213DB6E800035F2B /* NSImageView+iTerm.m */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
@@ -4939,6 +4941,8 @@
 		A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testUnderline.png"; sourceTree = "<group>"; };
 		A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSetTitleTrigger.h; sourceTree = "<group>"; };
 		A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSetTitleTrigger.m; sourceTree = "<group>"; };
+		A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCopyModeHandler.h; sourceTree = "<group>"; };
+		A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCopyModeHandler.m; sourceTree = "<group>"; };
 		A675271B213DB6E800035F2B /* NSImageView+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSImageView+iTerm.h"; sourceTree = "<group>"; };
 		A675271C213DB6E800035F2B /* NSImageView+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSImageView+iTerm.m"; sourceTree = "<group>"; };
 		A6755F411D728FFA00F3726C /* iTermImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImage.h; sourceTree = "<group>"; };
@@ -8348,6 +8352,8 @@
 				5300984B2259365B00A69348 /* iTermHapticActuator.m */,
 				5300984E2259A44D00A69348 /* iTermSoundPlayer.h */,
 				5300984F2259A44D00A69348 /* iTermSoundPlayer.m */,
+				A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */,
+				A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9768,6 +9774,7 @@
 				A6D4C26621E18CB5009CF11B /* iTermScriptInspector.h in Headers */,
 				A65D3ADB21D163B800384015 /* iTermBacktrace.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
+				A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
 				530098502259A44D00A69348 /* iTermSoundPlayer.h in Headers */,
 				A69C9337212108E900531438 /* iTermsStatusBarComposerViewController.h in Headers */,
@@ -12257,6 +12264,7 @@
 				5300984D2259365B00A69348 /* iTermHapticActuator.m in Sources */,
 				A630117220E60DBF008114B7 /* iTermStatusBarView.m in Sources */,
 				533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */,
+				A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */,
 				A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */,
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
