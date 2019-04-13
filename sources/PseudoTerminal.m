@@ -5517,7 +5517,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                                  [_contentView.tabView numberOfTabViewItems] > 1 &&
-                                 [_contentView.tabBarControl isHidden]);
+                                 ([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
     // check window size in case tabs have to be hidden or shown
     if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         willShowTabBar) {
