@@ -181,12 +181,10 @@
          withVirtualEnv:(NSString *)virtualenv
           pythonVersion:(NSString *)pythonVersion {
     NSTask *task = [[NSTask alloc] init];
-    NSString *shell = [PTYTask userShell];
-
-    task.launchPath = shell;
+    task.launchPath = @"/bin/bash";
     task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
-    task.environment = [self environmentFromEnvironment:task.environment shell:shell cookie:cookie key:key];
+    task.environment = [self environmentFromEnvironment:task.environment shell:[PTYTask userShell] cookie:cookie key:key];
 
     NSPipe *pipe = [[NSPipe alloc] init];
     [task setStandardOutput:pipe];
@@ -207,7 +205,9 @@
     environment[@"ITERM2_COOKIE"] = cookie;
     environment[@"ITERM2_KEY"] = key;
     environment[@"HOME"] = NSHomeDirectory();
-    environment[@"SHELL"] = shell;
+    if (shell) {
+        environment[@"SHELL"] = shell;
+    }
     environment[@"PYTHONIOENCODING"] = @"utf-8";
     return environment;
 }
