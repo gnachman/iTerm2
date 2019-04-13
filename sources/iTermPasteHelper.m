@@ -525,6 +525,33 @@ const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
 
 // This may modify pasteEvent.string.
 - (BOOL)maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent {
+    const int limit = [iTermAdvancedSettingsModel alwaysWarnBeforePastingOverSize];
+    if (limit >= 0) {
+        if (pasteEvent.string.length > limit) {
+            NSNumberFormatter *numberFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+            numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+            const iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to paste %@ characters?", [numberFormatter stringFromNumber:@(pasteEvent.string.length)]]
+                                       actions:@[ @"OK", @"Cancel", @"Advanced…" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncPasteOverCharacterLimitWarning"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Paste Limit Exceeded"
+                                        window:self.delegate.pasteHelperViewForIndicator.window];
+            switch (selection) {
+                case kiTermWarningSelection0:
+                    break;
+                case kiTermWarningSelection1:
+                    return NO;
+                case kiTermWarningSelection2:
+                    [self showAdvancedPasteWithFlags:0];
+                    return NO;
+                default:
+                    break;
+            }
+        }
+    }
+
     NSCharacterSet *newlineCharacterSet =
         [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
     NSRange rangeOfFirstNewline = [pasteEvent.string rangeOfCharacterFromSet:newlineCharacterSet];

@@ -43,6 +43,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)alternateMouseScrollStringForDown;
 + (NSString *)alternateMouseScrollStringForUp;
 + (BOOL)alwaysAcceptFirstMouse;
++ (int)alwaysWarnBeforePastingOverSize;
 + (BOOL)appendToExistingDebugLog;
 + (int)autocompleteMaxOptions;
 + (NSString *)autoLogFormat;
