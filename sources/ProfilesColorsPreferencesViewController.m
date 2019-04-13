@@ -206,6 +206,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     [self defineControl:_useVerticalGuide
                     key:KEY_USE_VERTICAL_CURSOR_GUIDE
+            relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBrightBold
