@@ -209,10 +209,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_useVerticalGuide
-                    key:KEY_USE_VERTICAL_CURSOR_GUIDE
-                   type:kPreferenceInfoTypeCheckbox];
-
     info = [self defineControl:_useBrightBold
                            key:KEY_USE_BOLD_COLOR
                    displayName:@"Custom color for bold text"
