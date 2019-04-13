@@ -5423,7 +5423,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSImage *)imageFromSelectedTabView:(NSTabView *)aTabView
                           tabViewItem:(NSTabViewItem *)tabViewItem {
     NSView *tabRootView = [tabViewItem view];
-    NSRect tabFrame = [_contentView.tabBarControl frame];
 
     NSRect contentFrame;
     NSRect viewRect;
