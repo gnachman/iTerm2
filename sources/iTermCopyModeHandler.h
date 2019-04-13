@@ -24,8 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
 
-- (void)copyModeHandlerDidExitCopyMode:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
-
 - (void)copyModeHandler:(iTermCopyModeHandler *)handler revealLine:(int)line NOT_COPY_FAMILY;
 
 - (void)copyModeHandlerShowFindPanel:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;

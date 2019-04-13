@@ -11090,10 +11090,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview setNeedsDisplay:YES];
-    if (!handler.enabled && _queuedTokens.count) {
-        CVector vector;
-        CVectorCreate(&vector, 100);
-        [self executeTokens:&vector bytesHandled:0];
+    if (!handler.enabled) {
+        if (_textview.selection.live) {
+            [_textview.selection endLiveSelection];
+        }
+        if (!_queuedTokens.count) {
+            CVector vector;
+            CVectorCreate(&vector, 100);
+            [self executeTokens:&vector bytesHandled:0];
+        }
     }
 }
 
@@ -11115,12 +11120,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(state.coord.y, 1)];
     return state;
-}
-
-- (void)copyModeHandlerDidExitCopyMode:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
-    if (_textview.selection.live) {
-        [_textview.selection endLiveSelection];
-    }
 }
 
 - (void)copyModeHandler:(iTermCopyModeHandler *)handler redrawLine:(int)line NOT_COPY_FAMILY {

@@ -64,7 +64,6 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     if (copyMode) {
         _state = [self.delegate copyModeHandlerCreateState:self];
     } else {
-        [self.delegate copyModeHandlerDidExitCopyMode:self];
         _state = nil;
     }
     [self.delegate copyModeHandlerDidChangeEnabledState:self];
