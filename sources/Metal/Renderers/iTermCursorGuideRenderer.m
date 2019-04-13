@@ -1,17 +1,23 @@
 #import "iTermCursorGuideRenderer.h"
 
 @interface iTermCursorGuideRendererTransientState()
-@property (nonatomic, strong) id<MTLTexture> horizontalTexture, verticalTexture;
+@property (nonatomic, strong) id<MTLTexture> horizontalTexture;
+@property (nonatomic, strong) id<MTLTexture> verticalTexture;
 @property (nonatomic) int row;
 @property (nonatomic) int column;
-@property (nonatomic) id<MTLBuffer> horizontalVertexBuffer, verticalVertexBuffer, upperVertexBuffer, lowerVertexBuffer;
+@property (nonatomic) id<MTLBuffer> horizontalVertexBuffer;
+@property (nonatomic) id<MTLBuffer> verticalVertexBuffer;
+@property (nonatomic) id<MTLBuffer> upperVertexBuffer;
+@property (nonatomic) id<MTLBuffer> lowerVertexBuffer;
 @end
 
 @implementation iTermCursorGuideRendererTransientState {
     int _row;
     int _column;
-    id<MTLBuffer> _horizontalVertexBuffer, _verticalVertexBuffer;
-    id<MTLBuffer> _upperVertexBuffer, _lowerVertexBuffer;
+    id<MTLBuffer> _horizontalVertexBuffer;
+    id<MTLBuffer> _verticalVertexBuffer;
+    id<MTLBuffer> _upperVertexBuffer;
+    id<MTLBuffer> _lowerVertexBuffer;
 }
 
 - (id<MTLBuffer>)tessellateRect:(CGRect)rect withTexture:(CGRect)textureRect withPool:(iTermMetalBufferPool *)verticesPool {
@@ -43,6 +49,7 @@
 - (void)initializeVerticesWithPool:(iTermMetalBufferPool *)verticesPool
                         horizontal:(BOOL)horizontal
                           vertical:(BOOL)vertical {
+    assert(horizontal || vertical);
     CGSize cellSize = self.cellConfiguration.cellSize;
     VT100GridSize gridSize = self.cellConfiguration.gridSize;
 
@@ -90,7 +97,8 @@
 
 @implementation iTermCursorGuideRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    id<MTLTexture> _horizontalTexture, _verticalTexture;
+    id<MTLTexture> _horizontalTexture;
+    id<MTLTexture> _verticalTexture;
     NSColor *_color;
     CGSize _lastCellSize;
 }
@@ -156,7 +164,7 @@
     }
 
     if (tState.row >= 0 && tState.column >= 0 && self.horizontalEnabled && self.verticalEnabled) {
-        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:TRUE vertical:TRUE];
+        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:YES vertical:YES];
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
@@ -179,7 +187,7 @@
                               fragmentBuffers:@{}
                                      textures:@{ @(iTermTextureIndexPrimary): tState.verticalTexture } ];
     } else if (tState.row >= 0 && self.horizontalEnabled) {
-        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:TRUE vertical:FALSE];
+        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:YES vertical:NO];
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
@@ -188,7 +196,7 @@
                               fragmentBuffers:@{}
                                      textures:@{ @(iTermTextureIndexPrimary): tState.horizontalTexture } ];
     } else if (tState.column >= 0 && self.verticalEnabled) {
-        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:FALSE vertical:TRUE];
+        [tState initializeVerticesWithPool:_cellRenderer.verticesPool horizontal:NO vertical:YES];
         [_cellRenderer drawWithTransientState:tState
                                 renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
