@@ -51,6 +51,7 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
                                            styleMask: [.resizable, .fullSizeContentView],
                                            backing: .buffered,
                                            defer: true)
+            newPanel.hidesOnDeactivate = false
             newPanel.orderOut(nil)
             newPanel.contentView?.addSubview(vc.view)
             internalPanel = newPanel

@@ -14,11 +14,13 @@ public class FontPickerPanel: NSPanel {
     }
 
     public override func cancelOperation(_ sender: Any?) {
+        parent?.removeChildWindow(self)
         orderOut(nil)
     }
 
     public override func resignKey() {
         super.resignKey()
+        parent?.removeChildWindow(self)
         orderOut(nil)
     }
 }

@@ -242,6 +242,7 @@ SWIFT_PROTOCOL_NAMED("FontListDataSource")
 @property (nonatomic, readonly) BOOL isSeparator;
 @property (nonatomic, readonly, copy) NSArray<NSString *> * _Nonnull names;
 @property (nonatomic, copy) NSString * _Nonnull filter;
+- (void)reload;
 @end
 
 

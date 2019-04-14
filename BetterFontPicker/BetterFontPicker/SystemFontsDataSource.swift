@@ -8,10 +8,6 @@
 
 import Cocoa
 
-protocol SystemFontsDataSourceDelegate : class {
-    func systemFontsDataSourceDidChange(_ dataSource: SystemFontsDataSource)
-}
-
 fileprivate extension BidirectionalCollection where Element == String {
     func sortedLocalized() -> Array<String> {
         return sorted(by: { (s1: String, s2: String) -> Bool in
@@ -20,47 +16,58 @@ fileprivate extension BidirectionalCollection where Element == String {
     }
 }
 
+private func ComputeMonospaceAndVariableFamilyNames() -> ([String], [String]) {
+    var monospace: Set<String> = []
+    var variable: Set<String> = []
+    for descriptor in  NSFontCollection.withAllAvailableDescriptors.matchingDescriptors ?? [] {
+        if let name = descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String {
+            if monospace.contains(name) || variable.contains(name) {
+                // The call to symbolicTraits is slow so avoid doing it more than needed.
+                continue
+            }
+            if descriptor.symbolicTraits.contains(.monoSpace) {
+                monospace.insert(name)
+            } else {
+                variable.insert(name)
+            }
+        }
+    }
+    let newValue = (Array(monospace).sortedLocalized(),
+                    Array(variable).sortedLocalized())
+    return newValue
+}
+
 @objc(BFPSystemFontsDataSource)
 class SystemFontsDataSource: NSObject, FontListDataSource {
+    private static var suppressCacheInvalidation = false
     private static var internalMonospaceAndVariableFamilyNames: ([String], [String])? = nil
+
     private static var monospaceAndVariableFamilyNames: ([String], [String]) {  // monospace, variable pitch
         if let result = internalMonospaceAndVariableFamilyNames {
             return result
         }
-        var monospace: Set<String> = []
-        var variable: Set<String> = []
-        for descriptor in  NSFontCollection.withAllAvailableDescriptors.matchingDescriptors ?? [] {
-            if let name = descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String {
-                if monospace.contains(name) || variable.contains(name) {
-                    // The call to symbolicTraits is slow so avoid doing it more than needed.
-                    continue
-                }
-                if descriptor.symbolicTraits.contains(.monoSpace) {
-                    monospace.insert(name)
-                } else {
-                    variable.insert(name)
-                }
-            }
-        }
-        let newValue = (Array(monospace).sortedLocalized(),
-                        Array(variable).sortedLocalized())
+        let newValue = ComputeMonospaceAndVariableFamilyNames()
         internalMonospaceAndVariableFamilyNames = newValue
         return newValue
     }
+
     private let pointSize = CGFloat(12)
-    private lazy var matchingFonts: [String] = {
+    private var internalMatchingFonts: [String]?
+    private var matchingFonts: [String] {
+        if let result = internalMatchingFonts {
+            return result
+        }
         switch traitMask {
         case .all:
-            return NSFontManager.shared.availableFontFamilies.sortedLocalized()
+            internalMatchingFonts = NSFontManager.shared.availableFontFamilies.sortedLocalized()
         case .fixedPitch:
-            return SystemFontsDataSource.monospaceAndVariableFamilyNames.0
-
+            internalMatchingFonts = SystemFontsDataSource.monospaceAndVariableFamilyNames.0
         case .variablePitch:
-            return SystemFontsDataSource.monospaceAndVariableFamilyNames.1
+            internalMatchingFonts = SystemFontsDataSource.monospaceAndVariableFamilyNames.1
         }
-    }()
+        return internalMatchingFonts!
+    }
 
-    weak var delegate: SystemFontsDataSourceDelegate?
     enum Filter {
         case fixedPitch
         case variablePitch
@@ -100,17 +107,19 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
         postInit()
     }
 
-    private func postInit() {
-        NotificationCenter.default.addObserver(forName: NSFont.fontSetChangedNotification,
-                                               object: nil,
-                                               queue: nil) { [weak self] (notification) in
-                                                self?.reload()
-        }
+    func postInit() {
     }
 
-    private func reload() {
+    func reload() {
+        if !SystemFontsDataSource.suppressCacheInvalidation {
+            SystemFontsDataSource.internalMonospaceAndVariableFamilyNames = nil
+            SystemFontsDataSource.suppressCacheInvalidation = true
+            DispatchQueue.main.async {
+                SystemFontsDataSource.suppressCacheInvalidation = false
+            }
+        }
+        internalMatchingFonts = nil
         names = loadNames()
-        delegate?.systemFontsDataSourceDidChange(self)
     }
 
     private func loadNames() -> [String] {

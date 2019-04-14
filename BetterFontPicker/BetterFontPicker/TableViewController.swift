@@ -94,6 +94,11 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
                                                queue: nil) { [weak self] (notification) in
                                                 self?.layOutTableView()
         }
+        NotificationCenter.default.addObserver(forName: NSFont.fontSetChangedNotification,
+                                               object: nil,
+                                               queue: nil) { [weak self] (notification) in
+                                                self?.fontSetDidChange()
+        }
         layOutTableView()
 
         typicalHeight = newFontNameCell("X").fittingSize.height + 2
@@ -103,6 +108,13 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    private func fontSetDidChange() {
+        for dataSource in dataSources {
+            dataSource.reload()
+        }
+        tableView.reloadData()
     }
 
     // MARK:- Layout
@@ -337,6 +349,7 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         }
         return nil
     }
+
     @objc(tableView:viewForTableColumn:row:)
     public func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         guard let (dataSource, index) = dataSourceForRow(row) else {

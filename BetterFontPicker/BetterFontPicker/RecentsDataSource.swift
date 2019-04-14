@@ -65,10 +65,18 @@ class RecentsDataSource: NSObject, FontListDataSource {
         if let array = userDefault as? [String] {
             let queryTokens = filter.normalizedTokens
             return array.filter({ (name) -> Bool in
-                return name.matchesTableViewSearchQueryTokens(queryTokens)
+                return name.matchesTableViewSearchQueryTokens(queryTokens) && fontFamilyExists(name)
             })
         } else {
             return []
         }
+    }
+
+    private func fontFamilyExists(_ name: String) -> Bool {
+        return NSFontManager.shared.availableFontFamilies.contains(name)
+    }
+
+    func reload() {
+        recentsNames = loadNames()
     }
 }

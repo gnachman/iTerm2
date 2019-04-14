@@ -13,4 +13,5 @@ public protocol FontListDataSource: NSObjectProtocol {
     var isSeparator: Bool { get }
     var names: [String] { get }
     var filter: String { get set }
+    func reload()
 }

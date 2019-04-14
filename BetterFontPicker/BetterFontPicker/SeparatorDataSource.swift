@@ -16,4 +16,6 @@ class SeparatorDataSource: NSObject, FontListDataSource {
     var names: [String] {
         return []
     }
+    func reload() {
+    }
 }
