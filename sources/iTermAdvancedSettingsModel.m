@@ -155,7 +155,8 @@ DEFINE_BOILERPLATE(name, NSString *, kiTermAdvancedSettingTypeString, theDefault
 
 + (void)enumerateMethods:(void (^)(Method method, SEL selector))block {
     unsigned int methodCount = 0;
-    Method *methods = class_copyMethodList(object_getClass([iTermAdvancedSettingsModel class]), &methodCount);
+    Class theClass = object_getClass([iTermAdvancedSettingsModel class]);
+    Method *methods = class_copyMethodList(theClass, &methodCount);
     for (unsigned int i = 0; i < methodCount; i++) {
         Method method = methods[i];
         SEL selector = method_getName(method);
