@@ -149,24 +149,7 @@ NS_ASSUME_NONNULL_BEGIN
     cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
     name = [name stringByPerformingSubstitutions:substitutions];
-    NSString *pwd;
-    if (forceUseOldCWD) {
-        pwd = oldCWD;
-        DLog(@"Using oldcwd (forced). pwd is %@", pwd);
-    } else {
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
-        DLog(@"pwd for profile+object type is %@", pwd);
-    }
-    if ([pwd length] == 0) {
-        if (oldCWD) {
-            pwd = oldCWD;
-            DLog(@"pwd was empty. Use oldCWD of %@", pwd);
-        } else {
-            pwd = NSHomeDirectory();
-            DLog(@"pwd was empty. Use home directory of %@", pwd);
-        }
-    }
-    environment = [environment ?: @{} dictionaryBySettingObject:pwd forKey:@"PWD"];
+    
     BOOL isUTF8;
     if (isUTF8Number) {
         isUTF8 = isUTF8Number.boolValue;
@@ -174,23 +157,50 @@ NS_ASSUME_NONNULL_BEGIN
         isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
     }
 
-    void (^wrapper)(BOOL) = ^(BOOL ok) {
-        DLog(@"factory completion wrapper starting");
-        [aSession didFinishInitialization:ok];
-        DLog(@"factory did finish initialization");
-        if (completion) {
-            completion(ok);
-        }
-    };
     [windowController setName:name ?: @"" forSession:aSession];
-    [self finishAttachingOrLaunchingSession:aSession
-                                        cmd:cmd
-                                 completion:wrapper
-                                environment:environment
-                                     isUTF8:isUTF8
-                           serverConnection:serverConnection
-                              substitutions:substitutions
-                           windowController:windowController];
+
+    void (^pwdCompletion)(NSString *) = ^(NSString *suggestion) {
+        NSString *pwd = suggestion;
+        DLog(@"using pwd of %@", pwd);
+        if ([pwd length] == 0) {
+            if (oldCWD) {
+                pwd = oldCWD;
+                DLog(@"pwd was empty. Use oldCWD of %@", pwd);
+            } else {
+                pwd = NSHomeDirectory();
+                DLog(@"pwd was empty. Use home directory of %@", pwd);
+            }
+        }
+        void (^wrapper)(BOOL) = ^(BOOL ok) {
+            DLog(@"factory completion wrapper starting");
+            [aSession didFinishInitialization:ok];
+            DLog(@"factory did finish initialization");
+            if (completion) {
+                completion(ok);
+            }
+        };
+        [self finishAttachingOrLaunchingSession:aSession
+                                            cmd:cmd
+                                     completion:wrapper
+                                    environment:[environment ?: @{} dictionaryBySettingObject:pwd forKey:@"PWD"]
+                                         isUTF8:isUTF8
+                               serverConnection:serverConnection
+                                  substitutions:substitutions
+                               windowController:windowController];
+    };
+
+    NSString *pwd;
+    if (forceUseOldCWD) {
+        DLog(@"Using oldcwd (forced). pwd is %@", pwd);
+        pwdCompletion(oldCWD);
+    } else if (!canPrompt) {
+        pwdCompletion(@"");
+    } else {
+        [ITAddressBookMgr computeWorkingDirectoryForProfile:profile
+                                                   creating:objectType
+                                                      scope:aSession.variablesScope
+                                                 completion:pwdCompletion];
+    }
     return YES;
 }
 

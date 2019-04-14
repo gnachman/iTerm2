@@ -243,6 +243,8 @@
 // Session-only key
 #define KEY_SESSION_HOTKEY                   @"Session Hotkey"
 
+@class iTermVariableScope;
+
 // Posted when a session's unicode version changes.
 extern NSString *const iTermUnicodeVersionDidChangeNotification;
 
@@ -379,8 +381,10 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 + (NSString*)descFromFont:(NSFont*)font __attribute__((deprecated));
 + (NSString*)bookmarkCommand:(Profile*)bookmark
                forObjectType:(iTermObjectType)objectType;
-+ (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
-                        forObjectType:(iTermObjectType)objectType;
++ (void)computeWorkingDirectoryForProfile:(Profile *)profile
+                                 creating:(iTermObjectType)objectType
+                                    scope:(iTermVariableScope *)scope
+                               completion:(void (^)(NSString *directory))completion;
 
 // Indicates if it is safe to remove the profile from the model.
 + (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;

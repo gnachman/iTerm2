@@ -189,12 +189,12 @@
                                if (!strongSelf) {
                                    return;
                                }
-                               [weakSelf didEvaluateParametersWithScope:scope
-                                                            synchronous:synchronous
-                                                        parameterValues:parameterValues
-                                                               depError:depError
-                                                                missing:missing
-                                                             completion:completion];
+                               [strongSelf didEvaluateParametersWithScope:scope
+                                                              synchronous:synchronous
+                                                          parameterValues:parameterValues
+                                                                 depError:depError
+                                                                  missing:missing
+                                                               completion:completion];
                                [outstandingCalls removeObject:strongSelf];
                            }];
 }

@@ -115,6 +115,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 + (void)registerStandardFunctions {
     [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     [iTermAlertBuiltInFunction registerBuiltInFunction];
+    [iTermGetStringBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {

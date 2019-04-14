@@ -27,6 +27,9 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 + (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context;
 + (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context
                                              augmentedWith:(NSSet<NSString *> *)augmentations;
++ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context
+                                                 excluding:(NSSet<NSString *> *)exclusions
+                                             allowUserVars:(BOOL)allowUserVars;
 
 
 @end

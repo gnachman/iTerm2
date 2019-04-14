@@ -29,6 +29,7 @@
 
 #import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermHotKeyMigrationHelper.h"
@@ -558,32 +559,59 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
     }
 }
 
-+ (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark forObjectType:(iTermObjectType)objectType
-{
-    NSString* custom = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
-    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
-        return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
-    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
-        return @"";
-    } else if ([custom isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
-        switch (objectType) {
-          case iTermWindowObject:
-              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]
-                                                           directory:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY]];
-          case iTermTabObject:
-              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_TAB_OPTION]
-                                                           directory:[bookmark objectForKey:KEY_AWDS_TAB_DIRECTORY]];
-          case iTermPaneObject:
-              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_PANE_OPTION]
-                                                           directory:[bookmark objectForKey:KEY_AWDS_PANE_DIRECTORY]];
-          default:
-              NSLog(@"Bogus object type %d", (int)objectType);
-              return NSHomeDirectory();  // Shouldn't happen
-        }
-    } else {
-        // Home dir, custom == "No"
-        return NSHomeDirectory();
++ (void)computeWorkingDirectoryForProfile:(Profile *)profile
+                                 creating:(iTermObjectType)objectType
+                                    scope:(iTermVariableScope *)scope
+                               completion:(void (^)(NSString *directory))completion {
+    BOOL eval = NO;
+    NSString *format = [self swiftyStringForWorkingDirectoryForProfile:profile
+                                                              creating:objectType
+                                                             needsEval:&eval];
+    if (!eval) {
+        completion(format);
+        return;
     }
+
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:format
+                                                                                                 scope:scope];
+    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        completion(evaluator.value);
+    }];
+}
+
++ (NSString *)swiftyStringForWorkingDirectoryForProfile:(Profile *)profile
+                                               creating:(iTermObjectType)objectType
+                                              needsEval:(BOOL *)needsEval {
+    *needsEval = YES;
+    NSString *custom = [iTermProfilePreferences stringForKey:KEY_CUSTOM_DIRECTORY inProfile:profile];
+    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]) {
+        return [iTermProfilePreferences stringForKey:KEY_WORKING_DIRECTORY inProfile:profile];
+    }
+    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
+        *needsEval = NO;
+        return @"";
+    }
+    if ([custom isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
+        switch (objectType) {
+            case iTermWindowObject:
+                return [ITAddressBookMgr _advancedWorkingDirWithOption:[iTermProfilePreferences stringForKey:KEY_AWDS_WIN_OPTION inProfile:profile]
+                                                             directory:[iTermProfilePreferences stringForKey:KEY_AWDS_WIN_DIRECTORY inProfile:profile]];
+            case iTermTabObject:
+                return [ITAddressBookMgr _advancedWorkingDirWithOption:[iTermProfilePreferences stringForKey:KEY_AWDS_TAB_OPTION inProfile:profile]
+                                                             directory:[iTermProfilePreferences stringForKey:KEY_AWDS_TAB_DIRECTORY inProfile:profile]];
+            case iTermPaneObject:
+                return [ITAddressBookMgr _advancedWorkingDirWithOption:[iTermProfilePreferences stringForKey:KEY_AWDS_PANE_OPTION inProfile:profile]
+                                                             directory:[iTermProfilePreferences stringForKey:KEY_AWDS_PANE_DIRECTORY inProfile:profile]];
+            default:
+                NSLog(@"Bogus object type %d", (int)objectType);
+                *needsEval = NO;
+                return NSHomeDirectory();  // Shouldn't happen
+        }
+    }
+
+    // Home dir, custom == "No"
+    *needsEval = NO;
+    return NSHomeDirectory();
 }
 
 + (BOOL)canRemoveProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {

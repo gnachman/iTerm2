@@ -186,14 +186,41 @@
     return set;
 }
 
++ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context
+                                                 excluding:(NSSet<NSString *> *)exclusions
+                                             allowUserVars:(BOOL)allowUserVars {
+    return ^NSSet<NSString *> *(NSString *prefix) {
+        return [self recordedVariableNamesInContext:context
+                                      augmentedWith:[NSSet set]
+                                          excluding:exclusions
+                                             prefix:prefix
+                                      allowUserVars:allowUserVars];
+    };
+}
+
 + (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context
                                         augmentedWith:(NSSet<NSString *> *)augmentations
                                                prefix:(NSString *)prefix {
+    return [self recordedVariableNamesInContext:context
+                                  augmentedWith:augmentations
+                                      excluding:[NSSet set]
+                                         prefix:prefix
+                                  allowUserVars:YES];
+}
+
++ (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context
+                                        augmentedWith:(NSSet<NSString *> *)augmentations
+                                            excluding:(NSSet<NSString *> *)exclusions
+                                               prefix:(NSString *)prefix
+                                        allowUserVars:(BOOL)allowUserVars {
     NSMutableSet<NSString *> *terminalCandidates = [[self recordedTerminalVariableNamesInContext:context] mutableCopy];
     [terminalCandidates unionSet:augmentations];
 
     NSMutableSet<NSString *> *results = [NSMutableSet set];
     for (NSString *candidate in [terminalCandidates copy]) {
+        if (!allowUserVars && [candidate hasPrefix:@"user."]) {
+            continue;
+        }
         NSSet<NSString *> *paths = [self recordedVariableNamesInContext:context fromCandidate:candidate prefix:prefix];
         [results unionSet:paths];
     }
@@ -213,10 +240,15 @@
 
     // This catches session.tab for prefix session.t
     for (NSString *nonterminalName in nonterminalCandidates) {
+        if (!allowUserVars && [nonterminalName isEqualToString:@"user"]) {
+            continue;
+        }
         if ([nonterminalName hasPrefix:prefix]) {
             [results addObject:[nonterminalName stringByAppendingString:@"."]];
         }
     }
+
+    [results minusSet:exclusions];
 
     return results;
 }

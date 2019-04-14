@@ -78,6 +78,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_tabTitleTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_windowTitleTextFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_customDirectoryTextFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
     IBOutlet NSPopUpButton *_icon;
     IBOutlet NSTextField *_iconLabel;
@@ -220,6 +221,21 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
          settingChanged:^(id sender) { [weakSelf directoryTypeDidChange]; }
                  update:^BOOL { [weakSelf updateDirectoryType]; return YES; }];
 
+    // Remove paths that need the session fully initialized.
+    NSSet<NSString *> *exclusions = [NSSet setWithArray:@[ iTermVariableKeySessionTTY,
+                                                           iTermVariableKeySessionUsername,
+                                                           iTermVariableKeySessionHostname,
+                                                           iTermVariableKeySessionName,
+                                                           iTermVariableKeySessionJob,
+                                                           iTermVariableKeySessionPath,
+                                                           iTermVariableKeySessionJobPid] ];
+    _customDirectoryTextFieldDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession
+                                                                                                    excluding:exclusions
+                                                                                                allowUserVars:NO]
+                                                       passthrough:_customDirectory.delegate
+                                                     functionsOnly:NO];
+    _customDirectory.delegate = _customDirectoryTextFieldDelegate;
     [self defineUnsearchableControl:_customDirectory
                                 key:KEY_WORKING_DIRECTORY
                                type:kPreferenceInfoTypeStringTextField];
@@ -473,6 +489,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else {
         _customCommand.enabled = NO;
     }
+    _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
 }
 
 #pragma mark - Badge
@@ -612,6 +629,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self setString:value forKey:KEY_CUSTOM_DIRECTORY];
     [self updateEditAdvancedConfigButton];
+    [self updateEnabledState];
 }
 
 - (void)updateDirectoryType {
@@ -627,6 +645,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
     [_initialDirectoryType selectCellWithTag:[tagNumber integerValue]];
     [self updateEditAdvancedConfigButton];
+    [self updateEnabledState];
 }
 
 #pragma mark - Command Type
