@@ -2837,7 +2837,6 @@
 		A6C762C51B45C52B00E3C992 /* Coprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD9B142E5FBB00275650 /* Coprocess.m */; };
 		A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* iTermHotKeyController.m */; };
-		A6C762C81B45C52B00E3C992 /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		A6C762C91B45C52B00E3C992 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */; };
 		A6C762CB1B45C52B00E3C992 /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = E8A66F030272453F03A80106 /* iTermController.m */; };
@@ -12342,6 +12341,7 @@
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
+				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
 				A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */,
 				A6A4867020B67A3B00493302 /* iTermSizeRememberingView.m in Sources */,
 				A66F52B22105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m in Sources */,
@@ -12721,7 +12721,6 @@
 				A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */,
 				A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */,
 				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
-				A6C762C81B45C52B00E3C992 /* ITAddressBookMgr.m in Sources */,
 				A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */,
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
 				A6C762BF1B45C52B00E3C992 /* NSScreen+iTerm.m in Sources */,

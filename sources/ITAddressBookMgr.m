@@ -86,7 +86,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
-        NSString *originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
+        NSString *originalDefaultGuid = [[prefs objectForKey:KEY_DEFAULT_GUID] copy];
         if ([newBookmarks isKindOfClass:[NSArray class]]) {
             [self setBookmarks:newBookmarks
                    defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
@@ -114,11 +114,10 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
         // Make sure there is at least one bookmark.
         if ([[ProfileModel sharedInstance] numberOfBookmarks] == 0) {
-            NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
+            NSMutableDictionary *aDict = [[NSMutableDictionary alloc] init];
             [ITAddressBookMgr setDefaultsInBookmark:aDict];
             [[ProfileModel sharedInstance] addBookmark:aDict];
             [[ProfileModel sharedInstance] flush];
-            [aDict release];
         }
 
         if ([iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles]) {
@@ -153,15 +152,10 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 - (void)dealloc {
     [bonjourServices removeAllObjects];
-    [bonjourServices release];
 
     [sshBonjourBrowser stop];
     [ftpBonjourBrowser stop];
     [telnetBonjourBrowser stop];
-    [sshBonjourBrowser release];
-    [ftpBonjourBrowser release];
-    [telnetBonjourBrowser release];
-    [super dealloc];
 }
 
 - (void)removeBonjourProfiles {
@@ -198,18 +192,14 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 - (void)stopLocatingBonjourServices {
     [sshBonjourBrowser stop];
-    [sshBonjourBrowser release];
     sshBonjourBrowser = nil;
 
     [ftpBonjourBrowser stop];
-    [ftpBonjourBrowser release];
     ftpBonjourBrowser = nil;
 
     [telnetBonjourBrowser stop];
-    [telnetBonjourBrowser release];
     telnetBonjourBrowser = nil;
 
-    [bonjourServices release];
     bonjourServices = nil;
 }
 
@@ -272,7 +262,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
     }
 
     // remove host entry from this group
-    NSMutableArray* toRemove = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray *toRemove = [[NSMutableArray alloc] init];
 #ifdef SUPPORT_SFTP
     NSString* sftpName = [NSString stringWithFormat:@"%@-sftp", [aNetService name]];
 #endif
@@ -649,7 +639,6 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
         for (NSNotification *notification in sDelayedNotifications) {
             [[NSNotificationCenter defaultCenter] postNotification:notification];
         }
-        [sDelayedNotifications release];
         sDelayedNotifications = nil;
     } else {
         block();
