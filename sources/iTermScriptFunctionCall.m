@@ -29,6 +29,7 @@
     // Maps an argument name to a parsed expression for its value.
     NSMutableDictionary<NSString *, iTermParsedExpression *> *_argToExpression;
     NSMutableArray<iTermExpressionEvaluator *> *_evaluators;
+    NSMutableSet<NSString *> *_remainingArgs;
 }
 
 - (instancetype)init {
@@ -118,31 +119,49 @@
 
 #pragma mark - Function Calls
 
+- (void)functionCallDidTimeOutAfter:(NSTimeInterval)timeout
+                         invocation:(NSString *)invocation
+                         completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    NSString *reason;
+    if (_remainingArgs.count) {
+         reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while evaluating the following arguments to %@: %@", @(timeout), invocation, self.name, [_remainingArgs.allObjects componentsJoinedByString:@", "]];
+    } else {
+        reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while waiting for %@ to return.",
+                            @(timeout), invocation, self.name];
+    }
+    NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
+    if (self.connectionKey) {
+        userInfo = [userInfo dictionaryBySettingObject:self.connectionKey
+                                                forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    }
+    iTermScriptHistoryEntry *entry = [[iTermAPIHelper sharedInstance] scriptHistoryEntryForConnectionKey:self.connectionKey];
+    [entry addOutput:[reason stringByAppendingString:@"\n"]];
+
+    NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                         code:2
+                                     userInfo:userInfo];
+    completion(nil, error, nil);
+}
+
 - (void)performFunctionCallFromInvocation:(NSString *)invocation
                                     scope:(iTermVariableScope *)scope
                                   timeout:(NSTimeInterval)timeout
                                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     __block NSTimer *timer = nil;
+    _remainingArgs = [NSMutableSet setWithArray:_argToExpression.allKeys];
     if (timeout > 0) {
         // NOTE: The timer's block retains the completion block which is what keeps the caller
         // from being dealloc'ed when it is an iTermExpressionEvaluator.
+        __weak __typeof(self) weakSelf = self;
         timer = [NSTimer it_scheduledTimerWithTimeInterval:timeout repeats:NO block:^(NSTimer * _Nonnull theTimer) {
             if (timer == nil) {
                 // Shouldn't happen
                 return;
             }
             timer = nil;
-            NSString *reason = [NSString stringWithFormat:@"Timeout (%@ sec) waiting for %@", @(timeout), invocation];
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
-            if (self.connectionKey) {
-                userInfo = [userInfo dictionaryBySettingObject:self.connectionKey
-                                                        forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
-            }
-#warning TODO: Record the script that was being called so -[iTermExpressionEvaluator logError:invocation:] can attribute it to the right script history entry
-            NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
-                                                 code:2
-                                             userInfo:userInfo];
-            completion(nil, error, nil);
+            [weakSelf functionCallDidTimeOutAfter:timeout
+                                       invocation:invocation
+                                       completion:completion];
         }];
     }
     [self callWithScope:scope
@@ -258,6 +277,10 @@
                    completion:completion];
 }
 
+- (void)didEvaluateArgument:(NSString *)key {
+    [_remainingArgs removeObject:key];
+}
+
 - (void)evaluateParametersWithScope:(iTermVariableScope *)scope
                          invocation:(NSString *)invocation
                         synchronous:(BOOL)synchronous
@@ -268,6 +291,7 @@
     NSMutableDictionary<NSString *, id> *parameterValues = [NSMutableDictionary dictionary];
     NSMutableSet<NSString *> *missing = [NSMutableSet set];
     __block NSError *depError = nil;
+    __weak __typeof(self) weakSelf = self;
     [_argToExpression enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermParsedExpression *_Nonnull parsedExpression, BOOL * _Nonnull stop) {
         dispatch_group_enter(group);
         [self evaluateArgumentWithParsedExpression:parsedExpression
@@ -275,6 +299,7 @@
                                              scope:scope
                                        synchronous:synchronous
                                         completion:^(NSError *error, id value, NSSet<NSString *> *innerMissing) {
+                                            [weakSelf didEvaluateArgument:key];
                                             [missing unionSet:innerMissing];
                                             if (error) {
                                                 depError = error;
