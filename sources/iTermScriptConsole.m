@@ -58,6 +58,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)awakeFromNib {
     _callsView.textColor = [NSColor textColor];
+    NSScrollView *scrollView = _callsView.enclosingScrollView;
+    scrollView.horizontalScrollElasticity = NSScrollElasticityNone;
 }
 
 - (void)makeTextViewHorizontallyScrollable:(NSTextView *)textView {

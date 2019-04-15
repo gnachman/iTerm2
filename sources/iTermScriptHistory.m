@@ -56,7 +56,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
         _dateFormatter = [[NSDateFormatter alloc] init];
         _logLines = [NSMutableArray array];
         _callEntries = [NSMutableArray array];
-        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ss"
+        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ssSSS"
                                                                     options:0
                                                                      locale:[NSLocale currentLocale]];
         [[NSNotificationCenter defaultCenter] addObserver:self

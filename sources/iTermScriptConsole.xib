@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -232,7 +232,7 @@
             </connections>
             <point key="canvasLocation" x="202.5" y="331.5"/>
         </window>
-        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="LJ5-c1-8iY" userLabel="Logs">
+        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" horizontalScrollElasticity="none" id="LJ5-c1-8iY" userLabel="Logs">
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" drawsBackground="NO" id="3XP-OX-1oQ">
@@ -260,12 +260,12 @@
             </scroller>
             <point key="canvasLocation" x="151" y="880"/>
         </scrollView>
-        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="BoR-0b-whk" userLabel="Calls">
+        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" horizontalScrollElasticity="none" id="BoR-0b-whk" userLabel="Calls">
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" drawsBackground="NO" id="aGA-ed-GB6">
                 <rect key="frame" x="1" y="1" width="238" height="220"/>
-                <autoresizingMask key="autoresizingMask"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" spellingCorrection="YES" id="3YB-9P-sUx">
                         <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>
