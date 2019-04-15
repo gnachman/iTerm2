@@ -11,6 +11,7 @@
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 
+@class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
 @class PseudoTerminal;
@@ -96,10 +97,14 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
+
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
+                  scope:(iTermVariableScope *)scope
        initialDirectory:(iTermInitialDirectory *)initialDirectory;
+
 - (void)newWindowInSession:(NSString *)targetSession
+                     scope:(iTermVariableScope *)scope
           initialDirectory:(iTermInitialDirectory *)initialDirectory;
 
 - (void)selectPane:(int)windowPane;
@@ -111,9 +116,10 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 // A string of a negative integer (e.g., @"-2") means to open in an iTerm2 window with abs(windowId)==window number.
 // If affinity is given then the newly created tab will be considered "manually opened" which is
 // used to determine the tab's eventual location in the tabbar.
-- (void)newWindowWithAffinity:(NSString *)windowId
+- (void)newWindowWithAffinity:(NSString *)windowIdString
              initialDirectory:(iTermInitialDirectory *)initialDirectory
-                   completion:(void (^)(int newWindowId))completion;
+                        scope:(iTermVariableScope *)scope
+                   completion:(void (^)(int))completion;
 
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane

@@ -7,9 +7,13 @@
 //
 
 #import "iTermInitialDirectory.h"
+
+#import "iTermExpressionEvaluator.h"
 #import "iTermProfilePreferences.h"
 
-@implementation iTermInitialDirectory
+@implementation iTermInitialDirectory {
+    NSString *_evaluated;
+}
 
 + (iTermInitialDirectoryMode)modeForString:(NSString *)modeString
                                 objectType:(iTermObjectType)objectType
@@ -58,7 +62,7 @@
 
 + (instancetype)initialDirectoryFromProfile:(Profile *)profile
                                  objectType:(iTermObjectType)objectType {
-    iTermInitialDirectory *initialDirectory = [[[iTermInitialDirectory alloc] init] autorelease];
+    iTermInitialDirectory *initialDirectory = [[iTermInitialDirectory alloc] init];
     NSString *customDirectorySetting = [iTermProfilePreferences stringForKey:KEY_CUSTOM_DIRECTORY inProfile:profile];
     NSString *customDirectory = nil;
     initialDirectory.mode = [self modeForString:customDirectorySetting
@@ -66,14 +70,39 @@
                                         profile:profile
                                 customDirectory:&customDirectory];
     if (initialDirectory.mode == iTermInitialDirectoryModeCustom) {
-        initialDirectory.customDirectory = customDirectory;
+        initialDirectory.customDirectoryFormat = customDirectory;
     }
     return initialDirectory;
 }
 
-- (void)dealloc {
-    [_customDirectory release];
-    [super dealloc];
+- (void)evaluateWithOldPWD:(NSString *)oldPWD
+                     scope:(iTermVariableScope *)scope
+                completion:(void (^)(NSString *))completion {
+    if (_evaluated) {
+        completion(_evaluated);
+        return;
+    }
+    switch (self.mode) {
+        case iTermInitialDirectoryModeCustom:
+            break;
+        case iTermInitialDirectoryModeHome:
+            _evaluated = NSHomeDirectory();
+            break;
+        case iTermInitialDirectoryModeRecycle:
+            _evaluated = oldPWD;
+            break;
+    }
+    if (_evaluated) {
+        completion(_evaluated);
+        return;
+    }
+
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:self.customDirectoryFormat
+                                                                                                 scope:scope];
+    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        self->_evaluated = evaluator.value;
+        completion(evaluator.value);
+    }];
 }
 
 @end

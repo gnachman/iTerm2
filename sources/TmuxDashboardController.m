@@ -12,6 +12,8 @@
 #import "iTermInitialDirectory.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
+#import "iTermVariableScope.h"
+#import "iTermVariableScope+Global.h"
 #import "TmuxSessionsTable.h"
 #import "TmuxController.h"
 #import "TSVParser.h"
@@ -232,6 +234,7 @@
     if (lastName) {
         TmuxController *tmuxController = self.tmuxController;
         [tmuxController newWindowInSession:[sessionsTable_ selectedSessionName]
+                                     scope:[iTermVariableScope globalsScope]
                           initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:tmuxController.profile
                                                                                    objectType:iTermWindowObject]];
     }

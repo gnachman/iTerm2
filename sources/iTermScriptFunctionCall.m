@@ -138,6 +138,7 @@
                 userInfo = [userInfo dictionaryBySettingObject:self.connectionKey
                                                         forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
             }
+#warning TODO: Record the script that was being called so -[iTermExpressionEvaluator logError:invocation:] can attribute it to the right script history entry
             NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
                                                  code:2
                                              userInfo:userInfo];

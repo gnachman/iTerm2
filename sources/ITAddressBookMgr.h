@@ -381,10 +381,6 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 + (NSString*)descFromFont:(NSFont*)font __attribute__((deprecated));
 + (NSString*)bookmarkCommand:(Profile*)bookmark
                forObjectType:(iTermObjectType)objectType;
-+ (void)computeWorkingDirectoryForProfile:(Profile *)profile
-                                 creating:(iTermObjectType)objectType
-                                    scope:(iTermVariableScope *)scope
-                               completion:(void (^)(NSString *directory))completion;
 
 // Indicates if it is safe to remove the profile from the model.
 + (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;

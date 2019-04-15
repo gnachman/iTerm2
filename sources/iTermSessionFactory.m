@@ -10,10 +10,12 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermExpressionEvaluator.h"
+#import "iTermInitialDirectory.h"
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
 #import "iTermScriptFunctionCall.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
 
@@ -194,12 +196,20 @@ NS_ASSUME_NONNULL_BEGIN
         DLog(@"Using oldcwd (forced). pwd is %@", pwd);
         pwdCompletion(oldCWD);
     } else if (!canPrompt) {
+        // Doesn't matter because the session is already running.
         pwdCompletion(@"");
     } else {
-        [ITAddressBookMgr computeWorkingDirectoryForProfile:profile
-                                                   creating:objectType
-                                                      scope:aSession.variablesScope
-                                                 completion:pwdCompletion];
+        iTermInitialDirectory *initialDirectory = [iTermInitialDirectory initialDirectoryFromProfile:profile
+                                                                                          objectType:objectType];
+        // Keep the initial directory alive
+        void *key = (void *)"iTermSessionFactory.initialDirectory";
+        [aSession it_setAssociatedObject:initialDirectory forKey:key];
+        [initialDirectory evaluateWithOldPWD:oldCWD
+                                       scope:aSession.variablesScope
+                                  completion:^(NSString *pwd) {
+                                      [aSession it_setAssociatedObject:nil forKey:key];
+                                      pwdCompletion(pwd);
+                                  }];
     }
     return YES;
 }

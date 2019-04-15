@@ -61,6 +61,7 @@
 #import "iTermTouchBarButton.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
@@ -2540,6 +2541,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentTmuxController] newWindowWithAffinity:nil
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermWindowObject]
+                                                  scope:[iTermVariableScope globalsScope]
                                              completion:nil];
 }
 
@@ -2551,6 +2553,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermTabObject]
+                                                  scope:[iTermVariableScope globalsScope]
                                              completion:nil];
 }
 
@@ -7019,6 +7022,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [[targetSession tmuxController] selectPane:targetSession.tmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane]
                                              vertically:isVertical
+                                                  scope:[[self tabForSession:targetSession] variablesScope]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]];
         return nil;
     }

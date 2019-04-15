@@ -10,6 +10,8 @@
 #import "EquivalenceClassSet.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermInitialDirectory.h"
+#import "iTermInitialDirectory+Tmux.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -46,66 +48,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_layout}\t"
     "#{window_flags}\t"
     "#{?window_active,1,0}\"";
-
-@interface iTermInitialDirectory(Tmux)
-@end
-
-@implementation iTermInitialDirectory(Tmux)
-
-- (NSString *)tmuxNewWindowCommandInSession:(NSString *)session
-                         recyclingSupported:(BOOL)recyclingSupported {
-    NSArray *args = @[ @"new-window", @"-PF '#{window_id}'" ];
-
-    if (session) {
-        NSString *targetSessionArg = [NSString stringWithFormat:@"\"%@:+\"", [session stringByEscapingQuotes]];
-        NSArray *insertionArguments = @[ @"-a",
-                                         @"-t",
-                                         targetSessionArg ];
-        args = [args arrayByAddingObjectsFromArray:insertionArguments];
-    }
-    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args recyclingSupported:recyclingSupported];
-}
-
-- (NSString *)tmuxNewWindowCommandRecyclingSupported:(BOOL)recyclingSupported {
-    return [self tmuxNewWindowCommandInSession:nil recyclingSupported:recyclingSupported];
-}
-
-- (NSString *)tmuxSplitWindowCommand:(int)wp vertically:(BOOL)splitVertically
-                  recyclingSupported:(BOOL)recyclingSupported {
-    NSArray *args = @[ @"split-window",
-                       splitVertically ? @"-h": @"-v",
-                       @"-t",
-                       [NSString stringWithFormat:@"%%%d", wp] ];
-    return [self tmuxCommandByAddingCustomDirectoryWithArgs:args recyclingSupported:recyclingSupported];
-}
-
-- (NSString *)tmuxCustomDirectoryParameterRecyclingSupported:(BOOL)recyclingSupported {
-    switch (self.mode) {
-        case iTermInitialDirectoryModeHome:
-            return nil;
-        case iTermInitialDirectoryModeCustom:
-            return [self.customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
-        case iTermInitialDirectoryModeRecycle:
-            if (recyclingSupported) {
-                return @"#{pane_current_path}";
-            } else {
-                return nil;
-            }
-    }
-}
-
-- (NSString *)tmuxCommandByAddingCustomDirectoryWithArgs:(NSArray *)args
-                                      recyclingSupported:(BOOL)recyclingSupported {
-    NSString *customDirectory = [self tmuxCustomDirectoryParameterRecyclingSupported:recyclingSupported];
-    if (customDirectory) {
-        NSString *escapedCustomDirectory= [customDirectory stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
-        NSString *customDirectoryArgument = [NSString stringWithFormat:@"-c '%@'", escapedCustomDirectory];
-        args = [args arrayByAddingObject:customDirectoryArgument];
-    }
-    return [args componentsJoinedByString:@" "];
-}
-
-@end
 
 @interface TmuxController ()
 
@@ -908,13 +850,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 // The splitVertically parameter uses the iTerm2 conventions.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
+                  scope:(iTermVariableScope *)scope
        initialDirectory:(iTermInitialDirectory *)initialDirectory {
     // No need for a callback. We should get a layout-changed message and act on it.
-    [gateway_ sendCommand:[initialDirectory tmuxSplitWindowCommand:wp
-                                                        vertically:splitVertically
-                                                recyclingSupported:self.recyclingSupported]
-           responseTarget:nil
-         responseSelector:nil];
+    [initialDirectory tmuxSplitWindowCommand:wp
+                                  vertically:splitVertically
+                          recyclingSupported:self.recyclingSupported
+                                       scope:scope
+                                  completion:
+     ^(NSString *command) {
+         [gateway_ sendCommand:command
+                responseTarget:nil
+              responseSelector:nil];
+     }];
 }
 
 - (void)selectPane:(int)windowPane {
@@ -925,22 +873,34 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)newWindowInSession:(NSString *)targetSession
+                     scope:(iTermVariableScope *)scope
           initialDirectory:(iTermInitialDirectory *)initialDirectory {
-    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandInSession:targetSession
-                                                       recyclingSupported:self.recyclingSupported]
-           responseTarget:nil
-         responseSelector:nil];
+    [initialDirectory tmuxNewWindowCommandInSession:targetSession
+                                 recyclingSupported:self.recyclingSupported
+                                              scope:scope
+                                         completion:
+     ^(NSString *command) {
+         [gateway_ sendCommand:command
+                responseTarget:nil
+              responseSelector:nil];
+     }];
 }
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
              initialDirectory:(iTermInitialDirectory *)initialDirectory
+                        scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion {
     _manualOpenRequested = (windowIdString != nil);
-    [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandRecyclingSupported:self.recyclingSupported]
-           responseTarget:self
-         responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
-           responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
-                    flags:0];
+    [initialDirectory tmuxNewWindowCommandRecyclingSupported:self.recyclingSupported
+                                                       scope:scope
+                                                  completion:
+     ^(NSString *command) {
+         [gateway_ sendCommand:command
+                responseTarget:self
+              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
+                responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
+                         flags:0];
+     }];
 }
 
 - (void)movePane:(int)srcPane

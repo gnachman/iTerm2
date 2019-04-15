@@ -2892,6 +2892,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [controller newWindowWithAffinity:request.hasAffinity ? request.affinity : nil
                      initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.profile
                                                                               objectType:iTermWindowObject]
+                                scope:[iTermVariableScope globalsScope]
                            completion:^(int newWindowId) {
                                PTYTab *tab = [controller window:newWindowId];
                                response.createWindow.tabId = [NSString stringWithFormat:@"%d", tab.uniqueId];
