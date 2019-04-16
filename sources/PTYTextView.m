@@ -66,6 +66,8 @@
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
+#import "PTYTextView+ARC.h"
+#import "PTYTextView+Private.h"
 #import "PTYWindow.h"
 #import "RegexKitLite.h"
 #import "SCPPath.h"
@@ -110,32 +112,6 @@ static const int kDragThreshold = 3;
 
 @end
 
-@interface PTYTextView () <
-    iTermAltScreenMouseScrollInferrerDelegate,
-    iTermBadgeLabelDelegate,
-    iTermTextViewAccessibilityHelperDelegate,
-    iTermFindCursorViewDelegate,
-    iTermFindOnPageHelperDelegate,
-    iTermKeyboardHandlerDelegate,
-    iTermSelectionDelegate,
-    iTermSelectionScrollHelperDelegate,
-    NSDraggingSource,
-    NSMenuDelegate,
-    NSPopoverDelegate>
-
-@property(nonatomic, retain) iTermSelection *selection;
-@property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
-@property(nonatomic, retain) iTermFindCursorView *findCursorView;
-@property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
-@property(nonatomic, retain) iTermQuickLookController *quickLookController;
-@property(strong, readwrite, nullable) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
-
-// Set when a context menu opens, nilled when it closes. If the data source changes between when we
-// ask the context menu to open and when the main thread enters a tracking runloop, the text under
-// the selection can change. We want to respect what we show while the context menu is open.
-// See issue 4048.
-@property(nonatomic, copy) NSString *savedSelectedText;
-@end
 
 @implementation PTYTextView {
     // -refresh does not want to be reentrant.
@@ -445,17 +421,6 @@ static const int kDragThreshold = 3;
 - (NSColor *)defaultTextColor {
     return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
                                  overBackgroundColor:[self defaultBackgroundColor]
-                              disableMinimumContrast:NO];
-}
-
-- (NSColor *)selectionBackgroundColor {
-    CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
-    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]] colorWithAlphaComponent:alpha];
-}
-
-- (NSColor *)selectedTextColor {
-    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapSelectedText]
-                                 overBackgroundColor:[self selectionBackgroundColor]
                               disableMinimumContrast:NO];
 }
 
@@ -1785,46 +1750,6 @@ static const int kDragThreshold = 3;
     return VT100GridCoordMake(p.x, p.y);
 }
 
-// TODO: this should return a VT100GridCoord but it confusingly returns an NSPoint.
-//
-// If allowRightMarginOverflow is YES then the returned value's x coordinate may be equal to
-// dataSource.width. If NO, then it will always be less than dataSource.width.
-- (NSPoint)windowLocationToRowCol:(NSPoint)locationInWindow
-         allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
-    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView: nil];
-
-    VT100GridCoord coord = [self coordForPoint:locationInTextView allowRightMarginOverflow:allowRightMarginOverflow];
-    return NSMakePoint(coord.x, coord.y);
-}
-
-- (VT100GridCoord)coordForPoint:(NSPoint)locationInTextView allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
-    int x, y;
-    int width = [_dataSource width];
-
-    x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] + _charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / _charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    y = locationInTextView.y / _lineHeight;
-
-    int limit;
-    if (allowRightMarginOverflow) {
-        limit = width;
-    } else {
-        limit = width - 1;
-    }
-    x = MIN(x, limit);
-    y = MIN(y, [_dataSource numberOfLines] - 1);
-
-    return VT100GridCoordMake(x, y);
-}
-
-- (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
-    NSPoint locationInWindow = [event locationInWindow];
-    return [self windowLocationToRowCol:locationInWindow
-               allowRightMarginOverflow:allowRightMarginOverflow];
-}
-
 - (void)mouseDown:(NSEvent *)event {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
@@ -2412,85 +2337,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self pasteSelection:nil];
 }
 
-- (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {
-    // Command click in place.
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
-
-    URLAction *action = [self urlActionForClickAtX:x y:y];
-    DLog(@"openTargetWithEvent has action=%@", action);
-    if (action) {
-        switch (action.actionType) {
-            case kURLActionOpenExistingFile: {
-                NSString *extendedPrefix = [extractor wrappedStringAt:coord
-                                                              forward:NO
-                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
-                NSString *extendedSuffix = [extractor wrappedStringAt:coord
-                                                              forward:YES
-                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
-                if (![self openSemanticHistoryPath:action.fullPath
-                                     orRawFilename:action.rawFilename
-                                  workingDirectory:action.workingDirectory
-                                        lineNumber:action.lineNumber
-                                      columnNumber:action.columnNumber
-                                            prefix:extendedPrefix
-                                            suffix:extendedSuffix]) {
-                    [self findUrlInString:action.string andOpenInBackground:openInBackground];
-                }
-                break;
-            }
-            case kURLActionOpenURL: {
-                NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                if ([url.scheme isEqualToString:@"file"] &&
-                    url.host.length > 0 &&
-                    ![url.host isEqualToString:[[iTermLocalHostNameGuesser sharedInstance] name]]) {
-                    SCPPath *path = [[[SCPPath alloc] init] autorelease];
-                    path.path = url.path;
-                    path.hostname = url.host;
-                    path.username = [PTYTextView usernameToDownloadFileOnHost:url.host];
-                    if (path.username == nil) {
-                        return;
-                    }
-                    [self downloadFileAtSecureCopyPath:path
-                                           displayName:url.path.lastPathComponent
-                                        locationInView:action.range.coordRange];
-                } else {
-                    [self openURL:url inBackground:openInBackground];
-                }
-                break;
-            }
-
-            case kURLActionSmartSelectionAction: {
-                DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
-                [self performSelector:action.selector withObject:action];
-                break;
-            }
-
-            case kURLActionOpenImage:
-                DLog(@"Open image");
-                [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
-                break;
-
-            case kURLActionSecureCopyFile:
-                DLog(@"Secure copy file.");
-                [self downloadFileAtSecureCopyPath:action.identifier
-                                       displayName:action.string
-                                    locationInView:action.range.coordRange];
-                break;
-        }
-    }
-}
 
 - (BOOL)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
@@ -2532,11 +2378,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
-    [self _openTargetWithEvent:event inBackground:NO];
+    [self openTargetWithEvent:event inBackground:NO];
 }
 
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
-    [self _openTargetWithEvent:event inBackground:YES];
+    [self openTargetWithEvent:event inBackground:YES];
 }
 
 - (void)smartSelectWithEvent:(NSEvent *)event {
@@ -3277,34 +3123,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:range];
 }
 
-- (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
-                         displayName:(NSString *)name
-                      locationInView:(VT100GridCoordRange)range {
-    [_delegate startDownloadOverSCP:scpPath];
-
-    NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: [self selectedTextColor],
-           NSBackgroundColorAttributeName: [self selectionBackgroundColor],
-           NSFontAttributeName: _primaryFont.font };
-    NSSize size = [name sizeWithAttributes:attributes];
-    size.height = _lineHeight;
-    NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
-    [image lockFocus];
-    [name drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
-    [image unlockFocus];
-
-    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
-                                                     range.start.y * _lineHeight,
-                                                     0,
-                                                     0)
-                                   toView:nil];
-    NSPoint point = [[self window] convertRectToScreen:windowRect].origin;
-    point.y -= _lineHeight;
-    [[FileTransferManager sharedInstance] animateImage:image
-                            intoDownloadsMenuFromPoint:point
-                                              onScreen:[[self window] screen]];
-}
-
 - (void)showNotes:(id)sender
 {
     for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
@@ -3710,17 +3528,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [_selection hasSelection] && [_selection length] <= width;
 }
 
-- (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary {
-    // The selector's name must begin with contextMenuAction to
-    // pass validateMenuItem.
-    return @{ @(kOpenFileContextMenuAction): NSStringFromSelector(@selector(contextMenuActionOpenFile:)),
-              @(kOpenUrlContextMenuAction): NSStringFromSelector(@selector(contextMenuActionOpenURL:)),
-              @(kRunCommandContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommand:)),
-              @(kRunCoprocessContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCoprocess:)),
-              @(kSendTextContextMenuAction): NSStringFromSelector(@selector(contextMenuActionSendText:)),
-              @(kRunCommandInWindowContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommandInWindow:)) };
-}
-
 - (SEL)selectorForSmartSelectionAction:(NSDictionary *)action {
     NSDictionary<NSNumber *, NSString *> *dictionary = [self smartSelectionActionSelectorDictionary];
     ContextMenuActions contextMenuAction = [ContextMenuActionPrefsController actionForActionDict:action];
@@ -3779,59 +3586,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     return didAdd;
-}
-
-- (void)contextMenuActionOpenFile:(id)sender
-{
-    DLog(@"Open file: '%@'", [sender representedObject]);
-    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
-}
-
-- (void)contextMenuActionOpenURL:(id)sender
-{
-    NSURL *url = [NSURL URLWithUserSuppliedString:[sender representedObject]];
-    if (url) {
-        DLog(@"Open URL: %@", [sender representedObject]);
-        [[NSWorkspace sharedWorkspace] openURL:url];
-    } else {
-        DLog(@"%@ is not a URL", [sender representedObject]);
-    }
-}
-
-- (void)contextMenuActionRunCommand:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command: %@", command);
-    [NSThread detachNewThreadSelector:@selector(runCommand:)
-                             toTarget:[self class]
-                           withObject:command];
-}
-
-- (void)contextMenuActionRunCommandInWindow:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command in window: %@", command);
-    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command];
-}
-
-+ (void)runCommand:(NSString *)command
-{
-
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    system([command UTF8String]);
-    [pool drain];
-}
-
-- (void)contextMenuActionRunCoprocess:(id)sender
-{
-    NSString *command = [sender representedObject];
-    DLog(@"Run coprocess: %@", command);
-    [_delegate launchCoprocessWithCommand:command];
-}
-
-- (void)contextMenuActionSendText:(id)sender
-{
-    NSString *command = [sender representedObject];
-    DLog(@"Send text: %@", command);
-    [_delegate insertText:command];
 }
 
 // This method is called by control-click or by clicking the hamburger icon in the session title bar.
@@ -4465,21 +4219,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // and ensure they keep getting redrawn on a fast cadence.
             [self setNeedsDisplay:YES];
         }
-    }
-}
-
-- (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord {
-    if (coord.x < 0 ||
-        coord.y < 0 ||
-        coord.x >= [_dataSource width] ||
-        coord.y >= [_dataSource numberOfLines]) {
-        return nil;
-    }
-    screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
-    if (theLine && theLine[coord.x].image) {
-        return GetImageInfo(theLine[coord.x].code);
-    } else {
-        return nil;
     }
 }
 
@@ -6037,51 +5776,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 
-- (void)urlActionForClickAtX:(int)x
-                           y:(int)y
-      respectingHardNewlines:(BOOL)respectHardNewlines
-                  completion:(void (^)(URLAction *))completion {
-    DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
-         @(x), @(y), @(respectHardNewlines));
-    if (y < 0) {
-        completion(nil);
-        return;
-    }
-    const VT100GridCoord coord = VT100GridCoordMake(x, y);
-    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
-    if (imageInfo) {
-        completion([URLAction urlActionToOpenImage:imageInfo]);
-        return;
-    }
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    if ([extractor characterAt:coord].code == 0) {
-        completion(nil);
-        return;
-    }
-    [extractor restrictToLogicalWindowIncludingCoord:coord];
-
-    NSString *workingDirectory = [_dataSource workingDirectoryOnLine:y];
-    DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
-    if (!workingDirectory) {
-        // Well, just try the current directory then.
-        DLog(@"That failed, so try to get the current working directory...");
-        workingDirectory = [_delegate textViewCurrentWorkingDirectory];
-        DLog(@"It is %@", workingDirectory);
-    }
-
-    [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
-                        respectHardNewlines:respectHardNewlines
-                           workingDirectory:workingDirectory ?: @""
-                                 remoteHost:[_dataSource remoteHostOnLine:y]
-                                  selectors:[self smartSelectionActionSelectorDictionary]
-                                      rules:_smartSelectionRules
-                                  extractor:extractor
-                  semanticHistoryController:self.semanticHistoryController
-                                pathFactory:^SCPPath *(NSString *path, int line) {
-                                    return [_dataSource scpPathForFile:path onLine:line];
-                                }
-                                 completion:completion];
-}
 
 - (void)imageDidLoad:(NSNotification *)notification {
     if ([self missingImageIsVisible:notification.object]) {
@@ -6112,26 +5806,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     return NO;
-}
-
-- (URLAction *)urlActionForClickAtX:(int)x y:(int)y {
-    // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
-    // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    __block URLAction *action = nil;
-    [self urlActionForClickAtX:x
-                             y:y
-        respectingHardNewlines:![self ignoreHardNewlinesInURLs]
-                    completion:^(URLAction *result) {
-                        action = [result retain];
-                    }];
-    return [action autorelease];
-}
-
-- (BOOL)ignoreHardNewlinesInURLs {
-    if ([iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]) {
-        return YES;
-    }
-    return [self.delegate textViewInInteractiveApplication];
 }
 
 - (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender {
@@ -6193,62 +5867,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Not allowing drag");
         return NSDragOperationNone;
     }
-}
-
-+ (NSString *)usernameToDownloadFileOnHost:(NSString *)host {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = [NSString stringWithFormat:@"Enter username for host %@ to download file with scp", host];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
-
-    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
-    [input setStringValue:NSUserName()];
-    [alert setAccessoryView:input];
-    [alert layout];
-    [[alert window] makeFirstResponder:input];
-    NSInteger button = [alert runModal];
-    if (button == NSAlertFirstButtonReturn) {
-        [input validateEditing];
-        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    }
-    return nil;
-}
-
-// If iTerm2 is the handler for the scheme, then the profile is launched directly.
-// Otherwise it's passed to the OS to launch.
-- (void)openURL:(NSURL *)url inBackground:(BOOL)background {
-    DLog(@"openURL:%@ inBackground:%@", url, @(background));
-
-    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
-    if (profile) {
-        [_delegate launchProfileInCurrentTerminal:profile withURL:url.absoluteString];
-    } else if (background) {
-        [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
-                                           withAppBundleIdentifier:nil
-                                           options:NSWorkspaceLaunchWithoutActivation
-                                           additionalEventParamDescriptor:nil
-                                           launchIdentifiers:nil];
-    } else {
-        [[NSWorkspace sharedWorkspace] openURL:url];
-    }
-}
-
-- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
-    DLog(@"findUrlInString:%@", aURLString);
-    NSRange range = [aURLString rangeOfURLInString];
-    if (range.location == NSNotFound) {
-        DLog(@"No URL found");
-        return;
-    }
-    NSString *trimmedURLString = [aURLString substringWithRange:range];
-    if (!trimmedURLString) {
-        DLog(@"string is empty");
-        return;
-    }
-    NSString* escapedString = [trimmedURLString stringByEscapingForURL];
-
-    NSURL *url = [NSURL URLWithString:escapedString];
-    [self openURL:url inBackground:background];
 }
 
 - (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
