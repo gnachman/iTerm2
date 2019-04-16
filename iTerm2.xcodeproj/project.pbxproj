@@ -1336,6 +1336,8 @@
 		53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
+		53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */; };
+		53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */; };
 		53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */; };
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
 		53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */; };
@@ -4307,6 +4309,8 @@
 		53BBA0F3214205200074D061 /* NSAlert+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAlert+iTerm.h"; sourceTree = "<group>"; };
 		53BBA0F4214205200074D061 /* NSAlert+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+iTerm.m"; sourceTree = "<group>"; };
 		53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_poll.sh; path = sources/iterm2_git_poll.sh; sourceTree = "<group>"; };
+		53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCachingFileManager.h; sourceTree = "<group>"; };
+		53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCachingFileManager.m; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
 		53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMigrationHelper.m; sourceTree = "<group>"; };
 		53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSUserDefaults+iTerm.h"; sourceTree = "<group>"; };
@@ -8381,6 +8385,8 @@
 				5300984F2259A44D00A69348 /* iTermSoundPlayer.m */,
 				A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */,
 				A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */,
+				53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */,
+				53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9862,6 +9868,7 @@
 				A667192E1DCE36C3000CE608 /* PSMLightHighContrastTabStyle.h in Headers */,
 				A6EC47CD21ED96F2000E1321 /* iTermLaunchExperienceController.h in Headers */,
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
+				53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */,
 				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
 				535EA4FC20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.h in Headers */,
@@ -12424,6 +12431,7 @@
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
+				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
 				A695CA80213DAA8500486440 /* iTermLocalHostNameGuesser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

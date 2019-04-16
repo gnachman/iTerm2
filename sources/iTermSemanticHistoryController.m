@@ -26,6 +26,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCachingFileManager.h"
 #import "iTermLaunchServices.h"
 #import "iTermPathCleaner.h"
 #import "iTermPathFinder.h"
@@ -122,10 +123,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     NSOperatingSystemVersion version = [[NSProcessInfo processInfo] operatingSystemVersion];
     NSMutableArray<NSString *> *bindirs = [NSMutableArray array];
     NSURL *folder = [NSURL fileURLWithPath:[bundle.bundlePath stringByAppendingPathComponent:@"Contents/MacOS"]];
-    for (NSURL *url in [NSFileManager.defaultManager enumeratorAtURL:folder
-                                          includingPropertiesForKeys:nil
-                                                             options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
-                                                        errorHandler:nil]) {
+    for (NSURL *url in [[iTermCachingFileManager cachingFileManager] enumeratorAtURL:folder
+                                                          includingPropertiesForKeys:nil
+                                                                             options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                                        errorHandler:nil]) {
         NSString *file = url.path.lastPathComponent;
         DLog(@"Consider: %@", file);
         if (![file hasPrefix:@"bin-"]) {
@@ -133,7 +134,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             continue;
         }
         BOOL isdir = NO;
-        [[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isdir];
+        [[iTermCachingFileManager cachingFileManager] fileExistsAtPath:url.path isDirectory:&isdir];
         if (!isdir) {
             DLog(@"Reject: not a folder");
             continue;
@@ -563,7 +564,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 }
 
 - (NSFileManager *)fileManager {
-    return [NSFileManager defaultManager];
+    return [iTermCachingFileManager cachingFileManager];
 }
 
 @end
