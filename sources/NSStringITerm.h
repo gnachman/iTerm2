@@ -182,7 +182,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (iTermTuple *)keyValuePair;
 
-- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
 - (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions;
 
 // Returns self repeated |n| times.
@@ -287,8 +286,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // ll                                       YES
 - (void)enumerateSwiftySubstrings:(void (^)(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop))block;
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters;
-- (NSString *)stringByReplacingVariableReferencesWithVariablesFromScope:(iTermVariableScope *)scope
-                                                nonVariableReplacements:(NSDictionary *)nonvars;
 + (NSString *)sparkWithHeight:(double)fraction;
 - (id)it_jsonSafeValue;
 - (NSInteger)it_numberOfLines;
