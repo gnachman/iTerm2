@@ -63,6 +63,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary;
 
+#pragma mark - Underlined Actions
+
+- (void)updateUnderlinedURLs:(NSEvent *)event;
+
 #pragma mark - Context Menu Actions
 
 - (void)contextMenuActionOpenFile:(id)sender;
@@ -72,6 +76,18 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)runCommand:(NSString *)command;
 - (void)contextMenuActionRunCoprocess:(id)sender;
 - (void)contextMenuActionSendText:(id)sender;
+
+#pragma mark - Mouse Cursor
+
+- (void)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
+- (BOOL)setCursor:(NSCursor *)cursor;
+- (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
+
+#pragma mark - Mouse Reporting
+
+- (BOOL)xtermMouseReporting;
+- (BOOL)xtermMouseReportingAllowMouseWheel;
+- (BOOL)terminalWantsMouseReports;
 
 @end
 

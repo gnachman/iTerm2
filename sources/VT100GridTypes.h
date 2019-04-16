@@ -58,6 +58,8 @@ typedef struct {
     VT100GridRange columnWindow;
 } VT100GridAbsWindowedRange;
 
+extern const VT100GridCoord VT100GridCoordInvalid;
+
 @interface NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord;
@@ -382,6 +384,16 @@ NS_INLINE long long VT100GridCoordDistance(VT100GridCoord a, VT100GridCoord b, i
     bPos += b.x;
 
     return llabs(aPos - bPos);
+}
+
+NS_INLINE BOOL VT100GridWindowedRangeContainsCoord(VT100GridWindowedRange range,
+                                                   VT100GridCoord coord) {
+    if (range.columnWindow.location < 0 && range.columnWindow.length < 0) {
+        return VT100GridCoordRangeContainsCoord(range.coordRange, coord);
+    }
+    return (coord.x >= range.columnWindow.location &&
+            coord.x < range.columnWindow.location + range.columnWindow.length &&
+            VT100GridCoordRangeContainsCoord(range.coordRange, coord));
 }
 
 NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, int gridWidth) {

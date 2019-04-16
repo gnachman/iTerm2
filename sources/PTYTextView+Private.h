@@ -21,18 +21,19 @@
 #import "iTermSelectionScrollHelper.h"
 
 @interface PTYTextView () <
-    iTermAltScreenMouseScrollInferrerDelegate,
-    iTermBadgeLabelDelegate,
-    iTermTextViewAccessibilityHelperDelegate,
-    iTermFindCursorViewDelegate,
-    iTermFindOnPageHelperDelegate,
-    iTermKeyboardHandlerDelegate,
-    iTermSelectionDelegate,
-    iTermSelectionScrollHelperDelegate,
-    NSDraggingSource,
-    NSMenuDelegate,
-    NSPopoverDelegate> {
-        NSInteger _openTargetGeneration;
+iTermAltScreenMouseScrollInferrerDelegate,
+iTermBadgeLabelDelegate,
+iTermTextViewAccessibilityHelperDelegate,
+iTermFindCursorViewDelegate,
+iTermFindOnPageHelperDelegate,
+iTermKeyboardHandlerDelegate,
+iTermSelectionDelegate,
+iTermSelectionScrollHelperDelegate,
+NSDraggingSource,
+NSMenuDelegate,
+NSPopoverDelegate> {
+    NSInteger _openTargetGeneration;
+    NSCursor *cursor_;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

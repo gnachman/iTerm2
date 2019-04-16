@@ -14,6 +14,8 @@
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
 #import "iTermLocalHostNameGuesser.h"
+#import "iTermMouseCursor.h"
+#import "iTermPreferences.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "NSObject+iTerm.h"
@@ -21,6 +23,11 @@
 #import "PTYTextView+Private.h"
 #import "SCPPath.h"
 #import "URLAction.h"
+#import "VT100Terminal.h"
+
+static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
+static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
+static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
 
 @implementation PTYTextView (ARC)
 
@@ -360,6 +367,81 @@
     }
 }
 
+#pragma mark - Underlined Actions
+
+// Returns VT100GridCoordInvalid if event not on any cell
+- (VT100GridCoord)coordForEvent:(NSEvent *)event {
+    const NSPoint screenPoint = [NSEvent mouseLocation];
+    return [self coordForMouseLocation:screenPoint];
+}
+
+- (VT100GridCoord)coordForMouseLocation:(NSPoint)screenPoint {
+    const NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
+                                                                              screenPoint.y,
+                                                                              0,
+                                                                              0)];
+    const NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
+    if (!NSPointInRect(locationInTextView, [self bounds])) {
+        return VT100GridCoordInvalid;
+    }
+
+    NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
+    return VT100GridCoordMake(viewPoint.x, viewPoint.y);
+}
+
+// Update range of underlined chars indicating cmd-clickable url.
+- (void)updateUnderlinedURLs:(NSEvent *)event {
+    const BOOL commandPressed = ([event modifierFlags] & NSEventModifierFlagCommand) != 0;
+    if (commandPressed) {
+        NSLog(@"Command pressed");
+    }
+    const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
+                                         [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
+    const VT100GridCoord coord = [self coordForEvent:event];
+
+    if (!commandPressed ||
+        !semanticHistoryAllowed ||
+        VT100GridCoordEquals(coord, VT100GridCoordInvalid) ||
+        ![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] ||
+        coord.y < 0) {
+        [self removeUnderline];
+        [self updateCursor:event action:nil];
+        [self setNeedsDisplay:YES];
+        return;
+    }
+
+    __weak __typeof(self) weakSelf = self;
+    [self urlActionForClickAtX:coord.x
+                             y:coord.y
+        respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                    completion:^(URLAction *result) {
+                        [weakSelf finishUpdatingUnderlinesWithAction:result
+                                                               event:event];
+                    }];
+}
+
+- (void)finishUpdatingUnderlinesWithAction:(URLAction *)action
+                                     event:(NSEvent *)event {
+    if (!action) {
+        [self removeUnderline];
+        [self updateCursor:event action:action];
+        return;
+    }
+
+    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(action.range, coord)) {
+        return;
+    }
+
+    if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
+        self.drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range,
+                                                                                   [self.dataSource totalScrollbackOverflow]);
+    }
+
+    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    [self updateCursor:event action:action];
+}
+
 #pragma mark - Smart Selection
 
 - (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary {
@@ -422,5 +504,70 @@
     [self.delegate insertText:command];
 }
 
+#pragma mark - Mouse Cursor
+
+- (void)updateCursor:(NSEvent *)event action:(URLAction *)action {
+    NSString *hover = nil;
+    BOOL changed = NO;
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        changed = [self setCursor:[NSCursor openHandCursor]];
+    } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
+        changed = [self setCursor:[NSCursor crosshairCursor]];
+    } else if (action &&
+               ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
+        changed = [self setCursor:[NSCursor pointingHandCursor]];
+        if (action.hover && action.string.length) {
+            hover = action.string;
+        }
+    } else if ([self mouseIsOverImageInEvent:event]) {
+        changed = [self setCursor:[NSCursor arrowCursor]];
+    } else if ([self xtermMouseReporting] &&
+               [self terminalWantsMouseReports]) {
+        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
+    } else {
+        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
+    }
+    if (changed) {
+        [self.enclosingScrollView setDocumentCursor:cursor_];
+    }
+    [self.delegate textViewShowHoverURL:hover];
+}
+
+- (BOOL)setCursor:(NSCursor *)cursor {
+    if (cursor == cursor_) {
+        return NO;
+    }
+    cursor_ = cursor;
+    return YES;
+}
+
+- (BOOL)mouseIsOverImageInEvent:(NSEvent *)event {
+    NSPoint point = [self clickPoint:event allowRightMarginOverflow:NO];
+    return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
+}
+
+#pragma mark - Mouse Reporting
+
+// WARNING: This indicates if mouse reporting is a possibility. -terminalWantsMouseReports indicates
+// if the reporting mode would cause any action to be taken if this returns YES. They should be used
+// in conjunction most of the time.
+- (BOOL)xtermMouseReporting {
+    NSEvent *event = [NSApp currentEvent];
+    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
+            !([event modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
+}
+
+- (BOOL)xtermMouseReportingAllowMouseWheel {
+    return [[self delegate] xtermMouseReportingAllowMouseWheel];
+}
+
+// If mouse reports are sent to the delegate, will it use them? Use with -xtermMouseReporting, which
+// understands Option to turn off reporting.
+- (BOOL)terminalWantsMouseReports {
+    MouseMode mouseMode = [[self.dataSource terminal] mouseMode];
+    return ([self.delegate xtermMouseReporting] &&
+            mouseMode != MOUSE_REPORTING_NONE &&
+            mouseMode != MOUSE_REPORTING_HIGHLIGHT);
+}
 
 @end

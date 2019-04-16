@@ -166,7 +166,6 @@ static const int kDragThreshold = 3;
     BOOL _mouseDownIsThreeFingerClick;
 
     PointerController *pointer_;
-    NSCursor *cursor_;
 
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
@@ -1324,28 +1323,6 @@ static const int kDragThreshold = 3;
     return _keyboardHandler.keyIsARepeat;
 }
 
-// WARNING: This indicates if mouse reporting is a possibility. -terminalWantsMouseReports indicates
-// if the reporting mode would cause any action to be taken if this returns YES. They should be used
-// in conjunction most of the time.
-- (BOOL)xtermMouseReporting {
-    NSEvent *event = [NSApp currentEvent];
-    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
-}
-
-- (BOOL)xtermMouseReportingAllowMouseWheel {
-    return [[self delegate] xtermMouseReportingAllowMouseWheel];
-}
-
-// If mouse reports are sent to the delegate, will it use them? Use with -xtermMouseReporting, which
-// understands Option to turn off reporting.
-- (BOOL)terminalWantsMouseReports {
-    MouseMode mouseMode = [[_dataSource terminal] mouseMode];
-    return ([_delegate xtermMouseReporting] &&
-            mouseMode != MOUSE_REPORTING_NONE &&
-            mouseMode != MOUSE_REPORTING_HIGHLIGHT);
-}
-
 // TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown:(NSEvent *)event {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
@@ -1354,6 +1331,10 @@ static const int kDragThreshold = 3;
     [pointer_ mouseDown:event
             withTouches:_numTouches
            ignoreOption:[self terminalWantsMouseReports]];
+}
+
+- (void)updateCursor:(NSEvent *)event {
+    [self updateCursor:event action:nil];
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -1510,51 +1491,6 @@ static const int kDragThreshold = 3;
     }
 }
 
-- (BOOL)setCursor:(NSCursor *)cursor {
-    if (cursor == cursor_) {
-        return NO;
-    }
-    [cursor_ autorelease];
-    cursor_ = [cursor retain];
-    return YES;
-}
-
-- (BOOL)mouseIsOverImageInEvent:(NSEvent *)event {
-    NSPoint point = [self clickPoint:event allowRightMarginOverflow:NO];
-    return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
-}
-
-- (void)updateCursor:(NSEvent *)event {
-    [self updateCursor:event action:nil];
-}
-
-- (void)updateCursor:(NSEvent *)event action:(URLAction *)action {
-    NSString *hover = nil;
-    BOOL changed = NO;
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        changed = [self setCursor:[NSCursor openHandCursor]];
-    } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
-        changed = [self setCursor:[NSCursor crosshairCursor]];
-    } else if (action &&
-               ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
-        changed = [self setCursor:[NSCursor pointingHandCursor]];
-        if (action.hover && action.string.length) {
-            hover = action.string;
-        }
-    } else if ([self mouseIsOverImageInEvent:event]) {
-        changed = [self setCursor:[NSCursor arrowCursor]];
-    } else if ([self xtermMouseReporting] &&
-               [self terminalWantsMouseReports]) {
-        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
-    } else {
-        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
-    }
-    if (changed) {
-        [self.enclosingScrollView setDocumentCursor:cursor_];
-    }
-    [_delegate textViewShowHoverURL:hover];
-}
-
 - (BOOL)hasUnderline {
     return _drawingHelper.underlinedRange.coordRange.start.x >= 0;
 }
@@ -1569,63 +1505,8 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
 }
 
-// Update range of underlined chars indicating cmd-clickable url.
-- (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
-    __block URLAction *action = nil;
-    if (([event modifierFlags] & NSEventModifierFlagCommand) && (self.window.isKeyWindow ||
-                                                       [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
-        NSPoint screenPoint = [NSEvent mouseLocation];
-        NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
-                                                                            screenPoint.y,
-                                                                            0,
-                                                                            0)];
-        NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
-        if (!NSPointInRect(locationInTextView, [self bounds])) {
-            [self removeUnderline];
-            return action;
-        }
-        NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
-        int x = viewPoint.x;
-        int y = viewPoint.y;
-        if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
-            [self removeUnderline];
-            return action;
-        } else {
-            [self urlActionForClickAtX:x
-                                     y:y
-                respectingHardNewlines:![self ignoreHardNewlinesInURLs]
-                            completion:^(URLAction *result) {
-                                action = [result retain];
-                            }];
-            [action autorelease];
-            if (action) {
-                if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
-                    _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
-                }
-
-                if (action.actionType == kURLActionOpenURL) {
-                    NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                    if (url && url.host) {
-                        [self setNeedsDisplay:YES];
-                    }
-                }
-            } else {
-                [self removeUnderline];
-                return action;
-            }
-        }
-    } else {
-        [self removeUnderline];
-        return action;
-    }
-
-    [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    return action;
-}
-
 - (void)flagsChanged:(NSEvent *)theEvent {
-    URLAction *action = [self updateUnderlinedURLs:theEvent];
-    [self updateCursor:theEvent action:action];
+    [self updateUnderlinedURLs:theEvent];
     NSString *string = [_keyboardHandler.keyMapper keyMapperStringForPreCocoaEvent:theEvent];
     if (string) {
         [_delegate insertText:string];
@@ -1706,7 +1587,7 @@ static const int kDragThreshold = 3;
             [self setNeedsDisplay:YES];
         }
     }
-    [self updateCursor:event action:[self updateUnderlinedURLs:event]];
+    [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
         [[self window] alphaValue] > 0 &&
         ![NSApp modalWindow]) {
@@ -2185,9 +2066,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseMoved:(NSEvent *)event {
     [self resetMouseLocationToRefuseFirstResponderAt];
-    URLAction *action = [self updateUnderlinedURLs:event];
+    [self updateUnderlinedURLs:event];
     [self reportMouseEvent:event];
-    [self updateCursor:event action:action];
 }
 
 - (void)mouseDragged:(NSEvent *)event {

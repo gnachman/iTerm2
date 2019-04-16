@@ -1,5 +1,10 @@
 #import "VT100GridTypes.h"
 
+const VT100GridCoord VT100GridCoordInvalid = {
+    .x = INT_MIN,
+    .y = INT_MIN
+};
+
 VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
                                     int width) {
