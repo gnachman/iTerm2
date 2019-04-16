@@ -31,7 +31,9 @@
     iTermSelectionScrollHelperDelegate,
     NSDraggingSource,
     NSMenuDelegate,
-    NSPopoverDelegate>
+    NSPopoverDelegate> {
+        NSInteger _openTargetGeneration;
+}
 
 @property(nonatomic, strong) iTermSelection *selection;
 @property(nonatomic, strong) iTermSemanticHistoryController *semanticHistoryController;

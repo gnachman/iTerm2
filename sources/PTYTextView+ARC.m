@@ -106,6 +106,14 @@
     return [self.delegate textViewInInteractiveApplication];
 }
 
+- (void)computeURLActionForCoord:(VT100GridCoord)coord
+                      completion:(void (^)(URLAction *))completion {
+    [self urlActionForClickAtX:coord.x
+                             y:coord.y
+        respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                    completion:completion];
+}
+
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
@@ -165,17 +173,35 @@
                                  completion:completion];
 }
 
-
 - (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {
     // Command click in place.
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
+    const VT100GridCoord coord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+    __weak __typeof(self) weakSelf = self;
+    NSInteger generation = ++_openTargetGeneration;
+    DLog(@"Look up URL action for coord %@, generation %@", VT100GridCoordDescription(coord), @(generation));
+    [self computeURLActionForCoord:coord
+                        completion:^(URLAction *action) {
+                            [weakSelf finishOpeningTargetWithEvent:event
+                                                             coord:coord
+                                                      inBackground:openInBackground
+                                                            action:action
+                                                        generation:generation];
+                        }];
+}
 
-    URLAction *action = [self urlActionForClickAtX:x y:y];
-    DLog(@"openTargetWithEvent has action=%@", action);
+- (void)finishOpeningTargetWithEvent:(NSEvent *)event
+                               coord:(VT100GridCoord)coord
+                        inBackground:(BOOL)openInBackground
+                              action:(URLAction *)action
+                          generation:(NSInteger)generation {
+    if (generation != _openTargetGeneration) {
+        DLog(@"Canceled open target for generation %@", @(generation));
+        return;
+    }
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+    DLog(@"openTargetWithEvent generation %@ has action=%@", @(generation), action);
     if (action) {
         switch (action.actionType) {
             case kURLActionOpenExistingFile: {
