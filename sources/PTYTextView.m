@@ -150,9 +150,6 @@ static const int kDragThreshold = 3;
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
-    // Flag to make sure a Semantic History drag check is only one once per drag
-    BOOL _semanticHistoryDragged;
-
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
     NSInteger _firstMouseEventNumber;
@@ -209,7 +206,6 @@ static const int kDragThreshold = 3;
 
     BOOL _haveSeenScrollWheelEvent;
     iTermRateLimitedUpdate *_shadowRateLimit;
-    BOOL _committedToDrag;
 }
 
 
@@ -2156,46 +2152,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if (![_selection hasSelection] && pressingCmdOnly && _semanticHistoryDragged == NO) {
-        DLog(@"do semantic history check");
-        // Only one Semantic History check per drag
-        _semanticHistoryDragged = YES;
-
-        // Drag a file handle (only possible when there is no selection).
-        URLAction *action = [self urlActionForClickAtX:x y:y];
-        NSString *path = action.fullPath;
-        if (path == nil) {
-            DLog(@"path is nil");
-            return;
-        }
-
-        NSPoint dragPosition;
-        NSImage *dragImage;
-
-        dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
-        dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-        dragPosition.x -= [dragImage size].width / 2;
-
-        NSURL *url = [NSURL fileURLWithPath:path];
-
-        NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-        [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
-        NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
-        [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
-                          contents:dragImage];
-        NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
-                                                                           event:event
-                                                                          source:self];
-
-        draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
-        draggingSession.draggingFormation = NSDraggingFormationNone;
-        _committedToDrag = YES;
-
-        // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
-        _semanticHistoryDragged = NO;
-        DLog(@"did semantic history drag");
-
+        [self handleSemanticHistoryItemDragWithEvent:event coord:VT100GridCoordMake(x, y)];
         return;
-
     }
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
@@ -4540,26 +4498,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (filenames.count) {
             BOOL pasteNewline = NO;
 
+            NSMutableString *stringToPaste = [NSMutableString string];
             if (cdToDirectory) {
                 // cmd-drag: "cd" to dragged directory (well, we assume it's a directory).
                 // If multiple files are dragged, balk.
                 if (filenames.count > 1) {
                     return NO;
                 } else {
-                    [_delegate pasteString:@"cd "];
+                    [stringToPaste appendString:@"cd "];
                     pasteNewline = YES;
                 }
             }
 
             // Paste filenames separated by spaces.
-            [_delegate pasteString:[filenames componentsJoinedByString:@" "]];
-
+            [stringToPaste appendString:[filenames componentsJoinedByString:@" "]];
             if (pasteNewline) {
                 // For cmd-drag, we append a newline.
-                [_delegate pasteString:@"\r"];
+                [stringToPaste appendString:@"\r"];
             } else if (!cdToDirectory) {
-                [_delegate pasteString:@" "];
+                [stringToPaste appendString:@" "];
             }
+            [_delegate pasteString:stringToPaste];
+
             return YES;
         }
     }

@@ -34,6 +34,10 @@ NSMenuDelegate,
 NSPopoverDelegate> {
     NSInteger _openTargetGeneration;
     NSCursor *cursor_;
+
+    // Flag to make sure a Semantic History drag check is only one once per drag
+    BOOL _semanticHistoryDragged;
+    BOOL _committedToDrag;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

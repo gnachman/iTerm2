@@ -63,6 +63,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary;
 
+#pragma mark - Semantic History
+
+- (void)handleSemanticHistoryItemDragWithEvent:(NSEvent *)event
+                                         coord:(VT100GridCoord)coord;
+
 #pragma mark - Underlined Actions
 
 - (void)updateUnderlinedURLs:(NSEvent *)event;

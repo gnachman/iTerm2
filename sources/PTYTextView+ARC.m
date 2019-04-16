@@ -87,6 +87,26 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return VT100GridCoordMake(x, y);
 }
 
+// Returns VT100GridCoordInvalid if event not on any cell
+- (VT100GridCoord)coordForEvent:(NSEvent *)event {
+    const NSPoint screenPoint = [NSEvent mouseLocation];
+    return [self coordForMouseLocation:screenPoint];
+}
+
+- (VT100GridCoord)coordForMouseLocation:(NSPoint)screenPoint {
+    const NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
+                                                                              screenPoint.y,
+                                                                              0,
+                                                                              0)];
+    const NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
+    if (!NSPointInRect(locationInTextView, [self bounds])) {
+        return VT100GridCoordInvalid;
+    }
+
+    NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
+    return VT100GridCoordMake(viewPoint.x, viewPoint.y);
+}
+
 #pragma mark - Query Coordinates
 
 - (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord {
@@ -367,34 +387,67 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     }
 }
 
-#pragma mark - Underlined Actions
+#pragma mark - Semantic History
 
-// Returns VT100GridCoordInvalid if event not on any cell
-- (VT100GridCoord)coordForEvent:(NSEvent *)event {
-    const NSPoint screenPoint = [NSEvent mouseLocation];
-    return [self coordForMouseLocation:screenPoint];
+- (void)handleSemanticHistoryItemDragWithEvent:(NSEvent *)event
+                                         coord:(VT100GridCoord)coord {
+    DLog(@"do semantic history check");
+    // Only one Semantic History check per drag
+    _semanticHistoryDragged = YES;
+
+    // Drag a file handle (only possible when there is no selection).
+    [self computeURLActionForCoord:coord completion:^(URLAction *action) {
+        [self finishHandlingSemanticHistoryItemDragWithEvent:event action:action];
+    }];
 }
 
-- (VT100GridCoord)coordForMouseLocation:(NSPoint)screenPoint {
-    const NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
-                                                                              screenPoint.y,
-                                                                              0,
-                                                                              0)];
-    const NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView: nil];
-    if (!NSPointInRect(locationInTextView, [self bounds])) {
-        return VT100GridCoordInvalid;
+- (void)finishHandlingSemanticHistoryItemDragWithEvent:(NSEvent *)event
+                                                action:(URLAction *)action {
+    if (!_semanticHistoryDragged) {
+        return;
+    }
+    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(action.range, coord)) {
+        return;
+    }
+    NSString *path = action.fullPath;
+    if (path == nil) {
+        DLog(@"path is nil");
+        return;
     }
 
-    NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
-    return VT100GridCoordMake(viewPoint.x, viewPoint.y);
+    NSPoint dragPosition;
+    NSImage *dragImage;
+
+    dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
+    dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+    dragPosition.x -= [dragImage size].width / 2;
+
+    NSURL *url = [NSURL fileURLWithPath:path];
+
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
+    NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:pbItem];
+    [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
+                      contents:dragImage];
+    NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
+                                                                       event:event
+                                                                      source:self];
+
+    draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+    draggingSession.draggingFormation = NSDraggingFormationNone;
+    _committedToDrag = YES;
+
+    // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
+    _semanticHistoryDragged = NO;
+    DLog(@"did semantic history drag");
 }
+
+#pragma mark - Underlined Actions
 
 // Update range of underlined chars indicating cmd-clickable url.
 - (void)updateUnderlinedURLs:(NSEvent *)event {
     const BOOL commandPressed = ([event modifierFlags] & NSEventModifierFlagCommand) != 0;
-    if (commandPressed) {
-        NSLog(@"Command pressed");
-    }
     const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
                                          [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
     const VT100GridCoord coord = [self coordForEvent:event];
