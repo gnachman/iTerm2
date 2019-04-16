@@ -1606,7 +1606,7 @@ static const int kDragThreshold = 3;
 
 // Update range of underlined chars indicating cmd-clickable url.
 - (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
-    URLAction *action = nil;
+    __block URLAction *action = nil;
     if (([event modifierFlags] & NSEventModifierFlagCommand) && (self.window.isKeyWindow ||
                                                        [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
         NSPoint screenPoint = [NSEvent mouseLocation];
@@ -1626,9 +1626,13 @@ static const int kDragThreshold = 3;
             [self removeUnderline];
             return action;
         } else {
-            action = [self urlActionForClickAtX:x
-                                              y:y
-                         respectingHardNewlines:![self ignoreHardNewlinesInURLs]];
+            [self urlActionForClickAtX:x
+                                     y:y
+                respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                            completion:^(URLAction *result) {
+                                action = [result retain];
+                            }];
+            [action autorelease];
             if (action) {
                 if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
                     _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
@@ -6033,22 +6037,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 
-- (URLAction *)urlActionForClickAtX:(int)x
-                                  y:(int)y
-             respectingHardNewlines:(BOOL)respectHardNewlines {
+- (void)urlActionForClickAtX:(int)x
+                           y:(int)y
+      respectingHardNewlines:(BOOL)respectHardNewlines
+                  completion:(void (^)(URLAction *))completion {
     DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
          @(x), @(y), @(respectHardNewlines));
     if (y < 0) {
-        return nil;
+        completion(nil);
+        return;
     }
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
-        return [URLAction urlActionToOpenImage:imageInfo];
+        completion([URLAction urlActionToOpenImage:imageInfo]);
+        return;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     if ([extractor characterAt:coord].code == 0) {
-        return nil;
+        completion(nil);
+        return;
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
 
@@ -6061,7 +6069,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"It is %@", workingDirectory);
     }
 
-    __block URLAction *result = nil;
     [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
                         respectHardNewlines:respectHardNewlines
                            workingDirectory:workingDirectory ?: @""
@@ -6073,10 +6080,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                 pathFactory:^SCPPath *(NSString *path, int line) {
                                     return [_dataSource scpPathForFile:path onLine:line];
                                 }
-                                 completion:^(URLAction *action) {
-                                     result = [action retain];
-                                 }];
-    return [result autorelease];
+                                 completion:completion];
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {
@@ -6113,9 +6117,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    return [self urlActionForClickAtX:x
-                                    y:y
-               respectingHardNewlines:![self ignoreHardNewlinesInURLs]];
+    __block URLAction *action = nil;
+    [self urlActionForClickAtX:x
+                             y:y
+        respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                    completion:^(URLAction *result) {
+                        action = [result retain];
+                    }];
+    return [action autorelease];
 }
 
 - (BOOL)ignoreHardNewlinesInURLs {
