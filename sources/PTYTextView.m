@@ -6061,17 +6061,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"It is %@", workingDirectory);
     }
 
-    return [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
-                               respectHardNewlines:respectHardNewlines
-                                  workingDirectory:workingDirectory ?: @""
-                                        remoteHost:[_dataSource remoteHostOnLine:y]
-                                         selectors:[self smartSelectionActionSelectorDictionary]
-                                             rules:_smartSelectionRules
-                                         extractor:extractor
-                         semanticHistoryController:self.semanticHistoryController
-                                       pathFactory:^SCPPath *(NSString *path, int line) {
-                                           return [_dataSource scpPathForFile:path onLine:line];
-                                       }];
+    __block URLAction *result = nil;
+    [iTermURLActionFactory urlActionAtCoord:VT100GridCoordMake(x, y)
+                        respectHardNewlines:respectHardNewlines
+                           workingDirectory:workingDirectory ?: @""
+                                 remoteHost:[_dataSource remoteHostOnLine:y]
+                                  selectors:[self smartSelectionActionSelectorDictionary]
+                                      rules:_smartSelectionRules
+                                  extractor:extractor
+                  semanticHistoryController:self.semanticHistoryController
+                                pathFactory:^SCPPath *(NSString *path, int line) {
+                                    return [_dataSource scpPathForFile:path onLine:line];
+                                }
+                                 completion:^(URLAction *action) {
+                                     result = [action retain];
+                                 }];
+    return [result autorelease];
 }
 
 - (void)imageDidLoad:(NSNotification *)notification {

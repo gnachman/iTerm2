@@ -23,99 +23,221 @@
 #import "URLAction.h"
 #import "VT100RemoteHost.h"
 
-@implementation iTermURLActionFactory
+typedef enum {
+    iTermURLActionFactoryPhaseHypertextLink,
+    iTermURLActionFactoryPhaseExistingFile,
+    iTermURLActionFactoryPhaseSmartSelectionAction,
+    iTermURLActionFactoryPhaseAnyStringSemanticHistory,
+    iTermURLActionFactoryPhaseURLLike,
+    iTermURLActionFactoryPhaseSecureCopy,
+    iTermURLActionFactoryPhaseFailed
+} iTermURLActionFactoryPhase;
 
-+ (URLAction *)urlActionAtCoord:(VT100GridCoord)coord
-            respectHardNewlines:(BOOL)respectHardNewlines
-               workingDirectory:(NSString *)workingDirectory
-                     remoteHost:(VT100RemoteHost *)remoteHost
-                      selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
-                          rules:(NSArray *)rules
-                      extractor:(iTermTextExtractor *)extractor
-      semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
-                    pathFactory:(SCPPath *(^)(NSString *, int))pathFactory {
+@interface iTermURLActionFactory()
+@property (nonatomic) VT100GridCoord coord;
+@property (nonatomic) BOOL respectHardNewlines;
+@property (nonatomic, copy) NSString *workingDirectory;
+@property (nonatomic, strong) VT100RemoteHost *remoteHost;
+@property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *selectors;
+@property (nonatomic, copy) NSArray *rules;
+@property (nonatomic, strong) iTermTextExtractor *extractor;
+@property (nonatomic, strong) iTermSemanticHistoryController *semanticHistoryController;
+@property (nonatomic, copy) SCPPath *(^pathFactory)(NSString *, int);
+@property (nonatomic, copy) void (^completion)(URLAction *);
+@property (nonatomic) iTermURLActionFactoryPhase phase;
+
+@property (nonatomic, strong) NSMutableIndexSet *continuationCharsCoords;
+@property (nonatomic, strong) NSMutableArray *prefixCoords;
+@property (nonatomic, strong) NSString *prefix;
+@property (nonatomic, strong) NSMutableArray *suffixCoords;
+@property (nonatomic, strong) NSString *suffix;
+@end
+
+static NSMutableArray<iTermURLActionFactory *> *sFactories;
+
+@implementation iTermURLActionFactory {
+    BOOL _finished;
+}
+
++ (void)urlActionAtCoord:(VT100GridCoord)coord
+     respectHardNewlines:(BOOL)respectHardNewlines
+        workingDirectory:(NSString *)workingDirectory
+              remoteHost:(VT100RemoteHost *)remoteHost
+               selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
+                   rules:(NSArray *)rules
+               extractor:(iTermTextExtractor *)extractor
+semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+             pathFactory:(SCPPath *(^)(NSString *, int))pathFactory
+              completion:(void (^)(URLAction *))completion {
+    iTermURLActionFactory *factory = [[iTermURLActionFactory alloc] init];
+    factory.coord = coord;
+    factory.respectHardNewlines = respectHardNewlines;
+    factory.workingDirectory = workingDirectory;
+    factory.remoteHost = remoteHost;
+    factory.selectors = selectors;
+    factory.rules = rules;
+    factory.extractor = extractor;
+    factory.semanticHistoryController = semanticHistoryController;
+    factory.pathFactory = pathFactory;
+    factory.completion = completion;
+    factory.phase = iTermURLActionFactoryPhaseHypertextLink;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sFactories = [NSMutableArray array];
+    });
+
+    [sFactories addObject:factory];
+    [factory tryCurrentPhase];
+}
+
+// This is always eventually callsed.
+- (void)completeWithAction:(URLAction *)action {
+    _finished = YES;
+    self.completion(action);
+    [sFactories removeObject:self];
+}
+
+- (void)fail {
+    self.phase = self.phase + 1;
+    [self tryCurrentPhase];
+}
+
+- (void)tryCurrentPhase {
+    switch (self.phase) {
+        case iTermURLActionFactoryPhaseHypertextLink:
+            [self tryHypertextLink];
+            break;
+        case iTermURLActionFactoryPhaseExistingFile:
+            [self tryExistingFile];
+            break;
+        case iTermURLActionFactoryPhaseSmartSelectionAction:
+            [self trySmartSelectionAction];
+            break;
+        case iTermURLActionFactoryPhaseAnyStringSemanticHistory:
+            [self tryAnyStringSemanticHistory];
+            break;
+        case iTermURLActionFactoryPhaseURLLike:
+            [self tryURLLike];
+            break;
+        case iTermURLActionFactoryPhaseSecureCopy:
+            [self trySecureCopy];
+            break;
+        case iTermURLActionFactoryPhaseFailed:
+            [self completeWithAction:nil];
+            break;
+    }
+}
+
+- (void)tryHypertextLink {
     URLAction *action;
-    action = [self urlActionForHypertextLinkAt:coord extractor:extractor];
+    action = [self urlActionForHypertextLinkAt:self.coord
+                                     extractor:self.extractor];
     if (action) {
-        return action;
+        [self completeWithAction:action];
+    } else {
+        [self fail];
     }
+}
 
-    NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
-    NSMutableArray *prefixCoords = [NSMutableArray array];
-    NSString *prefix = [extractor wrappedStringAt:coord
+- (void)tryExistingFile {
+    self.continuationCharsCoords = [NSMutableIndexSet indexSet];
+    self.prefixCoords = [NSMutableArray array];
+    self.prefix = [self.extractor wrappedStringAt:self.coord
                                           forward:NO
-                              respectHardNewlines:respectHardNewlines
+                              respectHardNewlines:self.respectHardNewlines
                                          maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                continuationChars:continuationCharsCoords
+                                continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
-                                           coords:prefixCoords];
+                                           coords:self.prefixCoords];
 
-    NSMutableArray *suffixCoords = [NSMutableArray array];
-    NSString *suffix = [extractor wrappedStringAt:coord
+    self.suffixCoords = [NSMutableArray array];
+    self.suffix = [self.extractor wrappedStringAt:self.coord
                                           forward:YES
-                              respectHardNewlines:respectHardNewlines
+                              respectHardNewlines:self.respectHardNewlines
                                          maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                continuationChars:continuationCharsCoords
+                                continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
-                                           coords:suffixCoords];
+                                           coords:self.suffixCoords];
 
-    action = [self urlActionForExistingFileAt:coord
-                                       prefix:prefix
-                                 prefixCoords:prefixCoords
-                                       suffix:suffix
-                                 suffixCoords:suffixCoords
-                             workingDirectory:workingDirectory
-                                    extractor:extractor
-                    semanticHistoryController:semanticHistoryController];
+    URLAction *action = [self urlActionForExistingFileAt:self.coord
+                                                  prefix:self.prefix
+                                            prefixCoords:self.prefixCoords
+                                                  suffix:self.suffix
+                                            suffixCoords:self.suffixCoords
+                                        workingDirectory:self.workingDirectory
+                                               extractor:self.extractor
+                               semanticHistoryController:self.semanticHistoryController];
     if (action) {
-        return action;
+        [self completeWithAction:action];
+    } else {
+        [self fail];
     }
+}
 
-    action = [self urlActionForSmartSelectionAt:coord
-                            respectHardNewlines:respectHardNewlines
-                               workingDirectory:workingDirectory
-                                     remoteHost:remoteHost
-                                          rules:rules
-                                      selectors:selectors
-                                  textExtractor:extractor];
+- (void)trySmartSelectionAction {
+    URLAction *action = [self urlActionForSmartSelectionAt:self.coord
+                                       respectHardNewlines:self.respectHardNewlines
+                                          workingDirectory:self.workingDirectory
+                                                remoteHost:self.remoteHost
+                                                     rules:self.rules
+                                                 selectors:self.selectors
+                                             textExtractor:self.extractor];
     if (action) {
-        return action;
+        [self completeWithAction:action];
+    } else {
+        [self fail];
     }
+}
 
-    action = [self urlActionForAnyStringSemanticHistoryAt:coord
-                                      respectHardNewlines:respectHardNewlines
-                                         workingDirectory:workingDirectory
-                                                    rules:rules
-                                            textExtractor:extractor
-                                semanticHistoryController:semanticHistoryController];
+- (void)tryAnyStringSemanticHistory {
+    URLAction *action = [self urlActionForAnyStringSemanticHistoryAt:self.coord
+                                                 respectHardNewlines:self.respectHardNewlines
+                                                    workingDirectory:self.workingDirectory
+                                                               rules:self.rules
+                                                       textExtractor:self.extractor
+                                           semanticHistoryController:self.semanticHistoryController];
     if (action) {
-        return action;
+        [self completeWithAction:action];
+    } else {
+        [self fail];
     }
+}
 
+- (void)tryURLLike {
     // No luck. Look for something vaguely URL-like.
-    action = [self urlActionForURLAt:coord
-                              prefix:prefix
-                        prefixCoords:prefixCoords
-                              suffix:suffix
-                        suffixCoords:suffixCoords
-                           extractor:extractor];
+    URLAction *action = [self urlActionForURLAt:self.coord
+                                         prefix:self.prefix
+                                   prefixCoords:self.prefixCoords
+                                         suffix:self.suffix
+                                   suffixCoords:self.suffixCoords
+                                      extractor:self.extractor];
     if (action) {
-        return action;
+        [self completeWithAction:action];
+    } else {
+        [self fail];
     }
+}
 
+- (void)trySecureCopy {
     // TODO: We usually don't get here because "foo.txt" looks enough like a URL that we do a DNS
     // lookup and fail. It'd be nice to fallback to an SCP file path.
     // See if we can conjure up a secure copy path.
-    return [self urlActionWithSecureCopyAt:coord
-                       respectHardNewlines:respectHardNewlines
-                                     rules:rules
-                             textExtractor:extractor
-                               pathFactory:pathFactory];
+    URLAction *action = [self urlActionWithSecureCopyAt:self.coord
+                                    respectHardNewlines:self.respectHardNewlines
+                                                  rules:self.rules
+                                          textExtractor:self.extractor
+                                            pathFactory:self.pathFactory];
+    if (action) {
+        [self completeWithAction:action];
+    } else {
+        [self fail];
+    }
 }
 
 #pragma mark - Sub-factories
 
-+ (URLAction *)urlActionForHypertextLinkAt:(VT100GridCoord)coord
+- (URLAction *)urlActionForHypertextLinkAt:(VT100GridCoord)coord
                                  extractor:(iTermTextExtractor *)extractor {
     screen_char_t oc = [extractor characterAt:coord];
     NSString *urlId = nil;
@@ -140,7 +262,7 @@
     }
 }
 
-+ (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
+- (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
                                    prefix:(NSString *)prefix
                              prefixCoords:(NSArray *)prefixCoords
                                    suffix:(NSString *)suffix
@@ -215,7 +337,7 @@
     return nil;
 }
 
-+ (URLAction *)urlActionForSmartSelectionAt:(VT100GridCoord)coord
+- (URLAction *)urlActionForSmartSelectionAt:(VT100GridCoord)coord
                         respectHardNewlines:(BOOL)respectHardNewlines
                            workingDirectory:(NSString *)workingDirectory
                                  remoteHost:(VT100RemoteHost *)remoteHost
@@ -251,7 +373,7 @@
     return nil;
 }
 
-+ (URLAction *)urlActionForAnyStringSemanticHistoryAt:(VT100GridCoord)coord
+- (URLAction *)urlActionForAnyStringSemanticHistoryAt:(VT100GridCoord)coord
                                   respectHardNewlines:(BOOL)respectHardNewlines
                                      workingDirectory:(NSString *)workingDirectory
                                                 rules:(NSArray *)rules
@@ -279,7 +401,7 @@
     return nil;
 }
 
-+ (URLAction *)urlActionForURLAt:(VT100GridCoord)coord
+- (URLAction *)urlActionForURLAt:(VT100GridCoord)coord
                           prefix:(NSString *)prefix
                     prefixCoords:(NSArray *)prefixCoords
                           suffix:(NSString *)suffix
@@ -362,7 +484,7 @@
     return nil;
 }
 
-+ (URLAction *)urlActionForString:(NSString *)stringWithoutNearbyPunctuation
+- (URLAction *)urlActionForString:(NSString *)stringWithoutNearbyPunctuation
                             range:(NSRange)rangeWithoutNearbyPunctuation
                            prefix:(NSString *)prefix
                      prefixCoords:(NSArray *)prefixCoords
@@ -408,7 +530,7 @@
     return nil;
 }
 
-+ (URLAction *)urlActionWithSecureCopyAt:(VT100GridCoord)coord
+- (URLAction *)urlActionWithSecureCopyAt:(VT100GridCoord)coord
                      respectHardNewlines:(BOOL)respectHardNewlines
                                    rules:(NSArray *)rules
                            textExtractor:(iTermTextExtractor *)textExtractor
@@ -433,7 +555,7 @@
 
 #pragma mark - Helpers
 
-+ (BOOL)stringLooksLikeURL:(NSString*)s {
+- (BOOL)stringLooksLikeURL:(NSString*)s {
     // This is much harder than it sounds.
     // [NSURL URLWithString] is supposed to do this, but it doesn't accept IDN-encoded domains like
     // http://例子.测试

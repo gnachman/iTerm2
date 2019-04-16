@@ -18,14 +18,15 @@
 
 @interface iTermURLActionFactory : NSUserDefaults
 
-+ (URLAction *)urlActionAtCoord:(VT100GridCoord)coord
-            respectHardNewlines:(BOOL)respectHardNewlines
-               workingDirectory:(NSString *)workingDirectory
-                     remoteHost:(VT100RemoteHost *)remoteHost
-                      selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
-                          rules:(NSArray *)rules
-                      extractor:(iTermTextExtractor *)extractor
-      semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
-                    pathFactory:(SCPPath *(^)(NSString *, int))pathFactory;
++ (void)urlActionAtCoord:(VT100GridCoord)coord
+     respectHardNewlines:(BOOL)respectHardNewlines
+        workingDirectory:(NSString *)workingDirectory
+              remoteHost:(VT100RemoteHost *)remoteHost
+               selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
+                   rules:(NSArray *)rules
+               extractor:(iTermTextExtractor *)extractor
+semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+             pathFactory:(SCPPath *(^)(NSString *, int))pathFactory
+              completion:(void (^)(URLAction *))completion;
 
 @end
