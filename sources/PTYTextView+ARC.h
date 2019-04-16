@@ -30,6 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100GridCoord)coordForPoint:(NSPoint)locationInTextView
        allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
+- (NSPoint)pointForCoord:(VT100GridCoord)coord;
+
+- (VT100GridCoord)coordForPointInWindow:(NSPoint)point;
+
 #pragma mark - Query Coordinates
 
 - (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
@@ -93,6 +97,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)terminalWantsMouseReports;
+
+#pragma mark - Quicklook
+
+- (void)handleQuickLookWithEvent:(NSEvent *)event;
+
+#pragma mark - Copy to Pasteboard
+
+// Returns a dictionary to pass to NSAttributedString.
+- (NSDictionary *)charAttributes:(screen_char_t)c;
 
 @end
 

@@ -18,12 +18,18 @@
 #import "iTermPreferences.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
+#import "iTermURLStore.h"
+#import "iTermWebViewWrapperViewController.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "PTYTextView+Private.h"
 #import "SCPPath.h"
 #import "URLAction.h"
 #import "VT100Terminal.h"
+
+#import <WebKit/WebKit.h>
 
 static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
 static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
@@ -105,6 +111,17 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
     NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
     return VT100GridCoordMake(viewPoint.x, viewPoint.y);
+}
+
+- (NSPoint)pointForCoord:(VT100GridCoord)coord {
+    return NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + coord.x * self.charWidth,
+                       coord.y * self.lineHeight);
+}
+
+- (VT100GridCoord)coordForPointInWindow:(NSPoint)point {
+    // TODO: Merge this function with windowLocationToRowCol.
+    NSPoint p = [self windowLocationToRowCol:point allowRightMarginOverflow:NO];
+    return VT100GridCoordMake(p.x, p.y);
 }
 
 #pragma mark - Query Coordinates
@@ -621,6 +638,196 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return ([self.delegate xtermMouseReporting] &&
             mouseMode != MOUSE_REPORTING_NONE &&
             mouseMode != MOUSE_REPORTING_HIGHLIGHT);
+}
+
+#pragma mark - Quicklook
+
+- (void)handleQuickLookWithEvent:(NSEvent *)event {
+    DLog(@"Quick look with event %@\n%@", event, [NSThread callStackSymbols]);
+    const NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+    const VT100GridCoord coord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+    [self computeURLActionForCoord:coord completion:^(URLAction *action) {
+        [self finishHandlingQuickLookWithEvent:event action:action];
+    }];
+}
+
+- (void)finishHandlingQuickLookWithEvent:(NSEvent *)event
+                                  action:(URLAction *)urlAction {
+    if (!urlAction && [iTermAdvancedSettingsModel performDictionaryLookupOnQuickLook]) {
+        NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+        [self showDefinitionForWordAt:clickPoint];
+        return;
+    }
+    const VT100GridCoord coord = [self coordForMouseLocation:[NSEvent mouseLocation]];
+    if (!VT100GridWindowedRangeContainsCoord(urlAction.range, coord)) {
+        return;
+    }
+    NSURL *url = nil;
+    switch (urlAction.actionType) {
+        case kURLActionSecureCopyFile:
+            url = [urlAction.identifier URL];
+            break;
+
+        case kURLActionOpenExistingFile:
+            url = [NSURL fileURLWithPath:urlAction.fullPath];
+            break;
+
+        case kURLActionOpenImage:
+            url = [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
+            break;
+
+        case kURLActionOpenURL: {
+            if (!urlAction.string) {
+                break;
+            }
+            url = [NSURL URLWithUserSuppliedString:urlAction.string];
+            if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
+                return;
+            }
+            break;
+        }
+
+        case kURLActionSmartSelectionAction:
+            break;
+    }
+
+    if (url) {
+        NSPoint windowPoint = event.locationInWindow;
+        NSRect windowRect = NSMakeRect(windowPoint.x - self.charWidth / 2,
+                                       windowPoint.y - self.lineHeight / 2,
+                                       self.charWidth,
+                                       self.lineHeight);
+
+        NSRect screenRect = [self.window convertRectToScreen:windowRect];
+        self.quickLookController = [[iTermQuickLookController alloc] init];
+        [self.quickLookController addURL:url];
+        [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
+    }
+}
+
+- (void)showDefinitionForWordAt:(NSPoint)clickPoint {
+    if (clickPoint.y < 0) {
+        return;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+    VT100GridWindowedRange range =
+    [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+                maximumLength:kReasonableMaximumWordLength];
+    NSAttributedString *word = [extractor contentInRange:range
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
+                                           return [self charAttributes:theChar];
+                                       }
+                                              nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                                     pad:NO
+                                      includeLastNewline:NO
+                                  trimTrailingWhitespace:YES
+                                            cappedAtSize:self.dataSource.width
+                                            truncateTail:YES
+                                       continuationChars:nil
+                                                  coords:nil];
+    if (word.length) {
+        NSPoint point = [self pointForCoord:range.coordRange.start];
+        point.y += self.lineHeight;
+        NSDictionary *attributes = [word attributesAtIndex:0 effectiveRange:nil];
+        if (attributes[NSFontAttributeName]) {
+            NSFont *font = attributes[NSFontAttributeName];
+            point.y += font.descender;
+        }
+        [self showDefinitionForAttributedString:word
+                                        atPoint:point];
+    }
+}
+
+- (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
+    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:nil];
+    if (webView) {
+        if ([[url.scheme lowercaseString] isEqualToString:@"http"]) {
+            [webView loadHTMLString:@"This site cannot be displayed in QuickLook because of Application Transport Security. Only HTTPS URLs can be previewed." baseURL:nil];
+        } else {
+            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
+            [webView loadRequest:request];
+        }
+        NSPopover *popover = [[NSPopover alloc] init];
+        NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
+                                                                                            backupURL:url];
+        popover.contentViewController = viewController;
+        popover.contentSize = viewController.view.frame.size;
+        NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
+                                 pointInWindow.y - self.lineHeight / 2,
+                                 self.charWidth,
+                                 self.lineHeight);
+        rect = [self convertRect:rect fromView:nil];
+        popover.behavior = NSPopoverBehaviorSemitransient;
+        popover.delegate = self;
+        [popover showRelativeToRect:rect
+                             ofView:self
+                      preferredEdge:NSRectEdgeMinY];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+#pragma mark - Copy to Pasteboard
+
+// Returns a dictionary to pass to NSAttributedString.
+- (NSDictionary *)charAttributes:(screen_char_t)c {
+    BOOL isBold = c.bold;
+    BOOL isFaint = c.faint;
+    NSColor *fgColor = [self colorForCode:c.foregroundColor
+                                    green:c.fgGreen
+                                     blue:c.fgBlue
+                                colorMode:c.foregroundColorMode
+                                     bold:isBold
+                                    faint:isFaint
+                             isBackground:NO];
+    NSColor *bgColor = [self colorForCode:c.backgroundColor
+                                    green:c.bgGreen
+                                     blue:c.bgBlue
+                                colorMode:c.backgroundColorMode
+                                     bold:NO
+                                    faint:NO
+                             isBackground:YES];
+    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
+
+    int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
+
+    BOOL isItalic = c.italic;
+    PTYFontInfo *fontInfo = [self getFontForChar:c.code
+                                       isComplex:c.complexChar
+                                      renderBold:&isBold
+                                    renderItalic:&isItalic];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
+
+    NSFont *font = fontInfo.font;
+    if (!font) {
+        // Ordinarily fontInfo would never be nil, but it is in unit tests. It's useful to distinguish
+        // bold from regular in tests, so we ensure that attribute is correctly set in this test-only
+        // path.
+        const CGFloat size = [NSFont systemFontSize];
+        if (c.bold) {
+            font = [NSFont boldSystemFontOfSize:size];
+        } else {
+            font = [NSFont systemFontOfSize:size];
+        }
+    }
+    NSDictionary *attributes = @{ NSForegroundColorAttributeName: fgColor,
+                                  NSBackgroundColorAttributeName: bgColor,
+                                  NSFontAttributeName: font,
+                                  NSParagraphStyleAttributeName: paragraphStyle,
+                                  NSUnderlineStyleAttributeName: @(underlineStyle) };
+    if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
+        attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
+    }
+    if (c.urlCode) {
+        NSURL *url = [[iTermURLStore sharedInstance] urlForCode:c.urlCode];
+        if (url != nil) {
+            attributes = [attributes dictionaryBySettingObject:url forKey:NSLinkAttributeName];
+        }
+    }
+
+    return attributes;
 }
 
 @end
