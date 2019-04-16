@@ -34,6 +34,8 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 extern NSString *const kSemanticHistoryLineNumberKey;
 extern NSString *const kSemanticHistoryColumnNumberKey;
 
+@class iTermPathFinder;
+
 @protocol iTermSemanticHistoryControllerDelegate <NSObject>
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;
 @end
@@ -106,6 +108,12 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
                            charsTakenFromSuffix:(int *)suffixChars
                                  trimWhitespace:(BOOL)trimWhitespace;
+
+- (iTermPathFinder *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                                suffix:(NSString *)afterStringIn
+                                      workingDirectory:(NSString *)workingDirectory
+                                        trimWhitespace:(BOOL)trimWhitespace
+                                            completion:(void (^)(NSString *path, int prefixChars, int suffixChars))completion;
 
 #pragma mark - Testing
 

@@ -11,9 +11,10 @@
 #import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPathFinder.h"
+#import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLStore.h"
-#import "iTermSemanticHistoryController.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -22,6 +23,8 @@
 #import "SmartSelectionController.h"
 #import "URLAction.h"
 #import "VT100RemoteHost.h"
+
+static NSString *const iTermURLActionFactoryCancelPathfinders = @"iTermURLActionFactoryCancelPathfinders";
 
 typedef enum {
     iTermURLActionFactoryPhaseHypertextLink,
@@ -57,6 +60,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 @implementation iTermURLActionFactory {
     BOOL _finished;
+    iTermPathFinder *_pathfinder;
 }
 
 + (void)urlActionAtCoord:(VT100GridCoord)coord
@@ -81,6 +85,10 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     factory.pathFactory = pathFactory;
     factory.completion = completion;
     factory.phase = iTermURLActionFactoryPhaseHypertextLink;
+    [[NSNotificationCenter defaultCenter] addObserver:factory
+                                             selector:@selector(cancelPathfinders:)
+                                                 name:iTermURLActionFactoryCancelPathfinders
+                                               object:nil];
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -160,19 +168,21 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                               convertNullsToSpace:NO
                                            coords:self.suffixCoords];
 
-    URLAction *action = [self urlActionForExistingFileAt:self.coord
-                                                  prefix:self.prefix
-                                            prefixCoords:self.prefixCoords
-                                                  suffix:self.suffix
-                                            suffixCoords:self.suffixCoords
-                                        workingDirectory:self.workingDirectory
-                                               extractor:self.extractor
-                               semanticHistoryController:self.semanticHistoryController];
-    if (action) {
-        [self completeWithAction:action];
-    } else {
-        [self fail];
-    }
+    [self urlActionForExistingFileAt:self.coord
+                              prefix:self.prefix
+                        prefixCoords:self.prefixCoords
+                              suffix:self.suffix
+                        suffixCoords:self.suffixCoords
+                    workingDirectory:self.workingDirectory
+                           extractor:self.extractor
+           semanticHistoryController:self.semanticHistoryController
+                          completion:^(URLAction *action) {
+                              if (action) {
+                                  [self completeWithAction:action];
+                              } else {
+                                  [self fail];
+                              }
+                          }];
 }
 
 - (void)trySmartSelectionAction {
@@ -262,14 +272,15 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 }
 
-- (URLAction *)urlActionForExistingFileAt:(VT100GridCoord)coord
-                                   prefix:(NSString *)prefix
-                             prefixCoords:(NSArray *)prefixCoords
-                                   suffix:(NSString *)suffix
-                             suffixCoords:(NSArray *)suffixCoords
-                         workingDirectory:(NSString *)workingDirectory
-                                extractor:(iTermTextExtractor *)extractor
-                semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController {
+- (void)urlActionForExistingFileAt:(VT100GridCoord)coord
+                            prefix:(NSString *)prefix
+                      prefixCoords:(NSArray *)prefixCoords
+                            suffix:(NSString *)suffix
+                      suffixCoords:(NSArray *)suffixCoords
+                  workingDirectory:(NSString *)workingDirectory
+                         extractor:(iTermTextExtractor *)extractor
+         semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+                        completion:(void (^)(URLAction *))completion {
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
                         fromCharacterSet:[NSCharacterSet filenameCharacterSet]
@@ -279,62 +290,70 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                         fromCharacterSet:[NSCharacterSet filenameCharacterSet]
                     charsTakenFromPrefix:NULL];
 
-    int prefixChars = 0;
-    int suffixChars = 0;
-    // First, try to locate an existing filename at this location.
-    NSString *filename =
-    [semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
-                                                          suffix:possibleFilePart2
-                                                workingDirectory:workingDirectory
-                                            charsTakenFromPrefix:&prefixChars
-                                            charsTakenFromSuffix:&suffixChars
-                                                  trimWhitespace:NO];
+#warning TOOD: Don't just cancel them. If one's already running with the same inputs, glom on to it. Also, don't re-do the work when the user clicks. Furthermore, abort when the command key is released.
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermURLActionFactoryCancelPathfinders
+                                                        object:nil];
 
+    _pathfinder = [semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                                        suffix:possibleFilePart2
+                                                              workingDirectory:workingDirectory
+                                                                trimWhitespace:NO
+                                                                    completion:^(NSString *filename, int prefixChars, int suffixChars) {
+                                                                        URLAction *action = [self urlActionForFilename:filename
+                                                                                                           prefixChars:prefixChars
+                                                                                                           suffixChars:suffixChars];
+                                                                        completion(action);
+                                                                    }];
+}
+
+- (URLAction *)urlActionForFilename:(NSString *)filename
+                        prefixChars:(int)prefixChars
+                        suffixChars:(int)suffixChars {
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
-    if (filename.length > 0 &&
-        ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        DLog(@"Accepting filename from brute force search: %@", filename);
-        // If you clicked on an existing filename, use it.
-        URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
-        VT100GridWindowedRange range;
-
-        if (prefixCoords.count > 0 && prefixChars > 0) {
-            NSInteger i = MAX(0, (NSInteger)prefixCoords.count - prefixChars);
-            range.coordRange.start = [prefixCoords[i] gridCoordValue];
-        } else {
-            // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
-            range.coordRange.start = [suffixCoords[0] gridCoordValue];
-        }
-        VT100GridCoord lastCoord;
-        // Ensure we don't run off the end of suffixCoords if something unexpected happens.
-        // Subtract 1 because the 0th index into suffixCoords corresponds to 1 suffix char being used, etc.
-        NSInteger i = MIN((NSInteger)suffixCoords.count - 1, suffixChars - 1);
-        if (i >= 0) {
-            lastCoord = [suffixCoords[i] gridCoordValue];
-        } else {
-            // This shouldn't happen, but better safe than sorry
-            lastCoord = [[prefixCoords lastObject] gridCoordValue];
-        }
-        range.coordRange.end = [extractor successorOfCoord:lastCoord];
-        range.columnWindow = extractor.logicalWindow;
-        action.range = range;
-
-        NSString *lineNumber = nil;
-        NSString *columnNumber = nil;
-        action.rawFilename = filename;
-        action.fullPath = [semanticHistoryController cleanedUpPathFromPath:filename
-                                                                    suffix:[suffix substringFromIndex:suffixChars]
-                                                          workingDirectory:workingDirectory
-                                                       extractedLineNumber:&lineNumber
-                                                              columnNumber:&columnNumber];
-        action.lineNumber = lineNumber;
-        action.columnNumber = columnNumber;
-        action.workingDirectory = workingDirectory;
-        return action;
+    if (filename.length == 0 ||
+        [[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+        return nil;
     }
 
-    return nil;
+    DLog(@"Accepting filename from brute force search: %@", filename);
+    // If you clicked on an existing filename, use it.
+    URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
+    VT100GridWindowedRange range;
+
+    if (self.prefixCoords.count > 0 && prefixChars > 0) {
+        NSInteger i = MAX(0, (NSInteger)self.prefixCoords.count - prefixChars);
+        range.coordRange.start = [self.prefixCoords[i] gridCoordValue];
+    } else {
+        // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
+        range.coordRange.start = [self.suffixCoords[0] gridCoordValue];
+    }
+    VT100GridCoord lastCoord;
+    // Ensure we don't run off the end of suffixCoords if something unexpected happens.
+    // Subtract 1 because the 0th index into suffixCoords corresponds to 1 suffix char being used, etc.
+    NSInteger i = MIN((NSInteger)self.suffixCoords.count - 1, suffixChars - 1);
+    if (i >= 0) {
+        lastCoord = [self.suffixCoords[i] gridCoordValue];
+    } else {
+        // This shouldn't happen, but better safe than sorry
+        lastCoord = [[self.prefixCoords lastObject] gridCoordValue];
+    }
+    range.coordRange.end = [self.extractor successorOfCoord:lastCoord];
+    range.columnWindow = self.extractor.logicalWindow;
+    action.range = range;
+
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    action.rawFilename = filename;
+    action.fullPath = [self.semanticHistoryController cleanedUpPathFromPath:filename
+                                                                     suffix:[self.suffix substringFromIndex:suffixChars]
+                                                           workingDirectory:self.workingDirectory
+                                                        extractedLineNumber:&lineNumber
+                                                               columnNumber:&columnNumber];
+    action.lineNumber = lineNumber;
+    action.columnNumber = columnNumber;
+    action.workingDirectory = self.workingDirectory;
+    return action;
 }
 
 - (URLAction *)urlActionForSmartSelectionAt:(VT100GridCoord)coord
@@ -591,6 +610,12 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 
     return NO;
+}
+
+#pragma mark - Notifications
+
+- (void)cancelPathfinders:(NSNotification *)notification {
+    [_pathfinder cancel];
 }
 
 @end

@@ -3372,6 +3372,10 @@
 		A6F718BB226596DB0053488E /* PTYTextView+ARC.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718B9226596DB0053488E /* PTYTextView+ARC.h */; };
 		A6F718BC226596DB0053488E /* PTYTextView+ARC.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718BA226596DB0053488E /* PTYTextView+ARC.m */; };
 		A6F718BE226597700053488E /* PTYTextView+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718BD226597300053488E /* PTYTextView+Private.h */; };
+		A6F718C12265AF1D0053488E /* iTermPathFinder.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718BF2265AF1D0053488E /* iTermPathFinder.h */; };
+		A6F718C22265AF1D0053488E /* iTermPathFinder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C02265AF1D0053488E /* iTermPathFinder.m */; };
+		A6F718C52265B2580053488E /* iTermPathCleaner.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718C32265B2580053488E /* iTermPathCleaner.h */; };
+		A6F718C62265B2580053488E /* iTermPathCleaner.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C42265B2580053488E /* iTermPathCleaner.m */; };
 		A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A708213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A709213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
@@ -5732,6 +5736,10 @@
 		A6F718B9226596DB0053488E /* PTYTextView+ARC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTextView+ARC.h"; sourceTree = "<group>"; };
 		A6F718BA226596DB0053488E /* PTYTextView+ARC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTextView+ARC.m"; sourceTree = "<group>"; };
 		A6F718BD226597300053488E /* PTYTextView+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTextView+Private.h"; sourceTree = "<group>"; };
+		A6F718BF2265AF1D0053488E /* iTermPathFinder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPathFinder.h; sourceTree = "<group>"; };
+		A6F718C02265AF1D0053488E /* iTermPathFinder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPathFinder.m; sourceTree = "<group>"; };
+		A6F718C32265B2580053488E /* iTermPathCleaner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPathCleaner.h; sourceTree = "<group>"; };
+		A6F718C42265B2580053488E /* iTermPathCleaner.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPathCleaner.m; sourceTree = "<group>"; };
 		A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconUser.png; path = images/StatusBarIcons/StatusBarIconUser.png; sourceTree = "<group>"; };
 		A6F7A6F0213CB13E004DE961 /* StatusBarIconNetwork.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconNetwork.png; path = images/StatusBarIcons/StatusBarIconNetwork.png; sourceTree = "<group>"; };
 		A6F7A6F1213CB13E004DE961 /* StatusBarIconJobs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconJobs.png; path = images/StatusBarIcons/StatusBarIconJobs.png; sourceTree = "<group>"; };
@@ -7643,6 +7651,10 @@
 				A6F718B9226596DB0053488E /* PTYTextView+ARC.h */,
 				A6F718BA226596DB0053488E /* PTYTextView+ARC.m */,
 				A6F718BD226597300053488E /* PTYTextView+Private.h */,
+				A6F718BF2265AF1D0053488E /* iTermPathFinder.h */,
+				A6F718C02265AF1D0053488E /* iTermPathFinder.m */,
+				A6F718C32265B2580053488E /* iTermPathCleaner.h */,
+				A6F718C42265B2580053488E /* iTermPathCleaner.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9839,6 +9851,7 @@
 				A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */,
 				A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */,
 				5370679321C9D2780088D0F3 /* SIGPartialInputStream.h in Headers */,
+				A6F718C52265B2580053488E /* iTermPathCleaner.h in Headers */,
 				A667192C1DCE36C3000CE608 /* iTermPreciseTimer.h in Headers */,
 				A611272721D1B1E300E8C228 /* iTermCPUProfilerUI.h in Headers */,
 				A68400BC1FF98101008D3EE2 /* iTermTimestampsRenderer.h in Headers */,
@@ -10019,6 +10032,7 @@
 				5370678821C9D2780088D0F3 /* SIGPolicy.h in Headers */,
 				A623D9541F8B04890011F8C3 /* iTermMetalGlue.h in Headers */,
 				A6BF035C21E179BD0097DA86 /* iTermWeakVariables.h in Headers */,
+				A6F718C12265AF1D0053488E /* iTermPathFinder.h in Headers */,
 				535EA4F120D0CB7A00FC81E0 /* iTermSwiftyString.h in Headers */,
 				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
 				A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */,
@@ -12066,6 +12080,7 @@
 				A630116E20E60C8E008114B7 /* iTermStatusBarContainerView.m in Sources */,
 				A61ED2AA20E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m in Sources */,
 				535EA4E720D04C2A00FC81E0 /* iTermTip.m in Sources */,
+				A6F718C22265AF1D0053488E /* iTermPathFinder.m in Sources */,
 				A61ED2A620E99DCD0035BECD /* iTermStatusBarClockComponent.m in Sources */,
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A6F718B8226583600053488E /* iTermURLActionFactory.m in Sources */,
@@ -12079,6 +12094,7 @@
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
 				5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */,
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
+				A6F718C62265B2580053488E /* iTermPathCleaner.m in Sources */,
 				A67D19582237289900BD0D4D /* iTermImage.m in Sources */,
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
