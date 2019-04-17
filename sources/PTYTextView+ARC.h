@@ -7,18 +7,14 @@
 
 #import "PTYTextView.h"
 
+#import "iTermURLActionHelper.h"
 #import "VT100GridTypes.h"
 
 @class URLAction;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PTYTextView (ARC)
-
-#pragma mark - Attributes
-
-- (NSColor *)selectionBackgroundColor;
-- (NSColor *)selectedTextColor;
+@interface PTYTextView (ARC)<iTermURLActionHelperDelegate>
 
 #pragma mark - Coordinate Space Conversions
 
@@ -38,32 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
 
-#pragma mark - URL Actions
-
-- (BOOL)ignoreHardNewlinesInURLs;
-
-- (URLAction *)urlActionForClickAtX:(int)x y:(int)y;
-
-- (void)urlActionForClickAtX:(int)x
-                           y:(int)y
-      respectingHardNewlines:(BOOL)respectHardNewlines
-                  completion:(void (^)(URLAction *))completion;
-
-- (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground;
-
-- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background;
-
-#pragma mark Secure Copy
-
-+ (NSString *)usernameToDownloadFileOnHost:(NSString *)host;
-
-- (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
-                         displayName:(NSString *)name
-                      locationInView:(VT100GridCoordRange)range;
-
 #pragma mark - Open URL
-
-- (void)openURL:(NSURL *)url inBackground:(BOOL)background;
 
 - (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary;
 

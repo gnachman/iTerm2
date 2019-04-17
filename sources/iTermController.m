@@ -63,6 +63,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermSetCurrentTerminalHelper.h"
 #import "iTermSystemVersion.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "PTYWindow.h"
 #include <objc/runtime.h>
@@ -72,7 +73,6 @@
 @end
 
 // Pref keys
-static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 static iTermController *gSharedInstance;
 
 @interface iTermController()<iTermSetCurrentTerminalHelperDelegate>

@@ -34,6 +34,7 @@
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
 #import "iTermTextViewAccessibilityHelper.h"
+#import "iTermURLActionHelper.h"
 #import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
@@ -223,7 +224,6 @@ static const int kDragThreshold = 3;
         _colorMap.delegate = self;
 
         _drawingHelper.colorMap = colorMap;
-
         _firstMouseEventNumber = -1;
 
         [self updateMarkedTextAttributes];
@@ -266,6 +266,9 @@ static const int kDragThreshold = 3;
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
         _semanticHistoryDragged = NO;
+
+        _urlActionHelper = [[iTermURLActionHelper alloc] initWithSemanticHistoryController:_semanticHistoryController];
+        _urlActionHelper.delegate = self;
 
         pointer_ = [[PointerController alloc] init];
         pointer_.delegate = self;
@@ -379,7 +382,8 @@ static const int kDragThreshold = 3;
     [_shadowRateLimit release];
     _keyboardHandler.delegate = nil;
     [_keyboardHandler release];
-
+    _urlActionHelper.delegate = nil;
+    [_urlActionHelper release];
     [super dealloc];
 }
 
@@ -1228,45 +1232,16 @@ static const int kDragThreshold = 3;
 
 - (SmartMatch *)smartSelectAtX:(int)x
                              y:(int)y
-                            to:(VT100GridWindowedRange *)rangePtr
+                            to:(VT100GridWindowedRange *)range
               ignoringNewlines:(BOOL)ignoringNewlines
                 actionRequired:(BOOL)actionRequired
                respectDividers:(BOOL)respectDividers {
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
-    if (respectDividers) {
-        [extractor restrictToLogicalWindowIncludingCoord:coord];
-    }
-    return [extractor smartSelectionAt:coord
-                             withRules:_smartSelectionRules
-                        actionRequired:actionRequired
-                                 range:rangePtr
-                      ignoringNewlines:ignoringNewlines];
-}
-
-- (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines {
-    VT100GridWindowedRange range;
-    SmartMatch *smartMatch = [self smartSelectAtX:x
-                                                y:y
-                                               to:&range
-                                 ignoringNewlines:ignoringNewlines
-                                   actionRequired:NO
-                                  respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
-
-    [_selection beginSelectionAt:range.coordRange.start
-                            mode:kiTermSelectionModeCharacter
-                          resume:NO
-                          append:NO];
-    [_selection moveSelectionEndpointTo:range.coordRange.end];
-    if (!ignoringNewlines) {
-        // TODO(georgen): iTermSelection doesn't have a mode for smart selection ignoring newlines.
-        // If that flag is set, it's better to leave the selection in character mode because you can
-        // still extend a selection with shift-click. If we put it in smart mode, extending would
-        // get confused.
-        _selection.selectionMode = kiTermSelectionModeSmart;
-    }
-    [_selection endLiveSelection];
-    return smartMatch != nil;
+    return [_urlActionHelper smartSelectAtX:x
+                                          y:y
+                                         to:range
+                           ignoringNewlines:ignoringNewlines
+                             actionRequired:actionRequired
+                            respectDividers:respectDividers];
 }
 
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
@@ -1939,7 +1914,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // alt-click and then open the link. Note that cmd-alt-click isn't handled here
             // because you won't get here if alt is pressed. Note that openTargetWithEvent:
             // may not do anything if the pointer isn't over a clickable string.
-            [self openTargetWithEvent:event];
+            [_urlActionHelper openTargetWithEvent:event inBackground:NO];
         }
         DLog(@"Returning from mouseUp because the mouse event was reported.");
         return;
@@ -1999,11 +1974,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [_selection clearSelection];
         }
         if (willFollowLink) {
-            if (altPressed) {
-                [self openTargetInBackgroundWithEvent:event];
-            } else {
-                [self openTargetWithEvent:event];
-            }
+            [_urlActionHelper openTargetWithEvent:event inBackground:altPressed];
         } else {
             NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
             [_findOnPageHelper setStartPoint:VT100GridAbsCoordMake(clickPoint.x,
@@ -2162,7 +2133,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self pasteSelection:nil];
 }
 
-
 - (BOOL)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
@@ -2170,67 +2140,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                    columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix {
-    NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:prefix
-                                                               suffix:suffix
-                                                                 path:path
-                                                     workingDirectory:workingDirectory
-                                                           lineNumber:lineNumber
-                                                         columnNumber:columnNumber];
-    return [self.semanticHistoryController openPath:path
-                                      orRawFilename:rawFileName
-                                      substitutions:subs
-                                         lineNumber:lineNumber
-                                       columnNumber:columnNumber];
-}
-
-- (NSDictionary *)semanticHistorySubstitutionsWithPrefix:(NSString *)prefix
-                                                  suffix:(NSString *)suffix
-                                                    path:(NSString *)path
-                                        workingDirectory:(NSString *)workingDirectory
-                                              lineNumber:(NSString *)lineNumber
-                                            columnNumber:(NSString *)columnNumber {
-    NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
-    NSDictionary *semanticHistorySubs =
-        @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-           kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-           kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-           kSemanticHistoryLineNumberKey: lineNumber ?: @"",
-           kSemanticHistoryColumnNumberKey: columnNumber ?: @""
-           };
-    [subs addEntriesFromDictionary:semanticHistorySubs];
-    return subs;
+    return [_urlActionHelper openSemanticHistoryPath:path
+                                       orRawFilename:rawFileName
+                                    workingDirectory:workingDirectory
+                                          lineNumber:lineNumber
+                                        columnNumber:columnNumber
+                                              prefix:prefix
+                                              suffix:suffix];
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
-    [self openTargetWithEvent:event inBackground:NO];
+    [_urlActionHelper openTargetWithEvent:event inBackground:NO];
 }
 
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
-    [self openTargetWithEvent:event inBackground:YES];
-}
-
-- (void)smartSelectWithEvent:(NSEvent *)event {
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-
-    [self smartSelectAtX:x y:y ignoringNewlines:NO];
+    [_urlActionHelper openTargetWithEvent:event inBackground:YES];
 }
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines {
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-
-    [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
-    if ([_selection hasSelection] && _delegate) {
-        // if we want to copy our selection, do so
-        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
-            [self copySelectionAccordingToUserPreferences];
-        }
-    }
+    [_urlActionHelper smartSelectAndMaybeCopyWithEvent:event
+                                      ignoringNewlines:ignoringNewlines];
 }
 
 // Called for a right click that isn't control+click (e.g., two fingers on trackpad).
@@ -2271,7 +2201,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Didn't click on selection.
         // Save the selection and do a smart selection. If we don't like the result, restore it.
         iTermSelection *savedSelection = [[_selection copy] autorelease];
-        [self smartSelectWithEvent:event];
+        [_urlActionHelper smartSelectWithEvent:event];
         NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
         NSString *text = [self selectedText];
         if (!text ||
@@ -2819,8 +2749,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)downloadWithSCP:(id)sender
-{
+- (void)downloadWithSCP:(id)sender {
     if (![_selection hasSelection]) {
         return;
     }
@@ -2833,7 +2762,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     scpPath = [_dataSource scpPathForFile:parts[0] onLine:_selection.lastRange.coordRange.start.y];
     VT100GridCoordRange range = _selection.lastRange.coordRange;
 
-    [self downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:range];
+    [_urlActionHelper downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:range];
 }
 
 - (void)showNotes:(id)sender
@@ -4180,7 +4109,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)browse:(id)sender {
-    [self findUrlInString:[self selectedText] andOpenInBackground:NO];
+    [_urlActionHelper findUrlInString:[self selectedText] andOpenInBackground:NO];
 }
 
 - (void)searchInBrowser:(id)sender
@@ -4188,7 +4117,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString* url =
         [NSString stringWithFormat:[iTermAdvancedSettingsModel searchCommand],
                                    [[self selectedText] stringWithPercentEscape]];
-    [self findUrlInString:url andOpenInBackground:NO];
+    [_urlActionHelper findUrlInString:url andOpenInBackground:NO];
 }
 
 #pragma mark - Drag and Drop
@@ -5974,12 +5903,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
     VT100GridWindowedRange range;
-    [self smartSelectAtX:coord.x
-                       y:coord.y
-                      to:&range
-        ignoringNewlines:NO
-          actionRequired:NO
-         respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+    [_urlActionHelper smartSelectAtX:coord.x
+                                   y:coord.y
+                                  to:&range
+                    ignoringNewlines:NO
+                      actionRequired:NO
+                     respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
     return range;
 }
 

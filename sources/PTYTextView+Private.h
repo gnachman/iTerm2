@@ -20,6 +20,8 @@
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 
+@class iTermURLActionHelper;
+
 @interface PTYTextView () <
 iTermAltScreenMouseScrollInferrerDelegate,
 iTermBadgeLabelDelegate,
@@ -32,12 +34,13 @@ iTermSelectionScrollHelperDelegate,
 NSDraggingSource,
 NSMenuDelegate,
 NSPopoverDelegate> {
-    NSInteger _openTargetGeneration;
     NSCursor *cursor_;
 
     // Flag to make sure a Semantic History drag check is only one once per drag
     BOOL _semanticHistoryDragged;
     BOOL _committedToDrag;
+
+    iTermURLActionHelper *_urlActionHelper;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

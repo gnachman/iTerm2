@@ -23,6 +23,7 @@
 @class iTermQuickLookController;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
+@class iTermURLActionHelper;
 @class MovingAverage;
 @class PTYScroller;
 @class PTYScrollView;
@@ -381,6 +382,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic) BOOL useNativePowerlineGlyphs;
 
 @property (nonatomic, readonly) iTermKeyboardHandler *keyboardHandler;
+
+@property (nonatomic, readonly) iTermURLActionHelper *urlActionHelper;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
