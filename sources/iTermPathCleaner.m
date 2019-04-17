@@ -225,8 +225,6 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 #pragma mark Filesystem
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)path {
-    NSLog(@"path cleaner: %@", path);
-    [NSThread sleepForTimeInterval:0.1];
     return [self.fileManager fileExistsAtPathLocally:path
                               additionalNetworkPaths:_pathsToIgnore];
 }
