@@ -649,9 +649,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [self.delegate launchProfileInCurrentTerminal:profile withURL:url.absoluteString];
 }
 
-- (NSDictionary *)urlActionHelperSubstitutions:(iTermURLActionHelper *)helper {
-#warning TODO: Don't do this! DO it RIGHT
-    return [self.delegate textViewVariables];
+- (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper {
+    return [self.delegate textViewVariablesScope];
 }
 
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper {

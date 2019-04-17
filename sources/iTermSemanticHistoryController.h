@@ -35,6 +35,7 @@ extern NSString *const kSemanticHistoryLineNumberKey;
 extern NSString *const kSemanticHistoryColumnNumberKey;
 
 @class iTermPathFinder;
+@class iTermVariableScope;
 
 @protocol iTermSemanticHistoryControllerDelegate <NSObject>
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;
@@ -67,11 +68,13 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 // \(key) -> substitutions[key]
 //
 // Returns YES if the file was opened, NO if it could not be opened.
-- (BOOL)openPath:(NSString *)path
+- (void)openPath:(NSString *)path
    orRawFilename:(NSString *)rawFileName
-           substitutions:(NSDictionary *)substitutions
-              lineNumber:(NSString *)lineNumber
-            columnNumber:(NSString *)columnNumber;
+   substitutions:(NSDictionary *)substitutions
+           scope:(iTermVariableScope *)scope
+      lineNumber:(NSString *)lineNumber
+    columnNumber:(NSString *)columnNumber
+      completion:(void (^)(BOOL))completion;
 
 // Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
 // to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with

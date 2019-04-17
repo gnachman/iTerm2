@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermSemanticHistoryController;
 @class iTermTextExtractor;
 @class iTermURLActionHelper;
+@class iTermVariableScope;
 @class Profile;
 @class SCPPath;
 @class SmartMatch;
@@ -46,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSScreen *)urlActionHelperScreen:(iTermURLActionHelper *)helper;
 - (CGFloat)urlActionHelperLineHeight:(iTermURLActionHelper *)helper;
 - (void)urlActionHelper:(iTermURLActionHelper *)helper launchProfileInCurrentTerminal:(Profile *)profile withURL:(NSURL *)url;
-- (NSDictionary *)urlActionHelperSubstitutions:(iTermURLActionHelper *)helper;
+- (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
 - (iTermSelection *)urlActionHelperSelection:(iTermURLActionHelper *)helper;
 
@@ -88,13 +89,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines;
 
-- (BOOL)openSemanticHistoryPath:(NSString *)path
+- (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
-                         suffix:(NSString *)suffix;
+                         suffix:(NSString *)suffix
+                     completion:(void (^)(BOOL ok))completion;
 
 @end
 

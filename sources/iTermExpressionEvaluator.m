@@ -310,7 +310,7 @@
 
 - (void)logError:(NSError *)error invocation:(NSString *)invocation {
     NSString *message =
-    [NSString stringWithFormat:@"Error evaluating expression %@: %@",
+    [NSString stringWithFormat:@"Error evaluating expression %@: %@\n",
      invocation, error.localizedDescription];
     [[iTermScriptHistoryEntry globalEntry] addOutput:message];
 }

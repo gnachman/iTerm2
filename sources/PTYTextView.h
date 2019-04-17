@@ -24,6 +24,7 @@
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @class iTermURLActionHelper;
+@class iTermVariableScope;
 @class MovingAverage;
 @class PTYScroller;
 @class PTYScrollView;
@@ -213,6 +214,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (CGRect)textViewContainerRect;
 - (CGFloat)textViewBadgeTopMargin;
 - (CGFloat)textViewBadgeRightMargin;
+- (iTermVariableScope *)textViewVariablesScope;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -545,13 +547,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (IBAction)installShellIntegration:(id)sender;
 
 // Open a semantic history path.
-- (BOOL)openSemanticHistoryPath:(NSString *)path
+- (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
-                         suffix:(NSString *)suffix;
+                         suffix:(NSString *)suffix
+                     completion:(void (^)(BOOL ok))completion;
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)isComplex

@@ -2845,7 +2845,6 @@
 		A6C762CD1B45C52B00E3C992 /* iTermNotificationController.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermNotificationController.m */; };
 		A6C762CE1B45C52B00E3C992 /* iTermKeyBindingMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */; };
 		A6C762D01B45C52B00E3C992 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
-		A6C762D11B45C52B00E3C992 /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
 		A6C762D21B45C52B00E3C992 /* iTermTextExtractor.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */; };
 		A6C762D31B45C52B00E3C992 /* LineBlock.mm in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A3183F3B78003A6A6D /* LineBlock.mm */; };
 		A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
@@ -3382,6 +3381,7 @@
 		A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718C92266DB380053488E /* iTermURLActionHelper.m */; };
 		A6F718CE2266E71E0053488E /* iTermUserDefaults.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718CC2266E71E0053488E /* iTermUserDefaults.h */; };
 		A6F718CF2266E71E0053488E /* iTermUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718CD2266E71E0053488E /* iTermUserDefaults.m */; };
+		A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
 		A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A708213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A709213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
@@ -12310,6 +12310,7 @@
 				5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
+				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
@@ -12508,7 +12509,6 @@
 				A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */,
 				A6C763121B45C52B00E3C992 /* iTermImageInfo.m in Sources */,
 				A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */,
-				A6C762D11B45C52B00E3C992 /* iTermSemanticHistoryController.m in Sources */,
 				5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */,
 				A6CEC10F1DCE8146009F4FD2 /* GPBRootObject.m in Sources */,
 				A6C762D61B45C52B00E3C992 /* LineBufferPosition.m in Sources */,

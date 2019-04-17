@@ -2133,20 +2133,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self pasteSelection:nil];
 }
 
-- (BOOL)openSemanticHistoryPath:(NSString *)path
+- (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
-                         suffix:(NSString *)suffix {
-    return [_urlActionHelper openSemanticHistoryPath:path
-                                       orRawFilename:rawFileName
-                                    workingDirectory:workingDirectory
-                                          lineNumber:lineNumber
-                                        columnNumber:columnNumber
-                                              prefix:prefix
-                                              suffix:suffix];
+                         suffix:(NSString *)suffix
+                     completion:(void (^)(BOOL))completion {
+    [_urlActionHelper openSemanticHistoryPath:path
+                                orRawFilename:rawFileName
+                             workingDirectory:workingDirectory
+                                   lineNumber:lineNumber
+                                 columnNumber:columnNumber
+                                       prefix:prefix
+                                       suffix:suffix
+                                   completion:completion];
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {

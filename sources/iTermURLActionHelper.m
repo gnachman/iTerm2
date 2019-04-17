@@ -164,24 +164,27 @@
                       ignoringNewlines:ignoringNewlines];
 }
 
-- (BOOL)openSemanticHistoryPath:(NSString *)path
+- (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
-                         suffix:(NSString *)suffix {
+                         suffix:(NSString *)suffix
+                     completion:(void (^)(BOOL ok))completion {
     NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:prefix
                                                                suffix:suffix
                                                                  path:path
                                                      workingDirectory:workingDirectory
                                                            lineNumber:lineNumber
                                                          columnNumber:columnNumber];
-    return [self.semanticHistoryController openPath:path
-                                      orRawFilename:rawFileName
-                                      substitutions:subs
-                                         lineNumber:lineNumber
-                                       columnNumber:columnNumber];
+    [self.semanticHistoryController openPath:path
+                               orRawFilename:rawFileName
+                               substitutions:subs
+                                       scope:[self.delegate urlActionHelperScope:self]
+                                  lineNumber:lineNumber
+                                columnNumber:columnNumber
+                                  completion:completion];
 }
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
@@ -242,15 +245,20 @@
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
-                if (![self openSemanticHistoryPath:action.fullPath
-                                     orRawFilename:action.rawFilename
-                                  workingDirectory:action.workingDirectory
-                                        lineNumber:action.lineNumber
-                                      columnNumber:action.columnNumber
-                                            prefix:extendedPrefix
-                                            suffix:extendedSuffix]) {
-                    [self findUrlInString:action.string andOpenInBackground:openInBackground];
-                }
+                __weak __typeof(self) weakSelf = self;
+                [self openSemanticHistoryPath:action.fullPath
+                                orRawFilename:action.rawFilename
+                             workingDirectory:action.workingDirectory
+                                   lineNumber:action.lineNumber
+                                 columnNumber:action.columnNumber
+                                       prefix:extendedPrefix
+                                       suffix:extendedSuffix
+                                   completion:^(BOOL ok) {
+                                       if (!ok) {
+                                           [weakSelf findUrlInString:action.string
+                                                 andOpenInBackground:openInBackground];
+                                       }
+                                   }];
                 break;
             }
             case kURLActionOpenURL: {
@@ -303,8 +311,7 @@
                                         workingDirectory:(NSString *)workingDirectory
                                               lineNumber:(NSString *)lineNumber
                                             columnNumber:(NSString *)columnNumber {
-    NSMutableDictionary *subs = [[self.delegate urlActionHelperSubstitutions:self] mutableCopy];
-    NSDictionary *semanticHistorySubs =
+    return
     @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
        kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
        kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
@@ -312,8 +319,6 @@
        kSemanticHistoryLineNumberKey: lineNumber ?: @"",
        kSemanticHistoryColumnNumberKey: columnNumber ?: @""
        };
-    [subs addEntriesFromDictionary:semanticHistorySubs];
-    return subs;
 }
 
 #pragma mark - Secure Copy

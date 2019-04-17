@@ -27,11 +27,14 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCachingFileManager.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermLaunchServices.h"
 #import "iTermPathCleaner.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryPrefsController.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -45,15 +48,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 NSString *const kSemanticHistoryLineNumberKey = @"semanticHistory.lineNumber";
 NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber";
 
-@implementation iTermSemanticHistoryController
+@implementation iTermSemanticHistoryController {
+    iTermExpressionEvaluator *_expressionEvaluator;
+}
 
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
-
-- (void)dealloc {
-    [prefs_ release];
-    [super dealloc];
-}
 
 - (NSString *)cleanedUpPathFromPath:(NSString *)path
                              suffix:(NSString *)suffix
@@ -403,14 +403,27 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return [self openURL:url editorIdentifier:nil];
 }
 
-- (BOOL)openPath:(NSString *)cleanedUpPath
+- (NSDictionary *)numericSubstitutionsForPath:(NSString *)path
+                            lineNumber:(NSString *)lineNumber
+                                prefix:(NSString *)prefix
+                                suffix:(NSString *)suffix
+                                   pwd:(NSString *)pwd {
+    return @{ @"1": path ? [path stringWithEscapedShellCharactersIncludingNewlines:YES] : @"",
+              @"2": lineNumber ? lineNumber : @"",
+              @"3": prefix,
+              @"4": suffix,
+              @"5": pwd };
+}
+
+- (void)openPath:(NSString *)cleanedUpPath
    orRawFilename:(NSString *)rawFileName
-       substitutions:(NSDictionary *)substitutions
+   substitutions:(NSDictionary *)substitutions
+           scope:(iTermVariableScope *)originalScope
       lineNumber:(NSString *)lineNumber
-    columnNumber:(NSString *)columnNumber {
+    columnNumber:(NSString *)columnNumber
+      completion:(void (^)(BOOL))completion {
     DLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
          cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
-    BOOL isDirectory;
 
     NSString *path;
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
@@ -424,67 +437,100 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
-    NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
-    NSMutableDictionary *augmentedSubs = [[substitutions mutableCopy] autorelease];
-    augmentedSubs[@"1"] = path ? [path stringWithEscapedShellCharactersIncludingNewlines:YES] : @"";
-    augmentedSubs[@"2"] = lineNumber ? lineNumber : @"";
-    augmentedSubs[@"3"] = substitutions[kSemanticHistoryPrefixSubstitutionKey];
-    augmentedSubs[@"4"] = substitutions[kSemanticHistorySuffixSubstitutionKey];
-    augmentedSubs[@"5"] = substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey];
-    script = [script stringByReplacingVariableReferencesWithVariables:augmentedSubs];
+    // Construct a scope with semanticHistory.xxx variables based on the passed-in scope
+    iTermVariables *frame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
+    iTermVariableScope *scope = [originalScope copy];
+    [scope addVariables:frame toScopeNamed:@"semanticHistory"];
+    [scope setValuesFromDictionary:substitutions];
 
-    DLog(@"After escaping backrefs, script is %@", script);
+    NSDictionary *numericSubstitutions = [self numericSubstitutionsForPath:path
+                                                                lineNumber:lineNumber
+                                                                    prefix:substitutions[kSemanticHistoryPrefixSubstitutionKey]
+                                                                    suffix:substitutions[kSemanticHistorySuffixSubstitutionKey]
+                                                                       pwd:substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey]];
+    NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
+    script = [script stringByPerformingSubstitutions:numericSubstitutions];
+    _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:script scope:scope];
 
     if (isRawAction) {
-        DLog(@"Launch raw action: /bin/sh -c %@", script);
-        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
-        return YES;
+        __weak __typeof(self) weakSelf = self;
+        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+            DLog(@"Launch raw action: /bin/sh -c %@", evaluator.value);
+            if (!evaluator.error) {
+                [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
+            }
+        }];
+        completion(YES);
+        return;
     }
 
+    BOOL isDirectory;
     if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         DLog(@"No file exists at %@, not running semantic history", path);
-        return NO;
+        completion(NO);
+        return;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
-        DLog(@"Running /bin/sh -c %@", script);
-        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
-        return YES;
+        __weak __typeof(self) weakSelf = self;
+        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+            DLog(@"Running /bin/sh -c %@", evaluator.value);
+            if (!evaluator.error) {
+                [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
+                completion(YES);
+            }
+        }];
+        return;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
-        DLog(@"Launch coprocess with script %@", script);
-        assert(delegate_);
-        [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
-        return YES;
+        __weak __typeof(self) weakSelf = self;
+        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+            DLog(@"Launch coprocess with script %@", evaluator.value);
+            if (!evaluator.error) {
+                [weakSelf.delegate semanticHistoryLaunchCoprocessWithCommand:evaluator.value];
+                completion(YES);
+            }
+        }];
+        return;
     }
 
     if (isDirectory) {
         DLog(@"Open directory %@", path);
         [self openFile:path];
-        return YES;
+        completion(YES);
+        return;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryUrlAction]) {
         NSString *url = prefs_[kSemanticHistoryTextKey];
         // Replace the path with a non-shell-escaped path.
-        augmentedSubs[@"1"] = path ?: @"";
+        numericSubstitutions = [numericSubstitutions dictionaryBySettingObject:path ?: @"" forKey:@"1"];
         // Percent-escape all the arguments.
-        for (NSString *key in augmentedSubs.allKeys) {
-            augmentedSubs[key] =
-                [augmentedSubs[key] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
-        }
-        url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
-        DLog(@"Open url %@", url);
-        [self openURL:[NSURL URLWithUserSuppliedString:url]];
-        return YES;
+        numericSubstitutions = [numericSubstitutions mapValuesWithBlock:^id(id key, NSString *object) {
+            return [object stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+        }];
+        url = [url stringByPerformingSubstitutions:numericSubstitutions];
+        _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:url scope:scope];
+        __weak __typeof(self) weakSelf = self;
+        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+            DLog(@"URL format is %@. Error is %@. Evaluated value is %@.", url, evaluator.error, evaluator.value);
+            if (!evaluator.error) {
+                [weakSelf openURL:[NSURL URLWithUserSuppliedString:evaluator.value]];
+            } else {
+                [weakSelf openURL:[NSURL URLWithUserSuppliedString:url]];
+            }
+            completion(YES);
+        }];
+        return;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
         [self preferredEditorIdentifier]) {
         // Action is to open in a specific editor, so open it in the editor.
         [self openFileInEditor:path lineNumber:lineNumber columnNumber:columnNumber];
-        return YES;
+        completion(YES);
+        return;
     }
 
     if (lineNumber) {
@@ -493,12 +539,13 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
                  appBundleId);
             [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber columnNumber:columnNumber];
-            return YES;
+            completion(YES);
+            return;
         }
     }
 
     [self openFile:path];
-    return YES;
+    completion(YES);
 }
 
 - (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {

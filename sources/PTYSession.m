@@ -1784,6 +1784,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
     dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
     NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
+#warning TODO: Remove this
     NSString *name = [[format stringByReplacingVariableReferencesWithVariablesFromScope:self.variablesScope
                                                                 nonVariableReplacements:@{}] stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
     NSString *filename = [[iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:_profile] stringByAppendingPathComponent:name];
@@ -3204,17 +3205,26 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               workingDirectory:workingDirectory
                                                            extractedLineNumber:&lineNumber
                                                                   columnNumber:&columnNumber];
-        if ([_textview openSemanticHistoryPath:cleanedup
-                                 orRawFilename:rawFilename
-                              workingDirectory:workingDirectory
-                                    lineNumber:lineNumber
-                                  columnNumber:columnNumber
-                                        prefix:selection
-                                        suffix:@""]) {
-            return;
-        }
+        __weak __typeof(self) weakSelf = self;
+        [_textview openSemanticHistoryPath:cleanedup
+                             orRawFilename:rawFilename
+                          workingDirectory:workingDirectory
+                                lineNumber:lineNumber
+                              columnNumber:columnNumber
+                                    prefix:selection
+                                    suffix:@""
+                                completion:^(BOOL ok) {
+                                    if (!ok) {
+                                        [weakSelf tryOpenStringAsURL:selection];
+                                    }
+                                }];
+        return;
     }
 
+    [self tryOpenStringAsURL:selection];
+}
+
+- (void)tryOpenStringAsURL:(NSString *)selection {
     // Try to open it as a URL.
     NSURL *url =
         [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
@@ -7877,6 +7887,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (CGFloat)textViewBadgeRightMargin {
     return [iTermProfilePreferences floatForKey:KEY_BADGE_RIGHT_MARGIN inProfile:self.profile];
+}
+
+- (iTermVariableScope *)textViewVariablesScope {
+    return self.variablesScope;
 }
 
 - (void)bury {
