@@ -290,7 +290,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                         fromCharacterSet:[NSCharacterSet filenameCharacterSet]
                     charsTakenFromPrefix:NULL];
 
-#warning TOOD: Don't just cancel them. If one's already running with the same inputs, glom on to it. Also, don't re-do the work when the user clicks. Furthermore, abort when the command key is released.
+    // Because path finders cache their results, this is not a disaster. Since the inputs tend to
+    // be the same, whatever work was already done can be exploited this time around.
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermURLActionFactoryCancelPathfinders
                                                         object:nil];
 
