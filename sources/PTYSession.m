@@ -1,4 +1,5 @@
 #import "PTYSession.h"
+#import "PTYSession+ARC.h"
 
 #import "Coprocess.h"
 #import "CVector.h"
@@ -1063,7 +1064,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                    shouldEnterTmuxMode:(BOOL)shouldEnterTmuxMode
                                                  state:(NSDictionary *)state
                                      tmuxDCSIdentifier:(NSString *)tmuxDCSIdentifier
-                                        tmuxPaneNumber:(NSNumber *)tmuxPaneNumber
                                         missingProfile:(BOOL)missingProfile {
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -1078,10 +1078,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
     }
 
-
-    if (tmuxPaneNumber) {
-        [aSession setTmuxPane:[tmuxPaneNumber intValue]];
-    }
     NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
     if (history) {
         [[aSession screen] setHistory:history];
@@ -1357,7 +1353,7 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL attachedToServer = NO;
     typedef void (^iTermBooleanCompletionBlock)(BOOL ok);
     void (^runCommandBlock)(iTermBooleanCompletionBlock) = ^(void (^completion)(BOOL)) { completion(YES); };
-
+    BOOL startAutoLog = NO;
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
@@ -1476,9 +1472,9 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setTmuxWindowTitle:title];
         }
         if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
-            [aSession.shell startLoggingToFileWithPath:[aSession autoLogFilename]
-                                          shouldAppend:NO];
+            startAutoLog = YES;
         }
+        [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
     void (^finish)(BOOL) = ^(BOOL ok){
         if (!ok) {
@@ -1495,11 +1491,24 @@ ITERM_WEAKLY_REFERENCEABLE
                                          shouldEnterTmuxMode:shouldEnterTmuxMode
                                                        state:state
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
-                                              tmuxPaneNumber:tmuxPaneNumber
                                               missingProfile:missingProfile];
         [aSession didFinishInitialization:YES];
     };
-    runCommandBlock(finish);
+    if (startAutoLog) {
+        [aSession retain];
+        [aSession fetchAutoLogFilenameIfEnabled:YES
+                                     completion:
+         ^(NSString * _Nonnull filename) {
+             if (filename) {
+                 [aSession.shell startLoggingToFileWithPath:filename
+                                               shouldAppend:NO];
+             }
+             [aSession autorelease];
+             runCommandBlock(finish);
+         }];
+    } else {
+        runCommandBlock(finish);
+    }
 
     return aSession;
 }
@@ -1780,18 +1789,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
-- (NSString *)autoLogFilename {
-    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
-    dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-    NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
-#warning TODO: Remove this
-    NSString *name = [[format stringByReplacingVariableReferencesWithVariablesFromScope:self.variablesScope
-                                                                nonVariableReplacements:@{}] stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
-    NSString *filename = [[iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:_profile] stringByAppendingPathComponent:name];
-    DLog(@"Using autolog filename %@ from format %@", filename, format);
-    return filename;
-}
-
 - (BOOL)shouldSetCtype {
     return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
@@ -1936,14 +1933,6 @@ ITERM_WEAKLY_REFERENCEABLE
     completion(env);
 }
 
-- (NSString *)autoLogFilenameIfEnabled {
-    if ([_profile[KEY_AUTOLOG] boolValue]) {
-        return [self autoLogFilename];
-    } else {
-        return nil;
-    }
-}
-
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
@@ -1963,20 +1952,22 @@ ITERM_WEAKLY_REFERENCEABLE
             @synchronized(self) {
                 _registered = YES;
             }
-            [_shell launchWithPath:argv[0]
-                         arguments:[argv subarrayFromIndex:1]
-                       environment:env
-                             width:[_screen width]
-                            height:[_screen height]
-                            isUTF8:isUTF8
-                       autologPath:[self autoLogFilenameIfEnabled]
-                       synchronous:(completion == nil)
-                        completion:^{
-                            [self sendInitialText];
-                            if (completion) {
-                                completion(YES);
-                            }
-                        }];
+            [self fetchAutoLogFilenameIfEnabled:YES completion:^(NSString * _Nonnull autoLogFilename) {
+                [_shell launchWithPath:argv[0]
+                             arguments:[argv subarrayFromIndex:1]
+                           environment:env
+                                 width:[_screen width]
+                                height:[_screen height]
+                                isUTF8:isUTF8
+                           autologPath:autoLogFilename
+                           synchronous:(completion == nil)
+                            completion:^{
+                                [self sendInitialText];
+                                if (completion) {
+                                    completion(YES);
+                                }
+                            }];
+            }];
         }];
     }];
 }

@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) id value;
 @property (nonatomic, readonly) NSError *error;
 @property (nonatomic, readonly) NSSet<NSString *> *missingValues;
+@property (nonatomic) BOOL debug;
 
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
                               invocation:(NSString *)invocation

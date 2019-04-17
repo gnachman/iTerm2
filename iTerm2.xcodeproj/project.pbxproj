@@ -3382,6 +3382,8 @@
 		A6F718CE2266E71E0053488E /* iTermUserDefaults.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718CC2266E71E0053488E /* iTermUserDefaults.h */; };
 		A6F718CF2266E71E0053488E /* iTermUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718CD2266E71E0053488E /* iTermUserDefaults.m */; };
 		A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
+		A6F718D7226704920053488E /* PTYSession+ARC.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718D5226704920053488E /* PTYSession+ARC.h */; };
+		A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F718D6226704920053488E /* PTYSession+ARC.m */; };
 		A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A708213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
 		A6F7A709213CB143004DE961 /* StatusBarIconUser.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */; };
@@ -5752,6 +5754,8 @@
 		A6F718C92266DB380053488E /* iTermURLActionHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermURLActionHelper.m; sourceTree = "<group>"; };
 		A6F718CC2266E71E0053488E /* iTermUserDefaults.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUserDefaults.h; sourceTree = "<group>"; };
 		A6F718CD2266E71E0053488E /* iTermUserDefaults.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUserDefaults.m; sourceTree = "<group>"; };
+		A6F718D5226704920053488E /* PTYSession+ARC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYSession+ARC.h"; sourceTree = "<group>"; };
+		A6F718D6226704920053488E /* PTYSession+ARC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+ARC.m"; sourceTree = "<group>"; };
 		A6F7A6EF213CB13D004DE961 /* StatusBarIconUser.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconUser.png; path = images/StatusBarIcons/StatusBarIconUser.png; sourceTree = "<group>"; };
 		A6F7A6F0213CB13E004DE961 /* StatusBarIconNetwork.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconNetwork.png; path = images/StatusBarIcons/StatusBarIconNetwork.png; sourceTree = "<group>"; };
 		A6F7A6F1213CB13E004DE961 /* StatusBarIconJobs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconJobs.png; path = images/StatusBarIcons/StatusBarIconJobs.png; sourceTree = "<group>"; };
@@ -7669,6 +7673,8 @@
 				A6F718C42265B2580053488E /* iTermPathCleaner.m */,
 				A6F718CC2266E71E0053488E /* iTermUserDefaults.h */,
 				A6F718CD2266E71E0053488E /* iTermUserDefaults.m */,
+				A6F718D5226704920053488E /* PTYSession+ARC.h */,
+				A6F718D6226704920053488E /* PTYSession+ARC.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10049,6 +10055,7 @@
 				A6BF035421E179380097DA86 /* iTermVariableHistory.h in Headers */,
 				A6D8973A22154A8800325F6A /* AnnotateTrigger.h in Headers */,
 				A6D1784521BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h in Headers */,
+				A6F718D7226704920053488E /* PTYSession+ARC.h in Headers */,
 				A67D19792238D50800BD0D4D /* iTermSetFindStringNotification.h in Headers */,
 				5370678821C9D2780088D0F3 /* SIGPolicy.h in Headers */,
 				A623D9541F8B04890011F8C3 /* iTermMetalGlue.h in Headers */,
@@ -12337,6 +12344,7 @@
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
+				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
