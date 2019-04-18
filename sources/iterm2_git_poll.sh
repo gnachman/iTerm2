@@ -53,6 +53,7 @@ git_poll () {
     PUSH_COUNT=$(cut -f1 <<< "$COUNTS")
     PULL_COUNT=$(cut -f2 <<< "$COUNTS")
     BRANCH=$(branch)
+    cd /
 
     echo "--BEGIN--"
     echo "XCODE: $XCODE"
