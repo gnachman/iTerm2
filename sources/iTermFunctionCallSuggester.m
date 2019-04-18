@@ -7,6 +7,7 @@
 
 #import "iTermFunctionCallSuggester.h"
 
+#import "CPParser+Cache.h"
 #import "iTermExpressionParser+Private.h"
 #import "iTermGrammarProcessor.h"
 #import "iTermSwiftyStringParser.h"
@@ -21,7 +22,7 @@
 
 @implementation iTermFunctionCallSuggester {
 @protected
-    CPLR1Parser *_parser;
+    CPLALR1Parser *_parser;
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
     NSSet<NSString *> *(^_pathSource)(NSString *prefix);
     NSString *_prefix;
@@ -41,10 +42,6 @@
         _grammarProcessor = [[iTermGrammarProcessor alloc] init];
         [self loadRulesAndTransforms];
 
-        NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:self.grammarStart
-                                          backusNaurForm:_grammarProcessor.backusNaurForm
-                                                   error:&error];
         // NOTE:
         // CPSLRParser is a slightly faster parser but is not capable of dealing with the grammar
         // rules for functions in expressions. You need lookahead to distinguish function calls
@@ -55,7 +52,7 @@
         // reason a funcname is not a path is that it can only have two parts.
         //
         // See the comments in the headers for the two parsers for more details about their costs.
-        _parser = [CPLALR1Parser parserWithGrammar:grammar];
+        _parser = [CPLALR1Parser parserWithBNF:_grammarProcessor.backusNaurForm start:self.grammarStart];
         assert(_parser);
         _parser.delegate = self;
     }

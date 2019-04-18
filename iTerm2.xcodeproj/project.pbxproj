@@ -1235,6 +1235,8 @@
 		534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690271C94FF0000B7E4E9 /* overflowImagePressed.png */; };
 		5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */; };
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
+		5357E41E22682B2100FE5A55 /* CPParser+Cache.h in Headers */ = {isa = PBXBuildFile; fileRef = 5357E41C22682B2100FE5A55 /* CPParser+Cache.h */; };
+		5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */ = {isa = PBXBuildFile; fileRef = 5357E41D22682B2100FE5A55 /* CPParser+Cache.m */; };
 		535B3BB92228DC5500D6D410 /* iTermAlertBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 535B3BB72228DC5500D6D410 /* iTermAlertBuiltInFunction.h */; };
 		535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 535B3BB82228DC5500D6D410 /* iTermAlertBuiltInFunction.m */; };
 		535D0910224DBE7D00A79581 /* iTermPreferencesSearchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 535D090F224DBE7D00A79581 /* iTermPreferencesSearchTests.m */; };
@@ -4209,6 +4211,8 @@
 		534690271C94FF0000B7E4E9 /* overflowImagePressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImagePressed.png; sourceTree = "<group>"; };
 		534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImagePressed@2x.png"; sourceTree = "<group>"; };
 		5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "overflowImage@2x.png"; sourceTree = "<group>"; };
+		5357E41C22682B2100FE5A55 /* CPParser+Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CPParser+Cache.h"; sourceTree = "<group>"; };
+		5357E41D22682B2100FE5A55 /* CPParser+Cache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "CPParser+Cache.m"; sourceTree = "<group>"; };
 		535B3BB72228DC5500D6D410 /* iTermAlertBuiltInFunction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAlertBuiltInFunction.h; sourceTree = "<group>"; };
 		535B3BB82228DC5500D6D410 /* iTermAlertBuiltInFunction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAlertBuiltInFunction.m; sourceTree = "<group>"; };
 		535D090F224DBE7D00A79581 /* iTermPreferencesSearchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPreferencesSearchTests.m; sourceTree = "<group>"; };
@@ -8642,6 +8646,8 @@
 				531E71F22229A54500915960 /* iTermParsedExpression.h */,
 				531E71F32229A54500915960 /* iTermParsedExpression.m */,
 				531E71F62229A69C00915960 /* iTermExpressionParser+Private.h */,
+				5357E41C22682B2100FE5A55 /* CPParser+Cache.h */,
+				5357E41D22682B2100FE5A55 /* CPParser+Cache.m */,
 			);
 			name = Language;
 			sourceTree = "<group>";
@@ -9922,6 +9928,7 @@
 				537BFDD52101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h in Headers */,
 				A699507721E33827009916BC /* iTermRawKeyMapper.h in Headers */,
 				A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */,
+				5357E41E22682B2100FE5A55 /* CPParser+Cache.h in Headers */,
 				A66F52AD21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h in Headers */,
 				A69C93412121140100531438 /* iTermStatusBarLargeComposerViewController.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
@@ -12090,6 +12097,7 @@
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */,
 				530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */,
+				5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */,
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,

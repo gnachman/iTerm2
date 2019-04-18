@@ -926,6 +926,10 @@ int decode_utf8_char(const unsigned char *datap,
     }
 }
 
+- (NSString *)it_contentHash {
+    return [self dataUsingEncoding:NSUTF8StringEncoding].it_sha256.it_hexEncoded;
+}
+
 - (NSDate *)dateValueFromUTC {
     NSArray<NSString *> *formats = @[ @"E, d MMM yyyy HH:mm:ss zzz",
                                       @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
