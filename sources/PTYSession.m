@@ -10908,7 +10908,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)statusBarOpenPreferencesToComponent:(nullable id<iTermStatusBarComponent>)component {
     PreferencePanel *panel;
     NSString *guid;
-    if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {
+    if (self.isDivorced && ([_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT] ||
+                            [_overriddenFields containsObject:KEY_SHOW_STATUS_BAR])) {
         panel = [PreferencePanel sessionsInstance];
         guid = _profile[KEY_GUID];
     } else {
@@ -10919,6 +10920,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
   andEditComponentWithIdentifier:component.statusBarComponentIdentifier
                             tmux:self.isTmuxClient
                            scope:self.variablesScope];
+    [panel.window makeKeyAndOrderFront:nil];
 }
 
 
