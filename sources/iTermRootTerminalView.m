@@ -89,7 +89,7 @@ typedef struct {
         _delegate = delegate;
 
         self.autoresizesSubviews = YES;
-        _leftTabBarPreferredWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
+        _leftTabBarPreferredWidth = round([iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth]);
         [self setLeftTabBarWidthFromPreferredWidth];
 
         // Create the tab view.
@@ -1098,7 +1098,7 @@ typedef struct {
 
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
     const CGFloat minimumWidth = 50;
-    const CGFloat maximumWidth = contentWidth / 3;
+    const CGFloat maximumWidth = round(contentWidth / 3);
     return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
 }
 
@@ -1119,7 +1119,7 @@ typedef struct {
     // T <= T/3 + C/3
     // 2/3T <= C/3
     // T <= C/2
-    const CGFloat maximumWidth = self.bounds.size.width / 2;
+    const CGFloat maximumWidth = round(self.bounds.size.width / 2);
     _leftTabBarWidth = MAX(MIN(maximumWidth, _leftTabBarPreferredWidth), minimumWidth);
 }
 
@@ -1259,7 +1259,7 @@ typedef struct {
 // For the left-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
     CGFloat originalValue = _leftTabBarPreferredWidth;
-    _leftTabBarPreferredWidth = [self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + delta];
+    _leftTabBarPreferredWidth = round([self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + delta]);
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
     [[NSUserDefaults standardUserDefaults] setDouble:_leftTabBarPreferredWidth
                                               forKey:kPreferenceKeyLeftTabBarWidth];
