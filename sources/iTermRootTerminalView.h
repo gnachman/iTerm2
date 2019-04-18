@@ -47,6 +47,7 @@
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
 - (BOOL)rootTerminalViewWindowHasFullSizeContentView;
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop;
+- (BOOL)rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
@@ -127,5 +128,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
 - (void)updateToolbeltProportionsIfNeeded;
 - (void)setToolbeltProportions:(NSDictionary *)proportions;
+- (void)invalidateAutomaticTabBarBackingHiding;
 
 @end

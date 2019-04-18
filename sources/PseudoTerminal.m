@@ -1417,6 +1417,11 @@ ITERM_WEAKLY_REFERENCEABLE
                      scope:self.scope];
 }
 
+- (void)tabSessionDidChangeTransparency:(PTYTab *)tab {
+    // In case the last pane just becamse opaque, we can drop the visual effect view in the fake window title bar.
+    [_contentView invalidateAutomaticTabBarBackingHiding];
+}
+
 - (BOOL)miniaturizedWindowShouldPreserveFrameUntilDeminiaturized {
     if (self.window.isMiniaturized) {
         switch (windowType_) {
@@ -3998,6 +4003,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentTab] recheckBlur];
     [self updateTabColors];  // Updates the window's background color as a side-effect
     [self updateWindowShadow:self.ptyWindow];
+    [_contentView invalidateAutomaticTabBarBackingHiding];
 }
 
 - (BOOL)anySessionInCurrentTabHasTransparency {
@@ -4648,6 +4654,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [self repositionWidgets];
     }
+    [_contentView invalidateAutomaticTabBarBackingHiding];
 }
 
 - (NSTitlebarAccessoryViewController *)lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14) {
@@ -7893,6 +7900,28 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if ([PseudoTerminal windowTypeHasFullSizeContentView:savedWindowType_]) {
         // The tab bar is not a titlebar accessory
+        return YES;
+    }
+    return NO;
+}
+
+// Generally yes, but not when a fake titlebar is shown *and* the window has transparency.
+// Fake titlebars need a background because transparent windows won't give you one for free.
+- (BOOL)rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden {
+    if (@available(macOS 10.14, *)) { } else {
+        // Doesn't matter but let's not think about 10.13 and earlier since it won't happen
+        return YES;
+    }
+    if (![PseudoTerminal windowTypeHasFullSizeContentView:windowType_]) {
+        return YES;
+    }
+    if ([self anyFullScreen]) {
+        return YES;
+    }
+    if (![self useTransparency]) {
+        return YES;
+    }
+    if (![self anyPaneIsTransparent]) {
         return YES;
     }
     return NO;

@@ -3933,7 +3933,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_view.window && _delegate.realParentWindow && _textview) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (_view.window && _delegate.realParentWindow && _textview) {
-                [_delegate sessionUpdateMetalAllowed];
+                [_delegate sessionTransparencyDidChange];
             }
         });
     }

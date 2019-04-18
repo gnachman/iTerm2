@@ -5268,6 +5268,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionTransparencyDidChange {
+    [self sessionUpdateMetalAllowed];
+    [realParentWindow_ tabSessionDidChangeTransparency:self];
+}
+
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session {
     [realParentWindow_ tabDidClearScrollbackBufferInSession:session];
 }

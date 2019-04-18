@@ -59,10 +59,18 @@ typedef struct {
 
 @end
 
-@interface iTermTabBarBacking : NSVisualEffectView
+@interface iTermTabBarBacking : NSVisualEffectView<iTermTabBarControlViewContainer>
+@property (nonatomic) BOOL hidesWhenTabBarHidden;
 @end
 
 @implementation iTermTabBarBacking
+
+- (void)tabBarControlViewWillHide:(BOOL)hidden {
+    if (_hidesWhenTabBarHidden || !hidden) {
+        [self setHidden:hidden];
+    }
+}
+
 @end
 
 @implementation iTermRootTerminalView {
@@ -109,9 +117,9 @@ typedef struct {
         // Create the tab bar.
         NSRect tabBarFrame = self.bounds;
         tabBarFrame.size.height = _tabBarControl.height;
-
         if (@available(macOS 10.14, *)) {
             _tabBarBacking = [[iTermTabBarBacking alloc] init];
+            _tabBarBacking.hidesWhenTabBarHidden = [delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
             _tabBarBacking.autoresizesSubviews = YES;
             _tabBarBacking.blendingMode = NSVisualEffectBlendingModeWithinWindow;
             _tabBarBacking.material = NSVisualEffectMaterialTitlebar;
@@ -196,6 +204,13 @@ typedef struct {
     _tabBarControl.itermTabBarDelegate = nil;
     _tabBarControl.delegate = nil;
     _leftTabBarDragHandle.delegate = nil;
+}
+
+- (void)invalidateAutomaticTabBarBackingHiding {
+    _tabBarBacking.hidesWhenTabBarHidden = [self.delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
+    if (_tabBarControl.isHidden) {
+        _tabBarBacking.hidden = _tabBarBacking.hidesWhenTabBarHidden;
+    }
 }
 
 - (NSView *)hitTest:(NSPoint)point {

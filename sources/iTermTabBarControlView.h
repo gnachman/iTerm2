@@ -8,6 +8,11 @@
 
 #import "PSMTabBarControl.h"
 
+// If the superview conforms to this protocol then the willHide method gets called from -setHidden:.
+@protocol iTermTabBarControlViewContainer<NSObject>
+- (void)tabBarControlViewWillHide:(BOOL)hidden;
+@end
+
 // NOTE: The delegate should nil out of itermTabBarDelegate when it gets dealloced; we may live on because of delayed performs.
 @protocol iTermTabBarControlViewDelegate <NSObject>
 

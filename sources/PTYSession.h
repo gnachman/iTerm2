@@ -210,6 +210,9 @@ typedef enum {
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
 
+// Amount of transparency changed (perhaps to none!)
+- (void)sessionTransparencyDidChange;
+
 // Scrollback buffer cleared.
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session;
 
