@@ -1204,7 +1204,12 @@ typedef struct {
             _statusBarContainer = [[iTermGenericStatusBarContainer alloc] initWithFrame:statusBarFrame];
             _statusBarContainer.autoresizesSubviews = YES;
             _statusBarContainer.delegate = self;
-            [self addSubview:_statusBarContainer];
+            NSInteger index = [self.subviews indexOfObject:_stoplightHotbox];
+            if (index == NSNotFound) {
+                [self addSubview:_statusBarContainer];
+            } else {
+                [self insertSubview:_statusBarContainer atIndex:index];
+            }
         }
         if (_statusBarViewController.view.superview == _statusBarContainer) {
             [_statusBarViewController.view removeFromSuperview];
