@@ -238,7 +238,7 @@ static const float kAnimationDuration = 0.2;
             break;
         case NSReturnTextMovement: {
             // Return key
-            const BOOL shiftPressed = ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+            const BOOL shiftPressed = !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
             const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
             if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];
