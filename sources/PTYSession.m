@@ -2345,6 +2345,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
 }
 
+#if 0
 - (void)handleKeyPressInCopyMode:(NSEvent *)event {
     [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
     [self.textview setNeedsDisplayOnColumn:_copyModeState.coord.x];
@@ -2502,6 +2503,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.textview setNeedsDisplayOnColumn:_copyModeState.coord.x];
     }
 }
+#endif
 
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
     const unichar unicode = [event.characters length] > 0 ? [event.characters characterAtIndex:0] : 0;
