@@ -40,26 +40,6 @@
                                    checkIfChanged:YES];
 }
 
-- (id<MTLBuffer>)tessellateRect:(CGRect)rect withTexture:(CGRect)textureRect withPool:(iTermMetalBufferPool *)verticesPool {
-    // Tesselates an axis-aligned rectangle into a sequence of vertices
-    // representing two adjacent triangles that share the diagonal of the
-    // rectangle:
-    //  top-right, top-left, bottom-left, top-right, bottom-left, bottom-right
-    const iTermVertex vertices[] = {
-        // Pixel Positions                              Texture Coordinates
-        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMinY(textureRect) } },
-        { { CGRectGetMinX(rect), CGRectGetMinY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMinY(textureRect) } },
-        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMaxY(textureRect) } },
-
-        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMinY(textureRect) } },
-        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { CGRectGetMinX(textureRect), CGRectGetMaxY(textureRect) } },
-        { { CGRectGetMaxX(rect), CGRectGetMaxY(rect) }, { CGRectGetMaxX(textureRect), CGRectGetMaxY(textureRect) } },
-    };
-    return [verticesPool requestBufferFromContext:self.poolContext
-                                        withBytes:vertices
-                                   checkIfChanged:YES];
-}
-
 - (void)setCursorCoord:(VT100GridCoord)coord {
     VT100GridSize bounds = self.cellConfiguration.gridSize;
     _row = (0 <= coord.y && coord.y < bounds.height) ? coord.y : -1;
