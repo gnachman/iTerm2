@@ -248,7 +248,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:@"Remove" block:^(iTermWarningSelection selection) {
         [self removeKeyBindings:incompatibleKeyBindings];
     }],
-                          [iTermWarningAction warningActionWithLabel:@"OK" block:^(iTermWarningSelection selection) {}] ];
+                          [iTermWarningAction warningActionWithLabel:@"Cancel" block:^(iTermWarningSelection selection) {}] ];
     warning.warningActions = actions;
     warning.warningType = kiTermWarningTypePersistent;
     warning.window = self.view.window;
