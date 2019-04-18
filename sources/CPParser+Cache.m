@@ -16,10 +16,13 @@
 @implementation CPShiftReduceParser (Cache)
 
 + (instancetype)parserWithBNF:(NSString *)bnf start:(NSString *)start {
-    NSString *key = [NSString stringWithFormat:@"%@%@%@",
-                     NSStringFromClass(self).it_contentHash,
+    NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = info[@"CFBundleShortVersionString"];
+    NSString *key = [NSString stringWithFormat:@"%@ %@ %@%@",
+                     version,
+                     NSStringFromClass(self),
                      bnf.it_contentHash,
-                     start.it_contentHash].it_contentHash;
+                     start].it_contentHash;
     __kindof CPParser *parser;
     parser = self.it_cache[key];
     if (parser) {
@@ -47,6 +50,7 @@
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *parsers = [appSupport stringByAppendingPathComponent:@"parsers"];
     NSString *file = [parsers stringByAppendingPathComponent:key];
+    [[NSFileManager defaultManager] createDirectoryAtPath:parsers withIntermediateDirectories:YES attributes:nil error:nil];
     return file;
 }
 

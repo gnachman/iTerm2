@@ -8,6 +8,7 @@
 #import "iTermExpressionParser.h"
 #import "iTermExpressionParser+Private.h"
 
+#import "CPParser+Cache.h"
 #import "iTermGrammarProcessor.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
@@ -164,11 +165,7 @@
         _grammarProcessor = [[iTermGrammarProcessor alloc] init];
         [self loadRulesAndTransforms];
 
-        NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:start
-                                          backusNaurForm:_grammarProcessor.backusNaurForm
-                                                   error:&error];
-        _parser = [CPSLRParser parserWithGrammar:grammar];
+        _parser = [CPSLRParser parserWithBNF:_grammarProcessor.backusNaurForm start:start];
         assert(_parser);
         _parser.delegate = self;
     }
