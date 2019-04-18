@@ -75,16 +75,20 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)poll {
     DLog(@"poller running %@", self);
     if (!self.enabled) {
+        DLog(@"don't poll: not enabled");
         return;
     }
     if (!self.currentDirectory.length) {
+        DLog(@"don't poll: current directory unknown");
         return;
     }
     if (![self.delegate gitPollerShouldPoll:self]) {
+        DLog(@"don't poll: delegate %@ declined", self.delegate);
         return;
     }
     _lastPollTime = [NSDate date];
     __weak __typeof(self) weakSelf = self;
+    DLog(@"don't poll: request path %@", self.currentDirectory);
     [[iTermGitPollWorker instanceForPath:self.currentDirectory] requestPath:self.currentDirectory completion:^(iTermGitState *state) {
         [weakSelf didPollWithUpdatedState:state];
     }];
@@ -100,16 +104,21 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setCurrentDirectory:(NSString *)currentDirectory {
+    DLog(@"Set current directory of %@ to %@", self, currentDirectory);
     if (currentDirectory == _currentDirectory ||
         [currentDirectory isEqualToString:_currentDirectory]) {
+        DLog(@"Not changing");
         return;
     }
     if (currentDirectory) {
+        DLog(@"Attempt to invalidate cache");
         [_rateLimit performRateLimitedBlock:^{
+            DLog(@"Invalidate cache");
             [[iTermGitPollWorker instanceForPath:currentDirectory] invalidateCacheForPath:currentDirectory];
         }];
     }
     _currentDirectory = [currentDirectory copy];
+    DLog(@"Request poll");
     [self poll];
 }
 

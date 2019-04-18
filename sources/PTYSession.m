@@ -846,10 +846,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [super dealloc];
 }
 
-- (NSString *)description
-{
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@>",
-               [self class], self, [_screen width], [_screen height], @(self.useMetal)];
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@>",
+               [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid];
 }
 
 - (void)didFinishInitialization:(BOOL)ok {

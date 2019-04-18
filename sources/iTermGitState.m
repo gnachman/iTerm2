@@ -6,6 +6,8 @@
 //
 
 #import "iTermGitState.h"
+
+#import "DebugLogging.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
@@ -29,6 +31,7 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
     if (self) {
         for (NSString *path in iTermGitStatePaths()) {
             if (![scope valueForVariableName:path]) {
+                DLog(@"%@ is not set; cannot construct git state from scope", path);
                 return nil;
             }
         }

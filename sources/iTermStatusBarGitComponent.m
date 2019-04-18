@@ -79,10 +79,12 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         _gitPoller = gitPoller;
         _pwdRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionPath scope:scope];
         _pwdRef.onChangeBlock = ^{
+            DLog(@"PWD changed, update git poller directory");
             gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
         };
         _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname scope:scope];
         _hostRef.onChangeBlock = ^{
+            DLog(@"Hostname changed, update git poller enabled");
             [weakSelf updatePollerEnabled];
         };
         _lastCommandRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionLastCommand scope:scope];
@@ -91,11 +93,13 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         };
         _remoteObserver = [[iTermRemoteGitStateObserver alloc] initWithScope:scope
                                                                        block:^{
+                                                                           DLog(@"Remote git state changed; update enabled");
                                                                            [weakSelf updatePollerEnabled];
                                                                            [weakSelf statusBarComponentUpdate];
                                                                        }];
         gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
         [self updatePollerEnabled];
+        DLog(@"Initializing git component %@ for scope of session with ID %@. poller is %@", self, scope.ID, gitPoller);
     };
     return self;
 }
@@ -261,8 +265,23 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [knobValues[iTermStatusBarGitComponentPollingIntervalKey] doubleValue] ?: 1;
 }
 
+- (BOOL)gitPollerShouldBeEnabled {
+    if (self.onLocalhost) {
+        DLog(@"Enable git poller: on localhost");
+        return YES;
+    }
+
+    if ([[iTermGitState alloc] initWithScope:self.scope]) {
+        DLog(@"Enable git poller: can construct git state");
+        return YES;
+    }
+
+    DLog(@"DISABLE GIT POLLER");
+    return NO;
+}
+
 - (void)updatePollerEnabled {
-    _gitPoller.enabled = [self onLocalhost] || [[iTermGitState alloc] initWithScope:self.scope];
+    _gitPoller.enabled = [self gitPollerShouldBeEnabled];
 }
 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
@@ -605,8 +624,16 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
 #pragma mark - iTermGitPollerDelegate
 
 - (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller {
-    return (![self.delegate statusBarComponentIsInSetupUI:self] &&
-            [self.delegate statusBarComponentIsVisible:self]);
+    if ([self.delegate statusBarComponentIsInSetupUI:self]) {
+        DLog(@"Don't poll: in setup UI");
+        return NO;
+    }
+    if (![self.delegate statusBarComponentIsVisible:self]) {
+        DLog(@"Don't poll: not visible");
+        return NO;
+    }
+
+    return YES;
 }
 
 @end
