@@ -282,8 +282,8 @@
             break;
 
         case KEY_ACTION_LOAD_COLOR_PRESET:
-            [_colorPresetsLabel setHidden:NO];
-            [_colorPresetsPopup setHidden:NO];
+            colorPresetsLabelHidden = NO;
+            colorPresetsPopupHidden = NO;
             break;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
