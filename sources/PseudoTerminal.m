@@ -5922,17 +5922,22 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [titleTextField.window makeFirstResponder:titleTextField];
-    });
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
-        if (self.currentTab.tmuxTab) {
-            [self.currentTab.tmuxController renameWindowWithId:self.currentTab.tmuxWindow
-                                                     inSession:nil
-                                                        toName:titleTextField.stringValue];
-        } else {
-            self.currentTab.variablesScope.tabTitleOverrideFormat = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+    __weak __typeof(self) weakSelf = self;
+    [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSAlertFirstButtonReturn) {
+            [weakSelf setCurrentTabTitle:titleTextField.stringValue];
         }
+    }];
+    [titleTextField.window makeFirstResponder:titleTextField];
+}
+
+- (void)setCurrentTabTitle:(NSString *)title {
+    if (self.currentTab.tmuxTab) {
+        [self.currentTab.tmuxController renameWindowWithId:self.currentTab.tmuxWindow
+                                                 inSession:nil
+                                                    toName:title];
+    } else {
+        self.currentTab.variablesScope.tabTitleOverrideFormat = title.length ? title : nil;
     }
 }
 
