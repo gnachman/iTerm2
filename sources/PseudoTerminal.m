@@ -7905,6 +7905,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateTabColors];
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
+        self.tabBarControl.insets = [self tabBarInsets];
     }
 }
 
