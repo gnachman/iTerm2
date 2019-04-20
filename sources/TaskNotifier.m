@@ -168,7 +168,9 @@ void UnblockTaskNotifier(void) {
     if (FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"run/processWrite: unlock");
         [tasksLock unlock];
+        [task retain];
         [task processWrite];
+        [task release];
         PtyTaskDebugLog(@"run/processWrite: lock");
         [tasksLock lock];
         if (tasksChanged) {

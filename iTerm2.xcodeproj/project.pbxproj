@@ -2619,6 +2619,7 @@
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
+		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
 		A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55DE217256A600142244 /* iTermLineBlockArray.h */; };
 		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
 		A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */; };
@@ -2859,7 +2860,6 @@
 		A6C762DA1B45C52B00E3C992 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
 		A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
-		A6C762DF1B45C52B00E3C992 /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
 		A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
 		A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
 		A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
@@ -12143,6 +12143,7 @@
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
 				53B93DFE21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m in Sources */,
 				A67875DB21D80363005AB938 /* iTermKeyboardHandler.m in Sources */,
+				A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */,
 				A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */,
 				A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */,
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
@@ -12654,7 +12655,6 @@
 				A6EFF21D1D1CA9F800806EEF /* NSLocale+iTerm.m in Sources */,
 				A6C7631B1B45C52B00E3C992 /* iTermRestorableSession.m in Sources */,
 				A6C762AF1B45C52B00E3C992 /* NSColor+iTerm.m in Sources */,
-				A6C762DF1B45C52B00E3C992 /* PTYTask.m in Sources */,
 				A6461D8A1E1B654D00FEDCD6 /* iTermShellPromptTrigger.m in Sources */,
 				A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */,
 				A62C3B301BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.m in Sources */,

@@ -303,8 +303,6 @@ static int iTermForkToRunJobInServer(iTermForkState *forkState,
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     iTermFileDescriptorServerLog("The semaphore was signaled");
 
-    dispatch_release(semaphore);
-
     // Remove the temporary file. The server will create a new socket file
     // if the client dies. That file's name is dependent on its process ID,
     // which we don't know yet, so that's why this temp file dance has to
@@ -451,21 +449,11 @@ static void HandleSigChld(int n) {
     }
 
     [self closeFileDescriptor];
-    [_logPath release];
     [_logHandle closeFile];
-    [_logHandle release];
-    [writeLock release];
-    [writeBuffer release];
-    [_tty release];
-    [path release];
-    [command_ release];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
-        [coprocess_ release];
     }
-
-    [super dealloc];
 }
 
 - (NSString *)description {
@@ -540,8 +528,7 @@ static void HandleSigChld(int n) {
 
 - (void)setCoprocess:(Coprocess *)coprocess {
     @synchronized (self) {
-        [coprocess_ autorelease];
-        coprocess_ = [coprocess retain];
+        coprocess_ = coprocess;
         self.hasMuteCoprocess = coprocess_.mute;
     }
     [[TaskNotifier sharedInstance] unblock];
@@ -642,12 +629,9 @@ static void HandleSigChld(int n) {
 - (void)writeTask:(NSData *)data {
     if (self.isCoprocessOnly) {
         // Send keypresses to tmux.
-        [_delegate retain];
         NSData *copyOfData = [data copy];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_delegate writeForCoprocessOnlyTask:copyOfData];
-            [_delegate release];
-            [copyOfData release];
+            [self->_delegate writeForCoprocessOnlyTask:copyOfData];
         });
     } else {
         // Write as much as we can now through the non-blocking pipe
@@ -789,7 +773,6 @@ static void HandleSigChld(int n) {
 - (void)processWrite {
     // Retain to prevent the object from being released during this method
     // Lock to protect the writeBuffer from the main thread
-    [self retain];
     [writeLock lock];
 
     // Only write up to MAXRW bytes, then release control
@@ -812,7 +795,6 @@ static void HandleSigChld(int n) {
 
     // Clean up locks
     [writeLock unlock];
-    [self autorelease];
 }
 
 - (void)stopCoprocess {
@@ -822,7 +804,6 @@ static void HandleSigChld(int n) {
             thePid = coprocess_.pid;
         }
         [coprocess_ terminate];
-        [coprocess_ release];
         coprocess_ = nil;
         self.hasMuteCoprocess = NO;
     }
@@ -980,13 +961,12 @@ static void HandleSigChld(int n) {
     if (!shell) {
         return originalEnvironment;
     }
-    NSMutableDictionary *newEnvironment = [[originalEnvironment mutableCopy] autorelease];
-    newEnvironment[@"SHELL"] = [[shell copy] autorelease];
+    NSMutableDictionary *newEnvironment = [originalEnvironment mutableCopy];
+    newEnvironment[@"SHELL"] = [shell copy];
     return newEnvironment;
 }
 
 - (void)setCommand:(NSString *)command {
-    [command_ autorelease];
     command_ = [command copy];
 }
 
@@ -1005,7 +985,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)showFailedToCreateTempSocketError {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Error";
     alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
     [alert addButtonWithTitle:@"OK"];
@@ -1093,13 +1073,12 @@ static void HandleSigChld(int n) {
 
 - (NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        return [[_tty retain] autorelease];
+        return _tty;
     }
 }
 
 - (void)setTty:(NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        [_tty autorelease];
         _tty = [tty copy];
     }
     if ([NSThread isMainThread]) {
@@ -1108,10 +1087,10 @@ static void HandleSigChld(int n) {
         __weak id<PTYTaskDelegate> delegate = self.delegate;
         __weak __typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([weakSelf retain]) {
-                [delegate taskDidChangeTTY:weakSelf];
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                [delegate taskDidChangeTTY:strongSelf];
             }
-            [weakSelf release];
         });
     }
 }
@@ -1306,7 +1285,7 @@ static void HandleSigChld(int n) {
         _rateLimitedSetSizeToDesiredSizePending = YES;
         DLog(@" ** Rate limiting **");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kDelayBetweenSizeChanges * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            _rateLimitedSetSizeToDesiredSizePending = NO;
+            self->_rateLimitedSetSizeToDesiredSizePending = NO;
             [self setTerminalSizeToDesiredSize];
         });
     } else {
