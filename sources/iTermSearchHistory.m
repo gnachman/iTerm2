@@ -32,7 +32,7 @@
 }
 
 - (void)addQuery:(NSString *)query {
-    if (query.length == 0) {
+    if (query.length < 3) {
         [self coalescingFence];
         return;
     }
