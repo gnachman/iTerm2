@@ -2617,6 +2617,8 @@
 		A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D027C101CD1867000B0FBFF /* iTermColorPresets.m */; };
 		A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
+		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55DE217256A600142244 /* iTermLineBlockArray.h */; };
 		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
 		A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */; };
@@ -5401,6 +5403,8 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
+		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6AB55DE217256A600142244 /* iTermLineBlockArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLineBlockArray.h; sourceTree = "<group>"; };
 		A6AB55DF217256A600142244 /* iTermLineBlockArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLineBlockArray.m; sourceTree = "<group>"; };
 		A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCumulativeSumCache.h; sourceTree = "<group>"; };
@@ -8409,6 +8413,8 @@
 				53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */,
 				A6F718C82266DB380053488E /* iTermURLActionHelper.h */,
 				A6F718C92266DB380053488E /* iTermURLActionHelper.m */,
+				A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */,
+				A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9856,6 +9862,7 @@
 				A63011C420E85132008114B7 /* iTermStatusBarBaseComponent.h in Headers */,
 				A66719261DCE36C3000CE608 /* iTermCommandHistoryEntryMO.h in Headers */,
 				A6C1FD511FC2AC9B006B9A69 /* iTermMarginRenderer.h in Headers */,
+				A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */,
 				A66719271DCE36C3000CE608 /* SetHostnameTrigger.h in Headers */,
 				A6B1476421334D3900D0814F /* iTermTmuxStatusBarMonitor.h in Headers */,
 				A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */,
@@ -12256,6 +12263,7 @@
 				A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */,
 				A666D5ED221A1D9D00D6184A /* iTermVariableScope+Tab.m in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
+				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,
 				A60C036F2089B29700FE2F1F /* iTermScriptHistory.m in Sources */,
 				A65D3ADA21D163B800384015 /* iTermBacktrace.mm in Sources */,

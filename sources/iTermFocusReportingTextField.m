@@ -21,3 +21,18 @@
 }
 
 @end
+
+@implementation iTermFocusReportingSearchField
+
+@dynamic delegate;
+
+- (BOOL)becomeFirstResponder {
+    BOOL result = [super becomeFirstResponder];
+    if (result &&
+        [self.delegate respondsToSelector:@selector(focusReportingSearchFieldWillBecomeFirstResponder:)]) {
+        [self.delegate focusReportingSearchFieldWillBecomeFirstResponder:self];
+    }
+    return result;
+}
+
+@end

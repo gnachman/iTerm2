@@ -22,4 +22,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@class iTermFocusReportingSearchField;
+
+@protocol iTermFocusReportingSearchFieldDelegate<NSSearchFieldDelegate>
+@optional
+- (void)focusReportingSearchFieldWillBecomeFirstResponder:(iTermFocusReportingSearchField *)sender;
+@end
+
+@interface iTermFocusReportingSearchField : NSSearchField
+
+@property (nullable, weak) id<iTermFocusReportingSearchFieldDelegate> delegate;
+
+@end
+
 NS_ASSUME_NONNULL_END

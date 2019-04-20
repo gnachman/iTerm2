@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFindDriver+Internal.h"
+#import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -18,7 +19,7 @@
 
 @end
 
-@interface iTermMiniSearchField : NSSearchField
+@interface iTermMiniSearchField : iTermFocusReportingSearchField
 @end
 
 @implementation iTermMiniSearchField
@@ -193,11 +194,21 @@
     [self.driver close];
 }
 
+- (IBAction)eraseSearchHistory:(id)sender {
+    [self.driver eraseSearchHistory];
+}
+
 #pragma mark - NSViewController
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
     item.state = (item.tag == self.driver.mode) ? NSOnState : NSOffState;
     return YES;
+}
+
+#pragma mark - iTermFocusReportingSearchField
+
+- (void)focusReportingSearchFieldWillBecomeFirstResponder:(iTermFocusReportingSearchField *)sender {
+    [self.driver searchFieldWillBecomeFirstResponder:sender];
 }
 
 #pragma mark - NSControl
@@ -208,7 +219,23 @@
         return;
     }
     
-    [self.driver userDidEditSearchQuery:_searchField.stringValue];
+    [self.driver userDidEditSearchQuery:_searchField.stringValue
+                            fieldEditor:aNotification.userInfo[@"NSFieldEditor"]];
+}
+
+- (NSArray *)control:(NSControl *)control
+            textView:(NSTextView *)textView
+         completions:(NSArray *)words  // Dictionary words
+ forPartialWordRange:(NSRange)charRange
+ indexOfSelectedItem:(NSInteger *)index {
+    *index = -1;
+    return [self.driver completionsForText:[textView string]
+                                     range:charRange];
+}
+
+- (BOOL)becomeFirstResponder {
+    [self.driver searchFieldWillBecomeFirstResponder:_searchField];
+    return [super becomeFirstResponder];
 }
 
 - (BOOL)control:(NSControl *)control
@@ -233,6 +260,7 @@ doCommandBySelector:(SEL)commandSelector {
         [self.driver copyPasteSelection];
         return YES;
     } else {
+        [self.driver doCommandBySelector:commandSelector];
         return NO;
     }
 }

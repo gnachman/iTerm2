@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -32,7 +32,7 @@ Gw
                         <action selector="closeFindView:" target="-2" id="29"/>
                     </connections>
                 </button>
-                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2">
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2" customClass="iTermFocusReportingSearchField">
                     <rect key="frame" x="16" y="19" width="278" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" usesSingleLineMode="YES" bezelStyle="round" id="3" customClass="iTermMinimalSearchFieldCell">
@@ -102,6 +102,13 @@ Gw
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="changeMode:" target="-2" id="ZJX-A7-7La"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="ZCE-vD-EeM"/>
+                <menuItem title="Erase Search History" tag="4" id="cGh-hQ-V9H">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="eraseSearchHistory:" target="-2" id="6sW-DK-Wkc"/>
                     </connections>
                 </menuItem>
             </items>

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="FindViewController">
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermDropDownFindViewController">
             <connections>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
                 <outlet property="view" destination="1" id="10"/>
@@ -93,6 +93,13 @@ Gw
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="changeMode:" target="-2" id="ZJX-A7-7La"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="Vkh-3q-N5K"/>
+                <menuItem title="Erase Search History" tag="4" id="6DZ-ad-yVz">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="eraseSearchHistory:" target="-2" id="BzG-Vy-jjt"/>
                     </connections>
                 </menuItem>
             </items>

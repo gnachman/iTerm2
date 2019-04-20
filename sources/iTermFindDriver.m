@@ -9,8 +9,11 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermSearchHistory.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSObject+iTerm.h"
 
 static iTermFindMode gFindMode;
 static NSString *gSearchString;
@@ -51,6 +54,10 @@ static NSString *gSearchString;
         kFindViewDelayStateActiveMedium,
         kFindViewDelayStateActiveLong,
     } _delayState;
+
+    BOOL _isAutocompleting;
+    NSString *_lastEntry;
+    BOOL _backspaceKey;
 }
 
 + (void)loadUserDefaults {
@@ -173,7 +180,17 @@ static NSString *gSearchString;
     [self doSearch];
 }
 
-- (void)userDidEditSearchQuery:(NSString *)updatedQuery {
+- (void)userDidEditSearchQuery:(NSString *)updatedQuery
+                   fieldEditor:(NSTextView *)fieldEditor {
+    if (_isAutocompleting == NO  && !_backspaceKey) {
+        _isAutocompleting = YES;
+        _lastEntry = fieldEditor.string.copy;
+        [fieldEditor complete:nil];
+        _isAutocompleting = NO;
+    }
+
+    _backspaceKey = NO;
+
     // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
     // the search field has lost focus since the last char was entered).
     static const CGFloat kStaleTime = 3;
@@ -181,6 +198,10 @@ static NSString *gSearchString;
                     updatedQuery.length > 0 &&
                     [self queryIsShort:updatedQuery]);
 
+    void (^search)(void) = ^{
+        [[iTermSearchHistory sharedInstance] addQuery:updatedQuery];
+        [self doSearch];
+    };
     // This state machine implements a delay before executing short (1 or 2 char) queries. The delay
     // is incurred again when a 5+ char query becomes short. It's kind of complicated so the delay
     // gets inserted at appropriate but minimally annoying times. Plug this into graphviz to see the
@@ -235,7 +256,7 @@ static NSString *gSearchString;
                 break;
             }
 
-            [self doSearch];
+            search();
             if ([self queryIsLong:updatedQuery]) {
                 _delayState = kFindViewDelayStateActiveLong;
             } else if (![self queryIsShort:updatedQuery]) {
@@ -255,21 +276,21 @@ static NSString *gSearchString;
             }
             // This state intentionally does not transition to ActiveShort. If you backspace over
             // the whole query, the delay must be done again.
-            [self doSearch];
+            search();
             break;
 
         case kFindViewDelayStateActiveLong:
             if (updatedQuery.length == 0) {
                 _delayState = kFindViewDelayStateEmpty;
-                [self doSearch];
+                search();
             } else if ([self queryIsShort:updatedQuery]) {
                 // long->short transition. Common when select-all followed by typing.
                 [self startDelay];
             } else if (![self queryIsLong:updatedQuery]) {
                 _delayState = kFindViewDelayStateActiveMedium;
-                [self doSearch];
+                search();
             } else {
-                [self doSearch];
+                search();
             }
             break;
     }
@@ -518,6 +539,70 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:-1
     scrollToFirstResult:YES];
+}
+
+- (NSArray<NSString *> *)completionsForText:(NSString *)text
+                                      range:(NSRange)range {
+    return [[[iTermSearchHistory sharedInstance] queries] filteredArrayUsingBlock:^BOOL(NSString *historyEntry) {
+        return [[historyEntry localizedLowercaseString] it_hasPrefix:[text localizedLowercaseString]];
+    }];
+}
+
+- (void)doCommandBySelector:(SEL)commandSelector {
+    if (commandSelector == @selector(capitalizeWord:) ||
+        commandSelector == @selector(changeCaseOfLetter:) ||
+        commandSelector == @selector(deleteBackward:) ||
+        commandSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
+        commandSelector == @selector(deleteForward:) ||
+        commandSelector == @selector(deleteToBeginningOfLine:) ||
+        commandSelector == @selector(deleteToBeginningOfParagraph:) ||
+        commandSelector == @selector(deleteToEndOfLine:) ||
+        commandSelector == @selector(deleteToEndOfParagraph:) ||
+        commandSelector == @selector(deleteToMark:) ||
+        commandSelector == @selector(deleteWordBackward:) ||
+        commandSelector == @selector(deleteWordForward:) ||
+        commandSelector == @selector(indent:) ||
+        commandSelector == @selector(insertBacktab:) ||
+        commandSelector == @selector(insertContainerBreak:) ||
+        commandSelector == @selector(insertDoubleQuoteIgnoringSubstitution:) ||
+        commandSelector == @selector(insertLineBreak:) ||
+        commandSelector == @selector(insertNewline:) ||
+        commandSelector == @selector(insertNewlineIgnoringFieldEditor:) ||
+        commandSelector == @selector(insertParagraphSeparator:) ||
+        commandSelector == @selector(insertSingleQuoteIgnoringSubstitution:) ||
+        commandSelector == @selector(insertTab:) ||
+        commandSelector == @selector(insertTabIgnoringFieldEditor:) ||
+        commandSelector == @selector(lowercaseWord:) ||
+        commandSelector == @selector(makeBaseWritingDirectionLeftToRight:) ||
+        commandSelector == @selector(makeBaseWritingDirectionNatural:) ||
+        commandSelector == @selector(makeBaseWritingDirectionRightToLeft:) ||
+        commandSelector == @selector(makeTextWritingDirectionLeftToRight:) ||
+        commandSelector == @selector(makeTextWritingDirectionNatural:) ||
+        commandSelector == @selector(makeTextWritingDirectionRightToLeft:) ||
+        commandSelector == @selector(transpose:) ||
+        commandSelector == @selector(transposeWords:) ||
+        commandSelector == @selector(uppercaseWord:) ||
+        commandSelector == @selector(yank:)) {
+        _backspaceKey = YES;
+    }
+}
+
+- (void)searchFieldWillBecomeFirstResponder:(NSSearchField *)searchField {
+    NSTextView *fieldEditor = [NSTextView castFrom:[[searchField window] fieldEditor:YES
+                                                                           forObject:searchField]];
+    [[iTermSearchHistory sharedInstance] coalescingFence];
+    if (_isAutocompleting == NO  && !_backspaceKey) {
+        _isAutocompleting = YES;
+        _lastEntry = [[fieldEditor string] copy];
+        [fieldEditor complete:nil];
+        _isAutocompleting = NO;
+    }
+
+    _backspaceKey = NO;
+}
+
+- (void)eraseSearchHistory {
+    [[iTermSearchHistory sharedInstance] eraseHistory];
 }
 
 @end
