@@ -1475,7 +1475,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
-    void (^finish)(BOOL) = ^(BOOL ok){
+    void (^finish)(BOOL) = ^(BOOL ok) {
         if (!ok) {
             return;
         }

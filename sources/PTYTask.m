@@ -272,6 +272,7 @@ static int MyForkPty(int *amaster,
 static int iTermForkToRunJobInServer(iTermForkState *forkState,
                                      iTermTTYState *ttyState,
                                      NSString *tempPath) {
+    DLog(@"iTermForkToRunJobInServer");
     int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);
 
     // Get ready to run the server in a thread.
@@ -318,7 +319,9 @@ static int iTermForkToRunJobInServer(iTermForkState *forkState,
     iTermFileDescriptorServerLog("Calling MyForkPty");
     forkState->numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
     int fd = -1;
+    DLog(@"Calling MyForkPty");
     forkState->pid = MyForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
+    DLog(@"Returned from MyForkPty");
     return fd;
 }
 
@@ -1031,13 +1034,33 @@ static void HandleSigChld(int n) {
     free(newEnviron);
 }
 
-- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkState ttyState:(const iTermTTYState *)ttyState {
-    DLog(@"begin handshake");
-    iTermFileDescriptorServerConnection serverConnection =
-    iTermFileDescriptorClientRead(forkState->connectionFd, forkState->deadMansPipe[0]);
-    DLog(@"got connection");
-    close(forkState->deadMansPipe[0]);
-    DLog(@"closed dead mans pipe");
+- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
+                              ttyState:(const iTermTTYState *)ttyStatePtr
+                            completion:(void (^)(void))completion {
+    iTermForkState forkState = *forkStatePtr;
+    iTermTTYState ttyState = *ttyStatePtr;
+    DLog(@"Begin handshake");
+    int connectionFd = forkState.connectionFd;
+    int deadmansPipeFd = forkState.deadMansPipe[0];
+    // This takes about 200ms on a fast machine so pop off to a background queue to do it.
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
+                                                                                             deadmansPipeFd);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self didCompleteHandshakeWithForkState:forkState
+                                           ttyState:ttyState
+                                   serverConnection:serverConnection
+                                         completion:completion];
+        });
+    });
+}
+
+- (void)didCompleteHandshakeWithForkState:(iTermForkState)state
+                                 ttyState:(const iTermTTYState)ttyState
+                         serverConnection:(iTermFileDescriptorServerConnection)serverConnection
+                               completion:(void (^)(void))completion {
+    DLog(@"Handshake complete");
+    close(state.deadMansPipe[0]);
     if (serverConnection.ok) {
         // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
         // lets the server know it should call accept(). We now have two copies of the master PTY
@@ -1049,13 +1072,13 @@ static void HandleSigChld(int n) {
 
         // The serverConnection has the wrong server PID because the connection was made prior
         // to fork(). Update serverConnection with the real server PID.
-        serverConnection.serverPid = forkState->pid;
+        serverConnection.serverPid = state.pid;
 
         // Connect this task to the server's PIDs and file descriptor.
         DLog(@"attaching...");
         [self attachToServer:serverConnection];
         DLog(@"attached. Set nonblocking");
-        self.tty = [NSString stringWithUTF8String:ttyState->tty];
+        self.tty = [NSString stringWithUTF8String:ttyState.tty];
         fcntl(fd, F_SETFL, O_NONBLOCK);
     } else {
         close(fd);
@@ -1063,6 +1086,9 @@ static void HandleSigChld(int n) {
         [_delegate taskDiedImmediately];
     }
     DLog(@"fini");
+    if (completion) {
+        completion();
+    }
 }
 
 - (NSString *)tty {
@@ -1096,7 +1122,10 @@ static void HandleSigChld(int n) {
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
-- (void)didForkParent:(const iTermForkState *)forkState newEnviron:(char **)newEnviron ttyState:(iTermTTYState *)ttyState {
+- (void)didForkParent:(const iTermForkState *)forkState
+           newEnviron:(char **)newEnviron
+             ttyState:(iTermTTYState *)ttyState
+           completion:(void (^)(void))completion {
     DLog(@"free environment");
     [self freeEnvironment:newEnviron];
 
@@ -1109,10 +1138,13 @@ static void HandleSigChld(int n) {
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
-        [self finishHandshakeWithJobInServer:forkState ttyState:ttyState];
+        [self finishHandshakeWithJobInServer:forkState ttyState:ttyState completion:completion];
     } else {
         // Jobs are direct children of iTerm2
         [self finishLaunchingDirectChild:ttyState];
+        if (completion) {
+            completion();
+        }
     }
 }
 
@@ -1216,10 +1248,7 @@ static void HandleSigChld(int n) {
         return;
     }
     // Parent
-    [self didForkParent:&forkState newEnviron:newEnviron ttyState:&ttyState];
-    if (completion != nil) {
-        completion();
-    }
+    [self didForkParent:&forkState newEnviron:newEnviron ttyState:&ttyState completion:completion];
 }
 
 #pragma mark I/O

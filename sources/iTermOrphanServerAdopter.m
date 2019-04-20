@@ -67,7 +67,9 @@
 
 - (void)openWindowWithOrphans {
     for (NSString *path in _pathsToOrphanedServerSockets) {
+        NSLog(@"--- Begin orphan %@", path);
         [self adoptOrphanWithPath:path];
+        NSLog(@"--- End orphan");
     }
     _window = nil;
 }
