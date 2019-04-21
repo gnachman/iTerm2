@@ -103,6 +103,11 @@ Demonstrates registering a function and adjusting profiles' values.
 
 Demonstrates changing a session's local profile without updating the underlying profile.
 
+:doc:`increase_font_size`
+`````````````````````````
+
+Demonstrates changing a session's font without updating the underlying profile.
+
 ------------------
 Standalone Scripts
 ------------------

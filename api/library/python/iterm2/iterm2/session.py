@@ -346,6 +346,7 @@ class Session:
         .. seealso::
           * Example ":ref:`copycolor_example`"
           * Example ":ref:`settabcolor_example`"
+          * Example ":ref:`increase_font_size_example`"
         """
         for key, json_value in write_only_profile.values.items():
             response = await iterm2.rpc.async_set_profile_property_json(

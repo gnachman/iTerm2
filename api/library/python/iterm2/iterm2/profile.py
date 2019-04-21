@@ -83,6 +83,7 @@ class LocalWriteOnlyProfile:
     .. seealso::
       * Example ":ref:`copycolor_example`"
       * Example ":ref:`settabcolor_example`"
+      * Example ":ref:`increase_font_size_example`"
     """
     def __init__(self):
       self.__values = {}
@@ -743,7 +744,11 @@ class LocalWriteOnlyProfile:
         The normal font is used for either ASCII or all characters depending on
         whether a separate font is used for non-ascii.
 
-        :param value: Font name and size as a string."""
+        :param value: Font name and size as a string.
+
+        .. seealso::
+          * Example ":ref:`increase_font_size_example`"
+        """
         return self._simple_set("Normal Font", value)
 
     def set_non_ascii_font(self, value: str):
@@ -2604,7 +2609,11 @@ class Profile(WriteOnlyProfile):
         The normal font is used for either ASCII or all characters depending on
         whether a separate font is used for non-ascii.
 
-        :returns: Font name and size as a string."""
+        :returns: Font name and size as a string.
+
+        .. seealso::
+          * Example ":ref:`increase_font_size_example`"
+        """
         return self._simple_get("Normal Font")
 
     @property
