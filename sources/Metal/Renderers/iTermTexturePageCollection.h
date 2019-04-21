@@ -180,7 +180,6 @@ namespace iTerm2 {
         }
 
         bool is_over_maximum_size() const {
-            NSLog(@"Have %@ pages", @(_allPages.size()));
             return _allPages.size() > _maximumNumberOfPages;
         }
 
