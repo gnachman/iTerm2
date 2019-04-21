@@ -79,7 +79,7 @@ extern NSString *kCoprocessStatusChangeNotification;
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion;
 
-- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid;
+- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid completion:(void (^)(void))completion;
 
 - (void)writeTask:(NSData*)data;
 

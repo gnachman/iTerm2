@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermProcessInfo *)processInfoForPid:(pid_t)pid;
 - (void)setNeedsUpdate:(BOOL)needsUpdate;
-- (void)updateSynchronouslyWithTimeout:(NSTimeInterval)timeout;
+- (void)requestImmediateUpdateWithCompletionBlock:(void (^)(void))completion;
 - (iTermProcessInfo *)deepestForegroundJobForPid:(pid_t)pid;
 - (void)registerTrackedPID:(pid_t)pid;
 - (void)unregisterTrackedPID:(pid_t)pid;

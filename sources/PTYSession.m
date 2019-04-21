@@ -4327,7 +4327,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     } else {
         int pid;
-        NSString *name = [_shell currentJob:NO pid:&pid];
+        NSString *name = [_shell currentJob:NO pid:&pid completion:nil];
         [self setJobName:name pid:pid];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
@@ -4353,7 +4353,11 @@ ITERM_WEAKLY_REFERENCEABLE
 // Update the tab, session view, and window title.
 - (void)updateTitles {
     int pid = 0;
-    NSString *newJobName = [_shell currentJob:NO pid:&pid];
+    __weak __typeof(self) weakSelf = self;
+    NSString *newJobName = [_shell currentJob:NO pid:&pid completion:^{
+        DLog(@"** completion block recursing **");
+        [weakSelf updateTitles];
+    }];
     DLog(@"Job for pid %@ is %@, pid=%@", @(_shell.pid), newJobName, @(pid));
     [self setJobName:newJobName pid:pid];
 

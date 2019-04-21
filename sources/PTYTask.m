@@ -615,14 +615,19 @@ static void HandleSigChld(int n) {
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a cache to avoid doing the
 // potentially expensive system calls too often.
-- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
+- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid completion:(void (^)(void))completion {
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];
-    if (!info) {
-        if (self.pid > 0 && !_haveBumpedProcessCache) {
-            _haveBumpedProcessCache = YES;
-            DLog(@"BUMP");
-            [[iTermProcessCache sharedInstance] updateSynchronouslyWithTimeout:0.05];
-            return [self currentJob:forceRefresh pid:pid];
+    if (!info.name) {
+        if (self.pid > 0) {
+            if (!_haveBumpedProcessCache) {
+                _haveBumpedProcessCache = YES;
+                if (completion) {
+                    NSLog(@"Requesting immediate update");
+                    [[iTermProcessCache sharedInstance] requestImmediateUpdateWithCompletionBlock:completion];
+                    return nil;
+                }
+            }
+            [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
         }
         return nil;
     }

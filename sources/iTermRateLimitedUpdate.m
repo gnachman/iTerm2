@@ -16,6 +16,7 @@
 }
 
 - (void)invalidate {
+    NSLog(@"Invalidate timer from %@", [NSThread callStackSymbols]);
     [_timer invalidate];
     _timer = nil;
     _block = nil;
@@ -26,6 +27,9 @@
 }
 
 - (void)scheduleTimerAfterDelay:(NSTimeInterval)delay {
+    if (self.debug) {
+        NSLog(@"Schedule timer after delay %@", @(delay));
+    }
     [_timer invalidate];
     _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
                                                   target:self
@@ -36,6 +40,7 @@
 
 - (void)setMinimumInterval:(NSTimeInterval)minimumInterval {
     if (minimumInterval < _minimumInterval && _timer) {
+        NSLog(@"Invalidate timer");
         [_timer invalidate];
         _minimumInterval = minimumInterval;
         [self performBlockIfNeeded:_timer];
@@ -45,9 +50,15 @@
 }
 - (void)performRateLimitedBlock:(void (^)(void))block {
     if (_timer == nil) {
+        if (self.debug) {
+            NSLog(@"RLU perform immediately");
+        }
         block();
         [self scheduleTimer];
     } else {
+        if (self.debug) {
+            NSLog(@"RLU defer. minimum interval is %@", @(_minimumInterval));
+        }
         _block = [block copy];
     }
 }
@@ -66,12 +77,22 @@
 }
 
 - (void)performBlockIfNeeded:(NSTimer *)timer {
+    if (self.debug) {
+        NSLog(@"RLU timer fired");
+    }
     _timer = nil;
     if (_block != nil) {
+        if (self.debug) {
+            NSLog(@"RLU timer handler: have a block");
+        }
         void (^block)(void) = _block;
         _block = nil;
         block();
         [self scheduleTimer];
+    } else {
+        if (self.debug) {
+            NSLog(@"RLU timer fired - NO BLOCK");
+        }
     }
 }
 

@@ -11,6 +11,7 @@
 @interface iTermRateLimitedUpdate : NSObject
 
 @property (nonatomic) NSTimeInterval minimumInterval;
+@property (nonatomic) BOOL debug;
 
 // Do not perform a pending action.
 - (void)invalidate;
