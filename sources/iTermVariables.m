@@ -447,11 +447,13 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         seen[@(iTermVariablesSuggestionContextWindow)] = [NSMutableSet set];
         seen[@(iTermVariablesSuggestionContextApp)] = [NSMutableSet set];
     });
-    NSMutableSet *set = seen[@(context)];
+    // Make a copy to avoid modifying during enumeration.
+    NSMutableSet *set = [seen[@(context)] mutableCopy];
     ITAssertWithMessage(set, @"Bogus context %@", @(context));
     NSMutableSet<NSString *> *result = [names mutableCopy];
     [result minusSet:set];
     [set unionSet:result];
+    seen[@(context)] = set;
     return result;
 }
 
