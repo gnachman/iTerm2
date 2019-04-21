@@ -11,7 +11,11 @@
 @implementation iTermProgressIndicator
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor colorWithCalibratedWhite:0.8 alpha:1] set];
+    if (@available(macOS 10.14, *)) {
+        [[[NSColor textBackgroundColor] colorWithAlphaComponent:0.8] set];
+    } else {
+        [[NSColor colorWithCalibratedWhite:0.8 alpha:1] set];
+    }
     NSRectFill(self.bounds);
 
     [[NSColor colorWithCalibratedRed:0.5 green:0.7 blue:1.0 alpha:1.0] set];

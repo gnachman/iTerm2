@@ -60,8 +60,7 @@ const CGFloat rightMargin = 5;
     }
 }
 
-- (void)drawRect:(NSRect)dirtyRect
-{
+- (void)drawRect:(NSRect)dirtyRect {
 	[super drawRect:dirtyRect];
     NSColor *textColor;
     NSColor *grayColor;
@@ -72,12 +71,22 @@ const CGFloat rightMargin = 5;
         self.lastDrawnHighlighted = YES;
         [[NSColor selectedMenuItemColor] set];
         textColor = [NSColor selectedMenuItemTextColor];
-        grayColor = [NSColor lightGrayColor];
+        if (@available(macOS 10.14, *)) {
+            grayColor = [NSColor alternateSelectedControlTextColor];
+        } else {
+            grayColor = [NSColor lightGrayColor];
+        }
     } else {
         self.lastDrawnHighlighted = NO;
-        [[NSColor whiteColor] set];
-        textColor = [NSColor blackColor];
-        grayColor = [NSColor grayColor];
+        if (@available(macOS 10.14, *)) {
+            textColor = [NSColor textColor];
+            grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
+            [[NSColor clearColor] set];
+        } else {
+            textColor = [NSColor blackColor];
+            grayColor = [NSColor grayColor];
+            [[NSColor whiteColor] set];
+        }
     }
     NSRectFill(dirtyRect);
 
@@ -115,7 +124,7 @@ const CGFloat rightMargin = 5;
     }
     const CGFloat smallTextHeight = [sizeString sizeWithAttributes:sizeAttributes].height;
 
-    [[NSColor blackColor] set];
+    [textColor set];
 
     CGFloat topMargin = 1;
     CGFloat topY = self.bounds.size.height - textHeight - topMargin;
