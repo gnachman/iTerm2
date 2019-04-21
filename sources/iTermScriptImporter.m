@@ -52,6 +52,17 @@ static BOOL sInstallingScript;
         return;
     }
 
+    if ([downloadedURL.pathExtension isEqualToString:@"py"]) {
+        NSString *to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:downloadedURL.lastPathComponent];
+        NSError *error;
+        [[NSFileManager defaultManager] copyItemAtURL:downloadedURL
+                                                toURL:[NSURL fileURLWithPath:to]
+                                                error:&error];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(error.localizedDescription, NO, error ? nil : [NSURL fileURLWithPath:to]);
+        });
+        return;
+    }
     sInstallingScript = YES;
     [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage, BOOL trusted, BOOL reveal, BOOL quiet) {
         if (errorMessage) {
