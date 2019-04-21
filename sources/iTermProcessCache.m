@@ -46,7 +46,6 @@
         _queue = dispatch_queue_create("com.iterm2.process-cache", DISPATCH_QUEUE_SERIAL);
         _rateLimit = [[iTermRateLimitedUpdate alloc] init];
         _rateLimit.minimumInterval = 0.5;
-        _rateLimit.debug = YES;
         _trackedPids = [NSMutableSet set];
         [self setNeedsUpdate:YES];
         _blocks = [NSMutableArray array];
