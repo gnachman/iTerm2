@@ -371,6 +371,7 @@ static void HandleSigChld(int n) {
     VT100GridSize _desiredSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
+    BOOL _haveBumpedProcessCache;
 }
 
 // This is (I hope) the equivalent of the command "dscl . read /Users/$USER UserShell", which
@@ -617,11 +618,20 @@ static void HandleSigChld(int n) {
 - (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];
     if (!info) {
+        if (self.pid > 0 && !_haveBumpedProcessCache) {
+            _haveBumpedProcessCache = YES;
+            DLog(@"BUMP");
+            [[iTermProcessCache sharedInstance] updateSynchronouslyWithTimeout:0.05];
+            return [self currentJob:forceRefresh pid:pid];
+        }
         return nil;
     }
 
     if (pid) {
         *pid = info.processID;
+    }
+    if (!info.name) {
+        DLog(@"Have info for pid %@ but no name", @(self.pid));
     }
     return info.name;
 }

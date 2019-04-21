@@ -67,6 +67,17 @@
     }
 }
 
+- (void)updateSynchronouslyWithTimeout:(NSTimeInterval)timeout {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(_queue, ^{
+        [weakSelf reallyUpdate];
+        dispatch_group_leave(group);
+    });
+    dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)));
+}
+
 - (iTermProcessInfo *)processInfoForPid:(pid_t)pid {
     __block iTermProcessInfo *info = nil;
     dispatch_sync(_queue, ^{
@@ -98,9 +109,14 @@
     if (!self.needsUpdateFlag) {
         return;
     }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(_queue, ^{
+        [weakSelf reallyUpdate];
+    });
+}
 
+- (void)reallyUpdate {
     NSArray<NSNumber *> *allPids = [iTermLSOF allPids];
-
     // pid -> ppid
     NSMutableDictionary<NSNumber *, NSNumber *> *parentmap = [NSMutableDictionary dictionary];
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];

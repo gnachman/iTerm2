@@ -1524,16 +1524,16 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)showOrphanAnnouncement {
     NSString *notice = @"This already-running session was restored but its contents were not saved.";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:notice
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Why?" ]
-                                                    completion:^(int selection) {
-                                                        if (selection == 0) {
-                                                            // Why?
-                                                            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
-                                                            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
-                                                        }
-                                                    }];
+    [iTermAnnouncementViewController announcementWithTitle:notice
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Why?" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        // Why?
+                                                        NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+                                                        [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                    }
+                                                }];
     announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
@@ -2577,7 +2577,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Make sure the screen gets redrawn soonish
     self.active = YES;
 
-    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
 }
 
 - (void)checkTriggers {
@@ -4350,8 +4352,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Update the tab, session view, and window title.
 - (void)updateTitles {
-    int pid;
+    int pid = 0;
     NSString *newJobName = [_shell currentJob:NO pid:&pid];
+    DLog(@"Job for pid %@ is %@, pid=%@", @(_shell.pid), newJobName, @(pid));
     [self setJobName:newJobName pid:pid];
 
     if ([_delegate sessionBelongsToVisibleTab]) {
@@ -9890,15 +9893,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     void (^originalCompletion)(int) = [announcement.completion copy];
     NSString *identifierCopy = [identifier copy];
+    __weak __typeof(self) weakSelf = self;
     announcement.completion = ^(int selection) {
         originalCompletion(selection);
         if (selection == -2) {
-            [_announcements removeObjectForKey:identifierCopy];
+            [weakSelf removeAnnouncementWithIdentifier:identifierCopy];
             [identifierCopy release];
             [originalCompletion release];
         }
     };
     [_view addAnnouncement:announcement];
+}
+
+- (void)removeAnnouncementWithIdentifier:(NSString *)identifier {
+    [_announcements removeObjectForKey:identifier];
 }
 
 #pragma mark - PopupDelegate
@@ -10776,7 +10784,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - Variable Change Handlers
 
 - (void)jobPidDidChange {
-    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    // Avoid requesting an update before we know the name because doing so delays updating it when
+    // we finally get the name since it's rate-limited.
+    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
     if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
         [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
     }
