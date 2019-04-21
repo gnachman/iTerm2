@@ -40,6 +40,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class iTermAction;
 @class iTermAnnouncementViewController;
 @class iTermEchoProbe;
+@class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
 @class iTermVariables;
@@ -806,7 +807,11 @@ typedef enum {
 - (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey;
-- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key value:(id)value;
+
+- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key
+                                                                 value:(id)value
+                                                    scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry;
+
 - (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys;
 
 // Run a script-side function. Can include composition, references to variables.

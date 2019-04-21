@@ -1731,6 +1731,8 @@ static iTermAPIHelper *sAPIHelperInstance;
     ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
     ITMSetProfilePropertyResponse_Status (^setter)(id object, NSString *key, id value) = nil;
     NSMutableArray *objects = [NSMutableArray array];
+    id key = _apiServer.currentKey;
+    iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
 
     switch (request.targetOneOfCase) {
         case ITMSetProfilePropertyRequest_Target_OneOfCase_GPBUnsetOneOfCase: {
@@ -1759,7 +1761,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 
         case ITMSetProfilePropertyRequest_Target_OneOfCase_Session: {
             setter = ^ITMSetProfilePropertyResponse_Status(id object, NSString *key, id value) {
-                return [(PTYSession *)object handleSetProfilePropertyForKey:request.key value:value];
+                return [(PTYSession *)object handleSetProfilePropertyForKey:request.key value:value scriptHistoryEntry:entry];
             };
             if ([request.session isEqualToString:@"all"]) {
                 [objects addObjectsFromArray:[self allSessions]];

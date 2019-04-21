@@ -172,7 +172,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 #pragma mark - Private
 
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key {
-    NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING ];
+    NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING, KEY_NORMAL_FONT,
+                         KEY_NON_ASCII_FONT ];
 
     NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                         KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,

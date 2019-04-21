@@ -941,6 +941,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         return;
     }
 
+    _currentKey = webSocketConnection.key;
     switch (request.submessageOneOfCase) {
         case ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest:
             if (request.transactionRequest.begin) {
@@ -1080,6 +1081,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             [self handleInvokeFunctionRequest:request connection:webSocketConnection];
             break;
     }
+    _currentKey = nil;
 }
 
 // Runs on execution queue.

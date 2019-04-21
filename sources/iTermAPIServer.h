@@ -90,6 +90,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
 
 @property (nonatomic, weak) id<iTermAPIServerDelegate> delegate;
 
+// Key to the websocket connection. Valid only during delegate callbacks.
+@property (nonatomic, weak, readonly) id currentKey;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
 

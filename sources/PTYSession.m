@@ -10685,9 +10685,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return response;
 }
 
-- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
+- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key
+                                                                 value:(id)value
+                                                    scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry {
     if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
         XLog(@"Value %@ is not legal for key %@", value, key);
+        [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]];
         return ITMSetProfilePropertyResponse_Status_RequestMalformed;
     }
 
