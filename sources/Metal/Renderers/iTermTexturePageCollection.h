@@ -29,10 +29,12 @@ namespace iTerm2 {
 
         virtual ~TexturePageCollection() {
             if (_openPage) {
+                _openPage->assert_valid();
                 _openPage->release(this);
                 _openPage = NULL;
             }
             for (auto page : _allPages) {
+                page->assert_valid();
                 page->release(this);
             }
             for (auto it = _pages.begin(); it != _pages.end(); it++) {
@@ -90,6 +92,10 @@ namespace iTerm2 {
                 std::copy(_allPages.begin(), _allPages.end(), std::back_inserter(pages));
                 std::sort(pages.begin(), pages.end(), TexturePageCollection::LRUComparison);
 
+                for (auto page : pages) {
+                    page->assert_valid();
+                }
+
                 for (int i = 0; is_over_maximum_size() && i < pages.size(); i++) {
                     ITOwnershipLog(@"OWNERSHIP: Begin pruning page %p", pages[i]);
                     TexturePage *pageToPrune = pages[i];
@@ -109,9 +115,11 @@ namespace iTerm2 {
                 // Add to allPages and retain that reference too
                 _allPages.insert(_openPage);
                 _openPage->retain(this);
+                _openPage->assert_valid();
             }
 
             TexturePage *openPage = _openPage;
+            openPage->assert_valid();
             ITExtraDebugAssert(_openPage->get_available_count() > 0);
             const GlyphEntry *result = new GlyphEntry(part,
                                                       key,
@@ -127,6 +135,7 @@ namespace iTerm2 {
 
         // Remove all references to `pageToPrune` and all glyph entries that reference the page.
         void internal_prune(TexturePage *pageToPrune) {
+            pageToPrune->assert_valid();
             if (pageToPrune == _openPage) {
                 pageToPrune->release(this);
                 _openPage = NULL;
@@ -171,6 +180,7 @@ namespace iTerm2 {
         }
 
         bool is_over_maximum_size() const {
+            NSLog(@"Have %@ pages", @(_allPages.size()));
             return _allPages.size() > _maximumNumberOfPages;
         }
 

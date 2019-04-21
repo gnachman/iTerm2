@@ -10,12 +10,19 @@
 #import <Metal/Metal.h>
 
 namespace iTerm2 {
+    enum dontcare2 {
+        glyphEntryMagic = 0xfeedb0b0
+    };
+
     struct GlyphEntry : TexturePageOwner {
+        unsigned int _magic;
+
         GlyphEntry(int part,
                    GlyphKey key,
                    TexturePage *page,
                    int index,
                    bool is_emoji) :
+        _magic(glyphEntryMagic),
         _part(part),
         _key(key),
         _page(page),
@@ -26,7 +33,13 @@ namespace iTerm2 {
         }
 
         virtual ~GlyphEntry() {
+            assert_valid();
+            _magic = 0;
             _page->release(this);
+        }
+
+        void assert_valid() const {
+            assert(_magic == glyphEntryMagic);
         }
 
         const MTLOrigin &get_origin() const {
