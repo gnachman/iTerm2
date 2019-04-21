@@ -1977,6 +1977,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setWindowTitle {
     if (self.isShowingTransientTitle) {
+        DLog(@"showing transient title");
         PTYSession *session = self.currentSession;
         NSString *aTitle;
         VT100GridSize size = VT100GridSizeMake(session.columns, session.rows);
@@ -1984,10 +1985,12 @@ ITERM_WEAKLY_REFERENCEABLE
             if (VT100GridSizeEquals(_previousGridSize, VT100GridSizeMake(0, 0))) {
                 _previousGridSize = size;
                 DLog(@"NOT showing transient title because of no previous grid sizes");
+                [self setWindowTitle:[self undecoratedWindowTitle]];
                 return;
             }
             if (VT100GridSizeEquals(size, _previousGridSize)) {
                 DLog(@"NOT showing transient title because of equal grid sizes");
+                [self setWindowTitle:[self undecoratedWindowTitle]];
                 return;
             }
             _lockTransientTitle = YES;
@@ -2058,6 +2061,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
+        DLog(@"in a live resize");
         return;
     }
     // In bug 2593, we see a crazy thing where setting the window title right
@@ -2071,14 +2075,18 @@ ITERM_WEAKLY_REFERENCEABLE
     // terminal goes nuts and sends lots of title-change sequences.
     BOOL hadTimer = (self.desiredTitle != nil);
     self.desiredTitle = title;
+    DLog(@"setWindowTitle:%@", title);
     if (!hadTimer) {
         if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
             // Unless the window was just created, set the title immediately. Issue 5876.
+            DLog(@"set title immediately to %@", self.desiredTitle);
             self.window.title = self.desiredTitle;
         }
         PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+        DLog(@"schedule timer to set window title");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
+                DLog(@"timer fired. Set title to %@", weakSelf.desiredTitle);
                 weakSelf.window.title = weakSelf.desiredTitle;
             }
             weakSelf.desiredTitle = nil;

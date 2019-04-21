@@ -4363,6 +4363,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
+        DLog(@"Session asking to set window title. Parent window is %@", [_delegate parentWindow]);
         [[_delegate parentWindow] setWindowTitle];
     }
 }
