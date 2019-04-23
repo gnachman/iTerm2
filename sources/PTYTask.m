@@ -1038,16 +1038,29 @@ static void HandleSigChld(int n) {
     int connectionFd = forkState.connectionFd;
     int deadmansPipeFd = forkState.deadMansPipe[0];
     // This takes about 200ms on a fast machine so pop off to a background queue to do it.
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    if (@available(macOS 10.13, *)) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
+                                                                                                 deadmansPipeFd);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self didCompleteHandshakeWithForkState:forkState
+                                               ttyState:ttyState
+                                       serverConnection:serverConnection
+                                             completion:completion];
+            });
+        });
+    } else {
+        // Either iTerm2 or macOS 10.12 is buggy. The caller crashes very often, saying:
+        //        *** multi-threaded process forked ***
+        //        BUG IN LIBDISPATCH: mach semaphore API failure
+        //        crashed on child side of fork pre-exec
         iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
                                                                                              deadmansPipeFd);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self didCompleteHandshakeWithForkState:forkState
-                                           ttyState:ttyState
-                                   serverConnection:serverConnection
-                                         completion:completion];
-        });
-    });
+        [self didCompleteHandshakeWithForkState:forkState
+                                       ttyState:ttyState
+                               serverConnection:serverConnection
+                                     completion:completion];
+    }
 }
 
 - (void)didCompleteHandshakeWithForkState:(iTermForkState)state
