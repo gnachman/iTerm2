@@ -7,6 +7,7 @@
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 #import "PTYTask.h"
+#import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
@@ -33,22 +34,8 @@
 #include <util.h>
 
 #define CTRLKEY(c) ((c)-'A'+1)
-const int kNumFileDescriptorsToDup = NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER;
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
-
-typedef struct {
-    pid_t pid;
-    int connectionFd;
-    int deadMansPipe[2];
-    int numFileDescriptorsToPreserve;
-} iTermForkState;
-
-typedef struct {
-    struct termios term;
-    struct winsize win;
-    char tty[PATH_MAX];
-} iTermTTYState;
 
 static void
 setup_tty_param(iTermTTYState *ttyState,
@@ -93,234 +80,6 @@ setup_tty_param(iTermTTYState *ttyState,
     win->ws_col = width;
     win->ws_xpixel = 0;
     win->ws_ypixel = 0;
-}
-
-static void iTermSignalSafeWrite(int fd, const char *message) {
-    int len = 0;
-    for (int i = 0; message[i]; i++) {
-        len++;
-    }
-    int rc;
-    do {
-        rc = write(fd, message, len);
-    } while (rc < 0 && (errno == EAGAIN || errno == EINTR));
-}
-
-static void iTermSignalSafeWriteInt(int fd, int n) {
-    if (n == INT_MIN) {
-        iTermSignalSafeWrite(fd, "int_min");
-        return;
-    }
-    if (n < 0) {
-        iTermSignalSafeWrite(fd, "-");
-        n = -n;
-    }
-    if (n < 10) {
-        char str[2] = { n + '0', 0 };
-        iTermSignalSafeWrite(fd, str);
-        return;
-    }
-    iTermSignalSafeWriteInt(fd, n / 10);
-    iTermSignalSafeWriteInt(fd, n % 10);
-}
-
-static void iTermDidForkChild(const char *argpath,
-                              const char **argv,
-                              BOOL closeFileDescriptors,
-                              const iTermForkState *forkState,
-                              const char *initialPwd,
-                              char **newEnviron) {
-    // BE CAREFUL WHAT YOU DO HERE!
-    // See man sigaction for the list of legal function calls to make between fork and exec.
-    signal(SIGCHLD, SIG_DFL);
-    signal(SIGPIPE, SIG_DFL);
-    sigset_t signals;
-    sigemptyset(&signals);
-    sigaddset(&signals, SIGPIPE);
-    sigprocmask(SIG_UNBLOCK, &signals, NULL);
-
-    // Apple opens files without the close-on-exec flag (e.g., Extras2.rsrc).
-    // See issue 2662.
-    if (closeFileDescriptors) {
-        // If running jobs in servers close file descriptors after exec when it's safe to
-        // enumerate files in /dev/fd. This is the potentially very slow path (issue 5391).
-        for (int j = forkState->numFileDescriptorsToPreserve; j < getdtablesize(); j++) {
-            close(j);
-        }
-    }
-
-    chdir(initialPwd);
-
-    // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
-    // does the job.
-    extern char **environ;
-    environ = newEnviron;
-    execvp(argpath, (char* const*)argv);
-
-    // NOTE: This won't be visible when jobs run in servers :(
-    // exec error
-    int e = errno;
-    iTermSignalSafeWrite(1, "## exec failed ##\n");
-    iTermSignalSafeWrite(1, "Program: ");
-    iTermSignalSafeWrite(1, argpath);
-    iTermSignalSafeWrite(1, "\nErrno: ");
-    if (e == ENOENT) {
-        iTermSignalSafeWrite(1, "\nNo such file or directory");
-    } else {
-        iTermSignalSafeWrite(1, "\nErrno: ");
-        iTermSignalSafeWriteInt(1, e);
-    }
-    iTermSignalSafeWrite(1, "\n");
-
-    sleep(1);
-}
-
-// Like login_tty but makes fd 0 the master, fd 1 the slave, fd 2 an open unix-domain socket
-// for transferring file descriptors, and fd 3 the write end of a pipe that closes when the server
-// dies.
-// IMPORTANT: This runs between fork and exec. Careful what you do.
-static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPipeWriteEnd) {
-    setsid();
-    ioctl(slave, TIOCSCTTY, NULL);
-
-    // This array keeps track of which file descriptors are in use and should not be dup2()ed over.
-    // It has |inuseCount| valid elements. inuse must have inuseCount + arraycount(orig) elements.
-    int inuse[3 * kNumFileDescriptorsToDup] = {
-       0, 1, 2, 3,  // FDs get duped to the lowest numbers so reserve them
-       master, slave, serverSocketFd, deadMansPipeWriteEnd,  // FDs to get duped, which mustn't be overwritten
-       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get reused
-    int inuseCount = 2 * kNumFileDescriptorsToDup;
-
-    // File descriptors get dup2()ed to temporary numbers first to avoid stepping on each other or
-    // on any of the desired final values. Their temporary values go in here. The first is always
-    // master, then slave, then server socket.
-    int temp[kNumFileDescriptorsToDup];
-
-    // The original file descriptors to renumber.
-    int orig[kNumFileDescriptorsToDup] = { master, slave, serverSocketFd, deadMansPipeWriteEnd };
-
-    for (int o = 0; o < sizeof(orig) / sizeof(*orig); o++) {  // iterate over orig
-        int original = orig[o];
-
-        // Try to find a candidate file descriptor that is not important to us (i.e., does not belong
-        // to the inuse array).
-        for (int candidate = 0; candidate < sizeof(inuse) / sizeof(*inuse); candidate++) {
-            BOOL isInUse = NO;
-            for (int i = 0; i < sizeof(inuse) / sizeof(*inuse); i++) {
-                if (inuse[i] == candidate) {
-                    isInUse = YES;
-                    break;
-                }
-            }
-            if (!isInUse) {
-                // t is good. dup orig[o] to t and close orig[o]. Save t in temp[o].
-                inuse[inuseCount++] = candidate;
-                temp[o] = candidate;
-                dup2(original, candidate);
-                close(original);
-                break;
-            }
-        }
-    }
-
-    // Dup the temp values to their desired values (which happens to equal the index in temp).
-    // Close the temp file descriptors.
-    for (int i = 0; i < sizeof(orig) / sizeof(*orig); i++) {
-        dup2(temp[i], i);
-        close(temp[i]);
-    }
-}
-
-// Just like forkpty but fd 0 the master and fd 1 the slave.
-static int MyForkPty(int *amaster,
-                     iTermTTYState *ttyState,
-                     int serverSocketFd,
-                     int deadMansPipeWriteEnd) {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
-    int master;
-    int slave;
-
-    iTermFileDescriptorServerLog("Calling openpty");
-    if (openpty(&master, &slave, ttyState->tty, &ttyState->term, &ttyState->win) == -1) {
-        NSLog(@"openpty failed: %s", strerror(errno));
-        return -1;
-    }
-
-    iTermFileDescriptorServerLog("Calling fork");
-    pid_t pid = fork();
-    switch (pid) {
-        case -1:
-            // error
-            NSLog(@"Fork failed: %s", strerror(errno));
-            return -1;
-
-        case 0:
-            // child
-            MyLoginTTY(master, slave, serverSocketFd, deadMansPipeWriteEnd);
-            return 0;
-
-        default:
-            // parent
-            *amaster = master;
-            close(slave);
-            close(serverSocketFd);
-            close(deadMansPipeWriteEnd);
-            return pid;
-    }
-}
-
-static int iTermForkToRunJobInServer(iTermForkState *forkState,
-                                     iTermTTYState *ttyState,
-                                     NSString *tempPath) {
-    DLog(@"iTermForkToRunJobInServer");
-    int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);
-
-    // Get ready to run the server in a thread.
-    __block int serverConnectionFd = -1;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-
-    // In another thread, accept on the unix domain socket. Since it's
-    // already listening, there's no race here. connect will block until
-    // accept is called if the main thread wins the race. accept will block
-    // til connect is called if the background thread wins the race.
-    iTermFileDescriptorServerLog("Kicking off a background job to accept() in the server");
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        iTermFileDescriptorServerLog("Now running the accept queue block");
-        serverConnectionFd = iTermFileDescriptorServerAccept(serverSocketFd);
-
-        // Let the main thread go. This is necessary to ensure that
-        // serverConnectionFd is written to before the main thread uses it.
-        iTermFileDescriptorServerLog("Signal the semaphore");
-        dispatch_semaphore_signal(semaphore);
-    });
-
-    // Connect to the server running in a thread.
-    forkState->connectionFd = iTermFileDescriptorClientConnect(tempPath.UTF8String);
-    assert(forkState->connectionFd != -1);  // If this happens the block dispatched above never returns. Ran out of FDs, presumably.
-
-    // Wait for serverConnectionFd to be written to.
-    iTermFileDescriptorServerLog("Waiting for the semaphore");
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    iTermFileDescriptorServerLog("The semaphore was signaled");
-
-    // Remove the temporary file. The server will create a new socket file
-    // if the client dies. That file's name is dependent on its process ID,
-    // which we don't know yet, so that's why this temp file dance has to
-    // be done.
-    unlink(tempPath.UTF8String);
-
-    // Now fork. This variant of forkpty passes through the master, slave,
-    // and serverConnectionFd to the child job.
-    pipe(forkState->deadMansPipe);
-
-    // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
-    iTermFileDescriptorServerLog("Calling MyForkPty");
-    forkState->numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
-    int fd = -1;
-    DLog(@"Calling MyForkPty");
-    forkState->pid = MyForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
-    DLog(@"Returned from MyForkPty");
-    return fd;
 }
 
 static void HandleSigChld(int n) {
@@ -1007,15 +766,6 @@ static void HandleSigChld(int n) {
     [alert runModal];
 }
 
-- (void)forkToRunJobDirectlyWithForkState:(iTermForkState *)forkState
-                                 ttyState:(iTermTTYState *)ttyState {
-    forkState->pid = _childPid = forkpty(&fd, ttyState->tty, &ttyState->term, &ttyState->win);
-    if (_childPid > 0) {
-        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
-    }
-    forkState->numFileDescriptorsToPreserve = 3;
-}
-
 - (void)failedToForkWithEnvironment:(char **)newEnviron program:(NSString *)progpath {
     DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
     [[iTermNotificationController sharedInstance] notify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
@@ -1090,7 +840,7 @@ static void HandleSigChld(int n) {
         fcntl(fd, F_SETFL, O_NONBLOCK);
     } else {
         close(fd);
-        NSLog(@"Server died immediately!");
+        DLog(@"Server died immediately!");
         [_delegate taskDiedImmediately];
     }
     DLog(@"fini");
@@ -1223,9 +973,9 @@ static void HandleSigChld(int n) {
     if (runJobsInServers) {
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
         DLog(@"get path to UDS");
-        NSString *tempPath = [self pathToNewUnixDomainSocket];
+        NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
         DLog(@"done");
-        if (tempPath == nil) {
+        if (unixDomainSocketPath == nil) {
             [self freeEnvironment:newEnviron];
             if (completion != nil) {
                 completion();
@@ -1235,18 +985,33 @@ static void HandleSigChld(int n) {
 
         // Begin listening on that path as a unix domain socket.
         DLog(@"fork");
-        fd = iTermForkToRunJobInServer(&forkState, &ttyState, tempPath);
-        DLog(@"done forking");
+
+        fd = iTermForkAndExecToRunJobInServer(&forkState,
+                                              &ttyState,
+                                              unixDomainSocketPath,
+                                              argpath,
+                                              argv,
+                                              closeFileDescriptors,
+                                              initialPwd,
+                                              newEnviron);
+        // If you get here you're the parent.
         _serverPid = forkState.pid;
     } else {
-        [self forkToRunJobDirectlyWithForkState:&forkState ttyState:&ttyState];
+        fd = iTermForkAndExecToRunJobDirectly(&forkState,
+                                              &ttyState,
+                                              argpath,
+                                              argv,
+                                              closeFileDescriptors,
+                                              initialPwd,
+                                              newEnviron);
+        // If you get here you're the parent.
+        _childPid = forkState.pid;
+        if (_childPid > 0) {
+            [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
+        }
     }
-    if (forkState.pid == (pid_t)0) {
-        // Child
-        // Do not start the new process with a signal handler.
-        iTermDidForkChild(argpath, argv, closeFileDescriptors, &forkState, initialPwd, newEnviron);
-        _exit(-1);
-    } else if (forkState.pid < (pid_t)0) {
+
+    if (forkState.pid < (pid_t)0) {
         // Error
         [self failedToForkWithEnvironment:newEnviron program:progpath];
         if (completion != nil) {
@@ -1254,7 +1019,9 @@ static void HandleSigChld(int n) {
         }
         return;
     }
+
     // Parent
+    DLog(@"done forking");
     [self didForkParent:&forkState newEnviron:newEnviron ttyState:&ttyState completion:completion];
 }
 
