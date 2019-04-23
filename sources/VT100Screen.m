@@ -1052,15 +1052,17 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
 
+    const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
     if (commandStartX_ >= 0) {
-        // Save the start location of the command. If it's a multi-line command
-        // it'll get truncated and the display is hopelessly messed up, so
-        // while this is not the true start of the command it's better than not
-        // recording a start, which would break alt-click to move the cursor.
-        // The user will probably cancel the command or press ^L to redraw.
-        newCommandStart = VT100GridCoordMake(commandStartX_, 0);
+        // Compute the new location of the command's beginning, which is right
+        // after the end of the prompt in its new location.
+        int numberOfPromptLines = 1;
+        if (!VT100GridAbsCoordEquals(_currentPromptRange.start, _currentPromptRange.end)) {
+            numberOfPromptLines = MAX(1, _currentPromptRange.end.y - _currentPromptRange.start.y + 1);
+        }
+        newCommandStart = VT100GridCoordMake(commandStartX_, numberOfPromptLines - 1);
 
         // Abort the current command.
         [self commandWasAborted];
@@ -1069,7 +1071,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
 
     // Clear the grid by scrolling it up into history.
-    [self clearAndResetScreenPreservingCursorLine];
+    [self clearAndResetScreenSavingLines:linesToSave];
 
     // Erase history.
     [self clearScrollbackBuffer];
@@ -1079,7 +1081,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     if (newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines]];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [terminal_ resetSavedCursorPositions];
@@ -1087,20 +1089,37 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
-- (void)clearAndResetScreenPreservingCursorLine {
+- (void)clearAndResetScreenSavingLines:(int)linesToSave {
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = currentGrid_.cursorX;
-    int numberOfPromptLines = 1;
-    if (!VT100GridAbsCoordEquals(_currentPromptRange.start, _currentPromptRange.end)) {
-        numberOfPromptLines = MAX(1, _currentPromptRange.end.y - _currentPromptRange.start.y + 1);
-    }
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                             unlimitedScrollback:unlimitedScrollback_
                                              preserveCursorLine:YES
-                                          additionalLinesToSave:MAX(0, numberOfPromptLines - 1)]];
+                                          additionalLinesToSave:MAX(0, linesToSave - 1)]];
     currentGrid_.cursorX = x;
-    currentGrid_.cursorY = numberOfPromptLines - 1;
+    currentGrid_.cursorY = linesToSave - 1;
+}
+
+- (int)numberOfLinesToPreserveWhenClearingScreen {
+    if (VT100GridAbsCoordEquals(_currentPromptRange.start, _currentPromptRange.end)) {
+        // Prompt range not defined.
+        return 1;
+    }
+    if (commandStartX_ < 0) {
+        // Prompt apparently hasn't ended.
+        return 1;
+    }
+    VT100ScreenMark *lastCommandMark = [self lastPromptMark];
+    if (!lastCommandMark) {
+        // Never had a mark.
+        return 1;
+    }
+
+    VT100GridCoordRange lastCommandMarkRange = [self coordRangeForInterval:lastCommandMark.entry.interval];
+    int cursorLine = self.cursorY - 1 + self.numberOfScrollbackLines;
+    int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
+    return 1 + cursorMarkOffset;
 }
 
 - (void)clearScrollbackBuffer
@@ -2979,9 +2998,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt {
+    const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
     [delegate_ screenTriggerableChangeDidOccur];
     if (preservePrompt) {
-        [self clearAndResetScreenPreservingCursorLine];
+        [self clearAndResetScreenSavingLines:linesToSave];
     } else {
         [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                                 unlimitedScrollback:unlimitedScrollback_
