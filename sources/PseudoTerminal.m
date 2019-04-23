@@ -5565,6 +5565,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
             }
         }
+        // In case the tab bar will go away
+        [_contentView invalidateAutomaticTabBarBackingHiding];
+
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
