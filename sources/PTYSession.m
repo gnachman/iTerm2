@@ -53,6 +53,7 @@
 #import "iTermNotificationCenter.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
+#import "iTermPrintGuard.h"
 #import "iTermProcessCache.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPromptOnCloseReason.h"
@@ -93,6 +94,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -514,6 +516,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariableScope *_variablesScope;
     
     BOOL _showingVisualIndicatorForEsc;
+
+    iTermPrintGuard *_printGuard;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -843,6 +847,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keyMapper release];
     [_badgeFontName release];
     [_variablesScope release];
+    [_printGuard release];
 
     [super dealloc];
 }
@@ -8265,8 +8270,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)screenShouldBeginPrinting {
-
-    return ![[[self profile] objectForKey:KEY_DISABLE_PRINTING] boolValue];
+    if (!_printGuard) {
+        _printGuard = [[iTermPrintGuard alloc] init];
+    }
+    return [_printGuard shouldPrintWithProfile:self.profile inWindow:self.view.window];
 }
 
 - (void)screenSetWindowTitle:(NSString *)title {
