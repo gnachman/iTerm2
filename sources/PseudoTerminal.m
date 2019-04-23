@@ -7758,6 +7758,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [self fitWindowToTabs];
         }
     }
+    // Update whether the backing view is visible
+    [_contentView invalidateAutomaticTabBarBackingHiding];
     // If the theme changed from light to dark make sure split pane dividers redraw.
     [_contentView.tabView setNeedsDisplay:YES];
 }
@@ -7933,6 +7935,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return YES;
     }
     if (![self anyPaneIsTransparent]) {
+        return YES;
+    }
+    if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
         return YES;
     }
     return NO;
