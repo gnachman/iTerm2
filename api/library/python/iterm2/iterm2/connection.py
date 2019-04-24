@@ -269,6 +269,16 @@ class Connection:
                     except Exception as _err:
                         traceback.print_exc()
                         sys.exit(1)
+            except websockets.exceptions.InvalidMessage:
+                # This is a temporary workaround for this issue:
+                #
+                # https://gitlab.com/gnachman/iterm2/issues/7681#note_163548399
+                # https://github.com/aaugustin/websockets/issues/604
+                #
+                # I'm leaving the print statement in because I'm worried this might
+                # have unexpected consequences, as InvalidMessage is certainly
+                # not very specific.
+                print("websockets.connect failed with InvalidMessage. Retrying.")
             except (ConnectionRefusedError, OSError) as e:
                 # https://github.com/aaugustin/websockets/issues/593
                 if retry:
