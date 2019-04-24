@@ -238,6 +238,8 @@ int iTermForkAndExecToRunJobInServer(iTermForkState *forkState,
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     iTermFileDescriptorServerLog("The semaphore was signaled");
 
+    dispatch_release(semaphore);
+
     // Remove the temporary file. The server will create a new socket file
     // if the client dies. That file's name is dependent on its process ID,
     // which we don't know yet, so that's why this temp file dance has to
