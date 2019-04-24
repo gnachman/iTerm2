@@ -815,6 +815,11 @@ typedef struct {
     // Even though it's not visible it needs an accurate number so we can compute the proper
     // window size when it appears.
     [self setLeftTabBarWidthFromPreferredWidth];
+
+    if ([_delegate iTermTabBarWindowIsFullScreen]) {
+        // When in full screen the insets must be reset even though the tab bar is not visible.
+        self.tabBarControl.insets = [self.delegate tabBarInsets];
+    }
 }
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
