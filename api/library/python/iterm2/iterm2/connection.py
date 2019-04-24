@@ -269,11 +269,24 @@ class Connection:
                     except Exception as _err:
                         traceback.print_exc()
                         sys.exit(1)
-            except OSError as e:
+            except (ConnectionRefusedError, OSError) as e:
                 # https://github.com/aaugustin/websockets/issues/593
                 if retry:
                     await asyncio.sleep(0.5)
                 else:
+                    print("""
+There was a problem connecting to iTerm2.
+
+Please check the following:
+  * Ensure the Python API is enabled in iTerm2's preferences
+  * Ensure iTerm2 is running
+  * Ensure script is running on the same machine as iTerm2
+
+If you'd prefer to retry connecting automatically instead of
+raising an exception, pass retry=true to run_until_complete()
+or run_forever()
+
+""", file=sys.stderr)
                     done = True
                     raise
 
