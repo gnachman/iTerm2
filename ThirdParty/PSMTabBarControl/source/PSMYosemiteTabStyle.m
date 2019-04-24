@@ -760,10 +760,14 @@
     if (horizontal) {
         BOOL shouldDrawLeftLine;
         if (@available(macOS 10.14, *)) {
-            // Because alpha is less than 1, we don't want to double-draw. I don't think
-            // drawing the left line is necessary in earlier macOS versions either but I
-            // don't feel like adding any risk at the moment.
-            shouldDrawLeftLine = NO;
+            if (isFirst && NSMinX(cellFrame) > 1) {
+                shouldDrawLeftLine = YES;
+            } else {
+                // Because alpha is less than 1, we don't want to double-draw. I don't think
+                // drawing the left line is necessary in earlier macOS versions either but I
+                // don't feel like adding any risk at the moment.
+                shouldDrawLeftLine = NO;
+            }
         } else {
             shouldDrawLeftLine = !isFirst;
         }
