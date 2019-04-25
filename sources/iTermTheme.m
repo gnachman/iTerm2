@@ -42,6 +42,7 @@
     iTermPreferencesTabStyle tabStyle = preferredStyle;
     switch (preferredStyle) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             // 10.14 path
             tabStyle = [effectiveAppearance it_tabStyle:preferredStyle];
@@ -59,6 +60,7 @@
     }
     switch (tabStyle) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
@@ -178,6 +180,7 @@
         CGFloat whiteLevel;
         switch ([effectiveAppearance it_tabStyle:preferredStyle]) {
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:
             case TAB_STYLE_MINIMAL:
                 assert(NO);
 
@@ -217,6 +220,7 @@
     CGFloat brightness = tabColor.brightnessComponent;
     switch (tabStyle) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             break;
 
@@ -267,6 +271,7 @@
     CGFloat whiteLevel = 0;
     switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:

@@ -1514,7 +1514,6 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
-                <outlet property="_compactWindowStyleMenuItem" destination="9F7-Pq-9yJ" id="4Bl-6A-cRP"/>
                 <outlet property="_customWindowTitle" destination="j1C-qn-Cjv" id="4IV-M9-IBf"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
                 <outlet property="_initialUseTransparency" destination="zKb-TP-OY3" id="Mg9-Ah-4bM"/>
@@ -2857,7 +2856,6 @@ DQ
                                         <menuItem title="Normal" state="on" id="4945"/>
                                         <menuItem title="Full Screen" tag="1" id="4944"/>
                                         <menuItem isSeparatorItem="YES" id="f9k-Lu-L4T"/>
-                                        <menuItem title="Compact" tag="13" id="9F7-Pq-9yJ"/>
                                         <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
                                         <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
                                         <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
@@ -5025,13 +5023,14 @@ DQ
                                             <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
                                                 <rect key="frame" x="144" y="113" width="191" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="Automatic" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
+                                                <popUpButtonCell key="cell" type="push" title="Regular" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="dVY-ir-1iD">
                                                         <items>
-                                                            <menuItem title="Automatic" state="on" tag="4" id="ZNW-QH-Lff"/>
+                                                            <menuItem title="Regular" state="on" tag="4" id="ZNW-QH-Lff"/>
                                                             <menuItem title="Minimal" tag="5" id="pzb-ff-PHK"/>
+                                                            <menuItem title="Compact" tag="6" id="PuI-6v-vjf"/>
                                                             <menuItem isSeparatorItem="YES" tag="-1" id="Efu-Me-UrR"/>
                                                             <menuItem title="Light" id="4kv-Gg-Pyp"/>
                                                             <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>

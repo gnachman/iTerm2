@@ -387,12 +387,16 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 
     if ([self isEqual:[NSColor labelColor]]) {
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_DARK:
             case TAB_STYLE_DARK_HIGH_CONTRAST:
                 return [NSColor whiteColor];
+
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_MINIMAL:
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:;
                 return self;
         }
     }

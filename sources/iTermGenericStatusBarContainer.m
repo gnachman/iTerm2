@@ -66,6 +66,7 @@
             case TAB_STYLE_DARK:
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:
             case TAB_STYLE_DARK_HIGH_CONTRAST:
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
                 _backing.hidden = NO;

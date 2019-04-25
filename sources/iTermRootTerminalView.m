@@ -73,6 +73,14 @@ typedef struct {
 
 @end
 
+@interface iTermFakeWindowTitleLabel : NSTextField
+@property (nonatomic, copy) NSString *windowTitle;
+@property (nonatomic, strong) NSImage *windowIcon;
+@end
+
+@implementation iTermFakeWindowTitleLabel
+@end
+
 @implementation iTermRootTerminalView {
     BOOL _tabViewFrameReduced;
     BOOL _haveShownToolbelt;
@@ -82,7 +90,7 @@ typedef struct {
     NSString *_windowTitle;
     NSNumber *_windowNumber;
     NSTextField *_windowNumberLabel;
-    NSTextField *_windowTitleLabel;
+    iTermFakeWindowTitleLabel *_windowTitleLabel;
     iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
     iTermGenericStatusBarContainer *_statusBarContainer;
     NSDictionary *_desiredToolbeltProportions;
@@ -190,7 +198,7 @@ typedef struct {
         _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
-        _windowTitleLabel = [NSTextField newLabelStyledTextField];
+        _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
@@ -496,6 +504,8 @@ typedef struct {
     } else {
         _windowTitleLabel.stringValue = title ?: @"";
     }
+    _windowTitleLabel.windowTitle = title;
+    _windowTitleLabel.windowIcon = icon;
 }
 
 - (void)setWindowTitleIcon:(NSImage *)icon {
@@ -586,6 +596,7 @@ typedef struct {
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
         switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:
             case TAB_STYLE_MINIMAL:
                 assert(NO);
                 
@@ -613,6 +624,9 @@ typedef struct {
 
     _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+    if (_windowTitleLabel.windowIcon) {
+        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle icon:_windowTitleLabel.windowIcon];
+    }
 }
 
 #pragma mark - Toolbelt
@@ -1032,6 +1046,9 @@ typedef struct {
 - (void)layoutWindowPaneDecorations {
     _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+    if (_windowTitleLabel.windowIcon) {
+        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle icon:_windowTitleLabel.windowIcon];
+    }
 
     [self updateWindowNumberFont];
 

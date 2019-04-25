@@ -591,7 +591,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     if (!number) {
         return nil;
     }
-    return @(iTermSanitizedWindowType(number.intValue));
+    return @(iTermThemedWindowType(number.intValue));
 }
 
 + (id)badgeFont:(Profile *)profile {

@@ -32,8 +32,8 @@
         self.terminalGuid = restorableState[@"terminalGuid"];
         self.arrangement = restorableState[@"arrangement"];
         self.predecessors = restorableState[@"predecessors"];
-        self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : WINDOW_TYPE_NORMAL;
-        self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : WINDOW_TYPE_NORMAL;
+        self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : iTermWindowDefaultType();
+        self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : iTermWindowDefaultType();
         self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
     }
     return self;

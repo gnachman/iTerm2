@@ -10893,7 +10893,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const CGFloat alpha = 0.25;
     if (@available(macOS 10.14, *)) {
         NSAppearance *appearance = nil;
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_DARK:
             case TAB_STYLE_DARK_HIGH_CONTRAST:
                 appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
@@ -10903,6 +10903,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
                 break;
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:
             case TAB_STYLE_MINIMAL:  // shouldn't happen
                 appearance = [NSApp effectiveAppearance];
                 break;

@@ -264,6 +264,7 @@ static NSString *const kDynamicToolURL = @"URL";
     if (@available(macOS 10.14, *)) {
         switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COMPACT:
             case TAB_STYLE_MINIMAL:
                 return [NSColor controlBackgroundColor];
 
@@ -279,6 +280,7 @@ static NSString *const kDynamicToolURL = @"URL";
     NSColor *darkColor = [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
     switch ([self.effectiveAppearance it_tabStyle:[iTermPreferences intForKey:kPreferenceKeyTabStyle]]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             assert(NO);
 

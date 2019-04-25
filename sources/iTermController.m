@@ -942,7 +942,7 @@ static iTermController *gSharedInstance;
 
 - (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
-        int windowType = iTermSanitizedWindowType([[aDict objectForKey:KEY_WINDOW_TYPE] intValue]);
+        const iTermWindowType windowType = iTermThemedWindowType([[aDict objectForKey:KEY_WINDOW_TYPE] intValue]);
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
             [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
@@ -950,7 +950,7 @@ static iTermController *gSharedInstance;
             return windowType;
         }
     } else {
-        return WINDOW_TYPE_NORMAL;
+        return iTermWindowDefaultType();
     }
 }
 
@@ -980,7 +980,7 @@ static iTermController *gSharedInstance;
     if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
         windowType = [self windowTypeForBookmark:profile];
     } else {
-        windowType = [iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile];
+        windowType = iTermThemedWindowType([iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile]);
     }
     PseudoTerminal *term =
         [[[PseudoTerminal alloc] initWithSmartLayout:YES
@@ -1202,7 +1202,7 @@ static iTermController *gSharedInstance;
             term = theTerm;
             [term finishInitializationWithSmartLayout:YES
                                            windowType:windowType
-                                      savedWindowType:WINDOW_TYPE_NORMAL
+                                      savedWindowType:iTermWindowDefaultType()
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                      hotkeyWindowType:hotkeyWindowType
                                               profile:aDict];
@@ -1586,7 +1586,7 @@ static iTermController *gSharedInstance;
     MutableProfile *windowProfile = [[[self defaultBookmark] mutableCopy] autorelease];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
-        windowProfile[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_NORMAL);
+        windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());
     }
     if (initialPWD) {
         windowProfile[KEY_WORKING_DIRECTORY] = initialPWD;

@@ -1094,6 +1094,7 @@ static BOOL hasBecomeActive = NO;
             minimal = YES;
             // fall through
 
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_AUTOMATIC: {
             NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
             if ([systemMode isEqual:@"Dark"]) {
@@ -1882,8 +1883,8 @@ static BOOL hasBecomeActive = NO;
                         DLog(@"Create a new window");
                         // Create a new term and add the session to it.
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                                 windowType:WINDOW_TYPE_NORMAL
-                                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                                 windowType:iTermWindowDefaultType()
+                                                            savedWindowType:iTermWindowDefaultType()
                                                                      screen:-1
                                                                     profile:nil] autorelease];
                         if (term) {
@@ -1905,8 +1906,8 @@ static BOOL hasBecomeActive = NO;
                         // Create a new window
                         DLog(@"Create a new window");
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                                 windowType:WINDOW_TYPE_NORMAL
-                                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                                                 windowType:iTermWindowDefaultType()
+                                                            savedWindowType:iTermWindowDefaultType()
                                                                      screen:-1
                                                                     profile:nil] autorelease];
                         [[iTermController sharedInstance] addTerminalWindow:term];

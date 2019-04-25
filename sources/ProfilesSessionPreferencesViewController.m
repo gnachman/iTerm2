@@ -317,6 +317,7 @@
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
             return self.view.effectiveAppearance;
     }

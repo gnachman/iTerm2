@@ -37,7 +37,7 @@
 }
 
 + (instancetype)newLabelStyledTextField {
-    NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 22)];
+    NSTextField *label = [[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 22)];
     label.editable = NO;
     label.stringValue = @"";
     label.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];

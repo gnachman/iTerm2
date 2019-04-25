@@ -25,8 +25,9 @@ typedef NS_ENUM(int, iTermPreferencesTabStyle) {
     TAB_STYLE_DARK = 1,
     TAB_STYLE_LIGHT_HIGH_CONTRAST = 2,
     TAB_STYLE_DARK_HIGH_CONTRAST = 3,
-    TAB_STYLE_AUTOMATIC = 4,
-    TAB_STYLE_MINIMAL = 5
+    TAB_STYLE_AUTOMATIC = 4,  // automatic + normal windows. This has the side-effect of changing compact windows to normal.
+    TAB_STYLE_MINIMAL = 5,  // minimal + compact windows. Changes normal windows to compact.
+    TAB_STYLE_COMPACT = 6  // automatic + compact windows. This should be like automatic, except it has a side-effect of changing normal windows to compact.
 };
 
 typedef NS_ENUM(NSUInteger, iTermStatusBarPosition) {

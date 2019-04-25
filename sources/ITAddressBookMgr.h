@@ -267,7 +267,7 @@ typedef NS_ENUM(int, iTermOptionKeyBehavior) {
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.
 typedef enum {
-    WINDOW_TYPE_NORMAL = 0,
+    WINDOW_TYPE_NORMAL = 0,  // May be converted to compact depending on theme
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
 
@@ -289,20 +289,12 @@ typedef enum {
     WINDOW_TYPE_RIGHT_PARTIAL = 11,
 
     WINDOW_TYPE_NO_TITLE_BAR = 12,
-    WINDOW_TYPE_COMPACT = 13,
+    WINDOW_TYPE_COMPACT = 13,  // May be converted to normal depending on theme
     WINDOW_TYPE_ACCESSORY = 14
 } iTermWindowType;
 
-NS_INLINE iTermWindowType iTermSanitizedWindowType(iTermWindowType unsafeWindowType) {
-    if (@available(macOS 10.14, *)) {
-        return unsafeWindowType;
-    } else {
-        if (unsafeWindowType == WINDOW_TYPE_COMPACT) {
-            return WINDOW_TYPE_NORMAL;
-        }
-        return unsafeWindowType;
-    }
-}
+iTermWindowType iTermWindowDefaultType(void);
+iTermWindowType iTermThemedWindowType(iTermWindowType windowType);
 
 typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,

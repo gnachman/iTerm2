@@ -367,7 +367,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (iTermAnimationDirection)animateInDirectionForWindowType:(iTermWindowType)windowType {
-    switch (windowType) {
+    switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
             return kAnimationDirectionDown;

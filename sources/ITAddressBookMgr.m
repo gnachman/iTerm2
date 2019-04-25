@@ -50,6 +50,51 @@ const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
+iTermWindowType iTermWindowDefaultType(void) {
+    return iTermThemedWindowType(WINDOW_TYPE_NORMAL);
+}
+
+iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
+    switch (windowType) {
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_NORMAL:
+            if (@available(macOS 10.14, *)) {} else {
+                // 10.13 and earlier do not support compact
+                return WINDOW_TYPE_NORMAL;
+            }
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_COMPACT:
+                case TAB_STYLE_MINIMAL:
+                    return WINDOW_TYPE_COMPACT;
+
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    return WINDOW_TYPE_NORMAL;
+            }
+            assert(false);
+            return windowType;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            return windowType;
+    }
+    ITAssertWithMessage(NO, @"Unknown window type %@", @(windowType));
+    return WINDOW_TYPE_NORMAL;
+}
+
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
     NSNetServiceBrowser *ftpBonjourBrowser;
