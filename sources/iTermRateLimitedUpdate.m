@@ -16,7 +16,9 @@
 }
 
 - (void)invalidate {
-    NSLog(@"Invalidate timer from %@", [NSThread callStackSymbols]);
+    if (self.debug) {
+        NSLog(@"Invalidate timer from %@", [NSThread callStackSymbols]);
+    }
     [_timer invalidate];
     _timer = nil;
     _block = nil;
@@ -40,7 +42,9 @@
 
 - (void)setMinimumInterval:(NSTimeInterval)minimumInterval {
     if (minimumInterval < _minimumInterval && _timer) {
-        NSLog(@"Invalidate timer");
+        if (self.debug) {
+            NSLog(@"Invalidate timer");
+        }
         [_timer invalidate];
         _minimumInterval = minimumInterval;
         [self performBlockIfNeeded:_timer];
