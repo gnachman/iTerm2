@@ -1967,7 +1967,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 height:[_screen height]
                                 isUTF8:isUTF8
                            autologPath:autoLogFilename
-                           synchronous:synchronous || (completion == nil)
+                           synchronous:synchronous
                             completion:^{
                                 [self sendInitialText];
                                 if (completion) {

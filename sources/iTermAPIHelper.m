@@ -1914,9 +1914,11 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                                          return [term createTabWithProfile:profile
                                                                                                withCommand:nil
                                                                                                environment:nil
+#warning TODO: This doesn't really need to block the main thread since this method is async.
                                                                                                synchronous:YES
                                                                                                 completion:nil];
                                                                      }
+#warning TODO: This doesn't really need to block the main thread since this method is async.
                                                                synchronous:YES
                                                                 completion:nil];
 
@@ -2001,6 +2003,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                 before:request.before
                                                profile:profile
                                          targetSession:session
+#warning TODO: This doesn't really need to block the main thread since this method is async.
                                            synchronous:YES];
         if (newSession == nil && !session.isTmuxClient) {
             response.status = ITMSplitPaneResponse_Status_CannotSplit;
