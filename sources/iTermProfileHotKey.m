@@ -138,7 +138,9 @@ static NSString *const kArrangement = @"Arrangement";
                                                      makeKey:YES
                                                  canActivate:YES
                                                      command:nil
-                                                       block:nil];
+                                                       block:nil
+                                                 synchronous:NO
+                                                  completion:nil];
         }
     } else {
         windowController = [self windowControllerFromProfile:[self profile] url:url];
@@ -724,7 +726,9 @@ static NSString *const kArrangement = @"Arrangement";
                                                                    makeKey:YES
                                                                canActivate:YES
                                                                    command:nil
-                                                                     block:nil];
+                                                                     block:nil
+                                                               synchronous:NO
+                                                                completion:nil];
     self.birthingWindow = NO;
 
     [self.delegate hotKeyDidCreateWindow:self];

@@ -1911,8 +1911,14 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                                    command:nil
                                                                      block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                                          profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
-                                                                         return [term createTabWithProfile:profile withCommand:nil environment:nil];
-                                                                     }];
+                                                                         return [term createTabWithProfile:profile
+                                                                                               withCommand:nil
+                                                                                               environment:nil
+                                                                                               synchronous:YES
+                                                                                                completion:nil];
+                                                                     }
+                                                               synchronous:YES
+                                                                completion:nil];
 
     if (!session) {
         ITMCreateTabResponse *response = [[ITMCreateTabResponse alloc] init];
@@ -1994,7 +2000,8 @@ static iTermAPIHelper *sAPIHelperInstance;
         PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
                                                 before:request.before
                                                profile:profile
-                                         targetSession:session];
+                                         targetSession:session
+                                           synchronous:YES];
         if (newSession == nil && !session.isTmuxClient) {
             response.status = ITMSplitPaneResponse_Status_CannotSplit;
         } else if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer

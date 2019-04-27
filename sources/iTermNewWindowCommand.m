@@ -45,7 +45,9 @@
                                                      makeKey:YES
                                                  canActivate:YES
                                                      command:command
-                                                       block:nil];
+                                                       block:nil
+                                                 synchronous:YES
+                                                  completion:nil];
         return [iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window];
     }
     return nil;

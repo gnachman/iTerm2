@@ -1404,11 +1404,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return NSNotFound;
 }
 
-- (void)newSessionInTabAtIndex:(id)sender
-{
+- (void)newSessionInTabAtIndex:(id)sender {
     Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (profile) {
-        [self createTabWithProfile:profile withCommand:nil environment:nil];
+        [self createTabWithProfile:profile
+                       withCommand:nil
+                       environment:nil
+                       synchronous:NO
+                        completion:nil];
     }
 }
 
@@ -6675,7 +6678,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     NSString *guid = [SplitPanel showPanelWithParent:self isVertical:vertical];
     if (guid) {
-        [self splitVertically:vertical withBookmarkGuid:guid];
+        [self splitVertically:vertical withBookmarkGuid:guid synchronous:NO];
     }
 }
 
@@ -7036,16 +7039,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return index;
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                    withProfile:(Profile *)profile
+                    synchronous:(BOOL)synchronous {
     return [self splitVertically:isVertical
                     withBookmark:profile
-                   targetSession:[self currentSession]];
+                   targetSession:[self currentSession]
+                     synchronous:synchronous];
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid {
+- (PTYSession *)splitVertically:(BOOL)isVertical
+               withBookmarkGuid:(NSString *)guid
+                    synchronous:(BOOL)synchronous {
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (profile) {
-        return [self splitVertically:isVertical withProfile:profile];
+        return [self splitVertically:isVertical
+                         withProfile:profile
+                         synchronous:synchronous];
     } else {
         return nil;
     }
@@ -7132,14 +7142,20 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (PTYSession *)splitVertically:(BOOL)isVertical
                    withBookmark:(Profile*)theBookmark
-                  targetSession:(PTYSession*)targetSession {
-    return [self splitVertically:isVertical before:NO profile:theBookmark targetSession:targetSession];
+                  targetSession:(PTYSession*)targetSession
+                    synchronous:(BOOL)synchronous {
+    return [self splitVertically:isVertical
+                          before:NO
+                         profile:theBookmark
+                   targetSession:targetSession
+                     synchronous:synchronous];
 }
 
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
-                  targetSession:(PTYSession *)targetSession {
+                  targetSession:(PTYSession *)targetSession
+                    synchronous:(BOOL)synchronous {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         [[targetSession tmuxController] selectPane:targetSession.tmuxPane];
@@ -7194,6 +7210,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                       isUTF8:nil
                                                substitutions:nil
                                             windowController:self
+                                                 synchronous:synchronous
                                                   completion:nil]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
@@ -7239,18 +7256,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return theBookmark;
 }
 
-- (IBAction)splitVertically:(id)sender
-{
+- (IBAction)splitVertically:(id)sender {
     [self splitVertically:YES
              withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]];
+            targetSession:[[self currentTab] activeSession]
+              synchronous:NO];
 }
 
-- (IBAction)splitHorizontally:(id)sender
-{
+- (IBAction)splitHorizontally:(id)sender {
     [self splitVertically:NO
              withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]];
+            targetSession:[[self currentTab] activeSession]
+              synchronous:NO];
 }
 
 - (void)tabActiveSessionDidChange {
@@ -9005,7 +9022,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                            [aSession setIgnoreResizeNotifications:NO];
                                                        }
                                                        return copyOfTab.activeSession;
-                                                   }];
+                                                   }
+                                             synchronous:NO
+                                              completion:nil];
     } else {
         [PTYTab openTabWithArrangement:self.currentTab.arrangement
                             inTerminal:self
@@ -9276,7 +9295,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
-                         environment:(NSDictionary *)environment {
+                         environment:(NSDictionary *)environment
+                         synchronous:(BOOL)synchronous
+                          completion:(void (^)(BOOL ok))completion {
     assert(profile);
 
     // Get active session's directory
@@ -9322,7 +9343,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                  isUTF8:nil
                                           substitutions:nil
                                        windowController:self
-                                             completion:nil];
+                                            synchronous:synchronous
+                                             completion:completion];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1) {

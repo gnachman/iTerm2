@@ -77,6 +77,7 @@
 
 - (void)evaluateWithOldPWD:(NSString *)oldPWD
                      scope:(iTermVariableScope *)scope
+               synchronous:(BOOL)synchronous
                 completion:(void (^)(NSString *))completion {
     if (_evaluated) {
         completion(_evaluated);
@@ -99,7 +100,7 @@
 
     iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:self.customDirectoryFormat
                                                                                                  scope:scope];
-    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:synchronous ? 0 : 5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         self->_evaluated = evaluator.value;
         completion(evaluator.value);
     }];

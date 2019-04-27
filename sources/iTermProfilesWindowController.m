@@ -186,7 +186,8 @@ typedef enum {
         if (inPane != NO_PANE && terminal != nil) {
             [terminal splitVertically:(inPane == VERTICAL_PANE)
                          withBookmark:bookmark
-                        targetSession:[[terminal currentTab] activeSession]];
+                        targetSession:[[terminal currentTab] activeSession]
+                          synchronous:NO];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
                                                   inTerminal:terminal];

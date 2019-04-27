@@ -1466,6 +1466,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  isUTF8:isUTF8Arg
                                           substitutions:substitutionsArg
                                        windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
+                                            synchronous:NO
                                              completion:completion];
             };
         }
@@ -1500,14 +1501,16 @@ ITERM_WEAKLY_REFERENCEABLE
     };
     if (startAutoLog) {
         [aSession retain];
-        [aSession fetchAutoLogFilename:^(NSString * _Nonnull filename) {
-            if (filename) {
-                [aSession.shell startLoggingToFileWithPath:filename
-                                              shouldAppend:NO];
-            }
-            [aSession autorelease];
-            runCommandBlock(finish);
-        }];
+        [aSession fetchAutoLogFilenameSynchronously:NO
+                                         completion:
+         ^(NSString * _Nonnull filename) {
+             if (filename) {
+                 [aSession.shell startLoggingToFileWithPath:filename
+                                               shouldAppend:NO];
+             }
+             [aSession autorelease];
+             runCommandBlock(finish);
+         }];
     } else {
         runCommandBlock(finish);
     }
@@ -1939,6 +1942,7 @@ ITERM_WEAKLY_REFERENCEABLE
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
+         synchronous:(BOOL)synchronous
           completion:(void (^)(BOOL))completion {
     DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
@@ -1948,13 +1952,14 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
 
-    [self computeArgvForCommand:command substitutions:substitutions synchronous:(completion == nil) completion:^(NSArray<NSString *> *argv) {
+    [self computeArgvForCommand:command substitutions:substitutions synchronous:synchronous completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
-        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions synchronous:(completion == nil) completion:^(NSDictionary *env) {
+        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions synchronous:synchronous completion:^(NSDictionary *env) {
             @synchronized(self) {
                 _registered = YES;
             }
-            [self fetchAutoLogFilename:^(NSString * _Nonnull autoLogFilename) {
+            [self fetchAutoLogFilenameSynchronously:synchronous
+                                         completion:^(NSString * _Nonnull autoLogFilename) {
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
@@ -1962,7 +1967,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 height:[_screen height]
                                 isUTF8:isUTF8
                            autologPath:autoLogFilename
-                           synchronous:(completion == nil)
+                           synchronous:synchronous || (completion == nil)
                             completion:^{
                                 [self sendInitialText];
                                 if (completion) {
@@ -1983,8 +1988,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)launchProfileInCurrentTerminal:(Profile *)profile
-                               withURL:(NSString *)url
-{
+                               withURL:(NSString *)url {
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     [[iTermController sharedInstance] launchBookmark:profile
                                           inTerminal:term
@@ -1993,31 +1997,28 @@ ITERM_WEAKLY_REFERENCEABLE
                                              makeKey:NO
                                          canActivate:NO
                                              command:nil
-                                               block:nil];
+                                               block:nil
+                                         synchronous:NO
+                                          completion:nil];
 }
 
-- (void)selectPaneLeftInCurrentTerminal
-{
+- (void)selectPaneLeftInCurrentTerminal {
     [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
 }
 
-- (void)selectPaneRightInCurrentTerminal
-{
+- (void)selectPaneRightInCurrentTerminal {
     [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
 }
 
-- (void)selectPaneAboveInCurrentTerminal
-{
+- (void)selectPaneAboveInCurrentTerminal {
     [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
 }
 
-- (void)selectPaneBelowInCurrentTerminal
-{
+- (void)selectPaneBelowInCurrentTerminal {
     [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
 }
 
-- (void)_maybeWarnAboutShortLivedSessions
-{
+- (void)_maybeWarnAboutShortLivedSessions {
     if ([iTermApplication.sharedApplication delegate].isAppleScriptTestApp) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
@@ -2824,6 +2825,7 @@ ITERM_WEAKLY_REFERENCEABLE
            environment:_environment
                 isUTF8:_isUTF8
          substitutions:_substitutions
+           synchronous:YES
             completion:nil];
 }
 
@@ -6556,10 +6558,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
             break;
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-            [[_delegate realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
+            [[_delegate realParentWindow] splitVertically:NO
+                                         withBookmarkGuid:keyBindingText
+                                              synchronous:NO];
             break;
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-            [[_delegate realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+            [[_delegate realParentWindow] splitVertically:YES
+                                         withBookmarkGuid:keyBindingText
+                                              synchronous:NO];
             break;
         case KEY_ACTION_SET_PROFILE: {
             Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
@@ -7311,7 +7317,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [[_delegate realParentWindow] splitVertically:vertically
                                      withBookmark:profile
-                                    targetSession:self];
+                                    targetSession:self
+                                      synchronous:NO];
 }
 
 - (void)textViewSelectNextTab

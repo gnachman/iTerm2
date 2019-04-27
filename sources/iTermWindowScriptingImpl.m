@@ -38,7 +38,7 @@
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *command = args[@"command"];
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
-    PTYSession *session =
+    __block PTYSession *session =
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:(PseudoTerminal *)self.ptyDelegate
                                                  withURL:nil
@@ -46,7 +46,9 @@
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command
-                                                   block:nil];
+                                                   block:nil
+                                             synchronous:YES
+                                              completion:nil];
     return [self.ptyDelegate tabForSession:session];
 }
 
@@ -61,7 +63,7 @@
                                              profileName]];
         return nil;
     }
-    PTYSession *session =
+    __block PTYSession *session =
         [[iTermController sharedInstance] launchBookmark:profile
                                               inTerminal:(PseudoTerminal *)self.ptyDelegate
                                                  withURL:nil
@@ -69,7 +71,9 @@
                                                  makeKey:YES
                                              canActivate:NO
                                                  command:command
-                                                   block:nil];
+                                                   block:nil
+                                             synchronous:YES
+                                              completion:nil];
     return [self.ptyDelegate tabForSession:session];
 }
 

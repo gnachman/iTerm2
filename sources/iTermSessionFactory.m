@@ -76,7 +76,8 @@ NS_ASSUME_NONNULL_BEGIN
                                    isUTF8:(BOOL)isUTF8
                          serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                             substitutions:(NSDictionary *)substitutions
-                         windowController:(PseudoTerminal * _Nonnull)windowController {
+                         windowController:(PseudoTerminal * _Nonnull)windowController
+                              synchronous:(BOOL)synchronous {
     DLog(@"finishAttachingOrLaunchingSession:%@ cmd:%@ environment:%@ isUTF8:%@ substitutions:%@ windowController:%@",
          aSession, cmd, environment, @(isUTF8), substitutions, windowController);
 
@@ -94,6 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
                  inSession:aSession
              substitutions:substitutions
           windowController:windowController
+               synchronous:synchronous
                 completion:completion];
     }
 }
@@ -111,6 +113,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 isUTF8:(nullable NSNumber *)isUTF8Number
                          substitutions:(nullable NSDictionary *)providedSubs
                       windowController:(PseudoTerminal * _Nonnull)windowController
+                           synchronous:(BOOL)synchronous
                             completion:(void (^ _Nullable)(BOOL))completion {
     DLog(@"attachOrLaunchCommandInSession:%@ canPrompt:%@ objectType:%@ urlString:%@ allowURLSubs:%@ environment:%@ oldCWD:%@ forceUseOldCWD:%@ command:%@ isUTF8:%@ substitutions:%@ windowController:%@",
          aSession, @(canPrompt), @(objectType), urlString, @(allowURLSubs), environment, oldCWD,
@@ -188,7 +191,8 @@ NS_ASSUME_NONNULL_BEGIN
                                          isUTF8:isUTF8
                                serverConnection:serverConnection
                                   substitutions:substitutions
-                               windowController:windowController];
+                               windowController:windowController
+                                    synchronous:synchronous];
     };
 
     NSString *pwd;
@@ -206,6 +210,7 @@ NS_ASSUME_NONNULL_BEGIN
         [aSession it_setAssociatedObject:initialDirectory forKey:key];
         [initialDirectory evaluateWithOldPWD:oldCWD
                                        scope:aSession.variablesScope
+                                 synchronous:synchronous
                                   completion:^(NSString *pwd) {
                                       [aSession it_setAssociatedObject:nil forKey:key];
                                       pwdCompletion(pwd);
@@ -232,11 +237,13 @@ NS_ASSUME_NONNULL_BEGIN
            inSession:(PTYSession*)theSession
         substitutions:(NSDictionary *)substitutions
     windowController:(PseudoTerminal *)term
+         synchronous:(BOOL)synchronous
           completion:(void (^ _Nullable)(BOOL))completion {
     [theSession startProgram:command
                  environment:prog_env
                       isUTF8:isUTF8
                substitutions:substitutions
+                 synchronous:synchronous
                   completion:^(BOOL ok) {
                       [term setWindowTitle];
                       if (completion) {

@@ -13061,6 +13061,7 @@
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
 					"-Wundeclared-selector",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -13342,6 +13343,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-shorten-64-to-32",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -13413,6 +13415,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-shorten-64-to-32",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -13484,6 +13487,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-shorten-64-to-32",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -13720,6 +13724,7 @@
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
 					"-Wundeclared-selector",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -13791,6 +13796,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-shorten-64-to-32",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -13948,6 +13954,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wpartial-availability",
+					"-Wno-nullability-completeness",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -14094,6 +14101,10 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Beta;
 		};
@@ -14153,6 +14164,10 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Development;
 		};
@@ -14203,6 +14218,10 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Deployment;
 		};
@@ -14253,6 +14272,10 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Nightly;
 		};
@@ -14439,6 +14462,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wpartial-availability",
+					"-Wno-nullability-completeness",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -14491,6 +14515,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wpartial-availability",
+					"-Wno-nullability-completeness",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -14543,6 +14568,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wpartial-availability",
+					"-Wno-nullability-completeness",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -14797,6 +14823,7 @@
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
 					"-Wundeclared-selector",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -14872,6 +14899,7 @@
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
 					"-Wundeclared-selector",
+					"-Wno-nullability-completeness",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;

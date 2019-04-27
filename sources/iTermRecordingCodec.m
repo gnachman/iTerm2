@@ -96,7 +96,9 @@
                                                    });
                                                    [windowController insertSession:newSession atIndex:0];
                                                    return newSession;
-                                               }];
+                                               }
+                                         synchronous:NO
+                                          completion:nil];
 }
 
 + (void)exportRecording:(PTYSession *)session {

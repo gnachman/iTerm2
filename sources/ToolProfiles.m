@@ -136,7 +136,9 @@ static const CGFloat kInnerMargin = 5;
 {
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
-        [terminal splitVertically:NO withBookmarkGuid:guid];
+        [terminal splitVertically:NO
+                 withBookmarkGuid:guid
+                      synchronous:NO];
     }
 }
 
@@ -144,7 +146,9 @@ static const CGFloat kInnerMargin = 5;
 {
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
-        [terminal splitVertically:YES withBookmarkGuid:guid];
+        [terminal splitVertically:YES
+                 withBookmarkGuid:guid
+                      synchronous:NO];
     }
 }
 

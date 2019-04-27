@@ -126,9 +126,12 @@
                                                                           isUTF8:nil
                                                                    substitutions:nil
                                                                 windowController:term
+                                                                     synchronous:NO
                                                                       completion:nil];
              return ok ? session : nil;
-         }];
+         }
+                                             synchronous:NO
+                                              completion:nil];
     NSLog(@"restored an orphan");
     [aSession showOrphanAnnouncement];
     return aSession;

@@ -562,6 +562,7 @@ typedef enum {
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
+         synchronous:(BOOL)synchronous
           completion:(void (^)(BOOL))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches

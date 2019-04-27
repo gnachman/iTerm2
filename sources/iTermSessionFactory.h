@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 isUTF8:(nullable NSNumber *)isUTF8Number // Overrides profile's iSUTF8 if nonnil
                          substitutions:(nullable NSDictionary *)substitutions
                       windowController:(PseudoTerminal * _Nonnull)windowController
+                           synchronous:(BOOL)synchronous
                             completion:(void (^ _Nullable)(BOOL))completion;  // If nonnil this may be async
 @end
 

@@ -39,6 +39,7 @@
            environment:@{}
                 isUTF8:[args[@"isUTF8"] boolValue]
          substitutions:nil
+           synchronous:YES
             completion:nil];
 
     return;
@@ -166,7 +167,8 @@
         profile = temp;
     }
     PTYSession *session = [[self.delegate realParentWindow] splitVertically:vertically
-                                                                withProfile:profile];
+                                                                withProfile:profile
+                                                                synchronous:YES];
     [formerSession activateSessionAndTab];
     return session;
 }

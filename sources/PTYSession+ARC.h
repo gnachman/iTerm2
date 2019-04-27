@@ -11,7 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface PTYSession (ARC)
 
-- (void)fetchAutoLogFilename:(void (^)(NSString *filename))completion;
+- (void)fetchAutoLogFilenameSynchronously:(BOOL)synchronous
+                               completion:(void (^)(NSString *filename))completion;
 
 @end
 

@@ -290,7 +290,8 @@ extern NSString *const iTermSelectedTabDidChange;
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
-                  targetSession:(PTYSession *)targetSession;
+                  targetSession:(PTYSession *)targetSession
+                    synchronous:(BOOL)synchronous;
 
 // Change visibility of menu bar (but only if it should be changed--may do
 // nothing if the menu bar is on a different screen, for example).
@@ -307,7 +308,9 @@ extern NSString *const iTermSelectedTabDidChange;
 // The optional command overrides the profile's settings.
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
-                         environment:(NSDictionary *)environment;
+                         environment:(NSDictionary *)environment
+                         synchronous:(BOOL)synchronous
+                          completion:(void (^)(BOOL ok))completion;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;

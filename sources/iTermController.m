@@ -1018,7 +1018,9 @@ static iTermController *gSharedInstance;
                         makeKey:YES
                     canActivate:YES
                         command:nil
-                          block:nil];
+                          block:nil
+                    synchronous:NO
+                     completion:nil];
 }
 
 - (NSString *)validatedAndShellEscapedUsername:(NSString *)username {
@@ -1154,8 +1156,10 @@ static iTermController *gSharedInstance;
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
                        command:(NSString *)command
-                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block {
-    DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:");
+                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
+                   synchronous:(BOOL)synchronous
+                    completion:(void (^ _Nullable)(BOOL))completion {
+    DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:synchronous:completion:");
     DLog(@"Profile:\n%@", bookmarkData);
     DLog(@"URL: %@", url);
     DLog(@"hotkey window type: %@", @(hotkeyWindowType));
@@ -1179,6 +1183,9 @@ static iTermController *gSharedInstance;
         aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
         if (aDict == nil) {
             // Bogus hostname detected
+            if (completion != nil) {
+                completion(NO);
+            }
             return nil;
         }
     }
@@ -1232,6 +1239,7 @@ static iTermController *gSharedInstance;
 
     PTYSession* session = nil;
 
+    BOOL callCompletionBlock = (completion != nil);
     if (block) {
         DLog(@"Create a session via callback");
         session = block(aDict, term);
@@ -1239,6 +1247,7 @@ static iTermController *gSharedInstance;
         DLog(@"Creating a new session");
         session = [[term.sessionFactory newSessionWithProfile:aDict] autorelease];
         [term addSessionInNewTab:session];
+        callCompletionBlock = NO;
         const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
                                                                   canPrompt:YES
                                                                  objectType:objectType
@@ -1252,15 +1261,25 @@ static iTermController *gSharedInstance;
                                                                      isUTF8:nil
                                                               substitutions:nil
                                                            windowController:term
-                                                                 completion:nil];
+                                                                synchronous:synchronous
+                                                                 completion:completion];
         if (!ok) {
+            completion(NO);
             session = nil;
         }
     } else {
-        session = [term createTabWithProfile:aDict withCommand:command environment:nil];
+        callCompletionBlock = NO;
+        session = [term createTabWithProfile:aDict
+                                 withCommand:command
+                                 environment:nil
+                                 synchronous:synchronous
+                                  completion:completion];
     }
     if (!session && term.numberOfTabs == 0) {
         [[term window] close];
+        if (callCompletionBlock) {
+            completion(NO);
+        }
         return nil;
     }
 
@@ -1290,6 +1309,9 @@ static iTermController *gSharedInstance;
         }
     }
 
+    if (callCompletionBlock) {
+        completion(YES);
+    }
     return session;
 }
 
@@ -1612,7 +1634,11 @@ static iTermController *gSharedInstance;
         if (shortLived) {
             profile = [profile dictionaryBySettingObject:@0 forKey:KEY_UNDO_TIMEOUT];
         }
-        PTYSession *session = [term createTabWithProfile:profile withCommand:command environment:environment];
+        PTYSession *session = [term createTabWithProfile:profile
+                                             withCommand:command
+                                             environment:environment
+                                             synchronous:NO
+                                              completion:nil];
         if (shortLived) {
             session.shortLivedSingleUse = YES;
         }
@@ -1642,7 +1668,9 @@ static iTermController *gSharedInstance;
                                        makeKey:YES
                                    canActivate:YES
                                        command:command
-                                         block:makeSession];
+                                         block:makeSession
+                                   synchronous:NO
+                                    completion:nil];
 
     if (bury) {
         [session bury];

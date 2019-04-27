@@ -781,6 +781,7 @@ static void HandleSigChld(int n) {
 
 - (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
                               ttyState:(const iTermTTYState *)ttyStatePtr
+                           synchronous:(BOOL)synchronous
                             completion:(void (^)(void))completion {
     iTermForkState forkState = *forkStatePtr;
     iTermTTYState ttyState = *ttyStatePtr;
@@ -788,7 +789,7 @@ static void HandleSigChld(int n) {
     int connectionFd = forkState.connectionFd;
     int deadmansPipeFd = forkState.deadMansPipe[0];
     // This takes about 200ms on a fast machine so pop off to a background queue to do it.
-    if (@available(macOS 10.13, *)) {
+    if (!synchronous) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
                                                                                                  deadmansPipeFd);
@@ -800,10 +801,6 @@ static void HandleSigChld(int n) {
             });
         });
     } else {
-        // Either iTerm2 or macOS 10.12 is buggy. The caller crashes very often, saying:
-        //        *** multi-threaded process forked ***
-        //        BUG IN LIBDISPATCH: mach semaphore API failure
-        //        crashed on child side of fork pre-exec
         iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
                                                                                              deadmansPipeFd);
         [self didCompleteHandshakeWithForkState:forkState
@@ -882,6 +879,7 @@ static void HandleSigChld(int n) {
 - (void)didForkParent:(const iTermForkState *)forkState
            newEnviron:(char **)newEnviron
              ttyState:(iTermTTYState *)ttyState
+          synchronous:(BOOL)synchronous
            completion:(void (^)(void))completion {
     DLog(@"free environment");
     [self freeEnvironment:newEnviron];
@@ -895,7 +893,10 @@ static void HandleSigChld(int n) {
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
-        [self finishHandshakeWithJobInServer:forkState ttyState:ttyState completion:completion];
+        [self finishHandshakeWithJobInServer:forkState
+                                    ttyState:ttyState
+                                 synchronous:synchronous
+                                  completion:completion];
     } else {
         // Jobs are direct children of iTerm2
         [self finishLaunchingDirectChild:ttyState];
@@ -1022,7 +1023,11 @@ static void HandleSigChld(int n) {
 
     // Parent
     DLog(@"done forking");
-    [self didForkParent:&forkState newEnviron:newEnviron ttyState:&ttyState completion:completion];
+    [self didForkParent:&forkState
+             newEnviron:newEnviron
+               ttyState:&ttyState
+            synchronous:synchronous
+             completion:completion];
 }
 
 #pragma mark I/O

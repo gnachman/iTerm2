@@ -16,7 +16,8 @@
 
 @implementation PTYSession (ARC)
 
-- (void)fetchAutoLogFilename:(void (^)(NSString *filename))completion {
+- (void)fetchAutoLogFilenameSynchronously:(BOOL)synchronous
+                               completion:(void (^)(NSString *filename))completion {
     if (![self.profile[KEY_AUTOLOG] boolValue]) {
         completion(nil);
         return;
@@ -26,7 +27,8 @@
     dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
     NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
     iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:format scope:self.variablesScope];
-    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:synchronous ? 0 : 5
+                        completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         if (evaluator.error) {
             NSString *message = [NSString stringWithFormat:@"Cannot start logging to session with profile “%@”: %@",
                                  self.profile[KEY_NAME],

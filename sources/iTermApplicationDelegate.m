@@ -1407,7 +1407,9 @@ static BOOL hasBecomeActive = NO;
                                                      makeKey:NO
                                                  canActivate:NO
                                                      command:nil
-                                                       block:nil];
+                                                       block:nil
+                                                 synchronous:NO
+                                                  completion:nil];
         }
     }
 }

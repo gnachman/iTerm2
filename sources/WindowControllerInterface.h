@@ -357,16 +357,21 @@
 #pragma mark - Splits
 
 // Create a new split. The new session uses the profile with |guid|.
-- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
+- (PTYSession *)splitVertically:(BOOL)isVertical
+               withBookmarkGuid:(NSString*)guid
+                    synchronous:(BOOL)synchronous;
 
 // Create a new split with a provided profile.
-- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                    withProfile:(Profile *)profile
+                    synchronous:(BOOL)synchronous;
 
 // Create a new split with a specified bookmark. |targetSession| is the session
 // to split.
 - (PTYSession *)splitVertically:(BOOL)isVertical
                    withBookmark:(Profile*)theBookmark
-                  targetSession:(PTYSession*)targetSession;
+                  targetSession:(PTYSession*)targetSession
+                    synchronous:(BOOL)synchronous;
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target
