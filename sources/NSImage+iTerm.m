@@ -50,6 +50,9 @@
 }
 
 - (void)it_drawWithBlock:(void (^)(void))block {
+    if (self.size.width == 0 || self.size.height == 0) {
+        return;
+    }
     [self lockFocus];
     block();
     [self unlockFocus];
