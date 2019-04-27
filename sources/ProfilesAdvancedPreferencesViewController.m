@@ -261,7 +261,7 @@
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
-    if (rowIndex < 0 || rowIndex > self.boundHosts.count) {
+    if (rowIndex < 0 || rowIndex >= self.boundHosts.count) {
         return nil;
     }
     return [[self boundHosts] objectAtIndex:rowIndex];
