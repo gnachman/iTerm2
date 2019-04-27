@@ -5420,11 +5420,50 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (BOOL)droppingTabOutsideWindowMovesWindow {
+    if (self.numberOfTabs != 1) {
+        return NO;
+    }
+
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            break;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return NO;
+    }
+
+    if (![iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]) {
+        return NO;
+    }
+
+    switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            return NO;
+
+        case PSMTab_BottomTab:
+        case PSMTab_TopTab:
+            break;
+    }
+
+    return YES;
+}
+
 - (BOOL)tabView:(NSTabView*)aTabView
     shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
-                 inTabBar:(PSMTabBarControl *)aTabBarControl {
+                 inTabBar:(PSMTabBarControl *)aTabBarControl
+         moveSourceWindow:(BOOL *)moveSourceWindow {
     if (![aTabBarControl tabView]) {
         // Tab dropping outside any existing tabbar to create a new window.
+        if (moveSourceWindow && [self droppingTabOutsideWindowMovesWindow]) {
+            *moveSourceWindow = YES;
+            return NO;
+        }
         return [iTermAdvancedSettingsModel allowDragOfTabIntoNewWindow];
     } else if ([[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
         // Dropping a tab in its own tabbar when it's the only tab causes the

@@ -505,104 +505,141 @@
     [source sanityCheck:@"source performDragOperation"];
 }
 
-- (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
-    if ([self isDragging]) {  // means there was not a successful drop (performDragOperation)
-        PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
-        PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
-        id sourceDelegate = [[self sourceTabBar] delegate];
-
-        //split off the dragged tab into a new window
-        if ([self destinationTabBar] == nil &&
-            [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+- (BOOL)shouldCreateNewWindowOnDrop:(BOOL *)moveWindow {
+    id sourceDelegate = [[self sourceTabBar] delegate];
+    return ([self destinationTabBar] == nil &&
+            [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
             [sourceDelegate tabView:[[self sourceTabBar] tabView]
               shouldDropTabViewItem:[[self draggedCell] representedObject]
-                           inTabBar:nil] &&
-            [sourceDelegate respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
+                           inTabBar:nil
+                   moveSourceWindow:moveWindow] &&
+            [sourceDelegate respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]);
+}
 
-            NSPoint origin = [self topLeftPointOfDragViewWindowForMouseLocation:aPoint];
-            const CGFloat height = _dragViewWindow.frame.size.height;
-            PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView]
-                                 newTabBarForDraggedTabViewItem:[[self draggedCell] representedObject]
-                                                        atPoint:origin];
+- (void)createNewWindowWithTabBar:(PSMTabBarControl *)control height:(CGFloat)height origin:(const NSPoint)origin {
+    id sourceDelegate = [[self sourceTabBar] delegate];
+    if (!control) {
+        ELog(@"Delegate returned no control to add to.");
+        [self cancelDrag];
+        [[self sourceTabBar] sanityCheck:@"delegate returned no control to add to"];
+    }
 
-            if (control) {
-                if ([sourceDelegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
-                    [sourceDelegate tabView:[[self sourceTabBar] tabView]
-                        willDropTabViewItem:[[self draggedCell] representedObject]
-                                   inTabBar:control];
-                }
-                //add the dragged tab to the new window
-                [[control cells] insertObject:[self draggedCell] atIndex:0];
+    if ([sourceDelegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+        [sourceDelegate tabView:[[self sourceTabBar] tabView]
+            willDropTabViewItem:[[self draggedCell] representedObject]
+                       inTabBar:control];
+    }
+    //add the dragged tab to the new window
+    [[control cells] insertObject:[self draggedCell] atIndex:0];
 
-                //remove the tracking rects and bindings registered on the old tab
-                [[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
-                [[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
-                [[self sourceTabBar] removeTabForCell:[self draggedCell]];
+    //remove the tracking rects and bindings registered on the old tab
+    [[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
+    [[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+    [[self sourceTabBar] removeTabForCell:[self draggedCell]];
 
-                //rebind the cell to the new control
-                [control initializeStateForCell:[self draggedCell]];
-                [control bindPropertiesForCell:[self draggedCell] andTabViewItem:[[self draggedCell] representedObject]];
+    //rebind the cell to the new control
+    [control initializeStateForCell:[self draggedCell]];
+    [control bindPropertiesForCell:[self draggedCell] andTabViewItem:[[self draggedCell] representedObject]];
 
-                [[self draggedCell] setControlView:control];
+    [[self draggedCell] setControlView:control];
 
-                [[[self sourceTabBar] tabView] removeTabViewItem:[[self draggedCell] representedObject]];
+    [[[self sourceTabBar] tabView] removeTabViewItem:[[self draggedCell] representedObject]];
 
-                void (^fixOriginBlock)(void) = nil;
-                switch (self.sourceTabBar.tabLocation) {
-                    case PSMTab_BottomTab: {
-                        NSPoint bottomLeft = origin;
-                        bottomLeft.y -= height;
-                        fixOriginBlock = ^{
-                            [control.window setFrameOrigin:bottomLeft];
-                        };
-                        break;
-                    }
-                    case PSMTab_LeftTab:
-                    case PSMTab_TopTab: {
-                        NSPoint topLeft = control.window.frame.origin;
-                        topLeft.y += control.window.frame.size.height;
-                        fixOriginBlock = ^{
-                            [control.window setFrameTopLeftPoint:topLeft];
-                        };
-                        break;
-                    }
-                }
-
-                // This could cause an already correctly positioned window to resize.
-                [[control tabView] addTabViewItem:[[self draggedCell] representedObject]];
-
-                if (fixOriginBlock) {
-                    fixOriginBlock();
-                }
-
-                [[control window] makeKeyAndOrderFront:nil];
-
-                if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
-                    [sourceDelegate tabView:[[self sourceTabBar] tabView]
-                         didDropTabViewItem:[[self draggedCell] representedObject]
-                                   inTabBar:control];
-                }
-                [control sanityCheck:@"add dragged tab to new window"];
-            } else {
-                ELog(@"Delegate returned no control to add to.");
-                [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
-                [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
-                [[[self sourceTabBar] window] orderFront:nil];
-                [[self sourceTabBar] sanityCheck:@"delegate returned no control to add to"];
-            }
-
-        } else {
-            // put cell back
-            [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
-            [[self sourceTabBar] sanityCheck:@"put cell back"];
+    void (^fixOriginBlock)(void) = nil;
+    switch (self.sourceTabBar.tabLocation) {
+        case PSMTab_BottomTab: {
+            NSPoint bottomLeft = origin;
+            bottomLeft.y -= height;
+            fixOriginBlock = ^{
+                [control.window setFrameOrigin:bottomLeft];
+            };
+            break;
         }
+        case PSMTab_LeftTab:
+        case PSMTab_TopTab: {
+            NSPoint topLeft = control.window.frame.origin;
+            topLeft.y += control.window.frame.size.height;
+            fixOriginBlock = ^{
+                [control.window setFrameTopLeftPoint:topLeft];
+            };
+            break;
+        }
+    }
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+    // This could cause an already correctly positioned window to resize.
+    [[control tabView] addTabViewItem:[[self draggedCell] representedObject]];
 
-        [self finishDrag];
+    if (fixOriginBlock) {
+        fixOriginBlock();
+    }
 
-        [source sanityCheck:@"draggedImageEndedAt - source"];
-        [destination sanityCheck:@"draggedImageEndedAt - destination"];
+    [[control window] makeKeyAndOrderFront:nil];
+
+    if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+        [sourceDelegate tabView:[[self sourceTabBar] tabView]
+             didDropTabViewItem:[[self draggedCell] representedObject]
+                       inTabBar:control];
+    }
+    [control sanityCheck:@"add dragged tab to new window"];
+}
+
+- (void)cancelDrag {
+    [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+    [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
+    [[[self sourceTabBar] window] orderFront:nil];
+}
+
+- (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
+    if (![self isDragging]) {
+        // There was not a successful drop (performDragOperation).
+        return;
+    }
+    PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
+    PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
+    id sourceDelegate = [[self sourceTabBar] delegate];
+
+    const NSPoint origin = [self topLeftPointOfDragViewWindowForMouseLocation:aPoint];
+    BOOL moveSourceWindow = NO;
+    if ([self shouldCreateNewWindowOnDrop:&moveSourceWindow]) {
+        const CGFloat height = _dragViewWindow.frame.size.height;
+        PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView]
+                             newTabBarForDraggedTabViewItem:[[self draggedCell] representedObject]
+                                                    atPoint:origin];
+
+        [self createNewWindowWithTabBar:control height:height origin:origin];
+
+    } else if (moveSourceWindow) {
+        [self cancelDragMovingWindowTo:origin];
+    } else {
+        [self cancelDrag];
+    }
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+
+    [self finishDrag];
+
+    [source sanityCheck:@"draggedImageEndedAt - source"];
+    [destination sanityCheck:@"draggedImageEndedAt - destination"];
+}
+
+- (void)cancelDragMovingWindowTo:(const NSPoint)origin {
+    const CGFloat height = _dragViewWindow.frame.size.height;
+    NSWindow *window = self.sourceTabBar.window;
+    [self cancelDrag];
+
+    switch (self.sourceTabBar.tabLocation) {
+        case PSMTab_BottomTab: {
+            NSPoint bottomLeft = origin;
+            bottomLeft.y -= height;
+            [window setFrameOrigin:bottomLeft];
+            break;
+        }
+        case PSMTab_LeftTab:
+        case PSMTab_TopTab: {
+            NSPoint topLeft = origin;
+            [window setFrameTopLeftPoint:topLeft];
+            break;
+        }
     }
 }
 

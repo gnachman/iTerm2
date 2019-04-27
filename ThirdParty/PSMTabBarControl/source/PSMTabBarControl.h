@@ -93,7 +93,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInse
 
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
-- (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
+- (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl moveSourceWindow:(BOOL *)moveSourceWindow;
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 
@@ -149,11 +149,11 @@ enum {
     PSMTab_PositionSingleMask = 1 << 7
 };
 
-enum {
+typedef enum {
     PSMTab_TopTab = 0,
     PSMTab_BottomTab = 1,
     PSMTab_LeftTab = 2,
-};
+} PSMTabPosition;
 
 // This view provides a control interface to manage a regular NSTabView.  It looks and works like
 // the tabbed browsing interface of many popular browsers.

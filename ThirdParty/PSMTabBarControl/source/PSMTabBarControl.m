@@ -1553,10 +1553,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPart
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
-        if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+        if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
             ![[self delegate] tabView:[[sender draggingSource] tabView]
                 shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject]
-                             inTabBar:self]) {
+                             inTabBar:self
+                     moveSourceWindow:nil]) {
             return NSDragOperationNone;
         }
 
@@ -1579,10 +1580,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPart
 
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
 
-        if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+        if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
             ![[self delegate] tabView:[[sender draggingSource] tabView]
                 shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject]
-                             inTabBar:self]) {
+                             inTabBar:self
+                     moveSourceWindow:nil]) {
             return NSDragOperationNone;
         }
 
