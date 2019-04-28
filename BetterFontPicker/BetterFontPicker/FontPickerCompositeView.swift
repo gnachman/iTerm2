@@ -48,7 +48,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             if let font = newValue, let familyName = font.familyName {
                 affordance.familyName = familyName
                 memberPicker?.set(member: font.fontName)
-                sizePicker?.size = Int(font.pointSize)
+                sizePicker?.size = Double(font.pointSize)
             }
             delegate = temp
         }
@@ -120,7 +120,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     @objc(addHorizontalSpacingAccessoryWithInitialValue:)
-    public func addHorizontalSpacingAccessory(_ initialValue: Int) -> SizePickerView {
+    public func addHorizontalSpacingAccessory(_ initialValue: Double) -> SizePickerView {
         let view = SizePickerView()
         horizontalSpacing = view
         view.size = initialValue
@@ -136,7 +136,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     @objc(addVerticalSpacingAccessoryWithInitialValue:)
-    public func addVerticalSpacingAccessory(_ initialValue: Int) -> SizePickerView {
+    public func addVerticalSpacingAccessory(_ initialValue: Double) -> SizePickerView {
         let view = SizePickerView()
         verticalSpacing = view
         view.size = initialValue
@@ -221,7 +221,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     public func sizePickerView(_ sizePickerView: SizePickerView,
-                               didChangeSizeTo size: Int) {
+                               didChangeSizeTo size: Double) {
         if let font = font {
             delegate?.fontPickerCompositeView(self, didSelectFont: font)
         }

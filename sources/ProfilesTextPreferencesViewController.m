@@ -396,7 +396,7 @@
 
 #pragma mark - BFPSizePickerViewDelegate
 
-- (void)sizePickerView:(BFPSizePickerView *)sizePickerView didChangeSizeTo:(NSInteger)size {
+- (void)sizePickerView:(BFPSizePickerView *)sizePickerView didChangeSizeTo:(double)size {
     [self saveChangesFromFontPicker];
 }
 

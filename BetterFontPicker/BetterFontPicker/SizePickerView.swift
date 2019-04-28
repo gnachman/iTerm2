@@ -11,16 +11,16 @@ import Cocoa
 @objc(BFPSizePickerViewDelegate)
 public protocol SizePickerViewDelegate: NSObjectProtocol {
     func sizePickerView(_ sizePickerView: SizePickerView,
-                        didChangeSizeTo size: Int)
+                        didChangeSizeTo size: Double)
 }
 
 @objc(BFPSizePickerView)
 public class SizePickerView: NSView, NSTextFieldDelegate {
     @objc public weak var delegate: SizePickerViewDelegate?
-    private var internalSize = 12
-    @objc public var size: Int {
+    private var internalSize = 12.0
+    @objc public var size: Double {
         set {
-            internalSet(newValue, withSideEffects: false)
+            internalSet(newValue, withSideEffects: false, updateTextField: true)
         }
         get {
             return internalSize
@@ -54,8 +54,8 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
         textField.isEditable = true
         textField.isSelectable = true
         textField.usesSingleLineMode = true
-        textField.integerValue = size
-        stepper.integerValue = size
+        textField.doubleValue = size
+        stepper.doubleValue = size
         addSubview(stepper)
         stepper.target = self
         stepper.action = #selector(stepper(_:))
@@ -63,13 +63,18 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
         layoutSubviews()
     }
 
-    private func internalSet(_ newValue: Int, withSideEffects: Bool) {
+    private func internalSet(_ newValue: Double, withSideEffects: Bool, updateTextField: Bool) {
         if newValue <= 0 {
             return
         }
+        if newValue == internalSize {
+            return
+        }
         internalSize = newValue
-        textField.integerValue = internalSize
-        stepper.integerValue = internalSize
+        if updateTextField {
+            textField.stringValue = String(format: "%g", newValue)
+        }
+        stepper.doubleValue = internalSize
         if withSideEffects {
             delegate?.sizePickerView(self, didChangeSizeTo: internalSize)
         }
@@ -99,14 +104,25 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
     @objc(stepper:)
     public func stepper(_ sender: Any?) {
         let stepper = sender as! NSStepper
-        internalSet(stepper.integerValue, withSideEffects: true)
+        if stepper.doubleValue < 1 {
+            stepper.doubleValue = 1
+        }
+        internalSet(stepper.doubleValue, withSideEffects: true, updateTextField: true)
     }
 
     public func controlTextDidEndEditing(_ obj: Notification) {
-        internalSet(textField.integerValue, withSideEffects: true)
+        let value = textField.doubleValue
+        if value > 0 {
+            internalSet(value, withSideEffects: true, updateTextField: true)
+        } else {
+            textField.doubleValue = internalSize
+        }
     }
 
     public func controlTextDidChange(_ obj: Notification) {
-        internalSet(textField.integerValue, withSideEffects: false)
+        let value = textField.doubleValue
+        if value > 0 {
+            internalSet(value, withSideEffects: true, updateTextField: false)
+        }
     }
 }

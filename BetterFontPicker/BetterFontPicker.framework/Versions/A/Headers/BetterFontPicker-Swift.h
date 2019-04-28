@@ -258,7 +258,7 @@ SWIFT_CLASS_NAMED("FontListTableView")
 
 SWIFT_PROTOCOL_NAMED("SizePickerViewDelegate")
 @protocol BFPSizePickerViewDelegate <NSObject>
-- (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(NSInteger)size;
+- (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(double)size;
 @end
 
 @protocol BFPCompositeViewDelegate;
@@ -278,11 +278,11 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize;
 - (void)removeSizePicker;
 - (void)removeMemberPicker;
-- (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
-- (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(NSInteger)initialValue SWIFT_WARN_UNUSED_RESULT;
+- (BFPSizePickerView * _Nonnull)addHorizontalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
+- (BFPSizePickerView * _Nonnull)addVerticalSpacingAccessoryWithInitialValue:(double)initialValue SWIFT_WARN_UNUSED_RESULT;
 - (void)affordance:(BFPAffordance * _Nonnull)affordance didSelectFontFamily:(NSString * _Nonnull)fontFamily;
 - (void)fontFamilyMemberPickerView:(BFPFontFamilyMemberPickerView * _Nonnull)fontFamilyMemberPickerView didSelectFontName:(NSString * _Nonnull)name;
-- (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(NSInteger)size;
+- (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(double)size;
 @end
 
 typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", closed) {
@@ -329,7 +329,7 @@ SWIFT_CLASS_NAMED("MainViewController")
 SWIFT_CLASS_NAMED("SizePickerView")
 @interface BFPSizePickerView : NSView <NSTextFieldDelegate>
 @property (nonatomic, weak) id <BFPSizePickerViewDelegate> _Nullable delegate;
-@property (nonatomic) NSInteger size;
+@property (nonatomic) double size;
 @property (nonatomic, readonly) NSSize fittingSize;
 @property (nonatomic, readonly, strong) NSTextField * _Nonnull textField;
 - (void)clampWithMin:(NSInteger)min max:(NSInteger)max;
