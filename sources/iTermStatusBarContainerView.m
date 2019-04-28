@@ -45,8 +45,6 @@ NS_ASSUME_NONNULL_BEGIN
             [_iconImageView it_setTintColor:[NSColor labelColor]];
             [_iconImageView sizeToFit];
             [self addSubview:_iconImageView];
-            _iconImageView.layer.borderWidth =1;
-            _iconImageView.layer.borderColor = [[NSColor blackColor] CGColor];
             NSRect area = NSMakeRect(0, 0, iTermStatusBarViewControllerIconWidth, 21);
             NSRect frame;
             frame.size = NSMakeSize(icon.size.width, icon.size.height);
