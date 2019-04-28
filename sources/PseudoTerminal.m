@@ -2494,6 +2494,7 @@ ITERM_WEAKLY_REFERENCEABLE
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
         DLog(@"Initialize nonfullscreen window to saved frame %@", NSStringFromRect(rect));
+        rect = [self sanitizedWindowFrame:rect];
         [[term window] setFrame:rect display:NO];
     }
 
@@ -2509,6 +2510,40 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     return term;
+}
+
++ (NSRect)sanitizedWindowFrame:(NSRect)frame {
+    if (![iTermAdvancedSettingsModel restoreWindowsWithinScreens]) {
+        return frame;
+    }
+    NSRect allowed = NSZeroRect;
+    for (NSScreen *screen in [NSScreen screens]) {
+        allowed = NSUnionRect(allowed, screen.frame);
+    }
+
+    NSRect intersected = NSIntersectionRect(frame, allowed);
+    NSRect sanitized = frame;
+    if (NSWidth(intersected) < NSWidth(frame)) {
+        if (NSMinX(frame) < NSMinX(allowed)) {
+            sanitized.origin.x = NSMinX(allowed);
+        } else if (NSMaxX(frame) > NSMaxX(allowed)) {
+            const CGFloat rightOverhang = NSMaxX(frame) - NSMaxX(allowed);
+            const CGFloat leftSlop = NSMinX(frame) - NSMinX(allowed);
+            sanitized.origin.x -= MIN(leftSlop, rightOverhang);
+        }
+    }
+
+    if (NSHeight(intersected) < NSHeight(frame)) {
+        if (NSMinY(frame) < NSMinY(allowed)) {
+            sanitized.origin.y = NSMinY(allowed);
+        } else if (NSMaxY(frame) > NSMaxY(allowed)) {
+            const CGFloat topOverhang = NSMaxY(frame) - NSMaxY(allowed);
+            const CGFloat bottomSlop = NSMinY(frame) - NSMinY(allowed);
+            sanitized.origin.y -= MIN(topOverhang, bottomSlop);
+        }
+    }
+
+    return sanitized;
 }
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
@@ -2752,7 +2787,8 @@ ITERM_WEAKLY_REFERENCEABLE
         windowType == WINDOW_TYPE_COMPACT) {
         // The window may have changed size while adding tab bars, etc.
         // TODO: for window type top, set width to screen width.
-        [[self window] setFrame:rect display:YES];
+        [[self window] setFrame:[PseudoTerminal sanitizedWindowFrame:rect]
+                        display:YES];
     }
 
     const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];

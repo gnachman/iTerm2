@@ -185,6 +185,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)requireCmdForDraggingText;
 + (BOOL)resetSGROnPrompt;
 + (BOOL)restoreWindowContents;
++ (BOOL)restoreWindowsWithinScreens;
 + (BOOL)retinaInlineImages;
 + (BOOL)runJobsInServers;
 + (NSString *)searchCommand;
