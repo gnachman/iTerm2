@@ -190,6 +190,8 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 
 - (void)awakeFromNib {
     NSMutableAttributedString *attributedString;
+    // LOL the IB setting is not respected in 10.12 so you have to do it in code.
+    self.window.titlebarAppearsTransparent = YES;
     if (@available(macOS 10.14, *)) {
         NSString *url1 = @"iterm2whatsnew:/minimal-compact";
         NSMutableAttributedString *attributedString = _textField1.attributedStringValue.mutableCopy;
