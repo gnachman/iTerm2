@@ -2468,6 +2468,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return 4;
 }
 
+- (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range {
+    return @[];
+}
+
+
 - (int)numberOfLines {
     return 4;
 }
@@ -2624,7 +2629,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           [NSFont systemFontOfSize:[NSFont systemFontSize]]);
 
     NSDictionary *boldAttributes = [selectedAttributedText attributesAtIndex:kRegularLength
-                                                                 effectiveRange:&range];
+                                                              effectiveRange:&range];
     const int kBoldLength = [@"bold" length];
     XCTAssertEqual(range.location, kRegularLength);
     XCTAssertEqual(range.length, kBoldLength);
@@ -2705,6 +2710,51 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+}
+
+- (void)keyUp:(NSEvent *)event {
+}
+
+
+- (CGFloat)textViewBadgeRightMargin {
+    return 0;
+}
+
+
+- (CGFloat)textViewBadgeTopMargin {
+    return 0;
+}
+
+
+- (CGRect)textViewContainerRect {
+    return CGRectZero;
+}
+
+
+- (void)textViewDidResignFirstResponder {
+}
+
+
+- (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration fromSelection:(BOOL)fromSelection {
+}
+
+
+- (CGRect)textViewRelativeFrame {
+    return CGRectZero;
+}
+
+
+- (iTermVariableScope *)textViewVariablesScope {
+    return nil;
+}
+
+
+- (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
+    return [NSFont systemFontOfSize:[NSFont systemFontSize]];
+}
+
+- (NSSize)badgeLabelSizeFraction {
+    return NSMakeSize(1, 1);
 }
 
 @end

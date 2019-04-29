@@ -14012,6 +14012,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Beta;
 		};
@@ -14634,6 +14638,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Development;
 		};
@@ -14689,6 +14697,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Deployment;
 		};
@@ -14744,6 +14756,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-nullability-completeness",
+				);
 			};
 			name = Nightly;
 		};

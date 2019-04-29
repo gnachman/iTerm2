@@ -28,6 +28,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCachingFileManager.h"
 #import "iTermExpressionEvaluator.h"
+#import "iTermExpressionParser.h"
 #import "iTermLaunchServices.h"
 #import "iTermPathCleaner.h"
 #import "iTermPathFinder.h"
@@ -403,16 +404,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return [self openURL:url editorIdentifier:nil];
 }
 
-- (NSDictionary *)numericSubstitutionsForPath:(NSString *)path
-                            lineNumber:(NSString *)lineNumber
-                                prefix:(NSString *)prefix
-                                suffix:(NSString *)suffix
-                                   pwd:(NSString *)pwd {
-    return @{ @"1": path ? [path stringWithEscapedShellCharactersIncludingNewlines:YES] : @"",
-              @"2": lineNumber ? lineNumber : @"",
-              @"3": prefix,
-              @"4": suffix,
-              @"5": pwd };
+- (NSDictionary *)numericSubstitutions {
+    return @{ @"\\1": @"\\(semanticHistory.path)",
+              @"\\2": @"\\(semanticHistory.lineNumber)",
+              @"\\3": @"\\(semanticHistory.prefix)",
+              @"\\4": @"\\(semanticHistory.suffix)",
+              @"\\5": @"\\(semanticHistory.workingDirectory)" };
+}
+
+- (NSTimeInterval)evaluationTimeout {
+    return 30;
 }
 
 - (void)openPath:(NSString *)cleanedUpPath
@@ -442,19 +443,19 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     iTermVariableScope *scope = [originalScope copy];
     [scope addVariables:frame toScopeNamed:@"semanticHistory"];
     [scope setValuesFromDictionary:substitutions];
+    NSString *const escapedPath = [path stringWithEscapedShellCharactersIncludingNewlines:YES];
+    [scope setValue:escapedPath forVariableNamed:kSemanticHistoryPathSubstitutionKey];
+    [scope setValue:lineNumber forVariableNamed:kSemanticHistoryLineNumberKey];
+    [scope setValue:columnNumber forVariableNamed:kSemanticHistoryColumnNumberKey];
 
-    NSDictionary *numericSubstitutions = [self numericSubstitutionsForPath:path
-                                                                lineNumber:lineNumber
-                                                                    prefix:substitutions[kSemanticHistoryPrefixSubstitutionKey]
-                                                                    suffix:substitutions[kSemanticHistorySuffixSubstitutionKey]
-                                                                       pwd:substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey]];
+    NSDictionary *numericSubstitutions = [self numericSubstitutions];
     NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
     script = [script stringByPerformingSubstitutions:numericSubstitutions];
     _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:script scope:scope];
 
     if (isRawAction) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch raw action: /bin/sh -c %@", evaluator.value);
             if (!evaluator.error) {
                 [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
@@ -473,7 +474,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Running /bin/sh -c %@", evaluator.value);
             if (!evaluator.error) {
                 [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
@@ -485,7 +486,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch coprocess with script %@", evaluator.value);
             if (!evaluator.error) {
                 [weakSelf.delegate semanticHistoryLaunchCoprocessWithCommand:evaluator.value];
@@ -504,16 +505,23 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryUrlAction]) {
         NSString *url = prefs_[kSemanticHistoryTextKey];
-        // Replace the path with a non-shell-escaped path.
-        numericSubstitutions = [numericSubstitutions dictionaryBySettingObject:path ?: @"" forKey:@"1"];
-        // Percent-escape all the arguments.
-        numericSubstitutions = [numericSubstitutions mapValuesWithBlock:^id(id key, NSString *object) {
-            return [object stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
-        }];
+        // Replace the path with a non-shell-escaped path since we perform escaping later in this code path.
+        [scope setValue:path ?: @"" forVariableNamed:kSemanticHistoryPathSubstitutionKey];
+
         url = [url stringByPerformingSubstitutions:numericSubstitutions];
-        _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:url scope:scope];
+        NSString *(^urlEscapeFunction)(NSString *) = ^NSString *(NSString *string) {
+            return [string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+        };
+        iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:url
+                                                                                               escapingFunction:urlEscapeFunction
+                                                                                                          scope:scope];
+        _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
+                                                                               invocation:url
+                                                                                    scope:scope];
+        // Add percent escapes substitutions
+        _expressionEvaluator.escapingFunction = urlEscapeFunction;
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"URL format is %@. Error is %@. Evaluated value is %@.", url, evaluator.error, evaluator.value);
             if (!evaluator.error) {
                 [weakSelf openURL:[NSURL URLWithUserSuppliedString:evaluator.value]];
@@ -578,7 +586,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
-                           charsTakenFromSuffix:(int *)suffixChars
+                           charsTakenFromSuffix:(int *)charsTakenFromSuffixPtr
                                  trimWhitespace:(BOOL)trimWhitespace {
     iTermPathFinder *pathfinder = [[iTermPathFinder alloc] initWithPrefix:beforeStringIn
                                                                    suffix:afterStringIn
@@ -586,6 +594,12 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                                                            trimWhitespace:trimWhitespace];
     pathfinder.fileManager = self.fileManager;
     [pathfinder searchSynchronously];
+    if (charsTakenFromPrefixPtr) {
+        *charsTakenFromPrefixPtr = pathfinder.prefixChars;
+    }
+    if (charsTakenFromSuffixPtr) {
+        *charsTakenFromSuffixPtr = pathfinder.suffixChars;
+    }
     return pathfinder.path;
 }
 

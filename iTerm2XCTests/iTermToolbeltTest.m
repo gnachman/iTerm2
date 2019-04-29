@@ -511,4 +511,8 @@
 - (void)toolbeltDidFinishGrowing {
 }
 
+- (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action {
+}
+
+
 @end

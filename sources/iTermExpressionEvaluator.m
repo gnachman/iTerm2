@@ -234,6 +234,14 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
     [interpolatedStringParts enumerateObjectsUsingBlock:^(iTermParsedExpression *_Nonnull parsedExpression,
                                                           NSUInteger idx,
                                                           BOOL * _Nonnull stop) {
+        if (parsedExpression.expressionType == iTermParsedExpressionTypeString && parsedExpression.string) {
+            // Shortcut. String literals get appended without messing with dispatch groups or inner
+            // evaluators. They are also not subject to escaping, since they were under the control
+            // of the caller before getting here.
+            [parts addObject:parsedExpression.string];
+            return;
+        }
+
         [parts addObject:@""];
         iTermExpressionEvaluator *innerEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
                                                                                                    invocation:invocation
@@ -251,7 +259,11 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
                 firstError = evaluator.error;
                 [self logError:evaluator.error invocation:invocation];
             } else {
-                parts[idx] = [self stringFromJSONObject:evaluator.value];
+                NSString *decodedString = [self stringFromJSONObject:evaluator.value];
+                if (self.escapingFunction) {
+                    decodedString = self.escapingFunction(decodedString);
+                }
+                parts[idx] = decodedString;
             }
             if (group) {
                 if (debug) {

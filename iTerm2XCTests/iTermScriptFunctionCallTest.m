@@ -71,6 +71,7 @@
                                                                        completion(@[ @1, @"foo" ], nil);
                                                                    }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:a namespace:nil];
+    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
 
     _scope = [[iTermVariableScope alloc] init];
     iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
@@ -442,7 +443,6 @@
 
 - (void)testArrayCount {
     __block id result;
-    [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     [iTermScriptFunctionCall callFunction:@"iterm2.count(array: a())"
                                   timeout:0
                                     scope:_scope

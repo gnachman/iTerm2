@@ -224,18 +224,21 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 @implementation iTermArrayCountBuiltInFunction
 
 + (void)registerBuiltInFunction {
-    NSString *const array = @"array";
-    iTermBuiltInFunction *func =
-    [[iTermBuiltInFunction alloc] initWithName:@"count"
-                                     arguments:@{ array: [NSArray class] }
-                                 defaultValues:@{}
-                                       context:iTermVariablesSuggestionContextNone
-                                         block:
-     ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
-         [self countOfObject:parameters[array] completion:completion];
-     }];
-    [[iTermBuiltInFunctions sharedInstance] registerFunction:func
-                                                   namespace:@"iterm2"];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *const array = @"array";
+        iTermBuiltInFunction *func =
+        [[iTermBuiltInFunction alloc] initWithName:@"count"
+                                         arguments:@{ array: [NSArray class] }
+                                     defaultValues:@{}
+                                           context:iTermVariablesSuggestionContextNone
+                                             block:
+         ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
+             [self countOfObject:parameters[array] completion:completion];
+         }];
+        [[iTermBuiltInFunctions sharedInstance] registerFunction:func
+                                                       namespace:@"iterm2"];
+    });
 }
 
 + (void)countOfObject:(id)value completion:(iTermBuiltInFunctionCompletionBlock)completion {

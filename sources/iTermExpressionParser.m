@@ -258,6 +258,12 @@
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
                                                             scope:(iTermVariableScope *)scope {
+    return [self parsedExpressionWithInterpolatedString:swifty escapingFunction:nil scope:scope];
+}
+
++ (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
+                                                 escapingFunction:(NSString *(^)(NSString *string))escapingFunction
+                                                            scope:(iTermVariableScope *)scope {
     __block NSError *error = nil;
     NSMutableArray *interpolatedParts = [NSMutableArray array];
     [swifty enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
@@ -271,6 +277,12 @@
         iTermExpressionParser *parser = [[iTermExpressionParser alloc] initWithStart:@"expression"];
         iTermParsedExpression *expression = [parser parse:substring
                                                     scope:scope];
+        if (expression.expressionType == iTermParsedExpressionTypeString && escapingFunction) {
+            NSString *escapedString = escapingFunction(expression.string);
+            [interpolatedParts addObject:[[iTermParsedExpression alloc] initWithString:escapedString
+                                                                              optional:NO]];
+            return;
+        }
         [interpolatedParts addObject:expression];
         if (expression.expressionType == iTermParsedExpressionTypeError) {
             error = expression.error;
