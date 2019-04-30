@@ -668,9 +668,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // show-window-options pane-border-format will succeed in 2.3 and later (presumably. 2.3 isn't out yet)
     // the socket_path format was added in 2.2.
     // the session_activity format was added in 2.1
-    NSArray *commands = @[ [gateway_ dictionaryForCommand:@"display-message -v test"
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:@"display-message -p \"#{version}\""
                                            responseTarget:self
-                                         responseSelector:@selector(guessVersion29Response:)
+                                         responseSelector:@selector(handleDisplayMessageVersion:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
 
@@ -725,13 +725,23 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)guessVersion29Response:(NSString *)response {
-    if (response == nil) {
-        [self decreaseMaximumServerVersionTo:@"2.8"];
-    } else {
-        [self increaseMinimumServerVersionTo:@"2.9"];
+- (void)handleDisplayMessageVersion:(NSString *)response {
+    if (response.length == 0) {
+        // The "version" format was first added in 2.4
+        [self decreaseMaximumServerVersionTo:@"2.3"];
+        return;
     }
+
+    // In case we get back something that's not a number, or a totally unreasonable number, just ignore this.
+    NSDecimalNumber *number = [NSDecimalNumber decimalNumberWithString:response];
+    if (number.doubleValue != number.doubleValue ||
+        number.doubleValue < 2.4 || number.doubleValue > 10) {
+        return;
+    }
+
+    [self increaseMinimumServerVersionTo:response];
 }
+
 - (void)guessVersion23Response:(NSString *)response {
     if (response == nil) {
         [self decreaseMaximumServerVersionTo:@"2.2"];
