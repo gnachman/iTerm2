@@ -668,7 +668,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // show-window-options pane-border-format will succeed in 2.3 and later (presumably. 2.3 isn't out yet)
     // the socket_path format was added in 2.2.
     // the session_activity format was added in 2.1
-    NSArray *commands = @[ [gateway_ dictionaryForCommand:@"show-window-options pane-border-format"
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:@"display-message -v test"
+                                           responseTarget:self
+                                         responseSelector:@selector(guessVersion29Response:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+
+                           [gateway_ dictionaryForCommand:@"show-window-options pane-border-format"
                                            responseTarget:self
                                          responseSelector:@selector(guessVersion23Response:)
                                            responseObject:nil
@@ -719,6 +725,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)guessVersion29Response:(NSString *)response {
+    if (response == nil) {
+        [self decreaseMaximumServerVersionTo:@"2.8"];
+    } else {
+        [self increaseMinimumServerVersionTo:@"2.9"];
+    }
+}
 - (void)guessVersion23Response:(NSString *)response {
     if (response == nil) {
         [self decreaseMaximumServerVersionTo:@"2.2"];
@@ -866,6 +879,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)selectPane:(int)windowPane {
+    NSDecimalNumber *version2_9 = [NSDecimalNumber decimalNumberWithString:@"2.9"];
+
+    if ([gateway_.minimumServerVersion isEqual:version2_9]) {
+        // I presume this will be fixed in whatever verson follows 2.9, so use an isEqual:. I need to remember to revisit this after the bug is fixed!
+        return;
+    }
+
     NSString *command = [NSString stringWithFormat:@"select-pane -t %%%d", windowPane];
     [gateway_ sendCommand:command
            responseTarget:nil
