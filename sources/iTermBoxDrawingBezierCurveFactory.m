@@ -330,28 +330,37 @@
                    hints:nil];
 }
 
++ (BOOL)isPowerlineGlyph:(unichar)code {
+    switch (code) {
+        case 0xE0A0:  // Version control branch
+        case 0xE0A1:  // LN (line) symbol
+        case 0xE0A2:  // Closed padlock
+        case 0xE0B0:  // Rightward black arrowhead
+        case 0xE0B1:  // Rightwards arrowhead
+        case 0xE0B2:  // Leftwards black arrowhead
+        case 0xE0B3:  // Leftwards arrowhead
+            return YES;
+    }
+    return NO;
+}
+
 + (void)drawCodeInCurrentContext:(unichar)code
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
                           offset:(CGPoint)offset
                            color:(NSColor *)color
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs {
-    if (useNativePowerlineGlyphs) {
-        switch (code) {
-            case 0xE0A0:  // Version control branch
-            case 0xE0A1:  // LN (line) symbol
-            case 0xE0A2:  // Closed padlock
-            case 0xE0B0:  // Rightward black arrowhead
-            case 0xE0B1:  // Rightwards arrowhead
-            case 0xE0B2:  // Leftwards black arrowhead
-            case 0xE0B3:  // Leftwards arrowhead
-                [self drawPowerlineCode:code
-                               cellSize:cellSize
-                                  color:color];
-                return;
-        }
+    if (useNativePowerlineGlyphs && [self isPowerlineGlyph:code]) {
+        [self drawPowerlineCode:code
+                       cellSize:cellSize
+                          color:color];
+        return;
     }
-    
+    if (code == iTermFullBlock) {
+        // Fast path
+        NSRectFill(NSMakeRect(0, 0, cellSize.width, cellSize.height));
+        return;
+    }
     BOOL solid = NO;
     NSArray<NSBezierPath *> *paths = [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
                                                                                             cellSize:cellSize

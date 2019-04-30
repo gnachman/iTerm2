@@ -1153,8 +1153,16 @@ typedef struct iTermTextColorContext {
     [transform translateXBy:pos.x yBy:pos.y];
     [transform concat];
 
-    NSColor *color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
-    [color set];
+    NSColor *color = nil;
+    if (self.useNativePowerlineGlyphs &&
+        [iTermBoxDrawingBezierCurveFactory isPowerlineGlyph:theCharacter]) {
+        color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
+        [color set];
+    } else {
+        // Fast path
+        CGContextSetFillColorWithColor(ctx.CGContext,
+                                       (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]);
+    }
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
                                                        cellSize:_cellSize
                                                           scale:1
@@ -1228,6 +1236,18 @@ typedef struct iTermTextColorContext {
                 positions:(CGFloat *)positions
                 inContext:(CGContextRef)ctx
           backgroundColor:(NSColor *)backgroundColor {
+    if ([cheapString.attributes[iTermIsBoxDrawingAttribute] boolValue]) {
+        // Special box-drawing cells don't use the font so they look prettier.
+        unichar *chars = (unichar *)cheapString.characters;
+        for (NSUInteger i = 0; i < cheapString.length; i++) {
+            unichar c = chars[i];
+            NSPoint p = NSMakePoint(point.x + positions[i], point.y);
+            [self drawBoxDrawingCharacter:c
+                           withAttributes:cheapString.attributes
+                                       at:p];
+        }
+        return cheapString.length;
+    }
     int result = [self drawFastPathStringWithoutUnderline:cheapString
                                                   atPoint:point
                                                    origin:origin
@@ -2243,9 +2263,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                     orCharacter:code
                       positions:positions
                          offset:(i - indexRange.location) * _cellSize.width];
-            if (characterAttributes.boxDrawing) {
-                [builder disableFastPath];
-            }
         }
     }
     if (builder.length) {

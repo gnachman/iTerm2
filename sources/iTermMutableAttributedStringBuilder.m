@@ -189,7 +189,7 @@
         _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
     }
     if (!_characterData) {
-        _characterData = [[NSMutableData alloc] init];
+        _characterData = [[NSMutableData alloc] initWithCapacity:20];
     }
     [_characterData appendBytes:&code length:sizeof(unichar)];
 }
