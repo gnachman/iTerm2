@@ -435,10 +435,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 // all others. If multiple presets match, check the first matching one.
 - (void)popupButtonWillPopUp:(id)sender {
     BOOL found = NO;
+    iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
+
     for (NSMenuItem *item in _presetsMenu.itemArray) {
         if (item.action == @selector(loadColorPreset:)) {
             NSString *name = item.title;
-            if (!found && [self currentColorsEqualPreset:[iTermColorPresets presetWithName:name]]) {
+            if (!found && [self currentColorsEqualPreset:allPresets[name]]) {
                 item.state = NSOnState;
                 found = YES;
             } else {
