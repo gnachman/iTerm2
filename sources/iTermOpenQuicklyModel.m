@@ -180,8 +180,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         
         iTermOpenQuicklyColorPresetItem *item = [[iTermOpenQuicklyColorPresetItem alloc] init];
         item.presetName = name;
-        item.logoGenerator.textColor = [preset[KEY_FOREGROUND_COLOR] colorValue];
-        item.logoGenerator.backgroundColor = [preset[KEY_BACKGROUND_COLOR] colorValue];
+        item.logoGenerator.textColor = [preset[KEY_FOREGROUND_COLOR] colorValue] ?: [NSColor colorWithRed:0.75 green:0.75 blue:0.75 alpha:1];
+        item.logoGenerator.backgroundColor = [preset[KEY_BACKGROUND_COLOR] colorValue] ?: [NSColor colorWithRed:0.25 green:0.25 blue:0.25 alpha:1];
         item.logoGenerator.tabColor = [preset[KEY_TAB_COLOR] colorValue] ?: defaultColor;
         item.logoGenerator.cursorColor = [preset[KEY_CURSOR_COLOR] colorValue] ?: defaultColor;
 
