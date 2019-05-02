@@ -1214,6 +1214,30 @@
     XCTAssertNil(columnNumber);
 }
 
+// Regression test for issue 7760
+- (void)testIssue7760 {
+    _semanticHistoryController.prefs =
+    @{ kSemanticHistoryActionKey: kSemanticHistoryCommandAction,
+       kSemanticHistoryTextKey: @"/bin/bash -l -c \"cd \\5 && env /usr/local/bin/atom \\1:2\"" };
+    [_semanticHistoryController.fakeFileManager.files addObject:@"/Users/kolbrich/Projects/quill/tmp/failure-sandbox_spec-246-screenshot.png"];
+    [_semanticHistoryController.fakeFileManager.directories addObject:@"/Users/kolbrich/Projects/quill"];
+
+    BOOL opened = [self openPath:@"/Users/kolbrich/Projects/quill/tmp/failure-sandbox_spec-246-screenshot.png"
+                   orRawFilename:@"/Users/kolbrich/Projects/quill/tmp/failure-sandbox_spec-246-screenshot.png"
+                   substitutions:@{ kSemanticHistoryPathSubstitutionKey: @"/Users/kolbrich/Projects/quill/tmp/failure-sandbox_spec-246-screenshot.png",
+                                    kSemanticHistoryPrefixSubstitutionKey: @"Saving\\ screenshot\\ to\\ /Users/kolbrich/Projects/quill/tmp/failure-",
+                                    kSemanticHistorySuffixSubstitutionKey: @"sandbox_spec-246-screenshot.png\\",
+                                    kSemanticHistoryWorkingDirectorySubstitutionKey: @"/Users/kolbrich/Projects/quill",
+                                    kSemanticHistoryLineNumberKey: @"",
+                                    kSemanticHistoryColumnNumberKey: @"" }
+                      lineNumber:@""
+                    columnNumber:@""];
+    XCTAssert(opened);
+    NSString *expectedScript = @"/bin/bash -l -c \"cd /Users/kolbrich/Projects/quill && env /usr/local/bin/atom /Users/kolbrich/Projects/quill/tmp/failure-sandbox_spec-246-screenshot.png:2\"";
+    NSString *actualScript = _semanticHistoryController.scriptArguments[1];
+    XCTAssertEqualObjects(expectedScript, actualScript);
+}
+
 #warning This test fails, but fixing it would change how raw actions work in edge cases where there is punctuation or brackets. I'll delay that until 3.1.
 #if 0
 - (void)testPathOfExistingFile_QuestionableSuffix {
