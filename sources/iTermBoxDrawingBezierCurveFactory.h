@@ -15,7 +15,7 @@
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
                           offset:(CGPoint)offset
-                           color:(NSColor *)color  // only needed for powerline glyphs
+                           color:(CGColorRef)color
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs;
 
 + (BOOL)isPowerlineGlyph:(unichar)code;

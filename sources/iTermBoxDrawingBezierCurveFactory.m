@@ -194,7 +194,7 @@
     [[NSGraphicsContext currentContext] setImageInterpolation:saved];
 }
 
-+ (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize color:(NSColor *)color {
++ (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color {
     switch (code) {
         case 0xE0A0:
             [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize stretch:NO color:color antialiased:YES];
@@ -235,12 +235,13 @@
 + (NSImage *)imageForPDFNamed:(NSString *)pdfName
                      cellSize:(NSSize)cellSize
                   antialiased:(BOOL)antialiased
-                        color:(NSColor *)color {
+                        color:(CGColorRef)colorRef {
     static iTermImageCache *cache;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         cache = [[iTermImageCache alloc] initWithByteLimit:1024 * 1024];
     });
+    NSColor *color = [NSColor colorWithCGColor:colorRef];
     NSImage *image = [cache imageWithName:pdfName size:cellSize color:color];
     if (image) {
         return image;
@@ -311,7 +312,7 @@
 + (void)drawPDFWithName:(NSString *)pdfName
                cellSize:(NSSize)cellSize
                 stretch:(BOOL)stretch
-                  color:(NSColor *)color
+                  color:(CGColorRef)color
             antialiased:(BOOL)antialiased {
    
     NSImage *image = [self imageForPDFNamed:pdfName
@@ -348,17 +349,19 @@
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
                           offset:(CGPoint)offset
-                           color:(NSColor *)color
+                           color:(CGColorRef)colorRef
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs {
     if (useNativePowerlineGlyphs && [self isPowerlineGlyph:code]) {
         [self drawPowerlineCode:code
                        cellSize:cellSize
-                          color:color];
+                          color:colorRef];
         return;
     }
     if (code == iTermFullBlock) {
         // Fast path
-        NSRectFill(NSMakeRect(0, 0, cellSize.width, cellSize.height));
+        CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
+        CGContextSetFillColorWithColor(context, colorRef);
+        CGContextFillRect(context, CGRectMake(0, 0, cellSize.width, cellSize.height));
         return;
     }
     BOOL solid = NO;
@@ -367,6 +370,8 @@
                                                                                                scale:scale
                                                                                               offset:offset
                                                                                                solid:&solid];
+    NSColor *color = [NSColor colorWithCGColor:colorRef];
+    [color set];
     for (NSBezierPath *path in paths) {
         if (solid) {
             [path fill];

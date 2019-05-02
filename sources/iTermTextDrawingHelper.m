@@ -1153,16 +1153,7 @@ typedef struct iTermTextColorContext {
     [transform translateXBy:pos.x yBy:pos.y];
     [transform concat];
 
-    NSColor *color = nil;
-    if (self.useNativePowerlineGlyphs &&
-        [iTermBoxDrawingBezierCurveFactory isPowerlineGlyph:theCharacter]) {
-        color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
-        [color set];
-    } else {
-        // Fast path
-        CGContextSetFillColorWithColor(ctx.CGContext,
-                                       (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]);
-    }
+    CGColorRef color = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
                                                        cellSize:_cellSize
                                                           scale:1
