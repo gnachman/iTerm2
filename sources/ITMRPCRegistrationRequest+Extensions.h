@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface ITMRPCRegistrationRequest (Extensions)
 
 - (BOOL)it_rpcRegistrationRequestValidWithError:(out NSError **)error;
+// This gives the string signature.
 - (NSString *)it_stringRepresentation;
 - (NSSet<NSString *> *)it_allArgumentNames;
 - (NSSet<NSString *> *)it_argumentsWithDefaultValues;

@@ -223,7 +223,7 @@
 
 - (void)registeredFunctionsDidChange:(NSNotification *)notification {
     NSArray<NSString *> *registered = [_missingFunctions.allObjects filteredArrayUsingBlock:^BOOL(NSString *signature) {
-        return [[[iTermAPIHelper sharedInstance] notificationController] haveRegisteredFunctionWithSignature:signature];
+        return [[[iTermAPIHelper sharedInstance] dispatcher] haveRegisteredFunctionWithSignature:signature];
     }];
     if (!registered.count) {
         return;

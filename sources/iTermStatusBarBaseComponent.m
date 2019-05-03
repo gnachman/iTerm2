@@ -374,8 +374,8 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 #pragma mark - iTermWebViewDelegate
 
 - (void)itermWebViewScriptInvocation:(NSString *)invocation didFailWithError:(NSError *)error {
-    [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:invocation
-                                                                          string:error.localizedDescription];
+    [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:invocation
+                                                                                       string:error.localizedDescription];
 }
 
 - (iTermVariableScope *)itermWebViewScriptScopeForUserContentController:(WKUserContentController *)userContentController {

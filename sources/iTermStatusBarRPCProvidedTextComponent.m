@@ -171,8 +171,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     ITMRPCRegistrationRequest_RPCArgument *knobs = [[ITMRPCRegistrationRequest_RPCArgument alloc] init];
     knobs.name = @"knobs";
     knobs.path = @"__knobs";
-    return [iTermAPINotificationController invocationWithName:_savedRegistrationRequest.latestStatusBarRequest.name
-                                                     defaults:[defaults arrayByAddingObject:knobs]];
+    return [iTermAPIDispatcher invocationWithName:_savedRegistrationRequest.latestStatusBarRequest.name
+                                         defaults:[defaults arrayByAddingObject:knobs]];
 }
 
 - (NSString *)statusBarComponentIdentifier {
@@ -314,8 +314,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         _variants = arrayValue;
     } else {
         _errorMessage = [NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", self.invocation, value];
-        [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
-                                                                                                       string:_errorMessage];
+        [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
+                                                                                           string:_errorMessage];
         _variants = @[ @"🐞" ];
     }
     [self updateTextFieldIfNeeded];
@@ -329,8 +329,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                      self.invocation,
                      error.localizedDescription,
                      error.localizedFailureReason ? [@"\n\n" stringByAppendingString:error.localizedFailureReason] : @""];
-    [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
-                                                                                                   string:_errorMessage];
+    [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
+                                                                                       string:_errorMessage];
     _variants = @[ @"🐞" ];
     _missingFunctions = [missingFunctions mutableCopy];
     [self updateTextFieldIfNeeded];
@@ -351,7 +351,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (void)registeredFunctionsDidChange:(NSNotification *)notification {
     NSArray<NSString *> *registered = [_missingFunctions.allObjects filteredArrayUsingBlock:^BOOL(NSString *signature) {
-        return [[[iTermAPIHelper sharedInstance] notificationController] haveRegisteredFunctionWithSignature:signature];
+        return [[[iTermAPIHelper sharedInstance] dispatcher] haveRegisteredFunctionWithSignature:signature];
     }];
     if (!registered.count) {
         return;
@@ -461,10 +461,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     if (!signature && error) {
         signature = error.localizedDescription;
     }
-    [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:signature
-                                                                                                   string:errorText];
-    [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:signature
-                                                                                                   string:@"Right-click in the webview and choose Inspect Element to open the Web Inspector."];
+    [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:signature
+                                                                                       string:errorText];
+    [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:signature
+                                                                                       string:@"Right-click in the webview and choose Inspect Element to open the Web Inspector."];
 }
 
 - (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
@@ -474,8 +474,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     if (!signature && error) {
         signature = error.localizedDescription;
     }
-    [[[iTermAPIHelper sharedInstance] notificationController] logToConnectionHostingFunctionWithSignature:signature
-                                                                                                   string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
+    [[[iTermAPIHelper sharedInstance] dispatcher] logToConnectionHostingFunctionWithSignature:signature
+                                                                                       string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
 }
 
 @end

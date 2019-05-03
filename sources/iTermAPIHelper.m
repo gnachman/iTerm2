@@ -121,15 +121,15 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 + (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
-    return [sAPIHelperInstance.notificationController registeredFunctionSignatureDictionary] ?: @{};
+    return [sAPIHelperInstance.dispatcher registeredFunctionSignatureDictionary] ?: @{};
 }
 
 + (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions {
-    return [sAPIHelperInstance.notificationController sessionTitleFunctions] ?: @[];
+    return [sAPIHelperInstance.dispatcher sessionTitleFunctions] ?: @[];
 }
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests {
-    return [sAPIHelperInstance.notificationController statusBarComponentProviderRegistrationRequests] ?: @[];
+    return [sAPIHelperInstance.dispatcher statusBarComponentProviderRegistrationRequests] ?: @[];
 }
 
 + (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced {
@@ -219,7 +219,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
                              arguments:(NSArray<NSString *> *)arguments {
     NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
-    return [self.notificationController haveRegisteredFunctionWithSignature:stringSignature];
+    return [self.dispatcher haveRegisteredFunctionWithSignature:stringSignature];
 }
 
 - (void)logToConnectionWithKey:(NSString *)connectionKey
@@ -247,6 +247,10 @@ static iTermAPIHelper *sAPIHelperInstance;
     [entry addOutput:string];
     [entry addOutput:@"\n"];
     XLog(@"%@", string);
+}
+
+- (iTermAPIDispatcher *)dispatcher {
+    return _notificationController.dispatcher;
 }
 
 #pragma mark - iTermAPIServerDelegate
@@ -1470,8 +1474,8 @@ static iTermAPIHelper *sAPIHelperInstance;
 
 - (void)handleServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)result
                           connectionKey:(NSString *)connectionKey {
-    [self.notificationController serverOriginatedRPCDidReceiveResponseWithResult:result
-                                                                   connectionKey:connectionKey];
+    [self.dispatcher serverOriginatedRPCDidReceiveResponseWithResult:result
+                                                       connectionKey:connectionKey];
 }
 
 - (void)apiServerServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)request

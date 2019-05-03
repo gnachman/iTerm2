@@ -251,9 +251,9 @@
                                                                                                explicitParameters:parameterValues
                                                                                                             scope:scope
                                                                                                    fullParameters:&fullParameters] copy];
-    [[[iTermAPIHelper sharedInstance] notificationController] dispatchRPCWithName:self.name
-                                                                        arguments:fullParameters
-                                                                       completion:
+    [[[iTermAPIHelper sharedInstance] dispatcher] dispatchRPCWithName:self.name
+                                                            arguments:fullParameters
+                                                           completion:
      ^(id apiResult, NSError *apiError) {
          NSSet<NSString *> *missing = nil;
          if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {

@@ -6,6 +6,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ITMRPCRegistrationRequest+Extensions.h"
+#import "iTermAPIDispatcher.h"
 #import "iTermAPINotificationController.h"
 #import "iTermAPIServer.h"
 #import "iTermTuple.h"
@@ -16,10 +18,10 @@ extern NSString *const iTermAPIHelperDidStopNotification;
 @class iTermScriptHistoryEntry;
 @class iTermVariableScope;
 
-
 @interface iTermAPIHelper : NSObject<iTermAPIServerDelegate>
 
 @property (nonatomic, readonly) iTermAPINotificationController *notificationController;
+@property (nonatomic, readonly) iTermAPIDispatcher *dispatcher;
 
 + (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced;
 + (instancetype)sharedInstance;
@@ -53,8 +55,3 @@ extern NSString *const iTermAPIHelperDidStopNotification;
 
 @end
 
-@interface ITMRPCRegistrationRequest(Extensions)
-// This gives the string signature.
-@property (nonatomic, readonly) NSString *it_stringRepresentation;
-- (BOOL)it_rpcRegistrationRequestValidWithError:(out NSError **)error;
-@end
