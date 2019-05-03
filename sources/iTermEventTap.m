@@ -5,6 +5,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermEventTap.h"
 #import "iTermNotificationCenter.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "NSArray+iTerm.h"
 
 NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappedNotification";

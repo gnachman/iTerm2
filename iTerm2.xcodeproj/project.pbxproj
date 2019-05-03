@@ -1318,6 +1318,8 @@
 		537BFDD62101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDD42101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m */; };
 		537BFDDE2102B4060098C91F /* iTermPublisher.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDDC2102B4040098C91F /* iTermPublisher.h */; };
 		537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDDD2102B4060098C91F /* iTermPublisher.m */; };
+		537C4FD8227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h in Headers */ = {isa = PBXBuildFile; fileRef = 537C4FD6227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h */; };
+		537C4FD9227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 537C4FD7227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m */; };
 		53850903212FA8910039AFC7 /* iTermMetaFrustrationDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 53850901212FA8910039AFC7 /* iTermMetaFrustrationDetector.h */; };
 		53850904212FA8910039AFC7 /* iTermMetaFrustrationDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = 53850902212FA8910039AFC7 /* iTermMetaFrustrationDetector.m */; };
 		538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -4310,6 +4312,8 @@
 		537BFDD42101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarCPUUtilizationComponent.m; sourceTree = "<group>"; };
 		537BFDDC2102B4040098C91F /* iTermPublisher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPublisher.h; sourceTree = "<group>"; };
 		537BFDDD2102B4060098C91F /* iTermPublisher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPublisher.m; sourceTree = "<group>"; };
+		537C4FD6227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSecureKeyboardEntryController.h; sourceTree = "<group>"; };
+		537C4FD7227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSecureKeyboardEntryController.m; sourceTree = "<group>"; };
 		53850901212FA8910039AFC7 /* iTermMetaFrustrationDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetaFrustrationDetector.h; sourceTree = "<group>"; };
 		53850902212FA8910039AFC7 /* iTermMetaFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetaFrustrationDetector.m; sourceTree = "<group>"; };
 		539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreciseTimer.h; sourceTree = "<group>"; };
@@ -8427,6 +8431,8 @@
 				A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */,
 				A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */,
 				A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */,
+				537C4FD6227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h */,
+				537C4FD7227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9912,6 +9918,7 @@
 				A6EC47CD21ED96F2000E1321 /* iTermLaunchExperienceController.h in Headers */,
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
 				53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */,
+				537C4FD8227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h in Headers */,
 				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
 				535EA4FC20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.h in Headers */,
@@ -12239,6 +12246,7 @@
 				A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,
 				A6A4865F20B675DE00493302 /* AdvancedWorkingDirectoryWindowController.m in Sources */,
+				537C4FD9227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m in Sources */,
 				A692666D210A364900A980C7 /* PTYTextViewDataSource.m in Sources */,
 				A6A4867F20B6812A00493302 /* TriggerController.m in Sources */,
 				530AB7B920A6242C00D2AA08 /* iTermAPIAuthorizationController.m in Sources */,
