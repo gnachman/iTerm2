@@ -247,19 +247,20 @@
 
     // Fill in any default values not expliciltly specified.
     NSDictionary<NSString *, id> *fullParameters = nil;
-    self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
-                                                                      explicitParameters:parameterValues
-                                                                                   scope:scope
-                                                                          fullParameters:&fullParameters] copy];
-    [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                               arguments:fullParameters
-                                              completion:^(id apiResult, NSError *apiError) {
-                                                  NSSet<NSString *> *missing = nil;
-                                                  if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
-                                                      missing = [NSSet setWithObject:self.signature];
-                                                  }
-                                                  completion(apiResult, apiError, missing);
-                                              }];
+    self->_connectionKey = [[[[iTermAPIHelper sharedInstance] notificationController] connectionKeyForRPCWithName:self.name
+                                                                                               explicitParameters:parameterValues
+                                                                                                            scope:scope
+                                                                                                   fullParameters:&fullParameters] copy];
+    [[[iTermAPIHelper sharedInstance] notificationController] dispatchRPCWithName:self.name
+                                                                        arguments:fullParameters
+                                                                       completion:
+     ^(id apiResult, NSError *apiError) {
+         NSSet<NSString *> *missing = nil;
+         if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
+             missing = [NSSet setWithObject:self.signature];
+         }
+         completion(apiResult, apiError, missing);
+     }];
 }
 
 - (BOOL)isBuiltinFunction {

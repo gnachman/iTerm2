@@ -45,7 +45,7 @@
 }
 
 - (void)loadRows {
-    NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *subs = [[iTermAPIHelper sharedInstance] serverOriginatedRPCSubscriptions];
+    NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *subs = [[[iTermAPIHelper sharedInstance] notificationController] serverOriginatedRPCSubscriptions];
     _rows = [subs.allKeys mapWithBlock:^id(NSString *signature) {
         NSString *role = @"RPC";
         switch (subs[signature].secondObject.rpcRegistrationRequest.role) {
