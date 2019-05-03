@@ -85,4 +85,9 @@
                            detail:(NSString *)detail
                               URL:(NSURL *)url;
 
+- (void)postNotificationWithTitle:(NSString *)title
+                           detail:(NSString *)detail
+         callbackNotificationName:(NSString *)name
+     callbackNotificationUserInfo:(NSDictionary *)userInfo;
+
 @end
