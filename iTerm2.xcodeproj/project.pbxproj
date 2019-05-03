@@ -1185,6 +1185,9 @@
 		530098532259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
 		530098542259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
 		530098552259AAEF00A69348 /* keyclick.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 530098522259AAEF00A69348 /* keyclick.m4a */; };
+		5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
+		5308BF5C227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
+		5308BF5D227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
 		530AB7B420A615D900D2AA08 /* iTermPythonArgumentParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */; };
 		530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */; };
 		530AB7B820A6242C00D2AA08 /* iTermAPIAuthorizationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */; };
@@ -4144,6 +4147,7 @@
 		5300984E2259A44D00A69348 /* iTermSoundPlayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSoundPlayer.h; sourceTree = "<group>"; };
 		5300984F2259A44D00A69348 /* iTermSoundPlayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSoundPlayer.m; sourceTree = "<group>"; };
 		530098522259AAEF00A69348 /* keyclick.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; name = keyclick.m4a; path = OtherResources/keyclick.m4a; sourceTree = "<group>"; };
+		5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = InternetAccessPolicy.plist; sourceTree = "<group>"; };
 		530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPythonArgumentParser.h; sourceTree = "<group>"; };
 		530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonArgumentParser.m; sourceTree = "<group>"; };
 		530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIAuthorizationController.h; sourceTree = "<group>"; };
@@ -6523,6 +6527,7 @@
 		1D03D42619144C140049EB8F /* Property Lists */ = {
 			isa = PBXGroup;
 			children = (
+				5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */,
 				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
 				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
 				1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */,
@@ -10508,6 +10513,7 @@
 				A6FE8D09209382C000B5C648 /* download@2x.png in Resources */,
 				A67F615D214395990093940A /* graphic_micro.png in Resources */,
 				A67F61A9214395B70093940A /* graphic_rails.png in Resources */,
+				5308BF5D227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67F6163214395990093940A /* graphic_mysql@2x.png in Resources */,
@@ -10990,6 +10996,7 @@
 				1D44CFC81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				1D44CFC21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png in Resources */,
+				5308BF5C227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				1D44CFBE1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testMark.png in Resources */,
 				A67D0D571A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A67F614E214395870093940A /* graphic_java@2x.png in Resources */,
@@ -11367,6 +11374,7 @@
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
+				5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */,
 				A67F61CA214395C60093940A /* graphic_shell.png in Resources */,
 				A67D0D4A1A2EE12A003A8B35 /* configPanel.strings in Resources */,
