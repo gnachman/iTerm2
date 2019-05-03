@@ -14,4 +14,7 @@
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
 @property (nonatomic, strong) NSString *value;
 
+- (instancetype)init;
+- (instancetype)initWithInvocationSuggester;
+
 @end

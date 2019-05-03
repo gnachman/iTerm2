@@ -37,6 +37,9 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
         case iTermStatusBarComponentKnobTypeAction:
             return [[iTermStatusBarKnobActionViewController alloc] init];
 
+        case iTermStatusBarComponentKnobTypeInvocation:
+            return [[iTermStatusBarKnobTextViewController alloc] initWithInvocationSuggester];
+
         default:
             return nil;
     }
