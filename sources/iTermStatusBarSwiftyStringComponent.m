@@ -7,8 +7,10 @@
 
 #import "iTermStatusBarSwiftyStringComponent.h"
 
+#import "iTermScriptHistory.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermVariableScope.h"
+#import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -17,6 +19,7 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 
 @implementation iTermStatusBarSwiftyStringComponent {
     iTermSwiftyString *_swiftyString;
+    NSString *_errorReason;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -74,6 +77,31 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     [self updateTextFieldIfNeeded];
 }
 
+- (NSTextField *)newTextField {
+    NSTextField *textField = [super newTextField];
+
+    NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] init];
+    recognizer.buttonMask = 1;
+    recognizer.numberOfClicksRequired = 1;
+    recognizer.target = self;
+    recognizer.action = @selector(onClick:);
+    [textField addGestureRecognizer:recognizer];
+
+    return textField;
+}
+
+- (void)onClick:(id)sender {
+    if (_errorReason) {
+        [iTermWarning showWarningWithTitle:_errorReason
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncInterpolatedStatusBarComponentError"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Error"
+                                    window:self.statusBarComponentView.window];
+    }
+}
+
 - (nullable NSArray<NSString *> *)stringVariants {
     return @[ _value ?: @"" ];
 }
@@ -87,11 +115,27 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     } else {
         _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                             scope:self.scope
-                                                         observer:^(NSString * _Nonnull newValue) {
-                                                             [weakSelf setStringValue:newValue];
+                                                         observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
+                                                             return [weakSelf didEvaluateExpression:expression withResult:newValue error:error];
                                                          }];
         self.stringValue = _swiftyString.evaluatedString;
     }
+}
+
+- (NSString *)didEvaluateExpression:(NSString *)expression
+                         withResult:(NSString *)newValue
+                              error:(NSError *)error {
+    static NSString *ladybug = @"🐞";
+    if (error != nil) {
+        NSString *message = [NSString stringWithFormat:@"Error while evaluating “%@”:\n%@", expression, error.localizedDescription];
+        [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+        _errorReason = message;
+        return ladybug;
+    } else if (newValue != ladybug) {
+        _errorReason = nil;
+    }
+    [self setStringValue:newValue];
+    return newValue;
 }
 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {

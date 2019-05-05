@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarActionComponent.h"
 #import "iTermActionsModel.h"
+#import "iTermScriptHistory.h"
 #import "iTermSwiftyString.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -63,10 +64,16 @@ static NSString *const iTermStatusBarActionKey = @"action";
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    _swiftyString = [[iTermSwiftyString alloc] initWithString:self.action.title ?: @""
+    NSString *expression = self.action.title.copy ?: @"";
+    _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                         scope:self.scope
-                                                     observer:^(NSString * _Nonnull newValue) {
+                                                     observer:^(NSString * _Nonnull newValue, NSError *error) {
+                                                         if (error != nil) {
+                                                             [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]];
+                                                             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+                                                         }
                                                          [weakSelf swiftyStringDidChangeTo:newValue];
+                                                         return newValue;
                                                      }];
 }
 

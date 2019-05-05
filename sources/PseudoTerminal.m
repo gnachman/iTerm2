@@ -895,8 +895,12 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [[iTermSwiftyString alloc] initWithScope:self.scope
                                       sourcePath:iTermVariableKeyWindowTitleOverrideFormat
                                  destinationPath:iTermVariableKeyWindowTitleOverride];
-    _windowTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue) {
+    _windowTitleOverrideSwiftyString.observer = ^NSString *(NSString * _Nonnull newValue, NSError *error) {
+        if (error) {
+            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+        }
         [weakSelf setWindowTitle];
+        return newValue;
     };
     _windowNeedsInitialSize = YES;
     DLog(@"Done initializing PseudoTerminal %@", self);
@@ -6080,13 +6084,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setCurrentTabTitle:(NSString *)title {
-    if (self.currentTab.tmuxTab) {
-        [self.currentTab.tmuxController renameWindowWithId:self.currentTab.tmuxWindow
-                                                 inSession:nil
-                                                    toName:title];
-    } else {
-        self.currentTab.variablesScope.tabTitleOverrideFormat = title.length ? title : nil;
-    }
+    [self.currentTab setTitleOverride:title];
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {

@@ -419,8 +419,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
                                                              destinationPath:iTermVariableKeyTabTitleOverride];
     __weak __typeof(self) weakSelf = self;
-    _tabTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue) {
+    _tabTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue, NSError *error) {
+        if (error) {
+            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+        }
         [weakSelf updateTitleOverrideFromFormatVariable];
+        return newValue;
     };
 }
 
@@ -4112,7 +4116,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setTitleOverride:(NSString *)titleOverride {
-    [self.variablesScope setValue:titleOverride forVariableNamed:iTermVariableKeyTabTitleOverrideFormat];
+    if (self.tmuxTab) {
+        [self.tmuxController renameWindowWithId:self.tmuxWindow
+                                      inSession:nil
+                                         toName:titleOverride];
+        return;
+    }
+    NSString *const sanitized = titleOverride.length ? titleOverride : nil;
+    self.variablesScope.tabTitleOverrideFormat = sanitized;
 }
 
 - (void)updateTitleOverrideFromFormatVariable {

@@ -18,7 +18,6 @@
 #import "NSObject+iTerm.h"
 
 @interface iTermSwiftyString()
-@property (nonatomic, copy, readwrite) NSString *evaluatedString;
 @property (nonatomic) BOOL needsReevaluation;
 @property (nonatomic) NSInteger count;
 @property (nonatomic) NSInteger appliedCount;
@@ -33,7 +32,7 @@
 
 - (instancetype)initWithString:(NSString *)swiftyString
                         scope:(iTermVariableScope *)scope
-                      observer:(void (^)(NSString * _Nonnull))observer {
+                      observer:(NSString *(^)(NSString *, NSError *))observer {
     self = [super init];
     if (self) {
         _swiftyString = [swiftyString copy];
@@ -89,7 +88,7 @@
     _swiftyString = [swiftyString copy];
     if (_evaluatedString) {
         // Update the refs without losing the cached evaluation.
-        [self evaluateSynchronously:YES completion:^(NSString *newValue) {}];
+        [self evaluateSynchronously:YES completion:^(NSString *newValue, NSError *error) {}];
     }
     // Reevaluate later, which may happen asynchronously.
     [self setNeedsReevaluation];
@@ -104,8 +103,8 @@
 
 #pragma mark - Private
 
-- (void)setEvaluatedString:(NSString *)evaluatedString {
-    if ([NSObject object:evaluatedString isEqualToObject:self.evaluatedString]) {
+- (void)setEvaluatedString:(NSString *)evaluatedString error:(NSError *)error {
+    if (error == nil && [NSObject object:evaluatedString isEqualToObject:self.evaluatedString]) {
         return;
     }
 
@@ -120,14 +119,21 @@
         return;
     }
     _observing = YES;
-    self.observer(_evaluatedString);
+    NSString *replacement = self.observer(_evaluatedString, error);
+    if (![NSObject object:replacement isEqualToObject:_evaluatedString]) {
+        _evaluatedString = replacement;
+        if (self.destinationPath) {
+            [_scope setValue:replacement forVariableNamed:self.destinationPath];
+        }
+        self.observer(_evaluatedString, nil);
+    }
     _observing = NO;
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously {
     __weak __typeof(self) weakSelf = self;
     NSInteger count = ++_count;
-    [self evaluateSynchronously:synchronously completion:^(NSString *result) {
+    [self evaluateSynchronously:synchronously completion:^(NSString *result, NSError *error) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {
             if (strongSelf.appliedCount > count) {
@@ -135,16 +141,16 @@
                 return;
             }
             strongSelf.appliedCount = count;
-            if ([NSObject object:strongSelf.evaluatedString isEqualToObject:result]) {
+            if (error == nil && [NSObject object:strongSelf.evaluatedString isEqualToObject:result]) {
                 return;
             }
-            strongSelf.evaluatedString = result;
+            [strongSelf setEvaluatedString:result error:error];
         }
     }];
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously
-                   completion:(void (^)(NSString *))completion {
+                   completion:(void (^)(NSString *, NSError *))completion {
     iTermVariableRecordingScope *scope = [_scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
     [self evaluateSynchronously:synchronously withScope:scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
@@ -169,7 +175,7 @@
             [entry addOutput:message];
 
         }
-        completion(result);
+        completion(result, error);
     }];
     _refs = [scope recordedReferences];
     for (iTermVariableReference *ref in _refs) {
@@ -241,7 +247,7 @@
 - (instancetype)initWithString:(NSString *)swiftyString {
     self = [super initWithString:@""
                            scope:nil
-                        observer:^(NSString * _Nonnull newValue) {}];
+                        observer:^NSString *(NSString * _Nonnull newValue, NSError *error) { return newValue; }];
     if (self) {
         _string = [swiftyString copy];
     }

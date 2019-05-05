@@ -625,10 +625,11 @@ static const NSUInteger kMaxHosts = 100;
         _autoNameSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                               sourcePath:iTermVariableKeySessionAutoNameFormat
                                                          destinationPath:iTermVariableKeySessionAutoName];
-        _autoNameSwiftyString.observer = ^(NSString * _Nonnull newValue) {
+        _autoNameSwiftyString.observer = ^NSString *(NSString * _Nonnull newValue, NSError *error) {
             if ([weakSelf checkForCyclesInSwiftyStrings]) {
                 weakSelf.variablesScope.autoNameFormat = @"[Cycle detected]";
             }
+            return newValue;
         };
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
@@ -3670,8 +3671,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString autorelease];
     _badgeSwiftyString = [[iTermSwiftyString alloc] initWithString:badgeFormat
                                                              scope:self.variablesScope
-                                                          observer:^(NSString * _Nonnull newValue) {
+                                                          observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
+                                                              if (error) {
+                                                                  return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+                                                              }
                                                               [weakSelf updateBadgeLabel:newValue];
+                                                              return newValue;
                                                           }];
 
 }
