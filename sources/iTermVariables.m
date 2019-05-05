@@ -322,7 +322,9 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 }
 
 - (nullable iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
-    assert(name.length > 0);
+    if (name.length == 0) {
+        return nil;
+    }
 
     // If name refers to a variable of a child, go down a level.
     NSArray<NSString *> *parts = [name componentsSeparatedByString:@"."];
