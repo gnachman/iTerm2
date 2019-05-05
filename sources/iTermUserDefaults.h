@@ -14,6 +14,7 @@ extern NSString *const kSelectionRespectsSoftBoundariesKey;
 @interface iTermUserDefaults : NSObject
 
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
+@property (class, nonatomic) BOOL secureKeyboardEntry;
 
 @end
 

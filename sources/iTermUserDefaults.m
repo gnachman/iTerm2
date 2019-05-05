@@ -10,6 +10,7 @@
 #import "NSObject+iTerm.h"
 
 NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
+static NSString *const iTermSecureKeyboardEntryEnabledUserDefaultsKey = @"Secure Input";
 
 static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory";
 
@@ -34,6 +35,15 @@ static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id 
 
 + (void)setSearchHistory:(NSArray<NSString *> *)objects {
     iTermUserDefaultsSetTypedArray([NSString class], iTermUserDefaultsKeySearchHistory, objects);
+}
+
++ (BOOL)secureKeyboardEntry {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeySearchHistory];
+}
+
++ (void)setSecureKeyboardEntry:(BOOL)secureKeyboardEntry {
+    [[NSUserDefaults standardUserDefaults] setBool:secureKeyboardEntry
+                                            forKey:iTermUserDefaultsKeySearchHistory];
 }
 
 @end

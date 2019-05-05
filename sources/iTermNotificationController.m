@@ -123,8 +123,31 @@
     [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
 }
 
+- (void)postNotificationWithTitle:(NSString *)title
+                           detail:(NSString *)detail
+         callbackNotificationName:(NSString *)name
+     callbackNotificationUserInfo:(NSDictionary *)userInfo {
+    NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+    notification.title = title;
+    notification.informativeText = detail;
+    NSDictionary *context = @{ @"CallbackNotificationName": name,
+                               @"CallbackUserInfo": userInfo ?: @{} };
+    notification.userInfo = context;
+    notification.soundName = NSUserNotificationDefaultSoundName;
+    DLog(@"Post notification %@", notification);
+    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+}
+
 - (void)notificationWasClicked:(id)clickContext {
     DLog(@"notificationWasClicked:%@", clickContext);
+
+    NSString *callbackName = clickContext[@"CallbackNotificationName"];
+    NSDictionary *callbackUserInfo = clickContext[@"CallbackUserInfo"];
+    if (callbackName && callbackUserInfo) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:callbackName object:nil userInfo:callbackUserInfo];
+        return;
+    }
+
     NSURL *url = [NSURL URLWithString:clickContext[@"URL"]];
     if (url) {
         [[NSWorkspace sharedWorkspace] openURL:url];

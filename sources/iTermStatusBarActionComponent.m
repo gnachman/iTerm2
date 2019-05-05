@@ -48,6 +48,15 @@ static NSString *const iTermStatusBarActionKey = @"action";
     return [[iTermAction alloc] initWithDictionary:self.actionDictionary];
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+    [self swiftyStringDidChangeTo:_button.title];
+}
+
+- (void)statusBarTerminalBackgroundColorDidChange {
+    NSColor *color = self.backgroundColor;
+    _button.bezelColor = color;
+}
+
 - (void)updateTitleInButton {
     if (_swiftyString) {
         _swiftyString.swiftyString = self.action.title;
@@ -69,7 +78,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
         style.lineBreakMode = NSLineBreakByTruncatingTail;
         NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
                                       NSParagraphStyleAttributeName: style };
-        NSAttributedString *attrString = [[NSAttributedString alloc]initWithString:title
+        NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:title
                                                                         attributes:attributes];
         [_button setAttributedTitle:attrString];
     } else {

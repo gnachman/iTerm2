@@ -8,6 +8,8 @@
 #import "iTermStatusBarKnobTextViewController.h"
 
 #import "NSObject+iTerm.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermVariableHistory.h"
 
 @interface iTermStatusBarKnobTextViewController ()
 
@@ -15,10 +17,28 @@
 
 @implementation iTermStatusBarKnobTextViewController {
     NSString *_value;
+    iTermFunctionCallTextFieldDelegate *_suggester;
+}
+
+- (instancetype)init {
+    return [super init];
+}
+
+- (instancetype)initWithInvocationSuggester {
+    self = [super init];
+    if (self) {
+        _suggester = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                                        passthrough:self
+                                                                      functionsOnly:YES];
+    }
+    return self;
 }
 
 - (void)viewDidLoad {
     self.view.autoresizesSubviews = NO;
+    if (_suggester) {
+        self.textField.delegate = _suggester;
+    }
 }
 
 - (void)setValue:(NSString *)value {

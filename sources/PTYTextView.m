@@ -27,6 +27,7 @@
 #import "iTermQuickLookController.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermScrollAccumulator.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 #import "iTermSetFindStringNotification.h"
@@ -1534,6 +1535,7 @@ static const int kDragThreshold = 3;
         for (int i = 0; i < _keyFocusStolenCount; i++) {
             [self releaseKeyFocus];
         }
+        [[iTermSecureKeyboardEntryController sharedInstance] didReleaseFocus];
         _keyFocusStolenCount = 0;
         [self setNeedsDisplay:YES];
     }
@@ -1552,6 +1554,9 @@ static const int kDragThreshold = 3;
         [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         DLog(@"Trying to steal key focus");
         if ([self stealKeyFocus]) {
+            if (_keyFocusStolenCount == 0) {
+                [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
+            }
             ++_keyFocusStolenCount;
             [self setNeedsDisplay:YES];
         }

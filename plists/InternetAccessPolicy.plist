@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ApplicationDescription</key>
+	<string>iTerm2 is a free terminal emulator.</string>
+	<key>Connections</key>
+	<array>
+		<dict>
+			<key>IsIncoming</key>
+			<false/>
+			<key>Host</key>
+			<string>iterm2.com</string>
+			<key>NetworkProtocol</key>
+			<string>TCP</string>
+			<key>Port</key>
+			<string>443</string>
+			<key>Relevance</key>
+			<string>Default</string>
+			<key>Purpose</key>
+			<string>iTerm2 needs to connect to iterm2.com to check for and download software updates.</string>
+			<key>DenyConsequences</key>
+			<string>If you deny this connection, you won't be notified when a new version is released and you'll be unable to update the Python runtime for the scripting API.</string>
+		</dict>
+		<dict>
+			<key>IsIncoming</key>
+			<true/>
+			<key>Host</key>
+			<string>localhost</string>
+			<key>NetworkProtocol</key>
+			<string>TCP</string>
+			<key>Port</key>
+			<string>1912</string>
+			<key>Purpose</key>
+			<string>iTerm2 accepts connections from localhost on port 1912 for communicating with Python scripts using the scripting API.</string>
+			<key>DenyConsequences</key>
+			<string>The Python script that initiated the connection will not be able to proceed.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

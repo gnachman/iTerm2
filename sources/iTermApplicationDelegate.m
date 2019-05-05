@@ -73,6 +73,7 @@
 #import "iTermRecordingCodec.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermServiceProvider.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
@@ -129,7 +130,6 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
-NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureInputNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateKey";
@@ -178,7 +178,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *maximizePane;
     IBOutlet SUUpdater * suUpdater;
     IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
-    BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
     IBOutlet NSMenuItem *_splitHorizontallyWithCurrentProfile;
@@ -204,8 +203,6 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
-
-    int _secureInputCount;
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
 
@@ -307,8 +304,6 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Interface Builder
 
 - (void)awakeFromNib {
-    secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
-
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
@@ -384,14 +379,15 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
         return ![[iTermTipController sharedInstance] showingTip];
     } else if ([menuItem action] == @selector(toggleSecureInput:)) {
-        if (IsSecureEventInputEnabled()) {
-            if (secureInputDesired_) {
+        iTermSecureKeyboardEntryController *controller = [iTermSecureKeyboardEntryController sharedInstance];
+        if (controller.isEnabled) {
+            if (controller.isDesired) {
                 menuItem.state = NSControlStateValueOn;
             } else {
                 menuItem.state = NSControlStateValueMixed;
             }
         } else {
-            menuItem.state = secureInputDesired_ ? NSOnState : NSOffState;
+            menuItem.state = controller.isDesired ? NSOnState : NSOffState;
         }
         return YES;
     } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
@@ -980,10 +976,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
-    if (secureInputDesired_) {
-        DLog(@"Application resigning active. Disabling secure input.");
-        [self setSecureInput:NO];
-    }
     _savedMouseLocation = [NSEvent mouseLocation];
 }
 
@@ -995,10 +987,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
-    if (secureInputDesired_) {
-        DLog(@"Application becoming active. Enable secure input.");
-        [self setSecureInput:YES];
-    }
 
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSPoint mouseLocation = [NSEvent mouseLocation];
@@ -1962,16 +1950,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleSecureInput:(id)sender {
-    // Set secureInputDesired_ to the opposite of the current state.
-    secureInputDesired_ = !secureInputDesired_;
-    DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
-
-    // Try to set the system's state of secure input to the desired state.
-    [self setSecureInput:secureInputDesired_];
-
-    // Save the preference, independent of whether it succeeded or not.
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
-                                              forKey:@"Secure Input"];
+    [[iTermSecureKeyboardEntryController sharedInstance] toggle];
 }
 
 - (IBAction)debugLogging:(id)sender {
@@ -2299,38 +2278,6 @@ static BOOL hasBecomeActive = NO;
     rate /= delay;
 
     [ToastWindowController showToastWithMessage:[NSString stringWithFormat:@"Pasting at up to %@/sec", [NSString it_formatBytes:rate]]];
-}
-
-- (void)setSecureInput:(BOOL)secure {
-    if (secure && _secureInputCount > 0) {
-        XLog(@"Want to turn on secure input but it's already on");
-        return;
-    }
-
-    if (!secure && _secureInputCount == 0) {
-        XLog(@"Want to turn off secure input but it's already off");
-        return;
-    }
-    DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
-    if (secure) {
-        OSErr err = EnableSecureEventInput();
-        DLog(@"EnableSecureEventInput err=%d", (int)err);
-        if (err) {
-            NSLog(@"EnableSecureEventInput failed with error %d", (int)err);
-        } else {
-            ++_secureInputCount;
-        }
-    } else {
-        OSErr err = DisableSecureEventInput();
-        DLog(@"DisableSecureEventInput err=%d", (int)err);
-        if (err) {
-            XLog(@"DisableSecureEventInput failed with error %d", (int)err);
-        } else {
-            --_secureInputCount;
-        }
-    }
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidToggleSecureInputNotification object:nil];
-    DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
 }
 
 - (void)hideStuckToolTips {
