@@ -412,6 +412,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     NSMutableArray *_toggleFullScreenModeCompletionBlocks;
 
     BOOL _windowNeedsInitialSize;
+
+    iTermFunctionCallTextFieldDelegate *_currentTabTitleTextFieldDelegate;
 }
 
 @synthesize scope = _scope;
@@ -1032,6 +1034,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_windowTitleOverrideSwiftyString release];
     [_initialProfile release];
     [_toggleFullScreenModeCompletionBlocks release];
+    [_currentTabTitleTextFieldDelegate release];
 
     [super dealloc];
 }
@@ -6063,11 +6066,10 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.messageText = @"Set Tab Title";
     alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
-    iTermFunctionCallTextFieldDelegate *delegate;
-    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
-                                                                   passthrough:nil
-                                                                 functionsOnly:NO] autorelease];
-    titleTextField.delegate = delegate;
+    _currentTabTitleTextFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
+                                                                                           passthrough:nil
+                                                                                         functionsOnly:NO];
+    titleTextField.delegate = _currentTabTitleTextFieldDelegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
     titleTextField.stringValue = self.currentTab.variablesScope.tabTitleOverrideFormat ?: @"";
@@ -6076,11 +6078,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [alert addButtonWithTitle:@"Cancel"];
     __weak __typeof(self) weakSelf = self;
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf releaseTabTitleTextFieldDelegate];
         if (returnCode == NSAlertFirstButtonReturn) {
             [weakSelf setCurrentTabTitle:titleTextField.stringValue];
         }
     }];
     [titleTextField.window makeFirstResponder:titleTextField];
+}
+
+- (void)releaseTabTitleTextFieldDelegate {
+    [_currentTabTitleTextFieldDelegate release];
+    _currentTabTitleTextFieldDelegate = nil;
 }
 
 - (void)setCurrentTabTitle:(NSString *)title {
