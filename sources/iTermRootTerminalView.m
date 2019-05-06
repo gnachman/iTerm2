@@ -238,8 +238,15 @@ typedef struct {
         const CGFloat titleBarHeight = _tabBarControl.height;
         NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
         if (NSPointInRect(point, rect)) {
-            [self.window performZoom:nil];
-            return;
+            NSString *doubleClickAction = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleActionOnDoubleClick"];
+            if ([doubleClickAction isEqualToString:@"Minimize"]) {
+                [self.window performMiniaturize:nil];
+                return;
+            }
+            if ([doubleClickAction isEqualToString:@"Maximize"]) {
+                [self.window performZoom:nil];
+                return;
+            }
         }
     }
     [super mouseUp:event];
