@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSString *jobName;
 @property (nullable, nonatomic, strong) NSString *presentationName;
 @property (nullable, nonatomic, strong) NSString *tmuxWindowTitle;
+@property (nullable, nonatomic, strong) NSString *tmuxWindowTitleEval;
 @property (nullable, nonatomic, strong) NSString *tmuxRole;
 @property (nullable, nonatomic, strong) NSString *tmuxClientName;
 @property (nullable, nonatomic, strong) NSString *autoNameFormat;

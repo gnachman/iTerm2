@@ -234,6 +234,7 @@ typedef enum {
 
 - (void)sessionDidInvalidateStatusBar:(PTYSession *)session;
 - (void)sessionAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
+- (iTermVariableScope *)sessionTabScope;
 
 @end
 

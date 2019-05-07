@@ -17,6 +17,7 @@
 #import "iTermSwiftyStringGraph.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "MovePaneController.h"
 #import "NSAppearance+iTerm.h"
@@ -188,8 +189,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Temporarily hidden live views (this is needed to hold a reference count).
     NSMutableArray *hiddenLiveViews_;  // SessionView objects
-
-    NSString *tmuxWindowName_;
 
     // This tab broadcasts to all its sessions?
     BOOL broadcasting_;
@@ -3083,11 +3082,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSString *)tmuxWindowName {
-    return tmuxWindowName_ ? tmuxWindowName_ : @"tmux";
+    return self.activeSession.variablesScope.tmuxWindowTitleEval ?: @"tmux";
 }
 
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName {
-    tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
     for (PTYSession *session in self.sessions) {
         [session.variablesScope setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
@@ -5367,6 +5365,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                      scope:self.variablesScope];
 
     [self.realParentWindow tabAddSwiftyStringsToGraph:graph];
+}
+
+- (iTermVariableScope *)sessionTabScope {
+    return self.variablesScope;
 }
 
 @end

@@ -25,6 +25,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *swiftyString;
 @property (nonatomic, readonly, copy) id (^source)(NSString *);
 
+// To perform evaluation in a different scope than the one that owns the sourcePath and destinationPath set this.
+@property (nullable, nonatomic, copy) iTermVariableScope *(^contextProvider)(void);
+
+// Gives the evaluation scope, using `contextProvider` if set.
+@property (nullable, nonatomic, readonly) iTermVariableScope *scope;
+
 // NOTE: The observer returns a replacement value. If it differs from the passed-in value then
 // it will be called again with the replacement and nil error. It only gets once chance to
 // provide a replacement. This is useful for error handling. If your observer gets called

@@ -103,6 +103,13 @@
 
 #pragma mark - Private
 
+- (iTermVariableScope *)scope {
+    if (_contextProvider) {
+        return _contextProvider() ?: _scope;
+    }
+    return _scope;
+}
+
 - (void)setEvaluatedString:(NSString *)evaluatedString error:(NSError *)error {
     if (error == nil && [NSObject object:evaluatedString isEqualToObject:self.evaluatedString]) {
         return;
@@ -151,7 +158,7 @@
 
 - (void)evaluateSynchronously:(BOOL)synchronously
                    completion:(void (^)(NSString *, NSError *))completion {
-    iTermVariableRecordingScope *scope = [_scope recordingCopy];
+    iTermVariableRecordingScope *scope = [self.scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
     [self evaluateSynchronously:synchronously withScope:scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
         __strong __typeof(self) strongSelf = weakSelf;

@@ -302,7 +302,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSArray<NSString *> *)it_normalizedTokens;
 - (double)it_localizedDoubleValue;
 - (NSString *)it_contentHash;
-
+- (NSString *)it_unescapedTmuxWindowName;
 @end
 
 @interface NSMutableString (iTerm)

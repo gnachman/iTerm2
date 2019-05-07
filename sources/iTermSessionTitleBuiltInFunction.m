@@ -42,7 +42,7 @@ static NSString *const iTermSessionTitleSession = @"session";
        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,
        iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
        iTermSessionTitleArgHost: iTermVariableKeySessionHostname,
-       iTermSessionTitleArgTmux: iTermVariableKeySessionTmuxWindowTitle,
+       iTermSessionTitleArgTmux: iTermVariableKeySessionTmuxWindowTitleEval,
        iTermSessionTitleArgTmuxRole: iTermVariableKeySessionTmuxRole,
        iTermSessionTitleArgTmuxClientName: iTermVariableKeySessionTmuxClientName,
        iTermSessionTitleArgIconName: iTermVariableKeySessionIconName,
@@ -100,7 +100,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
     NSString *user = trim(parameters[iTermSessionTitleArgUser]);
     NSString *host = trim(parameters[iTermSessionTitleArgHost]);
-    NSString *tmux = trim(parameters[iTermVariableKeySessionTmuxWindowTitle]);
+    NSString *tmux = trim(parameters[iTermSessionTitleArgTmux]);
     NSString *iconName = trim(parameters[iTermSessionTitleArgIconName]);
     NSString *windowName = trim(parameters[iTermSessionTitleArgWindowName]);
     iTermTitleComponents titleComponents;

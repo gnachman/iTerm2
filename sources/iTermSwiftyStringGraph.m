@@ -34,7 +34,7 @@
                        to:[scope designatorForPath:evaluationPath]];
     }
     [swiftyString.refs enumerateObjectsUsingBlock:^(iTermVariableReference * _Nonnull ref, NSUInteger idx, BOOL * _Nonnull stop) {
-        [self addEdgeFrom:[scope designatorForPath:ref.path]
+        [self addEdgeFrom:[swiftyString.scope designatorForPath:ref.path]
                        to:[scope designatorForPath:evaluationPath]];
     }];
 }

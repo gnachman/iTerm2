@@ -231,8 +231,10 @@ error:
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-renamed id new_name): \"%@\"", command]];
         return;
     }
+    NSString *escaped = components[2];
+    NSString *name = [escaped it_unescapedTmuxWindowName];
     [delegate_ tmuxWindowRenamedWithId:[[components objectAtIndex:1] intValue]
-                                    to:[components objectAtIndex:2]];
+                                    to:name];
 }
 
 - (void)parseSessionRenamedCommand:(NSString *)command

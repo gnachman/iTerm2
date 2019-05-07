@@ -167,7 +167,15 @@
 }
 
 - (void)setTmuxWindowTitle:(NSString *)newValue {
-    [self setValue:newValue forUndefinedKey:iTermVariableKeySessionTmuxWindowTitle];
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
+}
+
+- (NSString *)tmuxWindowTitleEval {
+    return [self valueForVariableName:iTermVariableKeySessionTmuxWindowTitleEval];
+}
+
+- (void)setTmuxWindowTitleEval:(NSString *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionTmuxWindowTitleEval];
 }
 
 - (NSString *)tmuxRole {

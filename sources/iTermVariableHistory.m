@@ -60,6 +60,7 @@
                                     iTermVariableKeySessionJob,
                                     iTermVariableKeySessionPresentationName,
                                     iTermVariableKeySessionTmuxWindowTitle,
+                                    iTermVariableKeySessionTmuxWindowTitleEval,
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,
                                     iTermVariableKeySessionAutoNameFormat,

@@ -359,7 +359,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         DLog(@"Open window %@", record);
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         [self openWindowWithIndex:wid
-                             name:[doc valueInRecord:record forField:@"window_name"]
+                             name:[[doc valueInRecord:record forField:@"window_name"] it_unescapedTmuxWindowName]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                              [[doc valueInRecord:record forField:@"window_height"] intValue])
                            layout:[doc valueInRecord:record forField:@"window_layout"]
@@ -961,14 +961,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                     flags:0];
 }
 
+- (NSString *)escapedWindowName:(NSString *)name {
+    return [[name stringByReplacingOccurrencesOfString:@"\n" withString:@" "] stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+}
+
 - (void)renameWindowWithId:(int)windowId
                  inSession:(NSString *)sessionName
                     toName:(NSString *)newName {
     NSString *theCommand;
     if (sessionName) {
-        theCommand = [NSString stringWithFormat:@"rename-window -t \"%@:@%d\" \"%@\"", sessionName, windowId, newName];
+        theCommand = [NSString stringWithFormat:@"rename-window -t \"%@:@%d\" \"%@\"", sessionName, windowId, [self escapedWindowName:newName]];
     } else {
-        theCommand = [NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, newName];
+        theCommand = [NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, [self escapedWindowName:newName]];
     }
     [gateway_ sendCommand:theCommand
            responseTarget:nil
@@ -1697,7 +1701,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         NSString *recordWindowId = [doc valueInRecord:record forField:@"window_id"];
         if ([self windowIdFromString:recordWindowId] == [windowId intValue]) {
             [self openWindowWithIndex:[self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]]
-                                 name:[doc valueInRecord:record forField:@"window_name"]
+                                 name:[[doc valueInRecord:record forField:@"window_name"] it_unescapedTmuxWindowName]
                                  size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                                  [[doc valueInRecord:record forField:@"window_height"] intValue])
                                layout:[doc valueInRecord:record forField:@"window_layout"]

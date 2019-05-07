@@ -930,6 +930,10 @@ int decode_utf8_char(const unsigned char *datap,
     return [self dataUsingEncoding:NSUTF8StringEncoding].it_sha256.it_hexEncoded;
 }
 
+- (NSString *)it_unescapedTmuxWindowName {
+    return [self stringByReplacingOccurrencesOfString:@"\\\\" withString:@"\\"];
+}
+
 - (NSDate *)dateValueFromUTC {
     NSArray<NSString *> *formats = @[ @"E, d MMM yyyy HH:mm:ss zzz",
                                       @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
