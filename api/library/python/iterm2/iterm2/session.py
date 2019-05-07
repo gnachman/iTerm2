@@ -205,7 +205,7 @@ class Session:
             self.buried = True
             self.__grid_size = None
             self.frame = None
-        self.preferred_size = self.grid_size
+        self.__preferred_size = self.grid_size
 
     def __repr__(self):
         return "<Session name=%s id=%s>" % (self.name, self.__session_id)
@@ -232,6 +232,16 @@ class Session:
             self.__session_id,
             iterm2.util.size_str(self.grid_size),
             iterm2.util.frame_str(self.frame))
+
+    @property
+    def preferred_size(self) -> iterm2.util.Size:
+        """The size in cells to resize to when `Tab.async_update_layout()` is called."""
+        return self.__preferred_size
+
+    @preferred_size.setter
+    def preferred_size(self, value: iterm2.util.Size):
+        """Sets the size in cells to resize to when `Tab.async_update_layout()` is called."""
+        self.__preferred_size = value
 
     @property
     def session_id(self) -> str:
