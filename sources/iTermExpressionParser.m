@@ -228,7 +228,7 @@
     if (optional) {
         return [[iTermParsedExpression alloc] initWithOptionalObject:value];
     } else {
-        fallbackError = [NSString stringWithFormat:@"Reference to undefined variable “%@”. Use ? to convert undefined values to null.", path];
+        fallbackError = [NSString stringWithFormat:@"Reference to undefined variable “%@”. Change it to “%@?” to treat the undefined value as null.", path, path];
         return [[iTermParsedExpression alloc] initWithObject:value
                                                  errorReason:fallbackError];
     }
