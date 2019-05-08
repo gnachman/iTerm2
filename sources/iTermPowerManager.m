@@ -34,8 +34,6 @@ NSString *const iTermPowerManagerMetalAllowedDidChangeNotification = @"iTermPowe
     CFRunLoopRef _runLoop;
     CFRunLoopSourceRef _runLoopSource;
     BOOL _metalAllowed;
-    CFTypeRef _powerSourcesInfo;
-    CFArrayRef _powerSourcesList;
     iTermPublisher<iTermPowerState *> *_publisher;
     NSTimer *_timer;
 }
@@ -71,20 +69,9 @@ static void iTermPowerManagerSourceDidChange(void *context) {
         }
         _publisher = [[iTermPublisher alloc] init];
         _publisher.delegate = self;
-        _powerSourcesInfo = IOPSCopyPowerSourcesInfo();
-        _powerSourcesList = IOPSCopyPowerSourcesList(_powerSourcesInfo);
         [self metalAllowed];
     }
     return self;
-}
-
-- (void)dealloc {
-    if (_powerSourcesInfo) {
-        CFRelease(_powerSourcesInfo);
-    }
-    if (_powerSourcesList) {
-        CFRelease(_powerSourcesList);
-    }
 }
 
 - (void)setConnected:(BOOL)connected {
@@ -132,9 +119,27 @@ static void iTermPowerManagerSourceDidChange(void *context) {
 }
 #else
 - (iTermPowerState *)computedPowerState {
+    CFTypeRef powerSourcesInfo = IOPSCopyPowerSourcesInfo();
+    CFArrayRef powerSourcesList = IOPSCopyPowerSourcesList(powerSourcesInfo);
+
+    iTermPowerState *result = [self computedPowerStateWithList:powerSourcesList
+                                                          info:powerSourcesInfo];
+
+    if (powerSourcesList) {
+        CFRelease(powerSourcesList);
+    }
+    if (powerSourcesInfo) {
+        CFRelease(powerSourcesInfo);
+    }
+
+    return result;
+}
+
+- (iTermPowerState *)computedPowerStateWithList:(CFArrayRef)powerSourcesList
+                                           info:(CFTypeRef)powerSourcesInfo {
     CFDictionaryRef info;
-    if (_powerSourcesList && CFArrayGetCount(_powerSourcesList)) {
-        info = IOPSGetPowerSourceDescription(_powerSourcesInfo, CFArrayGetValueAtIndex(_powerSourcesList, 0));
+    if (powerSourcesList && CFArrayGetCount(powerSourcesList)) {
+        info = IOPSGetPowerSourceDescription(powerSourcesInfo, CFArrayGetValueAtIndex(powerSourcesList, 0));
     } else {
         return nil;
     }
@@ -153,7 +158,6 @@ static void iTermPowerManagerSourceDidChange(void *context) {
     state.percentage = @(percentage);
     state.timeToEmpty = @(timeToEmpty);
 
-    CFRelease(info);
     return state;
 }
 #endif
