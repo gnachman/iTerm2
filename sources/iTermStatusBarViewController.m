@@ -259,7 +259,8 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (void)updateColors {
     for (iTermStatusBarContainerView *view in _containerViews) {
-        [view.iconImageView it_setTintColor:[view.component statusBarTextColor] ?: [self statusBarComponentDefaultTextColor]];
+        NSColor *tintColor = [view.component statusBarTextColor] ?: [self statusBarComponentDefaultTextColor];
+        [view.iconImageView it_setTintColor:tintColor];
         [view.component statusBarDefaultTextColorDidChange];
         [view setNeedsDisplay:YES];
         [view.component statusBarTerminalBackgroundColorDidChange];

@@ -10,6 +10,7 @@
 #import "iTermAPIHelper.h"
 #import "iTermFontPanel.h"
 #import "iTermStatusBarActionComponent.h"
+#import "iTermStatusBarBatteryComponent.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarCPUUtilizationComponent.h"
 #import "iTermStatusBarClockComponent.h"
@@ -98,6 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)loadElements {
     NSArray<Class> *classes = @[
+                                 [iTermStatusBarBatteryComponent class],
                                  [iTermStatusBarCPUUtilizationComponent class],
                                  [iTermStatusBarMemoryUtilizationComponent class],
                                  [iTermStatusBarNetworkUtilizationComponent class],

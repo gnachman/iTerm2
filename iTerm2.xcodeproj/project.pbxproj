@@ -1188,6 +1188,20 @@
 		5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
 		5308BF5C227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
 		5308BF5D227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */; };
+		5308BF8922828268004BECAC /* iTermStatusBarBatteryComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 5308BF8722828268004BECAC /* iTermStatusBarBatteryComponent.h */; };
+		5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */; };
+		5308BF8D228283CE004BECAC /* StatusBarIconBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */; };
+		5308BF8E228283CE004BECAC /* StatusBarIconBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */; };
+		5308BF8F228283CE004BECAC /* StatusBarIconBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */; };
+		5308BF90228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8C228283CD004BECAC /* StatusBarIconBattery@2x.png */; };
+		5308BF91228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8C228283CD004BECAC /* StatusBarIconBattery@2x.png */; };
+		5308BF92228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF8C228283CD004BECAC /* StatusBarIconBattery@2x.png */; };
+		5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9322828A28004BECAC /* StatusBarIconCharging.png */; };
+		5308BF9622828A28004BECAC /* StatusBarIconCharging.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9322828A28004BECAC /* StatusBarIconCharging.png */; };
+		5308BF9722828A28004BECAC /* StatusBarIconCharging.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9322828A28004BECAC /* StatusBarIconCharging.png */; };
+		5308BF9822828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */; };
+		5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */; };
+		5308BF9A22828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */; };
 		530AB7B420A615D900D2AA08 /* iTermPythonArgumentParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */; };
 		530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */; };
 		530AB7B820A6242C00D2AA08 /* iTermAPIAuthorizationController.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */; };
@@ -4148,6 +4162,12 @@
 		5300984F2259A44D00A69348 /* iTermSoundPlayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSoundPlayer.m; sourceTree = "<group>"; };
 		530098522259AAEF00A69348 /* keyclick.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; name = keyclick.m4a; path = OtherResources/keyclick.m4a; sourceTree = "<group>"; };
 		5308BF5A227C02DE004BECAC /* InternetAccessPolicy.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = InternetAccessPolicy.plist; sourceTree = "<group>"; };
+		5308BF8722828268004BECAC /* iTermStatusBarBatteryComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarBatteryComponent.h; sourceTree = "<group>"; };
+		5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarBatteryComponent.m; sourceTree = "<group>"; };
+		5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconBattery.png; path = images/StatusBarIcons/StatusBarIconBattery.png; sourceTree = "<group>"; };
+		5308BF8C228283CD004BECAC /* StatusBarIconBattery@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconBattery@2x.png"; path = "images/StatusBarIcons/StatusBarIconBattery@2x.png"; sourceTree = "<group>"; };
+		5308BF9322828A28004BECAC /* StatusBarIconCharging.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconCharging.png; path = images/StatusBarIcons/StatusBarIconCharging.png; sourceTree = "<group>"; };
+		5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconCharging@2x.png"; path = "images/StatusBarIcons/StatusBarIconCharging@2x.png"; sourceTree = "<group>"; };
 		530AB7B220A615D900D2AA08 /* iTermPythonArgumentParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPythonArgumentParser.h; sourceTree = "<group>"; };
 		530AB7B320A615D900D2AA08 /* iTermPythonArgumentParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonArgumentParser.m; sourceTree = "<group>"; };
 		530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIAuthorizationController.h; sourceTree = "<group>"; };
@@ -6579,6 +6599,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				5308BF9322828A28004BECAC /* StatusBarIconCharging.png */,
+				5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */,
+				5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */,
+				5308BF8C228283CD004BECAC /* StatusBarIconBattery@2x.png */,
 				A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */,
 				A618FFCB224602F700B8FD88 /* StatusBarIconAction@2x.png */,
 				A61BB46722001E650027F47D /* iTermRecordingIcon.icns */,
@@ -7588,6 +7612,8 @@
 				A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */,
 				A618FFC32245F6A300B8FD88 /* iTermStatusBarActionComponent.h */,
 				A618FFC42245F6A300B8FD88 /* iTermStatusBarActionComponent.m */,
+				5308BF8722828268004BECAC /* iTermStatusBarBatteryComponent.h */,
+				5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -9925,6 +9951,7 @@
 				53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */,
 				537C4FD8227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h in Headers */,
 				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
+				5308BF8922828268004BECAC /* iTermStatusBarBatteryComponent.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
 				535EA4FC20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.h in Headers */,
 				A62EEDA220E012DA00943DE3 /* iTermScriptExporter.h in Headers */,
@@ -10475,6 +10502,7 @@
 				A6F7A727213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A6F7A724213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
+				5308BF8F228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A6F7A715213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
 				A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */,
@@ -10604,6 +10632,7 @@
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A67F61E0214395D50093940A /* graphic_yarn.png in Resources */,
 				A65FF3C520F18552008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
+				5308BF92228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				A61BB46621CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				A6E7AE9A214394DD00DE9F3B /* graphic_code.png in Resources */,
@@ -10612,6 +10641,7 @@
 				A6F7A72D213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
 				1DBBA5E31B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A6F7A709213CB143004DE961 /* StatusBarIconUser.png in Resources */,
+				5308BF9722828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				A6E7AE97214394DD00DE9F3B /* graphic_coffee@2x.png in Resources */,
 				1DE922EC1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
@@ -10637,6 +10667,7 @@
 				A6AC04CB21F0FDBD00CD2774 /* PopoverIcon.png in Resources */,
 				A66F52C62106F6F100571168 /* gitdown.png in Resources */,
 				A6614C79210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
+				5308BF9A22828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
 				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
@@ -10916,6 +10947,7 @@
 				A65429A620BE7ECD00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
 				1D44CFF31CC7F5A600BE5630 /* PTYTextViewTest-golden-testBadge.png in Resources */,
+				5308BF91228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				1D44D05E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorReverseVideo.png in Resources */,
 				A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */,
 				A67F61DF214395D50093940A /* graphic_yarn.png in Resources */,
@@ -10927,6 +10959,7 @@
 				1D44D0041CC7F5A600BE5630 /* PTYTextViewTest-golden-testCombiningMark.png in Resources */,
 				1D44D0A31CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testTimestamps.png in Resources */,
 				A6E7AE6E214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
+				5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
 				1D44D0991CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideo.png in Resources */,
 				1D44CF8F1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithReverseVideo.png in Resources */,
 				1D44D06A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingText.png in Resources */,
@@ -10995,6 +11028,7 @@
 				1D44CFAF1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndMinimumContrast.png in Resources */,
 				1D44CFC81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testRetinaFakeBold.png in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
+				5308BF9622828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				1D44CFC21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNoAntiAlias.png in Resources */,
 				5308BF5C227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				1D44CFBE1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testMark.png in Resources */,
@@ -11109,6 +11143,7 @@
 				1D44CFC41CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNonretinaFakeBold.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1D44D02D1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */,
+				5308BF8E228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				A6F7A723213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
 				1D44CFB51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */,
 				A65FF3C420F18550008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
@@ -11523,6 +11558,7 @@
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
+				5308BF8D228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
@@ -11582,6 +11618,7 @@
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
+				5308BF9822828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6614C77210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				A66F52C42106F6F100571168 /* gitdown.png in Resources */,
@@ -11612,6 +11649,7 @@
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
 				A66F52CA2106F6F100571168 /* gitup.png in Resources */,
+				5308BF90228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A63011AB20E7EE05008114B7 /* iTermStatusBarKnobCheckboxViewController.xib in Resources */,
 				1DEDF56919C917FD005B023A /* new-tab.png in Resources */,
@@ -11678,6 +11716,7 @@
 				A67D0D8C1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A69C93392121101B00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
+				5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
@@ -12446,6 +12485,7 @@
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,
 				A60C03682089897400FE2F1F /* iTermScriptConsole.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
+				5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */,
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
