@@ -818,6 +818,20 @@
     </dict>
     <key>Natural Text Editing</key>
     <dict>
+      <key>0xf703-0x300000</key>
+      <dict>
+          <key>Action</key>
+          <integer>11</integer>
+          <key>Text</key>
+          <string>0x5</string>
+      </dict>
+      <key>0xf702-0x300000</key>
+      <dict>
+          <key>Action</key>
+          <integer>11</integer>
+          <key>Text</key>
+          <string>0x1</string>
+      </dict>
       <key>0xf728-0x80000</key>
       <dict>
         <key>Action</key>
