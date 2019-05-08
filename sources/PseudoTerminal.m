@@ -6044,7 +6044,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
     PTYSession *session = [[aTabViewItem identifier] activeSession];
     return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
-            session.name,
+            aTabViewItem.label,
             [[session profile] objectForKey:KEY_NAME],
             [session.shell originalCommand] ?: @"None"];
 }
