@@ -6054,7 +6054,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [tabView selectTabViewItem:tabViewItem];
-    [self openEditTabTitleWindow];
+    if ([iTermAdvancedSettingsModel doubleClickTabToEdit]) {
+        [self openEditTabTitleWindow];
+    }
 }
 
 - (IBAction)editTabTitle:(id)sender {

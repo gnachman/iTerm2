@@ -77,6 +77,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (BOOL)doNotSetCtype;
++ (BOOL)doubleClickTabToEdit;
 + (BOOL)doubleReportScrollWheel;
 + (NSString *)downloadsDirectory;
 + (BOOL)drawOutlineAroundCursor;
