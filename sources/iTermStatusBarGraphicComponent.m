@@ -274,8 +274,13 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     }
 
     // Draw baseline
-    [[self statusBarTextColor] set];
-    NSRectFill(NSMakeRect(NSMinX(rect), rect.origin.y + iTermStatusBarSparklineBottomMargin, NSWidth(rect), 1));
+    NSColor *baseColor = [self statusBarTextColor];
+    [[baseColor colorWithAlphaComponent:baseColor.alphaComponent * 0.5] set];
+    const NSRect baselineRect = NSMakeRect(NSMinX(rect),
+                                           rect.origin.y + iTermStatusBarSparklineBottomMargin,
+                                           NSWidth(rect),
+                                           1);
+    NSRectFillUsingOperation(baselineRect, NSCompositingOperationSourceOver);
 
     if (self.numberOfTimeSeries == 1) {
         NSBezierPath *path = [self bezierPathWithValues:self.values inRect:rect];
