@@ -101,11 +101,11 @@ class Connection:
         don't need to any more."""
         self.__tasks = list(filter(lambda t: not t.done(), self.__tasks))
 
-    def run_until_complete(self, coro, retry):
-        self.run(False, coro, retry)
+    def run_until_complete(self, coro, retry, debug=False):
+        self.run(False, coro, retry, debug)
 
-    def run_forever(self, coro, retry):
-        self.run(True, coro, retry)
+    def run_forever(self, coro, retry, debug=False):
+        self.run(True, coro, retry, debug)
 
     def set_message_in_future(self, loop, message, future):
         assert future is not None
@@ -145,7 +145,7 @@ class Connection:
             traceback.print_exc()
             raise
 
-    def run(self, forever, coro, retry):
+    def run(self, forever, coro, retry, debug=False):
         """
         Convenience method to start a program.
 
@@ -170,9 +170,7 @@ class Connection:
             for task in self.__tasks:
                 task.cancel()
 
-        # This keeps you from pulling your hair out. The downside is uncertain, but
-        # I do know that pulling my hair out hurts.
-        loop.set_debug(True)
+        loop.set_debug(debug)
         self.loop = loop
         loop.run_until_complete(self.async_connect(async_main, retry))
 
@@ -301,7 +299,7 @@ or run_forever()
                     raise
 
 
-def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False) -> None:
+def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False, debug=False) -> None:
     """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     After `coro` returns this function will return.
@@ -309,9 +307,9 @@ def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typi
     :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value.
     :param retry: Keep trying to connect until it succeeds?
     """
-    Connection().run_until_complete(coro, retry)
+    Connection().run_until_complete(coro, retry, debug)
 
-def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False) -> None:
+def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]], retry=False, debug=False) -> None:
     """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     This function never returns.
@@ -319,4 +317,4 @@ def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any,
     :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value.
     :param retry: Keep trying to connect until it succeeds?
     """
-    Connection().run_forever(coro, retry)
+    Connection().run_forever(coro, retry, debug)
