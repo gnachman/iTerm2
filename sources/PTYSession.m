@@ -9110,6 +9110,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    DLog(@"Current host did change to %@ %@", host, self);
     const BOOL hadHost = (_currentHost != nil);
 
     NSNull *null = [NSNull null];

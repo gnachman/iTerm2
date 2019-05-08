@@ -3558,6 +3558,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
+    DLog(@"Set remote host to %@ %@", remoteHost, self);
     NSRange atRange = [remoteHost rangeOfString:@"@"];
     NSString *user = nil;
     NSString *host = nil;
@@ -3575,6 +3576,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setHost:(NSString *)host user:(NSString *)user {
+    DLog(@"setHost:%@ user:%@ %@", host, user, self);
     VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
     if (!host || !user) {
         // A trigger can set the host and user alone. If remoteHost looks like example.com or

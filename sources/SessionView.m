@@ -1344,6 +1344,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
+    DLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
     [_announcements addObject:announcement];
     announcement.delegate = self;
     if (!_currentAnnouncement) {
