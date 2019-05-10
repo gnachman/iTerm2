@@ -7,6 +7,7 @@
 @interface NSDateFormatter (Extras)
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date;
 + (NSString *)compactDateDifferenceStringFromDate:(NSDate *)date;
++ (NSString *)durationString:(NSTimeInterval)duration;
 
 @end
 

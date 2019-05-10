@@ -14,7 +14,8 @@ extern NSString *const iTermPowerManagerMetalAllowedDidChangeNotification;
 @interface iTermPowerState : NSObject
 @property (nonatomic, readonly) NSString *powerStatus;
 @property (nonatomic, readonly) NSNumber *percentage;
-@property (nonatomic, readonly) NSNumber *timeToEmpty;
+@property (nonatomic, readonly) NSNumber *time;
+@property (nonatomic, readonly) BOOL charging;
 @end
 
 @interface iTermPowerManager : NSObject

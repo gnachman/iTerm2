@@ -314,7 +314,10 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
 - (NSBezierPath *)bezierPathWithValues:(NSArray<NSNumber *> *)values
                                 inRect:(NSRect)rect {
-    const CGFloat barWidth = rect.size.width / self.maximumNumberOfValues;
+    if (self.maximumNumberOfValues == 0) {
+        return nil;
+    }
+    const CGFloat barWidth = rect.size.width / (self.maximumNumberOfValues - 1);
     if (barWidth == 0) {
         return nil;
     }

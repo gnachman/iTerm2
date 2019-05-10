@@ -10,6 +10,14 @@
 
 @implementation NSDateFormatter (Extras)
 
++ (NSString *)durationString:(NSTimeInterval)duration {
+    int seconds = duration;
+    int minutes = seconds / 60;
+    int hours = minutes / 60;
+    int remainderMinutes = minutes - hours * 60;
+    return [NSString stringWithFormat:@"%d:%02d", hours, remainderMinutes];
+}
+
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date
 {
     NSDate *now = [NSDate date];

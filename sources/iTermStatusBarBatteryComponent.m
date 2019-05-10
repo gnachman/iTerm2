@@ -9,15 +9,19 @@
 
 #import "iTermPowerManager.h"
 #import "NSArray+iTerm.h"
+#import "NSDateFormatterExtras.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSView+iTerm.h"
 
 static const CGFloat iTermBatteryWidth = 120;
+static NSString *const iTermBatteryComponentKnobKeyShowPercentage = @"ShowPercentage";
+static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
 
 @implementation iTermStatusBarBatteryComponent {
     NSImage *_chargingImage;
 }
+
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
@@ -34,6 +38,22 @@ static const CGFloat iTermBatteryWidth = 120;
         }];
     }
     return self;
+}
+
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    iTermStatusBarComponentKnob *showPercentageKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Show Percentage"
+                                                      type:iTermStatusBarComponentKnobTypeCheckbox
+                                               placeholder:nil
+                                              defaultValue:@YES
+                                                       key:iTermBatteryComponentKnobKeyShowPercentage];
+    iTermStatusBarComponentKnob *showEstimatedTimeKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Show Estimated Time"
+                                                      type:iTermStatusBarComponentKnobTypeCheckbox
+                                               placeholder:nil
+                                              defaultValue:@NO
+                                                       key:iTermBatteryComponentKnobKeyShowTime];
+    return [@[ showPercentageKnob, showEstimatedTimeKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -141,38 +161,87 @@ static const CGFloat iTermBatteryWidth = 120;
 }
 
 - (NSSize)leftSize {
+    if (!self.showPercentage) {
+        return NSMakeSize(0, 0);
+    }
     NSString *longestPercentage = @"100%";
     return [longestPercentage sizeWithAttributes:self.leftAttributes];
 }
 
 - (CGSize)rightSize {
-    CGSize size = [self.rightText sizeWithAttributes:self.rightAttributes];
+    CGSize size = [@"" sizeWithAttributes:self.rightAttributes];
+    if (self.showTimeOnRight) {
+        size.width += [@"55:55" sizeWithAttributes:self.rightAttributes].width;
+        const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+        if (!charging) {
+            return size;
+        }
+    }
     size.width += _chargingImage.size.width;
     return size;
+}
+
+- (BOOL)showPercentage {
+    NSDictionary *knobs = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobs[iTermBatteryComponentKnobKeyShowPercentage] ?: @YES boolValue];
+}
+
+- (BOOL)showTime {
+    const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+    if (self.currentEstimate == 100 && charging) {
+        return NO;
+    }
+    if ([[[iTermPowerManager sharedInstance] currentState] time] < 0) {
+        return NO;
+    }
+    NSDictionary *knobs = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobs[iTermBatteryComponentKnobKeyShowTime] ?: @NO boolValue];
+}
+
+- (BOOL)showTimeOnRight {
+    return (self.showTime &&
+            self.showPercentage);
 }
 
 - (NSString *)leftText {
     if ([[[iTermPowerManager sharedInstance] currentState] percentage] == nil) {
         return @"";
     }
-    return [NSString stringWithFormat:@"%d%%", self.currentEstimate];
+    if (self.showPercentage) {
+        return [NSString stringWithFormat:@"%d%%", self.currentEstimate];
+    }
+    if (self.showTime) {
+        return [NSDateFormatter durationString:[[[[iTermPowerManager sharedInstance] currentState] time] doubleValue]];
+    }
+    return @"";
 }
 
 - (NSString *)rightText {
+    if ([[[iTermPowerManager sharedInstance] currentState] percentage] == nil) {
+        return @"";
+    }
+    if (self.showTimeOnRight) {
+        return [NSDateFormatter durationString:[[[[iTermPowerManager sharedInstance] currentState] time] doubleValue]];
+    }
     return @"";
 }
 
 - (void)drawRect:(NSRect)rect {
     CGSize rightSize = self.rightSize;
 
-    [self drawTextWithRect:rect
+    NSRect textRect = rect;
+    const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+    if (self.showTimeOnRight && charging) {
+        textRect.size.width -= _chargingImage.size.width;
+    }
+    [self drawTextWithRect:textRect
                       left:self.leftText
                      right:self.rightText
                  rightSize:rightSize];
 
     NSRect graphRect = [self graphRectForRect:rect leftSize:self.leftSize rightSize:rightSize];
 
-    if ([[iTermPowerManager sharedInstance] connectedToPower]) {
+    if (charging) {
         NSImage *tintedImage = [_chargingImage it_imageWithTintColor:[self statusBarTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]];
         [tintedImage drawInRect:NSMakeRect(NSMaxX(rect) - _chargingImage.size.width,
                                            [self.view retinaRound:(rect.size.height - _chargingImage.size.height) / 2.0],
