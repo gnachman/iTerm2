@@ -11,6 +11,7 @@ typedef void (^iTermCPUUtilizationObserver)(double);
 
 @interface iTermCPUUtilization : NSObject
 @property (nonatomic) NSTimeInterval cadence;
+@property (nonatomic, readonly) NSArray<NSNumber *> *samples;
 
 + (instancetype)sharedInstance;
 - (void)addSubscriber:(id)subscriber block:(iTermCPUUtilizationObserver)block;

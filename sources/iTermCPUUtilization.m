@@ -43,7 +43,7 @@ typedef struct {
     self = [super init];
     if (self) {
         _cadence = 1;
-        _publisher = [[iTermPublisher alloc] init];
+        _publisher = [[iTermPublisher alloc] initWithCapacity:120];
         _publisher.delegate = self;
     }
     return self;
@@ -53,6 +53,12 @@ typedef struct {
     [_publisher addSubscriber:subscriber block:^(NSNumber * _Nonnull payload) {
         block(payload.doubleValue);
     }];
+    NSNumber *last = _publisher.historicalValues.lastObject;
+    if (last != nil) {
+        block(last.doubleValue);
+    } else {
+        [self update];
+    }
 }
 
 #pragma mark - Private
@@ -77,6 +83,10 @@ typedef struct {
         return;
     }
     [_publisher publish:@(value)];
+}
+
+- (NSArray<NSNumber *> *)samples {
+    return _publisher.historicalValues;
 }
 
 - (iTermCPUTicks)sample {

@@ -22,6 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermPublisherDelegate> delegate;
 @property (nonatomic, readonly) NSTimeInterval timeIntervalSinceLastUpdate;
 @property (nonatomic, readonly) BOOL hasAnySubscribers;
+@property (nonatomic, nullable, readonly) NSArray<PayloadType> *historicalValues;
+
+- (instancetype)initWithCapacity:(NSInteger)capacity NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 - (void)publish:(PayloadType)payload;
 

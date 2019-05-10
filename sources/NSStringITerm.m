@@ -1902,7 +1902,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         double divisor;
         NSString *format;
     } units[] = {
-        { 1,        1, @"%.04f bytes" }, // 0.9999 bytes
+        { 1,        1, @"%.0f bytes" }, // 0 bytes
         { k,        1, @"%.0f bytes" }, // 999 bytes
         { 10 * k,   k, @"%.1f kB" },  // 9.9 KB
         { mb,       k, @"%.0f kB" },  // 999 KB

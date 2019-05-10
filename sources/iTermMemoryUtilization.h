@@ -11,9 +11,10 @@
 
 @property (nonatomic) NSTimeInterval cadence;
 @property (nonatomic, readonly) long long availableMemory;
+@property (nonatomic, readonly) NSArray<NSNumber *> *samples;
 
 + (instancetype)sharedInstance;
 - (void)addSubscriber:(id)subscriber
-                block:(void (^)(long long))block;
+                block:(void (^)(double))block;
 
 @end

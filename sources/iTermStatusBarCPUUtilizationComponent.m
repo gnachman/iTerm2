@@ -17,15 +17,12 @@ static const CGFloat iTermCPUUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation iTermStatusBarCPUUtilizationComponent {
-    NSMutableArray<NSNumber *> *_samples;
-}
+@implementation iTermStatusBarCPUUtilizationComponent
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
     self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
-        _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
         [[iTermCPUUtilization sharedInstance] addSubscriber:self block:^(double value) {
             [weakSelf update:value];
@@ -68,14 +65,15 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<NSNumber *> *)values {
-    return _samples;
+    return [[iTermCPUUtilization sharedInstance] samples];
 }
 
 - (int)currentEstimate {
     double alpha = 0.7;
-    NSArray<NSNumber *> *lastSamples = _samples;
+    NSArray<NSNumber *> *const samples = self.values;
+    NSArray<NSNumber *> *lastSamples = samples;
     const NSInteger maxSamplesToUse = 4;
-    double x = _samples.lastObject.doubleValue;
+    double x = samples.lastObject.doubleValue;
     if (lastSamples.count > maxSamplesToUse) {
         lastSamples = [lastSamples subarrayWithRange:NSMakeRange(lastSamples.count - maxSamplesToUse,
                                                                  maxSamplesToUse)];
@@ -180,10 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 - (void)update:(double)value {
-    [_samples addObject:@(value)];
-    while (_samples.count > self.maximumNumberOfValues) {
-        [_samples removeObjectAtIndex:0];
-    }
+    [self invalidate];
 }
 
 @end

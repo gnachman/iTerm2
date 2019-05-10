@@ -283,11 +283,13 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     NSRectFillUsingOperation(baselineRect, NSCompositingOperationSourceOver);
 
     if (self.numberOfTimeSeries == 1) {
-        NSBezierPath *path = [self bezierPathWithValues:self.values inRect:rect];
+        NSBezierPath *path = [self bezierPathWithValues:[self.values it_arrayByKeepingLastN:self.maximumNumberOfValues]
+                                                 inRect:rect];
         [self drawBezierPath:path forTimeSeries:0];
     } else {
         for (NSInteger i = 0; i < self.numberOfTimeSeries; i++) {
-            NSArray<NSNumber *> *values = [self.values mapWithBlock:^id(id anObject) {
+            NSArray *rawValues = [[self values] it_arrayByKeepingLastN:self.maximumNumberOfValues];
+            NSArray<NSNumber *> *values = [rawValues mapWithBlock:^id(id anObject) {
                 return [[NSArray castFrom:anObject] objectAtIndex:i];
             }];
             NSBezierPath *path = [self bezierPathWithValues:values inRect:rect];

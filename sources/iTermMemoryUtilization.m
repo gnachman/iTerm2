@@ -37,22 +37,32 @@
     self = [super init];
     if (self) {
         _cadence = 1;
-        _publisher = [[iTermPublisher alloc] init];
+        _publisher = [[iTermPublisher alloc] initWithCapacity:120];
         _publisher.delegate = self;
     }
     return self;
 }
 
-- (void)addSubscriber:(id)subscriber block:(void (^)(long long))block {
+- (void)addSubscriber:(id)subscriber block:(void (^)(double))block {
     [_publisher addSubscriber:subscriber block:^(NSNumber * _Nonnull payload) {
         block(payload.doubleValue);
     }];
+    NSNumber *last = _publisher.historicalValues.lastObject;
+    if (last != nil) {
+        block(last.doubleValue);
+    } else {
+        [self update];
+    }
+}
+
+- (NSArray<NSNumber *> *)samples {
+    return [_publisher historicalValues];
 }
 
 #pragma mark - Private
 
 - (void)update {
-    [_publisher publish:@(self.memoryUsage)];
+    [_publisher publish:@((double)self.memoryUsage / (double)self.availableMemory)];
 }
 
 - (long long)pageSize {

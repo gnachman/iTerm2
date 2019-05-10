@@ -80,12 +80,15 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     // be a dumpster fire I'll go my own way.
     NSMutableArray<iTermSubscriber *> *_subscribers;
     uint64_t _updateTime;
+    NSInteger _capacity;
+    NSMutableArray *_historicalValues;
 }
 
-- (instancetype)init {
+- (instancetype)initWithCapacity:(NSInteger)capacity {
     self = [super init];
     if (self) {
         _subscribers = [NSMutableArray array];
+        _capacity = capacity;
     }
     return self;
 }
@@ -120,6 +123,13 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     if (hasAnySubscribers != _hasAnySubscribers) {
         _hasAnySubscribers = hasAnySubscribers;
         [self.delegate publisherDidChangeNumberOfSubscribers:self];
+        
+        
+        if (!_historicalValues && hasAnySubscribers) {
+            _historicalValues = [NSMutableArray array];
+        } else if (_historicalValues && !hasAnySubscribers) {
+            _historicalValues = nil;
+        }
     }
 }
 
@@ -132,6 +142,10 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
 }
 
 - (void)publish:(id)payload {
+    [_historicalValues addObject:payload];
+    while (_historicalValues.count > _capacity && _capacity >= 0) {
+        [_historicalValues removeObjectAtIndex:0];
+    }
     _updateTime = mach_absolute_time();
     for (iTermSubscriber *obj in _subscribers) {
         if (obj.object) {

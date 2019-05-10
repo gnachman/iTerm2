@@ -6,7 +6,9 @@
 //
 
 #import "iTermStatusBarBatteryComponent.h"
+
 #import "iTermPowerManager.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSView+iTerm.h"
@@ -14,7 +16,6 @@
 static const CGFloat iTermBatteryWidth = 120;
 
 @implementation iTermStatusBarBatteryComponent {
-    NSMutableArray<NSNumber *> *_samples;
     NSImage *_chargingImage;
 }
 
@@ -22,16 +23,15 @@ static const CGFloat iTermBatteryWidth = 120;
                                 scope:(nullable iTermVariableScope *)scope {
     self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
-        _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
-        [[iTermPowerManager sharedInstance] addPowerStateSubscriber:self block:^(iTermPowerState *state) {
-            [weakSelf update:state];
-        }];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(powerManagerStateDidChange:)
                                                      name:iTermPowerManagerStateDidChange
                                                    object:nil];
         _chargingImage = [NSImage it_imageNamed:@"StatusBarIconCharging" forClass:self.class];
+        [[iTermPowerManager sharedInstance] addPowerStateSubscriber:self block:^(iTermPowerState *state) {
+            [weakSelf update:state];
+        }];
     }
     return self;
 }
@@ -70,12 +70,14 @@ static const CGFloat iTermBatteryWidth = 120;
 }
 
 - (NSArray<NSNumber *> *)values {
-    return _samples;
+    return [[[iTermPowerManager sharedInstance] percentageSamples] mapWithBlock:^id(NSNumber *percentage) {
+        return @(percentage.doubleValue / 100.0);
+    }];
 }
 
 - (int)currentEstimate {
-    double x = _samples.lastObject.doubleValue;
-    return x * 100;
+    const double x = [[[[iTermPowerManager sharedInstance] currentState] percentage] doubleValue];
+    return x;
 }
 
 - (void)drawTextWithRect:(NSRect)rect
@@ -150,7 +152,7 @@ static const CGFloat iTermBatteryWidth = 120;
 }
 
 - (NSString *)leftText {
-    if (_samples.count == 0) {
+    if ([[[iTermPowerManager sharedInstance] currentState] percentage] == nil) {
         return @"";
     }
     return [NSString stringWithFormat:@"%d%%", self.currentEstimate];
@@ -189,10 +191,6 @@ static const CGFloat iTermBatteryWidth = 120;
 - (void)update:(iTermPowerState *)state {
     if (state.percentage == nil) {
         return;
-    }
-    [_samples addObject:@(state.percentage.doubleValue / 100.0)];
-    while (_samples.count > self.maximumNumberOfValues) {
-        [_samples removeObjectAtIndex:0];
     }
     [self invalidate];
 }

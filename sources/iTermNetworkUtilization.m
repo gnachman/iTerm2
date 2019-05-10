@@ -8,25 +8,45 @@
 #import "iTermNetworkUtilization.h"
 
 #import "iTermPublisher.h"
-#import "iTermTuple.h"
 
 #include <sys/sysctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/route.h>
 
-
 typedef struct {
     double upbytes;
     double downbytes;
 } iTermNetworkUtilizationStats;
+
+@implementation iTermNetworkUtilizationSample {
+    iTermNetworkUtilizationStats _stats;
+}
+
+- (instancetype)initWithStats:(iTermNetworkUtilizationStats)stats {
+    self = [super init];
+    if (self) {
+        _stats = stats;
+    }
+    return self;
+}
+
+- (double)bytesPerSecondRead {
+    return _stats.downbytes;
+}
+
+- (double)bytesPerSecondWrite {
+    return _stats.upbytes;
+}
+
+@end
 
 @interface iTermNetworkUtilization()<iTermPublisherDelegate>
 @end
 
 @implementation iTermNetworkUtilization {
     NSTimer *_timer;
-    iTermPublisher<iTermTuple<NSNumber *, NSNumber *> *> *_publisher;
+    iTermPublisher<iTermNetworkUtilizationSample *> *_publisher;
     iTermNetworkUtilizationStats _last;
 }
 
@@ -43,16 +63,27 @@ typedef struct {
     self = [super init];
     if (self) {
         _cadence = 1;
-        _publisher = [[iTermPublisher alloc] init];
+        _publisher = [[iTermPublisher alloc] initWithCapacity:120];
         _publisher.delegate = self;
     }
     return self;
 }
 
 - (void)addSubscriber:(id)subscriber block:(void (^)(double, double))block {
-    [_publisher addSubscriber:subscriber block:^(iTermTuple<NSNumber *, NSNumber *> *_Nonnull payload) {
-        block(payload.firstObject.doubleValue, payload.secondObject.doubleValue);
+    [_publisher addSubscriber:subscriber block:^(iTermNetworkUtilizationSample *_Nonnull payload) {
+        block(payload.bytesPerSecondRead,
+              payload.bytesPerSecondWrite);
     }];
+    iTermNetworkUtilizationSample *last = _publisher.historicalValues.lastObject;
+    if (last != nil) {
+        block(last.bytesPerSecondRead, last.bytesPerSecondWrite);
+    } else {
+        [self update];
+    }
+}
+
+- (NSArray<iTermNetworkUtilizationSample *> *)samples {
+    return _publisher.historicalValues;
 }
 
 #pragma mark - Private
@@ -66,7 +97,7 @@ typedef struct {
         .downbytes = (current.downbytes - last.downbytes) / t
     };
     _last = current;
-    [_publisher publish:[iTermTuple tupleWithObject:@(diff.downbytes) andObject:@(diff.upbytes)]];
+    [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:diff]];
 }
 
 - (iTermNetworkUtilizationStats)currentStats {

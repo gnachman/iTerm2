@@ -21,6 +21,8 @@ extern NSString *const iTermPowerManagerMetalAllowedDidChangeNotification;
 
 @property (nonatomic, readonly) BOOL connectedToPower;
 @property (nonatomic, readonly) BOOL metalAllowed;
+@property (nonatomic, readonly) NSArray<NSNumber *> *percentageSamples;
+@property (nonatomic, readonly) iTermPowerState *currentState;
 
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;

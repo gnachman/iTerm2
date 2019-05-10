@@ -18,17 +18,14 @@ static const CGFloat iTermMemoryUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation iTermStatusBarMemoryUtilizationComponent {
-    NSMutableArray<NSNumber *> *_samples;
-}
+@implementation iTermStatusBarMemoryUtilizationComponent
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
     self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
-        _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
-        [[iTermMemoryUtilization sharedInstance] addSubscriber:self block:^(long long value) {
+        [[iTermMemoryUtilization sharedInstance] addSubscriber:self block:^(double value) {
             [weakSelf update:value];
         }];
     }
@@ -69,11 +66,12 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<NSNumber *> *)values {
-    return _samples;
+    return [[iTermMemoryUtilization sharedInstance] samples];
 }
 
 - (long long)currentEstimate {
-    return  _samples.lastObject.doubleValue * [[iTermMemoryUtilization sharedInstance] availableMemory];
+    NSNumber *last = self.values.lastObject;
+    return  last.doubleValue * [[iTermMemoryUtilization sharedInstance] availableMemory];
 }
 
 - (void)drawTextWithRect:(NSRect)rect
@@ -141,7 +139,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)leftText {
-    return [NSString it_formatBytes:self.currentEstimate];
+    const long long estimate = self.currentEstimate;
+    if (estimate == 0) {
+        return @"";
+    }
+    return [NSString it_formatBytes:estimate];
 }
 
 - (NSString *)rightText {
@@ -166,11 +168,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 - (void)update:(double)value {
-    double available = [[iTermMemoryUtilization sharedInstance] availableMemory];
-    [_samples addObject:@(value / available)];
-    while (_samples.count > self.maximumNumberOfValues) {
-        [_samples removeObjectAtIndex:0];
-    }
+    [self invalidate];
 }
 
 @end

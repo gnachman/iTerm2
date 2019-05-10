@@ -7,9 +7,15 @@
 
 #import <Foundation/Foundation.h>
 
+@interface iTermNetworkUtilizationSample : NSObject
+@property (nonatomic, readonly) double bytesPerSecondRead;
+@property (nonatomic, readonly) double bytesPerSecondWrite;
+@end
+
 @interface iTermNetworkUtilization : NSObject
 
 @property (nonatomic) NSTimeInterval cadence;
+@property (nonatomic, readonly) NSArray<iTermNetworkUtilizationSample *> *samples;
 
 + (instancetype)sharedInstance;
 - (void)addSubscriber:(id)subscriber

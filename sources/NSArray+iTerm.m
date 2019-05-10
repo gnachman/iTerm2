@@ -459,6 +459,13 @@
     return [self subarrayToIndex:n];
 }
 
+- (NSArray *)it_arrayByKeepingLastN:(NSUInteger)n {
+    if (n >= self.count) {
+        return self;
+    }
+    return [self subarrayFromIndex:self.count - n];
+}
+
 // Convert an array like ["a", "b", "b", "c"] into
 // ["a", "2 instances of \"b\"", "c"].
 - (NSArray *)countedInstancesStrings {

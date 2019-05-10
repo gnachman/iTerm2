@@ -20,7 +20,6 @@ static const CGFloat iTermNetworkUtilizationWidth = 170;
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarNetworkUtilizationComponent {
-    NSMutableArray<NSArray<NSNumber *> *> *_samples;
     double _ceiling;
 }
 
@@ -29,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
         _ceiling = 1;
-        _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
         [[iTermNetworkUtilization sharedInstance] addSubscriber:self block:^(double down, double up) {
             [weakSelf updateWithDown:down up:up];
@@ -72,7 +70,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray *)values {
-    return _samples;
+    return [[[iTermNetworkUtilization sharedInstance] samples] mapWithBlock:^id(iTermNetworkUtilizationSample *sample) {
+        return @[ @(sample.bytesPerSecondRead), @(sample.bytesPerSecondWrite) ];
+    }];
 }
 
 - (NSInteger)numberOfTimeSeries {
@@ -84,11 +84,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (double)downThroughput {
-    return _samples.lastObject[0].doubleValue;
+    return [[[[iTermNetworkUtilization sharedInstance] samples] lastObject] bytesPerSecondRead];
 }
 
 - (double)upThroughput {
-    return _samples.lastObject[1].doubleValue;
+    return [[[[iTermNetworkUtilization sharedInstance] samples] lastObject] bytesPerSecondWrite];
 }
 
 - (void)drawTextWithRect:(NSRect)rect
@@ -185,11 +185,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 - (void)updateWithDown:(double)down up:(double)up {
-    [_samples addObject:@[ @(down), @(up) ]];
-    while (_samples.count > self.maximumNumberOfValues) {
-        [_samples removeObjectAtIndex:0];
-    }
-    _ceiling = [[[_samples flatMapWithBlock:^NSArray *(NSArray<NSNumber *> *anObject) {
+    _ceiling = [[[self.values flatMapWithBlock:^NSArray *(NSArray<NSNumber *> *anObject) {
         return anObject;
     }] maxWithBlock:^NSComparisonResult(NSNumber *n1, NSNumber *n2) {
         return [n1 compare:n2];
