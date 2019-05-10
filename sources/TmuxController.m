@@ -93,6 +93,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     ProfileModel *_profileModel;
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
     NSMutableDictionary<NSNumber *, void(^)(int)> *_pendingWindows;
+    BOOL _hasStatusBar;
 }
 
 @synthesize gateway = gateway_;
@@ -407,7 +408,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
-             size.width, size.height];
+                                size.width, [self adjustHeightForStatusBar:size.height]];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
@@ -608,6 +609,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self setClientSize:minSize];
 }
 
+- (int)adjustHeightForStatusBar:(int)height {
+    // See here for the bug fix: https://github.com/tmux/tmux/pull/1731
+    NSArray *buggyVersions = @[ [NSDecimalNumber decimalNumberWithString:@"2.9"],
+                                [NSDecimalNumber decimalNumberWithString:@"2.91"] ];
+    if (_hasStatusBar && [buggyVersions containsObject:gateway_.minimumServerVersion]) {
+        return height + 1;
+    }
+    return height;
+}
+
 - (void)setClientSize:(NSSize)size {
     DLog(@"Set client size to %@", NSStringFromSize(size));
     DLog(@"%@", [NSThread callStackSymbols]);
@@ -623,7 +634,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseObject:nil
                                                   flags:0],
                          [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                                         (int)size.width, (int)size.height]
+                                                         (int)size.width, [self adjustHeightForStatusBar:(int)size.height]]
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
@@ -646,6 +657,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                responseTarget:self
              responseSelector:@selector(showWindowOptionsResponse:)];
     }
+    [gateway_ sendCommand:@"show-option -g -v status"
+           responseTarget:self
+         responseSelector:@selector(handleStatusResponse:)];
+}
+
+- (void)handleStatusResponse:(NSString *)string {
+    _hasStatusBar = [string isEqualToString:@"on"];
 }
 
 - (void)checkForUTF8 {
@@ -738,8 +756,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         number.doubleValue < 2.4 || number.doubleValue > 10) {
         return;
     }
-
-    [self increaseMinimumServerVersionTo:response];
+    
+    // Sadly tmux version numbers look like 2.9 or 2.9a instead of a proper decimal number.
+    NSRange range = [response rangeOfCharacterFromSet:[NSCharacterSet lowercaseLetterCharacterSet]];
+    if (range.location == NSNotFound) {
+        [self increaseMinimumServerVersionTo:response];
+    } else {
+        // Convert 2.9a to 2.91
+        // According to this issue it should be safe to do this:
+        // https://github.com/tmux/tmux/issues/1712
+        unichar c = [response characterAtIndex:range.location];
+        NSInteger bug = c - 'a' + 1;
+        NSString *prefix = [response substringToIndex:range.location];
+        NSString *version = [NSString stringWithFormat:@"%@%@", prefix, @(bug)];
+        [self increaseMinimumServerVersionTo:version];
+    }
 }
 
 - (void)guessVersion23Response:(NSString *)response {
