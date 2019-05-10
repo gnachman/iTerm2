@@ -266,7 +266,7 @@
 }
 
 - (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_JOBS ];
+    NSArray *keys = @[ KEY_JOBS, KEY_STATUS_BAR_LAYOUT ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
