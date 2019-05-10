@@ -65,10 +65,37 @@
 
 #pragma mark - APIs
 
-+ (void)callFunction:(NSString *)invocation
-             timeout:(NSTimeInterval)timeout
-               scope:(iTermVariableScope *)scope
-          completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
++ (iTermParsedExpression *)callFunction:(NSString *)invocation
+                                timeout:(NSTimeInterval)timeout
+                                  scope:(iTermVariableScope *)scope
+                             retainSelf:(BOOL)retainSelf
+                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    static dispatch_once_t onceToken;
+    static NSMutableArray<iTermParsedExpression *> *array;
+    dispatch_once(&onceToken, ^{
+        array = [NSMutableArray array];
+    });
+    __block BOOL complete = NO;
+    __block iTermParsedExpression *expression = [self callFunction:invocation
+                                                           timeout:timeout
+                                                             scope:scope
+                                                        completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+                                                            completion(result, error, missing);
+                                                            if (expression) {
+                                                                [array removeObject:expression];
+                                                            }
+                                                            complete = YES;
+                                                        }];
+    if (retainSelf && !complete) {
+        [array addObject:expression];
+    }
+    return expression;
+}
+
++ (iTermParsedExpression *)callFunction:(NSString *)invocation
+                                timeout:(NSTimeInterval)timeout
+                                  scope:(iTermVariableScope *)scope
+                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
                                                                               scope:scope];
     switch (expression.expressionType) {
@@ -82,11 +109,11 @@
                                            code:3
                                        userInfo:@{ NSLocalizedDescriptionKey: reason }],
                        nil);
-            return;
+            return nil;
         }
         case iTermParsedExpressionTypeError:
             completion(nil, expression.error, nil);
-            return;
+            return nil;
 
         case iTermParsedExpressionTypeNil: {
             NSString *reason = @"nil not allowed";
@@ -95,7 +122,7 @@
                                            code:4
                                        userInfo:@{ NSLocalizedDescriptionKey: reason }],
                        nil);
-            return;
+            return nil;
         }
         case iTermParsedExpressionTypeFunctionCall:
             assert(expression.functionCall);
@@ -103,7 +130,7 @@
                                                                  scope:scope
                                                                timeout:timeout
                                                             completion:completion];
-            return;
+            return expression;
         case iTermParsedExpressionTypeInterpolatedString: {
             NSString *reason = @"interpolated string not allowed";
             completion(nil,
@@ -111,10 +138,11 @@
                                            code:4
                                        userInfo:@{ NSLocalizedDescriptionKey: reason }],
                        nil);
-            return;
+            return nil;
         }
     }
     assert(NO);
+    return nil;
 }
 
 #pragma mark - Function Calls

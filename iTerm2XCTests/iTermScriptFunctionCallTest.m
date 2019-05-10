@@ -354,6 +354,7 @@
     [iTermScriptFunctionCall callFunction:@"add(x:1, y:2)"
                                   timeout:0
                                     scope:_scope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    result = object;
                                    XCTAssertNil(error);
@@ -366,6 +367,7 @@
     [iTermScriptFunctionCall callFunction:@"add(x:1, y:\"foo\")"
                                   timeout:0
                                     scope:_scope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    XCTAssertNil(object);
                                    XCTAssertNotNil(error);
@@ -378,6 +380,7 @@
     [iTermScriptFunctionCall callFunction:@"add(x:1)"
                                   timeout:INFINITY
                                     scope:_scope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    XCTAssertNil(object);
                                    XCTAssertNotNil(error);
@@ -446,6 +449,7 @@
     [iTermScriptFunctionCall callFunction:@"iterm2.count(array: a())"
                                   timeout:0
                                     scope:_scope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    result = object;
                                }];

@@ -120,6 +120,23 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return self;
 }
 
+- (NSString *)debugInfo {
+    NSString *resolvedString = [[_resolvedLinks.allKeys mapWithBlock:^id(NSString *key) {
+        NSString *refs = [[self->_resolvedLinks[key].allObjects mapWithBlock:^id(iTermVariableReference *ref) {
+            return [@"    " stringByAppendingString:[ref description]];
+        }] componentsJoinedByString:@"\n"];
+        return [NSString stringWithFormat:@"%@ ->\n%@", key, refs];
+    }] componentsJoinedByString:@"\n"];
+    NSString *unresolvedString = [[_unresolvedLinks.allKeys mapWithBlock:^id(NSString *key) {
+        NSString *refs = [[self->_unresolvedLinks[key].allObjects mapWithBlock:^id(iTermVariableReference *ref) {
+            return [@"    " stringByAppendingString:[ref description]];
+        }] componentsJoinedByString:@"\n"];;
+        return [NSString stringWithFormat:@"%@ ->\n%@", key, refs];
+    }] componentsJoinedByString:@"\n"];
+
+    return [NSString stringWithFormat:@"Resolved links:\n%@\n\nUnresolved links:\n%@", resolvedString, unresolvedString];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p owner=%@>", self.class, self, self.owner];
 }

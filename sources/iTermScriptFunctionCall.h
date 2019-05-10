@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 @class iTermVariableScope;
+@class iTermParsedExpression;
 
 @interface iTermScriptFunctionCall : NSObject
 
@@ -15,9 +16,11 @@
 @property (nonatomic, readonly) NSString *name;
 
 // The 'invocation' must be a function call and cannot be any other kind of expression.
-+ (void)callFunction:(NSString *)invocation
-             timeout:(NSTimeInterval)timeout
-               scope:(iTermVariableScope *)scope
-          completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
+// Hold a reference to the result until you no longer care to receive the completion block.
++ (iTermParsedExpression *)callFunction:(NSString *)invocation
+                                timeout:(NSTimeInterval)timeout
+                                  scope:(iTermVariableScope *)scope
+                             retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
+                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
 @end

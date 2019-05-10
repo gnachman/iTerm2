@@ -18,6 +18,7 @@
 @property (nonatomic, readonly) NSString *value;
 @property (nonatomic, readonly) NSArray<id<iTermVariablesProxy>> *children;
 @property (nonatomic, readonly) BOOL isExpandable;
+- (NSString *)debugInfo;
 @end
 
 @interface iTermVariablesOutlineMenu : NSMenu
@@ -28,37 +29,47 @@
 @end
 
 @interface iTermVariablesTerminalProxy : NSObject<iTermVariablesProxy>
+@property (nonatomic, copy) NSString *debugInfo;
 - (instancetype)initWithName:(NSString *)name value:(id)value;
 @end
 
 @interface iTermVariablesWeakNonterminalProxy : NSObject<iTermVariablesProxy>
+@property (nonatomic, copy) NSString *debugInfo;
 - (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables isAlias:(BOOL)isAlias;
 @end
 
 @interface iTermVariablesNonterminalProxy : NSObject<iTermVariablesProxy>
+@property (nonatomic, copy) NSString *debugInfo;
 - (instancetype)initWithName:(NSString *)name variables:(iTermVariables *)variables;
 @end
 
 @interface iTermVariablesScopeProxy : NSObject<iTermVariablesProxy>
+@property (nonatomic, copy) NSString *debugInfo;
 @property (nonatomic, readonly) iTermVariableScope *scope;
 @property (nonatomic, readonly) NSArray<iTermVariablesNonterminalProxy *> *children;
 - (instancetype)initWithScope:(iTermVariableScope *)scope;
 @end
 
-id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
+static id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias, NSString *debugInfo) {
     iTermVariables *nested = [iTermVariables castFrom:value];
     if (nested) {
-        return [[iTermVariablesNonterminalProxy alloc] initWithName:name variables:nested];
+        iTermVariablesNonterminalProxy *proxy = [[iTermVariablesNonterminalProxy alloc] initWithName:name variables:nested];
+        proxy.debugInfo = debugInfo;
+        return proxy;
     }
     iTermWeakVariables *weak = [iTermWeakVariables castFrom:value];
     if (weak) {
         if (!weak.variables) {
             return nil;
         }
-        return [[iTermVariablesWeakNonterminalProxy alloc] initWithName:name variables:weak.variables isAlias:isAlias];
+        iTermVariablesWeakNonterminalProxy *proxy = [[iTermVariablesWeakNonterminalProxy alloc] initWithName:name variables:weak.variables isAlias:isAlias];
+        proxy.debugInfo = debugInfo;
+        return proxy;
     }
 
-    return [[iTermVariablesTerminalProxy alloc] initWithName:name value:value];
+    iTermVariablesTerminalProxy *proxy = [[iTermVariablesTerminalProxy alloc] initWithName:name value:value];
+    proxy.debugInfo = debugInfo;
+    return proxy;
 }
 
 @implementation iTermVariablesTerminalProxy {
@@ -122,7 +133,7 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
     _children = [_variables.allNames mapWithBlock:^id(NSString *name) {
         id value = [self->_variables rawValueForVariableName:name];
         const BOOL isAlias = [[iTermWeakVariables castFrom:value] variables] == self->_variables;
-        return iTermVariablesNewProxy(name, value, isAlias);
+        return iTermVariablesNewProxy(name, value, isAlias, self->_variables.debugInfo);
     }];
     return _children;
 }
@@ -156,7 +167,7 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
         _variables = variables;
         _children = [variables.allNames mapWithBlock:^id(NSString *name) {
             id value = [variables rawValueForVariableName:name];
-            return iTermVariablesNewProxy(name, value, NO);
+            return iTermVariablesNewProxy(name, value, NO, variables.debugInfo);
         }];
     }
     return self;
@@ -204,7 +215,7 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
                     iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
                     const BOOL isAlias = (tuple.firstObject == nil &&
                                           tuple.secondObject == weakVariables.variables);
-                    return iTermVariablesNewProxy(name, value, isAlias);
+                    return iTermVariablesNewProxy(name, value, isAlias, weakVariables.variables.debugInfo ?: [tuple.secondObject debugInfo]);
                 }];
             }
         }] ?: @[];
@@ -223,6 +234,7 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
 - (BOOL)isExpandable {
     return YES;
 }
+
 @end
 
 @implementation iTermVariablesOutlineDelegate {
@@ -233,6 +245,7 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
     self = [super init];
     if (self) {
         _root = [[iTermVariablesScopeProxy alloc] initWithScope:scope];
+        _root.debugInfo = @"Root";
     }
     return self;
 }
@@ -344,6 +357,11 @@ id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias) {
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
+    NSOutlineView *outlineView = notification.object;
+    NSInteger row = [outlineView selectedRow];
+    id<iTermVariablesProxy> proxy = [outlineView itemAtRow:row];
+    // Click on a variable to view its references in the console.
+    NSLog(@"%@", [proxy debugInfo]);
 }
 
 @end

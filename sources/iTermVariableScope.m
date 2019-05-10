@@ -268,6 +268,16 @@ NS_ASSUME_NONNULL_BEGIN
     return result;
 }
 
+// This is useful for debug logging
+- (NSString *)owner {
+    for (iTermTuple<NSString *, iTermVariables *> *tuple in _frames) {
+        if (tuple.firstObject == nil) {
+            return [[tuple.secondObject owner] description];
+        }
+    }
+    return @"(unknown)";
+}
+
 - (void)resolveDanglingReferences {
     NSPointerArray *refs = _danglingReferences;
     if (refs.count == 0) {

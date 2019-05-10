@@ -6333,6 +6333,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                     scope:scope
+                               retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                    if (error) {
                                        [PTYSession reportFunctionCallError:error
@@ -6418,6 +6419,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [iTermScriptFunctionCall callFunction:keyBindingText
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                             scope:[iTermVariableScope globalsScope]
+                                       retainSelf:YES
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                            if (error) {
                                                [PTYSession reportFunctionCallError:error

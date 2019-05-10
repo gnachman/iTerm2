@@ -121,13 +121,14 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:sync ? 0 : 30
                                     scope:scope
+                               retainSelf:YES
                                completion:
      ^(NSString *possiblyEmptyResult, NSError *error, NSSet<NSString *> *missing) {
          NSString *result = [weakSelf valueForInvocation:invocation
                                               withResult:possiblyEmptyResult
                                                    error:error];
          if (error) {
-             [self logError:error forInvocation:invocation];
+             [weakSelf logError:error forInvocation:invocation];
          }
          if (!sync) {
              [weakSelf didEvaluateInvocationWithResult:result];
@@ -140,6 +141,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         [iTermScriptFunctionCall callFunction:@"iterm2.private.window_title(session: session.id)"
                                       timeout:0
                                         scope:scope
+                                   retainSelf:YES
                                    completion:
          ^(NSString *possiblyEmptyResult, NSError *error, NSSet<NSString *> *missing) {
              windowTitle = [weakSelf valueForInvocation:invocation
@@ -399,6 +401,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 #pragma mark - Notifications
 
 - (void)didRegisterSessionTitleFunc:(NSNotification *)notification {
+    _cachedEvaluation = nil;  // Force references to be recomputed
     [self setNeedsReevaluation];
 }
 

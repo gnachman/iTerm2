@@ -141,6 +141,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         [iTermScriptFunctionCall callFunction:self.invocation
                                       timeout:0
                                         scope:scope
+                                   retainSelf:YES
                                    completion:^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {}];
         _dependencies = [scope recordedReferences];
         __weak __typeof(self) weakSelf = self;
@@ -264,6 +265,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [iTermScriptFunctionCall callFunction:self.invocation
                                   timeout:_savedRegistrationRequest.latestStatusBarRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
                                     scope:scope
+                               retainSelf:YES
                                completion:
      ^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {
          DLog(@"evaluation of %@ completed with value %@ error %@", self.invocation, value, error);
@@ -446,6 +448,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [iTermScriptFunctionCall callFunction:func
                                   timeout:30
                                     scope:self.scope
+                               retainSelf:YES
                                completion:^(id result, NSError *error, NSSet<NSString *> *mutations) {
                                    if (error) {
                                        NSString *message = [NSString stringWithFormat:@"Error in onclick handler: %@\n%@", error.localizedDescription, error.localizedFailureReason];

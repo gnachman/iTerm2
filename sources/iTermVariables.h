@@ -76,6 +76,7 @@ extern NSString *const iTermVariableKeyWindowTitleOverride;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 @property (nonatomic, readonly) NSArray<NSString *> *allNames;
+@property (nonatomic, readonly) NSString *debugInfo;
 
 + (instancetype)globalInstance;
 

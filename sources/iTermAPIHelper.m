@@ -3554,6 +3554,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
                                     scope:[iTermVariableScope globalsScope]
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                                }];
@@ -3571,6 +3572,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
                                     scope:tab.variablesScope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                                }];
@@ -3588,6 +3590,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
                                     scope:term.scope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                                }];
@@ -3605,6 +3608,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
                                     scope:session.variablesScope
+                               retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                                }];

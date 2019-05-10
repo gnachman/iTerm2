@@ -209,6 +209,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         [iTermScriptFunctionCall callFunction:invocation
                                       timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                         scope:scope
+                                   retainSelf:YES
                                    completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                        if (error) {
                                            [delegate itermWebViewScriptInvocation:invocation

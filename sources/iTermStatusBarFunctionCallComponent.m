@@ -175,6 +175,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout
                                     scope:weakSelf.scope
+                               retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *dependencies) {}];
 }
 
