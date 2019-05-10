@@ -92,6 +92,10 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(updateWindowLevel)
                                                      name:iTermApplicationDidCloseModalWindow
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidBecomeKey:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -171,6 +175,18 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    if (!self.floats) {
+        return;
+    }
+    const NSWindowLevel before = _windowController.window.level;
+    [self updateWindowLevel];
+    const NSWindowLevel after = _windowController.window.level;
+    if (before != after && after == NSNormalWindowLevel) {
+        [[NSApp keyWindow] makeKeyAndOrderFront:nil];
+    }
+}
+
 - (void)updateWindowLevel {
     if (self.floats) {
         _windowController.window.level = self.floatingLevel;
@@ -182,10 +198,15 @@ static NSString *const kArrangement = @"Arrangement";
 - (NSWindowLevel)floatingLevel {
     iTermApplication *app = [iTermApplication sharedApplication];
     if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen) {
+        NSLog(@"Use floating window level");
         return NSFloatingWindowLevel;
-    } else {
-        return NSStatusWindowLevel;
     }
+    if ([NSApp keyWindow] != _windowController.window) {
+        NSLog(@"Use normal window level");
+        return NSNormalWindowLevel;
+    }
+    NSLog(@"Use status window level");
+    return NSStatusWindowLevel;
 }
 
 - (NSPoint)destinationPointForInitialPoint:(NSPoint)point
