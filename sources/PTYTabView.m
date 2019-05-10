@@ -92,18 +92,26 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     [super addTabViewItem:aTabViewItem];
 }
 
-- (void)removeTabViewItem:(NSTabViewItem *) aTabViewItem {
-    // Let our delegate know
+- (void)removeTabViewItem:(NSTabViewItem *)tabViewItemToRemove {
+    // Let our delegate know.
     id<PSMTabViewDelegate> delegate = self.delegate;
-
     if ([delegate conformsToProtocol:@protocol(PSMTabViewDelegate)]) {
-        [delegate tabView:self willRemoveTabViewItem:aTabViewItem];
+        [delegate tabView:self willRemoveTabViewItem:tabViewItemToRemove];
     }
 
-    [_tabViewItemsInMRUOrder removeObject:aTabViewItem];
+    [_tabViewItemsInMRUOrder removeObject:tabViewItemToRemove];
 
-    // remove the item
-    [super removeTabViewItem:aTabViewItem];
+    if (self.selectedTabViewItem == tabViewItemToRemove) {
+        // Select the next tab to the right if possible
+        NSArray<NSTabViewItem *> *items = self.tabViewItems;
+        NSInteger index = [items indexOfObject:tabViewItemToRemove];
+        if (index != NSNotFound && index + 1 < items.count) {
+            [self selectTabViewItem:items[index + 1]];
+        }
+    }
+
+    // Remove the item.
+    [super removeTabViewItem:tabViewItemToRemove];
 }
 
 - (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(NSInteger)theIndex {
