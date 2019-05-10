@@ -384,6 +384,25 @@ class Window:
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))
 
+    async def async_set_variable(self, name: str, value: typing.Any) -> None:
+        """
+        Sets a user-defined variable in the window.
+
+        See the Scripting Fundamentals documentation for more information on user-defined variables.
+
+        :param name: The variable's name.
+        :param value: The new value to assign.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(
+            self.connection,
+            sets=[(name, json.dumps(value))],
+            window_id=self.window_id)
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
         Invoke an RPC. Could be a registered function by this or another script of a built-in function.

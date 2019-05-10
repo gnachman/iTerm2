@@ -275,7 +275,6 @@ BOOL ITMVariableScope_IsValidValue(int32_t value);
 #pragma mark - Enum ITMInvokeFunctionResponse_Status
 
 typedef GPB_ENUM(ITMInvokeFunctionResponse_Status) {
-  ITMInvokeFunctionResponse_Status_Ok = 0,
   ITMInvokeFunctionResponse_Status_Timeout = 1,
   ITMInvokeFunctionResponse_Status_Failed = 2,
   ITMInvokeFunctionResponse_Status_RequestMalformed = 3,
@@ -549,6 +548,7 @@ typedef GPB_ENUM(ITMVariableResponse_Status) {
   ITMVariableResponse_Status_MissingScope = 3,
   ITMVariableResponse_Status_TabNotFound = 4,
   ITMVariableResponse_Status_MultiGetDisallowed = 5,
+  ITMVariableResponse_Status_WindowNotFound = 6,
 };
 
 GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void);
@@ -2699,6 +2699,7 @@ typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
   ITMVariableRequest_FieldNumber_GetArray = 3,
   ITMVariableRequest_FieldNumber_TabId = 4,
   ITMVariableRequest_FieldNumber_App = 5,
+  ITMVariableRequest_FieldNumber_WindowId = 6,
 };
 
 typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
@@ -2706,6 +2707,7 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
   ITMVariableRequest_Scope_OneOfCase_SessionId = 1,
   ITMVariableRequest_Scope_OneOfCase_TabId = 4,
   ITMVariableRequest_Scope_OneOfCase_App = 5,
+  ITMVariableRequest_Scope_OneOfCase_WindowId = 6,
 };
 
 @interface ITMVariableRequest : GPBMessage
@@ -2719,6 +2721,9 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
 
 @property(nonatomic, readwrite) BOOL app;
+
+/** "all" is allowed only if no gets (only sets allowed) */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
 
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMVariableRequest_Set*> *setArray;
 /** The number of items in @c setArray without causing the array to be created. */

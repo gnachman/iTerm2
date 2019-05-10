@@ -2436,6 +2436,10 @@ static iTermAPIHelper *sAPIHelperInstance;
             [self handleSessionScopeVariableRequest:request handler:handler];
             return;
 
+        case ITMVariableRequest_Scope_OneOfCase_WindowId:
+            [self handleWindowScopeVariableRequest:request handler:handler];
+            return;
+
         case ITMVariableRequest_Scope_OneOfCase_GPBUnsetOneOfCase:
             break;
     }
@@ -2474,6 +2478,30 @@ static iTermAPIHelper *sAPIHelperInstance;
     [self handleVariableSetsInRequest:request scope:tab.variablesScope];
     [self handleVariableGetsInRequest:request response:response scope:tab.variablesScope];
 
+    handler(response);
+}
+
+- (void)handleWindowScopeVariableRequest:(ITMVariableRequest *)request
+                                 handler:(void (^)(ITMVariableResponse *))handler {
+    if ([request.sessionId isEqualToString:@"all"]) {
+        NSArray<iTermVariableScope *> *scopes = [[iTermController sharedInstance].terminals mapWithBlock:^id(PseudoTerminal *anObject) {
+            return anObject.scope;
+        }];
+        handler([self handleVariableMultiSetRequest:request scopes:scopes]);
+        return;
+    }
+    
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    PseudoTerminal *windowController = [self windowControllerWithID:request.windowId];
+    if (!windowController) {
+        response.status = ITMVariableResponse_Status_WindowNotFound;
+        handler(response);
+        return;
+    }
+    
+    [self handleVariableSetsInRequest:request scope:windowController.scope];
+    [self handleVariableGetsInRequest:request response:response scope:windowController.scope];
+    
     handler(response);
 }
 

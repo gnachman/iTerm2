@@ -128,7 +128,7 @@ class Tab:
         """
         Sets a user-defined variable in the tab.
 
-        See Badges documentation for more information on user-defined variables.
+        See the Scripting Fundamentals documentation for more information on user-defined variables.
 
         :param name: The variable's name.
         :param value: The new value to assign.

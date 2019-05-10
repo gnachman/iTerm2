@@ -338,7 +338,7 @@ async def async_activate(connection,
     request.activate_request.select_session = select_session
     return await _async_call(connection, request)
 
-async def async_variable(connection, session_id=None, sets=[], gets=[], tab_id=None):
+async def async_variable(connection, session_id=None, sets=[], gets=[], tab_id=None, window_id=None):
     """
     Gets or sets session variables.
 
@@ -349,6 +349,8 @@ async def async_variable(connection, session_id=None, sets=[], gets=[], tab_id=N
         request.variable_request.session_id = session_id
     elif tab_id:
         request.variable_request.tab_id = tab_id
+    elif window_id:
+        request.variable_request.window_id = window_id
     else:
         request.variable_request.app = True
 

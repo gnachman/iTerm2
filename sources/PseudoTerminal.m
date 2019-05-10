@@ -414,6 +414,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _windowNeedsInitialSize;
 
     iTermFunctionCallTextFieldDelegate *_currentTabTitleTextFieldDelegate;
+    iTermVariables *_userVariables;
 }
 
 @synthesize scope = _scope;
@@ -619,6 +620,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
          windowType,
          screenNumber,
          @(hotkeyWindowType));
+
+    _scope = [iTermVariableScope newWindowScopeWithVariables:self.variables
+                                                tabVariables:[[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                                                               owner:self] autorelease]];
+    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                       owner:self];
+    [_scope setValue:_userVariables forVariableNamed:@"user"];
 
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
@@ -1031,6 +1039,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_sessionFactory release];
     [_variables release];
     [_scope release];
+    [_userVariables release];
     [_windowTitleOverrideSwiftyString release];
     [_initialProfile release];
     [_toggleFullScreenModeCompletionBlocks release];
@@ -2582,10 +2591,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (iTermVariableScope<iTermWindowScope> *)scope {
-    if (!_scope) {
-        _scope = [iTermVariableScope newWindowScopeWithVariables:self.variables
-                                                    tabVariables:self.currentTab.variables];
-    }
     return _scope;
 }
 

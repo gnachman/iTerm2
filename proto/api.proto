@@ -575,6 +575,7 @@ message VariableRequest {
     string session_id = 1;  // "all" is allowed only if no gets (only sets allowed)
     string tab_id = 4;  // "all" is allowed only if no gets (only sets allowed)
     bool app = 5;
+    string window_id = 6;  // "all" is allowed only if no gets (only sets allowed)
   }
 
   message Set {
@@ -593,6 +594,7 @@ message VariableResponse {
     MISSING_SCOPE = 3;  // None of the scope oneof fields was set
     TAB_NOT_FOUND = 4;
     MULTI_GET_DISALLOWED = 5;
+    WINDOW_NOT_FOUND = 6;
   }
   optional Status status = 1;
   repeated string values = 2;  // 1:1 with get field in request.  JSON encoded, with null for unset variables.

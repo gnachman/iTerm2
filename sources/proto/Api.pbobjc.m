@@ -1441,10 +1441,9 @@ GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Ok\000Timeout\000Failed\000RequestMalformed\000Inval"
-        "idId\000";
+        "Timeout\000Failed\000RequestMalformed\000InvalidI"
+        "d\000";
     static const int32_t values[] = {
-        ITMInvokeFunctionResponse_Status_Ok,
         ITMInvokeFunctionResponse_Status_Timeout,
         ITMInvokeFunctionResponse_Status_Failed,
         ITMInvokeFunctionResponse_Status_RequestMalformed,
@@ -1465,7 +1464,6 @@ GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void) {
 
 BOOL ITMInvokeFunctionResponse_Status_IsValidValue(int32_t value__) {
   switch (value__) {
-    case ITMInvokeFunctionResponse_Status_Ok:
     case ITMInvokeFunctionResponse_Status_Timeout:
     case ITMInvokeFunctionResponse_Status_Failed:
     case ITMInvokeFunctionResponse_Status_RequestMalformed:
@@ -1494,24 +1492,26 @@ typedef struct ITMInvokeFunctionResponse_Error__storage_ {
 + (GPBDescriptor *)descriptor {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
-    static GPBMessageFieldDescription fields[] = {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
       {
-        .name = "status",
-        .dataTypeSpecific.enumDescFunc = ITMInvokeFunctionResponse_Status_EnumDescriptor,
-        .number = ITMInvokeFunctionResponse_Error_FieldNumber_Status,
-        .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, status),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
-        .dataType = GPBDataTypeEnum,
+        .defaultValue.valueEnum = ITMInvokeFunctionResponse_Status_Timeout,
+        .core.name = "status",
+        .core.dataTypeSpecific.enumDescFunc = ITMInvokeFunctionResponse_Status_EnumDescriptor,
+        .core.number = ITMInvokeFunctionResponse_Error_FieldNumber_Status,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, status),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
       },
       {
-        .name = "errorReason",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMInvokeFunctionResponse_Error_FieldNumber_ErrorReason,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, errorReason),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
+        .defaultValue.valueString = nil,
+        .core.name = "errorReason",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMInvokeFunctionResponse_Error_FieldNumber_ErrorReason,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, errorReason),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -1519,9 +1519,9 @@ typedef struct ITMInvokeFunctionResponse_Error__storage_ {
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
-                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMInvokeFunctionResponse_Error__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionResponse)];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
@@ -5675,6 +5675,7 @@ BOOL ITMSavedArrangementResponse_Status_IsValidValue(int32_t value__) {
 @dynamic sessionId;
 @dynamic tabId;
 @dynamic app;
+@dynamic windowId;
 @dynamic setArray, setArray_Count;
 @dynamic getArray, getArray_Count;
 
@@ -5684,6 +5685,7 @@ typedef struct ITMVariableRequest__storage_ {
   NSMutableArray *setArray;
   NSMutableArray *getArray;
   NSString *tabId;
+  NSString *windowId;
 } ITMVariableRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -5736,6 +5738,15 @@ typedef struct ITMVariableRequest__storage_ {
         .offset = 0,  // Stored in _has_storage_ to save space.
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_FieldNumber_WindowId,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -5881,7 +5892,8 @@ GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000InvalidName\000MissingSc"
-        "ope\000TabNotFound\000MultiGetDisallowed\000";
+        "ope\000TabNotFound\000MultiGetDisallowed\000Windo"
+        "wNotFound\000";
     static const int32_t values[] = {
         ITMVariableResponse_Status_Ok,
         ITMVariableResponse_Status_SessionNotFound,
@@ -5889,6 +5901,7 @@ GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
         ITMVariableResponse_Status_MissingScope,
         ITMVariableResponse_Status_TabNotFound,
         ITMVariableResponse_Status_MultiGetDisallowed,
+        ITMVariableResponse_Status_WindowNotFound,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMVariableResponse_Status)
@@ -5911,6 +5924,7 @@ BOOL ITMVariableResponse_Status_IsValidValue(int32_t value__) {
     case ITMVariableResponse_Status_MissingScope:
     case ITMVariableResponse_Status_TabNotFound:
     case ITMVariableResponse_Status_MultiGetDisallowed:
+    case ITMVariableResponse_Status_WindowNotFound:
       return YES;
     default:
       return NO;
