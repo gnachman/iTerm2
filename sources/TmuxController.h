@@ -65,6 +65,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 			 intentional:(BOOL)intentional;
 - (void)hideWindow:(int)windowId;
 
+// Modifies a native tab to match the given server layout.
 - (void)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
                 zoomed:(NSNumber *)zoomed;
@@ -171,6 +172,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
            vSpacing:(double)vs;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
+- (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession *> *)clientSessions;
 
 @end

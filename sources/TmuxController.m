@@ -1463,6 +1463,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                          KEY_VERTICAL_SPACING: @(vs) } retain];
 }
 
+- (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout {
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-layout -t @%@ %@",
+                                                           @(window), layout]
+                                           responseTarget:self
+                                         responseSelector:@selector(didSetLayout:)
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\" -t \"%@\"", sessionName_]
+                                           responseTarget:self
+                                         responseSelector:@selector(didListWindowsSubsequentToSettingLayout:)
+                                           responseObject:nil
+                                                    flags:0] ];
+    [gateway_ sendCommandList:commands];
+}
+
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name {
     NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-layout -t %%%@ %@", @(windowPane), name]
                                            responseTarget:self

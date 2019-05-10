@@ -1370,6 +1370,9 @@
 		53C5650921B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */; };
 		53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */; };
 		53C5650D21B8CF65002B3167 /* PowerlineLineRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */; };
+		53D68F802283EE7C0018710D /* iTermTmuxLayoutBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */; };
+		53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */; };
+		53D68F842283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D68F822283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
 		53E8F36F2244A58800F3770F /* iTermActionsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E8F36D2244A58800F3770F /* iTermActionsModel.h */; };
@@ -4366,6 +4369,9 @@
 		53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineSolidRightArrow.pdf; path = images/PowerlineSolidRightArrow.pdf; sourceTree = "<group>"; };
 		53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineLeftArrow.pdf; path = images/PowerlineLineLeftArrow.pdf; sourceTree = "<group>"; };
 		53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineRightArrow.pdf; path = images/PowerlineLineRightArrow.pdf; sourceTree = "<group>"; };
+		53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxLayoutBuilder.h; sourceTree = "<group>"; };
+		53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxLayoutBuilder.m; sourceTree = "<group>"; };
+		53D68F822283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxLayoutBuilderTest.m; sourceTree = "<group>"; };
 		53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalBufferPool.h; sourceTree = "<group>"; };
 		53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalBufferPool.m; sourceTree = "<group>"; };
 		53E8F36D2244A58800F3770F /* iTermActionsModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActionsModel.h; sourceTree = "<group>"; };
@@ -6910,6 +6916,8 @@
 				1D3D21941483144600FAC8E7 /* TSVParser.m */,
 				A6F718B3226438FC0053488E /* iTermInitialDirectory+Tmux.h */,
 				A6F718B4226438FC0053488E /* iTermInitialDirectory+Tmux.m */,
+				53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */,
+				53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -8794,6 +8802,7 @@
 				A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */,
 				A638D2A322223394001CD688 /* iTermDirectedGraphTest.m */,
 				535D090F224DBE7D00A79581 /* iTermPreferencesSearchTests.m */,
+				53D68F822283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -9989,6 +9998,7 @@
 				A66719381DCE36C3000CE608 /* iTermDirectoryTreeNode.h in Headers */,
 				A639358B21023BDB00A16D1C /* iTermStatusBarGraphicComponent.h in Headers */,
 				A66719391DCE36C3000CE608 /* iTermColorPresets.h in Headers */,
+				53D68F802283EE7C0018710D /* iTermTmuxLayoutBuilder.h in Headers */,
 				A667193A1DCE36C3000CE608 /* iTermProfileHotKey.h in Headers */,
 				A667193B1DCE36C3000CE608 /* iTermIPV4Address.h in Headers */,
 				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
@@ -12542,6 +12552,7 @@
 				A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
+				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
@@ -12922,6 +12933,7 @@
 				A666D5F7221A710B00D6184A /* iTermScriptFunctionCallTest.m in Sources */,
 				A608CD09214DE7C1007A7B87 /* iTermAutomaticProfileSwitcherTest.m in Sources */,
 				A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */,
+				53D68F842283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m in Sources */,
 				A608CD0A214DE7C1007A7B87 /* iTermNSURLCategoryTest.m in Sources */,
 				535D0910224DBE7D00A79581 /* iTermPreferencesSearchTests.m in Sources */,
 				A608CCFC214DE7C1007A7B87 /* iTermPasteHelperTest.m in Sources */,
@@ -13129,7 +13141,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -13200,7 +13212,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
@@ -13267,7 +13279,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
@@ -13901,7 +13913,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
