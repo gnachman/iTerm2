@@ -28,13 +28,6 @@
     return color;
 }
 
-// NSSplitView, that paragon of quality, does not redraw itself properly
-// on 10.14 (and, who knows, maybe earlier versions) unless you subclass
-// drawRect.
-- (void)drawRect:(NSRect)dirtyRect {
-    [super drawRect:dirtyRect];
-}
-
 - (NSString *)description
 {
     NSMutableString *d = [NSMutableString stringWithString:@"<PTYSplitView "];
@@ -126,6 +119,7 @@
 - (void)didAddSubview:(NSView *)subview {
     [super didAddSubview:subview];
     [self.delegate splitViewDidChangeSubviews:self];
+    [self performSelector:@selector(forceRedraw) withObject:nil afterDelay:0];
 }
 
 - (void)willRemoveSubview:(NSView *)subview {
@@ -143,6 +137,11 @@
         [strongSelf.delegate splitViewDidChangeSubviews:self];
     });
     [super willRemoveSubview:subview];
+    [self performSelector:@selector(forceRedraw) withObject:nil afterDelay:0];
+}
+
+- (void)forceRedraw {
+    [self setNeedsDisplay:YES];
 }
 
 @end
