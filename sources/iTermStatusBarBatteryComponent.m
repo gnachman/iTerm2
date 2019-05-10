@@ -192,7 +192,7 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
         return NO;
     }
     iTermPowerState *currentState = [[iTermPowerManager sharedInstance] currentState];
-    if ([currentState time] < 0) {
+    if ([currentState time].doubleValue < 1) {
         return NO;
     }
     if (currentState.charging != charging) {
