@@ -220,6 +220,7 @@ static BOOL hasBecomeActive = NO;
     } _untitledFileOpenStatus;
     
     BOOL _disableTermination;
+    iTermVariables *_userVariables;
 }
 
 - (instancetype)init {
@@ -1121,6 +1122,9 @@ static BOOL hasBecomeActive = NO;
     }
 
     [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
+    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                       owner:self];
+    [[iTermVariableScope globalsScope] setValue:_userVariables forVariableNamed:@"user"];
     [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
                                forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
     void (^themeDidChange)(id _Nonnull) = ^(id _Nonnull newValue) {

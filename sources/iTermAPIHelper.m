@@ -2447,9 +2447,9 @@ static iTermAPIHelper *sAPIHelperInstance;
 - (void)handleAppScopeVariableRequest:(ITMVariableRequest *)request
                               handler:(void (^)(ITMVariableResponse *))handler {
     ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
-    [self handleVariableSetsInRequest:request scope:[iTermVariableScope globalsScope]];
+    BOOL ok = [self handleVariableSetsInRequest:request scope:[iTermVariableScope globalsScope]];
     [self handleVariableGetsInRequest:request response:response scope:[iTermVariableScope globalsScope]];
-    response.status = ITMVariableResponse_Status_Ok;
+    response.status = ok ? ITMVariableResponse_Status_Ok : ITMVariableResponse_Status_InvalidName;
     handler(response);
 }
 
@@ -2502,7 +2502,8 @@ static iTermAPIHelper *sAPIHelperInstance;
     handler(response);
 }
 
-- (void)handleVariableSetsInRequest:(ITMVariableRequest *)request scope:(iTermVariableScope *)scope {
+- (BOOL)handleVariableSetsInRequest:(ITMVariableRequest *)request scope:(iTermVariableScope *)scope {
+    __block BOOL result = YES;
     [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
         id value;
         if ([setRequest.value isEqual:@"null"]) {
@@ -2510,8 +2511,12 @@ static iTermAPIHelper *sAPIHelperInstance;
         } else {
             value = [NSJSONSerialization it_objectForJsonString:setRequest.value];
         }
-        [scope setValue:value forVariableNamed:setRequest.name];
+        const BOOL ok = [scope setValue:value forVariableNamed:setRequest.name];
+        if (!ok) {
+            result = NO;
+        }
     }];
+    return result;
 }
 
 - (void)handleVariableGetsInRequest:(ITMVariableRequest *)request response:(ITMVariableResponse *)response scope:(iTermVariableScope *)scope {
