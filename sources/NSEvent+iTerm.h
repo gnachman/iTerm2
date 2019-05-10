@@ -17,4 +17,8 @@
 // other values the same as self.
 - (NSEvent *)eventWithButtonNumber:(NSInteger)buttonNumber;
 
+// Like NSEvent.modifierFlags but sets the numeric keypad bit correctly. This
+// seems to have broken at some point. See issue 7780.
+@property (nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
+
 @end

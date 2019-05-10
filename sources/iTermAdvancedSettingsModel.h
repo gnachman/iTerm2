@@ -265,6 +265,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useOpenDirectory;
 + (BOOL)useSystemCursorWhenPossible;
 + (BOOL)useUnevenTabs;
++ (BOOL)workAroundNumericKeypadBug;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;

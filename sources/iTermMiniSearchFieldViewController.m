@@ -13,6 +13,7 @@
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
 #import "NSColor+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 @interface iTermMiniSearchFieldViewController ()
@@ -279,7 +280,7 @@ doCommandBySelector:(SEL)commandSelector {
             break;
         case NSReturnTextMovement: {
             // Return key
-            const BOOL shiftPressed = !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+            const BOOL shiftPressed = !!([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift);
             const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
             if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];

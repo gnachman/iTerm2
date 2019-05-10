@@ -6,6 +6,7 @@
 //
 
 #import "iTermStatusBarLargeComposerViewController.h"
+#import "NSEvent+iTerm.h"
 #import "SolidColorView.h"
 
 @interface iTermComposerView : NSView
@@ -14,7 +15,7 @@
 @implementation iTermComposerTextView
 
 - (void)keyDown:(NSEvent *)event {
-    if ([event.characters isEqualToString:@"\r"] && event.modifierFlags & NSEventModifierFlagOption) {
+    if ([event.characters isEqualToString:@"\r"] && event.it_modifierFlags & NSEventModifierFlagOption) {
         [self.composerDelegate composerTextViewDidFinish];
         return;
     }

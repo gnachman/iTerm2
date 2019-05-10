@@ -1,4 +1,6 @@
 #import "iTermOpenQuicklyTextField.h"
+
+#import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 @implementation iTermOpenQuicklyTextField
@@ -6,7 +8,7 @@
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
     unsigned int modflag;
     unsigned short keycode;
-    modflag = [theEvent modifierFlags];
+    modflag = [theEvent it_modifierFlags];
     keycode = [theEvent keyCode];
 
     if (![self textFieldIsFirstResponder]) {

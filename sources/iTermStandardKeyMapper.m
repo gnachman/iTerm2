@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermKeyboardHandler.h"
 #import "NSData+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "VT100Output.h"
 
 @implementation iTermStandardKeyMapper {
@@ -28,7 +29,7 @@
 #pragma mark - Pre-Cocoa
 
 - (NSString *)preCocoaString {
-    const unsigned int modflag = [_event modifierFlags];
+    const unsigned int modflag = [_event it_modifierFlags];
     NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
     const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
     const BOOL shiftPressed = !!(modflag & NSEventModifierFlagShift);
@@ -66,7 +67,7 @@
 
     NSString *const characters = event.characters;
     const unichar character = characters.length > 0 ? [characters characterAtIndex:0] : 0;
-    const BOOL shiftPressed = !!(event.modifierFlags & NSEventModifierFlagShift);
+    const BOOL shiftPressed = !!(event.it_modifierFlags & NSEventModifierFlagShift);
     if (character == '/' && shiftPressed) {
         return 127;
     }
@@ -103,7 +104,7 @@
 #pragma mark - Post-Cocoa
 
 - (NSData *)postCocoaData {
-    if (_event.modifierFlags & NSEventModifierFlagFunction) {
+    if (_event.it_modifierFlags & NSEventModifierFlagFunction) {
         return [self dataForFunctionKeyPress];
     }
 
@@ -123,7 +124,7 @@
     const unichar character = _event.characters.length > 0 ? [_event.characters characterAtIndex:0] : 0;
     NSString *const charactersIgnoringModifiers = [_event charactersIgnoringModifiers];
     const unichar characterIgnoringModifier = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
-    NSEventModifierFlags mutableModifiers = _event.modifierFlags;
+    NSEventModifierFlags mutableModifiers = _event.it_modifierFlags;
 
     if (character == NSEnterCharacter && characterIgnoringModifier == NSEnterCharacter) {
         mutableModifiers |= NSEventModifierFlagNumericPad;
@@ -158,7 +159,7 @@
 }
 
 - (iTermOptionKeyBehavior)optionKeyBehavior {
-    const NSEventModifierFlags modflag = _event.modifierFlags;
+    const NSEventModifierFlags modflag = _event.it_modifierFlags;
     const BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
     const BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
     assert(leftAltPressed || rightAltPressed);
@@ -172,7 +173,7 @@
 
 - (NSData *)dataWhenOptionPressed {
     const unichar unicode = _event.characters.length > 0 ? [_event.characters characterAtIndex:0] : 0;
-    const BOOL controlPressed = !!(_event.modifierFlags & NSEventModifierFlagControl);
+    const BOOL controlPressed = !!(_event.it_modifierFlags & NSEventModifierFlagControl);
     if (controlPressed && unicode > 0) {
         return [_event.characters dataUsingEncoding:_configuration.encoding];
     } else {
@@ -221,7 +222,7 @@
 }
 
 - (BOOL)shouldSendOptionModifiedKeypress {
-    const NSEventModifierFlags modifiers = _event.modifierFlags;
+    const NSEventModifierFlags modifiers = _event.it_modifierFlags;
     const BOOL rightAltPressed = (modifiers & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
     const BOOL leftAltPressed = (modifiers & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
 
@@ -237,7 +238,7 @@
 
 - (NSData *)dataForFunctionKeyPress {
     NSString *const characters = _event.characters;
-    const NSEventModifierFlags modifiers = _event.modifierFlags;
+    const NSEventModifierFlags modifiers = _event.it_modifierFlags;
     const unichar unicode = [characters length] > 0 ? [characters characterAtIndex:0] : 0;
     DLog(@"PTYSession keyDown is a function key");
 
@@ -389,7 +390,7 @@
 }
 
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
-    const NSEventModifierFlags modifiers = event.modifierFlags;
+    const NSEventModifierFlags modifiers = event.it_modifierFlags;
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
     if (isSpecialKey) {
         // Arrow key, function key, etc.

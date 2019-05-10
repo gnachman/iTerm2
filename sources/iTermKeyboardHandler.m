@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNSKeyBindingEmulator.h"
+#import "NSEvent+iTerm.h"
 
 // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
 // wrong instance of PTYTextView. We work around the issue by using a global variable to
@@ -61,7 +62,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     if (![self.delegate keyboardHandler:self shouldHandleKeyDown:event]) {
         return;
     }
-    unsigned int modflag = [event modifierFlags];
+    unsigned int modflag = [event it_modifierFlags];
     unsigned short keyCode = [event keyCode];
     _hadMarkedTextBeforeHandlingKeypressEvent = [self hasMarkedText];
     BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
@@ -235,7 +236,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
    eschewCocoaTextHandling:(BOOL)eschewCocoaTextHandling
                    context:(iTermKeyboardHandlerContext)context
               inputContext:(NSTextInputContext *)inputContext {
-    const unsigned int modflag = [event modifierFlags];
+    const unsigned int modflag = [event it_modifierFlags];
 
     // Should we process the event immediately in the delegate?
     if ([self shouldSendEventToController:event context:context]) {

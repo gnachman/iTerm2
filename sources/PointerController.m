@@ -7,7 +7,9 @@
 //
 
 #import "PointerController.h"
+
 #import "iTermApplicationDelegate.h"
+#import "NSEvent+iTerm.h"
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
 
@@ -106,14 +108,14 @@
 {
     return ![iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] &&
            [event buttonNumber] == 0 &&
-           ([event modifierFlags] & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift)) == NSEventModifierFlagControl;
+           ([event it_modifierFlags] & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift)) == NSEventModifierFlagControl;
 }
 
 - (NSString *)actionForEvent:(NSEvent *)event
                       clicks:(int)clicks
                  withTouches:(int)numTouches
 {
-    NSUInteger modifierFlags = [event modifierFlags];
+    NSUInteger modifierFlags = [event it_modifierFlags];
     if (ignoreOption_) {
         modifierFlags &= ~NSEventModifierFlagOption;
     }
@@ -149,10 +151,10 @@
     if (numTouches <= 2) {
         return [PointerPrefsController argumentWithButton:[event buttonNumber]
                                                 numClicks:clicks
-                                                modifiers:[event modifierFlags]];
+                                                modifiers:[event it_modifierFlags]];
     } else {
         return [PointerPrefsController argumentForTapWithTouches:numTouches
-                                                       modifiers:[event modifierFlags]];
+                                                       modifiers:[event it_modifierFlags]];
     }
 }
 
@@ -202,9 +204,9 @@
         _previousStage = event.stage;
         if (event.stage == 2 && previousStage < 2) {
             NSString *action = [PointerPrefsController actionForGesture:kForceTouchSingleClick
-                                                              modifiers:[event modifierFlags]];
+                                                              modifiers:[event it_modifierFlags]];
             NSString *argument = [PointerPrefsController argumentForGesture:kForceTouchSingleClick
-                                                                  modifiers:[event modifierFlags]];
+                                                                  modifiers:[event it_modifierFlags]];
             if (action) {
                 [self performAction:action forEvent:event withArgument:argument];
                 return YES;
@@ -231,9 +233,9 @@
         gesture = kThreeFingerSwipeDown;
     }
     NSString *action = [PointerPrefsController actionForGesture:gesture
-                                                      modifiers:[event modifierFlags]];
+                                                      modifiers:[event it_modifierFlags]];
     NSString *argument = [PointerPrefsController argumentForGesture:gesture
-                                                          modifiers:[event modifierFlags]];
+                                                          modifiers:[event it_modifierFlags]];
     if (action) {
         [self performAction:action forEvent:event withArgument:argument];
     }

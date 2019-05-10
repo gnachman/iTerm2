@@ -9,6 +9,8 @@
 #import "iTermRootTerminalView.h"
 
 #import "DebugLogging.h"
+
+#import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PTYTabView.h"
@@ -1335,7 +1337,7 @@ typedef struct {
 }
 
 - (BOOL)stoplightHotboxMouseEnter {
-    if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagCommand) {
+    if ([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagCommand) {
         return NO;
     }
     [_stoplightHotbox setNeedsDisplay:YES];

@@ -1259,7 +1259,7 @@ static const int kDragThreshold = 3;
     }
     unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
 
-    NSUInteger modifiers = [theEvent modifierFlags];
+    NSUInteger modifiers = [theEvent it_modifierFlags];
     if ((modifiers & NSEventModifierFlagControl) &&
         (modifiers & NSEventModifierFlagFunction)) {
         switch (unmodunicode) {
@@ -1389,7 +1389,7 @@ static const int kDragThreshold = 3;
         // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
         return NO;
     }
-    if (event.modifierFlags & NSEventModifierFlagOption) {
+    if (event.it_modifierFlags & NSEventModifierFlagOption) {
         // Hold alt to disable sending arrow keys.
         return NO;
     }
@@ -1410,8 +1410,8 @@ static const int kDragThreshold = 3;
 
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
         *forceLatin1 = YES;
-        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:event.modifierFlags] :
-                              [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:event.it_modifierFlags] :
+                              [_dataSource.terminal.output keyArrowUp:event.it_modifierFlags];
         return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {
         *forceLatin1 = NO;
@@ -1644,10 +1644,10 @@ static const int kDragThreshold = 3;
 - (BOOL)mouseDownImpl:(NSEvent*)event {
     DLog(@"mouseDownImpl: called");
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
-    const BOOL altPressed = ([event modifierFlags] & NSEventModifierFlagOption) != 0;
-    BOOL cmdPressed = ([event modifierFlags] & NSEventModifierFlagCommand) != 0;
-    const BOOL shiftPressed = ([event modifierFlags] & NSEventModifierFlagShift) != 0;
-    const BOOL ctrlPressed = ([event modifierFlags] & NSEventModifierFlagControl) != 0;
+    const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
+    BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+    const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
+    const BOOL ctrlPressed = ([event it_modifierFlags] & NSEventModifierFlagControl) != 0;
     if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
         // Dump view hierarchy
         NSBeep();
@@ -1679,7 +1679,7 @@ static const int kDragThreshold = 3;
     [pointer_ notifyLeftMouseDown];
     _mouseDownIsThreeFingerClick = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [_delegate textViewBeginDrag];
         DLog(@"Returning because of drag starting");
         return NO;
@@ -1726,7 +1726,7 @@ static const int kDragThreshold = 3;
             cmdPressed = [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory];
         }
     }
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         DLog(@"Returning because of drag modifiers.");
         return YES;
     }
@@ -1775,7 +1775,7 @@ static const int kDragThreshold = 3;
     } else if (clickCount < 2) {
         // single click
         iTermSelectionMode mode;
-        if ((event.modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
+        if ((event.it_modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
             mode = kiTermSelectionModeBox;
         } else {
             mode = kiTermSelectionModeCharacter;
@@ -1877,7 +1877,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
         return;
     }
-    const BOOL cmdActuallyPressed = (([event modifierFlags] & NSEventModifierFlagCommand) != 0);
+    const BOOL cmdActuallyPressed = (([event it_modifierFlags] & NSEventModifierFlagCommand) != 0);
     // Make an exception to the first-mouse rule when cmd-click is set to always invoke
     // semantic history.
     const BOOL cmdPressed = cmdActuallyPressed && (!_mouseDownWasFirstMouse ||
@@ -1895,10 +1895,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !mouseDragged &&
-                                   !([event modifierFlags] & NSEventModifierFlagShift));
+                                   !([event it_modifierFlags] & NSEventModifierFlagShift));
     BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
                                  !mouseDragged &&
-                                 ([event modifierFlags] & NSEventModifierFlagShift));
+                                 ([event it_modifierFlags] & NSEventModifierFlagShift));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
@@ -1946,7 +1946,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Just a click in the window.
         DLog(@"is a click in the window");
 
-        BOOL altPressed = ([event modifierFlags] & NSEventModifierFlagOption) != 0;
+        BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
         if (altPressed &&
             [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
             !_mouseDownWasFirstMouse) {
@@ -2071,7 +2071,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [self removeUnderline];
 
-    BOOL pressingCmdOnly = ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand;
+    BOOL pressingCmdOnly = ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand;
     if (!pressingCmdOnly || dragThresholdMet) {
         DLog(@"mousedragged = yes");
         _mouseDragged = YES;
@@ -2080,7 +2080,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // It's ok to drag if Cmd is not required to be pressed or Cmd is pressed.
     BOOL okToDrag = (![iTermAdvancedSettingsModel requireCmdForDraggingText] ||
-                     ([event modifierFlags] & NSEventModifierFlagCommand));
+                     ([event it_modifierFlags] & NSEventModifierFlagCommand));
     if (okToDrag) {
         if (_mouseDownOnImage && dragThresholdMet) {
             _committedToDrag = YES;
@@ -2106,7 +2106,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     if (_mouseDownOnSelection == YES &&
-        ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand) &&
+        ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand) &&
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
@@ -6086,7 +6086,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     coord.y = MAX(0, coord.y);
 
     return [_delegate textViewReportMouseEvent:event.type
-                                     modifiers:event.modifierFlags
+                                     modifiers:event.it_modifierFlags
                                         button:[self mouseReportingButtonNumberForEvent:event]
                                     coordinate:coord
                                         deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]];

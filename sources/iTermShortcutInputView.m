@@ -7,7 +7,9 @@
 //
 
 #import "iTermShortcutInputView.h"
+
 #import "iTermKeyBindingMgr.h"
+#import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSImage+iTerm.h"
 
@@ -229,7 +231,7 @@
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
     } else if (event.type == NSEventTypeFlagsChanged) {
-        self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.modifierFlags];
+        self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.it_modifierFlags];
     }
     [self setNeedsDisplay:YES];
 }

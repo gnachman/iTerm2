@@ -10,7 +10,10 @@
 // each keystroke.
 
 #import "iTermNSKeyBindingEmulator.h"
+
 #import "DebugLogging.h"
+#import "NSEvent+iTerm.h"
+
 #import <Carbon/Carbon.h>
 #import <wctype.h>
 
@@ -397,7 +400,7 @@ static struct {
 // an uppercase version.
 - (NSArray *)dictionaryKeysForEvent:(NSEvent *)event {
     NSString *charactersIgnoringModifiersExceptShift = [event charactersIgnoringModifiers];
-    NSUInteger flags = [event modifierFlags];
+    NSUInteger flags = [event it_modifierFlags];
     NSMutableArray *result = [NSMutableArray array];
 
     NSString *theKey =

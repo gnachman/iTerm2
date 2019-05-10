@@ -7,6 +7,7 @@
 //
 
 #import "KeysPreferencesViewController.h"
+
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermHotKeyController.h"
@@ -17,6 +18,7 @@
 #import "iTermModifierRemapper.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -380,7 +382,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     unsigned int keyMods;
     NSString *unmodkeystr;
 
-    keyMods = [event modifierFlags];
+    keyMods = [event it_modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int keyCode = [event keyCode];

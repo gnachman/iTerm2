@@ -72,6 +72,7 @@
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -3820,7 +3821,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSUInteger theMask =
         (NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
     BOOL modifierDown =
-        (([[NSApp currentEvent] modifierFlags] & theMask) == NSEventModifierFlagControl);
+        (([[NSApp currentEvent] it_modifierFlags] & theMask) == NSEventModifierFlagControl);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -5026,7 +5027,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if (maxVerticallyPref ^
-            (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) != 0)) {
+            (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
             verticalOnly = YES;
         }
     }
@@ -8340,9 +8341,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                       userInfo:nil];
 
 
-    [_contentView.tabView cycleFlagsChanged:[theEvent modifierFlags]];
+    [_contentView.tabView cycleFlagsChanged:[theEvent it_modifierFlags]];
 
-    NSUInteger modifierFlags = [theEvent modifierFlags];
+    NSUInteger modifierFlags = [theEvent it_modifierFlags];
     if (!(modifierFlags & NSEventModifierFlagCommand) &&
         [[[self currentSession] textview] isFindingCursor]) {
         // The cmd key was let up while finding the cursor

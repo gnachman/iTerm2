@@ -7,10 +7,12 @@
 //
 
 #import "iTermShortcut.h"
+
 #import "iTermCarbonHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 
 // IMPORTANT: When adding to this list also update the short string class methods.
@@ -114,7 +116,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 
 + (instancetype)shortcutWithEvent:(NSEvent *)event {
     return [[[self alloc] initWithKeyCode:event.keyCode
-                                modifiers:event.modifierFlags
+                                modifiers:event.it_modifierFlags
                                characters:event.characters
               charactersIgnoringModifiers:event.charactersIgnoringModifiers] autorelease];
 }
@@ -222,14 +224,14 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
     self.keyCode = event.keyCode;
     self.characters = [event characters];
     self.charactersIgnoringModifiers = [event charactersIgnoringModifiers];
-    self.modifiers = event.modifierFlags;
+    self.modifiers = event.it_modifierFlags;
 }
 
 - (BOOL)eventIsShortcutPress:(NSEvent *)event {
     if (event.type != NSEventTypeKeyDown) {
         return NO;
     }
-    return (([event modifierFlags] & kHotKeyModifierMask) == (_modifiers & kHotKeyModifierMask) &&
+    return (([event it_modifierFlags] & kHotKeyModifierMask) == (_modifiers & kHotKeyModifierMask) &&
             [event keyCode] == _keyCode);
 }
 

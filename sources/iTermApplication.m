@@ -38,6 +38,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
@@ -234,7 +235,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (BOOL)switchToWindowByNumber:(NSEvent *)event {
     const NSUInteger allModifiers =
         (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption);
-    if (([event modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
+    if (([event it_modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
         // Command-Alt (or selected modifier) + number: Switch to window by number.
         int digit = [self digitKeyForEvent:event];
         if (digit >= 1 && digit <= 9) {
@@ -257,7 +258,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
     const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
-    if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
+    if (([event it_modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
         int digit = [self digitKeyForEvent:event];
         NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
         int numSessions = [orderedSessions count];
@@ -283,7 +284,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)switchToTabInTabView:(PTYTabView *)tabView byNumber:(NSEvent *)event {
     const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
-    if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
+    if (([event it_modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
         int digit = [self digitKeyForEvent:event];
         if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
             // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.

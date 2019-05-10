@@ -9,6 +9,7 @@
 
 #import "iTermCopyModeState.h"
 #import "iTermNotificationController.h"
+#import "NSEvent+iTerm.h"
 
 #import <Cocoa/Cocoa.h>
 
@@ -76,7 +77,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     // starts being used in copy mode. We never use command key in copy mode,
     // so that's safe.
     return ([self actionForEvent:event] != iTermCopyModeActionNone ||
-            (event.modifierFlags & NSEventModifierFlagCommand) == 0);
+            (event.it_modifierFlags & NSEventModifierFlagCommand) == 0);
 }
 
 - (BOOL)handleEvent:(NSEvent *)event {
@@ -177,7 +178,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     NSString *const string = event.charactersIgnoringModifiers;
     const unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
 
-    if ((event.modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagControl) {
+    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagControl) {
         switch (code) {
             case 'b':
                 return iTermCopyModeActionPageUp;
@@ -195,7 +196,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
         }
         return iTermCopyModeActionNone;
     }
-    if ((event.modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagOption) {
+    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagOption) {
         switch (code) {
             case 'b':
             case NSLeftArrowFunctionKey:
@@ -208,14 +209,14 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
         }
         return iTermCopyModeActionNone;
     }
-    if ((event.modifierFlags & sCopyModeEventModifierMask) == 0) {
+    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == 0) {
         switch (code) {
             case NSPageUpFunctionKey:
                 return iTermCopyModeActionPageUp;
             case NSPageDownFunctionKey:
                 return iTermCopyModeActionPageDown;
             case '\t':
-                if (event.modifierFlags & NSEventModifierFlagShift) {
+                if (event.it_modifierFlags & NSEventModifierFlagShift) {
                     return iTermCopyModeActionMoveBackwardWord;
                 } else {
                     return iTermCopyModeActionMoveForwardWord;

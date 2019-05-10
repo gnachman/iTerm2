@@ -7,6 +7,8 @@
 
 #import "iTermRawKeyMapper.h"
 
+#import "NSEvent+iTerm.h"
+
 @implementation iTermRawKeyMapper
 
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
@@ -94,7 +96,7 @@ static BOOL HasBits(NSUInteger value, NSUInteger required) {
 // esc ] 1337 ; u ; flags ; hex-string ; key-code ; hex-string-ignoring-modifiers-except-shift ^G
 // esc ] 1337 ; d ; flags ; hex-string ; key-code ; hex-string-ignoring-modifiers-except-shift ^G
 - (NSString *)rawKeyStringForFlagsChangedEvent:(NSEvent *)event {
-    int flags = [self csiModifiersForEventModifiers:event.modifierFlags repeat:NO];
+    int flags = [self csiModifiersForEventModifiers:event.it_modifierFlags repeat:NO];
     return [NSString stringWithFormat:@"%c]1337;%@;%@%c",
             27,
             [self nameForEvent:event],
@@ -111,8 +113,8 @@ static BOOL HasBits(NSUInteger value, NSUInteger required) {
     if (!name) {
         return nil;
     }
-    const int flags = [self csiModifiersForEventModifiers:event.modifierFlags repeat:event.isARepeat];
-    const BOOL isFunctionKey = !!(event.modifierFlags & NSEventModifierFlagFunction);
+    const int flags = [self csiModifiersForEventModifiers:event.it_modifierFlags repeat:event.isARepeat];
+    const BOOL isFunctionKey = !!(event.it_modifierFlags & NSEventModifierFlagFunction);
     return [NSString stringWithFormat:@"%c]1337;%@;%@;%@;%@;%@%c",
             27,
             name,

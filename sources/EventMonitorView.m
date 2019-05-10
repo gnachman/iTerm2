@@ -7,9 +7,11 @@
 //
 
 #import "EventMonitorView.h"
-#import "PointerPrefsController.h"
+
 #import "FutureMethods.h"
 #import "iTermApplicationDelegate.h"
+#import "NSEvent+iTerm.h"
+#import "PointerPrefsController.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 
 @implementation EventMonitorView {
@@ -69,7 +71,7 @@
     DLog(@"EventMonitorView mouseUp:%@", theEvent);
     if (numTouches_ == 3) {
         [pointerPrefs_ setGesture:kThreeFingerClickGesture
-                        modifiers:[theEvent modifierFlags]];
+                        modifiers:[theEvent it_modifierFlags]];
     } else if (_maximumStage < 2) {
         [self showNotSupported];
     }
@@ -90,7 +92,7 @@
     if ([event respondsToSelector:@selector(stage)]) {
         _maximumStage = MAX(_maximumStage, event.stage);
         if (event.stage == 2) {
-            [pointerPrefs_ setGesture:kForceTouchSingleClick modifiers:[event modifierFlags]];
+            [pointerPrefs_ setGesture:kForceTouchSingleClick modifiers:[event it_modifierFlags]];
         }
     }
     ITERM_IGNORE_PARTIAL_END
@@ -114,7 +116,7 @@
     DLog(@"EventMonitorView rightMouseUp:%@", theEvent);
     int buttonNumber = 1;
     int clickCount = [theEvent clickCount];
-    int modMask = [theEvent modifierFlags];
+    int modMask = [theEvent it_modifierFlags];
     [pointerPrefs_ setButtonNumber:buttonNumber clickCount:clickCount modifiers:modMask];
     [super mouseDown:theEvent];
 }
@@ -124,7 +126,7 @@
     DLog(@"EventMonitorView otherMouseDown:%@", theEvent);
     int buttonNumber = [theEvent buttonNumber];
     int clickCount = [theEvent clickCount];
-    int modMask = [theEvent modifierFlags];
+    int modMask = [theEvent it_modifierFlags];
     [pointerPrefs_ setButtonNumber:buttonNumber clickCount:clickCount modifiers:modMask];
     [super mouseDown:theEvent];
 }
@@ -146,7 +148,7 @@
 }
 
 - (void)threeFingerTap:(NSEvent *)event {
-    [pointerPrefs_ setGesture:kThreeFingerClickGesture modifiers:[event modifierFlags]];
+    [pointerPrefs_ setGesture:kThreeFingerClickGesture modifiers:[event it_modifierFlags]];
 }
 
 @end

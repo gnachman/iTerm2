@@ -8,6 +8,8 @@
 
 #import "iTermAltScreenMouseScrollInferrer.h"
 
+#import "NSEvent+iTerm.h"
+
 typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInferrerState) {
     iTermAltScreenMouseScrollInferrerStateInitial,
     iTermAltScreenMouseScrollInferrerStateScrolledUp,
@@ -32,7 +34,7 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInferrerState) {
 }
 
 - (unichar)arrowKeyInEvent:(NSEvent *)theEvent {
-    if ([theEvent modifierFlags] & NSEventModifierFlagNumericPad) {
+    if ([theEvent it_modifierFlags] & NSEventModifierFlagNumericPad) {
         NSString *theArrow = [theEvent charactersIgnoringModifiers];
         if ([theArrow length] == 1) {
             return [theArrow characterAtIndex:0];

@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSImageView+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
@@ -156,7 +157,7 @@ NS_ASSUME_NONNULL_BEGIN
         }
         if (event.type == NSEventTypeLeftMouseUp ||
             event.type == NSEventTypeLeftMouseDown) {
-            if (event.modifierFlags & NSEventModifierFlagControl) {
+            if (event.it_modifierFlags & NSEventModifierFlagControl) {
                 return self;
             }
         }
@@ -165,7 +166,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    if (event.clickCount != 1 || !(event.modifierFlags & NSEventModifierFlagControl)) {
+    if (event.clickCount != 1 || !(event.it_modifierFlags & NSEventModifierFlagControl)) {
         [super mouseUp:event];
         return;
     }

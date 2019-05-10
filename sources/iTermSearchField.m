@@ -28,6 +28,7 @@
 #import "iTermSearchField.h"
 
 #import "DebugLogging.h"
+#import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 @implementation iTermSearchField
@@ -41,7 +42,7 @@
 {
     unsigned int modflag;
     unsigned short keycode;
-    modflag = [theEvent modifierFlags];
+    modflag = [theEvent it_modifierFlags];
     keycode = [theEvent keyCode];
 
     if (![self textFieldIsFirstResponder]) {

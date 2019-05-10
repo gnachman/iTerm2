@@ -7,6 +7,9 @@
 //
 
 #import "NSEvent+iTerm.h"
+
+#import "iTermAdvancedSettingsModel.h"
+
 #import <Carbon/Carbon.h>
 
 @implementation NSEvent (iTerm)
@@ -53,6 +56,47 @@
     NSEvent *fakeEvent = [NSEvent eventWithCGEvent:modifiedCGEvent];
     CFRelease(modifiedCGEvent);
     return fakeEvent;
+}
+
+- (NSEventModifierFlags)it_modifierFlags {
+    // Wait for follow-up on issue 7780 before enabling this.
+    // I also need to find a numeric keypad to test with.
+    if (![iTermAdvancedSettingsModel workAroundNumericKeypadBug]) {
+        return self.modifierFlags;
+    }
+    
+    switch (self.type) {
+        case NSEventTypeKeyUp:
+        case NSEventTypeKeyDown:
+            break;
+        default:
+            return self.modifierFlags;
+    }
+
+    switch (self.keyCode) {
+        case kVK_ANSI_KeypadDecimal:
+        case kVK_ANSI_KeypadMultiply:
+        case kVK_ANSI_KeypadPlus:
+        case kVK_ANSI_KeypadClear:
+        case kVK_ANSI_KeypadDivide:
+        case kVK_ANSI_KeypadEnter:
+        case kVK_ANSI_KeypadMinus:
+        case kVK_ANSI_KeypadEquals:
+        case kVK_ANSI_Keypad0:
+        case kVK_ANSI_Keypad1:
+        case kVK_ANSI_Keypad2:
+        case kVK_ANSI_Keypad3:
+        case kVK_ANSI_Keypad4:
+        case kVK_ANSI_Keypad5:
+        case kVK_ANSI_Keypad6:
+        case kVK_ANSI_Keypad7:
+        case kVK_ANSI_Keypad8:
+        case kVK_ANSI_Keypad9:
+            return self.modifierFlags | NSEventModifierFlagNumericPad;
+            
+        default:
+            return self.modifierFlags;
+    }
 }
 
 @end

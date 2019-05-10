@@ -22,6 +22,7 @@
 #import "iTermWebViewWrapperViewController.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "PTYTextView+Private.h"
@@ -192,7 +193,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 // Update range of underlined chars indicating cmd-clickable url.
 - (void)updateUnderlinedURLs:(NSEvent *)event {
-    const BOOL commandPressed = ([event modifierFlags] & NSEventModifierFlagCommand) != 0;
+    const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
     const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
                                          [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
     const VT100GridCoord coord = [self coordForEvent:event];
@@ -304,12 +305,12 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 - (void)updateCursor:(NSEvent *)event action:(URLAction *)action {
     NSString *hover = nil;
     BOOL changed = NO;
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
-    } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
+    } else if (([event it_modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (action &&
-               ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
+               ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length) {
             hover = action.string;
@@ -349,7 +350,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 - (BOOL)xtermMouseReporting {
     NSEvent *event = [NSApp currentEvent];
     return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
+            !([event it_modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
 }
 
 - (BOOL)xtermMouseReportingAllowMouseWheel {

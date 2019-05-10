@@ -7,9 +7,11 @@
 //
 
 #import "ToolProfiles.h"
-#import "PseudoTerminal.h"
+
+#import "NSEvent+iTerm.h"
 #import "iTermController.h"
 #import "ProfileModel.h"
+#import "PseudoTerminal.h"
 
 static const int kVerticalMargin = 5;
 static const int kMargin = 0;
@@ -155,11 +157,11 @@ static const CGFloat kInnerMargin = 5;
 - (void)profileTableRowSelected:(id)profileTable
 {
     NSEvent *event = [[NSApplication sharedApplication] currentEvent];
-    if ([event modifierFlags] & (NSEventModifierFlagControl)) {
+    if ([event it_modifierFlags] & (NSEventModifierFlagControl)) {
         [self toolProfilesNewHorizontalSplit:nil];
-    } else if ([event modifierFlags] & (NSEventModifierFlagOption)) {
+    } else if ([event it_modifierFlags] & (NSEventModifierFlagOption)) {
         [self toolProfilesNewVerticalSplit:nil];
-    } else if ([event modifierFlags] & (NSEventModifierFlagShift)) {
+    } else if ([event it_modifierFlags] & (NSEventModifierFlagShift)) {
         [self toolProfilesNewWindow:nil];
     } else {
         [self toolProfilesNewTab:nil];

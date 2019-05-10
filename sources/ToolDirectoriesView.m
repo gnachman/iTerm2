@@ -15,6 +15,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
+#import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -256,7 +257,7 @@ static const CGFloat kHelpMargin = 5;
     } else {
         text = escapedPath;
     }
-    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
+    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

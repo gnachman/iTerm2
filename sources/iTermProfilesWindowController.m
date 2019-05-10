@@ -29,6 +29,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "NSEvent+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -51,7 +52,7 @@ static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWi
 - (BOOL)performKeyEquivalent:(NSEvent *)event {
     DLog(@"iTermProfileWindowContentView: Perform key equivalent: %@", event);
     if ([event.characters isEqualToString:@"\r"]) {
-        if (event.modifierFlags & NSEventModifierFlagShift) {
+        if (event.it_modifierFlags & NSEventModifierFlagShift) {
             if (self.windowController.windowButton.isEnabled) {
                 [self.windowController openBookmarkInWindow:nil];
                 return YES;

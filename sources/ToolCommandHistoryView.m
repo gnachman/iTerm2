@@ -14,6 +14,7 @@
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "NSDate+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYSession.h"
@@ -281,14 +282,14 @@ static const CGFloat kHelpMargin = 5;
     iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = commandUse.command;
-    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption)) {
+    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagOption)) {
         if (commandUse.directory) {
             text = [@"cd " stringByAppendingString:commandUse.directory];
         } else {
             return;
         }
     }
-    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
+    if (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

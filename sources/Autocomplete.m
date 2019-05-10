@@ -7,6 +7,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
+#import "NSEvent+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PopupModel.h"
 #import "PTYTextView.h"
@@ -386,7 +387,7 @@ const int kMaxResultContextWords = 4;
     if ([keystr length] == 1) {
         unichar c = [keystr characterAtIndex:0];
         AcLog(@"c=%d", (int)c);
-        unsigned int modflag = [event modifierFlags];
+        unsigned int modflag = [event it_modifierFlags];
         if ((modflag & NSEventModifierFlagShift) && c == 25) {
             // backtab
             [self less];

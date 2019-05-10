@@ -8,6 +8,8 @@
 #import "iTermMetaFrustrationDetector.h"
 
 #import "DebugLogging.h"
+#import "NSEvent+iTerm.h"
+
 #import <Carbon/Carbon.h>
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
@@ -34,7 +36,7 @@ typedef NS_ENUM(NSUInteger, iTermMetaFrustrationDetectorState) {
         case iTermMetaFrustrationDetectorReady:
             if ([self eventIsCandidate:event]) {
                 _lastTime = [NSDate timeIntervalSinceReferenceDate];
-                _lastWasLeft = (event.modifierFlags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask;
+                _lastWasLeft = (event.it_modifierFlags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask;
                 self.state = iTermMetaFrustrationDetectorWaitingForBackspace;
             }
             break;
@@ -97,7 +99,7 @@ typedef NS_ENUM(NSUInteger, iTermMetaFrustrationDetectorState) {
                                        NSEventModifierFlagControl |
                                        NSEventModifierFlagFunction |
                                        NSEventModifierFlagCommand);
-    if ((event.modifierFlags & mask) != NSEventModifierFlagOption) {
+    if ((event.it_modifierFlags & mask) != NSEventModifierFlagOption) {
         return NO;
     }
     static NSSet<NSNumber *> *alphabeticKeyCodes;
@@ -126,10 +128,10 @@ typedef NS_ENUM(NSUInteger, iTermMetaFrustrationDetectorState) {
                                        NSEventModifierFlagControl |
                                        NSEventModifierFlagFunction |
                                        NSEventModifierFlagCommand);
-    if ((event.modifierFlags & mask) == 0 && event.keyCode == kVK_Delete) {
+    if ((event.it_modifierFlags & mask) == 0 && event.keyCode == kVK_Delete) {
         return YES;
     }
-    if ((event.modifierFlags & mask) == NSEventModifierFlagControl && event.keyCode == kVK_ANSI_H) {
+    if ((event.it_modifierFlags & mask) == NSEventModifierFlagControl && event.keyCode == kVK_ANSI_H) {
         return YES;
     }
     return NO;
@@ -141,7 +143,7 @@ typedef NS_ENUM(NSUInteger, iTermMetaFrustrationDetectorState) {
                                        NSEventModifierFlagControl |
                                        NSEventModifierFlagFunction |
                                        NSEventModifierFlagCommand);
-    return (event.modifierFlags & mask) == 0 && event.keyCode == kVK_Escape;
+    return (event.it_modifierFlags & mask) == 0 && event.keyCode == kVK_Escape;
 }
 
 @end

@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermKeyboardHandler.h"
+#import "NSEvent+iTerm.h"
 #import "VT100Output.h"
 
 @implementation iTermTermkeyKeyMapper {
@@ -18,7 +19,7 @@
 #pragma mark - Pre-Cocoa
 
 - (NSString *)preCocoaString {
-    const unsigned int modifiers = [_event modifierFlags];
+    const unsigned int modifiers = [_event it_modifierFlags];
 
     NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
     const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
@@ -239,7 +240,7 @@
         return applicationModeResult;
     }
 
-    if (!(_event.modifierFlags & NSEventModifierFlagFunction)) {
+    if (!(_event.it_modifierFlags & NSEventModifierFlagFunction)) {
         return nil;
     }
 
@@ -364,7 +365,7 @@
 }
 
 - (iTermOptionKeyBehavior)optionKeyBehavior {
-    const NSEventModifierFlags modflag = _event.modifierFlags;
+    const NSEventModifierFlags modflag = _event.it_modifierFlags;
     const BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
     const BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
     assert(leftAltPressed || rightAltPressed);
@@ -574,7 +575,7 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     }
     const unichar codePoint = [_event.charactersIgnoringModifiers characterAtIndex:0];
     return [self termkeySequenceForCodePoint:codePoint
-                                   modifiers:_event.modifierFlags
+                                   modifiers:_event.it_modifierFlags
                                      keyCode:_event.keyCode];
 }
 
@@ -597,7 +598,7 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 }
 
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
-    const NSEventModifierFlags modifiers = event.modifierFlags;
+    const NSEventModifierFlags modifiers = event.it_modifierFlags;
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
     if (isSpecialKey) {
         // Arrow key, function key, etc.
@@ -620,7 +621,7 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
         const unichar codePoint = [event.charactersIgnoringModifiers characterAtIndex:0];
         if ([self sequenceForApplicationModeCodePoint:codePoint
                                               keyCode:event.keyCode
-                                       eventModifiers:event.modifierFlags]) {
+                                       eventModifiers:event.it_modifierFlags]) {
             // Application cursor keys in effect. Don't let cocoa call insertText:.
             return YES;
         }

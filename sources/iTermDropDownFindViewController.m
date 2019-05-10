@@ -26,6 +26,7 @@
  */
 
 #import "iTermDropDownFindViewController.h"
+
 #import "DebugLogging.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -37,6 +38,7 @@
 #import "iTermProgressIndicator.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermSystemVersion.h"
+#import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 // This used to be absurdly fast (.075) for reasons neither I nor revision
@@ -255,7 +257,7 @@ static const float kAnimationDuration = 0.2;
             break;
         case NSReturnTextMovement: {
             // Return key
-            const BOOL shiftPressed = !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+            const BOOL shiftPressed = !!([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift);
             const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
             if  (!shiftPressed ^ swap) {
                 [self.driver searchNext];
