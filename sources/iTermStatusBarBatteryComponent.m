@@ -191,7 +191,11 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     if (self.currentEstimate == 100 && charging) {
         return NO;
     }
-    if ([[[iTermPowerManager sharedInstance] currentState] time] < 0) {
+    iTermPowerState *currentState = [[iTermPowerManager sharedInstance] currentState];
+    if ([currentState time] < 0) {
+        return NO;
+    }
+    if (currentState.charging != charging) {
         return NO;
     }
     NSDictionary *knobs = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
