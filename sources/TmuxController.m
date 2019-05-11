@@ -750,6 +750,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         return;
     }
 
+    NSString *nextPrefix = @"next-";
+    if ([response hasPrefix:nextPrefix]) {
+        [self handleDisplayMessageVersion:[response substringFromIndex:nextPrefix.length]];
+         return;
+    }
     // In case we get back something that's not a number, or a totally unreasonable number, just ignore this.
     NSDecimalNumber *number = [NSDecimalNumber decimalNumberWithString:response];
     if (number.doubleValue != number.doubleValue ||
