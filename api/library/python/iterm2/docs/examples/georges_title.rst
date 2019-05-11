@@ -109,5 +109,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
 
 :Download:`Download<georges_title.its>`
 
+Then either restart iTerm2 or launch the script from **Scripts > AutoLaunch > georges_title**.
+
 Finally, select *George's Title Algorithm* in **Prefs > Profiles > General > Title**.
 
