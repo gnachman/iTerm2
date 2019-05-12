@@ -207,6 +207,10 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
         case iTermParsedExpressionTypeNil:
             completion(nil, nil, nil);
             return;
+
+        case iTermParsedExpressionTypeArrayLookup:
+        case iTermParsedExpressionTypeVariableReference:
+            assert(NO);
     }
 
     NSString *reason = [NSString stringWithFormat:@"Invalid parsed expression type %@", @(parsedExpression.expressionType)];

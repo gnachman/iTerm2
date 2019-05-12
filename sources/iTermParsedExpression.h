@@ -20,8 +20,26 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeNumber,
     iTermParsedExpressionTypeFunctionCall,
     iTermParsedExpressionTypeError,
-    iTermParsedExpressionTypeInterpolatedString
+    iTermParsedExpressionTypeInterpolatedString,
+    // These two are only produced if you request an AST from the expression parser
+    iTermParsedExpressionTypeVariableReference,
+    iTermParsedExpressionTypeArrayLookup
 };
+
+@protocol iTermExpressionParserPlaceholder<NSObject>
+@property (nonatomic, readonly, copy) NSString *path;
+- (iTermParsedExpressionType)expressionType;
+@end
+
+@interface iTermExpressionParserArrayDereferencePlaceholder : NSObject<iTermExpressionParserPlaceholder>
+@property (nonatomic, readonly) NSInteger index;
+- (instancetype)initWithPath:(NSString *)path index:(NSInteger)index;
+@end
+
+@interface iTermExpressionParserVariableReferencePlaceholder : NSObject<iTermExpressionParserPlaceholder>
+- (instancetype)initWithPath:(NSString *)path;
+@end
+
 
 @interface iTermParsedExpression : NSObject
 // Only one property will be set.
@@ -34,6 +52,7 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
 @property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *interpolatedStringParts;
+@property (nonatomic, strong, readonly) id<iTermExpressionParserPlaceholder> placeholder;
 
 // This is always equal to the only set property above (or nil if none is set)
 @property (nonatomic, strong, readonly) id object;
@@ -52,7 +71,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
 - (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array;
 - (instancetype)initWithArrayOfValues:(NSArray *)array;
-
+- (instancetype)initWithPlaceholder:(id<iTermExpressionParserPlaceholder>)placeholder
+                           optional:(BOOL)optional;
 - (BOOL)containsAnyFunctionCall;
 
 @end
