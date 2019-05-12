@@ -278,7 +278,6 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         _logsView.string = @"";
         _callsView.string = @"";
         _terminateButton.enabled = NO;
-        _startButton.title = @"Start";
         _startButton.enabled = NO;
     } else {
         [self scrollLogsToBottomIfNeeded];
