@@ -82,6 +82,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (BOOL)usePlaceholders {
+    return NO;
+}
+
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName {
     [_frames insertObject:[iTermTuple tupleWithObject:scopeName andObject:variables] atIndex:0];
     [self resolveDanglingReferences];
@@ -369,6 +373,14 @@ NS_ASSUME_NONNULL_BEGIN
         return [[iTermVariableReference alloc] initWithPath:path scope:self->_scope];
     }];
 }
+@end
+
+@implementation iTermVariablePlaceholderScope
+
+- (BOOL)usePlaceholders {
+    return YES;
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

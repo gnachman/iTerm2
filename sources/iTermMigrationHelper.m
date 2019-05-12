@@ -9,8 +9,14 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermDisclosableView.h"
+#import "iTermExpressionParser.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermVariableScope.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSStringITerm.h"
+#import "ProfileModel.h"
 
 @implementation iTermMigrationHelper
 
@@ -205,6 +211,68 @@
         }
         [self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
     }
+}
+
++ (BOOL)justUpgradedTo33OrLater {
+    NSString *lastVersion = [iTermPreferences appVersionBeforeThisLaunch];
+    if (!lastVersion) {
+        return NO;
+    }
+    NSArray<NSString *> *parts = [lastVersion componentsSeparatedByString:@"."];
+    if (parts.count < 2) {
+        return NO;
+    }
+    const NSInteger major = [parts[0] integerValue];
+    const NSInteger minor = [parts[1] integerValue];
+    if (major < 3 || (major == 3 && minor < 3)) {
+        return YES;
+    }
+    return NO;
+}
+
++ (void)makeBadgesUseOptionals {
+    if (![self justUpgradedTo33OrLater]) {
+        return;
+    }
+    ProfileModel *model = [ProfileModel sharedInstance];
+    for (Profile *profile in [[model bookmarks] copy]) {
+        NSString *badge = profile[KEY_BADGE_FORMAT];
+        if (badge.length == 0) {
+            continue;
+        }
+        NSMutableString *fixed = [NSMutableString string];
+        __block BOOL needsWrite = NO;
+        [badge enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
+            if (isLiteral) {
+                [fixed appendString:substring];
+                return;
+            }
+            iTermParsedExpression *expression = [[iTermExpressionParser expressionParser] parse:substring
+                                                                                          scope:[[iTermVariablePlaceholderScope alloc] init]];
+            NSString *questionMark = @"";
+            switch (expression.expressionType) {
+                case iTermParsedExpressionTypeArrayLookup:
+                case iTermParsedExpressionTypeVariableReference: {
+                    needsWrite = needsWrite || !expression.optional;
+                    questionMark = expression.optional ? @"" : @"?";
+                }
+                case iTermParsedExpressionTypeNil:
+                case iTermParsedExpressionTypeError:
+                case iTermParsedExpressionTypeNumber:
+                case iTermParsedExpressionTypeString:
+                case iTermParsedExpressionTypeFunctionCall:
+                case iTermParsedExpressionTypeArrayOfValues:
+                case iTermParsedExpressionTypeArrayOfExpressions:
+                case iTermParsedExpressionTypeInterpolatedString:
+                    break;
+            }
+            [fixed appendFormat:@"\\(%@%@)", substring, questionMark];
+        }];
+        if (needsWrite) {
+            [model setObject:fixed forKey:KEY_BADGE_FORMAT inBookmark:profile];
+        }
+    }
+    [model flush];
 }
 
 @end

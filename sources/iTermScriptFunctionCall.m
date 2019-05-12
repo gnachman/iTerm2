@@ -99,6 +99,10 @@
     iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
                                                                               scope:scope];
     switch (expression.expressionType) {
+        case iTermParsedExpressionTypeVariableReference:
+        case iTermParsedExpressionTypeArrayLookup:
+            assert(false);
+
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeNumber:

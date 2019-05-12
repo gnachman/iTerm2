@@ -12,6 +12,44 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
+@implementation iTermExpressionParserArrayDereferencePlaceholder
+
+@synthesize path = _path;
+
+- (iTermParsedExpressionType)expressionType {
+    return iTermParsedExpressionTypeArrayLookup;
+}
+
+- (instancetype)initWithPath:(NSString *)path index:(NSInteger)index {
+    self = [super init];
+    if (self) {
+        _path = [path copy];
+        _index = index;
+    }
+    return self;
+}
+
+@end
+
+@implementation iTermExpressionParserVariableReferencePlaceholder
+
+@synthesize path = _path;
+
+- (iTermParsedExpressionType)expressionType {
+    return iTermParsedExpressionTypeVariableReference;
+}
+
+- (instancetype)initWithPath:(NSString *)path {
+    self = [super init];
+    if (self) {
+        _path = [path copy];
+    }
+    return self;
+}
+
+@end
+
+
 @implementation iTermParsedExpression
 
 - (NSString *)description {
@@ -44,6 +82,14 @@
             }] componentsJoinedByString:@" "];
             value = [NSString stringWithFormat:@"[ %@ ]", value];
             break;
+        case iTermParsedExpressionTypeArrayLookup: {
+            iTermExpressionParserArrayDereferencePlaceholder *placeholder = self.placeholder;
+            return [NSString stringWithFormat:@"%@[%@]", placeholder.path, @(placeholder.index)];
+        }
+        case iTermParsedExpressionTypeVariableReference: {
+            iTermExpressionParserVariableReferencePlaceholder *placeholder = self.placeholder;
+            return [NSString stringWithFormat:@"%@", placeholder.path];
+        }
     }
     if (self.optional) {
         value = [value stringByAppendingString:@"?"];
@@ -167,6 +213,17 @@
     return self;
 }
 
+- (instancetype)initWithPlaceholder:(id<iTermExpressionParserPlaceholder>)placeholder
+                           optional:(BOOL)optional {
+    self = [super init];
+    if (self) {
+        _expressionType = placeholder.expressionType;
+        _object = placeholder;
+        _optional = optional;
+    }
+    return self;
+}
+
 - (NSArray *)arrayOfValues {
     assert([_object isKindOfClass:[NSArray class]]);
     return _object;
@@ -202,6 +259,11 @@
     return _object;
 }
 
+- (id<iTermExpressionParserPlaceholder>)placeholder {
+    assert([_object conformsToProtocol:@protocol(iTermExpressionParserPlaceholder)]);
+    return _object;
+}
+
 - (BOOL)containsAnyFunctionCall {
     switch (self.expressionType) {
         case iTermParsedExpressionTypeFunctionCall:
@@ -211,6 +273,8 @@
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfValues:
+        case iTermParsedExpressionTypeVariableReference:
+        case iTermParsedExpressionTypeArrayLookup:
             return NO;
         case iTermParsedExpressionTypeArrayOfExpressions:
             return [self.arrayOfExpressions anyWithBlock:^BOOL(iTermParsedExpression *expression) {
