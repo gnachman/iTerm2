@@ -3345,4 +3345,5 @@ cite {
     font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
     background: #DDD;
     font-style: normal!important;
+    hyphens: none
 }
