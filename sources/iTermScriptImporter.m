@@ -23,6 +23,7 @@ static BOOL sInstallingScript;
 
 + (void)importScriptFromURL:(NSURL *)downloadedURL
               userInitiated:(BOOL)userInitiated
+            offerAutoLaunch:(BOOL)offerAutoLaunch
                  completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
@@ -35,6 +36,7 @@ static BOOL sInstallingScript;
         dispatch_async(dispatch_get_main_queue(), ^{
             [self reallyImportScriptFromURL:downloadedURL
                               userInitiated:userInitiated
+                            offerAutoLaunch:offerAutoLaunch
                                  completion:^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                                      dispatch_group_leave(group);
                                      completion(errorMessage, quiet, location);
@@ -46,6 +48,7 @@ static BOOL sInstallingScript;
 
 + (void)reallyImportScriptFromURL:(NSURL *)downloadedURL
                     userInitiated:(BOOL)userInitiated
+                  offerAutoLaunch:(BOOL)offerAutoLaunch
                        completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     if (sInstallingScript) {
         completion(@"Another import is in progress. Please try again after it completes.", NO, nil);
@@ -88,16 +91,21 @@ static BOOL sInstallingScript;
                                   sInstallingScript = NO;
                                   return;
                               }
-                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:^(NSString *errorMessage, BOOL quiet, NSURL *location) {
-                                  sInstallingScript = NO;
-                                  if (reveal) {
-                                      completion(errorMessage, errorMessage == nil || quiet, nil);
-                                      return;
-                                  }
-                                  [self eraseTempDir:tempDir];
-                                  [pleaseWait.window close];
-                                  completion(errorMessage, quiet, location);
-                              }];
+                              [self didUnzipSuccessfullyTo:tempDir
+                                                   trusted:trusted
+                                           offerAutoLaunch:offerAutoLaunch
+                                                    reveal:reveal
+                                            withCompletion:
+                               ^(NSString *errorMessage, BOOL quiet, NSURL *location) {
+                                   sInstallingScript = NO;
+                                   if (reveal) {
+                                       completion(errorMessage, errorMessage == nil || quiet, nil);
+                                       return;
+                                   }
+                                   [self eraseTempDir:tempDir];
+                                   [pleaseWait.window close];
+                                   completion(errorMessage, quiet, location);
+                               }];
                           }];
     }];
 }
@@ -211,6 +219,7 @@ static BOOL sInstallingScript;
 
 + (void)didUnzipSuccessfullyTo:(NSString *)tempDir
                        trusted:(BOOL)trusted
+               offerAutoLaunch:(BOOL)offerAutoLaunch
                         reveal:(BOOL)reveal
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     if (reveal) {
@@ -241,14 +250,18 @@ static BOOL sInstallingScript;
                                                                       window:nil];
         if (selection == kiTermWarningSelection0) {
             [self removeScriptNamed:archive.name];
-            [self didUnzipSuccessfullyTo:tempDir trusted:trusted reveal:reveal withCompletion:completion];
+            [self didUnzipSuccessfullyTo:tempDir
+                                 trusted:trusted
+                         offerAutoLaunch:offerAutoLaunch
+                                  reveal:reveal
+                          withCompletion:completion];
             return;
         }
         completion(nil, YES, nil);
         return;
     }
 
-    [archive installTrusted:trusted withCompletion:^(NSError *error, NSURL *location) {
+    [archive installTrusted:trusted offerAutoLaunch:offerAutoLaunch withCompletion:^(NSError *error, NSURL *location) {
         completion(error.localizedDescription, NO, location);
     }];
 }

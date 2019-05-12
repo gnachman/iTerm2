@@ -136,7 +136,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     return [[NSNumber castFrom:self.metadata[@"AutoLaunch"]] boolValue];
 }
 
-- (BOOL)userAcceptsAutoLaunchInstall {
+- (BOOL)userAcceptsTrustedScriptAutoLaunchInstall {
     NSString *body = [NSString stringWithFormat:@"“%@” would like to run automatically when iTerm2 starts. Would you like to allow that?", self.name];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
                                                                        actions:@[ @"Allow", @"Decline" ]
@@ -148,18 +148,38 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     return (selection == kiTermWarningSelection0);
 }
 
-- (void)installTrusted:(BOOL)trusted withCompletion:(void (^)(NSError *, NSURL *location))completion {
+- (BOOL)userAcceptsExplicitAutoLaunchInstall {
+    NSString *body = [NSString stringWithFormat:@"“%@” can run automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
+                                                                       actions:@[ @"Allow", @"Decline" ]
+                                                                     accessory:nil
+                                                                    identifier:nil
+                                                                   silenceable:kiTermWarningTypePersistent
+                                                                       heading:@"Allow Auto-Launch?"
+                                                                        window:nil];
+    return (selection == kiTermWarningSelection0);
+}
+
+- (void)installTrusted:(BOOL)trusted
+       offerAutoLaunch:(BOOL)offerAutoLaunch
+        withCompletion:(void (^)(NSError *, NSURL *location))completion {
     if (self.fullEnvironment) {
-        [self installFullEnvironmentTrusted:trusted completion:completion];
+        [self installFullEnvironmentTrusted:trusted
+                            offerAutoLaunch:offerAutoLaunch
+                                 completion:completion];
     } else {
-        [self installBasicTrusted:trusted completion:completion];
+        [self installBasicTrusted:trusted
+                  offerAutoLaunch:offerAutoLaunch
+                       completion:completion];
     }
 }
 
-- (void)installBasicTrusted:(BOOL)trusted completion:(void (^)(NSError *, NSURL *location))completion {
+- (void)installBasicTrusted:(BOOL)trusted
+            offerAutoLaunch:(BOOL)offerAutoLaunch
+                 completion:(void (^)(NSError *, NSURL *location))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
     NSString *to;
-    if (trusted && [self wantsAutoLaunch] && [self userAcceptsAutoLaunchInstall]) {
+    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
         to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
     } else {
         to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
@@ -171,7 +191,32 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     completion(error, [NSURL fileURLWithPath:to]);
 }
 
-- (void)installFullEnvironmentTrusted:(BOOL)trusted completion:(void (^)(NSError *, NSURL *location))completion {
+- (BOOL)shouldOfferAutoLaunchWhenTrusted:(BOOL)trusted
+                         offerAutoLaunch:(BOOL)offerAutoLaunch {
+    if (offerAutoLaunch) {
+        return YES;
+    }
+    if (trusted && [self wantsAutoLaunch]) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)shouldAutoLaunchWhenTrusted:(BOOL)trusted
+                    offerAutoLaunch:(BOOL)offerAutoLaunch {
+    if (![self shouldOfferAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
+        return NO;
+    }
+    if (offerAutoLaunch) {
+        return [self userAcceptsExplicitAutoLaunchInstall];
+    } else {
+        return [self userAcceptsTrustedScriptAutoLaunchInstall];
+    }
+}
+
+- (void)installFullEnvironmentTrusted:(BOOL)trusted
+                      offerAutoLaunch:(BOOL)offerAutoLaunch
+                           completion:(void (^)(NSError *, NSURL *location))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
 
     NSString *setupCfg = [from stringByAppendingPathComponent:iTermScriptSetupCfgName];
@@ -192,7 +237,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     // You always get the iterm2 module so don't bother to pip install it.
     dependencies = [dependencies arrayByRemovingObject:@"iterm2"];
     NSString *to;
-    if (trusted && [self wantsAutoLaunch] && [self userAcceptsAutoLaunchInstall]) {
+    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
         to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
     } else {
         to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];

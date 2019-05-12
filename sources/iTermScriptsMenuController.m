@@ -81,6 +81,26 @@ NS_ASSUME_NONNULL_BEGIN
     [_children addObject:child];
 }
 
+- (BOOL)isAutoLaunchFolderItem {
+    if (!_isFolder) {
+        // The auto launch folder is a folder
+        return NO;
+    }
+    if (!_parent) {
+        // Is root
+        return NO;
+    }
+    if (_parent.parent != nil) {
+        // Parent is not root
+        return NO;
+    }
+    if (![self.name isEqualToString:@"AutoLaunch"]) {
+        return NO;
+    }
+
+    return YES;
+}
+
 @end
 
 @interface iTermScriptsMenuController()<NSOpenSavePanelDelegate, SCEventListenerProtocol>
@@ -169,13 +189,13 @@ NS_ASSUME_NONNULL_BEGIN
     _allScripts = [self allScriptsFromMenu];
 }
 
-+ (NSArray<iTermScriptItem *> *)scriptItems {
+- (NSArray<iTermScriptItem *> *)scriptItems {
     iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces] parent:nil];
     [self populateScriptItem:root];
     return root.children;
 }
 
-+ (void)populateScriptItem:(iTermScriptItem *)parentFolderItem {
+- (void)populateScriptItem:(iTermScriptItem *)parentFolderItem {
     NSString *root = parentFolderItem.path;
     NSDirectoryEnumerator *directoryEnumerator =
         [[NSFileManager defaultManager] enumeratorAtPath:root];
@@ -204,12 +224,64 @@ NS_ASSUME_NONNULL_BEGIN
             }
         } else if ([scriptExtensions containsObject:[file pathExtension]]) {
             [parentFolderItem addChild:[[iTermScriptItem alloc] initFileWithPath:path parent:parentFolderItem]];
+        } else if ([file.pathExtension isEqualToString:@"its"]) {
+            [self didFindScriptArchive:path autolaunch:parentFolderItem.isAutoLaunchFolderItem];
         }
     }
 }
 
+- (void)didFindScriptArchive:(NSString *)file autolaunch:(BOOL)autolaunch {
+    static NSMutableSet<NSString *> *alreadyFound;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        alreadyFound = [NSMutableSet set];
+    });
+    if ([alreadyFound containsObject:file]) {
+        return;
+    }
+    [alreadyFound addObject:file];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script archive named “%@” was found in the Scripts directory. Would you like to install it?", file.lastPathComponent]
+                               actions:@[ @"OK", @"Cancel", @"Move to Trash" ]
+                             accessory:nil
+                            identifier:@"NoSyncInstallScriptArchive"
+                           silenceable:kiTermWarningTypeTemporarilySilenceable
+                               heading:@"Install Script Archive?"
+                                window:nil];
+    NSURL *url = [NSURL fileURLWithPath:file];
+    switch (selection) {
+        case kiTermWarningSelection0: {
+            [iTermScriptImporter importScriptFromURL:url
+                                       userInitiated:YES
+                                     offerAutoLaunch:autolaunch
+                                          completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
+                                              if (quiet) {
+                                                  return;
+                                              }
+                                              if (errorMessage == nil) {
+                                                  [[NSFileManager defaultManager] trashItemAtURL:url
+                                                                                resultingItemURL:nil
+                                                                                           error:nil];
+                                              }
+                                              [self importDidFinishWithErrorMessage:errorMessage
+                                                                           location:location
+                                                                        originalURL:url];
+                                          }];
+            break;
+        }
+        case kiTermWarningSelection1:
+            break;
+        case kiTermWarningSelection2:
+            [[NSFileManager defaultManager] trashItemAtURL:url
+                                          resultingItemURL:nil
+                                                     error:nil];
+        default:
+            break;
+    }
+}
+
 - (void)addMenuItemsTo:(NSMenu *)rootMenu {
-    [self addMenuItemsForScriptItems:[iTermScriptsMenuController scriptItems]
+    [self addMenuItemsForScriptItems:[self scriptItems]
                               toMenu:rootMenu];
 }
 
@@ -297,6 +369,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)importFromURL:(NSURL *)url {
     [iTermScriptImporter importScriptFromURL:url
                                userInitiated:YES
+                             offerAutoLaunch:NO
                                   completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                       // Mojave deadlocks if you do this without the dispatch_async
                                       dispatch_async(dispatch_get_main_queue(), ^{

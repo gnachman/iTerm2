@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 // url is path to zip file
 + (void)importScriptFromURL:(NSURL *)url
               userInitiated:(BOOL)userInitiated
+            offerAutoLaunch:(BOOL)offerAutoLaunch
                  completion:(void (^)(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location))completion;
 
 @end

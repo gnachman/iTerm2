@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isFolder;
 @property (nonatomic, readonly) BOOL fullEnvironment;
 @property (nonatomic, readonly) NSArray<iTermScriptItem *> *children;
+@property (nonatomic, readonly) BOOL isAutoLaunchFolderItem;
 @end
 
 @interface iTermScriptsMenuController : NSObject
@@ -23,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMenuItem *installRuntimeMenuItem;
 @property (nonatomic, readonly) NSArray<NSString *> *allScripts;
 
-+ (NSArray<iTermScriptItem *> *)scriptItems;
+- (NSArray<iTermScriptItem *> *)scriptItems;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;

@@ -564,6 +564,7 @@ static BOOL hasBecomeActive = NO;
     if ([[filename pathExtension] isEqualToString:@"its"]) {
         [iTermScriptImporter importScriptFromURL:[NSURL fileURLWithPath:filename]
                                    userInitiated:NO
+                                 offerAutoLaunch:NO
                                       completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                           if (quiet) {
                                               return;

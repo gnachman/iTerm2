@@ -8,6 +8,7 @@
 #import "iTermDependencyEditorWindowController.h"
 
 #import "DebugLogging.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptsMenuController.h"
@@ -178,7 +179,8 @@
     _checkForUpdate.enabled = NO;
     _remove.enabled = NO;
     [_scriptsButton.menu removeAllItems];
-    [self addScriptItems:[iTermScriptsMenuController scriptItems] breadcrumbs:@[]];
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [self addScriptItems:[itad.scriptsMenuController scriptItems] breadcrumbs:@[]];
 }
 
 - (void)addScriptItems:(NSArray<iTermScriptItem *> *)scriptItems breadcrumbs:(NSArray<NSString *> *)breadcrumbs {

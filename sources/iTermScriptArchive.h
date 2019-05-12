@@ -18,6 +18,11 @@ extern NSString *const iTermScriptSetupCfgName;
 
 + (instancetype)archiveFromContainer:(NSString *)container
                           deprecated:(out BOOL *)deprecatedPtr;
-- (void)installTrusted:(BOOL)trusted withCompletion:(void (^)(NSError *, NSURL *location))completion;
+
+// Trusted scripts may specify that they prefer to be in autolaunch and user will be prompted.
+// If offerAutoLaunch is set, then even non-trusted scripts will prompt to move to autolaunch.
+- (void)installTrusted:(BOOL)trusted
+       offerAutoLaunch:(BOOL)offerAutoLaunch
+        withCompletion:(void (^)(NSError *, NSURL *location))completion;
 
 @end
