@@ -189,7 +189,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         }
 
         [[iTermHotKeyMigrationHelper sharedInstance] migrateSingleHotkeyToMulti];
-        [iTermMigrationHelper makeBadgesUseOptionals];
         [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 

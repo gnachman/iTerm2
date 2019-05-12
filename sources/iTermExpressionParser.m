@@ -40,8 +40,6 @@
     iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
                                                                             scope:permissiveScope];
     switch (expression.expressionType) {
-        case iTermParsedExpressionTypeArrayLookup:
-        case iTermParsedExpressionTypeVariableReference:
         case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfExpressions:
@@ -225,11 +223,6 @@
         return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:errorReason];
     }
 
-    if ([value conformsToProtocol:@protocol(iTermExpressionParserPlaceholder)]) {
-        return [[iTermParsedExpression alloc] initWithPlaceholder:value
-                                                         optional:optional];
-    }
-
     // The fallbackError is used only when value is not legit.
     NSString *fallbackError;
     if (optional) {
@@ -307,17 +300,6 @@
 
 - (iTermTriple<id, NSString *, NSString *> *)pathOrDereferencedArrayFromPath:(NSString *)path
                                                                        index:(NSNumber *)indexNumber {
-    if (_scope.usePlaceholders) {
-        id placeholder;
-        if (indexNumber) {
-            placeholder = [[iTermExpressionParserArrayDereferencePlaceholder alloc] initWithPath:path index:indexNumber.integerValue];
-        } else {
-            placeholder = [[iTermExpressionParserVariableReferencePlaceholder alloc] initWithPath:path];
-        }
-        return [iTermTriple tripleWithObject:placeholder
-                                   andObject:nil
-                                      object:path];
-    }
     id untypedValue = [_scope valueForVariableName:path];
     if (!untypedValue) {
         return [iTermTriple tripleWithObject:nil andObject:nil object:path];

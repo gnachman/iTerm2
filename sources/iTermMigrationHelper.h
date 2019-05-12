@@ -11,6 +11,5 @@
 
 + (void)migrateApplicationSupportDirectoryIfNeeded;
 + (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)path;
-+ (void)makeBadgesUseOptionals;
 
 @end

@@ -28,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermVariableScope : NSObject<NSCopying>
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *dictionaryWithStringValues;
 @property (nonatomic) BOOL neverReturnNil;
-@property (nonatomic, readonly) BOOL usePlaceholders;
 @property (nonatomic, readonly) NSArray<iTermTuple<NSString *, iTermVariables *> *> *frames;
 
 - (iTermVariableRecordingScope *)recordingCopy;
@@ -71,11 +70,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithScope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-@end
-
-// A scope that causes parsed expressions to record variable references rather than expand them to
-// values.
-@interface iTermVariablePlaceholderScope : iTermVariableScope
 @end
 
 NS_ASSUME_NONNULL_END
