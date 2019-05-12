@@ -269,8 +269,7 @@ static const int kMaxScreenRows = 4096;
     _parser.encoding = encoding;
 }
 
-- (void)setTermType:(NSString *)termtype
-{
+- (void)setTermType:(NSString *)termtype {
     [_termType autorelease];
     _termType = [termtype copy];
 
@@ -286,7 +285,11 @@ static const int kMaxScreenRows = 4096;
         NSLog(@"Terminal type %s is not defined.", [_termType UTF8String]);
     }
     _output.termTypeIsValid = (r == 1);
-
+    if ([termtype isEqualToString:@"VT100"]) {
+        _output.vtLevel = VT100EmulationLevel100;
+    } else {
+        _output.vtLevel = VT100EmulationLevel200;
+    }
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [delegate_ terminalTypeDidChange];

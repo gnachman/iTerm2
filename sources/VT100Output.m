@@ -557,8 +557,15 @@ typedef enum {
     // VT220 + sixel
     // For a very long time we returned 1;2, like most other terms, but we need to advertise sixel
     // support. Let's see what happens! New in version 3.3.0.
-    NSString *string = @"\033[?62;4c";
-    return [string dataUsingEncoding:NSUTF8StringEncoding];
+    //
+    // Update: Per issue 7803, VT200 must accept 8-bit CSI. Allow users to elect VT100 reporting by
+    // setting $TERM to VT100.
+    switch (_vtLevel) {
+        case VT100EmulationLevel100:
+            return [@"\033[?1;2c" dataUsingEncoding:NSUTF8StringEncoding];
+        case VT100EmulationLevel200:
+            return [@"\033[?62;4c" dataUsingEncoding:NSUTF8StringEncoding];
+    }
 }
 
 - (NSData *)reportSecondaryDeviceAttribute

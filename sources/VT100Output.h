@@ -18,6 +18,11 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
     MOUSE_FORMAT_SGR = 3          // SGR 1006 mode (preferred)
 };
 
+typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
+    VT100EmulationLevel100,
+    VT100EmulationLevel200,
+};
+
 // This class produces data to send for special keys (arrow keys, function keys, etc.)
 // It has a small amount of state that is copied from VT100Terminal. This object is 1:1 with
 // VT100Terminal.
@@ -27,6 +32,7 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL optionIsMetaForSpecialKeys;
+@property(nonatomic, assign) VT100EmulationLevel vtLevel;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
 - (NSData *)keyArrowDown:(unsigned int)modflag;
