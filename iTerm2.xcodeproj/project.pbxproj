@@ -1754,6 +1754,8 @@
 		A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
+		A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */; };
+		A636C3B22288887600A83E2F /* iTermResourceLimitsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A636C3B02288887600A83E2F /* iTermResourceLimitsHelper.m */; };
 		A6374A211DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A1E1DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png */; };
 		A6374A221DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A1F1DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png */; };
 		A6374A231DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A201DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png */; };
@@ -4777,6 +4779,8 @@
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A635C4351AB38205008A2DEE /* iTermCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCursor.m; sourceTree = "<group>"; tabWidth = 4; };
+		A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermResourceLimitsHelper.h; sourceTree = "<group>"; };
+		A636C3B02288887600A83E2F /* iTermResourceLimitsHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermResourceLimitsHelper.m; sourceTree = "<group>"; };
 		A6374A1E1DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-testCustomUnderline.png"; sourceTree = "<group>"; };
 		A6374A1F1DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCustomUnderline.png"; sourceTree = "<group>"; };
 		A6374A201DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUnderline.png"; sourceTree = "<group>"; };
@@ -8472,6 +8476,8 @@
 				A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */,
 				537C4FD6227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h */,
 				537C4FD7227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m */,
+				A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */,
+				A636C3B02288887600A83E2F /* iTermResourceLimitsHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10088,6 +10094,7 @@
 				A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */,
 				530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */,
 				5365207121433ED2003C58FD /* iTermGitState.h in Headers */,
+				A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */,
 				A63011B120E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.h in Headers */,
 				53197E7E220528E40000D95D /* iTermNotificationCenter.h in Headers */,
 				A667194F1DCE36C3000CE608 /* NSWindow+iTerm.h in Headers */,
@@ -12377,6 +12384,7 @@
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,
+				A636C3B22288887600A83E2F /* iTermResourceLimitsHelper.m in Sources */,
 				A65429BB20CE3C9F00CE71B1 /* iTermExpressionParser.m in Sources */,
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,

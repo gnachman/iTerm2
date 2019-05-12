@@ -12,6 +12,7 @@
 #import "PreferencePanel.h"
 #import <signal.h>
 #import "FutureMethods.h"
+#import "iTermResourceLimitsHelper.h"
 #import "shell_launcher.h"
 
 int main(int argc, const char *argv[]){
@@ -24,6 +25,7 @@ int main(int argc, const char *argv[]){
     }
 
     // Normal launch of GUI.
+    iTermResourceLimitsHelperSaveCurrentLimits();
     signal(SIGPIPE, SIG_IGN);
     sigset_t signals;
     sigemptyset(&signals);

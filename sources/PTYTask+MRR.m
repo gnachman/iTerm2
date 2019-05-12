@@ -16,6 +16,7 @@
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorServer.h"
 #include "iTermFileDescriptorSocketPath.h"
+#import "iTermResourceLimitsHelper.h"
 #include "shell_launcher.h"
 
 #include <sys/ioctl.h>
@@ -172,6 +173,12 @@ static void iTermDidForkChild(const char *argpath,
         }
     }
 
+    // setrlimit is *not* documented as being safe to use between fork and exec, but I believe it to
+    // be safe nonetheless. The implementation is simply to make a system call. Neither memory
+    // allocation nor mutex locking occurs in user space. There isn't any other way to do this besides
+    // passing the desired limits to the child process, which is pretty gross.
+    iTermResourceLimitsHelperRestoreSavedLimits();
+    
     chdir(initialPwd);
 
     // Sub in our environ for the existing one. Since Mac OS doesn't have execvpe, this hack
