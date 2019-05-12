@@ -279,19 +279,28 @@
 
     // Fill in any default values not expliciltly specified.
     NSDictionary<NSString *, id> *fullParameters = nil;
-    self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithName:self.name
-                                                                      explicitParameters:parameterValues
-                                                                                   scope:scope
-                                                                          fullParameters:&fullParameters] copy];
-    [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                               arguments:fullParameters
-                                              completion:^(id apiResult, NSError *apiError) {
-                                                  NSSet<NSString *> *missing = nil;
-                                                  if (apiError.code == iTermAPIHelperFunctionCallUnregisteredErrorCode) {
-                                                      missing = [NSSet setWithObject:self.signature];
-                                                  }
-                                                  completion(apiResult, apiError, missing);
-                                              }];
+    iTermAPIHelper *apiHelper = [iTermAPIHelper sharedInstanceIfEnabled];
+    if (apiHelper == nil) {
+        NSString *const signature = [self signature];
+        NSError *error = [NSError errorWithDomain:iTermAPIHelperErrorDomain
+                                             code:iTermAPIHelperErrorCodeAPIDisabled
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Undefined function with signature “%@”", signature]}];
+        completion(nil, error, nil);
+        return;
+    }
+    self->_connectionKey = [[apiHelper connectionKeyForRPCWithName:self.name
+                                                explicitParameters:parameterValues
+                                                             scope:scope
+                                                    fullParameters:&fullParameters] copy];
+    [apiHelper dispatchRPCWithName:self.name
+                         arguments:fullParameters
+                        completion:^(id apiResult, NSError *apiError) {
+                            NSSet<NSString *> *missing = nil;
+                            if (apiError.code == iTermAPIHelperErrorCodeUnregisteredFunction) {
+                                missing = [NSSet setWithObject:self.signature];
+                            }
+                            completion(apiResult, apiError, missing);
+                        }];
 }
 
 - (BOOL)isBuiltinFunction {
@@ -381,7 +390,7 @@
 - (NSError *)errorForDependentCall:(iTermScriptFunctionCall *)call
                thatFailedWithError:(NSError *)error
                      connectionKey:(id)connectionKey {
-    if (error.code == iTermAPIHelperFunctionCallUnregisteredErrorCode && [error.domain isEqualToString:@"com.iterm2.api"]) {
+    if (error.code == iTermAPIHelperErrorCodeUnregisteredFunction && [error.domain isEqualToString:iTermAPIHelperErrorDomain]) {
         return error;
     }
     NSString *reason = [NSString stringWithFormat:@"In call to %@: %@", call.name, error.localizedDescription];

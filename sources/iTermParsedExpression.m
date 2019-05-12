@@ -108,14 +108,14 @@
 }
 
 + (instancetype)parsedString:(NSString *)string {
-    return [[self alloc] initWithString:string optional:NO];
+    return [[self alloc] initWithString:string];
 }
 
-- (instancetype)initWithString:(NSString *)string optional:(BOOL)optional {
+- (instancetype)initWithString:(NSString *)string {
     self = [super init];
     if (self) {
         _expressionType = iTermParsedExpressionTypeString;
-        _optional = optional;
+        _optional = NO;
         _object = string;
     }
     return self;
@@ -145,7 +145,7 @@
 // given reason.
 - (instancetype)initWithObject:(id)object errorReason:(NSString *)errorReason {
     if ([object isKindOfClass:[NSString class]]) {
-        return [self initWithString:object optional:NO];
+        return [self initWithString:object];
     }
     if ([object isKindOfClass:[NSNumber class]]) {
         return [self initWithNumber:object];

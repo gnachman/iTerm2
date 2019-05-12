@@ -59,7 +59,7 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 
 @property (nonatomic, readonly) BOOL optional;
 
-- (instancetype)initWithString:(NSString *)string optional:(BOOL)optional;
+- (instancetype)initWithString:(NSString *)string;
 - (instancetype)initWithFunctionCall:(iTermScriptFunctionCall *)functionCall;
 - (instancetype)initWithErrorCode:(int)code reason:(NSString *)localizedDescription;
 // Object may be NSString, NSNumber, or NSArray. If it is not, an error will be created with the

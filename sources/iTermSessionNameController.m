@@ -172,8 +172,8 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 }
 
 - (BOOL)errorIsUnregisteredFunctionCall:(NSError *)error {
-    return (error.code == iTermAPIHelperFunctionCallUnregisteredErrorCode &&
-            [error.domain isEqual:@"com.iterm2.api"]);
+    return (error.code == iTermAPIHelperErrorCodeUnregisteredFunction &&
+            [error.domain isEqual:iTermAPIHelperErrorDomain]);
 }
 
 - (void)logError:(NSError *)error forInvocation:(NSString *)invocation {

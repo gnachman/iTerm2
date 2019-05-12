@@ -14,14 +14,21 @@ extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
 extern NSString *const iTermAPIDidRegisterStatusBarComponentNotification;  // object is the unique id of the status bar component
 extern NSString *const iTermAPIHelperDidStopNotification;
+extern NSString *const iTermAPIHelperErrorDomain;
 
-extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
-extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
 @class iTermParsedExpression;
 @class iTermScriptHistoryEntry;
 @class iTermVariableScope;
+
+typedef NS_ENUM(NSUInteger, iTermAPIHelperErrorCode) {
+    iTermAPIHelperErrorCodeRegistrationFailed,
+    iTermAPIHelperErrorCodeInvalidJSON,
+    iTermAPIHelperErrorCodeUnregisteredFunction,
+    iTermAPIHelperErrorCodeFunctionCallFailed,
+    iTermAPIHelperErrorCodeAPIDisabled
+};
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
@@ -36,6 +43,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced;
 + (instancetype)sharedInstance;
 + (instancetype)sharedInstanceFromExplicitUserAction;
++ (instancetype)sharedInstanceIfEnabled;
 
 + (NSString *)invocationWithName:(NSString *)name
                         defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;

@@ -53,9 +53,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
 NSString *const iTermAPIDidRegisterStatusBarComponentNotification = @"iTermAPIDidRegisterStatusBarComponentNotification";
 NSString *const iTermAPIHelperDidStopNotification = @"iTermAPIHelperDidStopNotification";
 static NSString *const iTermAPIHelperEnablePythonAPIWarningIdentifier = @"NoSyncEnableAPIServer";
-
-const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
-const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
+NSString *const iTermAPIHelperErrorDomain = @"com.iterm2.api";
 
 NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
 
@@ -108,8 +106,8 @@ static iTermAPIHelper *sAPIHelperInstance;
 
     NSError *(^newErrorWithReason)(NSString *) = ^NSError *(NSString *reason) {
         NSDictionary *userinfo = @{ NSLocalizedDescriptionKey: reason };
-        return [NSError errorWithDomain:@"com.iterm2.api"
-                                   code:3
+        return [NSError errorWithDomain:iTermAPIHelperErrorDomain
+                                   code:iTermAPIHelperErrorCodeRegistrationFailed
                                userInfo:userinfo];
     };
     if (self.name.length == 0) {
@@ -321,6 +319,13 @@ static iTermAPIHelper *sAPIHelperInstance;
         sAPIHelperInstance = [[self alloc] initWithExplicitUserAction:YES];
     }
     return sAPIHelperInstance;
+}
+
++ (instancetype)sharedInstanceIfEnabled {
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer]) {
+        return nil;
+    }
+    return [self sharedInstance];
 }
 
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions {
@@ -737,8 +742,8 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                      forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
                 }
                 if (error) {
-                    *error = [NSError errorWithDomain:@"com.iterm2.api"
-                                                 code:2
+                    *error = [NSError errorWithDomain:iTermAPIHelperErrorDomain
+                                                 code:iTermAPIHelperErrorCodeInvalidJSON
                                              userInfo:userinfo];
                 }
 
@@ -816,8 +821,8 @@ static iTermAPIHelper *sAPIHelperInstance;
         userInfo = [userInfo dictionaryBySettingObject:connectionKey
                                                 forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     }
-    return [NSError errorWithDomain:@"com.iterm2.api"
-                               code:unregistered ? iTermAPIHelperFunctionCallUnregisteredErrorCode : iTermAPIHelperFunctionCallOtherErrorCode
+    return [NSError errorWithDomain:iTermAPIHelperErrorDomain
+                               code:unregistered ? iTermAPIHelperErrorCodeUnregisteredFunction : iTermAPIHelperErrorCodeFunctionCallFailed
                            userInfo:userInfo];
 }
 

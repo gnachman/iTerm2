@@ -53,7 +53,7 @@
 
 - (instancetype)initWithInterpolatedString:(NSString *)interpolatedString scope:(iTermVariableScope *)scope {
     iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:interpolatedString
-                                                                                                        scope:scope];
+                                                                                                      scope:scope];
     return [self initWithParsedExpression:parsedExpression
                                invocation:interpolatedString
                                     scope:scope];
