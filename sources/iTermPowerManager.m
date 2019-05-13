@@ -177,6 +177,8 @@ static void iTermPowerManagerSourceDidChange(void *context) {
     iTermPowerState *state = [self computedPowerState];
     if (state) {
         [_publisher publish:state];
+    } else {
+        _hasBattery = NO;
     }
 }
 

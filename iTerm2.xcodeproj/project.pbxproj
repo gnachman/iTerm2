@@ -1756,6 +1756,12 @@
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */; };
 		A636C3B22288887600A83E2F /* iTermResourceLimitsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A636C3B02288887600A83E2F /* iTermResourceLimitsHelper.m */; };
+		A636C3B522891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */; };
+		A636C3B622891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */; };
+		A636C3B722891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */; };
+		A636C3B822891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B422891BD800A83E2F /* StatusBarIconNoBattery@2x.png */; };
+		A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B422891BD800A83E2F /* StatusBarIconNoBattery@2x.png */; };
+		A636C3BA22891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A636C3B422891BD800A83E2F /* StatusBarIconNoBattery@2x.png */; };
 		A6374A211DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A1E1DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png */; };
 		A6374A221DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A1F1DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png */; };
 		A6374A231DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A6374A201DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png */; };
@@ -4781,6 +4787,8 @@
 		A635C4351AB38205008A2DEE /* iTermCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCursor.m; sourceTree = "<group>"; tabWidth = 4; };
 		A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermResourceLimitsHelper.h; sourceTree = "<group>"; };
 		A636C3B02288887600A83E2F /* iTermResourceLimitsHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermResourceLimitsHelper.m; sourceTree = "<group>"; };
+		A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconNoBattery.png; path = images/StatusBarIcons/StatusBarIconNoBattery.png; sourceTree = "<group>"; };
+		A636C3B422891BD800A83E2F /* StatusBarIconNoBattery@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconNoBattery@2x.png"; path = "images/StatusBarIcons/StatusBarIconNoBattery@2x.png"; sourceTree = "<group>"; };
 		A6374A1E1DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-testCustomUnderline.png"; sourceTree = "<group>"; };
 		A6374A1F1DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testCustomUnderline.png"; sourceTree = "<group>"; };
 		A6374A201DEA08C5000A136F /* PTYTextViewTest-golden-nonretina-testUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testUnderline.png"; sourceTree = "<group>"; };
@@ -6609,6 +6617,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */,
+				A636C3B422891BD800A83E2F /* StatusBarIconNoBattery@2x.png */,
 				5308BF9322828A28004BECAC /* StatusBarIconCharging.png */,
 				5308BF9422828A28004BECAC /* StatusBarIconCharging@2x.png */,
 				5308BF8B228283CD004BECAC /* StatusBarIconBattery.png */,
@@ -10528,6 +10538,7 @@
 				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
 				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */,
+				A636C3BA22891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A67F6136214395570093940A /* graphic_gulp.png in Resources */,
 				1D6ED97919AEA20D005A7799 /* important.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
@@ -10571,6 +10582,7 @@
 				A67D0D371A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				53B93DE321F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */,
+				A636C3B722891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */,
 				A67F6149214395870093940A /* graphic_less@2x.png in Resources */,
 				53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				5376CB3E220D2E4300FE7476 /* git.sb in Resources */,
@@ -11251,6 +11263,7 @@
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				1D44D0931CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				1D44CFC51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNote.png in Resources */,
+				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A618FFD1224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				1D44D0571CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBasicDraw.png in Resources */,
 				53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */,
@@ -11372,6 +11385,7 @@
 				1D44D0A01CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColorWithCursorBoost.png in Resources */,
 				A6F7A735213CB143004DE961 /* StatusBarIconLoupe@2x.png in Resources */,
 				1D44CFD31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
+				A636C3B622891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11578,6 +11592,7 @@
 				5308BF8D228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
+				A636C3B822891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
 				A67F618D214395A70093940A /* graphic_nodejs@2x.png in Resources */,
@@ -11720,6 +11735,7 @@
 				530AB7BC20A641E000D2AA08 /* repl_banner.txt in Resources */,
 				A67F614A214395870093940A /* graphic_http.png in Resources */,
 				A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
+				A636C3B522891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */,
 				A6E7AEA6214394F600DE9F3B /* graphic_docker.png in Resources */,
 				A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				A67F6167214395990093940A /* graphic_nano.png in Resources */,

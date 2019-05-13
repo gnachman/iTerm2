@@ -56,8 +56,30 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     return [@[ showPercentageKnob, showEstimatedTimeKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
++ (BOOL)machineHasBattery {
+    static dispatch_once_t onceToken;
+    static BOOL result;
+    dispatch_once(&onceToken, ^{
+        if ([[iTermPowerManager sharedInstance] currentState] == nil) {
+            result = NO;
+        } else {
+            result = YES;
+        }
+    });
+    return result;
+}
+
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconBattery" forClass:[self class]];
+    static dispatch_once_t onceToken;
+    static NSImage *image;
+    dispatch_once(&onceToken, ^{
+        if ([self.class machineHasBattery]) {
+            image = [NSImage it_imageNamed:@"StatusBarIconBattery" forClass:[self class]];
+        } else {
+            image = [NSImage it_imageNamed:@"StatusBarIconNoBattery" forClass:[self class]];
+        }
+    });
+    return image;
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -168,11 +190,15 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     return [longestPercentage sizeWithAttributes:self.leftAttributes];
 }
 
+- (BOOL)isCharging {
+    return [self.class machineHasBattery] && [[iTermPowerManager sharedInstance] connectedToPower];
+}
+
 - (CGSize)rightSize {
     CGSize size = [@"" sizeWithAttributes:self.rightAttributes];
     if (self.showTimeOnRight) {
         size.width += [@"55:55" sizeWithAttributes:self.rightAttributes].width;
-        const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+        const BOOL charging = self.isCharging;
         if (!charging) {
             return size;
         }
@@ -187,7 +213,7 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
 }
 
 - (BOOL)showTime {
-    const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+    const BOOL charging = self.isCharging;
     if (self.currentEstimate == 100 && charging) {
         return NO;
     }
@@ -234,7 +260,7 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     CGSize rightSize = self.rightSize;
 
     NSRect textRect = rect;
-    const BOOL charging = [[iTermPowerManager sharedInstance] connectedToPower];
+    const BOOL charging = self.isCharging;
     if (self.showTimeOnRight && charging) {
         textRect.size.width -= _chargingImage.size.width;
     }
