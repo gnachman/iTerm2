@@ -24,7 +24,7 @@
 - (void)resolveAsynchronously;
 
 // This is to be used by tests
-- (void)privateSetIsForegroundJob;
+- (void)privateSetIsForegroundJob:(BOOL)value;
 
 - (NSArray<iTermProcessInfo *> *)descendantsSkippingLevels:(NSInteger)levels;
 
