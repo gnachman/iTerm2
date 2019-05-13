@@ -18,6 +18,7 @@
 #import "NSObject+iTerm.h"
 
 @interface iTermFunctionCallSuggester()<CPParserDelegate, CPTokeniserDelegate>
+@property (nonatomic, readonly) CPLALR1Parser *parser;
 @end
 
 @implementation iTermFunctionCallSuggester {
@@ -57,6 +58,10 @@
         _parser.delegate = self;
     }
     return self;
+}
+
+- (void)dealloc {
+    [_parser it_releaseParser];
 }
 
 - (void)addTokenRecognizersToTokenizer:(CPTokeniser *)tokenizer {

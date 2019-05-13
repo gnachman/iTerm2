@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface CPShiftReduceParser (Cache)
 
 + (instancetype)parserWithBNF:(NSString *)bnf start:(NSString *)start;
+- (void)it_releaseParser;
 
 @end
 

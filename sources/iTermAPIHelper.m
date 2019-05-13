@@ -322,7 +322,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 + (instancetype)sharedInstanceIfEnabled {
-    if (![iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer]) {
+    if (![NSApp isRunningUnitTests] && ![iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer]) {
         return nil;
     }
     return [self sharedInstance];

@@ -8,12 +8,17 @@
 #import <XCTest/XCTest.h>
 #import "iTermFunctionCallSuggester.h"
 #import "iTermExpressionParser.h"
+#import "iTermExpressionParser+Private.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermVariableScope.h"
 
 @interface iTermExpressionParser(Testing)
 - (instancetype)initPrivate;
+@end
+
+@interface iTermFunctionCallSuggester(Testing)
+- (CPLALR1Parser *)parser;
 @end
 
 @interface iTermFunctionCallSuggesterTest : XCTestCase
@@ -114,4 +119,33 @@
     XCTAssertEqualObjects(actual, expected);
 }
 
+- (void)testParserReuse {
+    NSDictionary *signatures = @{ @"func1": @[ @"arg1", @"arg2" ],
+                                  @"func2": @[ ] };
+    NSArray *paths = @[ @"path.first", @"path.second", @"third" ];
+
+    CPLALR1Parser *firstInnerParser;
+    @autoreleasepool {
+        iTermFunctionCallSuggester *suggester =
+        [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
+                                                            pathSource:^NSSet<NSString *> *(NSString *prefix) {
+                                                                return [NSSet setWithArray:paths];
+                                                            }];
+        firstInnerParser = suggester.parser;
+        [suggester release];
+    }
+
+    CPLALR1Parser *secondInnerParser;
+    @autoreleasepool {
+        iTermFunctionCallSuggester *suggester =
+        [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
+                                                            pathSource:^NSSet<NSString *> *(NSString *prefix) {
+                                                                return [NSSet setWithArray:paths];
+                                                            }];
+        secondInnerParser = suggester.parser;
+        [suggester release];
+    }
+
+    XCTAssertEqual(firstInnerParser, secondInnerParser);
+}
 @end

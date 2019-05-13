@@ -27,7 +27,7 @@
 @implementation iTermExpressionParser {
     @protected
     CPTokeniser *_tokenizer;
-    CPParser *_parser;
+    CPSLRParser *_parser;
     iTermVariableScope *_scope;
     NSError *_error;
     NSString *_input;
@@ -173,6 +173,10 @@
         _parser.delegate = self;
     }
     return self;
+}
+
+- (void)dealloc {
+    [_parser it_releaseParser];
 }
 
 - (void)addSwiftyStringRecognizers {

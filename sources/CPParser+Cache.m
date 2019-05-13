@@ -9,13 +9,16 @@
 
 #import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 #import <CoreParse/CoreParse.h>
 
+static const char CPShiftReduceParserAssociatedObjectCacheKey;
+
 @implementation CPShiftReduceParser (Cache)
 
-+ (instancetype)parserWithBNF:(NSString *)bnf start:(NSString *)start {
++ (NSString *)it_keyWithBNF:(NSString *)bnf start:(NSString *)start {
     NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
     NSString *version = info[@"CFBundleShortVersionString"];
     NSString *key = [NSString stringWithFormat:@"%@ %@ %@%@",
@@ -23,15 +26,22 @@
                      NSStringFromClass(self),
                      bnf.it_contentHash,
                      start].it_contentHash;
+    return key;
+}
+
++ (instancetype)parserWithBNF:(NSString *)bnf start:(NSString *)start {
     __kindof CPParser *parser;
-    parser = self.it_cache[key];
+    NSString *key = [self it_keyWithBNF:bnf start:start];
+    parser = [self.it_cache[key] firstObject];
     if (parser) {
+        [self.it_cache[key] removeObjectAtIndex:0];
         return parser;
     }
 
     NSString *const file = [self it_pathToCacheForKey:key];
     parser = [self it_cachedFromFile:file];
     if (parser) {
+        [parser it_setAssociatedObject:[key copy] forKey:(void *)&CPShiftReduceParserAssociatedObjectCacheKey];
         return parser;
     }
 
@@ -40,10 +50,23 @@
         return nil;
     }
 
+    [parser it_setAssociatedObject:[key copy] forKey:(void *)&CPShiftReduceParserAssociatedObjectCacheKey];
     [parser it_writeToFile:file];
-
-    self.it_cache[key] = parser;
     return parser;
+}
+
+- (void)it_releaseParser {
+    NSString *key = [self it_associatedObjectForKey:(void *)&CPShiftReduceParserAssociatedObjectCacheKey];
+    if (!key) {
+        return;
+    }
+    self.delegate = nil;
+    NSMutableArray *array = [[CPShiftReduceParser it_cache] objectForKey:key];
+    if (!array) {
+        [[CPShiftReduceParser it_cache] setObject:[NSMutableArray arrayWithObject:self] forKey:key];
+    } else {
+        [array addObject:self];
+    }
 }
 
 + (NSString *)it_pathToCacheForKey:(NSString *)key {
@@ -54,8 +77,8 @@
     return file;
 }
 
-+ (NSMutableDictionary<NSString *, id> *)it_cache {
-    static NSMutableDictionary<NSString *, id> *cache;
++ (NSMutableDictionary<NSString *, NSMutableArray *> *)it_cache {
+    static NSMutableDictionary<NSString *, NSMutableArray *> *cache;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         cache = [NSMutableDictionary dictionary];

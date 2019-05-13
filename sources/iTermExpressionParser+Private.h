@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) iTermParsedExpression *expression;
 @end
 
-@interface iTermExpressionParser (Private)
+@class CPSLRParser;
+
+@interface iTermExpressionParser ()
 
 + (CPTokeniser *)newTokenizer;
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;
