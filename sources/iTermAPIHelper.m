@@ -2940,7 +2940,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     
     [controller newWindowWithAffinity:request.hasAffinity ? request.affinity : nil
-                     initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.profile
+                                 size:[PTYTab sizeForTmuxWindowWithAffinity:request.hasAffinity ? request.affinity : nil
+                                                                 controller:controller]
+                     initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.sharedProfile
                                                                               objectType:iTermWindowObject]
                                 scope:[iTermVariableScope globalsScope]
                            completion:^(int newWindowId) {
@@ -2973,7 +2975,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
             return;
         }
 
-        [controller openWindowWithId:[[request windowId] intValue] intentional:YES];
+        [controller openWindowWithId:[[request windowId] intValue]
+                         intentional:YES
+                             profile:controller.sharedProfile];
         response.status = ITMTmuxResponse_Status_Ok;
         handler(response);
         return;

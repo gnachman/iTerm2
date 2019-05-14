@@ -65,7 +65,8 @@
 }
 
 + (instancetype)tmuxLayoutWithController:(TmuxController *)controller
-                                   scope:(iTermVariableScope *)scope {
+                                   scope:(iTermVariableScope *)scope
+                                  window:(int)window {
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *leftConfiguration;
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *rightConfiguration;
 
@@ -79,7 +80,8 @@
     id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}
                                                                                                          scope:scope];
 
-    NSDictionary *layoutDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:controller.profile];
+    NSDictionary *layoutDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT
+                                                           inProfile:[controller profileForWindow:window]];
     iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDict
                                                                               scope:scope];
     layout.components = @[ leftComponent, springComponent, rightComponent ];

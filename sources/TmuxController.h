@@ -47,9 +47,10 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) BOOL hasOutstandingWindowResize;
 @property(nonatomic, readonly, getter=isAttached) BOOL attached;
 @property(nonatomic, readonly) BOOL detaching;
-@property(nonatomic, copy) Profile *profile;
-@property(nonatomic, readonly) NSDictionary *fontOverrides;
+@property(nonatomic, copy) Profile *sharedProfile;
+@property(nonatomic, readonly) NSDictionary *sharedFontOverrides;
 @property(nonatomic, readonly) NSString *sessionGuid;
+@property(nonatomic, readonly) BOOL variableWindowSize;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -57,12 +58,20 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
                    profileModel:(ProfileModel *)profileModel NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+- (Profile *)profileForWindow:(int)window;
+- (NSDictionary *)fontOverridesForWindow:(int)window;
+
 - (void)openWindowsInitial;
+
 - (void)openWindowWithId:(int)windowId
-			 intentional:(BOOL)intentional;
+			 intentional:(BOOL)intentional
+                 profile:(Profile *)profile;
+
 - (void)openWindowWithId:(int)windowId
 			  affinities:(NSArray *)affinities
-			 intentional:(BOOL)intentional;
+			 intentional:(BOOL)intentional
+                 profile:(Profile *)profile;
+
 - (void)hideWindow:(int)windowId;
 
 // Modifies a native tab to match the given server layout.
@@ -87,7 +96,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
-- (BOOL)windowDidResize:(NSWindowController<iTermWindowController> *)term;
+- (void)windowDidResize:(NSWindowController<iTermWindowController> *)term;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 
@@ -111,6 +120,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)selectPane:(int)windowPane;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
+- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(NSString *)value;
+- (NSSize)sizeOfSmallestWindowAmong:(NSSet<NSString *> *)siblings;
 
 // nil: Open in a new window
 // A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
@@ -118,6 +129,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 // If affinity is given then the newly created tab will be considered "manually opened" which is
 // used to determine the tab's eventual location in the tabbar.
 - (void)newWindowWithAffinity:(NSString *)windowIdString
+                         size:(NSSize)size
              initialDirectory:(iTermInitialDirectory *)initialDirectory
                         scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion;
@@ -169,10 +181,14 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
-           vSpacing:(double)vs;
+           vSpacing:(double)vs
+             window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession *> *)clientSessions;
+
+- (void)setSize:(NSSize)size windows:(NSArray<NSString *> *)windows;
+- (void)setSize:(NSSize)size window:(int)window;
 
 @end

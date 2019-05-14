@@ -4283,7 +4283,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
-                                   tmuxController:(TmuxController *)tmuxController {
+                                   tmuxController:(TmuxController *)tmuxController
+                                           window:(int)window {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[parseNode objectForKey:kLayoutDictHeightKey] forKey:SESSION_ARRANGEMENT_ROWS];
@@ -4310,7 +4311,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (value) {
         result[SESSION_ARRANGEMENT_TMUX_TAB_COLOR] = value;
     }
-    NSDictionary *fontOverrides = tmuxController.fontOverrides;
+    NSDictionary *fontOverrides = [tmuxController fontOverridesForWindow:window];
     if (fontOverrides) {
         result[SESSION_ARRANGEMENT_FONT_OVERRIDES] = fontOverrides;
     }
@@ -4616,7 +4617,9 @@ ITERM_WEAKLY_REFERENCEABLE
         NSNumber *hSpacing = args[2];
         NSNumber *vSpacing = args[3];
         TmuxController *controller = args[4];
-        if (controller == _tmuxController) {
+        NSNumber *tmuxWindow = args[5];
+        if (controller == _tmuxController &&
+            (!controller.variableWindowSize || tmuxWindow.intValue == self.delegate.tmuxWindow)) {
             [_textview setFont:font
                   nonAsciiFont:nonAsciiFont
              horizontalSpacing:[hSpacing doubleValue]
@@ -4635,14 +4638,15 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                       _textview.nonAsciiFontEvenIfNotUsed,
                                                                       @(_textview.horizontalSpacing),
                                                                       @(_textview.verticalSpacing),
-                                                                      _tmuxController ?: [NSNull null] ]];
+                                                                      _tmuxController ?: [NSNull null],
+                                                                      @(self.delegate.tmuxWindow)]];
         fontChangeNotificationInProgress = NO;
         [_delegate setTmuxFont:_textview.font
                   nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
                       hSpacing:_textview.horizontalSpacing
                       vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
-                                                            object:nil];
+                                                            object:self];
     }
 }
 
@@ -5555,7 +5559,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
                 if ([iTermAdvancedSettingsModel useTmuxStatusBar] ||
                     [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
-                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController scope:nil] dictionaryValue] }];
+                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
+                                                                                                                              scope:nil
+                                                                                                                             window:self.delegate.tmuxWindow] dictionaryValue] }];
                 }
                 break;
         }
@@ -5892,11 +5898,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)tmuxWindowAddedWithId:(int)windowId
-{
+- (void)tmuxWindowAddedWithId:(int)windowId {
     if (![_tmuxController window:windowId]) {
         [_tmuxController openWindowWithId:windowId
-                              intentional:NO];
+                              intentional:NO
+                                  profile:[_tmuxController profileForWindow:self.delegate.tmuxWindow]];
     }
     [_tmuxController windowsChanged];
 }
@@ -6056,11 +6062,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (VT100GridSize)tmuxClientSize {
-    return [_delegate sessionTmuxSizeWithProfile:_tmuxController.profile];
+    return [_delegate sessionTmuxSizeWithProfile:[_tmuxController profileForWindow:self.delegate.tmuxWindow]];
 }
 
 - (NSInteger)tmuxNumberOfLinesOfScrollbackHistory {
-    Profile *profile = _tmuxController.profile;
+    Profile *profile = [_tmuxController profileForWindow:self.delegate.tmuxWindow];
     if ([iTermPreferences useTmuxProfile]) {
         profile = [[ProfileModel sharedInstance] tmuxProfile];
     }

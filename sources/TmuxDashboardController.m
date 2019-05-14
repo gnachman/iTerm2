@@ -235,7 +235,7 @@
         TmuxController *tmuxController = self.tmuxController;
         [tmuxController newWindowInSession:[sessionsTable_ selectedSessionName]
                                      scope:[iTermVariableScope globalsScope]
-                          initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:tmuxController.profile
+                          initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:tmuxController.sharedProfile
                                                                                    objectType:iTermWindowObject]];
     }
 }
@@ -246,12 +246,14 @@
         for (NSNumber *wid in windowIds) {
             [[self tmuxController] openWindowWithId:[wid intValue]
                                          affinities:windowIds
-										intentional:YES];
+                                        intentional:YES
+                                            profile:self.tmuxController.sharedProfile];
         }
     } else {
         for (NSNumber *wid in windowIds) {
             [[self tmuxController] openWindowWithId:[wid intValue]
-										intentional:YES];
+                                        intentional:YES
+                                            profile:self.tmuxController.sharedProfile];
         }
     }
 	[[self tmuxController] saveHiddenWindows];

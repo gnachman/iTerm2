@@ -397,7 +397,7 @@ static int OctalValue(const char *bytes) {
         }
         if (self.target) {
             [self.target performSelector:self.selector
-                              withObject:[NSNumber numberWithInt:windowIndex_]];
+                              withObject:self];
         }
         if (isNewWindow) {
             [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];

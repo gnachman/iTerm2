@@ -238,6 +238,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)synergyModifierRemappingEnabled;
 + (double)timeoutForStringEvaluation;
 + (double)timeToWaitForEmojiPanel;
++ (BOOL)tmuxVariableWindowSizesSupported;
 + (BOOL)tolerateUnrecognizedTmuxCommands;
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)traditionalVisualBell;
