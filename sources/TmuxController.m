@@ -304,8 +304,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 }
 
-- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(int)wid {
-    return [affinities_ valuesEqualTo:[NSString stringWithInt:wid]];
+- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(NSString *)value {
+    return [affinities_ valuesEqualTo:value];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response {
@@ -364,7 +364,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                              [[doc valueInRecord:record forField:@"window_height"] intValue])
                            layout:[doc valueInRecord:record forField:@"window_layout"]
-                       affinities:[self savedAffinitiesForWindow:wid]
+                       affinities:[self savedAffinitiesForWindow:[NSString stringWithInt:wid]]
                       windowFlags:[doc valueInRecord:record forField:@"window_flags"]
                           initial:YES];
     }
@@ -574,39 +574,79 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         // After the last session closes a size of 0 is reported.
         return YES;
     }
-    DLog(@"The last known size of tmux windows is %@", NSStringFromSize(lastSize_));
-    if (NSEqualSizes(size, lastSize_)) {
-        return NO;
-    }
-
-    DLog(@"Looks like the window resize is legit. Change client size to %@", NSStringFromSize(size));
-    [self setClientSize:size];
+    NSArray<NSString *> *windows = [term.tabs mapWithBlock:^id(PTYTab *tab) {
+        if (tab.tmuxController != self || !tab.tmuxTab) {
+            return nil;
+        }
+        return [NSString stringWithInt:tab.tmuxWindow];
+    }];
+    [self setSize:size windows:windows];
     return YES;
+}
+
+- (NSSize)sizeOfSmallestWindowAmong:(NSSet<NSString *> *)siblings {
+    NSSize minSize = NSMakeSize(INFINITY, INFINITY);
+    for (NSString *windowKey in siblings) {
+        if ([windowKey hasPrefix:@"pty"]) {
+            continue;
+        }
+        PTYTab *tab = [[windows_ objectForKey:@(windowKey.intValue)] objectAtIndex:0];
+        NSSize size = [tab tmuxSize];
+        minSize.width = MIN(minSize.width, size.width);
+        minSize.height = MIN(minSize.height, size.height);
+    }
+    return minSize;
 }
 
 - (void)fitLayoutToWindows {
     if (!windows_.count) {
         return;
     }
-    NSSize minSize = NSMakeSize(INFINITY, INFINITY);
-    for (id windowKey in windows_) {
-        PTYTab *tab = [[windows_ objectForKey:windowKey] objectAtIndex:0];
-        NSSize size = [tab tmuxSize];
-        minSize.width = MIN(minSize.width, size.width);
-        minSize.height = MIN(minSize.height, size.height);
+    for (NSSet *siblings in affinities_.classes) {
+        if (siblings.count == 0) {
+            continue;
+        }
+        NSSize minSize = [self sizeOfSmallestWindowAmong:siblings];
+        if (minSize.width <= 0 || minSize.height <= 0) {
+            // After the last session closes a size of 0 is reported. Apparently unplugging a monitor
+            // leads to a negative value here. That's inferred from crash report 1468853197.309853926.txt
+            // (at the time of that crash, this tested only for zero values so it passed through and
+            // asserted anyway).
+            continue;
+        }
+        [self setSize:minSize windows:siblings.allObjects];
     }
-    if (minSize.width <= 0 || minSize.height <= 0) {
-        // After the last session closes a size of 0 is reported. Apparently unplugging a monitor
-        // leads to a negative value here. That's inferred from crash report 1468853197.309853926.txt
-        // (at the time of that crash, this tested only for zero values so it passed through and
-        // asserted anyway).
-        return;
+}
+
+- (void)setSize:(NSSize)size window:(int)window {
+    [gateway_ sendCommandList:[self commandListToSetSize:size ofWindow:window]];
+}
+
+- (NSArray<NSDictionary *> *)commandListToSetSize:(NSSize)size ofWindow:(int)window {
+    NSSet *siblings = [affinities_ valuesEqualTo:[@(window) stringValue]];
+    if (!siblings.count) {
+        return [self commandListToSetSize:size ofWindows:@[ [NSString stringWithInt:window] ]];
+    } else {
+        return [self commandListToSetSize:size ofWindows:siblings.allObjects];
     }
-    if (NSEqualSizes(minSize, lastSize_)) {
-        return;
-    }
-    DLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
-    [self setClientSize:minSize];
+}
+
+- (void)setSize:(NSSize)size windows:(NSArray<NSString *> *)windows {
+    [gateway_ sendCommandList:[self commandListToSetSize:size ofWindows:windows]];
+}
+
+- (NSArray<NSDictionary *> *)commandListToSetSize:(NSSize)size ofWindows:(NSArray<NSString *> *)windows {
+    return [windows mapWithBlock:^NSDictionary *(NSString *window) {
+        if ([window hasPrefix:@"pty"]) {
+            return nil;
+        }
+        NSString *command = [NSString stringWithFormat:@"resize-window -x %@ -y %@ -t @%@", @((int)size.width), @((int)size.height), window];
+        NSDictionary *dict = [gateway_ dictionaryForCommand:command responseTarget:self responseSelector:@selector(handleResizeWindowResponse:) responseObject:nil flags:0];
+        return dict;
+    }];
+}
+
+- (void)handleResizeWindowResponse:(NSString *)response {
 }
 
 - (int)adjustHeightForStatusBar:(int)height {
@@ -946,6 +986,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                               scope:scope
                                          completion:
      ^(NSString *command) {
+#warning TODO: Refresh client first
          [gateway_ sendCommand:command
                 responseTarget:nil
               responseSelector:nil];
@@ -953,6 +994,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
+                         size:(NSSize)size
              initialDirectory:(iTermInitialDirectory *)initialDirectory
                         scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion {
@@ -961,11 +1003,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                        scope:scope
                                                   completion:
      ^(NSString *command) {
-         [gateway_ sendCommand:command
-                responseTarget:self
-              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
-                responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
-                         flags:0];
+         NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
+                                     (int)size.width, [self adjustHeightForStatusBar:size.height]];
+         NSArray *commands = @[ [gateway_ dictionaryForCommand:setSizeCommand
+                                                responseTarget:nil
+                                              responseSelector:nil
+                                                responseObject:nil
+                                                         flags:0],
+                                [gateway_ dictionaryForCommand:command
+                                                responseTarget:self
+                                              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
+                                                responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
+                                                         flags:0] ];
+         [gateway_ sendCommandList:commands];
      }];
 }
 
@@ -1413,9 +1463,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return nil;
 }
 
-- (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid
-{
-    for (NSString *n in [self savedAffinitiesForWindow:wid]) {
+- (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid {
+    for (NSString *n in [self savedAffinitiesForWindow:[NSString stringWithInt:wid]]) {
         if ([n hasPrefix:@"pty-"]) {
             PseudoTerminal *term = [self terminalWithGuid:n];
             if (term) {

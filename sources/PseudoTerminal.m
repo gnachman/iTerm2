@@ -2647,6 +2647,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)newTmuxWindow:(id)sender {
     [[self currentTmuxController] newWindowWithAffinity:nil
+                                                   size:[PTYTab sizeForTmuxWindowWithAffinity:nil
+                                                                                   controller:self.currentTmuxController]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermWindowObject]
                                                   scope:[iTermVariableScope globalsScope]
@@ -2658,7 +2660,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (tmuxWindow < 0) {
         tmuxWindow = -(number_ + 1);
     }
-    [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]
+    NSString *affinity = [NSString stringWithFormat:@"%d", tmuxWindow];
+    [[self currentTmuxController] newWindowWithAffinity:affinity
+                                                   size:[PTYTab sizeForTmuxWindowWithAffinity:affinity
+                                                                                   controller:self.currentTmuxController]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermTabObject]
                                                   scope:[iTermVariableScope globalsScope]
@@ -3332,7 +3337,18 @@ ITERM_WEAKLY_REFERENCEABLE
                         // with legacy scrollers (if the system is configured to use them) and then
                         // it needs to update its size when the scrollers are forced to be inline.
                         for (TmuxController *controller in self.uniqueTmuxControllers) {
-                            [controller setClientSize:self.tmuxCompatibleSize];
+                            NSArray<NSString *> *windows = [self.tabs mapWithBlock:^id(PTYTab *anObject) {
+                                if (!anObject.tmuxTab) {
+                                    return nil;
+                                }
+                                if (anObject.tmuxController != controller) {
+                                    return nil;
+                                }
+                                return [NSString stringWithInt:anObject.tmuxWindow];
+                            }];
+                            if (windows.count > 0) {
+                                [controller setSize:self.tmuxCompatibleSize windows:windows];
+                            }
                         }
                     }
                 }
@@ -5445,7 +5461,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [theTab recompact];
         [theTab notifyWindowChanged];
         DLog(@"Update client size");
-        [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
+        [[theTab tmuxController] setSize:theTab.tmuxSize window:theTab.tmuxWindow];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
 }

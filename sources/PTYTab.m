@@ -336,6 +336,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                      alpha:1.0];
 }
 
++ (NSSize)sizeForTmuxWindowWithAffinity:(NSString *)affinity
+                             controller:(TmuxController *)controller {
+    if (affinity != nil) {
+        NSSet *siblings = [controller savedAffinitiesForWindow:affinity];
+        NSSize size = [controller sizeOfSmallestWindowAmong:siblings];
+        if (size.width != INFINITY && size.height != INFINITY) {
+            return size;
+        }
+    }
+    Profile *profile = controller.profile;
+    if (!profile) {
+        return NSMakeSize(80, 25);
+    }
+    return NSMakeSize([profile[KEY_COLUMNS] intValue] ?: 80,
+                      [profile[KEY_ROWS] intValue] ?: 25);
+}
+
 #pragma mark - NSObject
 
 - (instancetype)initWithSession:(PTYSession *)session
@@ -3496,7 +3513,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     iTermTmuxLayoutBuilder *builder = [[iTermTmuxLayoutBuilder alloc] initWithRootNode:root];
     if (!self.realParentWindow.anyFullScreen) {
         VT100GridSize clientSize = builder.clientSize;
-        [self.tmuxController setClientSize:NSMakeSize(clientSize.width, clientSize.height)];
+        [self.tmuxController setSize:NSMakeSize(clientSize.width, clientSize.height)
+                              window:self.tmuxWindow];
     }
     [self.tmuxController setLayoutInWindow:self.tmuxWindow toLayout:builder.layoutString];
 }

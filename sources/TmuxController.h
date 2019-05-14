@@ -111,6 +111,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)selectPane:(int)windowPane;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
+- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(NSString *)value;
+- (NSSize)sizeOfSmallestWindowAmong:(NSSet<NSString *> *)siblings;
 
 // nil: Open in a new window
 // A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
@@ -118,6 +120,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 // If affinity is given then the newly created tab will be considered "manually opened" which is
 // used to determine the tab's eventual location in the tabbar.
 - (void)newWindowWithAffinity:(NSString *)windowIdString
+                         size:(NSSize)size
              initialDirectory:(iTermInitialDirectory *)initialDirectory
                         scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion;
@@ -174,5 +177,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession *> *)clientSessions;
+
+- (void)setSize:(NSSize)size windows:(NSArray<NSString *> *)windows;
+- (void)setSize:(NSSize)size window:(int)window;
 
 @end

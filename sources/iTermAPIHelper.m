@@ -2940,6 +2940,8 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     
     [controller newWindowWithAffinity:request.hasAffinity ? request.affinity : nil
+                                 size:[PTYTab sizeForTmuxWindowWithAffinity:request.hasAffinity ? request.affinity : nil
+                                                                 controller:controller]
                      initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.profile
                                                                               objectType:iTermWindowObject]
                                 scope:[iTermVariableScope globalsScope]

@@ -78,6 +78,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
 @property(nonatomic) BOOL deferFontChanges;
 
++ (NSSize)sizeForTmuxWindowWithAffinity:(NSString *)affinity
+                             controller:(TmuxController *)controller;
+
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
