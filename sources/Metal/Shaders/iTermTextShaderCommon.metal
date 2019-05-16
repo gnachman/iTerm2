@@ -171,6 +171,7 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
 
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle:
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble:
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle:
             // This shouldn't happen.
             return 0;
     }
