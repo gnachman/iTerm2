@@ -2394,7 +2394,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     // Keep the underline a reasonable distance from the baseline.
     CGFloat underlineOffset = self.baselineOffset - xHeight / 2.0;
     CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
-    return [self retinaRound:yOffset + _cellSize.height + underlineOffset] - 1.0 / (2 * scaleFactor);
+    return [self retinaRound:yOffset + _cellSize.height + underlineOffset];
 }
 
 - (CGFloat)underlineThicknessForFont:(NSFont *)font {
