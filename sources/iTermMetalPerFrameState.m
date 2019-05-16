@@ -40,7 +40,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 typedef struct {
     unsigned int isMatch : 1;
-    unsigned int inUnderlinedRange : 1;
+    unsigned int inUnderlinedRange : 1;  // This is the underline for semantic history
     unsigned int selected : 1;
     unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
@@ -491,7 +491,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             c.backgroundColorMode = ColorModeAlternate;
 
             c.underline = YES;
-
+            c.strikethrough = NO;
+            
             if (i + 1 < len &&
                 coord.x == gridWidth -1 &&
                 buf[i+1].code == DWC_RIGHT &&
@@ -808,7 +809,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
         }
-
+        if (line[x].strikethrough) {
+            // This right here is why strikethrough and underline is mutually exclusive
+            attributes[x].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
+        }
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;
         currentColorKey = previousColorKey;
@@ -1127,9 +1131,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (void)metalGetUnderlineDescriptorsForASCII:(out iTermMetalUnderlineDescriptor *)ascii
-                                    nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii {
+                                    nonASCII:(out iTermMetalUnderlineDescriptor *)nonAscii
+                               strikethrough:(out iTermMetalUnderlineDescriptor *)strikethrough {
     *ascii = _configuration->_asciiUnderlineDescriptor;
     *nonAscii = _configuration->_nonAsciiUnderlineDescriptor;
+    *strikethrough = _configuration->_strikethroughUnderlineDescriptor;
 }
 
 // Use 24-bit color to set the text and background color of a cell.

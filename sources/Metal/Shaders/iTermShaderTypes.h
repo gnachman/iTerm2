@@ -32,11 +32,20 @@ typedef enum {
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
 } iTermFragmentBufferIndex;
 
+// AND with mask to remove strikethrough bit
+#define iTermMetalGlyphAttributesUnderlineBitmask 3
+// OR this to set the strikethrough bit
+#define iTermMetalGlyphAttributesUnderlineStrikethroughFlag 4
 typedef enum {
     iTermMetalGlyphAttributesUnderlineNone = 0,
     iTermMetalGlyphAttributesUnderlineSingle = 1,
     iTermMetalGlyphAttributesUnderlineDouble = 2,
-    iTermMetalGlyphAttributesUnderlineDashedSingle = 3
+    iTermMetalGlyphAttributesUnderlineDashedSingle = 3,
+
+    iTermMetalGlyphAttributesUnderlineStrikethrough = iTermMetalGlyphAttributesUnderlineStrikethroughFlag,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle = 5,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble = 6,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle = 7,
 } iTermMetalGlyphAttributesUnderline;
 
 typedef struct {
@@ -104,6 +113,8 @@ typedef struct {
     vector_float2 cellSize;  // Size of a cell
     float underlineOffset;  // Distance from bottom of cell to underline in pixels
     float underlineThickness;  // Thickness of underline in pixels
+    float strikethroughOffset;
+    float strikethroughThickness;
     float scale;  // 2 for retina, 1 for non retina
 } iTermTextureDimensions;
 

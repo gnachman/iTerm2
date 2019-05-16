@@ -330,7 +330,10 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 
 - (CGFloat)yOriginForUnderlineForFont:(NSFont *)font yOffset:(CGFloat)yOffset cellHeight:(CGFloat)cellHeight;
+- (CGFloat)yOriginForStrikethroughForFont:(NSFont *)font yOffset:(CGFloat)yOffset cellHeight:(CGFloat)cellHeight;
+
 - (CGFloat)underlineThicknessForFont:(NSFont *)font;
+- (CGFloat)strikethroughThicknessForFont:(NSFont *)font;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
@@ -351,7 +354,10 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
             code == TAB_FILLER ||
             code < ' ') {
             return NO;
-        } else if (code == ' ' && !c->underline && !c->urlCode) {
+        } else if (code == ' ' &&
+                   !c->underline &&
+                   !c->strikethrough &&
+                   !c->urlCode) {
             return NO;
         }
     }

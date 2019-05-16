@@ -82,6 +82,13 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                          cellHeight:_cellSize.height];
     _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
 
+    // We use the ASCII font's color and underline thickness for strikethrough.
+    _strikethroughUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
+    _strikethroughUnderlineDescriptor.offset = [drawingHelper yOriginForStrikethroughForFont:_asciiFont.font
+                                                                                     yOffset:0
+                                                                                  cellHeight:_cellSize.height];
+    _strikethroughUnderlineDescriptor.thickness = [drawingHelper strikethroughThicknessForFont:_asciiFont.font];
+
     // Indicators
     NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     _fullScreenFlashColor = simd_make_float4(color.redComponent,

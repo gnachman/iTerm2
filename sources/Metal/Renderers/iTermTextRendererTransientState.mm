@@ -289,10 +289,11 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         }
     }
 
-    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
+    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\nstrikethroughUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
                    _backgroundTexture,
                    iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
                    iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
+                   iTermMetalUnderlineDescriptorDescription(&_strikethroughUnderlineDescriptor),
                    @(_defaultBackgroundColor.x),
                    @(_defaultBackgroundColor.y),
                    @(_defaultBackgroundColor.z),
@@ -348,6 +349,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                                                 vector_uint2,
                                                 vector_uint2,
                                                 iTermMetalUnderlineDescriptor,
+                                                iTermMetalUnderlineDescriptor,
                                                 BOOL underlined,
                                                 BOOL emoji))block {
     for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
@@ -362,6 +364,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
                       CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize),
                       _asciiUnderlineDescriptor,
+                      _strikethroughUnderlineDescriptor,
                       underlined,
                       emoji);
             }
@@ -374,6 +377,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                                            id<MTLTexture>,
                                            vector_uint2,
                                            vector_uint2,
+                                           iTermMetalUnderlineDescriptor,
                                            iTermMetalUnderlineDescriptor,
                                            BOOL underlined,
                                            BOOL emoji))block {
@@ -393,6 +397,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                           texturePage->get_atlas_size(),
                           texturePage->get_cell_size(),
                           _nonAsciiUnderlineDescriptor,
+                          _strikethroughUnderlineDescriptor,
                           !!(k & iTermPIUArrayIndexUnderlined),
                           !!(k & iTermPIUArrayIndexNotUnderlinedEmoji));
                 }
@@ -403,7 +408,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
 }
 
 - (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU>[iTermPIUArraySize][iTermNumberOfPIUArrays])piuArrays
-                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, BOOL, BOOL))block {
+                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, iTermMetalUnderlineDescriptor, BOOL, BOOL))block {
     [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexUnderlined]
                              underlined:true
                                   emoji:false
@@ -427,6 +432,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                                  id<MTLTexture>,
                                  vector_uint2,
                                  vector_uint2,
+                                 iTermMetalUnderlineDescriptor,
                                  iTermMetalUnderlineDescriptor,
                                  BOOL underlined,
                                  BOOL emoji))block

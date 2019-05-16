@@ -1,2 +1,24 @@
 [4mUnderlined -p- 😀  🆕  gjgjgjg        😀[0m
 [31;4mRed Underlined[0m
+[21mDouble underline[m
+
+[9mStrikethrough[29mNot strikethrough[9mStrikethrough[mNot strikethrough
+[31;9mRed Strikethrough[0m
+
+[4;9mUnderlined and strikethrough[m
+[21;9mDouble underlined and strikethrough[m
+
+
+OSC 8 URL TESTS
+
+Plain URL:
+]8;;https://bugzilla.gnome.org/show_bug.cgi?id=779734gnome-terminal #779734]8;;
+
+With underline:
+[4m]8;;https://bugzilla.gnome.org/show_bug.cgi?id=779734gnome-terminal #779734]8;;[m
+
+With strikethrough:
+[9m]8;;https://bugzilla.gnome.org/show_bug.cgi?id=779734gnome-terminal #779734]8;;[m
+
+With underline and strikethrough:
+[4;9m]8;;https://bugzilla.gnome.org/show_bug.cgi?id=779734gnome-terminal #779734]8;;[m

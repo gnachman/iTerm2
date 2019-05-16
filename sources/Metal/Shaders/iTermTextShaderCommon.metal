@@ -116,6 +116,8 @@ float FractionOfPixelThatIntersectsUnderline(float2 clipSpacePosition,
     return intersection;
 }
 
+// Call this with none, single, double, or strikethrough only. If you want strikethrough and an
+// underline call it twice.
 float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                                      float2 clipSpacePosition,
                                                      float2 viewportSize,
@@ -139,6 +141,7 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
         case iTermMetalGlyphAttributesUnderlineNone:
             return 0;
 
+        case iTermMetalGlyphAttributesUnderlineStrikethrough:
         case iTermMetalGlyphAttributesUnderlineSingle:
             return weight;
 
@@ -165,6 +168,11 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
             } else {
                 return weight;
             }
+
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle:
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble:
+            // This shouldn't happen.
+            return 0;
     }
 
     // Shouldn't get here
@@ -177,6 +185,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 cellOffset,
                                        float underlineOffset,
                                        float underlineThickness,
+                                       float strikethroughOffset,
+                                       float strikethroughThickness,
                                        float2 textureSize,
                                        float2 textureOffset,
                                        float2 textureCoordinate,
@@ -189,8 +199,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                                                   clipSpacePosition,
                                                                   viewportSize,
                                                                   cellOffset,
-                                                                  underlineOffset,
-                                                                  underlineThickness,
+                                                                  underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough ? strikethroughOffset : underlineOffset,
+                                                                  underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough ? strikethroughThickness : underlineThickness,
                                                                   scale);
     if (weight == 0) {
         return 0;
@@ -198,7 +208,9 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
     }
-
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
+        return weight;
+    }
     half4 mask = GetMinimumColorComponentsOfNeighbors(textureSize,
                                                       textureOffset,
                                                       textureCoordinate,
@@ -222,8 +234,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 clipSpacePosition,
                                       float2 viewportSize,
                                       float2 cellOffset,
-                                      float underlineOffset,
-                                      float underlineThickness,
+                                      float offset,
+                                      float thickness,
                                       float2 textureSize,
                                       float2 textureOffset,
                                       float2 textureCoordinate,
@@ -236,14 +248,17 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                                                   clipSpacePosition,
                                                                   viewportSize,
                                                                   cellOffset,
-                                                                  underlineOffset,
-                                                                  underlineThickness,
+                                                                  offset,
+                                                                  thickness,
                                                                   scale);
     if (weight == 0) {
         return 0;
     }
     if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
+    }
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
+        return weight;
     }
     half maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
                                                          textureOffset,

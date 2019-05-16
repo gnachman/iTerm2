@@ -65,8 +65,25 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
+    half strikethroughWeight = 0;
+    if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
+        strikethroughWeight = ComputeWeightOfUnderlineRegular(iTermMetalGlyphAttributesUnderlineStrikethrough,
+                                                              in.clipSpacePosition.xy,
+                                                              in.viewportSize,
+                                                              in.cellOffset,
+                                                              dimensions->strikethroughOffset,
+                                                              dimensions->strikethroughThickness,
+                                                              dimensions->textureSize,
+                                                              in.textureOffset,
+                                                              in.textureCoordinate,
+                                                              dimensions->glyphSize,
+                                                              dimensions->cellSize,
+                                                              texture,
+                                                              textureSampler,
+                                                              dimensions->scale);
+    }
     // Emoji, underlined
-    half underlineWeight = ComputeWeightOfUnderlineRegular(in.underlineStyle,
+    half underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
                                                            in.clipSpacePosition.xy,
                                                            in.viewportSize,
                                                            in.cellOffset,
@@ -82,7 +99,7 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
                                                            dimensions->scale);
     return mix(bwColor,
                in.underlineColor,
-               underlineWeight);
+               max(strikethroughWeight, underlineWeight));
 }
 
 fragment half4
@@ -104,6 +121,8 @@ iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput i
                                                        in.cellOffset,
                                                        dimensions->underlineOffset,
                                                        dimensions->underlineThickness,
+                                                       dimensions->strikethroughOffset,
+                                                       dimensions->strikethroughThickness,
                                                        dimensions->textureSize,
                                                        in.textureOffset,
                                                        in.textureCoordinate,

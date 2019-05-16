@@ -1801,7 +1801,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [terminal_ setForegroundColor:5 alternateSemantics:NO];
     [terminal_ setBackgroundColor:6 alternateSemantics:NO];
-    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m"];  // Bold, italic, blink, underline
+    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m^[[9m"];  // Bold, italic, blink, underline, strikethrough
     [screen appendStringAtCursor:@"Hello world"];
 
     XCTAssert([[screen compactLineDump] isEqualToString:
@@ -1816,6 +1816,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[0].italic);
     XCTAssert(line[0].blink);
     XCTAssert(line[0].underline);
+    XCTAssert(line[0].strikethrough);
     XCTAssert(line[0].backgroundColor == 6);
     XCTAssert(line[0].backgroundColorMode == ColorModeNormal);
 }
@@ -1881,7 +1882,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [terminal_ setForegroundColor:5 alternateSemantics:NO];
     [terminal_ setBackgroundColor:6 alternateSemantics:NO];
-    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m"];  // Bold, italic, blink, underline
+    [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m^[[9m"];  // Bold, italic, blink, underline, strikethrough
 
     unichar chars[] = {
         0x301, //  standalone
@@ -1920,6 +1921,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[0].italic);
     XCTAssert(line[0].blink);
     XCTAssert(line[0].underline);
+    XCTAssert(line[0].strikethrough);
     XCTAssert(line[0].backgroundColor == 6);
     XCTAssert(line[0].backgroundColorMode == ColorModeNormal);
 

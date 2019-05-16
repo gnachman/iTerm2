@@ -15,7 +15,8 @@
 
 NSString *const kGraphicRenditionBoldKey = @"Bold";
 NSString *const kGraphicRenditionBlinkKey = @"Blink";
-NSString *const kGraphicRenditionUnderKey = @"Underline";
+NSString *const kGraphicRenditionUnderlineKey = @"Underline";
+NSString *const kGraphicRenditionStrikethroughKey = @"Strikethrough";
 NSString *const kGraphicRenditionReversedKey = @"Reversed";
 NSString *const kGraphicRenditionFaintKey = @"Faint";
 NSString *const kGraphicRenditionItalicKey = @"Italic";
@@ -96,7 +97,8 @@ NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 typedef struct {
     BOOL bold;
     BOOL blink;
-    BOOL under;
+    BOOL underline;
+    BOOL strikethrough;
     BOOL reversed;
     BOOL faint;
     BOOL italic;
@@ -153,20 +155,22 @@ typedef struct {
 #define DEL  0x7f
 
 // character attributes
-#define VT100CHARATTR_ALLOFF   0
-#define VT100CHARATTR_BOLD     1
-#define VT100CHARATTR_FAINT    2
-#define VT100CHARATTR_ITALIC   3
-#define VT100CHARATTR_UNDER    4
-#define VT100CHARATTR_BLINK    5
-#define VT100CHARATTR_REVERSE  7
+#define VT100CHARATTR_ALLOFF           0
+#define VT100CHARATTR_BOLD             1
+#define VT100CHARATTR_FAINT            2
+#define VT100CHARATTR_ITALIC           3
+#define VT100CHARATTR_UNDERLINE        4
+#define VT100CHARATTR_BLINK            5
+#define VT100CHARATTR_REVERSE          7
+#define VT100CHARATTR_STRIKETHROUGH    9
 
 // xterm additions
-#define VT100CHARATTR_NORMAL        22
-#define VT100CHARATTR_NOT_ITALIC    23
-#define VT100CHARATTR_NOT_UNDER     24
-#define VT100CHARATTR_STEADY        25
-#define VT100CHARATTR_POSITIVE      27
+#define VT100CHARATTR_NORMAL            22
+#define VT100CHARATTR_NOT_ITALIC        23
+#define VT100CHARATTR_NOT_UNDERLINE     24
+#define VT100CHARATTR_STEADY            25
+#define VT100CHARATTR_POSITIVE          27
+#define VT100CHARATTR_NOT_STRIKETHROUGH 29
 
 typedef enum {
     COLORCODE_BLACK = 0,
@@ -451,7 +455,8 @@ static const int kMaxScreenRows = 4096;
     result.bold = graphicRendition_.bold;
     result.faint = graphicRendition_.faint;
     result.italic = graphicRendition_.italic;
-    result.underline = graphicRendition_.under;
+    result.underline = graphicRendition_.underline;
+    result.strikethrough = graphicRendition_.strikethrough;
     result.blink = graphicRendition_.blink;
     result.image = NO;
     result.urlCode = _currentURLCode;
@@ -490,7 +495,8 @@ static const int kMaxScreenRows = 4096;
     result.bold = graphicRendition_.bold;
     result.faint = graphicRendition_.faint;
     result.italic = graphicRendition_.italic;
-    result.underline = graphicRendition_.under;
+    result.underline = graphicRendition_.underline;
+    result.strikethrough = graphicRendition_.strikethrough;
     result.blink = graphicRendition_.blink;
     result.urlCode = _currentURLCode;
     return result;
@@ -700,11 +706,17 @@ static const int kMaxScreenRows = 4096;
                 case VT100CHARATTR_NOT_ITALIC:
                     graphicRendition_.italic = NO;
                     break;
-                case VT100CHARATTR_UNDER:
-                    graphicRendition_.under = YES;
+                case VT100CHARATTR_UNDERLINE:
+                    graphicRendition_.underline = YES;
                     break;
-                case VT100CHARATTR_NOT_UNDER:
-                    graphicRendition_.under = NO;
+                case VT100CHARATTR_NOT_UNDERLINE:
+                    graphicRendition_.underline = NO;
+                    break;
+                case VT100CHARATTR_STRIKETHROUGH:
+                    graphicRendition_.strikethrough = YES;
+                    break;
+                case VT100CHARATTR_NOT_STRIKETHROUGH:
+                    graphicRendition_.strikethrough = NO;
                     break;
                 case VT100CHARATTR_BLINK:
                     graphicRendition_.blink = YES;
@@ -1273,8 +1285,9 @@ static const int kMaxScreenRows = 4096;
     // Reset BLINK
     graphicRendition_.blink = NO;
 
-    // Reset UNDERLINE
-    graphicRendition_.under = NO;
+    // Reset UNDERLINE & STRIKETHROUGH
+    graphicRendition_.underline = NO;
+    graphicRendition_.strikethrough = NO;
 
     self.url = nil;
     self.urlParams = nil;
@@ -2869,7 +2882,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 - (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
               kGraphicRenditionBlinkKey: @(graphicRendition.blink),
-              kGraphicRenditionUnderKey: @(graphicRendition.under),
+              kGraphicRenditionUnderlineKey: @(graphicRendition.underline),
+              kGraphicRenditionStrikethroughKey: @(graphicRendition.strikethrough),
               kGraphicRenditionReversedKey: @(graphicRendition.reversed),
               kGraphicRenditionFaintKey: @(graphicRendition.faint),
               kGraphicRenditionItalicKey: @(graphicRendition.italic),
@@ -2887,7 +2901,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     VT100GraphicRendition graphicRendition = { 0 };
     graphicRendition.bold = [dict[kGraphicRenditionBoldKey] boolValue];
     graphicRendition.blink = [dict[kGraphicRenditionBlinkKey] boolValue];
-    graphicRendition.under = [dict[kGraphicRenditionUnderKey] boolValue];
+    graphicRendition.underline = [dict[kGraphicRenditionUnderlineKey] boolValue];
+    graphicRendition.strikethrough = [dict[kGraphicRenditionStrikethroughKey] boolValue];
     graphicRendition.reversed = [dict[kGraphicRenditionReversedKey] boolValue];
     graphicRendition.faint = [dict[kGraphicRenditionFaintKey] boolValue];
     graphicRendition.italic = [dict[kGraphicRenditionItalicKey] boolValue];

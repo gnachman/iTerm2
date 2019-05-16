@@ -22,6 +22,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
 @property (nonatomic) iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
 @property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+@property (nonatomic) iTermMetalUnderlineDescriptor strikethroughUnderlineDescriptor;
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 @property (nonatomic) BOOL disableIndividualColorModels NS_DEPRECATED_MAC(10_12, 10_14);
 

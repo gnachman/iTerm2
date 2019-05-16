@@ -79,7 +79,7 @@
 }
 
 - (NSString *)formatChar:(screen_char_t)c {
-    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ image=%@ unused=%@ urlCode=%@",
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ image=%@ unused=%@ urlCode=%@",
             (int)c.code,
             ScreenCharToStr(&c),
             @(c.foregroundColor),
@@ -96,6 +96,7 @@
             @(c.italic),
             @(c.blink),
             @(c.underline),
+            @(c.strikethrough),
             @(c.image),
             @(c.unused),
             @(c.urlCode)];

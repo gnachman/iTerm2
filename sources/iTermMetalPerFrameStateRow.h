@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSIndexSet *_selectedIndexSet;
     NSDate *_date;
     NSData *_matches;
-    NSRange _underlinedRange;
+    NSRange _underlinedRange;  // Underline for semantic history
 }
 
 - (instancetype)init NS_UNAVAILABLE;

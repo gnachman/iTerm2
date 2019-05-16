@@ -1097,10 +1097,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // Configure underlines
     iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
     iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor strikethroughUnderlineDescriptor;
     [frameData.perFrameState metalGetUnderlineDescriptorsForASCII:&asciiUnderlineDescriptor
-                                                         nonASCII:&nonAsciiUnderlineDescriptor];
+                                                         nonASCII:&nonAsciiUnderlineDescriptor
+                                                    strikethrough:&strikethroughUnderlineDescriptor];
     textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
+    textState.strikethroughUnderlineDescriptor = strikethroughUnderlineDescriptor;
     textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
 
     CGSize glyphSize = textState.cellConfiguration.glyphSize;

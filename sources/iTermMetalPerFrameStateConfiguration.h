@@ -43,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _nonasciiAntialias;
     iTermMetalUnderlineDescriptor _asciiUnderlineDescriptor;
     iTermMetalUnderlineDescriptor _nonAsciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor _strikethroughUnderlineDescriptor;
     CGFloat _baselineOffset;
     iTermThinStrokesSetting _thinStrokes;
     BOOL _useBoldFont;

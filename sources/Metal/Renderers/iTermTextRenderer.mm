@@ -478,6 +478,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                              vector_uint2 textureSize,
                              vector_uint2 glyphSize,
                              iTermMetalUnderlineDescriptor underlineDescriptor,
+                             iTermMetalUnderlineDescriptor strikethroughDescriptor,
                              BOOL underlined,
                              BOOL emoji) {
         totalInstances += instances;
@@ -510,6 +511,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 
         __block id<MTLBuffer> textureDimensionsBuffer;
         const float underlineThickness = underlineDescriptor.thickness * scale;
+        const float strikethroughThickness = strikethroughDescriptor.thickness * scale;
         [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
@@ -517,6 +519,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                 .cellSize = cellSize,
                 .underlineOffset = MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale)),
                 .underlineThickness = underlineThickness,
+                .strikethroughOffset = glyphSize.y - strikethroughDescriptor.offset * scale,
+                .strikethroughThickness = strikethroughThickness,
                 .scale = scale,
             };
 

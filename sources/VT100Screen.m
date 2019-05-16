@@ -4489,7 +4489,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (c.blink) {
         [result addObject:@"5"];
     }
-
+    if (c.strikethrough) {
+        [result addObject:@"9"];
+    }
     return result;
 }
 

@@ -176,9 +176,11 @@ typedef struct screen_char_t
     // foregroundColor, and backgroundColor (see notes above).
     unsigned int image : 1;
 
+    unsigned int strikethrough : 1;
+
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 5;
+    unsigned int unused : 4;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
@@ -224,6 +226,7 @@ static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char
             c1->italic == c2->italic &&
             c1->blink == c2->blink &&
             c1->underline == c2->underline &&
+            c1->strikethrough == c2->strikethrough &&
             !c1->urlCode == !c2->urlCode &&  // Only tests if urlCode is zero/nonzero in both
             c1->image == c2->image);
 }
@@ -240,6 +243,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->italic = from.italic;
     to->blink = from.blink;
     to->underline = from.underline;
+    to->strikethrough = from.strikethrough;
     to->urlCode = from.urlCode;
     to->image = from.image;
 }
@@ -282,6 +286,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
         a.italic != b.italic ||
         a.blink != b.blink ||
         a.underline != b.underline ||
+        a.strikethrough != b.strikethrough ||
         !a.urlCode != !b.urlCode) {
         return NO;
     }
@@ -312,6 +317,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.italic &&
             !s.blink &&
             !s.underline &&
+            !s.strikethrough &&
             !s.urlCode);
 }
 
