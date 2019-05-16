@@ -201,6 +201,7 @@ DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In
 DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for compact windows with minimal theme.");
 DEFINE_FLOAT(defaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height")
 DEFINE_BOOL(doubleClickTabToEdit, YES, SECTION_TABS @"Should double-clicking a tab open a window to edit its title?");
+DEFINE_FLOAT(minimumTabLabelWidth, 35, SECTION_TABS @"Minimum width for tab labels.\nThe activity/bell icon will be hidden when the space for the label drops below this size (in points)");
 
 #pragma mark Mouse
 

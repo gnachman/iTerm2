@@ -943,27 +943,45 @@
 
     }
 
+    NSAttributedString *attributedString = [cell attributedStringValue];
 
     // icon
+    BOOL drewIcon = NO;
     NSRect iconRect = NSZeroRect;
     if ([cell hasIcon]) {
-        iconRect = [self iconRectForTabCell:cell];
+        // There is an icon. Draw it as long as the amount of space left for the label is more than
+        // the size of the icon. This is a heuristic to roughly prioritize the label over the icon.
+        const CGFloat labelWidth = [self widthForLabelInCell:cell
+                                               labelPosition:labelPosition
+                                                     hasIcon:YES
+                                                    iconRect:iconRect
+                                            attributedString:attributedString
+                                               reservedSpace:reservedSpace
+                                                boundingSize:NULL
+                                                    truncate:NULL];
         NSImage *icon = [(id)[[cell representedObject] identifier] icon];
+        const CGFloat minimumLabelWidth =
+        [[self.tabBar.delegate tabView:self.tabBar
+                         valueOfOption:PSMTabBarControlOptionMinimumSpaceForLabel] doubleValue];
+        if (labelWidth > minimumLabelWidth) {
+            drewIcon = YES;
+            iconRect = [self iconRectForTabCell:cell];
 
-        // center in available space (in case icon image is smaller than kPSMTabBarIconWidth)
-        if ([icon size].width < kPSMTabBarIconWidth) {
-            iconRect.origin.x += (kPSMTabBarIconWidth - [icon size].width)/2.0;
-        }
-        if ([icon size].height < kPSMTabBarIconWidth) {
-            iconRect.origin.y -= (kPSMTabBarIconWidth - [icon size].height)/2.0;
-        }
+            // center in available space (in case icon image is smaller than kPSMTabBarIconWidth)
+            if ([icon size].width < kPSMTabBarIconWidth) {
+                iconRect.origin.x += (kPSMTabBarIconWidth - [icon size].width)/2.0;
+            }
+            if ([icon size].height < kPSMTabBarIconWidth) {
+                iconRect.origin.y -= (kPSMTabBarIconWidth - [icon size].height)/2.0;
+            }
 
-        [icon drawInRect:iconRect
-                fromRect:NSZeroRect
-               operation:NSCompositingOperationSourceOver
-                fraction:1.0
-          respectFlipped:YES
-                   hints:nil];
+            [icon drawInRect:iconRect
+                    fromRect:NSZeroRect
+                   operation:NSCompositingOperationSourceOver
+                    fraction:1.0
+              respectFlipped:YES
+                       hints:nil];
+        }
     }
 
     // object counter
@@ -979,40 +997,74 @@
     }
 
     // label rect
-    NSAttributedString *attributedString = [cell attributedStringValue];
     if (attributedString.length > 0) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
-        labelRect.size.width = cellFrame.size.width - (labelRect.origin.x - cellFrame.origin.x) - kPSMTabBarCellPadding;
-        if ([cell hasIcon]) {
-            // Reduce size of label if there is an icon or activity indicator
-            labelRect.size.width -= iconRect.size.width + kPSMTabBarCellIconPadding;
-        } else if (![[cell indicator] isHidden]) {
-            labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
-        }
-        labelRect.size.height = cellFrame.size.height;
-
-        if ([cell count] > 0) {
-            labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
-        }
-
-        NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+        NSSize boundingSize;
+        BOOL truncate;
+        labelRect.size.width = [self widthForLabelInCell:cell
+                                           labelPosition:labelPosition
+                                                 hasIcon:drewIcon
+                                                iconRect:iconRect
+                                        attributedString:attributedString
+                                           reservedSpace:reservedSpace
+                                            boundingSize:&boundingSize
+                                                truncate:&truncate];
         labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
         labelRect.size.height = boundingSize.height;
 
-        if (_orientation == PSMTabBarHorizontalOrientation) {
-            CGFloat effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2;
-            if (effectiveLeftMargin < reservedSpace) {
-                attributedString = [attributedString attributedStringWithTextAlignment:NSTextAlignmentLeft];
-
-                labelRect.origin.x += reservedSpace;
-                labelRect.size.width -= reservedSpace;
-            }
+        if (truncate) {
+            attributedString = [attributedString attributedStringWithTextAlignment:NSTextAlignmentLeft];
+            labelRect.origin.x += reservedSpace;
         }
 
         attributedString = [self truncateAttributedStringIfNeeded:attributedString forWidth:labelRect.size.width];
         [attributedString drawInRect:labelRect];
     }
+}
+
+- (CGFloat)widthForLabelInCell:(PSMTabBarCell *)cell
+                 labelPosition:(CGFloat)labelPosition
+                       hasIcon:(BOOL)drewIcon
+                      iconRect:(NSRect)iconRect
+              attributedString:(NSAttributedString *)attributedString
+                 reservedSpace:(CGFloat)reservedSpace
+                  boundingSize:(NSSize *)boundingSizeOut
+                      truncate:(BOOL *)truncateOut {
+    const NSRect cellFrame = cell.frame;
+    NSRect labelRect = NSMakeRect(labelPosition,
+                                  0,
+                                  cellFrame.size.width - (labelPosition - cellFrame.origin.x) - kPSMTabBarCellPadding,
+                                  cellFrame.size.height);
+    if (drewIcon) {
+        // Reduce size of label if there is an icon or activity indicator
+        labelRect.size.width -= iconRect.size.width + kPSMTabBarCellIconPadding;
+    } else if (![[cell indicator] isHidden]) {
+        labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
+    }
+
+    if ([cell count] > 0) {
+        labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
+    }
+
+    NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+
+    BOOL truncate = NO;
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        CGFloat effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2;
+        if (effectiveLeftMargin < reservedSpace) {
+            labelRect.size.width -= reservedSpace;
+            truncate = YES;
+        }
+    }
+    if (truncateOut) {
+        *truncateOut = truncate;
+    }
+
+    if (boundingSizeOut) {
+        *boundingSizeOut = boundingSize;
+    }
+    return labelRect.size.width;
 }
 
 // In the neverending saga of Cocoa embarassing itself, if there isn't enough space for a text

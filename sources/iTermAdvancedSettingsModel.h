@@ -128,6 +128,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)minimalTabStyleTreatLeftInsetAsPartOfFirstTab;
 + (double)minimalTabStyleOutlineStrength;
 + (int)minimumTabDragDistance;
++ (double)minimumTabLabelWidth;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)minRunningTime;
 + (int)minTabWidth;
