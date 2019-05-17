@@ -90,7 +90,9 @@ NS_ASSUME_NONNULL_BEGIN
     __weak __typeof(self) weakSelf = self;
     DLog(@"don't poll: request path %@", self.currentDirectory);
     [[iTermGitPollWorker instanceForPath:self.currentDirectory] requestPath:self.currentDirectory completion:^(iTermGitState *state) {
-        [weakSelf didPollWithUpdatedState:state];
+        if (state) {
+            [weakSelf didPollWithUpdatedState:state];
+        }
     }];
 }
 

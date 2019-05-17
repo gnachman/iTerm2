@@ -79,6 +79,10 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p pid=%@>", self.class, self, @(_task.processIdentifier)];
+}
+
 - (void)run {
     dispatch_async(_readingQueue, ^{
         [self runSynchronously];
@@ -103,7 +107,11 @@
 
 - (void)terminate {
     @try {
-        [_task terminate];
+        int pid = _task.processIdentifier;
+        if (pid) {
+            int rc = kill(pid, SIGKILL);
+            DLog(@"kill -%@ %@ returned %@", @(SIGKILL), @(_task.processIdentifier), @(rc));
+        }
     } @catch (NSException *exception) {
         DLog(@"terminate threw %@", exception);
     }
