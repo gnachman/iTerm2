@@ -15,20 +15,20 @@
 #import <stdatomic.h>
 
 @interface iTermProcessCache()
-@property (atomic) BOOL needsUpdateFlag;
 
-// Maps process id to deepest foreground job. Shared between main thread and _queue
-@property (atomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob;
+// Maps process id to deepest foreground job. _lockQueue
+@property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJobLQ;
 
 @end
 
 @implementation iTermProcessCache {
-    dispatch_queue_t _queue;
-    iTermProcessCollection *_collection; // _queue
-    _Atomic bool _needsUpdate;
-    NSMutableSet<NSNumber *> *_trackedPids;  // _queue
-    iTermRateLimitedUpdate *_rateLimit;  // keeps updateIfNeeded from eating all the CPU
-    NSMutableArray<void (^)(void)> *_blocks; // Any queue. @synchronized(_blocks)
+    dispatch_queue_t _lockQueue;
+    dispatch_queue_t _workQueue;
+    iTermProcessCollection *_collectionLQ; // _lockQueue
+    NSMutableSet<NSNumber *> *_trackedPidsLQ;  // _lockQueue
+    NSMutableArray<void (^)(void)> *_blocksLQ; // _lockQueue
+    BOOL _needsUpdateFlagLQ;  // _lockQueue
+    iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
 }
 
 + (instancetype)sharedInstance {
@@ -43,12 +43,13 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _queue = dispatch_queue_create("com.iterm2.process-cache", DISPATCH_QUEUE_SERIAL);
+        _lockQueue = dispatch_queue_create("com.iterm2.process-cache-lock", DISPATCH_QUEUE_SERIAL);
+        _workQueue = dispatch_queue_create("com.iterm2.process-cache-work", DISPATCH_QUEUE_SERIAL);
         _rateLimit = [[iTermRateLimitedUpdate alloc] init];
         _rateLimit.minimumInterval = 0.5;
-        _trackedPids = [NSMutableSet set];
+        _trackedPidsLQ = [NSMutableSet set];
         [self setNeedsUpdate:YES];
-        _blocks = [NSMutableArray array];
+        _blocksLQ = [NSMutableArray array];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
@@ -63,9 +64,12 @@
 
 #pragma mark - APIs
 
+// Main queue
 - (void)setNeedsUpdate:(BOOL)needsUpdate {
     DLog(@"setNeedsUpdate:%@", @(needsUpdate));
-    self.needsUpdateFlag = needsUpdate;
+    dispatch_sync(_lockQueue, ^{
+        self->_needsUpdateFlagLQ = needsUpdate;
+    });
     if (needsUpdate) {
         [_rateLimit performRateLimitedSelector:@selector(updateIfNeeded) onTarget:self withObject:nil];
     }
@@ -73,29 +77,29 @@
 
 // main queue
 - (void)requestImmediateUpdateWithCompletionBlock:(void (^)(void))completion {
-    BOOL needsUpdate;
-    @synchronized (_blocks) {
-        [_blocks addObject:[completion copy]];
-        needsUpdate = _blocks.count == 1;
-    }
+    __block BOOL needsUpdate;
+    dispatch_sync(_lockQueue, ^{
+        [self->_blocksLQ addObject:[completion copy]];
+        needsUpdate = self->_blocksLQ.count == 1;
+    });
     if (!needsUpdate) {
         DLog(@"request immediate update just added block to queue");
         return;
     }
     DLog(@"request immediate update scheduling update");
     __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
+    dispatch_async(_workQueue, ^{
         [weakSelf collectBlocksAndUpdate];
     });
 }
 
-// _queue
+// _workQueue
 - (void)collectBlocksAndUpdate {
-    NSMutableArray<void (^)(void)> *blocks;
-    @synchronized (_blocks) {
-        blocks = _blocks.copy;
-        [_blocks removeAllObjects];
-    }
+    __block NSArray<void (^)(void)> *blocks;
+    dispatch_sync(_lockQueue, ^{
+        blocks = self->_blocksLQ.copy;
+        [self->_blocksLQ removeAllObjects];
+    });
     assert(blocks.count > 0);
     DLog(@"collecting blocks and updating");
     [self reallyUpdate];
@@ -106,58 +110,59 @@
     });
 }
 
-- (void)updateSynchronouslyWithTimeout:(NSTimeInterval)timeout {
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
-        [weakSelf reallyUpdate];
-        dispatch_group_leave(group);
-    });
-    dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)));
-}
-
+// Any queue
 - (iTermProcessInfo *)processInfoForPid:(pid_t)pid {
     __block iTermProcessInfo *info = nil;
-    dispatch_sync(_queue, ^{
-        info = [self->_collection infoForProcessID:pid];
+    dispatch_sync(_lockQueue, ^{
+        info = [self->_collectionLQ infoForProcessID:pid];
     });
     return info;
 }
 
+// Any queue
 - (iTermProcessInfo *)deepestForegroundJobForPid:(pid_t)pid {
-    NSDictionary<NSNumber *, iTermProcessInfo *> *cache = self.cachedDeepestForegroundJob;
-    return cache[@(pid)];
+    __block iTermProcessInfo *result;
+    dispatch_sync(_lockQueue, ^{
+        result = self.cachedDeepestForegroundJobLQ[@(pid)];
+    });
+    return result;
 }
 
+// Any queue
 - (void)registerTrackedPID:(pid_t)pid {
-    dispatch_async(_queue, ^{
-        [self->_trackedPids addObject:@(pid)];
+    dispatch_async(_lockQueue, ^{
+        [self->_trackedPidsLQ addObject:@(pid)];
     });
 }
 
+// Any queue
 - (void)unregisterTrackedPID:(pid_t)pid {
-    dispatch_async(_queue, ^{
-        [self->_trackedPids removeObject:@(pid)];
+    dispatch_async(_lockQueue, ^{
+        [self->_trackedPidsLQ removeObject:@(pid)];
     });
 }
 
 #pragma mark - Private
 
+// Any queue
 - (void)updateIfNeeded {
     DLog(@"updateIfNeeded");
-    if (!self.needsUpdateFlag) {
+    __block BOOL needsUpdate;
+    dispatch_sync(_lockQueue, ^{
+        needsUpdate = self->_needsUpdateFlagLQ;
+    });
+    if (!needsUpdate) {
         DLog(@"** Returning early!");
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
+    dispatch_async(_workQueue, ^{
         [weakSelf reallyUpdate];
     });
 }
 
-- (void)reallyUpdate {
-    DLog(@"Process cache reallyUpdate starting");
+// _workQueue
++ (iTermProcessCollection *)newProcessCollection {
     NSArray<NSNumber *> *allPids = [iTermLSOF allPids];
     // pid -> ppid
     NSMutableDictionary<NSNumber *, NSNumber *> *parentmap = [NSMutableDictionary dictionary];
@@ -173,28 +178,51 @@
         parentmap[@(pid)] = @(ppid);
         [collection addProcessWithProcessID:pid parentProcessID:ppid];
     }
-
     [collection commit];
+    return collection;
+}
 
+- (NSDictionary<NSNumber *, iTermProcessInfo *> *)newDeepestForegroundJobCacheWithCollection:(iTermProcessCollection *)collection {
     NSMutableDictionary<NSNumber *, iTermProcessInfo *> *cache = [NSMutableDictionary dictionary];
-    for (NSNumber *root in _trackedPids) {
+    __block NSSet<NSNumber *> *trackedPIDs;
+    dispatch_sync(_lockQueue, ^{
+        trackedPIDs = [self->_trackedPidsLQ copy];
+    });
+    for (NSNumber *root in trackedPIDs) {
         iTermProcessInfo *info = [collection infoForProcessID:root.integerValue].deepestForegroundJob;
         if (info) {
             cache[root] = info;
         }
     }
-    self.cachedDeepestForegroundJob = cache;
-    
-    _collection = collection;
-    self.needsUpdateFlag = NO;
+    return cache;
+}
+
+// _workQueue
+- (void)reallyUpdate {
+    DLog(@"Process cache reallyUpdate starting");
+
+    // Do expensive stuff
+    iTermProcessCollection *collection = [self.class newProcessCollection];
+
+    // Save the tracked PIDs in the cache
+    NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
+
+    // Flip to the new state.
+    dispatch_sync(_lockQueue, ^{
+        self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
+        self->_collectionLQ = collection;
+        self->_needsUpdateFlagLQ = NO;
+    });
 }
 
 #pragma mark - Notifications
 
+// Main queue
 - (void)applicationDidResignActive:(NSNotification *)notification {
     _rateLimit.minimumInterval = 5;
 }
 
+// Main queue
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
     _rateLimit.minimumInterval = 0.5;
 }
