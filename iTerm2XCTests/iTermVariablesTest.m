@@ -6,10 +6,11 @@
 //
 
 #import <XCTest/XCTest.h>
+#import "iTermObject.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 
-@interface iTermVariablesTest : XCTestCase
+@interface iTermVariablesTest : XCTestCase<iTermObject>
 
 @end
 
@@ -137,6 +138,16 @@
     
     XCTAssertEqualObjects(@234, [scope2 valueForVariableName:@"v"]);
     XCTAssertEqualObjects(@234, [vars2 discouragedValueForVariableName:@"v"]);
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

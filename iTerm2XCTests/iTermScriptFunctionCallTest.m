@@ -10,10 +10,11 @@
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermObject.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 
-@interface iTermScriptFunctionCallTest : XCTestCase
+@interface iTermScriptFunctionCallTest : XCTestCase<iTermObject>
 
 @end
 
@@ -469,4 +470,15 @@
     NSArray *expected = @[ @1, @2, @3 ];
     XCTAssertEqualObjects(actual, expected);
 }
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
+}
+
 @end

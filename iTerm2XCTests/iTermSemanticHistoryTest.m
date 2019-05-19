@@ -7,6 +7,8 @@
 //
 
 #import "iTermSemanticHistoryController.h"
+
+#import "iTermObject.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermVariables.h"
 #import "iTermVariableScope.h"
@@ -14,7 +16,7 @@
 #import "NSStringITerm.h"
 #import <XCTest/XCTest.h>
 
-@interface iTermSemanticHistoryTest : XCTestCase
+@interface iTermSemanticHistoryTest : XCTestCase<iTermObject>
 @end
 
 @interface iTermFakeFileManager : NSFileManager
@@ -1264,6 +1266,16 @@
 
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command {
     _coprocessCommand = [[command copy] autorelease];
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

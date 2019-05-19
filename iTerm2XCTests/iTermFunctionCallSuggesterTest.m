@@ -9,6 +9,7 @@
 #import "iTermFunctionCallSuggester.h"
 #import "iTermExpressionParser.h"
 #import "iTermExpressionParser+Private.h"
+#import "iTermObject.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermVariableScope.h"
@@ -21,7 +22,7 @@
 - (CPLALR1Parser *)parser;
 @end
 
-@interface iTermFunctionCallSuggesterTest : XCTestCase
+@interface iTermFunctionCallSuggesterTest : XCTestCase<iTermObject>
 
 @end
 
@@ -148,4 +149,15 @@
 
     XCTAssertEqual(firstInnerParser, secondInnerParser);
 }
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
+}
+
 @end

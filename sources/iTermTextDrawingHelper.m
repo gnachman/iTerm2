@@ -2393,7 +2393,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     const CGFloat xHeight = font.xHeight;
     // Keep the underline a reasonable distance from the baseline.
     CGFloat underlineOffset = self.baselineOffset - xHeight / 2.0;
-    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
     return [self retinaRound:yOffset + _cellSize.height + underlineOffset];
 }
 
