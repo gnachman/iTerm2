@@ -275,6 +275,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
     NSArray<iTermReflectionMethodArgument *> *_args;
     __weak id<iTermObject> _target;
     SEL _action;
+    NSDictionary<NSString *, Class> *_types;
 }
 
 + (NSArray<iTermReflectionMethodArgument *> *)argumentsFromTarget:(id<iTermObject>)target
@@ -322,6 +323,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 
 - (instancetype)initWithName:(NSString *)name
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
+                       types:(NSDictionary<NSString *, Class> *)types
                      context:(iTermVariablesSuggestionContext)context
                       target:(id<iTermObject>)target
                       action:(SEL)action {
@@ -345,6 +347,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         _args = [args copy];
         _action = action;
         _target = target;
+        _types = [types copy];
     }
     return self;
 }
@@ -363,6 +366,16 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         } else {
             temp[i] = parameters[arg.argumentName];
             assert(temp[i]);
+        }
+        Class requiredClass = _types[arg.argumentName];
+        if (requiredClass) {
+            if (![parameters[arg.argumentName] isKindOfClass:requiredClass]) {
+                Class actualClass = [parameters[arg.argumentName] class];
+                completion(nil, [self typeMismatchError:arg.argumentName
+                                                 wanted:requiredClass
+                                                    got:actualClass]);
+                return;
+            }
         }
         [invocation setArgument:&temp[i] atIndex:i + 2];
     }

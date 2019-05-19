@@ -41,6 +41,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (instancetype)initWithName:(NSString *)name
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
+                       types:(NSDictionary<NSString *, Class> *)types
                      context:(iTermVariablesSuggestionContext)context
                       target:(id<iTermObject>)target
                       action:(SEL)action;
