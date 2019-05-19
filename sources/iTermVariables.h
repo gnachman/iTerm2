@@ -63,6 +63,7 @@ extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 extern NSString *const iTermVariableKeyWindowTitleOverride;
+extern NSString *const iTermVariableKeyWindowID;
 
 @protocol iTermObject;
 @class iTermVariables;

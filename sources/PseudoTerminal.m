@@ -22,6 +22,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermBroadcastInputHelper.h"
 #import "iTermBroadcastPasswordHelper.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
@@ -418,6 +419,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     iTermFunctionCallTextFieldDelegate *_currentTabTitleTextFieldDelegate;
     iTermVariables *_userVariables;
+    iTermBuiltInFunctions *_methods;
 }
 
 @synthesize scope = _scope;
@@ -624,6 +626,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
          screenNumber,
          @(hotkeyWindowType));
 
+    _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextWindow
+                                                   owner:self];
+    _variables.primaryKey = iTermVariableKeyWindowID;
     _scope = [iTermVariableScope newWindowScopeWithVariables:self.variables
                                                 tabVariables:[[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                                                                owner:self] autorelease]];
@@ -919,6 +924,15 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     DLog(@"Done initializing PseudoTerminal %@", self);
 }
 
+- (void)setTerminalGuid:(NSString *)terminalGuid {
+    assert(_scope);
+    _scope.windowID = terminalGuid;
+}
+
+- (NSString *)terminalGuid {
+    return _scope.windowID;
+}
+
 - (BOOL)isHotKeyWindow {
     return self.hotkeyWindowType != iTermHotkeyWindowTypeNone;
 }
@@ -1024,7 +1038,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [commandHistoryPopup release];
     [_directoriesPopupWindowController release];
     [autocompleteView release];
-    [_terminalGuid release];
     [lastArrangement_ release];
     [_autoCommandHistorySessionGuid release];
     if (@available(macOS 10.14, *)) {
@@ -1047,6 +1060,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_initialProfile release];
     [_toggleFullScreenModeCompletionBlocks release];
     [_currentTabTitleTextFieldDelegate release];
+    [_methods release];
 
     [super dealloc];
 }
@@ -2590,10 +2604,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (iTermVariables *)variables {
-    if (!_variables) {
-        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextWindow
-                                                       owner:self];
-    }
     return _variables;
 }
 
@@ -2887,7 +2897,7 @@ ITERM_WEAKLY_REFERENCEABLE
         ++screenNumber;
     }
 
-    [result setObject:_terminalGuid forKey:TERMINAL_GUID];
+    [result setObject:self.terminalGuid forKey:TERMINAL_GUID];
 
     // Save window frame
     result[TERMINAL_ARRANGEMENT_X_ORIGIN] = @(rect.origin.x);
@@ -9926,7 +9936,25 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {
-    return nil;
+    if (!_methods) {
+        _methods = [[iTermBuiltInFunctions alloc] init];
+        iTermBuiltInMethod *method;
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_title"
+                                            defaultValues:@{}
+                                                    types:@{ @"title": [NSString class] }
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(setTitleWithCompletion:title:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+    }
+    return _methods;
+}
+
+- (void)setTitleWithCompletion:(void (^)(id, NSError *))completion
+                         title:(NSString *)title {
+    [self.scope setValue:title.length ? title : nil
+        forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
+    completion(nil, nil);
 }
 
 - (iTermVariableScope *)objectScope {

@@ -179,6 +179,21 @@ class Tab:
         if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.CloseResponse.Status.Name(status))
 
+    async def async_set_title(self, title: str):
+        """Changes the tab's title.
+
+        This is equivalent to editing the tab's title with the menu item Edit Tab Title. The title is an interpolated string.
+
+        :param title: The new title. Set it to an empty string to use the default value (the current session's title).
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        invocation = iterm2.util.invocation_string(
+                "iterm2.set_title",
+                { "title": title,
+                  "id": self.tab_id })
+        await iterm2.rpc.async_invoke_method(self.connection, invocation, -1)
+
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
         Invoke an RPC. Could be a registered function by this or another script of a built-in function.

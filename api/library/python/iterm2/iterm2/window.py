@@ -403,6 +403,21 @@ class Window:
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
 
+    async def async_set_title(self, title: str):
+        """Changes the window's title.
+
+        This is equivalent to editing the window's title with the menu item Edit Window Title. The title is an interpolated string. Note that when using tmux integration, tab titles correspond to tmux window titles. iTerm2's window titles have no equivalent in tmux.
+
+        :param title: The new title. Set it to an empty string to use the default value (the current tab's title).
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        invocation = iterm2.util.invocation_string(
+                "iterm2.set_title",
+                { "title": title,
+                  "id": self.window_id })
+        await iterm2.rpc.async_invoke_method(self.connection, invocation, -1)
+
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
         Invoke an RPC. Could be a registered function by this or another script of a built-in function.

@@ -213,6 +213,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Capture of the session reading order when a session is maximized.
     // Used so next/previous session will work consistently post-maximization.
     NSArray<NSString *> *_orderedGUIDs;
+    iTermBuiltInFunctions *_methods;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -409,6 +410,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                    owner:self];
+    _variables.primaryKey = @"id";
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                        owner:self];
     [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
@@ -5509,7 +5511,24 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {
-    return nil;
+    if (!_methods) {
+        _methods = [[iTermBuiltInFunctions alloc] init];
+        iTermBuiltInMethod *method;
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_title"
+                                            defaultValues:@{}
+                                                    types:@{ @"title": [NSString class] }
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(setTitleWithCompletion:title:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+    }
+    return _methods;
+}
+
+- (void)setTitleWithCompletion:(void (^)(id, NSError *))completion
+                         title:(NSString *)title {
+    [self setTitleOverride:title];
+    completion(nil, nil);
 }
 
 - (iTermVariableScope *)objectScope {

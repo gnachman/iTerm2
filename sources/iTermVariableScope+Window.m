@@ -36,4 +36,12 @@
     return [iTermVariableScope newTabScopeWithVariables:[self valueForVariableName:iTermVariableKeyWindowCurrentTab]];
 }
 
+- (NSString *)windowID {
+    return [self valueForVariableName:iTermVariableKeyWindowID];
+}
+
+- (void)setWindowID:(NSString *)identifier {
+    [self setValue:identifier forVariableNamed:iTermVariableKeyWindowID];
+}
+
 @end
