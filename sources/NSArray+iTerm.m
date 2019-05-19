@@ -527,6 +527,16 @@
     return sum;
 }
 
+- (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement {
+    return [self mapWithBlock:^id(id obj) {
+        if ([obj isEqual:pattern]) {
+            return replacement;
+        } else {
+            return obj;
+        }
+    }];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

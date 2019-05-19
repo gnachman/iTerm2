@@ -111,6 +111,7 @@
 - (NSArray<iTermTuple *> *)zip:(NSArray *)other;
 
 - (double)sumOfNumbers;
+- (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement;
 
 @end
 

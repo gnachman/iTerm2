@@ -2840,7 +2840,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
-        self.terminalGuid = [arrangement objectForKey:TERMINAL_GUID];
+        NSString *savedGUID = [arrangement objectForKey:TERMINAL_GUID];
+        if ([[iTermController sharedInstance] terminalWithGuid:savedGUID]) {
+            // Refuse to create a window with an already-used guid.
+            self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
+        } else {
+            self.terminalGuid = savedGUID;
+        }
     }
 
     [self fitTabsToWindow];

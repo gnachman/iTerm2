@@ -69,13 +69,13 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 }
 
 - (NSDictionary *)stateDictionary {
-    return @{ iTermSessionNameControllerStateKeyWindowTitleStack: _windowTitleStack ?: @[],
-              iTermSessionNameControllerStateKeyIconTitleStack: _iconTitleStack ?: @[] };
+    return @{ iTermSessionNameControllerStateKeyWindowTitleStack: [_windowTitleStack it_arrayByReplacingOccurrencesOf:[NSNull null] with:@0] ?: @[],
+              iTermSessionNameControllerStateKeyIconTitleStack: [_iconTitleStack it_arrayByReplacingOccurrencesOf:[NSNull null] with:@0] ?: @[] };
 }
 
 - (void)restoreNameFromStateDictionary:(NSDictionary *)state {
-    _windowTitleStack = [state[iTermSessionNameControllerStateKeyWindowTitleStack] mutableCopy];
-    _iconTitleStack = [state[iTermSessionNameControllerStateKeyIconTitleStack] mutableCopy];
+    _windowTitleStack = [[state[iTermSessionNameControllerStateKeyWindowTitleStack] it_arrayByReplacingOccurrencesOf:@0 with:[NSNull null]] mutableCopy];
+    _iconTitleStack = [[state[iTermSessionNameControllerStateKeyIconTitleStack] it_arrayByReplacingOccurrencesOf:@0 with:[NSNull null]] mutableCopy];
     [self.delegate sessionNameControllerDidChangeWindowTitle];
 }
 
