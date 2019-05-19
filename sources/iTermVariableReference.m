@@ -6,7 +6,8 @@
 //
 
 #import "iTermVariableReference.h"
-#import "iTermVariableScope.h"
+
+#import "iTermVariables+Private.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermVariableReferenceLink : NSObject
@@ -32,15 +33,18 @@
     NSMutableArray *_links;
 }
 
+@synthesize onChangeBlock = _onChangeBlock;
+@synthesize path = _path;
+
 - (instancetype)initWithPath:(NSString *)path
-                       scope:(iTermVariableScope *)scope {
+                      vendor:(id<iTermVariableVendor>)vendor {
     self = [super init];
     if (self) {
         _path = [path copy];
-        _scope = scope;
+        _vendor = vendor;
         _links = [NSMutableArray array];
 
-        [scope addLinksToReference:self];
+        [vendor addLinksToReference:self];
     }
     return self;
 }
@@ -50,11 +54,11 @@
 }
 
 - (id)value {
-    return [_scope valueForVariableName:_path];
+    return [_vendor valueForVariableName:_path];
 }
 
 - (void)setValue:(id)value {
-    [_scope setValue:value forVariableNamed:_path];
+    [_vendor setValue:value forVariableNamed:_path];
 }
 
 - (void)addLinkToVariables:(iTermVariables *)variables localPath:(NSString *)path {
@@ -70,7 +74,7 @@
 
 - (void)invalidate {
     [self removeAllLinks];
-    [_scope addLinksToReference:self];
+    [_vendor addLinksToReference:self];
     [self valueDidChange];
 }
 

@@ -597,11 +597,13 @@ async def async_close(connection, sessions=None, tabs=None, windows=None, force=
     return await _async_call(connection, request)
 
 
-async def async_invoke_function(connection, invocation, session_id=None, tab_id=None, window_id=None, timeout=-1):
+async def async_invoke_function(connection, invocation, session_id=None, tab_id=None, window_id=None, timeout=-1, method=False):
     request = _alloc_request()
     request.invoke_function_request.SetInParent()
     request.invoke_function_request.invocation = invocation
-    if session_id:
+    if method:
+        request.invoke_function_request.method.SetInParent()
+    elif session_id:
         request.invoke_function_request.session.session_id = session_id
     elif tab_id:
         request.invoke_function_request.tab.tab_id = tab_id
@@ -611,6 +613,24 @@ async def async_invoke_function(connection, invocation, session_id=None, tab_id=
         request.invoke_function_request.app.SetInParent()
     request.invoke_function_request.timeout = timeout
     return await _async_call(connection, request)
+
+async def async_invoke_method(connection, invocation, timeout):
+    """Convenience wrapper around async_invoke_function for methods."""
+    response = await iterm2.rpc.async_invoke_function(
+            connection,
+            invocation,
+            method=True,
+            timeout=timeout)
+    which = response.invoke_function_response.WhichOneof('disposition')
+    if which == 'error':
+        if response.invoke_function_response.error.status == iterm2.api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT"):
+            raise iterm2.rpc.RPCException("Timeout")
+        else:
+            raise iterm2.rpc.RPCException("{}: {}".format(
+                iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
+                    response.invoke_function_response.error.status),
+                response.invoke_function_response.error.error_reason))
+    return json.loads(response.invoke_function_response.success.json_result)
 
 ## Private --------------------------------------------------------------------
 

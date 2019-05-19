@@ -27,7 +27,9 @@ typedef NS_ENUM(NSUInteger, iTermAPIHelperErrorCode) {
     iTermAPIHelperErrorCodeInvalidJSON,
     iTermAPIHelperErrorCodeUnregisteredFunction,
     iTermAPIHelperErrorCodeFunctionCallFailed,
-    iTermAPIHelperErrorCodeAPIDisabled
+    iTermAPIHelperErrorCodeAPIDisabled,
+    iTermAPIHelperErrorCodeTimeout,
+    iTermAPIHelperErrorCodeInvalidIdentifier
 };
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);

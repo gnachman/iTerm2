@@ -65,7 +65,7 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
     if (self) {
         NSArray<NSString *> *paths = iTermGitStatePaths();
         _refs = [paths mapWithBlock:^id(NSString *path) {
-            iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path scope:scope];
+            iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path vendor:scope];
             ref.onChangeBlock = block;
             return ref;
         }];

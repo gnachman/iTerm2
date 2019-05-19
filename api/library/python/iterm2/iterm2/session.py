@@ -612,6 +612,21 @@ class Session:
         t = (dict["grid"], dict["history"], dict["overflow"], dict["first_visible"] )
         return SessionLineInfo(t)
 
+    async def async_set_name(self, name: str):
+        """Changes the session's name.
+
+        This is equivalent to editing the session's name manually in the Edit Session window.
+
+        :param name: The new name to use.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        invocation = iterm2.util.invocation_string(
+                "iterm2.set_name",
+                { "name": name,
+                  "id": self.session_id })
+        await iterm2.rpc.async_invoke_method(self.connection, invocation, -1)
+
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
         Invoke an RPC. Could be a function registered by this or another script, or a built-in function.

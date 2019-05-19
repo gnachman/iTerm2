@@ -37,6 +37,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermLionFullScreenTabBarViewController.h"
 #import "iTermMenuBarObserver.h"
+#import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
@@ -176,6 +177,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
+    iTermObject,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     PTYTabDelegate,
@@ -9919,6 +9921,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (NSWindow *)broadcastInputHelperWindowForWarnings:(iTermBroadcastInputHelper *)helper {
     return self.window;
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return self.scope;
 }
 
 @end

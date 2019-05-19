@@ -13,6 +13,7 @@
 #import "iTermAPIScriptLauncher.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermObject.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermScriptsMenuController.h"
@@ -105,6 +106,9 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                                                                  knobs:knobs];
 }
 
+@end
+
+@interface iTermStatusBarRPCProvidedTextComponent()<iTermObject>
 @end
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
@@ -479,6 +483,16 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }
     [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
                                                                           string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

@@ -64,24 +64,46 @@ extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 extern NSString *const iTermVariableKeyWindowTitleOverride;
 
-@class iTermVariableReference;
+@protocol iTermObject;
 @class iTermVariables;
-@class iTermVariableScope;
+
+@protocol iTermVariableReference<NSObject>
+
+@property (nullable, nonatomic, copy) void (^onChangeBlock)(void);
+@property (nonatomic, readonly) NSString *path;
+@property (nullable, nonatomic, strong) id value;
+
+- (void)addLinkToVariables:(iTermVariables *)variables localPath:(NSString *)path;
+- (void)invalidate;
+- (void)valueDidChange;
+- (void)removeAllLinks;
+
+@end
+
+@protocol iTermVariableVendor<NSObject>
+- (void)addLinksToReference:(id<iTermVariableReference>)reference;
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
+- (nullable id)valueForVariableName:(NSString *)name;
+@end
 
 // Typically you would not use this directly. Create one and bind it to a
 // scope, then perform references to it from the scope.
-@interface iTermVariables : NSObject
+@interface iTermVariables : NSObject<iTermVariableVendor>
 
-@property (nonatomic, readonly, weak) id owner;
+@property (nonatomic, readonly, weak) id<iTermObject> owner;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 @property (nonatomic, readonly) NSArray<NSString *> *allNames;
 @property (nonatomic, readonly) NSString *debugInfo;
 
+// If you set this then the frame can be searched globally.
+@property (nonatomic, nullable, copy) NSString *primaryKey;
+
 + (instancetype)globalInstance;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context owner:(id)owner NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context
+                          owner:(id<iTermObject>)owner NS_DESIGNATED_INITIALIZER;
 
 // WARNING: You almost never want to use this. It is useful if you need to get a known child out, as
 // open quickly does to find the names of all user variables.
@@ -90,7 +112,7 @@ extern NSString *const iTermVariableKeyWindowTitleOverride;
 // Don't use this unless you really know what you're doing.
 - (nullable id)rawValueForVariableName:(NSString *)name;
 
-- (void)removeLinkToReference:(iTermVariableReference *)reference
+- (void)removeLinkToReference:(id<iTermVariableReference>)reference
                          path:(NSString *)path;
 
 @end

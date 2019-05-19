@@ -59,7 +59,7 @@
         _refs = [NSMutableArray array];
         _missingFunctions = [NSMutableSet set];
         _destinationPath = [destinationPath copy];
-        _sourceRef = [[iTermVariableReference alloc] initWithPath:sourcePath scope:scope];
+        _sourceRef = [[iTermVariableReference alloc] initWithPath:sourcePath vendor:scope];
         __weak __typeof(self) weakSelf = self;
         _sourceRef.onChangeBlock = ^{
             [weakSelf sourceDidChange];

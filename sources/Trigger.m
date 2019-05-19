@@ -7,6 +7,7 @@
 
 #import "Trigger.h"
 #import "DebugLogging.h"
+#import "iTermObject.h"
 #import "iTermSwiftyString.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
@@ -19,6 +20,9 @@ NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
+
+@interface Trigger()<iTermObject>
+@end
 
 @implementation Trigger {
     // The last absolute line number on which this trigger fired for a partial
@@ -300,6 +304,16 @@ NSString * const kTriggerPartialLineKey = @"partial";
     } else {
         return data;
     }
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

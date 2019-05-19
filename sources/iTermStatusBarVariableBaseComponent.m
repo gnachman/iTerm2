@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _path = path;
         if (path) {
-            _ref = [[iTermVariableReference alloc] initWithPath:path scope:scope];
+            _ref = [[iTermVariableReference alloc] initWithPath:path vendor:scope];
             __weak __typeof(self) weakSelf = self;
             _ref.onChangeBlock = ^{
                 [weakSelf updateTextFieldIfNeeded];

@@ -8,6 +8,8 @@
 
 #import "NSObject+iTerm.h"
 
+#import "iTermWeakProxy.h"
+
 #import <objc/runtime.h>
 
 @implementation iTermDelayedPerform
@@ -190,6 +192,10 @@
     }
 
     return [NSString stringWithFormat:@"%@ has type %@", path, NSStringFromClass([self class])];
+}
+
+- (instancetype)it_weakProxy {
+    return (id)[[iTermWeakProxy alloc] initWithObject:self];
 }
 
 @end

@@ -30,6 +30,7 @@
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermLaunchServices.h"
+#import "iTermObject.h"
 #import "iTermPathCleaner.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryPrefsController.h"
@@ -48,6 +49,9 @@ NSString *const kSemanticHistorySuffixSubstitutionKey = @"semanticHistory.suffix
 NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHistory.workingDirectory";
 NSString *const kSemanticHistoryLineNumberKey = @"semanticHistory.lineNumber";
 NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber";
+
+@interface iTermSemanticHistoryController()<iTermObject>
+@end
 
 @implementation iTermSemanticHistoryController {
     iTermExpressionEvaluator *_expressionEvaluator;
@@ -626,6 +630,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 - (NSFileManager *)fileManager {
     return [iTermCachingFileManager cachingFileManager];
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

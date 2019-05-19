@@ -7,9 +7,11 @@
 
 #import "iTermVariableScope.h"
 
+#import "iTermObject.h"
 #import "iTermTuple.h"
 #import "iTermVariableReference.h"
 #import "iTermVariables.h"
+#import "iTermVariables+Private.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -52,18 +54,6 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
-@end
-
-@interface iTermVariables(Private)
-- (NSDictionary<NSString *,NSString *> *)stringValuedDictionaryInScope:(nullable NSString *)scopeName;
-- (nullable id)valueForVariableName:(NSString *)name;
-- (NSString *)stringValueForVariableName:(NSString *)name;
-- (BOOL)hasLinkToReference:(iTermVariableReference *)reference
-                      path:(NSString *)path;
-- (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
-- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak;
-- (void)addLinkToReference:(iTermVariableReference *)reference
-                      path:(NSString *)path;
 @end
 
 @implementation iTermVariableScope {
@@ -299,7 +289,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (void)addLinksToReference:(iTermVariableReference *)reference {
+- (void)addLinksToReference:(id<iTermVariableReference>)reference {
     NSString *tail;
     iTermVariables *variables = [self ownerForKey:reference.path forWriting:YES stripped:&tail];
     if (!variables) {
@@ -370,7 +360,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSArray<iTermVariableReference *> *)recordedReferences {
     return [_names.allObjects mapWithBlock:^id(NSString *path) {
-        return [[iTermVariableReference alloc] initWithPath:path scope:self->_scope];
+        return [[iTermVariableReference alloc] initWithPath:path vendor:self->_scope];
     }];
 }
 @end

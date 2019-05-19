@@ -1099,6 +1099,7 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
 @dynamic session;
 @dynamic window;
 @dynamic app;
+@dynamic method;
 @dynamic hasInvocation, invocation;
 @dynamic hasTimeout, timeout;
 
@@ -1109,6 +1110,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
   ITMInvokeFunctionRequest_Window *window;
   ITMInvokeFunctionRequest_App *app;
   NSString *invocation;
+  ITMInvokeFunctionRequest_Method *method;
   double timeout;
 } ITMInvokeFunctionRequest__storage_;
 
@@ -1177,6 +1179,16 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, timeout),
         .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue),
         .core.dataType = GPBDataTypeDouble,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "method",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Method),
+        .core.number = ITMInvokeFunctionRequest_FieldNumber_Method,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, method),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -1359,6 +1371,37 @@ typedef struct ITMInvokeFunctionRequest_App__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMInvokeFunctionRequest_App__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Method
+
+@implementation ITMInvokeFunctionRequest_Method
+
+
+typedef struct ITMInvokeFunctionRequest_Method__storage_ {
+  uint32_t _has_storage_[1];
+} ITMInvokeFunctionRequest_Method__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_Method class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMInvokeFunctionRequest_Method__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
     NSAssert(descriptor == nil, @"Startup recursed!");

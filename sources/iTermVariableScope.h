@@ -25,7 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 // set of variables except one (that of the most local scope) must have a name.
 // Variables are searched for one matching the name. You could get and set variables through
 // this object. If you want to get called back when a value changes, use iTermVariableReference.
-@interface iTermVariableScope : NSObject<NSCopying>
+@interface iTermVariableScope : NSObject<NSCopying, iTermVariableVendor>
+
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *dictionaryWithStringValues;
 @property (nonatomic) BOOL neverReturnNil;
 @property (nonatomic, readonly) BOOL usePlaceholders;

@@ -382,3 +382,8 @@ async def async_wait_forever():
     """A convenience function that never returns."""
     await asyncio.wait([asyncio.Future()])
 
+def invocation_string(method_name: str, argdict: typing.Dict[str, typing.Any]) -> str:
+    parts = []
+    for name, value in argdict.items():
+        parts.append(f"{name}: {json.dumps(value)}")
+    return method_name + "(" + ", ".join(parts) + ")"

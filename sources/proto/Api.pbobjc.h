@@ -69,6 +69,7 @@ CF_EXTERN_C_BEGIN
 @class ITMInjectResponse;
 @class ITMInvokeFunctionRequest;
 @class ITMInvokeFunctionRequest_App;
+@class ITMInvokeFunctionRequest_Method;
 @class ITMInvokeFunctionRequest_Session;
 @class ITMInvokeFunctionRequest_Tab;
 @class ITMInvokeFunctionRequest_Window;
@@ -1276,6 +1277,7 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_FieldNumber) {
   ITMInvokeFunctionRequest_FieldNumber_App = 4,
   ITMInvokeFunctionRequest_FieldNumber_Invocation = 5,
   ITMInvokeFunctionRequest_FieldNumber_Timeout = 6,
+  ITMInvokeFunctionRequest_FieldNumber_Method = 7,
 };
 
 typedef GPB_ENUM(ITMInvokeFunctionRequest_Context_OneOfCase) {
@@ -1284,6 +1286,7 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Context_OneOfCase) {
   ITMInvokeFunctionRequest_Context_OneOfCase_Session = 2,
   ITMInvokeFunctionRequest_Context_OneOfCase_Window = 3,
   ITMInvokeFunctionRequest_Context_OneOfCase_App = 4,
+  ITMInvokeFunctionRequest_Context_OneOfCase_Method = 7,
 };
 
 @interface ITMInvokeFunctionRequest : GPBMessage
@@ -1297,6 +1300,9 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Context_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Window *window;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_App *app;
+
+/** method means there is an "id" argument from which the context can be inferred. The id's value is a globally unique identifier that is indexed. */
+@property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Method *method;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *invocation;
 /** Test to see if @c invocation has been set. */
@@ -1358,6 +1364,12 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Window_FieldNumber) {
 #pragma mark - ITMInvokeFunctionRequest_App
 
 @interface ITMInvokeFunctionRequest_App : GPBMessage
+
+@end
+
+#pragma mark - ITMInvokeFunctionRequest_Method
+
+@interface ITMInvokeFunctionRequest_Method : GPBMessage
 
 @end
 

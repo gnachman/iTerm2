@@ -6,29 +6,21 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermVariables.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermVariableScope;
-@class iTermVariables;
 
-@interface iTermVariableReference<ObjectType> : NSObject
+@interface iTermVariableReference<ObjectType> : NSObject<iTermVariableReference>
 
-@property (nonatomic, readonly) NSString *path;
-@property (nonatomic, readonly) iTermVariableScope *scope;
-@property (nullable, nonatomic, copy) void (^onChangeBlock)(void);
+@property (nonatomic, readonly) id<iTermVariableVendor> vendor;
 @property (nullable, nonatomic, strong) ObjectType value;
 
 - (instancetype)initWithPath:(NSString *)path
-                       scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
+                      vendor:(id<iTermVariableVendor>)vendor NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
-
-- (void)removeAllLinks;
-- (void)addLinkToVariables:(iTermVariables *)variables
-                 localPath:(NSString *)path;
-- (void)invalidate;
-- (void)valueDidChange;
 
 @end
 

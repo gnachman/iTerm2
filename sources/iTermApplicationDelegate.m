@@ -56,6 +56,7 @@
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
+#import "iTermObject.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPythonRuntimeDownloader.h"
@@ -145,7 +146,7 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate, iTermObject>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -2357,6 +2358,16 @@ static BOOL hasBecomeActive = NO;
 
 - (void)windowDidChangeKeyStatus:(NSNotification *)notification {
     DLog(@"%@:\n%@", notification.name, [NSThread callStackSymbols]);
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return [iTermVariableScope globalsScope];
 }
 
 @end

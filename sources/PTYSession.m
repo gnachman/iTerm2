@@ -39,6 +39,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermObject.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
@@ -264,6 +265,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermHotKeyNavigableSession,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
+    iTermObject,
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
     iTermSessionViewDelegate,
@@ -520,6 +522,7 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _showingVisualIndicatorForEsc;
 
     iTermPrintGuard *_printGuard;
+    iTermBuiltInFunctions *_methods;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -615,8 +618,9 @@ static const NSUInteger kMaxHosts = 100;
                      forVariableNamed:iTermVariableKeySessionCreationTimeString];
         [self.variablesScope setValue:[@(_autoLogId) stringValue] forVariableNamed:iTermVariableKeySessionAutoLogID];
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
+        _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
-                                                            scope:self.variablesScope];
+                                                           vendor:self.variablesScope];
         __weak __typeof(self) weakSelf = self;
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
@@ -868,6 +872,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeFontName release];
     [_variablesScope release];
     [_printGuard release];
+    [_methods release];
 
     [super dealloc];
 }
@@ -11215,6 +11220,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)copyModeHandlerCopySelection:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview copySelectionAccordingToUserPreferences];
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    if (!_methods) {
+        _methods = [[iTermBuiltInFunctions alloc] init];
+        iTermBuiltInMethod *method;
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_name"
+                                            defaultValues:@{}
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(setNameWithCompletion:name:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+    }
+    return _methods;
+}
+
+- (void)setNameWithCompletion:(void (^)(id, NSError *))completion
+                         name:(NSString *)name  {
+    [self setSessionSpecificProfileValues:@{ KEY_NAME: name ?: @""}];
+    completion(nil, nil);
+}
+
+- (iTermVariableScope *)objectScope {
+    return self.variablesScope;
 }
 
 @end

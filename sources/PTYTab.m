@@ -9,6 +9,7 @@
 #import "iTermFlexibleView.h"
 #import "iTermMoveTabToWindowBuiltInFunction.h"
 #import "iTermNotificationController.h"
+#import "iTermObject.h"
 #import "iTermPowerManager.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
@@ -120,7 +121,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SetWithGrainDim(!isVertical, dest, value);
 }
 
-@interface PTYTab()
+@interface PTYTab()<iTermObject>
 @property(nonatomic, strong) NSMapTable<SessionView *, PTYSession *> *viewToSessionMap;
 @end
 
@@ -5502,6 +5503,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (iTermVariableScope *)sessionTabScope {
+    return self.variablesScope;
+}
+
+#pragma mark - iTermObject
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
     return self.variablesScope;
 }
 

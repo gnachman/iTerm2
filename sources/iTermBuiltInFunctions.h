@@ -37,6 +37,19 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 @end
 
+@interface iTermBuiltInMethod : iTermBuiltInFunction
+
+- (instancetype)initWithName:(NSString *)name
+               defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
+                     context:(iTermVariablesSuggestionContext)context
+                      target:(id<iTermObject>)target
+                      action:(SEL)action;
+
+- (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
+               completion:(iTermBuiltInFunctionCompletionBlock)block;
+
+@end
+
 @interface iTermBuiltInFunctions : NSObject
 
 + (instancetype)sharedInstance;
@@ -61,6 +74,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
 - (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
+- (iTermBuiltInMethod *)methodWithSignature:(NSString *)signature;
 
 @end
 

@@ -17,6 +17,7 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermObject.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
@@ -1276,7 +1277,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                  subscriptions:(NSMutableDictionary<id,NSMutableArray<iTermTuple<ITMNotificationRequest *,iTermVariableReference *> *> *> *)subscriptions {
     NSString *name = request.variableMonitorRequest.name;
     iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:name
-                                                                         scope:scope];
+                                                                        vendor:scope];
     __weak __typeof(ref) weakRef = ref;
     __weak __typeof(self) weakSelf = self;
     ref.onChangeBlock = ^{
@@ -3548,6 +3549,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         case ITMInvokeFunctionRequest_Context_OneOfCase_Session:
             [self invokeFunction:request.invocation inSessionWithID:request.session.sessionId completion:completion timeout:request.timeout];
             return;
+        case ITMInvokeFunctionRequest_Context_OneOfCase_Method:
+            [self invokeMethod:request.invocation completion:completion timeout:request.timeout];
+            return;
 
         case ITMInvokeFunctionRequest_Context_OneOfCase_GPBUnsetOneOfCase:
             break;
@@ -3585,6 +3589,15 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                    [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                                }];
+}
+
+- (void)invokeMethod:(NSString *)invocation completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+    [iTermScriptFunctionCall callMethod:invocation
+                                timeout:timeout >= 0 ? timeout : 30
+                             retainSelf:YES
+                             completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
+                                 [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
+                             }];
 }
 
 - (void)invokeFunction:(NSString *)invocation inWindowWithID:(NSString *)windowId completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {

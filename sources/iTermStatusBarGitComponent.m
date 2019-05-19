@@ -77,17 +77,17 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         }];
         gitPoller.delegate = self;
         _gitPoller = gitPoller;
-        _pwdRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionPath scope:scope];
+        _pwdRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionPath vendor:scope];
         _pwdRef.onChangeBlock = ^{
             DLog(@"PWD changed, update git poller directory");
             gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
         };
-        _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname scope:scope];
+        _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname vendor:scope];
         _hostRef.onChangeBlock = ^{
             DLog(@"Hostname changed, update git poller enabled");
             [weakSelf updatePollerEnabled];
         };
-        _lastCommandRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionLastCommand scope:scope];
+        _lastCommandRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionLastCommand vendor:scope];
         _lastCommandRef.onChangeBlock = ^{
             [weakSelf bumpIfLastCommandWasGit];
         };
