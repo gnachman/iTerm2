@@ -3,7 +3,7 @@
 Tab Title
 =========
 
-This scropt prompts you to enter a tab title every time a new tab is created.
+This script prompts you to enter a tab title every time a new tab is created.
 
 .. code-block:: python
 

@@ -27,6 +27,7 @@
     _savedBIFs = [[iTermBuiltInFunctions sharedInstance] savedState];
     iTermBuiltInFunction *add = [[iTermBuiltInFunction alloc] initWithName:@"add"
                                                                  arguments:@{ @"x": [NSNumber class], @"y": [NSNumber class] }
+                                                         optionalArguments:[NSSet set]
                                                              defaultValues:@{}
                                                                    context:iTermVariablesSuggestionContextNone
                                                                      block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -37,6 +38,7 @@
 
     iTermBuiltInFunction *mult = [[iTermBuiltInFunction alloc] initWithName:@"mult"
                                                                   arguments:@{ @"x": [NSNumber class], @"y": [NSNumber class] }
+                                                          optionalArguments:[NSSet set]
                                                               defaultValues:@{}
                                                                     context:iTermVariablesSuggestionContextNone
                                                                       block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -47,6 +49,7 @@
 
     iTermBuiltInFunction *cat = [[iTermBuiltInFunction alloc] initWithName:@"cat"
                                                                   arguments:@{ @"x": [NSString class], @"y": [NSString class] }
+                                                         optionalArguments:[NSSet set]
                                                               defaultValues:@{}
                                                                     context:iTermVariablesSuggestionContextNone
                                                                       block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -57,6 +60,7 @@
 
     iTermBuiltInFunction *s = [[iTermBuiltInFunction alloc] initWithName:@"s"
                                                                arguments:@{}
+                                                       optionalArguments:[NSSet set]
                                                              defaultValues:@{}
                                                                    context:iTermVariablesSuggestionContextNone
                                                                      block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -66,6 +70,7 @@
 
     iTermBuiltInFunction *a = [[iTermBuiltInFunction alloc] initWithName:@"a"
                                                                arguments:@{}
+                                                       optionalArguments:[NSSet set]
                                                            defaultValues:@{}
                                                                  context:iTermVariablesSuggestionContextNone
                                                                    block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
