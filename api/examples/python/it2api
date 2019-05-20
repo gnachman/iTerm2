@@ -713,8 +713,7 @@ def main(argv):
     except Exception as e:
       print(traceback.format_exc())
 
-  c = iterm2.connection.Connection()
-  c.run_until_complete(wrapper)
+  iterm2.run_until_complete(wrapper)
 
 if __name__ == "__main__":
   try:
