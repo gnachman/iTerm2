@@ -99,6 +99,11 @@ function Build {
   # Modern
   SparkleSign ${SPARKLE_PREFIX}testing3_modern.xml ${SPARKLE_PREFIX}template3_modern.xml
 
+  # Copy experiment to control
+  cp ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template.xml
+  cp ${SPARKLE_PREFIX}testing3_new.xml ${SPARKLE_PREFIX}template_new.xml
+  cp ${SPARKLE_PREFIX}testing3_modern.xml ${SPARKLE_PREFIX}template_modern.xml
+
   popd
 }
 
