@@ -55,6 +55,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         iTermBuiltInFunction *func =
         [[iTermBuiltInFunction alloc] initWithName:@"session_title"
                                          arguments:@{ iTermSessionTitleSession: [NSString class] }
+                                 optionalArguments:[NSSet set]
                                      defaultValues:defaults
                                            context:iTermVariablesSuggestionContextSession
                                              block:
@@ -69,6 +70,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         iTermBuiltInFunction *func =
         [[iTermBuiltInFunction alloc] initWithName:@"window_title"
                                          arguments:@{ iTermSessionTitleSession: [NSString class] }
+                                 optionalArguments:[NSSet set]
                                      defaultValues:defaults
                                            context:iTermVariablesSuggestionContextSession
                                              block:

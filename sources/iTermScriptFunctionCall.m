@@ -69,10 +69,11 @@
 #pragma mark - APIs
 
 + (iTermParsedExpression *)callMethod:(NSString *)invocation
+                             receiver:(NSString *)receiver
                               timeout:(NSTimeInterval)timeout
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    return [self callFunction:invocation isMethod:YES timeout:timeout scope:nil retainSelf:retainSelf completion:completion];
+    return [self callFunction:invocation receiver:receiver timeout:timeout scope:nil retainSelf:retainSelf completion:completion];
 }
 
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
@@ -80,11 +81,11 @@
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    return [self callFunction:invocation isMethod:NO timeout:timeout scope:scope retainSelf:retainSelf completion:completion];
+    return [self callFunction:invocation receiver:nil timeout:timeout scope:scope retainSelf:retainSelf completion:completion];
 }
 
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
-                               isMethod:(BOOL)isMethod
+                               receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf
@@ -96,7 +97,7 @@
     });
     __block BOOL complete = NO;
     __block iTermParsedExpression *expression = [self callFunction:invocation
-                                                          isMethod:isMethod
+                                                          receiver:receiver
                                                            timeout:timeout
                                                              scope:scope
                                                         completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
@@ -113,7 +114,7 @@
 }
 
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
-                               isMethod:(BOOL)isMethod
+                               receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
                                   scope:(iTermVariableScope *)scope
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
@@ -151,27 +152,17 @@
             return nil;
         }
         case iTermParsedExpressionTypeFunctionCall:
-            if (isMethod && expression && placeholderScope) {
-                // Evaluate the identifier so we can call the method.
-                [expression.functionCall evaluateIdentifierWithTimeout:timeout
-                                                            invocation:invocation
-                                                            completion:
-                 ^(NSString *identifier, NSError *error, NSTimeInterval remainingTime) {
-                     if (error) {
-                         completion(nil, error, nil);
-                         return;
-                     }
-                     [expression.functionCall performMethodCallFromInvocation:invocation
-                                                                   identifier:identifier
-                                                                      timeout:remainingTime
-                                                                   completion:completion];
-                 }];
+            if (receiver) {
+                [expression.functionCall performMethodCallFromInvocation:invocation
+                                                                receiver:receiver
+                                                                 timeout:timeout
+                                                              completion:completion];
                 return expression;
             }
 
             assert(expression.functionCall);
             [expression.functionCall performFunctionCallFromInvocation:invocation
-                                                              isMethod:isMethod
+                                                              receiver:nil
                                                                  scope:scope
                                                                timeout:timeout
                                                             completion:completion];
@@ -193,21 +184,12 @@
 #pragma mark - Function Calls
 
 - (void)performMethodCallFromInvocation:(NSString *)invocation
-                             identifier:(NSString *)identifier
+                               receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    if (!identifier) {
-        NSString *reason = [NSString stringWithFormat:@"In invocation ”%@”: ”id” argument missing or not string-valued", invocation];
-        completion(nil,
-                   [NSError errorWithDomain:@"com.iterm2.call"
-                                       code:6
-                                   userInfo:@{ NSLocalizedDescriptionKey: reason }],
-                   nil);
-        return;
-    }
-    id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:identifier].owner;
+    id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:receiver].owner;
     if (!object) {
-        NSString *reason = [NSString stringWithFormat:@"Object with identifier “%@” not found", identifier];
+        NSString *reason = [NSString stringWithFormat:@"Object with identifier “%@” not found", receiver];
         completion(nil,
                    [NSError errorWithDomain:@"com.iterm2.call"
                                        code:5
@@ -215,10 +197,8 @@
                    nil);
         return;
     }
-    // Ensure that there are no side-effects from re-evaluating the "id" argument's value, since those were already done before getting here.
-    _argToExpression[@"id"] = [[iTermParsedExpression alloc] initWithString:identifier];
     [self performFunctionCallFromInvocation:invocation
-                                   isMethod:YES
+                                   receiver:receiver
                                       scope:object.objectScope
                                     timeout:timeout
                                  completion:completion];
@@ -249,7 +229,7 @@
 }
 
 - (void)performFunctionCallFromInvocation:(NSString *)invocation
-                                 isMethod:(BOOL)isMethod
+                                 receiver:(NSString *)receiver
                                     scope:(iTermVariableScope *)scope
                                   timeout:(NSTimeInterval)timeout
                                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
@@ -272,7 +252,7 @@
     }
     [self callWithScope:scope
              invocation:invocation
-               isMethod:isMethod
+               receiver:receiver
             synchronous:(timeout == 0)
              completion:
      ^(id output, NSError *error, NSSet<NSString *> *missing) {
@@ -295,7 +275,7 @@
 
 - (void)callWithScope:(iTermVariableScope *)scope
            invocation:(NSString *)invocation
-             isMethod:(BOOL)isMethod
+             receiver:(NSString *)receiver
           synchronous:(BOOL)synchronous
            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     static NSMutableArray<iTermScriptFunctionCall *> *outstandingCalls;
@@ -320,7 +300,7 @@
                                [strongSelf didEvaluateParametersWithScope:scope
                                                               synchronous:synchronous
                                                           parameterValues:parameterValues
-                                                                 isMethod:isMethod
+                                                                 receiver:receiver
                                                                  depError:depError
                                                                   missing:missing
                                                                completion:completion];
@@ -331,7 +311,7 @@
 - (void)didEvaluateParametersWithScope:(iTermVariableScope *)scope
                            synchronous:(BOOL)synchronous
                        parameterValues:(NSDictionary<NSString *, id> *)parameterValues
-                              isMethod:(BOOL)isMethod
+                              receiver:(NSString *)receiver
                               depError:(NSError *)depError
                                missing:(NSSet<NSString *> *)missing
                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
@@ -339,8 +319,8 @@
         completion(nil, depError, missing);
         return;
     }
-    if (isMethod) {
-        iTermCallMethodByIdentifier(parameterValues[@"id"],
+    if (receiver) {
+        iTermCallMethodByIdentifier(receiver,
                                     _name,
                                     parameterValues,
                                     ^(id object, NSError *error) {
@@ -433,7 +413,7 @@
                                                 depError = error;
                                                 *stop = YES;
                                             } else {
-                                                parameterValues[key] = value;
+                                                parameterValues[key] = value ?: [NSNull null];
                                             }
                                             dispatch_group_leave(group);
                                         }];
@@ -497,43 +477,6 @@
     return [NSError errorWithDomain:@"com.iterm2.call"
                                code:1
                            userInfo:userInfo];
-}
-
-- (void)evaluateIdentifierWithTimeout:(NSTimeInterval)timeout
-                           invocation:(NSString *)invocation
-                           completion:(void (^)(NSString *, NSError *, NSTimeInterval))completion {
-    iTermParsedExpression *expression = _argToExpression[@"id"];
-    if (!expression) {
-        NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
-                                             code:6
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"No “id” argument" }];
-        completion(nil, error, 0);
-        return;
-    }
-    __block BOOL done = NO;
-    const NSTimeInterval startTime = [NSDate it_timeSinceBoot];
-    [self evaluateArgumentWithParsedExpression:expression
-                                    invocation:invocation
-                                         scope:[[iTermVariablePlaceholderScope alloc] init]
-                                   synchronous:timeout == 0
-                                    completion:^(NSError *error, id value, NSSet<NSString *> *innerMissing) {
-                                        if (done) {
-                                            return;
-                                        }
-                                        done = YES;
-                                        const NSTimeInterval elapsed = NSDate.it_timeSinceBoot - startTime;
-                                        const NSTimeInterval timeLeft = MAX(DBL_MIN, timeout - elapsed);
-                                        completion([NSString castFrom:value], error, timeLeft);
-                                    }];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (done) {
-            return;
-        }
-        done = YES;
-        [self functionCallDidTimeOutAfter:timeout invocation:invocation completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
-            completion(value, error, 0);
-        }];
-    });
 }
 
 @end

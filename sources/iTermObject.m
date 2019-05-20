@@ -50,8 +50,7 @@ void iTermCallMethodOnObject(id<iTermObject> object,
                              NSString *name,
                              NSDictionary *args,
                              void (^completion)(id, NSError *)) {
-    NSDictionary *filteredArgs = [args dictionaryByRemovingObjectForKey:@"id"];
-    NSString *const signature = iTermFunctionSignatureFromNameAndArguments(name, filteredArgs.allKeys);
+    NSString *const signature = iTermFunctionSignatureFromNameAndArguments(name, args.allKeys);
     iTermBuiltInMethod *const method = [object.objectMethodRegistry methodWithSignature:signature];
     if (!method) {
         completion(nil,
@@ -62,6 +61,6 @@ void iTermCallMethodOnObject(id<iTermObject> object,
         return;
     }
 
-    [method callWithArguments:filteredArgs completion:completion];
+    [method callWithArguments:args completion:completion];
 }
 

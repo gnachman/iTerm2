@@ -11231,6 +11231,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         method = [[iTermBuiltInMethod alloc] initWithName:@"set_name"
                                             defaultValues:@{}
                                                     types:@{ @"name": [NSString class] }
+                                        optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
                                                    target:self
                                                    action:@selector(setNameWithCompletion:name:)];

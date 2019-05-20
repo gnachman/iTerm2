@@ -35,10 +35,13 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters;
 @end
 
-@implementation iTermBuiltInFunction
+@implementation iTermBuiltInFunction {
+    NSSet<NSString *> *_optionalArguments;
+}
 
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *,Class> *)argumentsAndTypes
+           optionalArguments:(NSSet<NSString *> *)optionalArguments
                defaultValues:(NSDictionary<NSString *,NSString *> *)defaultValues
                      context:(iTermVariablesSuggestionContext)context
                        block:(iTermBuiltInFunctionsExecutionBlock)block {
@@ -48,6 +51,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         _argumentsAndTypes = [argumentsAndTypes copy];
         _defaultValues = [defaultValues copy];
         _block = [block copy];
+        _optionalArguments = [optionalArguments copy];
         [defaultValues enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
             [iTermVariableHistory recordUseOfVariableNamed:obj inContext:context];
         }];
@@ -65,6 +69,9 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters {
     for (NSString *name in parameters) {
         Class actual = [parameters[name] class];
+        if ([actual isKindOfClass:[NSNull class]] && [_optionalArguments containsObject:name]) {
+            continue;
+        }
         Class expected = _argumentsAndTypes[name];
         if (!expected) {
             return [self invalidArgumentError:name];
@@ -203,7 +210,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         return;
     }
 
-    function.block(amendedParameters, completion);
+    function.block([amendedParameters dictionaryByRemovingNullValues], completion);
 }
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier {
@@ -237,6 +244,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         iTermBuiltInFunction *func =
         [[iTermBuiltInFunction alloc] initWithName:@"count"
                                          arguments:@{ array: [NSArray class] }
+                                 optionalArguments:[NSSet set]
                                      defaultValues:@{}
                                            context:iTermVariablesSuggestionContextNone
                                              block:
@@ -276,6 +284,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
     __weak id<iTermObject> _target;
     SEL _action;
     NSDictionary<NSString *, Class> *_types;
+    NSSet<NSString *> *_optionalArguments;
 }
 
 + (NSArray<iTermReflectionMethodArgument *> *)argumentsFromTarget:(id<iTermObject>)target
@@ -324,6 +333,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 - (instancetype)initWithName:(NSString *)name
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
                        types:(NSDictionary<NSString *, Class> *)types
+           optionalArguments:(NSSet<NSString *> *)optionalArguments
                      context:(iTermVariablesSuggestionContext)context
                       target:(id<iTermObject>)target
                       action:(SEL)action {
@@ -337,6 +347,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
     }
     self = [super initWithName:name
                      arguments:argDict
+             optionalArguments:[NSSet set]
                  defaultValues:defaultValues
                        context:context
                          block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -348,6 +359,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         _action = action;
         _target = target;
         _types = [types copy];
+        _optionalArguments = [optionalArguments copy];
     }
     return self;
 }
@@ -364,11 +376,18 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         if ([arg.argumentName hasSuffix:@"WithCompletion"]) {
             temp[i] = [completion copy];
         } else {
-            temp[i] = parameters[arg.argumentName];
+            temp[i] = [parameters[arg.argumentName] nilIfNull];
             assert(temp[i]);
         }
         Class requiredClass = _types[arg.argumentName];
         if (requiredClass) {
+            if ([parameters[arg.argumentName] isKindOfClass:[NSNull class]] &&
+                ![_optionalArguments containsObject:arg.argumentName]) {
+                completion(nil, [self typeMismatchError:arg.argumentName
+                                                 wanted:requiredClass
+                                                    got:nil]);
+                return;
+            }
             if (![parameters[arg.argumentName] isKindOfClass:requiredClass]) {
                 Class actualClass = [parameters[arg.argumentName] class];
                 completion(nil, [self typeMismatchError:arg.argumentName

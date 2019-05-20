@@ -47,6 +47,7 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`copycolor` — Demonstrates monitoring for session creation and using color presets.
 
+:doc:`tabtitle` - Demonstrates monitoring for the creation of a new tab. Also demonstrates prompting the user for a string and changing a tab title.
 
 ----
 

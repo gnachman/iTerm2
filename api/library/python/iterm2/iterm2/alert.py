@@ -9,13 +9,15 @@ class Alert:
 
     :param title: The title, shown in bold at the top.
     :param subtitle: The informative text, which may be more than one line long.
+    :param window_id: The window to attach the alert to. If None, it will be application modal.
 
     .. seealso:: Example ":ref:`oneshot_example`"
     """
-    def __init__(self, title, subtitle):
+    def __init__(self, title: str, subtitle: str, window_id: typing.Optional[str]=None):
         self.__title = title
         self.__subtitle = subtitle
         self.__buttons = []
+        self.__window_id = window_id
 
     @property
     def title(self) -> str:
@@ -24,6 +26,10 @@ class Alert:
     @property
     def subtitle(self) -> str:
         return self.__subtitle
+
+    @property
+    def window_id(self) -> str:
+        return self.__window_id
 
     def add_button(self, title: str):
         """Adds a button to the end of the list of buttons."""
@@ -43,8 +49,7 @@ class Alert:
 
         return await iterm2.async_invoke_function(
                 connection,
-                'iterm2.alert(title: {}, subtitle: {}, buttons: {})'.format(
-                    title, subtitle, buttons))
+                f'iterm2.alert(title: {title}, subtitle: {subtitle}, buttons: {buttons}, window_id: {json.dumps(self.window_id)})')
 
 class TextInputAlert:
     """A modal alert with a text input accessory.
@@ -54,11 +59,12 @@ class TextInputAlert:
     :param placeholder: Grayed-out text to show in the text field when it is empty.
     :param defaultValue: Default text to place in the text field.
     """
-    def __init__(self, title: str, subtitle: str, placeholder: str, defaultValue: str):
+    def __init__(self, title: str, subtitle: str, placeholder: str, defaultValue: str, window_id: typing.Optional[str]=None):
         self.__title = title
         self.__subtitle = subtitle
         self.__placeholder = placeholder
         self.__defaultValue = defaultValue
+        self.__window_id = window_id
 
     @property
     def title(self) -> str:
@@ -76,6 +82,10 @@ class TextInputAlert:
     def defaultValue(self) -> str:
         return self.__defaultValue
 
+    @property
+    def window_id(self) -> str:
+        return self.__window_id
+
     async def async_run(self, connection: iterm2.connection.Connection) -> typing.Optional[str]:
         """Shows the modal alert.
 
@@ -91,5 +101,5 @@ class TextInputAlert:
 
         return await iterm2.async_invoke_function(
                 connection,
-                f'iterm2.get_string(title: {title}, subtitle: {subtitle}, placeholder: {placeholder}, defaultValue: {defaultValue})')
+                f'iterm2.get_string(title: {title}, subtitle: {subtitle}, placeholder: {placeholder}, defaultValue: {defaultValue}, window_id: {json.dumps(self.window_id)})')
 

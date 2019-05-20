@@ -190,9 +190,8 @@ class Tab:
         """
         invocation = iterm2.util.invocation_string(
                 "iterm2.set_title",
-                { "title": title,
-                  "id": self.tab_id })
-        await iterm2.rpc.async_invoke_method(self.connection, invocation, -1)
+                { "title": title })
+        await iterm2.rpc.async_invoke_method(self.connection, self.tab_id, invocation, -1)
 
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """

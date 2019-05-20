@@ -30,6 +30,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
+           optionalArguments:(NSSet<NSString *> *)optionalArguments
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
                      context:(iTermVariablesSuggestionContext)context
                        block:(iTermBuiltInFunctionsExecutionBlock)block NS_DESIGNATED_INITIALIZER;
@@ -42,6 +43,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (instancetype)initWithName:(NSString *)name
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
                        types:(NSDictionary<NSString *, Class> *)types
+           optionalArguments:(NSSet<NSString *> *)optionalArguments
                      context:(iTermVariablesSuggestionContext)context
                       target:(id<iTermObject>)target
                       action:(SEL)action;

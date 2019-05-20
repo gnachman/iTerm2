@@ -5517,6 +5517,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         method = [[iTermBuiltInMethod alloc] initWithName:@"set_title"
                                             defaultValues:@{}
                                                     types:@{ @"title": [NSString class] }
+                                        optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];

@@ -597,12 +597,12 @@ async def async_close(connection, sessions=None, tabs=None, windows=None, force=
     return await _async_call(connection, request)
 
 
-async def async_invoke_function(connection, invocation, session_id=None, tab_id=None, window_id=None, timeout=-1, method=False):
+async def async_invoke_function(connection, invocation, session_id=None, tab_id=None, window_id=None, timeout=-1, receiver=None):
     request = _alloc_request()
     request.invoke_function_request.SetInParent()
     request.invoke_function_request.invocation = invocation
-    if method:
-        request.invoke_function_request.method.SetInParent()
+    if receiver:
+        request.invoke_function_request.method.receiver = receiver
     elif session_id:
         request.invoke_function_request.session.session_id = session_id
     elif tab_id:
@@ -614,12 +614,13 @@ async def async_invoke_function(connection, invocation, session_id=None, tab_id=
     request.invoke_function_request.timeout = timeout
     return await _async_call(connection, request)
 
-async def async_invoke_method(connection, invocation, timeout):
+async def async_invoke_method(connection, receiver, invocation, timeout):
     """Convenience wrapper around async_invoke_function for methods."""
+    assert(receiver)
     response = await iterm2.rpc.async_invoke_function(
             connection,
             invocation,
-            method=True,
+            receiver=receiver,
             timeout=timeout)
     which = response.invoke_function_response.WhichOneof('disposition')
     if which == 'error':

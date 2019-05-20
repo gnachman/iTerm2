@@ -623,9 +623,8 @@ class Session:
         """
         invocation = iterm2.util.invocation_string(
                 "iterm2.set_name",
-                { "name": name,
-                  "id": self.session_id })
-        await iterm2.rpc.async_invoke_method(self.connection, invocation, -1)
+                { "name": name })
+        await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1)
 
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """

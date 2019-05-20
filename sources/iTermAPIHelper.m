@@ -3550,7 +3550,14 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
             [self invokeFunction:request.invocation inSessionWithID:request.session.sessionId completion:completion timeout:request.timeout];
             return;
         case ITMInvokeFunctionRequest_Context_OneOfCase_Method:
-            [self invokeMethod:request.invocation completion:completion timeout:request.timeout];
+            if (!request.method.hasReceiver) {
+                ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
+                response.error.status = ITMInvokeFunctionResponse_Status_RequestMalformed;
+                response.error.errorReason = @"No receiver";
+                completion(response);
+                return;
+            }
+            [self invokeMethod:request.invocation receiver:request.method.receiver completion:completion timeout:request.timeout];
             return;
 
         case ITMInvokeFunctionRequest_Context_OneOfCase_GPBUnsetOneOfCase:
@@ -3591,8 +3598,12 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
                                }];
 }
 
-- (void)invokeMethod:(NSString *)invocation completion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
+- (void)invokeMethod:(NSString *)invocation
+            receiver:(NSString *)receiver
+          completion:(void (^)(ITMInvokeFunctionResponse *))completion
+             timeout:(NSTimeInterval)timeout {
     [iTermScriptFunctionCall callMethod:invocation
+                               receiver:receiver
                                 timeout:timeout >= 0 ? timeout : 30
                              retainSelf:YES
                              completion:^(id object, NSError *error, NSSet<NSString *> *missing) {

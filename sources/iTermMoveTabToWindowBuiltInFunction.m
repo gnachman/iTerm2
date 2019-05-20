@@ -17,6 +17,7 @@
     iTermBuiltInFunction *func =
     [[iTermBuiltInFunction alloc] initWithName:@"move_tab_to_window"
                                      arguments:@{ }
+                             optionalArguments:[NSSet set]
                                  defaultValues:@{ @"tab_id": iTermVariableKeyTabID }
                                        context:iTermVariablesSuggestionContextTab
                                          block:

@@ -112,13 +112,13 @@ message InvokeFunctionRequest {
   message App {
   }
   message Method {
+    optional string receiver = 1;
   }
   oneof context {
     Tab tab = 1;
     Session session = 2;
     Window window = 3;
     App app = 4;
-    // method means there is an "id" argument from which the context can be inferred. The id's value is a globally unique identifier that is indexed.
     Method method = 7;
   }
   optional string invocation = 5;

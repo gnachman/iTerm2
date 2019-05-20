@@ -9948,6 +9948,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         method = [[iTermBuiltInMethod alloc] initWithName:@"set_title"
                                             defaultValues:@{}
                                                     types:@{ @"title": [NSString class] }
+                                        optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];

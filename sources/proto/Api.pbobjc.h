@@ -1301,7 +1301,6 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Context_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_App *app;
 
-/** method means there is an "id" argument from which the context can be inferred. The id's value is a globally unique identifier that is indexed. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionRequest_Method *method;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *invocation;
@@ -1369,7 +1368,15 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Window_FieldNumber) {
 
 #pragma mark - ITMInvokeFunctionRequest_Method
 
+typedef GPB_ENUM(ITMInvokeFunctionRequest_Method_FieldNumber) {
+  ITMInvokeFunctionRequest_Method_FieldNumber_Receiver = 1,
+};
+
 @interface ITMInvokeFunctionRequest_Method : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *receiver;
+/** Test to see if @c receiver has been set. */
+@property(nonatomic, readwrite) BOOL hasReceiver;
 
 @end
 

@@ -1385,9 +1385,11 @@ typedef struct ITMInvokeFunctionRequest_App__storage_ {
 
 @implementation ITMInvokeFunctionRequest_Method
 
+@dynamic hasReceiver, receiver;
 
 typedef struct ITMInvokeFunctionRequest_Method__storage_ {
   uint32_t _has_storage_[1];
+  NSString *receiver;
 } ITMInvokeFunctionRequest_Method__storage_;
 
 // This method is threadsafe because it is initially called
@@ -1395,12 +1397,23 @@ typedef struct ITMInvokeFunctionRequest_Method__storage_ {
 + (GPBDescriptor *)descriptor {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "receiver",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMInvokeFunctionRequest_Method_FieldNumber_Receiver,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Method__storage_, receiver),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMInvokeFunctionRequest_Method class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
-                                        fields:NULL
-                                    fieldCount:0
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionRequest_Method__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];

@@ -320,6 +320,9 @@
 
 - (iTermTriple<id, NSString *, NSString *> *)pathOrDereferencedArrayFromPath:(NSString *)path
                                                                        index:(NSNumber *)indexNumber {
+    if ([path isEqualToString:@"null"] && !indexNumber) {
+        return [iTermTriple tripleWithObject:nil andObject:nil object:path];
+    }
     if (_scope.usePlaceholders) {
         id placeholder;
         if (indexNumber) {
@@ -392,10 +395,11 @@
     [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermTriple *triple = syntaxTree.children[0];
+                               // Explicit nulls must be optional to signal the caller intended them to be null.
                                return [weakSelf parsedExpressionWithValue:triple.firstObject
                                                               errorReason:triple.secondObject
                                                                      path:triple.thirdObject
-                                                                 optional:NO];
+                                                                 optional:[triple.thirdObject isEqualToString:@"null"]];
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array> '?'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

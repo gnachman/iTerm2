@@ -11,6 +11,7 @@
 #import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
+#import "PseudoTerminal.h"
 #import "SessionView.h"
 
 #import <Cocoa/Cocoa.h>
@@ -21,19 +22,23 @@
     static NSString *const title = @"title";
     static NSString *const subtitle = @"subtitle";
     static NSString *const buttons = @"buttons";
+    static NSString *const window_id = @"window_id";
 
     iTermBuiltInFunction *func =
     [[iTermBuiltInFunction alloc] initWithName:@"alert"
                                      arguments:@{ title: [NSString class],
                                                   subtitle: [NSString class],
-                                                  buttons: [NSArray class] }
-                                 defaultValues:@{}
+                                                  buttons: [NSArray class],
+                                                  window_id: [NSObject class] }
+                             optionalArguments:[NSSet setWithObject:window_id]
+                                 defaultValues:@{ window_id: @"" }
                                        context:iTermVariablesSuggestionContextNone
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          [self showAlertWithTitle:parameters[title]
                          subtitle:parameters[subtitle]
                           buttons:parameters[buttons]
+                         windowID:[NSString castFrom:parameters[window_id]]
                        completion:completion];
      }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:func
@@ -43,6 +48,7 @@
 + (void)showAlertWithTitle:(NSString *)title
                   subtitle:(NSString *)subtitle
                    buttons:(NSArray *)buttons
+                  windowID:(NSString *)windowID
                 completion:(iTermBuiltInFunctionCompletionBlock)completion {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = title;
@@ -53,7 +59,12 @@
             [alert addButtonWithTitle:text];
         }
     }
-    completion(@(alert.runModal), nil);
+    NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
+    if (window) {
+        completion(@([alert runSheetModalForWindow:window]), nil);
+    } else {
+        completion(@(alert.runModal), nil);
+    }
 }
 
 @end
@@ -65,14 +76,16 @@
     static NSString *const subtitle = @"subtitle";
     static NSString *const placeholder = @"placeholder";
     static NSString *const defaultValue = @"defaultValue";
-    static NSString *const sessionID = @"sessionID";
+    static NSString *const window_id = @"window_id";
     iTermBuiltInFunction *func =
     [[iTermBuiltInFunction alloc] initWithName:@"get_string"
                                      arguments:@{ title: [NSString class],
                                                   subtitle: [NSString class],
                                                   placeholder: [NSString class],
-                                                  defaultValue: [NSString class] }
-                                 defaultValues:@{ sessionID: @"id" }
+                                                  defaultValue: [NSString class],
+                                                  window_id: [NSObject class] }
+                             optionalArguments:[NSSet setWithObject:window_id]
+                                 defaultValues:@{ }
                                        context:iTermVariablesSuggestionContextNone
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -80,7 +93,7 @@
                                                subtitle:parameters[subtitle]
                                             placeholder:parameters[placeholder]
                                            defaultValue:parameters[defaultValue]
-                                              sessionID:parameters[sessionID]
+                                               windowID:[NSString castFrom:parameters[window_id]]
                                              completion:completion];
      }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:func
@@ -91,7 +104,7 @@
                                         subtitle:(NSString *)subtitle
                                      placeholder:(NSString *)placeholder
                                     defaultValue:(NSString *)defaultValue
-                                       sessionID:(NSString *)sessionID
+                                        windowID:(NSString *)windowID
                                       completion:(iTermBuiltInFunctionCompletionBlock)completion {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     textField.editable = YES;
@@ -104,8 +117,7 @@
     alert.informativeText = subtitle;
     alert.accessoryView = textField;
 
-    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID];
-    NSWindow *window = session.view.window;
+    NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
     if (window) {
         [alert runSheetModalForWindow:window];
     } else {
