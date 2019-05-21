@@ -15,18 +15,29 @@
     return sizeof(iTermBackgroundColorPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
 }
 
+- (BOOL)shouldPremultiply {
+    if (@available(macOS 10.14, *)) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row
        repeatingRows:(int)repeatingRows {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     const int height = self.cellConfiguration.gridSize.height;
+    const BOOL premultiply = [self shouldPremultiply];
     for (int i = 0; i < count; i++) {
         iTermBackgroundColorPIU &piu = *_pius.get_next();
         piu.color = rles[i].color;
-        piu.color.x *= piu.color.w;
-        piu.color.y *= piu.color.w;
-        piu.color.z *= piu.color.w;
+        if (premultiply) {
+            piu.color.x *= piu.color.w;
+            piu.color.y *= piu.color.w;
+            piu.color.z *= piu.color.w;
+        }
         piu.runLength = rles[i].count;
         piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,

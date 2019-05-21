@@ -78,9 +78,11 @@ NS_ASSUME_NONNULL_BEGIN
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
-    color.x *= color.w;
-    color.y *= color.w;
-    color.z *= color.w;
+    if (@available(macOS 10.14, *)) {
+        color.x *= color.w;
+        color.y *= color.w;
+        color.z *= color.w;
+    }
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&color
                                                       checkIfChanged:YES];
