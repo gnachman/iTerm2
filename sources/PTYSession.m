@@ -7237,7 +7237,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     includeBottomStatusBar:YES];
     NSRect containerBounds = [self.view insetRect:container.bounds
                                           flipped:YES
-                           includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
+                           includeBottomStatusBar:YES];
     viewRect.origin.x -= containerBounds.origin.x;
     viewRect.origin.y -= containerBounds.origin.y;
 
