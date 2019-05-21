@@ -10,6 +10,16 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 
+// I foolishly renamed GrowlTrigger to iTermUserNotificationTrigger in 3.2.1, which broke everyone's triggers.
+// It got renamed back in 3.2.2. If someone created a new trigger in 3.2.1 it would have the bogus name.
+// Then the 3.3.0 betas didn't cherrypick the fix, so more problems. I'm done with this so let's just
+// keep both around forever.
+@interface GrowlTrigger : iTermUserNotificationTrigger
+@end
+
+@implementation GrowlTrigger
+@end
+
 @implementation iTermUserNotificationTrigger
 
 + (NSString *)title
