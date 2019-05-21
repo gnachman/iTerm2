@@ -7208,12 +7208,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                        flip:NO];
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
+        NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect);;
+        if (@available(macOS 10.14, *)) {} else {
+            if (view == self.view) {
+                clippedDirtyRect = dirtyRect;
+            }
+        }
         NSRect windowVisibleRect = [self.view insetRect:container.bounds
                                                 flipped:YES
                                  includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:container
-                                                  dirtyRect:NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect)
+                                                  dirtyRect:clippedDirtyRect
                                      visibleRectInContainer:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:YES];
