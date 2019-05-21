@@ -1777,6 +1777,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         offset += size;
         offset += splitView.dividerThickness;
     }
+    [self adjustSubviewsOf:splitView];
+    [self _splitViewDidResizeSubviews:splitView];
 }
 
 - (void)arrangeTmuxSplitPanesEvenly {

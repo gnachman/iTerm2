@@ -43,6 +43,13 @@
     return d;
 }
 
+// NSSplitView, that paragon of quality, does not redraw itself properly
+// on 10.14 (and, who knows, maybe earlier versions) unless you subclass
+// drawRect.
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+}
+
 - (void)mouseDown:(NSEvent *)theEvent
 {
     if (self.subviews.count == 0) {
