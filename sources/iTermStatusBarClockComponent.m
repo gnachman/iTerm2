@@ -58,7 +58,8 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     if (!_dateFormatter) {
         _dateFormatter = [[NSDateFormatter alloc] init];
         NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-        _dateFormatter.dateFormat = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"M-dd h:mm";
+        NSString *template = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"M-dd h:mm";
+        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]];
     }
     return _dateFormatter;
 }
