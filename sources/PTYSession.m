@@ -7235,9 +7235,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSRect viewRect = [self.view insetRect:sessionViewFrameInContainer
                                    flipped:YES
                     includeBottomStatusBar:YES];
+    BOOL includeBottomStatusBar = YES;
+    if (@available(macOS 10.14, *)) {
+        includeBottomStatusBar = ![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane];
+    }
     NSRect containerBounds = [self.view insetRect:container.bounds
                                           flipped:YES
-                           includeBottomStatusBar:YES];
+                           includeBottomStatusBar:includeBottomStatusBar];
     viewRect.origin.x -= containerBounds.origin.x;
     viewRect.origin.y -= containerBounds.origin.y;
 
