@@ -22,8 +22,8 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 
 @implementation iTermGitPollWorker {
     iTermCommandRunner *_commandRunner;
+    NSMutableArray<iTermCommandRunner *> *_terminatingCommandRunners;
     NSMutableData *_readData;
-    NSInteger _generation;
     NSMutableArray<NSString *> *_queue;
     iTermGitCache *_cache;
     NSMutableDictionary<NSString *, NSMutableArray<iTermGitCallback> *> *_outstanding;
@@ -51,6 +51,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         _queue = [NSMutableArray array];
         _cache = [[iTermGitCache alloc] init];
         _outstanding = [NSMutableDictionary dictionary];
+        _terminatingCommandRunners = [NSMutableArray array];
     }
     return self;
 }
@@ -145,9 +146,9 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         _commandRunner.outputHandler = ^(NSData *data) {
             [weakSelf didRead:data];
         };
-        NSInteger generation = _generation++;
+        __weak __typeof(_commandRunner) weakCommandRunner = _commandRunner;
         _commandRunner.completion = ^(int code) {
-            [weakSelf scriptDied:generation];
+            [weakSelf commandRunnerDied:weakCommandRunner];
         };
         [_commandRunner run];
     }
@@ -161,9 +162,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     const size_t maxBytes = 100000;
     if (_readData.length + data.length > maxBytes) {
         DLog(@"wtf, have queued up more than 100k of output from the git poller script");
-        [_commandRunner terminate];
-        _commandRunner = nil;
-        [_readData setLength:0];
+        [self killScript];
         return;
     }
 
@@ -224,8 +223,9 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 - (void)killScript {
     DLog(@"KILL command runner %@", self->_commandRunner);
     DLog(@"killing wedged git poller script");
-    [_commandRunner terminate];
+    [_terminatingCommandRunners addObject:_commandRunner];
     [self reset];
+    [_commandRunner terminate];
 }
 
 - (void)reset {
@@ -235,11 +235,16 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     [_outstanding removeAllObjects];
 }
 
-- (void)scriptDied:(NSInteger)generation {
+- (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
     DLog(@"* script died *");
+    if (!commandRunner) {
+        DLog(@"nil command runner");
+        return;
+    }
     gNumberOfCommandRunners--;
     DLog(@"Decremented number of command runners to %@", @(gNumberOfCommandRunners));
-    if (generation != _generation) {
+    if ([_terminatingCommandRunners containsObject:commandRunner]) {
+        [_terminatingCommandRunners removeObject:commandRunner];
         return;
     }
     [self reset];
