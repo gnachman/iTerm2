@@ -36,6 +36,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)addNewTabAtEndOfTabs;
++ (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;

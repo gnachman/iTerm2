@@ -1526,8 +1526,25 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     static dispatch_once_t onceToken;
     static NSCharacterSet *exceptions;
     dispatch_once(&onceToken, ^{
-        // These characters are forced to be base characters.
-        exceptions = [[NSCharacterSet characterSetWithCharactersInString:@"\uff9e\uff9f"] retain];
+        // These characters are forced to be base characters. Apple's function
+        // is a bit overzealous in its definition of composed characters. For
+        // example, it treats 0b95 0bcd 0b95 0bc1 as a single composed
+        // character. In issue 7788 we see this violates user expectations;
+        // since b95 is a base character, it doesn't make sense. However Apple
+        // has decided to define grapheme cluster, it doesn't match what we
+        // actually want, which is to segment on base characters. It isn't as
+        // simple as simply splitting on base characters because combining
+        // marks can be picky about which preceding characters they'll combine
+        // with. For example, skin tone modifiers don't combine with all emoji. 
+        // Apple's function does pick those out properly, so we use it as a
+        // starting point and then segment further where we're sure it's safe
+        // to do so.
+        // This also came up in issue 6048 for FF9E and FF9F.
+        if ([iTermAdvancedSettingsModel aggressiveBaseCharacterDetection]) {
+            exceptions = [NSCharacterSet baseCharactersForUnicodeVersion:12];
+        } else {
+            exceptions = [[NSCharacterSet characterSetWithCharactersInString:@"\uff9e\uff9f"] retain];
+        }
     });
     CFIndex index = 0;
     NSInteger minimumLocation = 0;
@@ -1545,14 +1562,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         }
         range = NSMakeRange(tempRange.location, tempRange.length);
         if (range.length > 0) {
-            // CFStringGetRangeOfComposedCharactersAtIndex thinks that U+FF9E and U+FF9F are
-            // combining marks. Terminal.app and the person in issue 6048 disagree. Prevent them
-            // from combining.
             NSRange rangeOfFirstException = [self rangeOfCharacterFromSet:exceptions
                                                                   options:NSLiteralSearch
-                                                                    range:range];
-            if (rangeOfFirstException.location != NSNotFound &&
-                rangeOfFirstException.location > range.location) {
+                                                                    range:NSMakeRange(range.location + 1, range.length - 1)];
+            if (rangeOfFirstException.location != NSNotFound) {
                 range.length = rangeOfFirstException.location - range.location;
                 minimumLocation = NSMaxRange(range);
             }

@@ -21,6 +21,8 @@
 // Zero-width spaces.
 + (instancetype)zeroWidthSpaceCharacterSetForUnicodeVersion:(NSInteger)version;
 
++ (instancetype)baseCharactersForUnicodeVersion:(NSInteger)version;
+
 + (NSCharacterSet *)urlCharacterSet;
 + (NSCharacterSet *)filenameCharacterSet;
 
