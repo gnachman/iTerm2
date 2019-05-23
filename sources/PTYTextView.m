@@ -488,6 +488,8 @@ static const int kDragThreshold = 3;
 }
 
 - (BOOL)resignFirstResponder {
+    DLog(@"resign first responder: reset numTouches to 0");
+    _numTouches = 0;
     if (!self.it_shouldIgnoreFirstResponderChanges) {
         [_altScreenMouseScrollInferrer firstResponderDidChange];
         [self removeUnderline];
@@ -1857,15 +1859,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
         return;
     }
-    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
+    int numTouches = _numTouches;
+    _numTouches = 0;
+    DLog(@"Mouse Up on %@ with event %@, numTouches=%d. Resetting _numTouches to 0.", self, event, numTouches);
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
         return;
-    } else if (_numTouches == 3 && mouseDown) {
+    } else if (numTouches == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
-        [pointer_ mouseUp:event withTouches:_numTouches];
+        [pointer_ mouseUp:event withTouches:numTouches];
         _mouseDown = NO;
         DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
         return;
@@ -1873,7 +1877,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dragOk_ = NO;
     _semanticHistoryDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseUp:event withTouches:_numTouches];
+        [pointer_ mouseUp:event withTouches:numTouches];
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
         return;
     }
@@ -5374,6 +5378,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
+    DLog(@"applicationDidResignActive: reset _numTouches to 0");
+    _numTouches = 0;
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
