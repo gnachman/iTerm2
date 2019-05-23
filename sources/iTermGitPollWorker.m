@@ -224,8 +224,8 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     DLog(@"KILL command runner %@", self->_commandRunner);
     DLog(@"killing wedged git poller script");
     [_terminatingCommandRunners addObject:_commandRunner];
-    [self reset];
     [_commandRunner terminate];
+    [self reset];
 }
 
 - (void)reset {
@@ -236,7 +236,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
-    DLog(@"* script died *");
+    DLog(@"* command runner died: %@ *", commandRunner);
     if (!commandRunner) {
         DLog(@"nil command runner");
         return;
@@ -247,6 +247,10 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         [_terminatingCommandRunners removeObject:commandRunner];
         return;
     }
+    // This assertion is here in because calling reset when this precondition
+    // is violated means you're going to nil out your current command runner even
+    // though it's still running.
+    assert(commandRunner == _commandRunner);
     [self reset];
 }
 

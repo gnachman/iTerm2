@@ -12,6 +12,7 @@
 
 @interface iTermCommandRunner()
 @property (atomic) BOOL running;
+@property (atomic) BOOL terminateAfterLaunch;
 @end
 
 @implementation iTermCommandRunner {
@@ -107,10 +108,13 @@
 
 - (void)terminate {
     @try {
+        self.terminateAfterLaunch = YES;
         int pid = _task.processIdentifier;
         if (pid) {
             int rc = kill(pid, SIGKILL);
             DLog(@"kill -%@ %@ returned %@", @(SIGKILL), @(_task.processIdentifier), @(rc));
+        } else {
+            DLog(@"command runner %@ process ID is 0. Should terminate after launch.", self);
         }
     } @catch (NSException *exception) {
         DLog(@"terminate threw %@", exception);
@@ -129,6 +133,7 @@
     DLog(@"runCommand: Launching %@", _task);
     @try {
         [_task launch];
+        DLog(@"Launched %@", self);
     } @catch (NSException *e) {
         NSLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
         DLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
@@ -140,6 +145,10 @@
         return NO;
     }
     self.running = YES;
+    if (self.terminateAfterLaunch) {
+        DLog(@"terminate after launch %@", self);
+        [self terminate];
+    }
     return YES;
 }
 
