@@ -140,7 +140,7 @@
     _profile = self.profileUserX;
     _allProfiles = @[ self.profileUserX, self.profileUserY ];
     [_aps setHostname:@"whatever" username:@"y" path:@"whatever" job:@"whatever"];
-    XCTAssert([_profile isEqualToProfile:self.profileUserY]);
+    XCTAssert([_profile isEqualToProfile:self.profileUserY]);CSSMERR_CSP_INVALID_KEY_FORMAT
 }
 
 - (void)testSwitchesOnPath {
