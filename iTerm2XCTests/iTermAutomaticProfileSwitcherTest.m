@@ -103,12 +103,19 @@
     return @{ KEY_NAME: @"job=y", KEY_GUID: @"17", KEY_BOUND_HOSTS: @[ @"&y" ] };
 }
 
+- (Profile *)profileHostAll {
+    return @{ KEY_NAME: @"host=*", KEY_GUID: @"18", KEY_BOUND_HOSTS: @[ @"*" ] };
+}
+
+- (Profile *)profileWithoutBoundHosts {
+    return @{ KEY_NAME: @"Boring", KEY_GUID: @"19" };
+}
+
 - (void)setUp {
     [super setUp];
     _callsToLoadProfile = 0;
     _aps = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
-
-    _profile = _allProfiles[0];
+    _profile = @{ KEY_NAME: @"Initial Profile", KEY_GUID: @"initial" };
 }
 
 - (void)tearDown {
@@ -155,6 +162,13 @@
     _allProfiles = @[ self.profileJobX, self.profileJobY ];
     [_aps setHostname:@"whatever" username:@"whatever" path:@"whatever" job:@"y"];
     XCTAssert([_profile isEqualToProfile:self.profileJobY]);
+}
+
+- (void)testMatchAll {
+    _profile = self.profileWithoutBoundHosts;
+    _allProfiles = @[ self.profileWithoutBoundHosts, self.profileHostAll ];
+    [_aps setHostname:@"whatever" username:@"whatever" path:@"whatever" job:@"whatever"];
+    XCTAssert([_profile isEqualToProfile:self.profileHostAll]);
 }
 
 #pragma mark Priority is correct

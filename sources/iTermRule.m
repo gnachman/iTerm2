@@ -86,10 +86,6 @@
         // host
         hostname = string;
     }
-    if ([hostname isEqualToString:@"*"]) {
-        // user@*:path or *:path
-        hostname = nil;
-    }
     iTermRule *rule = [[[iTermRule alloc] init] autorelease];
     rule.username = username;
     rule.hostname = hostname;
@@ -123,13 +119,20 @@
                   username:(NSString *)username
                       path:(NSString *)path
                        job:(NSString *)job {
-    const int kHostExactMatchScore = 16;
-    const int kHostPartialMatchScore = 8;
-    const int kJobMatchScore = 4;
-    const int kUserExactMatchScore = 2;
-
-    const int kPathExactMatchScore = 1;
+    int acc = 1;
     const int kPathPartialMatchScore = 0;
+    const int kCatchallRuleScore = acc;
+    acc *= 2;
+    const int kPathExactMatchScore = acc;
+    acc *= 2;
+    const int kUserExactMatchScore = acc;
+    acc *= 2;
+    const int kJobMatchScore = acc;
+    acc *= 2;
+    const int kHostPartialMatchScore = acc;
+    acc *= 2;
+    const int kHostExactMatchScore = acc;
+    acc *= 2;
 
     double score = 0;
 
@@ -144,6 +147,16 @@
         NSRange wildcardPos = [self.hostname rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [hostname isEqualToString:self.hostname]) {
             score += kHostExactMatchScore;
+        } else if ([hostname isEqualToString:@"*"]) {
+            if (![self haveAnyComponentBesidesHostname]) {
+                // This is for backward compatibility. Previously, a hostname of * would be treated the
+                // same as not having a host name at all. That made sense from a scoring POV because
+                // you shouldn't get a higher score than a profile that doesn't specify a hostname at
+                // all, as they are exactly equivalent. However, if you specify only a hostname of *
+                // that should outrank a profile without any APS rules at all. I decided to give the
+                // lowest possible score because it's a catch-all, so any other rule should outrank it.
+                score += kCatchallRuleScore;
+            }
         } else if ([hostname stringMatchesGlobPattern:self.hostname caseSensitive:NO]) {
             score += kHostPartialMatchScore * (1.0 + [self squash:self.hostname.length]);
         } else if (self.hostname.length) {
@@ -175,6 +188,12 @@
     }
 
     return score;
+}
+
+- (BOOL)haveAnyComponentBesidesHostname {
+    return (self.username != nil ||
+            self.path != nil ||
+            self.job != nil);
 }
 
 @end
