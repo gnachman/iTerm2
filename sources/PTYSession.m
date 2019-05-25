@@ -8738,6 +8738,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName {
+    DLog(@"Set profile to\n%@", newProfile);
+    // Force triggers to be checked. We may be switching to a profile without triggers
+    // and we don't want them to run on the lines of text above _triggerLine later on
+    // when switching to a profile that does have triggers.
+    _lastPartialLineTriggerCheck = 0;
+    [self clearTriggerLine];
+
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
     if (preserveName) {
