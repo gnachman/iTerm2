@@ -61,6 +61,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`increase_font_size` — Demonstrates changing a session's font without updating the underlying profile.
 
+:doc:`change_default_profile` - Demonstrates changing the default profile.
+
 ----
 
 **Standalone Scripts**
