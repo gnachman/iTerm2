@@ -3786,26 +3786,8 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
         return [self tabBarInsetsForCompactWindow];
-    } else {
-        if (self.anyFullScreen || togglingLionFullScreen_) {
-            return NSEdgeInsetsZero;
-        }
-        return [self tabBarInsetsForNonFullscreenWindow];
     }
-}
-
-- (NSEdgeInsets)tabBarInsetsForNonFullscreenWindow NS_DEPRECATED_MAC(10_12, 10_14) {
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_TopTab:
-            return NSEdgeInsetsZero;
-
-        case PSMTab_LeftTab:
-            return NSEdgeInsetsMake(24, 0, 0, 0);
-
-        case PSMTab_BottomTab:
-            return NSEdgeInsetsZero;
-    }
-    assert(false);
+    // 10.13 and earlier - no compact mode so this is always 0.
     return NSEdgeInsetsZero;
 }
 
