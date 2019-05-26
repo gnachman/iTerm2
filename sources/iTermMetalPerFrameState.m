@@ -751,6 +751,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         attributes[x].annotation = annotated;
 
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                                                   x > 0 ? &line[x - 1] : NULL,
                                                                                    line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed);
@@ -836,6 +837,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 [imageRuns addObject:run];
             }
             glyphKeys[x].drawable = NO;
+            glyphKeys[x].combiningSuccessor = 0;
         } else if (annotated || characterIsDrawable) {
             lastDrawableGlyph = x;
             glyphKeys[x].code = line[x].code;
@@ -847,8 +849,18 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             const int italicBit = line[x].italic ? (1 << 1) : 0;
             glyphKeys[x].typeface = (boldBit | italicBit);
             glyphKeys[x].drawable = YES;
+            if (x < width &&
+                line[x + 1].complexChar &&
+                !(!line[x].complexChar && line[x].code < 128) &&
+                ComplexCharCodeIsSpacingCombiningMark(line[x + 1].code)) {
+                // Next character is a combining spacing mark that will join with this non-ascii character.
+                glyphKeys[x].combiningSuccessor = line[x + 1].code;
+            } else {
+                glyphKeys[x].combiningSuccessor = 0;
+            }
         } else {
             glyphKeys[x].drawable = NO;
+            glyphKeys[x].combiningSuccessor = 0;
         }
 
         // This is my attempt at a fast sketch that estimates the number of unique combinations of
@@ -1089,23 +1101,34 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
 
     const int radius = iTermTextureMapMaxCharacterParts / 2;
-    iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_configuration->_asciiFont
-                                                                                                           nonAsciiFont:_configuration->_nonAsciiFont
-                                                                                                            asciiOffset:asciiOffset
-                                                                                                              glyphSize:size
-                                                                                                               cellSize:_configuration->_cellSize
-                                                                                                 cellSizeWithoutSpacing:_configuration->_cellSizeWithoutSpacing
-                                                                                                                  scale:scale
-                                                                                                            useBoldFont:_configuration->_useBoldFont
-                                                                                                          useItalicFont:_configuration->_useItalicFont
-                                                                                                       usesNonAsciiFont:_configuration->_useNonAsciiFont
-                                                                                                       asciiAntiAliased:_configuration->_asciiAntialias
-                                                                                                    nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
-    iTermCharacterSourceAttributes *attributes = [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
-                                                                                                                 bold:bold
-                                                                                                                   italic:italic];
+    iTermCharacterSourceDescriptor *descriptor =
+    [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_configuration->_asciiFont
+                                                              nonAsciiFont:_configuration->_nonAsciiFont
+                                                               asciiOffset:asciiOffset
+                                                                 glyphSize:size
+                                                                  cellSize:_configuration->_cellSize
+                                                    cellSizeWithoutSpacing:_configuration->_cellSizeWithoutSpacing
+                                                                     scale:scale
+                                                               useBoldFont:_configuration->_useBoldFont
+                                                             useItalicFont:_configuration->_useItalicFont
+                                                          usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                          asciiAntiAliased:_configuration->_asciiAntialias
+                                                       nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
+    iTermCharacterSourceAttributes *attributes =
+    [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
+                                                                        bold:bold
+                                                                      italic:italic];
+    NSString *string = CharToStr(glyphKey->code, glyphKey->isComplex);
+    if (glyphKey->combiningSuccessor) {
+        if (ComplexCharCodeIsSpacingCombiningMark(glyphKey->combiningSuccessor) &&
+            !(glyphKey->isComplex && ComplexCharCodeIsSpacingCombiningMark(glyphKey->code))) {
+            // Append the successor cell's spacing combining mark, provided it has a predecessor.
+            NSString *successorString = CharToStr(glyphKey->combiningSuccessor, YES);
+            string = [string stringByAppendingString:successorString];
+        }
+    }
     iTermCharacterSource *characterSource =
-    [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
+    [[iTermCharacterSource alloc] initWithCharacter:string
                                          descriptor:descriptor
                                          attributes:attributes
                                          boxDrawing:glyphKey->boxDrawing

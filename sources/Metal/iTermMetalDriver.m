@@ -867,6 +867,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     CGSize glyphSize = frameData.glyphSize;
     CGFloat scale = frameData.scale;
     __weak iTermMetalFrameData *weakFrameData = frameData;
+
+    // Set up the ASCII fast path
     [_textRenderer setASCIICellSize:cellSize
                              offset:frameData.asciiOffset
                          descriptor:[frameData.perFrameState characterSourceDescriptorForASCIIWithGlyphSize:glyphSize
@@ -876,25 +878,26 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                __typeof(self) strongSelf = weakSelf;
                                iTermMetalFrameData *strongFrameData = weakFrameData;
                                if (strongSelf && strongFrameData) {
-                                   return [strongSelf dictionaryForCharacter:c
-                                                              withAttributes:attributes
-                                                                   frameData:strongFrameData
-                                                                   glyphSize:glyphSize
-                                                                       scale:scale];
+                                   return [strongSelf dictionaryForASCIICharacter:c
+                                                                   withAttributes:attributes
+                                                                        frameData:strongFrameData
+                                                                        glyphSize:glyphSize
+                                                                            scale:scale];
                                } else {
                                    return nil;
                                }
                            }];
 }
 
-- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)dictionaryForCharacter:(char)c
-                                                              withAttributes:(iTermASCIITextureAttributes)attributes
-                                                                   frameData:(iTermMetalFrameData *)frameData
-                                                                   glyphSize:(CGSize)glyphSize
-                                                                       scale:(CGFloat)scale {
+- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)dictionaryForASCIICharacter:(char)c
+                                                                   withAttributes:(iTermASCIITextureAttributes)attributes
+                                                                        frameData:(iTermMetalFrameData *)frameData
+                                                                        glyphSize:(CGSize)glyphSize
+                                                                            scale:(CGFloat)scale {
     static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
     iTermMetalGlyphKey glyphKey = {
         .code = c,
+        .combiningSuccessor = 0,
         .isComplex = NO,
         .boxDrawing = NO,
         .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
@@ -902,6 +905,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         .typeface = (attributes & typefaceMask),
     };
     BOOL emoji = NO;
+    // Don't need to pass predecessor or successor because ASCII never has combining spacing marks.
     return [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
                                                asciiOffset:frameData.asciiOffset
                                                       size:glyphSize

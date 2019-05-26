@@ -342,6 +342,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 
 // Look up the string associated with a complex char's key.
 NSString* ComplexCharToStr(int key);
+BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 
 // Return a string with the contents of a screen char, which may or may not
 // be complex.
@@ -361,17 +362,6 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex);
 // Add a code point to the end of an existing complex char. A replacement key is
 // returned.
 int AppendToComplexChar(int key, unichar codePoint);
-
-// Takes a non-complex character and adds a combining mark to it. It may or may not
-// become complex as a result, depending on whether there is an NFC form for the
-// new composite.
-void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, iTermUnicodeNormalization normalization);
-
-// Place a complex char in a screen char.
-void SetComplexCharInScreenChar(screen_char_t *screenChar, NSString *theString, iTermUnicodeNormalization normalization);
-
-// Create or lookup & return the code for a complex char.
-int GetOrSetComplexChar(NSString* str);
 
 // Translate a surrogate pair into a single utf-32 char.
 UTF32Char DecodeSurrogatePair(unichar high, unichar low);

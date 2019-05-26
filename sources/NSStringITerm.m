@@ -1539,9 +1539,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         // Apple's function does pick those out properly, so we use it as a
         // starting point and then segment further where we're sure it's safe
         // to do so.
-        // This also came up in issue 6048 for FF9E and FF9F.
+        //
+        // Furthermore, (at least some) combining spacing marks behave better
+        // when they have their own cell. For example, U+0BC6 when combined with
+        // U+0B95. See issue 7788.
+        //
+        // This also came up in issue 6048 for FF9E and FF9F (HALFWIDTH KATAKANA VOICED SOUND MARK)
         if ([iTermAdvancedSettingsModel aggressiveBaseCharacterDetection]) {
-            exceptions = [NSCharacterSet baseCharactersForUnicodeVersion:12];
+            exceptions = [NSCharacterSet codePointsWithOwnCell];
         } else {
             exceptions = [[NSCharacterSet characterSetWithCharactersInString:@"\uff9e\uff9f"] retain];
         }

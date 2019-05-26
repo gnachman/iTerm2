@@ -26,6 +26,7 @@
 #import "iTermTimestampDrawHelper.h"
 #import "MovingAverage.h"
 #import "NSArray+iTerm.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -2179,24 +2180,45 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     iTermCharacterAttributes previousCharacterAttributes = { 0 };
     int segmentLength = 0;
     BOOL previousDrawable = YES;
+    screen_char_t predecessor = { 0 };
 
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
-        unichar code = c.code;
+        const unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
         NSString *charAsString;
+
         if (isComplex) {
-            charAsString = ComplexCharToStr(c.code);
+            charAsString = ComplexCharToStr(code);
+
+            if (i > indexRange.location &&
+                builder.length > 0 &&
+                !(!predecessor.complexChar && predecessor.code < 128) &&
+                ComplexCharCodeIsSpacingCombiningMark(code)) {
+                // Spacing combining marks get their own cell but get drawn together with their base
+                // character which is assumed to be in the preceding cell so they combine properly.
+                // This does not apply to ASCII characters, since they can never combine with a
+                // spacing combining mark. That's done for performance in the GPU renderer to avoid
+                // complicating its ASCII fastpath.
+                [builder appendString:charAsString];
+                const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
+                for (int i = 0; i < charAsString.length; i++) {
+                    CTVectorAppend(positions, lastValue);
+                }
+                continue;
+            }
         } else {
             charAsString = nil;
         }
 
         const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
+                                                                        i > indexRange.location ? &predecessor : NULL,
                                                                         charAsString != nil,
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed);
+        predecessor = c;
         if (!drawable) {
             if ((characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) ||
                 (i > indexRange.location && !memcmp(&c, &line[i - 1], sizeof(c)))) {

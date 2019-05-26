@@ -244,8 +244,6 @@
 // Returns (-1,-1) if there is no previous cell.
 - (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord movedBackOverDoubleWidth:(BOOL *)dwc;
 
-- (BOOL)addCombiningChar:(unichar)combiningChar toCoord:(VT100GridCoord)coord;
-
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
 

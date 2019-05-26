@@ -341,6 +341,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @end
 
 NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *const c,
+                                                         const screen_char_t *const predecessor,
                                                          BOOL isStringifiable,
                                                          BOOL blinkingItemsVisible,
                                                          BOOL blinkAllowed) {
@@ -358,6 +359,11 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
                    !c->underline &&
                    !c->strikethrough &&
                    !c->urlCode) {
+            return NO;
+        }
+    } else if (predecessor && ComplexCharCodeIsSpacingCombiningMark(c->code)) {
+        if (predecessor->complexChar || predecessor->code > 127) {
+            // A spacing combining mark that has a non-ascii predecessor is not visible because the predecessor draws it.
             return NO;
         }
     }

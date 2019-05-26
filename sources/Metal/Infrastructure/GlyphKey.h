@@ -34,6 +34,7 @@ namespace iTerm2 {
 
         inline bool operator==(const GlyphKey &other) const {
             return (_repr.code == other._repr.code &&
+                    _repr.combiningSuccessor == other._repr.combiningSuccessor &&
                     _repr.isComplex == other._repr.isComplex &&
                     _repr.boxDrawing == other._repr.boxDrawing &&
                     _repr.thinStrokes == other._repr.thinStrokes &&
@@ -45,8 +46,9 @@ namespace iTerm2 {
         }
 
         NSString *description() const {
-            return [NSString stringWithFormat:@"[GlyphKey: code=%@ complex=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
+            return [NSString stringWithFormat:@"[GlyphKey: code=%@ combiningSuccessor=%@ complex=%@ boxdrawing=%@ thinstrokes=%@ drawable=%@ typeface=%@]",
                     @(_repr.code),
+                    @(_repr.combiningSuccessor),
                     @(_repr.isComplex),
                     @(_repr.boxDrawing),
                     @(_repr.thinStrokes),
@@ -59,6 +61,7 @@ namespace iTerm2 {
             std::size_t seed = 0;
 
             hash_combine(seed, _repr.code);
+            hash_combine(seed, _repr.combiningSuccessor);
             hash_combine(seed, _repr.isComplex);
             hash_combine(seed, _repr.boxDrawing);
             hash_combine(seed, _repr.thinStrokes);

@@ -21,7 +21,9 @@
 // Zero-width spaces.
 + (instancetype)zeroWidthSpaceCharacterSetForUnicodeVersion:(NSInteger)version;
 
-+ (instancetype)baseCharactersForUnicodeVersion:(NSInteger)version;
++ (instancetype)spacingCombiningMarksForUnicodeVersion:(int)version;
+
++ (instancetype)codePointsWithOwnCell;
 
 + (NSCharacterSet *)urlCharacterSet;
 + (NSCharacterSet *)filenameCharacterSet;

@@ -1887,29 +1887,6 @@ static NSString *const kGridSizeKey = @"Size";
     return VT100GridCoordMake(cx, cy);
 }
 
-// Add a combining char to the cell at the cursor position if possible. Returns
-// YES if it is able to and NO if there is no base character to combine with.
-- (BOOL)addCombiningChar:(unichar)combiningChar toCoord:(VT100GridCoord)coord
-{
-    int cx = coord.x;
-    int cy = coord.y;
-    screen_char_t* theLine = [self screenCharsAtLineNumber:cy];
-    if (theLine[cx].code == 0 ||
-        (theLine[cx].code >= ITERM2_PRIVATE_BEGIN && theLine[cx].code <= ITERM2_PRIVATE_END) ||
-        (IsLowSurrogate(combiningChar) && !IsHighSurrogate(theLine[cx].code)) ||
-        (!IsLowSurrogate(combiningChar) && IsHighSurrogate(theLine[cx].code))) {
-        // Unable to combine.
-        return NO;
-    }
-    if (theLine[cx].complexChar) {
-        theLine[cx].code = AppendToComplexChar(theLine[cx].code,
-                                               combiningChar);
-    } else {
-        BeginComplexChar(theLine + cx, combiningChar, [delegate_ gridUnicodeNormalizationForm]);
-    }
-    return YES;
-}
-
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord {
     screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
     if (!theLine) {

@@ -21,6 +21,7 @@ typedef NS_OPTIONS(int, iTermMetalGlyphKeyTypeface) {
 
 typedef struct {
     unichar code;
+    unichar combiningSuccessor;  // 0 if none, which is the normal case.
     BOOL isComplex;
     BOOL boxDrawing;
     BOOL thinStrokes;
@@ -46,6 +47,14 @@ NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key)
     } else {
         formattedCode = @(key->code);
     }
+
+    id formattedCombiningSuccessor;
+    if (key->combiningSuccessor) {
+        formattedCombiningSuccessor = [NSString stringWithFormat:@"0x%x (%C)", key->combiningSuccessor, key->combiningSuccessor];
+    } else {
+        formattedCombiningSuccessor = @"none";
+    }
+
     NSString *typefaceString = @"";
     if (key->typeface & iTermMetalGlyphKeyTypefaceBold) {
         typefaceString = [typefaceString stringByAppendingString:@"B"];
@@ -54,8 +63,9 @@ NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key)
         typefaceString = [typefaceString stringByAppendingString:@"I"];
     }
 
-    return [NSString stringWithFormat:@"code=%@ complex=%@ boxDrawing=%@ thinStrokes=%@ typeface=%@",
+    return [NSString stringWithFormat:@"code=%@ combiningSuccessor=%@ complex=%@ boxDrawing=%@ thinStrokes=%@ typeface=%@",
             formattedCode,
+            formattedCombiningSuccessor,
             key->isComplex ? @"YES" : @"NO",
             key->boxDrawing ? @"YES" : @"NO",
             key->thinStrokes ? @"YES" : @"NO",

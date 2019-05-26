@@ -2542,37 +2542,6 @@ do { \
     XCTAssert(coord.x == 1);
     XCTAssert(coord.y == 0);
 }
-
-- (void)testAddCombiningCharToCoord {
-    const unichar kCombiningAcuteAccent = 0x301;
-    const unichar kCombiningCedilla = 0x327;
-    const unichar kCombiningEnclosingCircle = 0x20dd;
-
-    VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
-    XCTAssert([grid addCombiningChar:kCombiningEnclosingCircle
-                          toCoord:VT100GridCoordMake(0, 0)]);
-    screen_char_t *line = [grid screenCharsAtLineNumber:0];
-    XCTAssert(line[0].complexChar);
-    NSString *str = ScreenCharToStr(&line[0]);
-    XCTAssert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"a⃝" decomposedStringWithCanonicalMapping]]);
-
-    // Fail to modify null character
-    grid = [self gridFromCompactLines:@".bcd"];
-    XCTAssert(![grid addCombiningChar:kCombiningAcuteAccent
-                           toCoord:VT100GridCoordMake(0, 0)]);
-
-    // Add two combining marks
-    grid = [self gridFromCompactLines:@"abcd"];
-    XCTAssert([grid addCombiningChar:kCombiningAcuteAccent
-                          toCoord:VT100GridCoordMake(0, 0)]);
-    XCTAssert([grid addCombiningChar:kCombiningCedilla
-                          toCoord:VT100GridCoordMake(0, 0)]);
-    line = [grid screenCharsAtLineNumber:0];
-    XCTAssert(line[0].complexChar);
-    str = ScreenCharToStr(&line[0]);
-    XCTAssert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
-}
-
 - (void)testDeleteChars {
     // Base case
     VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
