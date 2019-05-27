@@ -150,9 +150,12 @@
     return self.tabBar.insets.left;
 }
 
-- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow {
-    // This style always leaves space for overflow control.
-    return 24.0f;
+- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow
+                                    addTabButton:(BOOL)withAddTabButton {
+    if (withOverflow || withAddTabButton) {
+        return 24.0f;
+    }
+    return 0;
 }
 
 // For vertical orientation

@@ -183,6 +183,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL automaticallyAnimates;
 @property(nonatomic, assign) int tabLocation;
 @property(nonatomic, assign) int minimumTabDragDistance;
+@property(nonatomic, readonly) BOOL lainOutWithOverflow;
 
 // If off (the default) always ellipsize the ends of tab titles that don't fit.
 // Of on, ellipsize the start if more tabs share a prefix than a suffix.

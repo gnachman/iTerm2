@@ -23,7 +23,8 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 // control specific parameters
 - (float)leftMarginForTabBarControl;
-- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow;
+- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow
+                                    addTabButton:(BOOL)withAddTabButton;
 - (float)topMarginForTabBarControl;
 
 // add tab button

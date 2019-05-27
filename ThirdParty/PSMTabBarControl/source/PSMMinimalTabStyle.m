@@ -56,13 +56,6 @@
     }
 }
 
-- (float)rightMarginForTabBarControlWithOverflow:(BOOL)withOverflow {
-    if (withOverflow) {
-        return [super rightMarginForTabBarControlWithOverflow:YES];
-    }
-    return 0;
-}
-
 - (NSColor *)tabBarColor {
     NSColor *minimalStyleColor = [self.delegate minimalTabStyleBackgroundColor];
     DLog(@"Computing tab bar color. delegate=%@ minimalStyleColor=%@", self.delegate, minimalStyleColor);
@@ -521,9 +514,11 @@
     PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
     NSRect frame = cell.frame;
     if (!cell || cell.isInOverflowMenu) {
-        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:YES],
+        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:bar.lainOutWithOverflow
+                                                                                addTabButton:bar.showAddTabButton],
                            0,
-                           [self rightMarginForTabBarControlWithOverflow:YES],
+                           [self rightMarginForTabBarControlWithOverflow:bar.lainOutWithOverflow
+                                                            addTabButton:bar.showAddTabButton],
                            NSHeight(bar.frame));
     }
     const CGFloat left = 0.5;
@@ -591,9 +586,11 @@
     PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
     NSRect frame = cell.frame;
     if (!cell || cell.isInOverflowMenu) {
-        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:YES],
+        frame = NSMakeRect(NSMaxX(bar.frame) - [self rightMarginForTabBarControlWithOverflow:bar.lainOutWithOverflow
+                                                                                addTabButton:bar.showAddTabButton],
                            0,
-                           [self rightMarginForTabBarControlWithOverflow:YES],
+                           [self rightMarginForTabBarControlWithOverflow:bar.lainOutWithOverflow
+                                                            addTabButton:bar.showAddTabButton],
                            NSHeight(bar.frame));
     }
     const CGFloat left = 0;
