@@ -615,9 +615,6 @@
 		1D5FDD7D1208E91100C46BA3 /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = FB754C5F036EFC5301F955DB /* config.png */; };
 		1D5FDD7F1208E91100C46BA3 /* important.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB2EBCD040AC7C201F955DB /* important.png */; };
 		1D5FDD811208E91100C46BA3 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
-		1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
-		1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
-		1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
 		1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577109CB93C2008F320C /* Warning.png */; };
 		1D6578421CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6578401CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h */; };
 		1D6578431CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6578411CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m */; };
@@ -906,9 +903,6 @@
 		1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
 		1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
 		1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
-		1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
-		1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
-		1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
 		1D6ED99319AEA20D005A7799 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
 		1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
@@ -1752,6 +1746,13 @@
 		A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */; };
 		A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */; };
 		A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */; };
+		A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
+		A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
+		A635029A229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
+		A635029C229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */; };
+		A635029D229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */; };
+		A635029E229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */; };
+		A635029F229B64000042B779 /* PSMRolloverButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572F09CB9398008F320C /* PSMRolloverButton.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A636C3AF2288887600A83E2F /* iTermResourceLimitsHelper.h */; };
@@ -3086,7 +3087,6 @@
 		A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
 		A6C763DC1B45C6DD00E3C992 /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */; };
 		A6C763DD1B45C6DD00E3C992 /* PSMProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572D09CB9398008F320C /* PSMProgressIndicator.m */; };
-		A6C763DE1B45C6DD00E3C992 /* PSMRolloverButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572F09CB9398008F320C /* PSMRolloverButton.m */; };
 		A6C763DF1B45C6DD00E3C992 /* PSMTabBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02573109CB9398008F320C /* PSMTabBarCell.m */; };
 		A6C763E01B45C6DD00E3C992 /* PSMTabBarControl.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02573309CB9398008F320C /* PSMTabBarControl.m */; };
 		A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */ = {isa = PBXBuildFile; fileRef = F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */; };
@@ -4787,6 +4787,8 @@
 		A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusItemAlt@2x.png"; path = "images/StatusItemAlt@2x.png"; sourceTree = "<group>"; };
 		A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowImpl.m; sourceTree = "<group>"; };
 		A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowScriptingImpl.m; sourceTree = "<group>"; };
+		A6350297229B5F620042B779 /* YosemiteAddTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = YosemiteAddTab.png; path = images/YosemiteAddTab.png; sourceTree = SOURCE_ROOT; };
+		A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "YosemiteAddTab@2x.png"; path = "images/YosemiteAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -5913,9 +5915,6 @@
 		DD02573209CB9398008F320C /* PSMTabBarControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarControl.h; sourceTree = "<group>"; };
 		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02573909CB9398008F320C /* PSMTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabStyle.h; sourceTree = "<group>"; };
-		DD02576E09CB93C2008F320C /* TabNewMetal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetal.png; sourceTree = "<group>"; };
-		DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalPressed.png; sourceTree = "<group>"; };
-		DD02577009CB93C2008F320C /* TabNewMetalRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalRollover.png; sourceTree = "<group>"; };
 		DD02577109CB93C2008F320C /* Warning.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Warning.png; sourceTree = "<group>"; };
 		DD57633605653C5F00F1905E /* iTerm2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iTerm2.plist; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9090,6 +9089,8 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
+				A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */,
+				A6350297229B5F620042B779 /* YosemiteAddTab.png */,
 				534690271C94FF0000B7E4E9 /* overflowImagePressed.png */,
 				534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */,
 				534690231C94FE8000B7E4E9 /* overflowImage.png */,
@@ -9100,9 +9101,6 @@
 				1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */,
 				1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */,
 				1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */,
-				DD02576E09CB93C2008F320C /* TabNewMetal.png */,
-				DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */,
-				DD02577009CB93C2008F320C /* TabNewMetalRollover.png */,
 				DD02577109CB93C2008F320C /* Warning.png */,
 			);
 			name = images;
@@ -10560,6 +10558,7 @@
 				5308BF8F228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A6F7A715213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
+				A635029A229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A67F61EF214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
@@ -10616,15 +10615,12 @@
 				5376CB3E220D2E4300FE7476 /* git.sb in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
-				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
-				1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */,
 				A69C93482121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A67F6152214395870093940A /* graphic_less.png in Resources */,
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
-				1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */,
 				A6F7A71B213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				530AB7BE20A641E000D2AA08 /* repl_banner.txt in Resources */,
 				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
@@ -10793,6 +10789,7 @@
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
+				A635029E229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
 				A6F7A72A213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A67F616C214395990093940A /* graphic_micro@2x.png in Resources */,
@@ -10964,6 +10961,7 @@
 				1D44CFDB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				1D44D0851CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testNonAsciiAntiAliasOnly.png in Resources */,
 				1D44D0701CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
+				A635029D229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
 				A630118620E6A61D008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
 				1D44CFDA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
 				A6B3A73F1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
@@ -11111,6 +11109,7 @@
 				1D44D02A1CC7F5A600BE5630 /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */,
 				1D44D09D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
+				A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6F7A720213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */,
@@ -11485,15 +11484,12 @@
 				A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */,
 				A6F7A740213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
 				1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */,
-				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */,
 				53B93DFF21F640B9001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
-				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
-				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
 				A62DBB9F20F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A6E7AE8F214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67F61D0214395C60093940A /* graphic_ruby.png in Resources */,
@@ -11527,6 +11523,7 @@
 				A67D0D591A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				53FF9824209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				A67F6150214395870093940A /* graphic_less.png in Resources */,
+				A635029C229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
 				A6F7A743213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
@@ -11641,6 +11638,7 @@
 				A67F61F82143976F0093940A /* graphic_icons.json in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
+				A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */,
@@ -12595,6 +12593,7 @@
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
 				A64816602290773A008E7E0C /* iTermReflection.m in Sources */,
+				A635029F229B64000042B779 /* PSMRolloverButton.m in Sources */,
 				5365207221433ED2003C58FD /* iTermGitState.m in Sources */,
 				A630118E20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.m in Sources */,
 				A63011C920E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m in Sources */,
@@ -12922,7 +12921,6 @@
 				A6C7635D1B45C52B00E3C992 /* DirectoriesPopup.m in Sources */,
 				A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */,
 				A6C763021B45C52B00E3C992 /* VT100RemoteHost.m in Sources */,
-				A6C763DE1B45C6DD00E3C992 /* PSMRolloverButton.m in Sources */,
 				A6C762EF1B45C52B00E3C992 /* DVR.m in Sources */,
 				A6C763071B45C52B00E3C992 /* CapturedOutput.m in Sources */,
 				A6C762F11B45C52B00E3C992 /* DVRDecoder.m in Sources */,

@@ -158,12 +158,12 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
         }
 
         // new tab button
-        NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES] + 1,
-                                             3.0,
-                                             16.0,
-                                             16.0);
+        NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES],
+                                             3,
+                                             23,
+                                             22);
         _addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
-        if (_addTabButton){
+        if (_addTabButton) {
             NSImage *newButtonImage = [_style addTabButtonImage];
             if (newButtonImage)
                 [_addTabButton setUsualImage:newButtonImage];
@@ -184,6 +184,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
                 [_addTabButton setHidden:YES];
             }
             [_addTabButton setNeedsDisplay:YES];
+            _addTabButton.action = @selector(addTab:);
+            _addTabButton.target = self;
         }
 
         [self registerForDraggedTypes:[NSArray arrayWithObjects:@"com.iterm2.psm.controlitem", nil]];
@@ -331,7 +333,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
     _style.tabBar = self;
     
     // restyle add tab button
-    if (_addTabButton){
+    if (_addTabButton) {
         NSImage *newButtonImage = [_style addTabButtonImage];
         if (newButtonImage) {
             [_addTabButton setUsualImage:newButtonImage];
@@ -1090,7 +1092,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
 
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
             cellRect.origin.y = 0;
-            cellRect.origin.x += [[newValues valueForKeyPath:@"@sum.floatValue"] floatValue] + 2;
+            cellRect.origin.x += [[newValues valueForKeyPath:@"@sum.floatValue"] floatValue];
+            cellRect.size.width = 24;
+            cellRect.size.height = self.bounds.size.height;
         } else {
             cellRect.origin.x = 0;
             cellRect.origin.y = [[newValues lastObject] floatValue];
@@ -1281,8 +1285,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
     }
 }
 
-- (void)_setupAddTabButton:(NSRect)frame
-{
+- (void)_setupAddTabButton:(NSRect)frame {
     if (![[self subviews] containsObject:_addTabButton]) {
         [self addSubview:_addTabButton];
     }
@@ -1690,6 +1693,12 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
 - (void)tabBarDoubleClick {
     if ([[self delegate] respondsToSelector:@selector(tabViewDoubleClickTabBar:)]) {
         [[self delegate] tabViewDoubleClickTabBar:[self tabView]];
+    }
+}
+
+- (void)addTab:(id)sender {
+    if ([self.delegate respondsToSelector:@selector(tabViewDidClickAddTabButton:)]) {
+        [self.delegate tabViewDidClickAddTabButton:self];
     }
 }
 

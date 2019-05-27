@@ -6385,6 +6385,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return nil;
 }
 
+- (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView {
+    if (self.currentSession.isTmuxClient) {
+        [self newTmuxTab:nil];
+    } else {
+        [[iTermController sharedInstance] launchBookmark:nil inTerminal:self];
+    }
+}
+
 - (BOOL)isInitialized
 {
     return _contentView.tabView != nil;
