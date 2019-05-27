@@ -36,3 +36,5 @@ api/library/python/iterm2/.mypy_cache
 api/library/python/iterm2/_unstubbed
 api/library/python/iterm2/docs/_build
 
+# Better font picker
+BetterFontPicker/BetterFontPicker.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/UserInterfaceState.xcuserstate
