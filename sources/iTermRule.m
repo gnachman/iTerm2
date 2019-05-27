@@ -147,7 +147,7 @@
         NSRange wildcardPos = [self.hostname rangeOfString:@"*"];
         if (wildcardPos.location == NSNotFound && [hostname isEqualToString:self.hostname]) {
             score += kHostExactMatchScore;
-        } else if ([hostname isEqualToString:@"*"]) {
+        } else if ([self.hostname isEqualToString:@"*"]) {
             if (![self haveAnyComponentBesidesHostname]) {
                 // This is for backward compatibility. Previously, a hostname of * would be treated the
                 // same as not having a host name at all. That made sense from a scoring POV because
