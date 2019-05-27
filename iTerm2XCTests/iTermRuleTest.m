@@ -240,9 +240,9 @@
                                                        username:@"username"
                                                            path:@"/path"
                                                             job:@"x"];
-  NSArray *expected = @[ _usernameWildcardStartEndPath,
+  NSArray *expected = @[ _usernameWildcardActualPath,
+                         _usernameWildcardStartEndPath,
                          _usernameWildcardAllPath,
-                         _usernameWildcardActualPath,
                          _usernamePath,
                          _username,
                          _path ];
@@ -433,12 +433,12 @@
                                                              path:@"/path"
                                                               job:@"job"];
     NSArray *expected = @[
+                          _usernameWildcardActualPathJob,
                           _usernameWildcardStartEndPathJob,
                           _usernameWildcardAllPathJob,
-                          _usernameWildcardActualPathJob,
+                          _usernameWildcardActualPath,
                           _usernameWildcardStartEndPath,
                           _usernameWildcardAllPath,
-                          _usernameWildcardActualPath,
                           _usernamePathJob,
                           _usernameJob,
                           _pathJob,
