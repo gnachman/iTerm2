@@ -1602,28 +1602,31 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _deferFontChanges = deferFontChanges;
     if (!deferFontChanges) {
         for (PTYSession *session in _sessionsWithDeferredFontChanges) {
-            [self reallyChangeSessionFontSize:session];
+            [self reallyChangeSessionFontSize:session adjustWindow:YES];
         }
         [_sessionsWithDeferredFontChanges removeAllObjects];
     }
 }
 
-- (void)sessionDidChangeFontSize:(PTYSession *)session {
+- (void)sessionDidChangeFontSize:(PTYSession *)session
+                    adjustWindow:(BOOL)adjustWindow {
     if (self.deferFontChanges) {
         if (![_sessionsWithDeferredFontChanges containsObject:session]) {
             [_sessionsWithDeferredFontChanges addObject:session];
         }
         return;
     }
-    [self reallyChangeSessionFontSize:session];
+    [self reallyChangeSessionFontSize:session adjustWindow:adjustWindow];
 }
 
-- (void)reallyChangeSessionFontSize:(PTYSession *)session {
-    if (![[self parentWindow] anyFullScreen]) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
-            [[self parentWindow] fitWindowToTab:self];
-        }
+- (void)reallyChangeSessionFontSize:(PTYSession *)session
+                       adjustWindow:(BOOL)adjustWindow {
+    if (adjustWindow &&
+        ![[self parentWindow] anyFullScreen] &&
+        [iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        [[self parentWindow] fitWindowToTab:self];
     }
+
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     if ([session isTmuxClient]) {

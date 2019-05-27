@@ -134,7 +134,8 @@ typedef enum {
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
 
 // Session-initiated font size. May cause window size to adjust.
-- (void)sessionDidChangeFontSize:(PTYSession *)session;
+- (void)sessionDidChangeFontSize:(PTYSession *)session
+                    adjustWindow:(BOOL)adjustWindow;
 
 // Session-initiated resize.
 - (BOOL)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
@@ -759,7 +760,8 @@ typedef enum {
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier;
 
 // Change the current profile but keep the name the same.
-- (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName;
+- (void)setProfile:(NSDictionary *)newProfile
+    preservingName:(BOOL)preserveName;
 
 // Make the scroll view's document view be this session's textViewWrapper.
 - (void)setScrollViewDocumentView;

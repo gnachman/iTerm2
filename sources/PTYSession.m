@@ -523,6 +523,9 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermPrintGuard *_printGuard;
     iTermBuiltInFunctions *_methods;
+
+    // When this is true, changing the font size does not cause the window size to change.
+    BOOL _windowAdjustmentDisabled;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -4510,7 +4513,7 @@ ITERM_WEAKLY_REFERENCEABLE
      horizontalSpacing:horizontalSpacing
        verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[_textview lineHeight]);
-    [_delegate sessionDidChangeFontSize:self];
+    [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 }
@@ -8737,7 +8740,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName {
+- (void)setProfile:(NSDictionary *)newProfile
+    preservingName:(BOOL)preservingName {
+    [self setProfile:newProfile preservingName:preservingName adjustWindow:YES];
+}
+
+- (void)setProfile:(NSDictionary *)newProfile
+    preservingName:(BOOL)preserveName
+      adjustWindow:(BOOL)adjustWindow {
     DLog(@"Set profile to\n%@", newProfile);
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
@@ -8751,8 +8761,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [dict setObject:theName forKey:KEY_NAME];
     }
 
+    _windowAdjustmentDisabled = !adjustWindow;
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
+    _windowAdjustmentDisabled = NO;
     [_originalProfile autorelease];
     _originalProfile = [newProfile copy];
     [self remarry];
@@ -10125,7 +10137,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
-    [self setProfile:savedProfile.originalProfile preservingName:NO];
+    [self setProfile:savedProfile.originalProfile preservingName:NO adjustWindow:NO];
     if (savedProfile.isDivorced) {
         NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
         for (NSString *key in savedProfile.overriddenFields) {
