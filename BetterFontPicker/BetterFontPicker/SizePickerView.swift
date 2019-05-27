@@ -59,11 +59,13 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
         addSubview(stepper)
         stepper.target = self
         stepper.action = #selector(stepper(_:))
-
+        stepper.valueWraps = false
         layoutSubviews()
     }
 
-    private func internalSet(_ newValue: Double, withSideEffects: Bool, updateTextField: Bool) {
+    private func internalSet(_ newValue: Double,
+                             withSideEffects: Bool,
+                             updateTextField: Bool) {
         if newValue <= 0 {
             return
         }
@@ -111,7 +113,8 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
     }
 
     public func controlTextDidEndEditing(_ obj: Notification) {
-        let value = textField.doubleValue
+        let value = min(stepper.maxValue, max(stepper.minValue, textField.doubleValue))
+        textField.doubleValue = value
         if value > 0 {
             internalSet(value, withSideEffects: true, updateTextField: true)
         } else {
@@ -122,7 +125,11 @@ public class SizePickerView: NSView, NSTextFieldDelegate {
     public func controlTextDidChange(_ obj: Notification) {
         let value = textField.doubleValue
         if value > 0 {
-            internalSet(value, withSideEffects: true, updateTextField: false)
+            // Notify client only if the value is in the legal range. Otherwise let the user edit
+            // in peace until they end editing.
+            internalSet(value,
+                        withSideEffects: value >= stepper.minValue && value <= stepper.maxValue,
+                        updateTextField: false)
         }
     }
 }

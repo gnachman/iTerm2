@@ -29,6 +29,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         case normal
         case fixedPitch
     }
+
     @objc public var mode: Mode = .normal {
         didSet {
             switch mode {
@@ -87,6 +88,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         affordance.delegate = self
         memberPicker?.delegate = self
         sizePicker?.delegate = self
+        sizePicker?.clamp(min: 1, max: 256)
         addSubview(affordance)
         if let memberPicker = memberPicker {
             addSubview(memberPicker)
@@ -122,6 +124,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc(addHorizontalSpacingAccessoryWithInitialValue:)
     public func addHorizontalSpacingAccessory(_ initialValue: Double) -> SizePickerView {
         let view = SizePickerView()
+        view.clamp(min: 1, max: 200)
         horizontalSpacing = view
         view.size = initialValue
         let bundle = Bundle(for: FontPickerCompositeView.self)
@@ -138,6 +141,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc(addVerticalSpacingAccessoryWithInitialValue:)
     public func addVerticalSpacingAccessory(_ initialValue: Double) -> SizePickerView {
         let view = SizePickerView()
+        view.clamp(min: 1, max: 200)
         verticalSpacing = view
         view.size = initialValue
         let bundle = Bundle(for: FontPickerCompositeView.self)
