@@ -121,7 +121,8 @@ static const CGFloat kInnerMargin = 5;
     for (NSString* guid in [listView_ selectedGuids]) {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:terminal];
+                                              inTerminal:terminal
+                                      respectTabbingMode:NO];
     }
 }
 
@@ -130,7 +131,8 @@ static const CGFloat kInnerMargin = 5;
     for (NSString* guid in [listView_ selectedGuids]) {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:nil];
+                                              inTerminal:nil
+                                      respectTabbingMode:NO];
     }
 }
 

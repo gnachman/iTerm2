@@ -6389,7 +6389,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.currentSession.isTmuxClient) {
         [self newTmuxTab:nil];
     } else {
-        [[iTermController sharedInstance] launchBookmark:nil inTerminal:self];
+        [[iTermController sharedInstance] launchBookmark:nil
+                                              inTerminal:self
+                                      respectTabbingMode:NO];
     }
 }
 
@@ -6989,15 +6991,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:nil];
+        [[iTermController sharedInstance] launchBookmark:bookmark
+                                              inTerminal:nil
+                                      respectTabbingMode:NO];
     }
 }
 
-- (void)newTabWithBookmarkGuid:(NSString*)guid
-{
+- (void)newTabWithBookmarkGuid:(NSString *)guid {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:self];
+        [[iTermController sharedInstance] launchBookmark:bookmark
+                                              inTerminal:self
+                                      respectTabbingMode:NO];
     }
 }
 
@@ -9076,7 +9081,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (!theTab) {
         theTab = [self currentTab];
     }
-    if ([iTermProfilePreferences boolForKey:KEY_PREVENT_TAB inProfile:self.currentSession.profile]) {
+    PseudoTerminal *destinationTerminal = [[iTermController sharedInstance] windowControllerForNewTabWithProfile:self.currentSession.profile
+                                                                                                       candidate:self
+                                                                                              respectTabbingMode:NO];
+    if (destinationTerminal == nil) {
         PTYTab *copyOfTab = [[theTab copy] autorelease];
         [copyOfTab updatePaneTitles];
         [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
@@ -9085,6 +9093,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:YES
+                                      respectTabbingMode:NO
                                                  command:nil
                                                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                        // Keep session size stable.

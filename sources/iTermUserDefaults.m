@@ -46,4 +46,24 @@ static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id 
                                             forKey:iTermUserDefaultsKeySearchHistory];
 }
 
++ (iTermAppleWindowTabbingMode)appleWindowTabbingMode {
+    static NSUserDefaults *globalDomain;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // We overwrite this key in the app domain to fool Cocoa, so we need to
+        // read it from the global domain. You can't create an instance of
+        // NSUserDefaults with the suite NSGlobalDefaults because AppKit is not
+        // good, so instead we have to lie to it.
+        globalDomain = [[NSUserDefaults alloc] initWithSuiteName:@"com.iterm2.fake"];
+    });
+    NSString *value = [globalDomain objectForKey:@"AppleWindowTabbingMode"];
+    if ([value isEqualToString:@"always"]) {
+        return iTermAppleWindowTabbingModeAlways;
+    }
+    if ([value isEqualToString:@"manual"]) {
+        return iTermAppleWindowTabbingModeManual;
+    }
+    return iTermAppleWindowTabbingModeFullscreen;
+}
+
 @end

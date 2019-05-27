@@ -141,6 +141,7 @@ static NSString *const kArrangement = @"Arrangement";
                                             hotkeyWindowType:[self hotkeyWindowType]
                                                      makeKey:YES
                                                  canActivate:YES
+                                          respectTabbingMode:NO
                                                      command:nil
                                                        block:nil
                                                  synchronous:NO
@@ -746,6 +747,7 @@ static NSString *const kArrangement = @"Arrangement";
                                                           hotkeyWindowType:[self hotkeyWindowType]
                                                                    makeKey:YES
                                                                canActivate:YES
+                                                        respectTabbingMode:NO
                                                                    command:nil
                                                                      block:nil
                                                                synchronous:NO

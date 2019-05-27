@@ -43,6 +43,7 @@
                                     hotkeyWindowType:iTermHotkeyWindowTypeNone
                                              makeKey:YES
                                          canActivate:YES
+                                  respectTabbingMode:NO
                                              command:nil
                                                block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];

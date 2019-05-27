@@ -204,6 +204,7 @@
                                                 hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                          makeKey:YES
                                                      canActivate:YES
+                                              respectTabbingMode:NO
                                                          command:nil
                                                            block:nil
                                                      synchronous:NO

@@ -191,7 +191,8 @@ typedef enum {
                           synchronous:NO];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
-                                                  inTerminal:terminal];
+                                                  inTerminal:terminal
+                                          respectTabbingMode:NO];
         }
         isFirst = NO;
     }
@@ -304,7 +305,8 @@ typedef enum {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:terminal];
+                                              inTerminal:terminal
+                                      respectTabbingMode:NO];
     }
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];

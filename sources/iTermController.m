@@ -254,14 +254,18 @@ static iTermController *gSharedInstance;
         DLog(@"Creating a new tmux window");
         [_frontTerminalWindowController newTmuxWindow:sender];
     } else {
-        [self launchBookmark:nil inTerminal:nil];
+        [self launchBookmark:nil
+                  inTerminal:nil
+          respectTabbingMode:YES];
     }
 }
 
 - (void)newSessionInTabAtIndex:(id)sender {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
-        [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
+        [self launchBookmark:bookmark
+                  inTerminal:_frontTerminalWindowController
+          respectTabbingMode:NO];
     }
 }
 
@@ -290,7 +294,9 @@ static iTermController *gSharedInstance;
 - (void)newSessionInWindowAtIndex:(id)sender {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
-        [self launchBookmark:bookmark inTerminal:nil];
+        [self launchBookmark:bookmark
+                  inTerminal:nil
+          respectTabbingMode:NO];
     }
 }
 
@@ -309,7 +315,9 @@ static iTermController *gSharedInstance;
         NSString *guid = [ProfileModel freshGuid];
         bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
     }
-    PTYSession *session = [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
+    PTYSession *session = [self launchBookmark:bookmark
+                                    inTerminal:_frontTerminalWindowController
+                            respectTabbingMode:NO];
     if (divorced) {
         [session divorceAddressBookEntryFromPreferences];
     }
@@ -325,7 +333,9 @@ static iTermController *gSharedInstance;
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
         [_frontTerminalWindowController newTmuxTab:sender];
     } else {
-        [self launchBookmark:nil inTerminal:_frontTerminalWindowController];
+        [self launchBookmark:nil
+                  inTerminal:_frontTerminalWindowController
+          respectTabbingMode:NO];
     }
 }
 
@@ -835,12 +845,16 @@ static iTermController *gSharedInstance;
     PseudoTerminal *term = newWindow ? nil : [self currentTerminal];
     for (Profile *bookmark in bookmarks) {
         if (!term) {
-            PTYSession *session = [self launchBookmark:bookmark inTerminal:nil];
+            PTYSession *session = [self launchBookmark:bookmark
+                                            inTerminal:nil
+                                    respectTabbingMode:NO];
             if (session) {
                 term = [self terminalWithSession:session];
             }
         } else {
-            [self launchBookmark:bookmark inTerminal:term];
+            [self launchBookmark:bookmark
+                      inTerminal:term
+              respectTabbingMode:NO];
         }
     }
 }
@@ -1010,13 +1024,16 @@ static iTermController *gSharedInstance;
     [[iTermFullScreenWindowManager sharedInstance] makeWindowEnterFullScreen:term.ptyWindow];
 }
 
-- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
+- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+            respectTabbingMode:(BOOL)respectTabbingMode {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                         makeKey:YES
                     canActivate:YES
+             respectTabbingMode:respectTabbingMode
                         command:nil
                           block:nil
                     synchronous:NO
@@ -1149,12 +1166,44 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (PseudoTerminal *)windowControllerForNewTabWithProfile:(Profile *)profile
+                                               candidate:(PseudoTerminal *)preferredWindowController
+                                      respectTabbingMode:(BOOL)respectTabbingMode {
+    const BOOL preventTab = [profile[KEY_PREVENT_TAB] boolValue];
+    if (preventTab) {
+        return nil;
+    }
+    if (!respectTabbingMode) {
+        return preferredWindowController;
+    }
+    switch ([iTermUserDefaults appleWindowTabbingMode]) {
+        case iTermAppleWindowTabbingModeManual:
+            return preferredWindowController;
+        case iTermAppleWindowTabbingModeAlways:
+            if (preferredWindowController) {
+                return preferredWindowController;
+            }
+            return [self currentTerminal];
+        case iTermAppleWindowTabbingModeFullscreen: {
+            if (preferredWindowController) {
+                return preferredWindowController;
+            }
+            PseudoTerminal *tempTerm = [[iTermController sharedInstance] currentTerminal];
+            if (tempTerm && tempTerm.windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+                return tempTerm;
+            }
+            return nil;
+        }
+    }
+}
+
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
                     inTerminal:(PseudoTerminal *)theTerm
                        withURL:(NSString *)url
               hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                        makeKey:(BOOL)makeKey
                    canActivate:(BOOL)canActivate
+            respectTabbingMode:(BOOL)respectTabbingMode
                        command:(NSString *)command
                          block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
                    synchronous:(BOOL)synchronous
@@ -1192,9 +1241,8 @@ static iTermController *gSharedInstance;
     if (!bookmarkData) {
         DLog(@"Using profile:\n%@", aDict);
     }
-    if (theTerm && [[aDict objectForKey:KEY_PREVENT_TAB] boolValue]) {
-        theTerm = nil;
-    }
+
+    theTerm = [self windowControllerForNewTabWithProfile:aDict candidate:theTerm respectTabbingMode:respectTabbingMode];
 
     // Where do we execute this command?
     BOOL toggle = NO;
@@ -1667,6 +1715,7 @@ static iTermController *gSharedInstance;
                               hotkeyWindowType:iTermHotkeyWindowTypeNone
                                        makeKey:YES
                                    canActivate:YES
+                            respectTabbingMode:NO
                                        command:command
                                          block:makeSession
                                    synchronous:NO

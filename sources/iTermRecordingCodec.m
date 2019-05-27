@@ -85,6 +85,7 @@
                                     hotkeyWindowType:iTermHotkeyWindowTypeNone
                                              makeKey:YES
                                          canActivate:YES
+                                  respectTabbingMode:NO
                                              command:nil
                                                block:^PTYSession *(NSDictionary *profile, PseudoTerminal *windowController) {
                                                    PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];

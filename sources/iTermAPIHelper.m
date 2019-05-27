@@ -1914,6 +1914,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                                    makeKey:YES
                                                                canActivate:YES
+                                                        respectTabbingMode:NO
                                                                    command:nil
                                                                      block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                                          profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];

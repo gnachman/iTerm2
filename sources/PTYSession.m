@@ -2024,6 +2024,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                     hotkeyWindowType:iTermHotkeyWindowTypeNone
                                              makeKey:NO
                                          canActivate:NO
+                                  respectTabbingMode:NO
                                              command:nil
                                                block:nil
                                          synchronous:NO
@@ -6450,7 +6451,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE: {
             Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
-            [[iTermController sharedInstance] launchBookmark:profile inTerminal:nil];
+            [[iTermController sharedInstance] launchBookmark:profile
+                                                  inTerminal:nil
+                                          respectTabbingMode:NO];
             return YES;
         }
         case KEY_ACTION_UNDO:

@@ -107,6 +107,7 @@
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:NO
                                              canActivate:NO
+                                      respectTabbingMode:NO
                                                  command:nil
                                                    block:
          ^PTYSession *(Profile *profile, PseudoTerminal *term) {

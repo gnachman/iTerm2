@@ -632,7 +632,9 @@ static BOOL hasBecomeActive = NO;
 
         PseudoTerminal *term = [self terminalToOpenFileIn];
         DLog(@"application:openFile: launching new session in window %@", term);
-        PTYSession *session = [controller launchBookmark:bookmark inTerminal:term];
+        PTYSession *session = [controller launchBookmark:bookmark
+                                              inTerminal:term
+                                      respectTabbingMode:NO];
         term = (id)session.delegate.realParentWindow;
 
         if (term) {
@@ -1400,6 +1402,7 @@ static BOOL hasBecomeActive = NO;
                                             hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                      makeKey:NO
                                                  canActivate:NO
+                                          respectTabbingMode:YES
                                                      command:nil
                                                        block:nil
                                                  synchronous:NO

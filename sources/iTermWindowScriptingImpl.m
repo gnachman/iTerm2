@@ -45,6 +45,7 @@
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
+                                      respectTabbingMode:NO
                                                  command:command
                                                    block:nil
                                              synchronous:YES
@@ -70,6 +71,7 @@
                                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                  makeKey:YES
                                              canActivate:NO
+                                      respectTabbingMode:NO
                                                  command:command
                                                    block:nil
                                              synchronous:YES

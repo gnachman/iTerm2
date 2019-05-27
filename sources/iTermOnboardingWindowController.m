@@ -24,7 +24,9 @@ static void iTermTryMinimalCompact(NSWindow *window) {
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                         object:nil
                                                       userInfo:nil];
-    PTYSession *session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+    PTYSession *session = [[iTermController sharedInstance] launchBookmark:nil
+                                                                inTerminal:nil
+                                                        respectTabbingMode:NO];
     [session.view.window performZoom:nil];
 
     NSAlert *alert = [[NSAlert alloc] init];

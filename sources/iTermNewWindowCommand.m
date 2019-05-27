@@ -44,6 +44,7 @@
                                             hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                      makeKey:YES
                                                  canActivate:YES
+                                          respectTabbingMode:NO
                                                      command:command
                                                        block:nil
                                                  synchronous:YES
