@@ -46,9 +46,11 @@ async def async_set_broadcast_domains(
 
     .. seealso:: Example ":ref:`enable_broadcasting_example`"
     """
-    await iterm2.rpc.async_set_broadcast_domains(connection, list(
+    response = await iterm2.rpc.async_set_broadcast_domains(connection, list(
         map(lambda d: list(
             map(lambda s: s.session_id,
                 d.sessions)),
             broadcast_domains)))
+    if response.set_broadcast_domains_response.status != iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Value("OK"):
+        raise iterm2.rpc.RPCException(iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Name(response.set_broadcast_domains_response.status))
 
