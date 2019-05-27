@@ -293,7 +293,8 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     // printed. See issue 4261.
     return ([note isKindOfClass:[VT100RemoteHost class]] ||
             [note isKindOfClass:[VT100WorkingDirectory class]] ||
-            [note isKindOfClass:[iTermImageMark class]]);
+            [note isKindOfClass:[iTermImageMark class]] ||
+            [note isKindOfClass:[iTermURLMark class]]);
 }
 
 // This is used for a very specific case. It's used when you have some history, optionally followed
