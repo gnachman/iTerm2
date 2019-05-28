@@ -49,7 +49,7 @@
     [[iTermShellHistoryController sharedInstance] eraseDirectoriesForHost:host];
 
     // Create a window and save convenience pointers to its various bits.
-    _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+    _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil respectTabbingMode:NO];
     _windowController = (PseudoTerminal *)_session.delegate.realParentWindow;
     _view = (iTermRootTerminalView *)_windowController.window.contentView;
 
@@ -232,7 +232,8 @@
 
 - (void)testCommandHistoryBoldsCommandsForCurrentSession {
     PTYSession *otherSession = [[iTermController sharedInstance] launchBookmark:nil
-                                                                     inTerminal:_windowController];
+                                                                     inTerminal:_windowController
+                                                             respectTabbingMode:NO];
 
     // Set the hostname for both sessions
     [self sendPromptAndStartCommand:@"command 1" toSession:_session];
