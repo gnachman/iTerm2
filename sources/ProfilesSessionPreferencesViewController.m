@@ -15,6 +15,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PSMMinimalTabStyle.h"
 #import "PreferencePanel.h"
@@ -510,7 +511,16 @@
 }
 
 - (void)updateLogDirWarning {
-    [_logDirWarning setHidden:[_autoLog state] == NSOffState || [self logDirIsWritable]];
+    if ([_autoLog state] == NSOffState) {
+        _logDirWarning.hidden = YES;
+        return;
+    }
+    _logDirWarning.hidden = NO;
+    if ([self logDirIsWritable]) {
+        _logDirWarning.image = [NSImage it_imageNamed:@"CheckMark" forClass:self.class];
+    } else {
+        _logDirWarning.image = [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
+    }
 }
 
 - (BOOL)logDirIsWritable {

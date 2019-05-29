@@ -1774,6 +1774,8 @@
 		A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
 		A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
 		A63821F1229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
+		A63821F4229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h in Headers */ = {isa = PBXBuildFile; fileRef = A63821F2229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h */; };
+		A63821F5229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = A63821F3229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m */; };
 		A638A04B20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04C20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04D20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
@@ -4811,6 +4813,8 @@
 		A63819CF1FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCopyBackgroundRenderer.m; path = Metal/Renderers/iTermCopyBackgroundRenderer.m; sourceTree = "<group>"; };
 		A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermCopyBackground.metal; path = Metal/Shaders/iTermCopyBackground.metal; sourceTree = "<group>"; };
 		A63821EE229E50CD005D74BE /* Warning@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Warning@2x.png"; sourceTree = "<group>"; };
+		A63821F2229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusIndicatingTextFieldCell.h; sourceTree = "<group>"; };
+		A63821F3229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusIndicatingTextFieldCell.m; sourceTree = "<group>"; };
 		A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermUnusedText.metal; path = Metal/Shaders/iTermUnusedText.metal; sourceTree = "<group>"; };
 		A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextShaderCommon.h; path = Metal/Shaders/iTermTextShaderCommon.h; sourceTree = "<group>"; };
 		A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermTextShaderCommon.metal; path = Metal/Shaders/iTermTextShaderCommon.metal; sourceTree = "<group>"; };
@@ -6929,6 +6933,8 @@
 				530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */,
 				A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */,
 				A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */,
+				A63821F2229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h */,
+				A63821F3229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -9968,6 +9974,7 @@
 				A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */,
 				A66719271DCE36C3000CE608 /* SetHostnameTrigger.h in Headers */,
 				A6B1476421334D3900D0814F /* iTermTmuxStatusBarMonitor.h in Headers */,
+				A63821F4229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h in Headers */,
 				A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */,
 				A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */,
 				53FF982A2093C823008688D7 /* iTermSignatureVerifier.h in Headers */,
@@ -12269,6 +12276,7 @@
 				A6481658228FE6B1008E7E0C /* iTermObject.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
 				A62EED9720DF602F00943DE3 /* iTermCommandRunner.m in Sources */,
+				A63821F5229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m in Sources */,
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
 				A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */,
 				5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */,

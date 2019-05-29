@@ -22,19 +22,6 @@
 #import "WindowArrangements.h"
 #import "NSImage+iTerm.h"
 
-@interface iTermCustomFolderTextFieldCell : NSTextFieldCell
-@end
-
-@implementation iTermCustomFolderTextFieldCell
-
-- (NSRect)drawingRectForBounds:(NSRect)theRect {
-    NSRect rect = [super drawingRectForBounds:theRect];
-    rect.size.width -= 23;  // Width of warning icon
-    return rect;
-}
-
-@end
-
 enum {
     kUseSystemWindowRestorationSettingTag = 0,
     kOpenDefaultWindowArrangementTag = 1,
@@ -87,7 +74,6 @@ enum {
 
     // Load prefs from custom folder
     IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
-    IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
     IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
     IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
     IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
