@@ -8152,15 +8152,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return YES;
     }
     if (![PseudoTerminal windowTypeHasFullSizeContentView:self.windowType]) {
+        // No full size content view? Then there won't be a fake title bar that needs backing.
+        return YES;
+    }
+    if (![self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
+        // There is no fake title bar, so it doesn't need backing.
         return YES;
     }
     if ([self anyFullScreen]) {
+        // Full screen is special w/r/t the tab bar.
         return YES;
     }
     if (![self useTransparency]) {
+        // Opaque windows have a window background behind the fake title bar.
         return YES;
     }
     if (![self anyPaneIsTransparent]) {
+        // Opaque windows have a window background behind the fake title bar.
         return YES;
     }
     if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
