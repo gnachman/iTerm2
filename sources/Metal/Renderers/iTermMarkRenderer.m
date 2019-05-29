@@ -98,7 +98,7 @@
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
 
-    CGRect leftMarginRect = CGRectMake(0,
+    CGRect leftMarginRect = CGRectMake(1,
                                        0,
                                        ([iTermAdvancedSettingsModel terminalMargin] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
