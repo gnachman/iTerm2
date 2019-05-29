@@ -2793,14 +2793,30 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate closeSession:self];
         return;
     }
-    if ([self autoClose] && [_delegate sessionShouldAutoClose:self]) {
-        [self appendBrokenPipeMessage:@"Broken Pipe"];
-        [_delegate closeSession:self];
-        return;
+    if (self.tmuxMode == TMUX_GATEWAY) {
+        [self forceTmuxDetach];
+    }
+    [self appendBrokenPipeMessage:@"Broken Pipe"];
+    switch (self.endAction) {
+        case iTermSessionEndActionClose:
+            if ([_delegate sessionShouldAutoClose:self]) {
+                [_delegate closeSession:self];
+                return;
+            }
+            break;
+
+        case iTermSessionEndActionRestart:
+            if ([self isRestartable]) {
+                [self performSelector:@selector(replaceTerminatedShellWithNewInstance) withObject:nil afterDelay:0];
+                return;
+            }
+            break;
+
+        case iTermSessionEndActionDefault:
+            break;
     }
 
     // Offer to restart the session by rerunning its program.
-    [self appendBrokenPipeMessage:@"Broken Pipe"];
     if ([self isRestartable]) {
         [self queueRestartSessionAnnouncement];
     }
@@ -3599,7 +3615,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
-    [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
+    self.endAction = [iTermProfilePreferences unsignedIntegerForKey:KEY_SESSION_END_ACTION inProfile:aDict];
     _screen.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION
                                                          inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH

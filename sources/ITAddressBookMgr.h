@@ -160,7 +160,7 @@
 #define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE_DEPRECATED             @"Sync Title"  // DEPRECATED
-#define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"
+#define KEY_SESSION_END_ACTION                @"Close Sessions On End"  // iTermSessionEndAction
 #define KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH   @"Non Ascii Double Width"  // DEPRECATED
 #define KEY_AMBIGUOUS_DOUBLE_WIDTH            @"Ambiguous Double Width"
 #define KEY_USE_HFS_PLUS_MAPPING              @"Use HFS Plus Mapping"  // DEPRECATED
@@ -255,6 +255,12 @@ extern const NSTimeInterval kMinimumAntiIdlePeriod;
 typedef NS_ENUM(NSInteger, iTermProfileSpaceSetting) {
     iTermProfileJoinsAllSpaces = -1,
     iTermProfileOpenInCurrentSpace = 0
+};
+
+typedef NS_ENUM(NSUInteger, iTermSessionEndAction) {
+    iTermSessionEndActionDefault = 0,
+    iTermSessionEndActionClose = 1,
+    iTermSessionEndActionRestart = 2
 };
 
 typedef NS_ENUM(int, iTermOptionKeyBehavior) {

@@ -335,7 +335,7 @@ typedef enum {
 @property(nonatomic, assign) NSTimeInterval antiIdlePeriod;
 
 // If true, close the tab when the session ends.
-@property(nonatomic, assign) BOOL autoClose;
+@property(nonatomic, assign) iTermSessionEndAction endAction;
 
 // Should ambiguous-width characters (e.g., Greek) be treated as double-width? Usually a bad idea.
 @property(nonatomic, assign) BOOL treatAmbiguousWidthAsDoubleWidth;
