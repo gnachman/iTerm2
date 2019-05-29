@@ -197,6 +197,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
     _customCommand.cell.usesSingleLineMode = YES;
+    _customCommand.hidden = YES;
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
                    displayName:@"Profile customc ommand"
@@ -485,8 +486,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateEnabledState {
     [super updateEnabledState];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        _customCommand.hidden = NO;
         _customCommand.enabled = YES;
     } else {
+        _customCommand.hidden = YES;
         _customCommand.enabled = NO;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
