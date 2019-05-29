@@ -1771,6 +1771,9 @@
 		A6374A291DEE941F000A136F /* iTermPromptOnCloseReason.m in Sources */ = {isa = PBXBuildFile; fileRef = A6374A271DEE941F000A136F /* iTermPromptOnCloseReason.m */; };
 		A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A63819CE1FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h */; };
 		A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = A63819CF1FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m */; };
+		A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
+		A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
+		A63821F1229E50CD005D74BE /* Warning@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63821EE229E50CD005D74BE /* Warning@2x.png */; };
 		A638A04B20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04C20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04D20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
@@ -4807,6 +4810,7 @@
 		A63819CE1FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCopyBackgroundRenderer.h; path = Metal/Renderers/iTermCopyBackgroundRenderer.h; sourceTree = "<group>"; };
 		A63819CF1FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCopyBackgroundRenderer.m; path = Metal/Renderers/iTermCopyBackgroundRenderer.m; sourceTree = "<group>"; };
 		A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermCopyBackground.metal; path = Metal/Shaders/iTermCopyBackground.metal; sourceTree = "<group>"; };
+		A63821EE229E50CD005D74BE /* Warning@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Warning@2x.png"; sourceTree = "<group>"; };
 		A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermUnusedText.metal; path = Metal/Shaders/iTermUnusedText.metal; sourceTree = "<group>"; };
 		A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextShaderCommon.h; path = Metal/Shaders/iTermTextShaderCommon.h; sourceTree = "<group>"; };
 		A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermTextShaderCommon.metal; path = Metal/Shaders/iTermTextShaderCommon.metal; sourceTree = "<group>"; };
@@ -9089,6 +9093,7 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
+				A63821EE229E50CD005D74BE /* Warning@2x.png */,
 				A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */,
 				A6350297229B5F620042B779 /* YosemiteAddTab.png */,
 				534690271C94FF0000B7E4E9 /* overflowImagePressed.png */,
@@ -10767,6 +10772,7 @@
 				A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A6E7AEA8214394F600DE9F3B /* graphic_docker.png in Resources */,
+				A63821F1229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
 				A67F6166214395990093940A /* graphic_monitor.png in Resources */,
 				A66F52C32106F6F100571168 /* gitdirty@2x.png in Resources */,
@@ -11319,6 +11325,7 @@
 				1D44D05D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorDoublyReverseVideo.png in Resources */,
 				1D44CFCA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png in Resources */,
 				1D44CFCB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png in Resources */,
+				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
 				1D44D04C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testAnsiColors.png in Resources */,
 				1D44D09C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
 				1D44D0831CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testMultipleDiscontinuousSelection.png in Resources */,
@@ -11646,6 +11653,7 @@
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
+				A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
 				A6AC04C921F0FDBD00CD2774 /* PopoverIcon.png in Resources */,
