@@ -9796,17 +9796,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastRemoteHost = [lastRemoteHost retain];
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
+// isSuitableForOldPWD means that if we don't know what the hostname is then this should be used
+// in place of asking the OS what the PWD is from now on. It's useful for users who set up a trigger
+// to report the PWD but don't report the hostname, or for users who use the CurrentDir control
+// sequence but not RemoteHost. Issue 5878, May 2019 comments.
+- (void)screenLogWorkingDirectoryAtLine:(int)line
+                          withDirectory:(NSString *)directory
+                    isSuitableForOldPWD:(BOOL)isSuitableForOldPWD {
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
                    [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
     [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
                                                            onHost:[_screen remoteHostOnLine:line]
                                                          isChange:!isSame];
-    // Note that when remoteHost is nil, it's unsuitable for old PWD because
-    // that means shell integration hasn't been used and we have to keep
-    // pulling the pwd from the child process via the kernel.
-    [self setLastDirectory:directory isUnsuitableForOldPWD:!remoteHost.isLocalhost];
+    BOOL unsuitable;
+    if (remoteHost == nil && isSuitableForOldPWD) {
+        // Special dispensation. Trust the caller that this working directory will be kept up to date.
+        unsuitable = NO;
+    } else {
+        // In this case a nil remoteHost is considered unsuitable because we believe this is an
+        // odd one-off (such as by setting the title) and we can't count on it being updated
+        // reliably. We'll pull pwd from the child process via the kernel.
+        unsuitable = !remoteHost.isLocalhost;
+    }
+    DLog(@"Calling setLastDirectory:%@ isUnsuitableForOldPWD:%@. remoteHost is %@\n%@",
+         directory, @(unsuitable), remoteHost, [NSThread callStackSymbols]);
+    [self setLastDirectory:directory isUnsuitableForOldPWD:unsuitable];
     self.lastRemoteHost = remoteHost;
 }
 

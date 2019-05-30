@@ -564,7 +564,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return @"Default";
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
+- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory isSuitableForOldPWD:(BOOL)isSuitableForOldPWD {
     [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
 }
 

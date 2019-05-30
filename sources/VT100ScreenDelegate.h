@@ -240,7 +240,9 @@
 
 - (NSString *)screenProfileName;
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory;
+- (void)screenLogWorkingDirectoryAtLine:(int)line
+                          withDirectory:(NSString *)directory
+                    isSuitableForOldPWD:(BOOL)isSuitableForOldPWD;
 
 - (void)screenSuggestShellIntegrationUpgrade;
 
