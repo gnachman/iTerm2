@@ -2099,6 +2099,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self terminate];
 }
 
+// Request that the session close. It may or may not be undoable. Only undoable terminations support
+// "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
 
@@ -2158,6 +2160,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_liveSession terminate];
     }
 
+    DLog(@"  terminate: exited = YES");
     _exited = YES;
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
@@ -2202,6 +2205,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
 }
 
+// Not undoable. Kill the process. However, you can replace the terminated shell after this.
 - (void)hardStop {
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_view release];  // This balances a retain in -terminate.
@@ -2248,6 +2252,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self queueRestartSessionAnnouncement];
             }
         } else {
+            DLog(@"  revive: exited=NO");
             _exited = NO;
         }
         _textview.dataSource = _screen;
@@ -2746,6 +2751,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)threadedTaskBrokenPipe
 {
+    DLog(@"threaded task broken pipe");
     // Put the call to brokenPipe in the same queue as executeTokens:bytesHandled: to avoid a race.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self brokenPipe];
@@ -2762,8 +2768,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
 }
 
+// Called when the file descriptor closes. If -terminate was already called this does nothing.
+// Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
+    DLog(@"  brokenPipe");
     if (_exited) {
+        DLog(@"  brokenPipe: Already exited");
         return;
     }
     [_shell killServerIfRunning];
@@ -2775,6 +2785,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               [_delegate tabNumber]]];
     }
 
+    DLog(@"  brokenPipe: set exited = YES");
     _exited = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -2858,15 +2869,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)maybeReplaceTerminatedShellWithNewInstance {
-    if (self.isRestartable && _exited) {
+    // The check for screen.terminal is because after -terminate is called, it is no longer safe
+    // to replace the terminated shell with a new instance unless you first do -revive. When
+    // the terminal is nil you can't write text to the screen.
+    if (_screen.terminal && self.isRestartable && _exited) {
         [self replaceTerminatedShellWithNewInstance];
     }
 }
 
+// NOTE: Not safe to call this after -terminate, unless you first call -revive. It *is* safe
+// to call this after -brokenPipe, provided -terminate wasn't already called.
 - (void)replaceTerminatedShellWithNewInstance {
     assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
+    DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     _exited = NO;
     [_shell release];
     _shell = [[PTYTask alloc] init];
@@ -2878,6 +2895,9 @@ ITERM_WEAKLY_REFERENCEABLE
          substitutions:_substitutions
            synchronous:YES
             completion:nil];
+    [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
+    [self removeAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
+    DLog(@"  replaceTerminatedShellWithNewInstance: return with terminal=%@", _screen.terminal);
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {

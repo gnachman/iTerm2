@@ -258,6 +258,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 #pragma mark - APIs
 
 - (void)setTerminal:(VT100Terminal *)terminal {
+    DLog(@"set terminal=%@", terminal);
     [terminal_ autorelease];
     terminal_ = [terminal retain];
     _ansi = [terminal_ isAnsi];
