@@ -2807,7 +2807,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case iTermSessionEndActionRestart:
             if ([self isRestartable]) {
-                [self performSelector:@selector(replaceTerminatedShellWithNewInstance) withObject:nil afterDelay:0];
+                [self performSelector:@selector(maybeReplaceTerminatedShellWithNewInstance) withObject:nil afterDelay:1];
                 return;
             }
             break;
@@ -2855,6 +2855,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)isRestartable {
     return _program != nil;
+}
+
+- (void)maybeReplaceTerminatedShellWithNewInstance {
+    if (self.isRestartable && _exited) {
+        [self replaceTerminatedShellWithNewInstance];
+    }
 }
 
 - (void)replaceTerminatedShellWithNewInstance {
