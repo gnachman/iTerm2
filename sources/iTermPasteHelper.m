@@ -28,6 +28,9 @@ const int kNumberOfSpacesPerTabCancel = -2;
 const int kNumberOfSpacesPerTabNoConversion = -1;
 const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
 
+// Was 1024, but this seemed to cause a lot of problems. Let's try this.
+const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
+
 @interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
 @end
 
@@ -228,7 +231,7 @@ const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
         chunkKey = @"SlowPasteBytesPerCall";
         delayKey = @"SlowPasteDelayBetweenCalls";
     } else {
-        defaultChunkSize = 1024;
+        defaultChunkSize = iTermQuickPasteBytesPerCallDefaultValue;
         defaultDelay = 0.01;
         chunkKey = @"QuickPasteBytesPerCall";
         delayKey = @"QuickPasteDelayBetweenCalls";
@@ -352,7 +355,7 @@ const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
     // thing? See bug 1031.
     [_buffer appendString:aString];
     [self pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                         defaultValue:1024
+                         defaultValue:iTermQuickPasteBytesPerCallDefaultValue
              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
                          defaultValue:0.01
                        blockAtNewline:NO
@@ -363,7 +366,7 @@ const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
 - (NSInteger)normalChunkSize {
     NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"QuickPasteBytesPerCall"];
     if (!n) {
-        return 1024;
+        return iTermQuickPasteBytesPerCallDefaultValue;
     } else {
         return [n integerValue];
     }

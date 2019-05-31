@@ -66,6 +66,7 @@
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
+#import "iTermPasteHelper.h"
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
@@ -1815,7 +1816,7 @@ static BOOL hasBecomeActive = NO;
 {
     [self changePasteSpeedBy:1.5
                     bytesKey:@"QuickPasteBytesPerCall"
-                defaultBytes:1024
+                defaultBytes:iTermQuickPasteBytesPerCallDefaultValue
                     delayKey:@"QuickPasteDelayBetweenCalls"
                 defaultDelay:.01];
 }
@@ -1824,7 +1825,7 @@ static BOOL hasBecomeActive = NO;
 {
     [self changePasteSpeedBy:0.66
                     bytesKey:@"QuickPasteBytesPerCall"
-                defaultBytes:1024
+                defaultBytes:iTermQuickPasteBytesPerCallDefaultValue
                     delayKey:@"QuickPasteDelayBetweenCalls"
                 defaultDelay:.01];
 }

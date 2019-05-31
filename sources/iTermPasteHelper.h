@@ -12,6 +12,7 @@
 extern const int kNumberOfSpacesPerTabCancel;
 extern const int kNumberOfSpacesPerTabNoConversion;
 extern const int kNumberOfSpacesPerTabOpenAdvancedPaste;
+extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
