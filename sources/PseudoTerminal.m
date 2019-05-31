@@ -420,6 +420,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermFunctionCallTextFieldDelegate *_currentTabTitleTextFieldDelegate;
     iTermVariables *_userVariables;
     iTermBuiltInFunctions *_methods;
+
+    BOOL _anyPaneIsTransparent;
 }
 
 @synthesize scope = _scope;
@@ -4136,7 +4138,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[self currentTab] recheckBlur];
     [self updateTabColors];  // Updates the window's background color as a side-effect
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [_contentView invalidateAutomaticTabBarBackingHiding];
 }
 
@@ -4404,7 +4406,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    [self updateWindowShadow:(NSWindow<PTYWindow> *)myWindow];
+    [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self setWindow:myWindow];
     if (@available(macOS 10.14, *)) {
         // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
@@ -4507,7 +4509,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [self willExitTraditionalFullScreenMode];
     }
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
 
     [self updateTransparencyBeforeTogglingTraditionalFullScreenMode];
     _fullScreen = !_fullScreen;
@@ -4618,10 +4620,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self didChangeCompactness];
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
 }
 
-- (void)updateWindowShadow:(NSWindow<PTYWindow> *)window {
+- (void)updateForTransparency:(NSWindow<PTYWindow> *)window {
     switch (self.windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -4642,6 +4644,10 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_ACCESSORY:
             break;
     }
+    if ([self anyPaneIsTransparent] != _anyPaneIsTransparent) {
+        _anyPaneIsTransparent = [self anyPaneIsTransparent];
+        [self repositionWidgets];
+    }
     if (@available(macOS 10.14, *)) {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
@@ -4660,7 +4666,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didChangeCompactness {
-    [self updateWindowShadow:(NSWindow<PTYWindow> *)self.window];
+    [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
     [_contentView didChangeCompactness];
 }
 
@@ -4855,7 +4861,7 @@ ITERM_WEAKLY_REFERENCEABLE
     togglingLionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [self repositionWidgets];
     [_contentView didChangeCompactness];
     if (@available(macOS 10.14, *)) {
@@ -4902,7 +4908,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded:NO];
 
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
 }
 
@@ -4950,7 +4956,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        savedWindowType:self.savedWindowType
                                                       hotkeyWindowType:_hotkeyWindowType];
     }
-    [self updateWindowShadow:(NSWindow<PTYWindow> *)self.window];
+    [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     if (@available(macOS 10.14, *)) {} else {
@@ -4958,7 +4964,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     if (@available(macOS 10.14, *)) {
         switch (self.savedWindowType) {
@@ -5022,7 +5028,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
     [_contentView didChangeCompactness];
     [_contentView layoutSubviews];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
 }
 
@@ -5351,7 +5357,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -7378,7 +7384,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self.contentView setNeedsDisplay:YES];
         [self.tabBarControl setNeedsDisplay:YES];
     }
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
 }
 
@@ -8265,9 +8271,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return exitingLionFullscreen_;
 }
 
+- (BOOL)shouldShowBorder {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+        return NO;
+    }
+    if (@available(macOS 10.14, *)) {
+        return self.anyPaneIsTransparent;
+    }
+    return YES;
+}
+
 - (BOOL)haveLeftBorder {
     BOOL leftTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab);
-    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+    if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
                self.windowType == WINDOW_TYPE_LEFT ||
@@ -8282,7 +8298,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL bottomTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
-    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+    if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
                self.windowType == WINDOW_TYPE_BOTTOM) {
@@ -8303,7 +8319,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)haveTopBorder {
-    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+    if (!self.shouldShowBorder) {
         return NO;
     }
     if (self.windowType == WINDOW_TYPE_COMPACT) {
@@ -8320,7 +8336,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)haveRightBorder {
-    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+    if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
                self.windowType == WINDOW_TYPE_RIGHT ) {
@@ -9746,7 +9762,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self.contentView setNeedsDisplay:YES];
         [_contentView.tabBarControl backgroundColorWillChange];
     }
-    [self updateWindowShadow:self.ptyWindow];
+    [self updateForTransparency:self.ptyWindow];
 }
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
