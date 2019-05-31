@@ -896,10 +896,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                 [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
                                                                                           bundle:[NSBundle bundleForClass:self.class]];
         }
-        if ((self.window.styleMask & NSWindowStyleMaskTitled) && _shortcutAccessoryViewController) {
-            [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
-            [self updateWindowNumberVisibility:nil];
-        }
+        [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
         _shortcutAccessoryViewController.ordinal = number_ + 1;
     }
 
@@ -4475,14 +4472,24 @@ ITERM_WEAKLY_REFERENCEABLE
         oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
     }
     [self.window setFrame:oldFrame_ display:YES];
+    [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
+    PtyLog(@"toggleFullScreenMode - allocate new terminal");
+}
+
+- (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
     if (@available(macOS 10.14, *)) {
+        if (!_shortcutAccessoryViewController) {
+            return;
+        }
+        if ([self.window.titlebarAccessoryViewControllers containsObject:_shortcutAccessoryViewController]) {
+            return;
+        }
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
             (self.window.styleMask & NSWindowStyleMaskTitled)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
             [self updateWindowNumberVisibility:nil];
         }
     }
-    PtyLog(@"toggleFullScreenMode - allocate new terminal");
 }
 
 - (void)updateTransparencyBeforeTogglingTraditionalFullScreenMode {
@@ -8191,6 +8198,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
         self.tabBarControl.insets = [self tabBarInsets];
+
+        [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
     }
 }
 
