@@ -183,6 +183,7 @@ static NSString *const kGridSizeKey = @"Size";
     int newX = MIN(size_.width, MAX(0, cursorX));
     if (newX != cursor_.x) {
         cursor_.x = newX;
+        [delegate_ gridCursorDidChangeColumn];
         [delegate_ gridCursorDidMove];
     }
 }

@@ -60,7 +60,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, nullable, readonly) iTermMetalIMEInfo *imeInfo;
 @property (nonatomic, readonly) BOOL showBroadcastStripes;
 @property (nonatomic, readonly) NSColor *cursorGuideColor;
-@property (nonatomic, readonly) BOOL cursorGuideEnabled;
+@property (nonatomic, readonly) BOOL cursorHorizontalGuideEnabled;
+@property (nonatomic, readonly) BOOL cursorVerticalGuideEnabled;
 @property (nonatomic, readonly) vector_float4 fullScreenFlashColor;
 @property (nonatomic, readonly) BOOL timestampsEnabled;
 @property (nonatomic, readonly) NSColor *timestampsBackgroundColor;

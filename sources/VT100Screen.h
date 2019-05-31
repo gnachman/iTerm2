@@ -58,6 +58,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) BOOL saveToScrollbackInAlternateScreen;
 @property(nonatomic, retain) DVR *dvr;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
+@property(nonatomic, assign) BOOL trackCursorColumnMovement;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
 @property(nonatomic, assign) iTermUnicodeNormalization normalization;

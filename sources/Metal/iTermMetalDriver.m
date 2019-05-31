@@ -644,7 +644,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
         return YES;
     }
-    if (!_cursorGuideRenderer.rendererDisabled && frameData.perFrameState.cursorGuideEnabled) {
+    if (!_cursorGuideRenderer.rendererDisabled && (frameData.perFrameState.cursorHorizontalGuideEnabled ||
+                                                   frameData.perFrameState.cursorVerticalGuideEnabled)) {
         return YES;
     }
 
@@ -973,7 +974,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     [_cursorGuideRenderer setColor:frameData.perFrameState.cursorGuideColor];
-    _cursorGuideRenderer.enabled = frameData.perFrameState.cursorGuideEnabled;
+    _cursorGuideRenderer.horizontalEnabled = frameData.perFrameState.cursorHorizontalGuideEnabled;
+    _cursorGuideRenderer.verticalEnabled = frameData.perFrameState.cursorVerticalGuideEnabled;
 }
 
 - (void)updateTimestampsRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1226,13 +1228,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)populateCursorGuideRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermCursorGuideRendererTransientState *tState = [frameData transientStateForRenderer:_cursorGuideRenderer];
-    iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
-    if (cursorInfo.coord.y >= 0 &&
-        cursorInfo.coord.y < frameData.gridSize.height) {
-        [tState setRow:frameData.perFrameState.metalDriverCursorInfo.coord.y];
-    } else {
-        [tState setRow:-1];
-    }
+    VT100GridCoord coord = frameData.perFrameState.metalDriverCursorInfo.coord;
+    [tState setCursorCoord:coord];
 }
 
 - (void)populateTimestampsRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {

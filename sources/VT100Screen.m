@@ -52,6 +52,7 @@ NSString *const kScreenStateCommandStartYKey = @"Command Start Y";
 NSString *const kScreenStateNextCommandOutputStartKey = @"Output Start";
 NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
 NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
+NSString *const kScreenStateTrackCursorColumnMovementKey = @"Track Cursor Column";
 NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
 NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
 NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
@@ -4171,6 +4172,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetHighlightCursorLine:highlight];
 }
 
+- (void)terminalSetHighlightCursorColumn:(BOOL)highlight {
+    [delegate_ screenSetHighlightCursorColumn:highlight];
+}
+
 - (void)terminalPromptDidStart {
     [self promptDidStartAt:VT100GridAbsCoordMake(currentGrid_.cursor.x,
                                                  currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
@@ -5337,6 +5342,12 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
+- (void)gridCursorDidChangeColumn {
+    if (_trackCursorColumnMovement) {
+        [delegate_ screenCursorDidMoveToColumn:currentGrid_.cursorX];
+    }
+}
+
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
     return _normalization;
 }
@@ -5394,6 +5405,7 @@ static void SwapInt(int *a, int *b) {
             kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
             kScreenStateCursorVisibleKey: @(_cursorVisible),
             kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
+            kScreenStateTrackCursorColumnMovementKey: @(_trackCursorColumnMovement),
             kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
             kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
             kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
@@ -5508,6 +5520,7 @@ static void SwapInt(int *a, int *b) {
         _startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
+        _trackCursorColumnMovement = [screenState[kScreenStateTrackCursorColumnMovementKey] boolValue];
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
         _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 

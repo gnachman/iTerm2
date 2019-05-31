@@ -213,6 +213,7 @@ static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of 
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE = @"Vertical Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
@@ -1185,6 +1186,9 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE]) {
+            aSession.textview.highlightCursorColumn = [arrangement[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] boolValue];
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
         aSession.lastRemoteHost = aSession.screen.lastRemoteHost;
@@ -2370,6 +2374,166 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
 }
 
+#if 0
+- (void)handleKeyPressInCopyMode:(NSEvent *)event {
+    [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
+    [self.textview setNeedsDisplayOnColumn:_copyModeState.coord.x];
+    BOOL wasSelecting = _copyModeState.selecting;
+    NSString *string = event.charactersIgnoringModifiers;
+    unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
+    NSUInteger mask = (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagCommand);
+    BOOL moved = NO;
+    if ((event.modifierFlags & mask) == NSEventModifierFlagControl) {
+        switch (code) {
+            case 'b':  // ^B
+                moved = [_copyModeState pageUp];
+                break;
+            case 'f': // ^F
+                moved = [_copyModeState pageDown];
+                break;
+            case ' ':
+                _copyModeState.selecting = !_copyModeState.selecting;
+                _copyModeState.mode = kiTermSelectionModeCharacter;
+                break;
+            case 'c':
+                self.copyMode = NO;
+                break;
+            case 'g':
+                self.copyMode = NO;
+                break;
+            case 'k':
+                [_textview copySelectionAccordingToUserPreferences];
+                self.copyMode = NO;
+                break;
+            case 'v':
+                _copyModeState.selecting = !_copyModeState.selecting;
+                _copyModeState.mode = kiTermSelectionModeBox;
+                break;
+        }
+    } else if ((event.modifierFlags & mask) == NSEventModifierFlagOption) {
+        switch (code) {
+            case 'b':
+            case NSLeftArrowFunctionKey:
+                moved = [_copyModeState moveBackwardWord];
+                break;
+
+            case 'f':
+            case NSRightArrowFunctionKey:
+                moved = [_copyModeState moveForwardWord];
+                break;
+            case 'm':
+                moved = [_copyModeState moveToStartOfIndentation];
+                break;
+        }
+    } else if ((event.modifierFlags & mask) == 0) {
+        switch (code) {
+            case NSPageUpFunctionKey:
+                moved = [_copyModeState pageUp];
+                break;
+            case NSPageDownFunctionKey:
+                moved = [_copyModeState pageDown];
+                break;
+            case '\t':
+                if (event.modifierFlags & NSEventModifierFlagShift) {
+                    moved = [_copyModeState moveBackwardWord];
+                } else {
+                    moved = [_copyModeState moveForwardWord];
+                }
+                break;
+            case '\n':
+            case '\r':
+                moved = [_copyModeState moveToStartOfNextLine];
+                break;
+            case 27:
+            case 'q':
+                self.copyMode = NO;
+                _copyModeState.selecting = NO;
+                moved = YES;
+                break;
+            case ' ':
+            case 'v':
+                _copyModeState.selecting = !_copyModeState.selecting;
+                _copyModeState.mode = kiTermSelectionModeCharacter;
+                break;
+            case 'b':
+                moved = [_copyModeState moveBackwardWord];
+                break;
+            case '0':
+                moved = [_copyModeState moveToStartOfLine];
+                break;
+            case 'H':
+                moved = [_copyModeState moveToTopOfVisibleArea];
+                break;
+            case 'G':
+                moved = [_copyModeState moveToEnd];
+                break;
+            case 'L':
+                moved = [_copyModeState moveToBottomOfVisibleArea];
+                break;
+            case 'M':
+                moved = [_copyModeState moveToMiddleOfVisibleArea];
+                break;
+            case 'V':
+                _copyModeState.selecting = !_copyModeState.selecting;
+                _copyModeState.mode = kiTermSelectionModeLine;
+                break;
+            case 'g':
+                moved = [_copyModeState moveToStart];
+                break;
+            case 'h':
+            case NSLeftArrowFunctionKey:
+                moved = [_copyModeState moveLeft];
+                break;
+            case 'j':
+            case NSDownArrowFunctionKey:
+                moved = [_copyModeState moveDown];
+                break;
+            case 'k':
+            case NSUpArrowFunctionKey:
+                moved = [_copyModeState moveUp];
+                break;
+            case 'l':
+            case NSRightArrowFunctionKey:
+                moved = [_copyModeState moveRight];
+                break;
+            case 'o':
+                [_copyModeState swap];
+                moved = YES;
+                break;
+            case 'w':
+                moved = [_copyModeState moveForwardWord];
+                break;
+            case 'y':
+                [_textview copySelectionAccordingToUserPreferences];
+                self.copyMode = NO;
+                break;
+            case '/':
+                [self showFindPanel];
+                break;
+            case '[':
+                moved = [_copyModeState previousMark];
+                break;
+            case ']':
+                moved = [_copyModeState nextMark];
+                break;
+            case '^':
+                moved = [_copyModeState moveToStartOfIndentation];
+                break;
+            case '$':
+                moved = [_copyModeState moveToEndOfLine];
+                break;
+        }
+    }
+    if (moved || (_copyModeState.selecting != wasSelecting)) {
+        if (self.copyMode) {
+            [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(_copyModeState.coord.y, 1)];
+        }
+        [self.textview setNeedsDisplayOnLine:_copyModeState.coord.y];
+        [self.textview setNeedsDisplayOnColumn:_copyModeState.coord.x];
+    }
+}
+#endif
+
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
     const unichar unicode = [event.characters length] > 0 ? [event.characters characterAtIndex:0] : 0;
     [self handleCharacterPressedInTmuxGateway:unicode];
@@ -3371,6 +3535,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];
+    _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                             inProfile:_profile];
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile
@@ -3553,6 +3719,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];
+        _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                                 inProfile:aDict];
     }
 
     for (i = 0; i < 16; i++) {
@@ -4287,6 +4455,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [NSDictionary dictionaryWithGridCoordRange:range];
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
+        result[SESSION_ARRANGEMENT_VERTICAL_CURSOR_GUIDE] = @(_textview.highlightCursorColumn);
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] = @(self.lastDirectoryIsUnsuitableForOldPWD);
@@ -8335,8 +8504,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];
+    _textview.highlightCursorColumn = [iTermProfilePreferences boolForKey:KEY_USE_VERTICAL_CURSOR_GUIDE
+                                                                inProfile:_profile];
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
+    _screen.trackCursorColumnMovement = NO;
 }
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
@@ -8607,6 +8779,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)highlightCursorLine {
     return _textview.highlightCursorLine;
+}
+
+- (void)screenCursorDidMoveToColumn:(int)column {
+    if (_textview.cursorVisible) {
+        [_textview setNeedsDisplayOnColumn:column];
+    }
+}
+
+- (void)screenSetHighlightCursorColumn:(BOOL)highlight {
+    _cursorGuideSettingHasChanged = YES;
+    self.highlightCursorColumn = highlight;
+}
+
+- (void)setHighlightCursorColumn:(BOOL)highlight {
+    _cursorGuideSettingHasChanged = YES;
+    _textview.highlightCursorColumn = highlight;
+    [_textview setNeedsDisplay:YES];
+    _screen.trackCursorColumnMovement = highlight;
+}
+
+- (BOOL)highlightCursorColumn {
+    return _textview.highlightCursorColumn;
 }
 
 - (BOOL)screenHasView {
