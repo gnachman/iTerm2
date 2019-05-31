@@ -47,7 +47,7 @@
     NSArray *args = @[ @"split-window",
                        splitVertically ? @"-h": @"-v",
                        @"-t",
-                       [NSString stringWithFormat:@"%%%d", wp] ];
+                       [NSString stringWithFormat:@"\"%%%d\"", wp] ];
     [self tmuxCommandByAddingCustomDirectoryWithArgs:args
                                   recyclingSupported:recyclingSupported
                                                scope:scope

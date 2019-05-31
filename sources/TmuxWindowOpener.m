@@ -201,7 +201,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t %%%d", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t \"%%%d\"", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(getPendingOutputResponse:pane:)
@@ -212,7 +212,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"list-panes -t %%%d -F \"%@\"", [wp intValue],
+    NSString *command = [NSString stringWithFormat:@"list-panes -t \"%%%d\" -F \"%@\"", [wp intValue],
                          [TmuxStateParser format]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
@@ -225,7 +225,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                         alt:(BOOL)alternate {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
+    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t \"%%%d\" -S -%d",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
