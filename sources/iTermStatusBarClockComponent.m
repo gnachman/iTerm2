@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
-
+static NSString *const iTermStatusBarClockComponentLocalizeKey = @"localize";
 @implementation iTermStatusBarClockComponent {
     NSDateFormatter *_dateFormatter;
 }
@@ -37,12 +37,18 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
                                                    placeholder:@"Date Format (Unicode TR 35)"
                                                   defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarClockComponentFormatKey]
                                                            key:iTermStatusBarClockComponentFormatKey];
-    return [@[ formatKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    iTermStatusBarComponentKnob *dateFormatIsTemplate =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Localize Date Format"
+                                                          type:iTermStatusBarComponentKnobTypeCheckbox
+                                                   placeholder:nil
+                                                  defaultValue:@YES
+                                                           key:iTermStatusBarClockComponentLocalizeKey];
+    return [@[ formatKnob, dateFormatIsTemplate ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
-    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"M-dd h:mm" }];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"M/dd h:mm" }];
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -58,8 +64,12 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     if (!_dateFormatter) {
         _dateFormatter = [[NSDateFormatter alloc] init];
         NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-        NSString *template = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"M-dd h:mm";
-        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]];
+        NSString *template = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"M/dd h:mm";
+        if ([knobValues[iTermStatusBarClockComponentLocalizeKey] ?: @YES boolValue]) {
+            _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]];
+        } else {
+            _dateFormatter.dateFormat = template;
+        }
     }
     return _dateFormatter;
 }
