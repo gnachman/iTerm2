@@ -2796,6 +2796,19 @@ class SetProfilePropertyRequest(google___protobuf___message___Message):
         def MergeFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
         def CopyFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
 
+    class Assignment(google___protobuf___message___Message):
+        key = ... # type: typing___Text
+        json_value = ... # type: typing___Text
+
+        def __init__(self,
+            key : typing___Optional[typing___Text] = None,
+            json_value : typing___Optional[typing___Text] = None,
+            ) -> None: ...
+        @classmethod
+        def FromString(cls, s: bytes) -> SetProfilePropertyRequest.Assignment: ...
+        def MergeFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
+        def CopyFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
+
     session = ... # type: typing___Text
     key = ... # type: typing___Text
     json_value = ... # type: typing___Text
@@ -2803,11 +2816,15 @@ class SetProfilePropertyRequest(google___protobuf___message___Message):
     @property
     def guid_list(self) -> SetProfilePropertyRequest.GuidList: ...
 
+    @property
+    def assignments(self) -> google___protobuf___internal___containers___RepeatedCompositeFieldContainer[SetProfilePropertyRequest.Assignment]: ...
+
     def __init__(self,
         session : typing___Optional[typing___Text] = None,
         guid_list : typing___Optional[SetProfilePropertyRequest.GuidList] = None,
         key : typing___Optional[typing___Text] = None,
         json_value : typing___Optional[typing___Text] = None,
+        assignments : typing___Optional[typing___Iterable[SetProfilePropertyRequest.Assignment]] = None,
         ) -> None: ...
     @classmethod
     def FromString(cls, s: bytes) -> SetProfilePropertyRequest: ...

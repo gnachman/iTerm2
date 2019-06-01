@@ -236,6 +236,18 @@ class Connection:
             except Exception:
                 raise
 
+    @property
+    def iterm2_protocol_version(self):
+        """Returns a tuple (major version, minor version) or 0,0 if it's an old version of iTerm2 that doesn't report its version or it's unknown."""
+        key = "X-iTerm2-Protocol-Version"
+        if key not in self.websocket.response_headers:
+            return (0, 0)
+        s = self.websocket.response_headers[key]
+        parts = s.split(".")
+        if len(parts) != 2:
+            return (0, 0)
+        return (int(parts[0]), int(parts[1]))
+
     async def async_connect(self, coro, retry=False):
         """
         Establishes a websocket connection.

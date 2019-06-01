@@ -20,6 +20,9 @@
 static NSString *const kProtocolName = @"api.iterm2.com";
 static const NSInteger kWebSocketVersion = 13;
 
+// SEE ALSO iTermMinimumPythonEnvironmentVersion
+static NSString *const iTermWebSocketConnectionMinimumPythonLibraryVersion = @"0.69";
+
 typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketConnectionStateConnecting,
     iTermWebSocketConnectionStateOpen,
@@ -111,7 +114,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     if (libver) {
         NSArray<NSString *> *parts = [libver componentsSeparatedByString:@" "];
         if (parts.count == 2) {
-            NSDictionary *minimums = @{ @"python": [NSDecimalNumber decimalNumberWithString:@"0.24"] };
+            NSDictionary *minimums = @{ @"python": [NSDecimalNumber decimalNumberWithString:iTermWebSocketConnectionMinimumPythonLibraryVersion] };
             NSString *name = parts[0];
             NSDecimalNumber *min = minimums[name];
             NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:parts[1]];
@@ -440,7 +443,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                @"Upgrade": @"websocket",
                @"Connection": @"Upgrade",
                @"Sec-WebSocket-Accept": [sha1 stringWithBase64EncodingWithLineBreak:@""],
-               @"Sec-WebSocket-Protocol": kProtocolName
+               @"Sec-WebSocket-Protocol": kProtocolName,
+               @"X-iTerm2-Protocol-Version": @"0.69"
              };
         if (version > kWebSocketVersion) {
             NSMutableDictionary *temp = [headers mutableCopy];

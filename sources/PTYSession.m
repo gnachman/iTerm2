@@ -4742,13 +4742,75 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)profileValuesDifferFromCurrentProfile:(NSDictionary *)newValues {
+    for (NSString *key in newValues) {
+        if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
+            continue;
+        }
+        NSObject *value = newValues[key];
+        if (![NSObject object:_profile[key] isEqualToObject:value]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Missing values are replaced with their defaults. If everything matches excluding deprecated keys
+// then the profiles are equivalent.
+- (BOOL)profile:(Profile *)profile1 isEffectivelyEqualToProfile:(Profile *)profile2 {
+    for (NSString *key in [iTermProfilePreferences nonDeprecatedKeys]) {
+        id value1 = [iTermProfilePreferences objectForKey:key inProfile:profile1];
+        id value2 = [iTermProfilePreferences objectForKey:key inProfile:profile2];
+
+        if ([NSObject object:value1 isEqualToObject:value2]) {
+            continue;
+        }
+        return NO;
+    }
+    return YES;
+}
+
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
     DLog(@"%@: setSessionSpecificProfilevalues:%@", self, newValues);
+    if (![self profileValuesDifferFromCurrentProfile:newValues]) {
+        DLog(@"No changes to be made");
+        return;
+    }
+
+    // Consider the possibility that newValues exactly matches an existing shared profile or is
+    // a modified copy of a shared profile.
+    NSString *const newGuid = newValues[KEY_GUID];
+    if (newGuid) {
+        Profile *const existingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:newGuid];
+        if (existingProfile) {
+            DLog(@"Switching to existing profile");
+            // Switch to the existing profile. This will remarry if possible.
+            [self setProfile:existingProfile preservingName:NO adjustWindow:YES];
+
+            // Are we done?
+            if ([self profile:existingProfile isEffectivelyEqualToProfile:newValues]) {
+                DLog(@"Effectively equivalent to existing profile");
+                // Since you switched to a shared profile that is an exact match, we're done.
+                return;
+            }
+
+            // No. Divorce and modify. This takes care of making everything right, such as setting
+            // the original profile guid.
+            DLog(@"Divorce and modify");
+        }
+    }
+
+    // Normal case: divorce and update a subset of properties.
     if (!self.isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
+
+    // Build a copy of the current dictionary, replacing values with those provided in newValues.
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     for (NSString *key in newValues) {
+        if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
+            continue;
+        }
         NSObject *value = newValues[key];
         if ([value isKindOfClass:[NSNull class]]) {
             [temp removeObjectForKey:key];
@@ -4756,7 +4818,8 @@ ITERM_WEAKLY_REFERENCEABLE
             temp[key] = value;
         }
     }
-    if ([temp isEqualToDictionary:_profile]) {
+    if ([self profile:temp isEffectivelyEqualToProfile:_profile]) {
+        DLog(@"Not doing anything because temp is equal to _profile");
         // This was a no-op, so there's no need to get a divorce. Happens most
         // commonly when setting tab color after a split.
         return;
@@ -10843,16 +10906,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return response;
 }
 
-- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key
-                                                                 value:(id)value
-                                                    scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry {
-    if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
-        XLog(@"Value %@ is not legal for key %@", value, key);
-        [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]];
-        return ITMSetProfilePropertyResponse_Status_RequestMalformed;
+- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples
+                                                            scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (iTermTuple<NSString *, id> *tuple in tuples) {
+        NSString *key = tuple.firstObject;
+        id value = tuple.secondObject;
+        if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
+            XLog(@"Value %@ is not legal for key %@", value, key);
+            [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]];
+            return ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        }
+        dict[key] = value;
     }
 
-    [self setSessionSpecificProfileValues:@{ key: value }];
+    [self setSessionSpecificProfileValues:dict];
     return ITMSetProfilePropertyResponse_Status_Ok;
 }
 

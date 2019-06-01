@@ -230,6 +230,7 @@ async def async_register_web_view_tool(connection,
 async def async_set_profile_property(connection, session_id, key, value, guids=None):
     """
     Sets a property of a session's profile.
+    TODO: Add async_set_profile_properties and deprecate this.
 
     :param connection: A connected iterm2.Connection.
     :param session_id: Session ID to modify or None. If None, guids must be set.
@@ -242,7 +243,8 @@ async def async_set_profile_property(connection, session_id, key, value, guids=N
     return await async_set_profile_property_json(connection, session_id, key, json.dumps(value), guids)
 
 async def async_set_profile_property_json(connection, session_id, key, json_value, guids=None):
-    """Like async_set_profile_property but takes a json-encoded value."""
+    """Like async_set_profile_property but takes a json-encoded value.
+    DEPRECATED. Prefer async_set_profile_properties_json."""
     request = _alloc_request()
     if session_id is None:
         request.set_profile_property_request.guid_list.guids.extend(guids);
@@ -250,6 +252,22 @@ async def async_set_profile_property_json(connection, session_id, key, json_valu
         request.set_profile_property_request.session = session_id
     request.set_profile_property_request.key = key
     request.set_profile_property_request.json_value = json_value
+    return await _async_call(connection, request)
+
+async def async_set_profile_properties_json(connection, session_id, assignments, guids=None):
+    """Like async_set_profile_properties but takes a json-encoded value."""
+    request = _alloc_request()
+    if session_id is None:
+        request.set_profile_property_request.guid_list.guids.extend(guids);
+    else:
+        request.set_profile_property_request.session = session_id
+    a = []
+    for assignment in assignments:
+        value = iterm2.api_pb2.SetProfilePropertyRequest.Assignment()
+        value.key = assignment[0]
+        value.json_value = assignment[1]
+        a.append(value)
+    request.set_profile_property_request.assignments.extend(a)
     return await _async_call(connection, request)
 
 async def async_get_profile(connection, session=None, keys=None):

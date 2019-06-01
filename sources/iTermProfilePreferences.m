@@ -150,15 +150,15 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return NO;
 }
 
++ (NSArray<NSString *> *)keysWithoutDefaultValues {
+    return @[ KEY_GUID, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY, KEY_BOUND_HOSTS,
+              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
+              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
+              KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
+              KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_FILENAME ];
+}
 + (NSArray<NSString *> *)allKeys {
-    // KEY_ASK_ABOUT_OUTDATED_KEYMAPS excluded because it should be deprecated.
-    NSArray<NSString *> *keysWithoutDefaultValues =
-        @[ KEY_GUID, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY, KEY_BOUND_HOSTS,
-           KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
-           KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
-           KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
-           KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_FILENAME ];
-    return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:keysWithoutDefaultValues];
+    return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:self.keysWithoutDefaultValues];
 }
 
 + (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile {
@@ -171,59 +171,126 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
 #pragma mark - Private
 
++ (NSDictionary<NSString *, BOOL (^)(id)> *)validationBlocks {
+    static NSMutableDictionary<NSString *, BOOL (^)(id)> *result;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        result = [NSMutableDictionary dictionary];
+        NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING, KEY_NORMAL_FONT,
+                             KEY_NON_ASCII_FONT, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION,
+                             KEY_SHORTCUT, KEY_ICON_PATH, KEY_CUSTOM_COMMAND, KEY_COMMAND_LINE,
+                             KEY_INITIAL_TEXT, KEY_CUSTOM_DIRECTORY, KEY_WORKING_DIRECTORY,
+                             KEY_CUSTOM_WINDOW_TITLE, KEY_HOTKEY_CHARACTERS, KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS,
+                             KEY_LOGDIR, KEY_TERMINAL_TYPE, KEY_TITLE_FUNC, KEY_GUID,
+                             KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
+                             KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
+                             KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
+                             KEY_DYNAMIC_PROFILE_FILENAME];
+
+        NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
+                            KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
+                            KEY_CURSOR_COLOR, KEY_CURSOR_TEXT_COLOR, KEY_ANSI_0_COLOR,
+                            KEY_ANSI_1_COLOR, KEY_ANSI_2_COLOR, KEY_ANSI_3_COLOR, KEY_ANSI_4_COLOR,
+                            KEY_ANSI_5_COLOR, KEY_ANSI_6_COLOR, KEY_ANSI_7_COLOR, KEY_ANSI_8_COLOR,
+                            KEY_ANSI_9_COLOR, KEY_ANSI_10_COLOR, KEY_ANSI_11_COLOR, KEY_ANSI_12_COLOR,
+                            KEY_ANSI_13_COLOR, KEY_ANSI_14_COLOR, KEY_ANSI_15_COLOR,
+                            KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
+                            KEY_UNDERLINE_COLOR ];
+
+        NSArray *number = @[ KEY_USE_CURSOR_GUIDE, KEY_USE_TAB_COLOR, KEY_USE_UNDERLINE_COLOR,
+                             KEY_SMART_CURSOR_COLOR, KEY_MINIMUM_CONTRAST, KEY_CURSOR_BOOST,
+                             KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
+                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_USE_BOLD_COLOR,
+                             KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
+                             KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
+                             KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_INITIAL_USE_TRANSPARENCY,
+                             KEY_BLUR, KEY_BLUR_RADIUS,
+                             KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND,
+                             KEY_DISABLE_WINDOW_RESIZING,
+                             KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
+                             KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED, KEY_SCROLLBACK_LINES,
+                             KEY_UNLIMITED_SCROLLBACK, KEY_SCROLLBACK_WITH_STATUS_BAR,
+                             KEY_SCROLLBACK_IN_ALTERNATE_SCREEN, KEY_CHARACTER_ENCODING,
+                             KEY_XTERM_MOUSE_REPORTING, KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL,
+                             KEY_UNICODE_VERSION, KEY_ALLOW_TITLE_REPORTING, KEY_ALLOW_TITLE_SETTING,
+                             KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
+                             KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
+                             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
+                             KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
+                             KEY_SESSION_END_ACTION, KEY_PROMPT_CLOSE,
+                             KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
+                             KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
+                             KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
+                             KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
+                             KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
+                             KEY_COLUMNS, KEY_ROWS, KEY_ICON, KEY_AUTOLOG, KEY_HAS_HOTKEY,
+                             KEY_HIDE_AFTER_OPENING, KEY_HOTKEY_MODIFIER_FLAGS, KEY_HOTKEY_KEY_CODE,
+                             KEY_HOTKEY_AUTOHIDE, KEY_HOTKEY_REOPEN_ON_ACTIVATION, KEY_HOTKEY_ANIMATE,
+                             KEY_HOTKEY_FLOAT, KEY_HOTKEY_DOCK_CLICK_ACTION,
+                             KEY_HOTKEY_MODIFIER_ACTIVATION, KEY_HOTKEY_ACTIVATE_WITH_MODIFIER,
+                             KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB, KEY_SCREEN, KEY_SET_LOCALE_VARS, KEY_SPACE,
+                             KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE,
+                             KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE];
+        NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS ];
+        NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
+                                 ];
+        NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
+                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP];
+
+        for (NSString *key in string) {
+            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSString class]]; };
+        }
+        for (NSString *key in color) {
+            result[key] = ^BOOL(id value) {
+                return ([value isKindOfClass:[NSDictionary class]] &&
+                        [value isColorValue]);
+            };
+        }
+        for (NSString *key in number) {
+            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSNumber class]]; };
+        }
+        for (NSString *key in stringArrays) {
+            result[key] = ^BOOL(id value) {
+                if (![value isKindOfClass:[NSArray class]]) {
+                    return NO;
+                }
+                for (id obj in value) {
+                    if (![obj isKindOfClass:[NSString class]]) {
+                        return NO;
+                    }
+                }
+                return YES;
+            };
+        }
+        for (NSString *key in dictArrays) {
+            result[key] = ^BOOL(id value) {
+                if (![value isKindOfClass:[NSArray class]]) {
+                    return NO;
+                }
+                for (id obj in value) {
+                    if (![obj isKindOfClass:[NSDictionary class]]) {
+                        return NO;
+                    }
+                }
+                return YES;
+            };
+        }
+        for (NSString *key in dict) {
+            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSDictionary class]]; };
+        }
+    });
+    return result;
+}
+
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key {
-    NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING, KEY_NORMAL_FONT,
-                         KEY_NON_ASCII_FONT, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION ];
-
-    NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
-                        KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
-                        KEY_CURSOR_COLOR, KEY_CURSOR_TEXT_COLOR, KEY_ANSI_0_COLOR,
-                        KEY_ANSI_1_COLOR, KEY_ANSI_2_COLOR, KEY_ANSI_3_COLOR, KEY_ANSI_4_COLOR,
-                        KEY_ANSI_5_COLOR, KEY_ANSI_6_COLOR, KEY_ANSI_7_COLOR, KEY_ANSI_8_COLOR,
-                        KEY_ANSI_9_COLOR, KEY_ANSI_10_COLOR, KEY_ANSI_11_COLOR, KEY_ANSI_12_COLOR,
-                        KEY_ANSI_13_COLOR, KEY_ANSI_14_COLOR, KEY_ANSI_15_COLOR,
-                        KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
-                        KEY_UNDERLINE_COLOR ];
-
-    NSArray *number = @[ KEY_USE_CURSOR_GUIDE, KEY_USE_TAB_COLOR, KEY_USE_UNDERLINE_COLOR,
-                         KEY_SMART_CURSOR_COLOR, KEY_MINIMUM_CONTRAST, KEY_CURSOR_BOOST,
-                         KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
-                         KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_USE_BOLD_COLOR,
-                         KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
-                         KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
-                         KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_INITIAL_USE_TRANSPARENCY,
-                         KEY_BLUR, KEY_BLUR_RADIUS,
-                         KEY_BACKGROUND_IMAGE_TILED_DEPRECATED, KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND, KEY_SYNC_TITLE_DEPRECATED,
-                         KEY_DISABLE_WINDOW_RESIZING,
-                         KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
-                         KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED, KEY_SCROLLBACK_LINES,
-                         KEY_UNLIMITED_SCROLLBACK, KEY_SCROLLBACK_WITH_STATUS_BAR,
-                         KEY_SCROLLBACK_IN_ALTERNATE_SCREEN, KEY_CHARACTER_ENCODING,
-                         KEY_XTERM_MOUSE_REPORTING, KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL,
-                         KEY_UNICODE_VERSION, KEY_ALLOW_TITLE_REPORTING, KEY_ALLOW_TITLE_SETTING,
-                         KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
-                         KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
-                         KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
-                         KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
-                         KEY_SESSION_END_ACTION, KEY_PROMPT_CLOSE,
-                         KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
-                         KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
-                         KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
-                         KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
-                         KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
-                       ];
-    NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT ];
-    if ([string containsObject:key]) {
-        return [value isKindOfClass:[NSString class]];
-    } else if ([color containsObject:key]) {
-        return [value isKindOfClass:[NSDictionary class]] && [(NSDictionary *)value isColorValue];
-    } else if ([number containsObject:key]) {
-        return [value isKindOfClass:[NSNumber class]];
-    } else if ([dict containsObject:key]) {
-        return [value isKindOfClass:[NSDictionary class]];
-    } else {
+    BOOL (^block)(id) = [[self validationBlocks] objectForKey:key];
+    if (!block) {
         return NO;
     }
+    if (!value) {
+        return YES;
+    }
+    return block(value);
 }
 
 + (NSDictionary *)defaultValueMap {
@@ -286,7 +353,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
-                  KEY_USE_HFS_PLUS_MAPPING: @NO,
                   KEY_UNICODE_NORMALIZATION: @(iTermUnicodeNormalizationNone),
                   KEY_HORIZONTAL_SPACING: @1.0,
                   KEY_VERTICAL_SPACING: @1.0,
@@ -295,7 +361,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_INITIAL_USE_TRANSPARENCY: @YES,
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
-                  KEY_BACKGROUND_IMAGE_TILED_DEPRECATED: @NO,
                   KEY_BACKGROUND_IMAGE_MODE: @(iTermBackgroundImageModeStretch),
                   KEY_BLEND: @0.5,
                   KEY_COLUMNS: @80,
@@ -306,7 +371,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_CUSTOM_WINDOW_TITLE: @"",
                   KEY_SCREEN: @-1,
                   KEY_SPACE: @(iTermProfileOpenInCurrentSpace),
-                  KEY_SYNC_TITLE_DEPRECATED: @NO,
                   KEY_DISABLE_WINDOW_RESIZING: @NO,
                   KEY_PREVENT_TAB: @NO,
                   KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR: @NO,
@@ -376,12 +440,35 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_AWDS_TAB_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_AWDS_PANE_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_AWDS_WIN_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
-                  // Remember to update valueIsLegal:forKey: and the websocket
-                  // README.md when adding a new value that should be
-                  // API-settable.
+                  // NOTES:
+                  //   * Remove deprecated values from this list.
+                  //   * Update validation blocks in preceding method.
                 };
+        NSSet<NSString *> *validatedKeys = [NSSet setWithArray:[[iTermProfilePreferences validationBlocks] allKeys]];
+        NSSet<NSString *> *allKnownKeys = [NSSet setWithArray:[dict.allKeys arrayByAddingObjectsFromArray:[iTermProfilePreferences keysWithoutDefaultValues]]];
+        if (![validatedKeys isEqualToSet:allKnownKeys]) {
+            NSLog(@"validated keys not equal to all known keys");
+            NSMutableSet *difference = [validatedKeys mutableCopy];
+            [difference minusSet:allKnownKeys];
+            if (difference.count) {
+                NSLog(@"validated contains extra entries: %@", difference);
+            }
+            difference = [allKnownKeys mutableCopy];
+            [difference minusSet:validatedKeys];
+            if (difference.count) {
+                NSLog(@"validated missing: %@", difference);
+            }
+            // If you hit this assertion you may have a default value for a
+            // deprecated key, a default without a validation block, or a
+            // validation block without a default.
+            assert(false);
+        }
     }
     return dict;
+}
+
++ (NSArray<NSString *> *)nonDeprecatedKeys {
+    return [[iTermProfilePreferences validationBlocks] allKeys];
 }
 
 + (id)objectForKey:(NSString *)key inProfile:(Profile *)profile {

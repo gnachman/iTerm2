@@ -1735,7 +1735,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 - (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
                             handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
     ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
-    ITMSetProfilePropertyResponse_Status (^setter)(id object, NSString *key, id value) = nil;
+    ITMSetProfilePropertyResponse_Status (^setter)(id object, NSArray<iTermTuple<NSString *, id> *> *assignments) = nil;
     NSMutableArray *objects = [NSMutableArray array];
     id key = _apiServer.currentKey;
     iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
@@ -1748,9 +1748,14 @@ static iTermAPIHelper *sAPIHelperInstance;
         }
 
         case ITMSetProfilePropertyRequest_Target_OneOfCase_GuidList: {
-            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSString *key, id value) {
+            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSArray<iTermTuple<NSString *, id> *> *assignments) {
                 Profile *profile = object;
-                [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:[ProfileModel sharedInstance]];
+                for (iTermTuple<NSString *, id> *assignment in assignments) {
+                    [iTermProfilePreferences setObject:assignment.secondObject
+                                                forKey:assignment.firstObject
+                                             inProfile:profile
+                                                 model:[ProfileModel sharedInstance]];
+                }
                 return ITMSetProfilePropertyResponse_Status_Ok;
             };
             for (NSString *guid in request.guidList.guidsArray) {
@@ -1766,8 +1771,9 @@ static iTermAPIHelper *sAPIHelperInstance;
         }
 
         case ITMSetProfilePropertyRequest_Target_OneOfCase_Session: {
-            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSString *key, id value) {
-                return [(PTYSession *)object handleSetProfilePropertyForKey:request.key value:value scriptHistoryEntry:entry];
+            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSArray<iTermTuple<NSString *, id> *> *assignments) {
+                return [(PTYSession *)object handleSetProfilePropertyForAssignments:assignments
+                                                                 scriptHistoryEntry:entry];
             };
             if ([request.session isEqualToString:@"all"]) {
                 [objects addObjectsFromArray:[self allSessions]];
@@ -1785,12 +1791,35 @@ static iTermAPIHelper *sAPIHelperInstance;
         }
     }
 
-    NSError *error = nil;
-    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
-                                               options:NSJSONReadingAllowFragments
-                                                 error:&error];
-    if (!value || error) {
-        XLog(@"JSON parsing error %@ for value in request %@", error, request);
+    NSArray<iTermTuple<NSString *, id> *> *assignments;
+    if (request.hasKey && request.hasJsonValue) {
+        // DEPRECATED CODE PATH - REMOVE THIS AFTER ENSURING EVERYONE HAS BEEN FORCED TO UPGRADE TO 0.69
+        assignments = @[ [iTermTuple tupleWithObject:request.key andObject:request.jsonValue] ];
+    } else {
+        assignments = [request.assignmentsArray mapWithBlock:^id(ITMSetProfilePropertyRequest_Assignment *assignment) {
+            return [iTermTuple tupleWithObject:assignment.key andObject:assignment.jsonValue];
+        }];
+    }
+
+    __block NSError *error = nil;
+    assignments = [assignments mapWithBlock:^id(iTermTuple<NSString *,id> *tuple) {
+        if (error) {
+            return nil;
+        }
+        id value = [NSJSONSerialization JSONObjectWithData:[tuple.secondObject dataUsingEncoding:NSUTF8StringEncoding]
+                                                   options:NSJSONReadingAllowFragments
+                                                     error:&error];
+        if (!value || error) {
+            XLog(@"JSON parsing error %@ for value in request %@", error, request);
+            error = error ?: [NSError errorWithDomain:iTermAPIHelperErrorDomain
+                                                 code:iTermAPIHelperErrorCodeInvalidJSON
+                                             userInfo:nil];
+            return nil;
+        }
+        return [iTermTuple tupleWithObject:tuple.firstObject andObject:value];
+    }];
+
+    if (error) {
         ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
         response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
         handler(response);
@@ -1798,7 +1827,7 @@ static iTermAPIHelper *sAPIHelperInstance;
     }
 
     for (id object in objects) {
-        response.status = setter(object, request.key, value);
+        response.status = setter(object, assignments);
         if (response.status != ITMSetProfilePropertyResponse_Status_Ok) {
             handler(response);
             return;

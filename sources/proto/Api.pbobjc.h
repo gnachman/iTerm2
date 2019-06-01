@@ -148,6 +148,7 @@ CF_EXTERN_C_BEGIN
 @class ITMSetBroadcastDomainsRequest;
 @class ITMSetBroadcastDomainsResponse;
 @class ITMSetProfilePropertyRequest;
+@class ITMSetProfilePropertyRequest_Assignment;
 @class ITMSetProfilePropertyRequest_GuidList;
 @class ITMSetProfilePropertyResponse;
 @class ITMSetPropertyRequest;
@@ -4121,6 +4122,7 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
   ITMSetProfilePropertyRequest_FieldNumber_GuidList = 2,
   ITMSetProfilePropertyRequest_FieldNumber_Key = 3,
   ITMSetProfilePropertyRequest_FieldNumber_JsonValue = 4,
+  ITMSetProfilePropertyRequest_FieldNumber_AssignmentsArray = 5,
 };
 
 typedef GPB_ENUM(ITMSetProfilePropertyRequest_Target_OneOfCase) {
@@ -4141,29 +4143,19 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_Target_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyRequest_GuidList *guidList;
 
-/**
- *
- * Color dictionaries have these mandatory keys taking numeric values between 0 and 1:
- *   Red Component, Green Component, Blue Component
- * And an optional key with a value in 0 to 1:
- *   Alpha Component
- **/
+/** deprecated */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *key;
 /** Test to see if @c key has been set. */
 @property(nonatomic, readwrite) BOOL hasKey;
 
-/**
- * Does not need to be a dictionary. Here are examples of JSON protos having JSON values:
- * Numeric example:
- *   "json_value": "0.5"
- * String example:
- *   "json_value": "\\"Hello world\\""
- * Color example:
- *   "json_value": "{\\"Red Component\\": 1, \\"Green Component\\": 0, \\"Blue Component\\": 0, \\"Alpha Component\\": 1}"
- **/
+/** deprecated */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
 /** Test to see if @c jsonValue has been set. */
 @property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMSetProfilePropertyRequest_Assignment*> *assignmentsArray;
+/** The number of items in @c assignmentsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger assignmentsArray_Count;
 
 @end
 
@@ -4183,6 +4175,25 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_GuidList_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *guidsArray;
 /** The number of items in @c guidsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger guidsArray_Count;
+
+@end
+
+#pragma mark - ITMSetProfilePropertyRequest_Assignment
+
+typedef GPB_ENUM(ITMSetProfilePropertyRequest_Assignment_FieldNumber) {
+  ITMSetProfilePropertyRequest_Assignment_FieldNumber_Key = 1,
+  ITMSetProfilePropertyRequest_Assignment_FieldNumber_JsonValue = 2,
+};
+
+@interface ITMSetProfilePropertyRequest_Assignment : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
 
 @end
 
