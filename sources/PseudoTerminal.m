@@ -7930,13 +7930,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
-            // In practice, this never happens because the prefs panel is
-            // always key when this notification is posted.
+            // This is only used when changing broadcast mode; otherwise, the kRefreshTerminalNotification
+            // notif is never posted when this window is key.
             if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
                 [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
-                [self showMenuBarHideDock];
-            } else {
                 [self hideMenuBar];
+            } else {
+                [self showMenuBarHideDock];
             }
         }
         [self.window setFrame:[self traditionalFullScreenFrame] display:YES];
