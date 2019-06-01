@@ -431,7 +431,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [self runTimer];
     NSString *expected = [[@"\x1b[200~" stringByAppendingString:test] stringByAppendingString:@"\x1b[201~"];
     XCTAssert([_writeBuffer isEqualToString:expected]);
-    XCTAssert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
+    XCTAssert(fabs(_helper.duration - 0.02) < kFloatingPointTolerance);
 }
 
 - (void)testDelegateChangesItsMindAboutBracketingWithQueue {
@@ -468,7 +468,7 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     XCTAssert([_writeBuffer isEqualToString:test]);
-    XCTAssert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
+    XCTAssert(fabs(_helper.duration - 0.02) < kFloatingPointTolerance);
 }
 
 - (void)testSlowTwoChunkPasteString {
@@ -501,7 +501,7 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     XCTAssert([_writeBuffer isEqualToString:[test1 stringByAppendingString:test2]]);
-    NSTimeInterval expectedDuration = 2 * 0.01;
+    NSTimeInterval expectedDuration = 4 * 0.01;
     XCTAssert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
     XCTAssert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:test1]);
     XCTAssert([[[[PasteboardHistory sharedInstance] entries][1] mainValue] isEqualToString:test2]);
@@ -534,7 +534,7 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     XCTAssert([_writeBuffer isEqualToString:[[test1 stringByAppendingString:@"x"] stringByAppendingString:test2]]);
-    NSTimeInterval expectedDuration = 2 * 0.01;
+    NSTimeInterval expectedDuration = 4 * 0.01;
     XCTAssert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
 }
 
