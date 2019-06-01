@@ -249,6 +249,10 @@ static PreferencePanel *gSessionsPreferencePanel;
                                               forKey:[self userDefaultsKeyForFrameName:name]];
 }
 
+- (BOOL)haveSavedFrameForFrameWithName:(NSString *)name {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]] != nil;
+}
+
 - (BOOL)setFrameFromDict:(NSDictionary *)dict {
     if (!dict[@"topLeft"] || !dict[@"screenFrame"]) {
         return NO;
@@ -538,7 +542,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (void)windowDidLoad {
     // We shouldn't use setFrameAutosaveName: because this window controller controls two windows
     // with different frames (besides, I tried it and it doesn't work here for some reason).
-    [self.window setFrameUsingName:self.nameForFrame force:NO];
+    if (![(iTermPrefsPanel *)self.window haveSavedFrameForFrameWithName:self.nameForFrame]) {
+        [self.window center];
+    } else {
+        [self.window setFrameUsingName:self.nameForFrame force:NO];
+    }
 }
 
 #pragma mark - NSWindowDelegate
