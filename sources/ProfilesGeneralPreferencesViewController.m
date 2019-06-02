@@ -809,6 +809,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         newValue ^= selectedTag;
     }
 
+    // Ensure only one of job or commandline is enabled.
+    if ((newValue & iTermTitleComponentsJob) &&
+        (newValue & iTermTitleComponentsCommandLine)) {
+        if (menuItem.tag == iTermTitleComponentsCommandLine) {
+            newValue ^= iTermTitleComponentsJob;
+        } else {
+            newValue ^= iTermTitleComponentsCommandLine;
+        }
+    }
+
     NSUInteger nameTagsMask = (iTermTitleComponentsProfileName |
                                iTermTitleComponentsSessionName |
                                iTermTitleComponentsProfileAndSessionName);
@@ -874,6 +884,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     titleSettings.title = customName ?: [iTermSessionTitleBuiltInFunction titleForSessionName:@"Name"
                                                                                   profileName:@"Profile"
                                                                                           job:@"Job"
+                                                                                  commandLine:@"Job+Args"
                                                                                           pwd:@"PWD"
                                                                                           tty:@"TTY"
                                                                                          user:@"User"

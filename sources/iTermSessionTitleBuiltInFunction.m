@@ -16,6 +16,7 @@
 static NSString *const iTermSessionTitleArgName = @"name";
 static NSString *const iTermSessionTitleArgProfile = @"profile";
 static NSString *const iTermSessionTitleArgJob = @"job";
+static NSString *const iTermSessionTitleArgCommandLine = @"commandLine";
 static NSString *const iTermSessionTitleArgPath = @"path";
 static NSString *const iTermSessionTitleArgTTY = @"tty";
 static NSString *const iTermSessionTitleArgUser = @"username";
@@ -38,6 +39,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     @{ iTermSessionTitleArgName: iTermVariableKeySessionAutoName,
        iTermSessionTitleArgProfile: iTermVariableKeySessionProfileName,
        iTermSessionTitleArgJob: iTermVariableKeySessionJob,
+       iTermSessionTitleArgCommandLine: iTermVariableKeySessionCommandLine,
        iTermSessionTitleArgPath: iTermVariableKeySessionPath,
        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,
        iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
@@ -98,6 +100,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *name = trim(parameters[iTermSessionTitleArgName]);
     NSString *profile = trim(parameters[iTermSessionTitleArgProfile]);
     NSString *job = trim(parameters[iTermSessionTitleArgJob]);
+    NSString *commandLine = trim(parameters[iTermSessionTitleArgCommandLine]);
     NSString *pwd = trim(parameters[iTermSessionTitleArgPath]);
     NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
     NSString *user = trim(parameters[iTermSessionTitleArgUser]);
@@ -112,6 +115,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *result = [self titleForSessionName:name
                                      profileName:profile
                                              job:job
+                                     commandLine:commandLine
                                              pwd:pwd
                                              tty:tty
                                             user:user
@@ -142,6 +146,7 @@ static NSString *const iTermSessionTitleSession = @"session";
 + (NSString *)titleForSessionName:(NSString *)sessionName
                       profileName:(NSString *)profileName
                               job:(NSString *)jobVariable
+                      commandLine:(NSString *)commandLineVariable
                               pwd:(NSString *)pwdVariable
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
@@ -151,8 +156,8 @@ static NSString *const iTermSessionTitleSession = @"session";
                        windowName:(NSString *)windowName
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle {
-    DLog(@"Compute title for sessionName=%@ profileName=%@ jobVariable=%@ pwdVariable=%@ ttyVariable=%@ userVariable=%@ hostVariable=%@ tmuxVariable=%@",
-         sessionName, profileName, jobVariable, pwdVariable, ttyVariable, userVariable, hostVariable, tmuxVariable);
+    DLog(@"Compute title for sessionName=%@ profileName=%@ jobVariable=%@ commandLineVariable=%@ pwdVariable=%@ ttyVariable=%@ userVariable=%@ hostVariable=%@ tmuxVariable=%@",
+         sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable, userVariable, hostVariable, tmuxVariable);
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
@@ -207,7 +212,9 @@ static NSString *const iTermSessionTitleSession = @"session";
     }
 
     NSString *job = nil;
-    if (titleComponents & iTermTitleComponentsJob) {
+    if (titleComponents & iTermTitleComponentsCommandLine) {
+        job = commandLineVariable;
+    } else if (titleComponents & iTermTitleComponentsJob) {
         job = jobVariable;
     }
     if (job) {

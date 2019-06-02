@@ -355,7 +355,8 @@ typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {
     iTermTitleComponentsProfileName = 1 << 5,
     iTermTitleComponentsProfileAndSessionName = 1 << 6,
     iTermTitleComponentsUser = 1 << 7,
-    iTermTitleComponentsHost = 1 << 8
+    iTermTitleComponentsHost = 1 << 8,
+    iTermTitleComponentsCommandLine = 1 << 9,
 };
 
 typedef NS_ENUM(NSUInteger, iTermProfileIcon) {

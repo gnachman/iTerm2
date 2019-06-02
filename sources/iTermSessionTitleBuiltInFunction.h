@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)titleForSessionName:(NSString *)sessionName
                       profileName:(NSString *)profileName
                               job:(NSString *)jobVariable
+                      commandLine:(NSString *)commandLineVariable
                               pwd:(NSString *)pwdVariable
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
