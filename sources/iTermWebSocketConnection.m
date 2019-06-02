@@ -23,7 +23,12 @@ NSString *const iTermWebSocketConnectionLibraryVersionTooOldString = @"Library v
 
 // SEE ALSO iTermMinimumPythonEnvironmentVersion
 // NOTE: Modules older than 0.69 did not report too-old errors correctly.
-static NSString *const iTermWebSocketConnectionMinimumPythonLibraryVersion = @"0.69";
+//
+// *WARNING*****************************************************************************************
+// *WARNING* Think carefully before changing this. It will break existing full-environment scripts.*
+// *WARNING*****************************************************************************************
+//
+static NSString *const iTermWebSocketConnectionMinimumPythonLibraryVersion = @"0.24";
 
 typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketConnectionStateConnecting,
