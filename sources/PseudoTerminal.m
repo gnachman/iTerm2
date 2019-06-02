@@ -4481,7 +4481,8 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!_shortcutAccessoryViewController) {
             return;
         }
-        if ([self.window.titlebarAccessoryViewControllers containsObject:_shortcutAccessoryViewController]) {
+        if ((self.window.styleMask & NSWindowStyleMaskTitled) &&
+            [self.window.titlebarAccessoryViewControllers containsObject:_shortcutAccessoryViewController]) {
             return;
         }
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
