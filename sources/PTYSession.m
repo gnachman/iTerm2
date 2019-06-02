@@ -1761,6 +1761,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSArray<NSString *> *)childJobNames {
     pid_t thePid = [_shell pid];
 
+    [[iTermProcessCache sharedInstance] updateSynchronously];
+
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
     if (!info) {
         return @[];

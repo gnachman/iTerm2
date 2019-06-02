@@ -278,7 +278,8 @@ typedef enum {
 // Do we need to prompt on close for this session?
 @property(nonatomic, readonly) iTermPromptOnCloseReason *promptOnCloseReason;
 
-// Array of subprocessess names.
+// Array of subprocessess names. WARNING: This forces a synchronous update of the process cache.
+// It is up-to-date but too slow to call frequently.
 @property(nonatomic, readonly) NSArray *childJobNames;
 
 // Is the session idle? Used by updateLabelAttributes to send a user notification when processing ends.

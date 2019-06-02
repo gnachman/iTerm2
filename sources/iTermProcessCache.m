@@ -77,9 +77,19 @@
 
 // main queue
 - (void)requestImmediateUpdateWithCompletionBlock:(void (^)(void))completion {
+    [self requestImmediateUpdateWithCompletionQueue:dispatch_get_main_queue()
+                                              block:completion];
+}
+
+// main queue
+- (void)requestImmediateUpdateWithCompletionQueue:(dispatch_queue_t)queue
+                                            block:(void (^)(void))completion {
     __block BOOL needsUpdate;
     dispatch_sync(_lockQueue, ^{
-        [self->_blocksLQ addObject:[completion copy]];
+        void (^wrapper)(void) = ^{
+            dispatch_async(queue, completion);
+        };
+        [self->_blocksLQ addObject:[wrapper copy]];
         needsUpdate = self->_blocksLQ.count == 1;
     });
     if (!needsUpdate) {
@@ -93,6 +103,16 @@
     });
 }
 
+// main queue
+- (void)updateSynchronously {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    [self requestImmediateUpdateWithCompletionQueue:_workQueue block:^{
+        dispatch_group_leave(group);
+    }];
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+}
+
 // _workQueue
 - (void)collectBlocksAndUpdate {
     __block NSArray<void (^)(void)> *blocks;
@@ -103,11 +123,12 @@
     assert(blocks.count > 0);
     DLog(@"collecting blocks and updating");
     [self reallyUpdate];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        for (void (^block)(void) in blocks) {
-            block();
-        }
-    });
+
+    // NOTE: blocks are called on the work queue, but they should have been wrapped with a
+    // dispatch_async to the queue the caller really wants.
+    for (void (^block)(void) in blocks) {
+        block();
+    }
 }
 
 // Any queue
