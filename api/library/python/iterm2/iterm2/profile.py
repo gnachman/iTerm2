@@ -85,10 +85,7 @@ class LocalWriteOnlyProfile:
       * Example ":ref:`settabcolor_example`"
       * Example ":ref:`increase_font_size_example`"
     """
-    def __init__(self):
-        self.__values = {}
-
-    def __init__(self, values):
+    def __init__(self, values={}):
         self.__values = {}
         for key, value in values.items():
             self.__values[key] = json.dumps(value)

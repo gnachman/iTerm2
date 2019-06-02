@@ -85,13 +85,18 @@ expect_contains set-cursor-color 255,0,0,255 "$($PYTHON it2api get-profile-prope
 echo "Type FOO in the window with the red cursor"
 expect_nothing monitor-screen "$($PYTHON it2api monitor-screen "$SESSION_ID" FOO)"
 
+clear
 echo "Select the word FOO"
+echo 5
+sleep 2
+echo 4
+sleep 2
 echo 3
-sleep 1
+sleep 2
 echo 2
-sleep 1
+sleep 2
 echo 1
-echo sleep 1
+sleep 2
 expect_contains show-selection FOO "$($PYTHON it2api show-selection "$SESSION_ID")"
 
 # Missing tests:
