@@ -74,6 +74,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeLabel;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     IBOutlet NSButton *_editBadgeButton;
+    iTermFunctionCallTextFieldDelegate *_profileNameFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_profileNameFieldForEditCurrentSessionDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_tabTitleTextFieldDelegate;
@@ -143,6 +145,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
     };
 
+    _profileNameFieldDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                       passthrough:_profileNameField.delegate
+                                                     functionsOnly:NO];
+    _profileNameField.delegate = _profileNameFieldDelegate;
+
     info = [self defineUnsearchableControl:_profileNameFieldForEditCurrentSession
                                        key:KEY_NAME
                                       type:kPreferenceInfoTypeStringTextField];
@@ -163,6 +171,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     };
+    _profileNameFieldForEditCurrentSessionDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                       passthrough:_profileNameFieldForEditCurrentSession.delegate
+                                                     functionsOnly:NO];
+    _profileNameFieldForEditCurrentSession.delegate = _profileNameFieldForEditCurrentSessionDelegate;
 
     info = [self defineControl:_icon
                            key:KEY_ICON
