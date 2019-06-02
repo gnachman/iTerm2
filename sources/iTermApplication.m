@@ -102,6 +102,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 // Giant pile of private API hacks for issue 7521.
 - (void)it_windowDidOrderOnScreen:(NSNotification *)notification {
+    DLog(@"windowDidOrderOnScreen");
     NSObject *object = notification.object;
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = YES;
@@ -110,6 +111,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)it_windowDidOrderOffScreen:(NSNotification *)notification {
+    DLog(@"windowDidOrderOffScreen");
     NSObject *object = notification.object;
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = NO;
@@ -130,6 +132,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)it_modalWindowDidChangeFrom:(NSWindow *)oldValue to:(NSWindow *)newValue {
+    DLog(@"modal window did change from %@ to %@", oldValue, newValue);
     if (oldValue == nil && newValue != nil) {
         _it_modalWindowOpen = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];

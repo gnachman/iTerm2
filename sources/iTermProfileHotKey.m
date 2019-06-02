@@ -199,14 +199,17 @@ static NSString *const kArrangement = @"Arrangement";
 - (NSWindowLevel)floatingLevel {
     iTermApplication *app = [iTermApplication sharedApplication];
     if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen) {
-        NSLog(@"Use floating window level");
+        DLog(@"Use floating window level. characterPanelIsOpen=%@, modalWindowOpen=%@ imeOpen=%@",
+             @(app.it_characterPanelIsOpen), @(app.it_modalWindowOpen),
+             @(app.it_imeOpen));
         return NSFloatingWindowLevel;
     }
     if ([NSApp keyWindow] != _windowController.window) {
-        NSLog(@"Use normal window level");
+        DLog(@"Use normal window level. Key window is %@, my window is %@",
+             NSApp.keyWindow, _windowController.window);
         return NSNormalWindowLevel;
     }
-    NSLog(@"Use status window level");
+    DLog(@"Use status window level (I am key, no detected panels are open)");
     return NSStatusWindowLevel;
 }
 
@@ -921,10 +924,12 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)inputMethodEditorDidOpen:(NSNotification *)notification {
+    DLog(@"inputMethodEditorDidOpen");
     [self updateWindowLevel];
 }
 
 - (void)inputMethodEditorDidClose:(NSNotification *)notification {
+    DLog(@"inputMethodEditorDidClose");
     [self updateWindowLevel];
 }
 
