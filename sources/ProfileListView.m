@@ -228,8 +228,6 @@ const CGFloat kDefaultTagsWidth = 80;
 
         [tableView_ setDoubleAction:@selector(onDoubleClick:)];
 
-        NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
-        [tableView_ setHeaderView:header];
         tableColumn_.title = @"Profile Name";
 
         [tableView_ sizeLastColumnToFit];
