@@ -654,6 +654,21 @@ class Session:
                 { "name": name })
         await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1)
 
+    async def async_run_tmux_command(self, command: str, timeout: float=-1) -> str:
+        """Invoke a tmux command and return its result. Raises an exception if this session is not a tmux integration session.
+
+        :param command: The tmux command to run.
+        :param timeout: The amount of time to wait for a response, or -1 to use the default.
+
+        :returns: The output from tmux.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        invocation = iterm2.util.invocation_string(
+                "iterm2.run_tmux_command",
+                { "command": command })
+        return await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, timeout)
+
     async def async_invoke_function(self, invocation: str, timeout: float=-1):
         """
         Invoke an RPC. Could be a function registered by this or another script, or a built-in function.

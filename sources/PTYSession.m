@@ -11402,8 +11402,47 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    target:self
                                                    action:@selector(setNameWithCompletion:name:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"run_tmux_command"
+                                            defaultValues:@{}
+                                                    types:@{ @"command": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(sendTmuxCommandWithCompletion:command:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
+}
+
+- (void)sendTmuxCommandWithCompletion:(void (^)(id, NSError *))completion
+                              command:(NSString *)command {
+    if (self.tmuxMode == TMUX_NONE || _tmuxController == nil) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.tmux-command"
+                                             code:0
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Not a tmux integration session" }];
+        completion(nil, error);
+    }
+
+    [_tmuxController.gateway sendCommand:command
+                          responseTarget:self
+                        responseSelector:@selector(sendTmuxCommandMethodDidComplete:completion:)
+                          responseObject:completion
+                                   flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)sendTmuxCommandMethodDidComplete:(NSString *)result
+                              completion:(void (^)(id, NSError *))completion {
+    if (result) {
+        completion(result, nil);
+        return;
+    }
+
+    // Tmux responded with an error.
+    NSError *error = [NSError errorWithDomain:@"com.iterm2.tmux-command"
+                                         code:1
+                                     userInfo:@{ NSLocalizedDescriptionKey: @"tmux error" }];
+    completion(nil, error);
 }
 
 - (void)setNameWithCompletion:(void (^)(id, NSError *))completion

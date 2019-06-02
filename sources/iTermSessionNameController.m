@@ -338,7 +338,12 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         // window name. This is confusing: this refers to the name of a tmux window, which is
         // equivalent to an iTerm2 tab. It is reported to us by tmux. We ignore the base name
         // because the real name comes from the server and that's all we care about.
-        return [NSString stringWithFormat:@"↣ %@", descriptor.tmuxWindowName];
+        if (self.delegate.sessionNameControllerUniqueIdentifier) {
+            // Using a custom title provider.
+            return [NSString stringWithFormat:@"↣ %@", base];
+        } else {
+            return [NSString stringWithFormat:@"↣ %@", descriptor.tmuxWindowName];
+        }
     }
     return base;
 }
