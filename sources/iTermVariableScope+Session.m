@@ -154,6 +154,14 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionJob];
 }
 
+- (NSString *)commandLine {
+    return [self valueForVariableName:iTermVariableKeySessionCommandLine];
+}
+
+- (void)setCommandLine:(NSString *)commandLine {
+    [self setValue:commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
+}
+
 - (NSString *)presentationName {
     return [self valueForVariableName:iTermVariableKeySessionPresentationName];
 }

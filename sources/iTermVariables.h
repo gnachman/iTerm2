@@ -46,6 +46,7 @@ extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
 extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;
+extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
 extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux window panes share the same window title
 extern NSString *const iTermVariableKeySessionTmuxWindowTitleEval;  // Result of evaluating NSString *const iTermVariableKeySessionTmuxWindowTitle

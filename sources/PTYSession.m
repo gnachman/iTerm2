@@ -4413,9 +4413,7 @@ ITERM_WEAKLY_REFERENCEABLE
             _lastUpdate = now;
         }
     } else {
-        int pid;
-        NSString *name = [_shell currentJob:NO pid:&pid completion:nil];
-        [self setJobName:name pid:pid];
+        [self setCurrentForegroundJobProcessInfo:[_shell cachedProcessInfoIfAvailable]];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
 
@@ -4439,14 +4437,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Update the tab, session view, and window title.
 - (void)updateTitles {
-    int pid = 0;
+    iTermProcessInfo *processInfo = [_shell cachedProcessInfoIfAvailable];
+    if (processInfo) {
+        [self updateTitleWithProcessInfo:processInfo];
+        return;
+    } else {
+        [self updateTitleWithProcessInfo:nil];
+    }
     __weak __typeof(self) weakSelf = self;
-    NSString *newJobName = [_shell currentJob:NO pid:&pid completion:^{
-        DLog(@"** completion block recursing **");
-        [weakSelf updateTitles];
+    [_shell fetchProcessInfoForCurrentJobWithCompletion:^(iTermProcessInfo *processInfo) {
+        [weakSelf updateTitleWithProcessInfo:processInfo];
     }];
-    DLog(@"Job for pid %@ is %@, pid=%@", @(_shell.pid), newJobName, @(pid));
-    [self setJobName:newJobName pid:pid];
+}
+
+- (void)updateTitleWithProcessInfo:(iTermProcessInfo *)processInfo {
+    DLog(@"Job for pid %@ is %@, pid=%@", @(_shell.pid), processInfo.name, @(processInfo.processID));
+    [self setCurrentForegroundJobProcessInfo:processInfo];
 
     if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
@@ -4459,9 +4465,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionJob];
 }
 
-- (void)setJobName:(NSString *)jobName pid:(pid_t)pid {
-    [self.variablesScope setValue:jobName forVariableNamed:iTermVariableKeySessionJob];
-    [self.variablesScope setValue:@(pid) forVariableNamed:iTermVariableKeySessionJobPid];
+- (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
+    [self.variablesScope setValue:processInfo.name forVariableNamed:iTermVariableKeySessionJob];
+    [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
+    [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
     if (!_exited && _shell.pid > 0) {
         [self.variablesScope setValue:@(_shell.pid) forVariableNamed:iTermVariableKeySessionChildPid];
     }
@@ -4469,7 +4476,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self tryAutoProfileSwitchWithHostname:self.variablesScope.hostname
                                   username:self.variablesScope.username
                                       path:self.variablesScope.path
-                                       job:jobName];
+                                       job:processInfo.name];
 }
 
 - (void)refresh {

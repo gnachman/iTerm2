@@ -58,6 +58,7 @@ NSString *const iTermVariableKeySessionIconName = @"terminalIconName";
 NSString *const iTermVariableKeySessionTriggerName = @"triggerName";
 NSString *const iTermVariableKeySessionWindowName = @"terminalWindowName";
 NSString *const iTermVariableKeySessionJob = @"jobName";
+NSString *const iTermVariableKeySessionCommandLine = @"commandLine";
 NSString *const iTermVariableKeySessionPresentationName = @"presentationName";
 NSString *const iTermVariableKeySessionTmuxWindowTitle = @"tmuxWindowTitle";
 NSString *const iTermVariableKeySessionTmuxWindowTitleEval = @"tmuxWindowTitleEval";

@@ -129,6 +129,14 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
         offset++;
     }
 
+    if (argv.count == 0) {
+        return @"";
+    }
+    NSString *command = argv[0];
+    NSRange lastSlash = [command rangeOfString:@"/" options:NSBackwardsSearch];
+    if (lastSlash.location != NSNotFound) {
+        argv[0] = [command substringFromIndex:lastSlash.location + 1];
+    }
     return [argv componentsJoinedByString:@" "];
 }
 

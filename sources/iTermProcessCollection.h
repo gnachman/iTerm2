@@ -11,6 +11,7 @@
 @interface iTermProcessInfo : NSObject
 
 @property(nonatomic, readonly, strong) NSString *name;
+@property(nonatomic, readonly, strong) NSString *commandLine;  // only set for foreground jobs
 @property(nonatomic, readonly) pid_t processID;
 @property(nonatomic, readonly) pid_t parentProcessID;
 @property(nonatomic, readonly) NSMutableArray<iTermProcessInfo *> *children;

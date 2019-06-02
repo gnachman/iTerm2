@@ -370,34 +370,47 @@ static void HandleSigChld(int n) {
     }
 }
 
-// Get the name of this task's current job. It is quite approximate! Any
-// arbitrary tty-controller in the tty's pgid that has this task as an ancestor
-// may be chosen. This function also implements a cache to avoid doing the
-// potentially expensive system calls too often.
-- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid completion:(void (^)(void))completion {
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];
-    if (!info.name) {
-        if (self.pid > 0) {
-            if (!_haveBumpedProcessCache) {
-                _haveBumpedProcessCache = YES;
-                if (completion) {
-                    NSLog(@"Requesting immediate update");
-                    [[iTermProcessCache sharedInstance] requestImmediateUpdateWithCompletionBlock:completion];
-                    return nil;
-                }
-            }
-            [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-        }
-        return nil;
+- (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion {
+    const pid_t pid = self.pid;
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
+    if (info.name) {
+        DLog(@"Return name synchronously");
+        completion(info);
+    } else if (info) {
+        DLog(@"Have info for pid %@ but no name", @(pid));
     }
 
-    if (pid) {
-        *pid = info.processID;
+    if (pid <= 0) {
+        DLog(@"Lack a good pid");
+        completion(nil);
+        return;
     }
-    if (!info.name) {
-        DLog(@"Have info for pid %@ but no name", @(self.pid));
+    if (_haveBumpedProcessCache) {
+        DLog(@"Already bumped process cache");
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+        completion(nil);
+        return;
     }
-    return info.name;
+    _haveBumpedProcessCache = YES;
+    DLog(@"Requesting immediate update");
+    [[iTermProcessCache sharedInstance] requestImmediateUpdateWithCompletionBlock:^{
+        completion([[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid]);
+    }];
+}
+
+- (iTermProcessInfo *)cachedProcessInfoIfAvailable {
+    const pid_t pid = self.pid;
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
+    if (info.name) {
+        return info;
+    }
+
+    if (pid > 0 && _haveBumpedProcessCache) {
+        _haveBumpedProcessCache = YES;
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
+
+    return nil;
 }
 
 - (void)writeTask:(NSData *)data {

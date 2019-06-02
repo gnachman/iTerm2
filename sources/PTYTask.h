@@ -7,6 +7,7 @@
 extern NSString *kCoprocessStatusChangeNotification;
 
 @class Coprocess;
+@class iTermProcessInfo;
 @class PTYTab;
 @class PTYTask;
 
@@ -79,7 +80,8 @@ extern NSString *kCoprocessStatusChangeNotification;
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion;
 
-- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid completion:(void (^)(void))completion;
+- (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion;
+- (iTermProcessInfo *)cachedProcessInfoIfAvailable;
 
 - (void)writeTask:(NSData*)data;
 
