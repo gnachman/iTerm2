@@ -12,6 +12,9 @@
 @class iTermWebSocketConnection;
 @class iTermWebSocketFrame;
 
+// Prefix of error message when connecting client is outdated.
+extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
+
 @protocol iTermWebSocketConnectionDelegate<NSObject>
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection;
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame;

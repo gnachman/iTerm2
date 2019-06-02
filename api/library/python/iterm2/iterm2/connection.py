@@ -76,11 +76,17 @@ class Connection:
         """
         connection = Connection()
         cookie, key = _cookie_and_key()
-        connection.websocket = await websockets.connect(
-                _uri(),
-                ping_interval=None,
-                extra_headers=_headers(),
-                subprotocols=_subprotocols())
+        try:
+            connection.websocket = await websockets.connect(
+                    _uri(),
+                    ping_interval=None,
+                    extra_headers=_headers(),
+                    subprotocols=_subprotocols())
+        except websockets.exceptions.InvalidStatusCode as e:
+            if e.status_code == 406:
+                print("This version of the iterm2 module is too old for the current version of iTerm2. Please upgrade.")
+                sys.exit(1)
+            raise
         connection.__dispatch_forever_future = asyncio.ensure_future(connection._async_dispatch_forever(connection, asyncio.get_event_loop()))
         return connection
 
@@ -279,6 +285,11 @@ class Connection:
                     except Exception as _err:
                         traceback.print_exc()
                         sys.exit(1)
+            except websockets.exceptions.InvalidStatusCode as e:
+                if e.status_code == 406:
+                    print("This version of the iterm2 module is too old for the current version of iTerm2. Please upgrade.")
+                    sys.exit(1)
+                raise
             except websockets.exceptions.InvalidMessage:
                 # This is a temporary workaround for this issue:
                 #

@@ -344,7 +344,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                                           @"pid": @(pid) }];
         });
         dispatch_async(connection.queue, ^{
-            [connection badRequest];
+            if ([authReason hasPrefix:iTermWebSocketConnectionLibraryVersionTooOldString]) {
+                [connection unacceptable];
+            } else {
+                [connection badRequest];
+            }
         });
         completion(NO, authReason);
     }

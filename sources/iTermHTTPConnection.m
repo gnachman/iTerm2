@@ -95,6 +95,10 @@
     [self sendResponseWithCode:400 reason:@"Bad Request" headers:@{}];
 }
 
+- (void)unacceptable {
+    [self sendResponseWithCode:406 reason:@"Unacceptable (upgrade Python library)" headers:@{}];
+}
+
 - (void)unauthorized {
     [self sendResponseWithCode:401 reason:@"Unauthorized" headers:@{}];
 }

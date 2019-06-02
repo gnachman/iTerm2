@@ -23,6 +23,7 @@
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 - (void)badRequest;
 - (void)unauthorized;
+- (void)unacceptable;  // library version too old
 
 // read a chunk of bytes. blocks.
 - (NSMutableData *)readSynchronously;

@@ -19,8 +19,10 @@
 
 static NSString *const kProtocolName = @"api.iterm2.com";
 static const NSInteger kWebSocketVersion = 13;
+NSString *const iTermWebSocketConnectionLibraryVersionTooOldString = @"Library version too old";
 
 // SEE ALSO iTermMinimumPythonEnvironmentVersion
+// NOTE: Modules older than 0.69 did not report too-old errors correctly.
 static NSString *const iTermWebSocketConnectionMinimumPythonLibraryVersion = @"0.69";
 
 typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
@@ -120,8 +122,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:parts[1]];
             NSComparisonResult result = [min compare:version];
             if (result == NSOrderedDescending) {
-                *reason = [NSString stringWithFormat:@"Library version too old. %@ library version reported as %@. Minimum supported by this version of iTerm2 is %@",
-                           name, version, min];
+                *reason = [NSString stringWithFormat:@"%@. %@ library version reported as %@. Minimum supported by this version of iTerm2 is %@",
+                           iTermWebSocketConnectionLibraryVersionTooOldString, name, version, min];
                 return nil;
             }
         }
