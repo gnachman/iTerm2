@@ -39,8 +39,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
 
-    // Remove close button from tabs.
-    IBOutlet NSButton *_hideTabCloseButton;
+    // Tabs have close buttons?
+    IBOutlet NSButton *_tabsHaveCloseButtons;
 
     // Hide activity indicator.
     IBOutlet NSButton *_hideActivityIndicator;
@@ -160,10 +160,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
-    info = [self defineControl:_hideTabCloseButton
-                           key:kPreferenceKeyHideTabCloseButton
+    info = [self defineControl:_tabsHaveCloseButtons
+                           key:kPreferenceKeyTabsHaveCloseButton
                    relatedView:nil
-                          type:kPreferenceInfoTypeInvertedCheckbox];
+                          type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideActivityIndicator

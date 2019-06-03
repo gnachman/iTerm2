@@ -85,7 +85,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)dwcLineCache;
 + (NSString *)dynamicProfilesPath;
 + (double)echoProbeDuration;
-+ (BOOL)eliminateCloseButtons;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;

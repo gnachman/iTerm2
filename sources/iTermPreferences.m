@@ -70,7 +70,8 @@ NSString *const kPreferenceKeyStatusBarPosition = @"StatusBarPosition";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges = @"PreserveWindowSizeWhenTabBarVisibilityChanges";
-NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";
+NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";  // Deprecated
+NSString *const kPreferenceKeyTabsHaveCloseButton = @"TabsHaveCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
@@ -264,7 +265,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges: @NO,
-                  kPreferenceKeyHideTabCloseButton: @NO,
+                  kPreferenceKeyHideTabCloseButton: @NO,  // Deprecated
+                  kPreferenceKeyTabsHaveCloseButton: @YES,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
                   kPreferenceKeyStretchTabsToFillBar: @YES,
@@ -399,6 +401,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
                   kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
                   kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
+                  kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
                   };
     }
     return dict;
@@ -591,6 +594,21 @@ static NSString *sPreviousVersion;
     } else {
         return @(TAB_STYLE_LIGHT);
     }
+}
+
++ (NSNumber *)computedTabsHaveCloseButton {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabsHaveCloseButton];
+    if (value) {
+        return value;
+    }
+
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:@"eliminateCloseButtons"];
+    if (value) {
+        return @(!value.boolValue);
+    }
+
+    return [self defaultObjectForKey:kPreferenceKeyTabsHaveCloseButton];
 }
 
 + (NSNumber *)computedUseMetal {

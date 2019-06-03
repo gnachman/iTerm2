@@ -1131,9 +1131,8 @@ typedef struct {
     }
 
     // Update the tab style.
-    [self.tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
-    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
+    [self.tabBarControl setDisableTabClose:YES];
+    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
     } else {
         [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
