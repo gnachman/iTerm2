@@ -206,6 +206,8 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     state.pushArrow = dict[@"PUSH"];
     state.pullArrow = dict[@"PULL"];
     state.branch = dict[@"BRANCH"];
+    state.adds = [dict[@"ADDS"] integerValue];
+    state.deletes = [dict[@"DELETES"] integerValue];
 
     NSString *path = _queue.firstObject;
     if (path) {

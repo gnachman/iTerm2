@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *pullArrow;
 @property (nonatomic, copy) NSString *branch;
 @property (nonatomic) BOOL dirty;
+@property (nonatomic) NSInteger adds;
+@property (nonatomic) NSInteger deletes;
 
 - (instancetype)initWithScope:(iTermVariableScope *)scope;
 

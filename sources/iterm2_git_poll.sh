@@ -40,6 +40,14 @@ branch() {
     fi
 }
 
+adds() {
+    "${GIT_BINARY}" ls-files --others --exclude-standard | wc -l
+}
+
+deletes() {
+    "${GIT_BINARY}" ls-files --deleted --exclude-standard | wc -l
+}
+
 git_poll () {
     local previous_path=$(pwd) 
     # make sure to replace ~ with home, if it's in the path. Users
@@ -53,7 +61,9 @@ git_poll () {
     local dirty=$(dirty) 
     local push_count pull_count
     read push_count pull_count <<< "$(counts)"
-    
+    local adds=$(adds)
+    local deletes=$(deletes)
+
     cd "${previous_path}"
 
     echo "--BEGIN--"
@@ -63,6 +73,8 @@ git_poll () {
     echo "PUSH: ${push_count}"
     echo "PULL: ${pull_count}"
     echo "BRANCH: ${branch}"
+    echo "ADDS: ${adds}"
+    echo "DELETES: ${deletes}"
     echo "--END--"
     echo ""
 }

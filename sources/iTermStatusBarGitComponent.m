@@ -217,6 +217,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     static NSAttributedString *dirtyImage;
     static NSAttributedString *enSpace;
     static NSAttributedString *thinSpace;
+    static NSAttributedString *adds;
+    static NSAttributedString *deletes;
+    static NSAttributedString *addsAndDeletes;
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
@@ -225,6 +228,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         dirtyImage = [self attributedStringWithImageNamed:@"gitdirty"];
         enSpace = [self attributedStringWithString:@"\u2002"];
         thinSpace = [self attributedStringWithString:@"\u2009"];
+        adds = [self attributedStringWithString:@"+"];
+        deletes = [self attributedStringWithString:@"-"];
+        addsAndDeletes = [self attributedStringWithString:@"±"];
     });
 
     if (self.currentState.xcode.length > 0) {
@@ -241,6 +247,19 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:branch];
 
+    if (self.currentState.adds && self.currentState.deletes) {
+        [result appendAttributedString:thinSpace];
+        [result appendAttributedString:addsAndDeletes];
+    } else {
+        if (self.currentState.adds) {
+            [result appendAttributedString:thinSpace];
+            [result appendAttributedString:adds];
+        }
+        if (self.currentState.deletes) {
+            [result appendAttributedString:thinSpace];
+            [result appendAttributedString:deletes];
+        }
+    }
     if (self.currentState.dirty) {
         [result appendAttributedString:thinSpace];
         [result appendAttributedString:dirtyImage];

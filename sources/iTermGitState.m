@@ -16,12 +16,16 @@ static NSString *const iTermGitStateVariableNameGitBranch = @"user.gitBranch";
 static NSString *const iTermGitStateVariableNameGitPushCount = @"user.gitPushCount";
 static NSString *const iTermGitStateVariableNameGitPullCount = @"user.gitPullCount";
 static NSString *const iTermGitStateVariableNameGitDirty = @"user.gitDirty";
+static NSString *const iTermGitStateVariableNameGitAdds = @"user.gitAdds";
+static NSString *const iTermGitStateVariableNameGitDeletes = @"user.gitDeletes";
 
 static NSArray<NSString *> *iTermGitStatePaths(void) {
     return @[ iTermGitStateVariableNameGitBranch,
               iTermGitStateVariableNameGitPushCount,
               iTermGitStateVariableNameGitPullCount,
-              iTermGitStateVariableNameGitDirty ];
+              iTermGitStateVariableNameGitDirty,
+              iTermGitStateVariableNameGitAdds,
+              iTermGitStateVariableNameGitDeletes ];
 }
 
 @implementation iTermGitState
@@ -39,6 +43,8 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
         _pushArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPushCount];
         _pullArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPullCount];
         _dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] boolValue];
+        _adds = [[scope valueForVariableName:iTermGitStateVariableNameGitAdds] integerValue];
+        _deletes = [[scope valueForVariableName:iTermGitStateVariableNameGitDeletes] integerValue];
     }
     return self;
 }
@@ -50,6 +56,8 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
     theCopy.pullArrow = self.pullArrow.copy;
     theCopy.branch = self.branch.copy;
     theCopy.dirty = self.dirty;
+    theCopy.adds = self.adds;
+    theCopy.deletes = self.deletes;
     return theCopy;
 }
 
