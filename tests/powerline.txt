@@ -1,0 +1,8 @@
+            U+E0A0        Version control branch
+            U+E0A1        LN (line) symbol
+            U+E0A2        Closed padlock
+            U+E0B0        Rightwards black arrowhead
+            U+E0B1        Rightwards arrowhead
+            U+E0B2        Leftwards black arrowhead
+            U+E0B3        Leftwards arrowhead
+
