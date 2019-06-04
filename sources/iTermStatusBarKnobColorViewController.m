@@ -60,4 +60,8 @@
     return NSMinX(_well.frame);
 }
 
+- (void)setHelpURL:(NSURL *)url {
+    NSAssert(NO, @"Not supported");
+}
+
 @end

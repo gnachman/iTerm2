@@ -86,5 +86,9 @@
     [self.view.window.sheetParent endSheet:self.view.window returnCode:NSModalResponseOK];
 }
 
+- (void)setHelpURL:(NSURL *)url {
+    NSAssert(NO, @"Not supported");
+}
+
 @end
 

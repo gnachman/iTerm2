@@ -41,4 +41,8 @@
     [aCoder encodeObject:self.value forKey:@"value"];
 }
 
+- (void)setHelpURL:(NSURL *)url {
+    NSAssert(NO, @"Not supported");
+}
+
 @end

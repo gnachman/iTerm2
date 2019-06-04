@@ -84,4 +84,8 @@
     _windowController = nil;
 }
 
+- (void)setHelpURL:(NSURL *)url {
+    NSAssert(NO, @"Not supported");
+}
+
 @end
