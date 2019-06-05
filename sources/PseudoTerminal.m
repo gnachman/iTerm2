@@ -125,6 +125,10 @@ NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWin
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
 NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
+NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
+NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
+NSString *const iTermSessionDidTerminateNotification = @"iTermSessionDidTerminate";
+NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -1833,6 +1837,8 @@ ITERM_WEAKLY_REFERENCEABLE
         if (restorableSession.arrangement) {
             [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
         }
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidCloseNotification
+                                                            object:aTab];
     } else {
         for (PTYSession* session in [aTab sessions]) {
             [session terminate];
@@ -3177,7 +3183,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // This releases the last reference to self except for autorelease pools.
     [[iTermController sharedInstance] terminalWillClose:self];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidClose"
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowDidCloseNotification
                                                         object:nil
                                                       userInfo:nil];
     [self didFinishFullScreenTransitionSuccessfully:NO];
@@ -8721,6 +8727,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [aTabViewItem release];
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
         if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+            if (self.tabs.count == 1) {
+                // It's important to do this before makeKeyAndOrderFront because API clients need
+                // to know the window exists before learning that it has focus.
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidCreateTerminalWindowNotification object:self];
+            }
             [[self window] makeKeyAndOrderFront:self];
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
@@ -9607,6 +9618,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [[[PreferencePanel sessionsInstance] window] close];
         }
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidTerminateNotification object:session];
 }
 
 - (IBAction)openSelection:(id)sender {

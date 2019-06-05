@@ -413,6 +413,8 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                  selector:@selector(sessionCreated:)
                                                      name:PTYSessionRevivedNotification
                                                    object:nil];
+
+        // Begin layoutChanged:
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
                                                      name:iTermSessionDidChangeTabNotification
@@ -429,6 +431,28 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                  selector:@selector(layoutChanged:)
                                                      name:iTermSessionBuriedStateChangeTabNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermWindowDidCloseNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermTabDidCloseNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermSessionDidTerminateNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermSessionDidTerminateNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermDidCreateTerminalWindowNotification
+                                                   object:nil];
+        // End layoutChanged:
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
@@ -665,11 +689,20 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif {
-    [_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        ITMNotification *notification = [[ITMNotification alloc] init];
-        notification.focusChangedNotification = notif;
-        [self postAPINotification:notification toConnectionKey:key];
-    }];
+    void (^handle)(void) = ^{
+        [self->_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+            ITMNotification *notification = [[ITMNotification alloc] init];
+            notification.focusChangedNotification = notif;
+            [self postAPINotification:notification toConnectionKey:key];
+        }];
+    };
+    if (_layoutChanged) {
+        // Let the layout change go through first so the app state can be up-to-date when processing
+        // the focus change notification.
+        dispatch_async(dispatch_get_main_queue(), handle);
+    } else {
+        handle();
+    }
 }
 
 - (void)handleBroadcastChange {
