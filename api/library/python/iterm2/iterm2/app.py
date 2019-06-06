@@ -361,6 +361,11 @@ class App:
 
     def get_tab_and_window_for_session(self,
             session: iterm2.session.Session) -> typing.Union[typing.Tuple[None, None], typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
+        """Deprecated because the name is wrong for the order of return arguments"""
+        return self.get_window_and_tab_for_session(session)
+
+    def get_window_and_tab_for_session(self,
+            session: iterm2.session.Session) -> typing.Union[typing.Tuple[None, None], typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
         """Finds the tab and window that own a session.
 
         :param session: The session whose tab and window you wish to find.
