@@ -5070,8 +5070,10 @@ ITERM_WEAKLY_REFERENCEABLE
         verticalOnly = NO;
     } else {
         maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
-        if (maxVerticallyPref ^
-            (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
+        if ([[NSApp currentEvent] type] == NSEventTypeKeyDown) {
+            verticalOnly = maxVerticallyPref;
+        } else if (maxVerticallyPref ^
+                   (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
             verticalOnly = YES;
         }
     }
