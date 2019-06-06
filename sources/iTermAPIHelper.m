@@ -441,11 +441,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
-                                                     name:iTermSessionDidTerminateNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(layoutChanged:)
-                                                     name:iTermSessionDidTerminateNotification
+                                                     name:iTermSessionWillTerminateNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)

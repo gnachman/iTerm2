@@ -127,7 +127,6 @@ NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidCha
 NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
 NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
 NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
-NSString *const iTermSessionDidTerminateNotification = @"iTermSessionDidTerminate";
 NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
@@ -9618,7 +9617,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [[[PreferencePanel sessionsInstance] window] close];
         }
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidTerminateNotification object:session];
 }
 
 - (IBAction)openSelection:(id)sender {

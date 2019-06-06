@@ -155,6 +155,7 @@ static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdated
 NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
 NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotification";
 NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification";
+NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
@@ -2176,6 +2177,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // final update of display
     [self updateDisplayBecause:@"terminate session"];
 
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
+                                                        object:self];
     [_delegate removeSession:self];
 
     _colorMap.delegate = nil;

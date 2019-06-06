@@ -34,6 +34,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 extern NSString *const PTYSessionCreatedNotification;
 extern NSString *const PTYSessionTerminatedNotification;
 extern NSString *const PTYSessionRevivedNotification;
+extern NSString *const iTermSessionWillTerminateNotification;
 
 @class CapturedOutput;
 @class FakeWindow;
