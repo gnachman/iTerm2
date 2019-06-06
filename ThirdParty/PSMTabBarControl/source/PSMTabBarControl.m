@@ -1356,11 +1356,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
         }
         [self setNeedsDisplay];
     }
-    else {
-        if ([theEvent clickCount] == 2) {
-            [self performSelector:@selector(tabBarDoubleClick)];
-        }
-    }
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent
@@ -1472,6 +1467,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
         // Clicked on close button
         [self closeTabClick:cell];
         return;
+    }
+
+    if (cell == nil && [theEvent clickCount] == 2) {
+        [self tabBarDoubleClick];
     }
 
     const BOOL mouseUpInSameCellAsMouseDown = NSMouseInRect(clickPoint, mouseDownCellFrame, [self isFlipped]);
