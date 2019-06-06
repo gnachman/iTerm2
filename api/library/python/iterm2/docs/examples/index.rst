@@ -95,7 +95,9 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`sorttabs` — Demonstrates reordering tabs in a window.
 
-:doc:`mrutabs` — Demonstrates monitoring for changes in keyboard focus and reordering tabs in a window.
+:doc:`mrutabs` — Demonstrates monitoring for changes in keyboard focus and reordering tabs in a window. This script keeps tabs always in most-recently-used order, so the first tab is always selected.
+
+:doc:`mrutabs2` - This script selects the next-most-recently-used tab when the current tab closes. Same for split panes.
 
 
 ----
