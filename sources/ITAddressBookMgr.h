@@ -243,6 +243,11 @@
 // Session-only key
 #define KEY_SESSION_HOTKEY                   @"Session Hotkey"
 
+// This is not a real setting. It's just a way for the session to communicate
+// the tmux pane title to the edit session dialog so it can prepopulate the
+// field correctly.
+#define KEY_TMUX_PANE_TITLE                  @"tmux Pane Title"
+
 @class iTermVariableScope;
 
 // Posted when a session's unicode version changes.

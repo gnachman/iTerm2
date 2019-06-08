@@ -39,6 +39,7 @@ NSString *const kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
 NSString *const kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
 NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
+NSString *const kTmuxControllerDidFetchSetTitlesStringOption = @"kTmuxControllerDidFetchSetTitlesStringOption";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -179,6 +180,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_pendingWindows release];
     [sessionName_ release];
     [sessions_ release];
+    [_setTitlesString release];
+
     [super dealloc];
 }
 
@@ -821,6 +824,29 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          responseSelector:nil];
 }
 
+- (void)loadTitleFormat {
+    [gateway_ sendCommandList:@[ [gateway_ dictionaryForCommand:@"show-options -v -g set-titles"
+                                                 responseTarget:self
+                                               responseSelector:@selector(handleShowSetTitles:)
+                                                 responseObject:nil
+                                                          flags:0],
+                                 [gateway_ dictionaryForCommand:@"show-options -v -g set-titles-string"
+                                                 responseTarget:self
+                                               responseSelector:@selector(handleShowSetTitlesString:)
+                                                 responseObject:nil
+                                                          flags:0] ]];
+}
+
+- (void)handleShowSetTitles:(NSString *)result {
+    _shouldSetTitles = [result isEqualToString:@"on"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidFetchSetTitlesStringOption
+                                                        object:self];
+}
+
+- (void)handleShowSetTitlesString:(NSString *)setTitlesString {
+    _setTitlesString = [setTitlesString copy];
+}
+
 - (void)guessVersion {
     // Run commands that will fail in successively older versions.
     // show-window-options pane-border-format will succeed in 2.3 and later (presumably. 2.3 isn't out yet)
@@ -1169,7 +1195,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                     flags:0];
 }
 
-- (NSString *)escapedWindowName:(NSString *)name {
+- (NSString *)stringByEscapingBackslashesAndRemovingNewlines:(NSString *)name {
     return [[name stringByReplacingOccurrencesOfString:@"\n" withString:@" "] stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
 }
 
@@ -1178,10 +1204,29 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                     toName:(NSString *)newName {
     NSString *theCommand;
     if (sessionName) {
-        theCommand = [NSString stringWithFormat:@"rename-window -t \"%@:@%d\" \"%@\"", sessionName, windowId, [self escapedWindowName:newName]];
+        theCommand = [NSString stringWithFormat:@"rename-window -t \"%@:@%d\" \"%@\"", sessionName, windowId, [self stringByEscapingBackslashesAndRemovingNewlines:newName]];
     } else {
-        theCommand = [NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, [self escapedWindowName:newName]];
+        theCommand = [NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, [self stringByEscapingBackslashesAndRemovingNewlines:newName]];
     }
+    [gateway_ sendCommand:theCommand
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (BOOL)canRenamePane {
+    NSDecimalNumber *version2_6 = [NSDecimalNumber decimalNumberWithString:@"2.6"];
+    if ([gateway_.minimumServerVersion compare:version2_6] == NSOrderedAscending) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)renamePane:(int)windowPane toTitle:(NSString *)newTitle {
+    if (![self canRenamePane]) {
+        return;
+    }
+    NSString *theCommand = [NSString stringWithFormat:@"select-pane -t %%'%d' -T \"%@\"",
+                            windowPane, [self stringByEscapingBackslashesAndRemovingNewlines:newTitle]];
     [gateway_ sendCommand:theCommand
            responseTarget:nil
          responseSelector:nil];

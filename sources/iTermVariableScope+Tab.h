@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSString *tabTitleOverrideFormat;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermSessionScope> *currentSession;
 @property (nullable, nonatomic, strong) NSNumber *tmuxWindow;
-@property (nullable, nonatomic, strong) NSNumber *tabID;
+@property (nullable, nonatomic, strong) NSString *tabID;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermWindowScope> *window;
 
 @end

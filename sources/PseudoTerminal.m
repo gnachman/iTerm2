@@ -2716,7 +2716,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
-    [self setWindowTitle:name];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     DLog(@"loadTmuxLayout invoking fitWindowToTabs.");

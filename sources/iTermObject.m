@@ -61,6 +61,6 @@ void iTermCallMethodOnObject(id<iTermObject> object,
         return;
     }
 
-    [method callWithArguments:args completion:completion];
+    [method callWithArguments:args completion:completion ?: ^(id result, NSError *error){}];
 }
 

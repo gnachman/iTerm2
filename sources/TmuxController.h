@@ -33,6 +33,8 @@ extern NSString *const kTmuxControllerWindowDidClose;
 extern NSString *const kTmuxControllerAttachedSessionDidChange;
 // Posted when a session changes name
 extern NSString *const kTmuxControllerSessionWasRenamed;
+// Posted when set-titles-string option changes. Object is tmux controller.
+extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 
 @interface TmuxController : NSObject
 
@@ -51,6 +53,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) NSDictionary *sharedFontOverrides;
 @property(nonatomic, readonly) NSString *sessionGuid;
 @property(nonatomic, readonly) BOOL variableWindowSize;
+@property(nonatomic, readonly) NSString *setTitlesString;
+@property(nonatomic, readonly) BOOL shouldSetTitles;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -102,6 +106,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 
 // Issue tmux commands to infer bounds on the version.
 - (void)guessVersion;
+- (void)loadTitleFormat;
 
 - (void)setClientSize:(NSSize)size;
 - (void)windowPane:(int)wp
@@ -146,6 +151,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
 - (void)requestDetach;
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
+- (BOOL)canRenamePane;
+- (void)renamePane:(int)windowPane toTitle:(NSString *)newTitle;
 - (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
 - (NSDictionary *)hotkeyForWindowPane:(int)windowPane;
 

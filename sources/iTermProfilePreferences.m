@@ -185,7 +185,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
-                             KEY_DYNAMIC_PROFILE_FILENAME];
+                             KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -440,6 +440,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_AWDS_TAB_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_AWDS_PANE_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_AWDS_WIN_OPTION: kProfilePreferenceInitialDirectoryHomeValue,
+                  KEY_TMUX_PANE_TITLE: [NSNull null],
                   // NOTES:
                   //   * Remove deprecated values from this list.
                   //   * Update validation blocks in preceding method.

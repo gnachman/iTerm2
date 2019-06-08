@@ -24,6 +24,18 @@
     _block = nil;
 }
 
+- (void)force {
+    if (!_timer) {
+        return;
+    }
+    [_timer invalidate];
+    _timer = nil;
+    if (_block) {
+        _block();
+    }
+    [self scheduleTimer];
+}
+
 - (void)scheduleTimer {
     [self scheduleTimerAfterDelay:self.minimumInterval];
 }

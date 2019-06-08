@@ -993,7 +993,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return self.scope;
 }
 
-
 #pragma mark - NSTabViewDelegate
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
