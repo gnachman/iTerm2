@@ -34,6 +34,7 @@ NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
 
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyTabTitleOverrideFormat = @"titleOverrideFormat";
+NSString *const iTermVariableKeyTabTmuxTitle = @"tmuxTitle";  // tmux window title if set-title is on, comes from evaluating set-titles-strings
 NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
 NSString *const iTermVariableKeyTabTmuxWindow = @"tmuxWindow";
 NSString *const iTermVariableKeyTabID = @"id";
@@ -60,6 +61,7 @@ NSString *const iTermVariableKeySessionWindowName = @"terminalWindowName";
 NSString *const iTermVariableKeySessionJob = @"jobName";
 NSString *const iTermVariableKeySessionCommandLine = @"commandLine";
 NSString *const iTermVariableKeySessionPresentationName = @"presentationName";
+NSString *const iTermVariableKeySessionTmuxPaneTitle = @"tmuxPaneTitle";
 NSString *const iTermVariableKeySessionTmuxWindowTitle = @"tmuxWindowTitle";
 NSString *const iTermVariableKeySessionTmuxWindowTitleEval = @"tmuxWindowTitleEval";
 NSString *const iTermVariableKeySessionTmuxRole = @"tmuxRole";

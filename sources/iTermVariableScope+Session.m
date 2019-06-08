@@ -170,6 +170,14 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionPresentationName];
 }
 
+- (NSString *)tmuxPaneTitle {
+    return [self valueForVariableName:iTermVariableKeySessionTmuxPaneTitle];
+}
+
+- (void)setTmuxPaneTitle:(NSString *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+}
+
 - (NSString *)tmuxWindowTitle {
     return [self valueForVariableName:iTermVariableKeySessionTmuxWindowTitle];
 }

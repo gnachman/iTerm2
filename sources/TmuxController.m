@@ -39,6 +39,7 @@ NSString *const kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
 NSString *const kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
 NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
+NSString *const kTmuxControllerDidFetchSetTitlesStringOption = @"kTmuxControllerDidFetchSetTitlesStringOption";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -179,6 +180,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_pendingWindows release];
     [sessionName_ release];
     [sessions_ release];
+    [_setTitlesString release];
+
     [super dealloc];
 }
 
@@ -819,6 +822,29 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:[NSString stringWithFormat:@"clear-history -t \"%%%d\"", windowPane]
            responseTarget:nil
          responseSelector:nil];
+}
+
+- (void)loadTitleFormat {
+    [gateway_ sendCommandList:@[ [gateway_ dictionaryForCommand:@"show-options -v -g set-titles"
+                                                 responseTarget:self
+                                               responseSelector:@selector(handleShowSetTitles:)
+                                                 responseObject:nil
+                                                          flags:0],
+                                 [gateway_ dictionaryForCommand:@"show-options -v -g set-titles-string"
+                                                 responseTarget:self
+                                               responseSelector:@selector(handleShowSetTitlesString:)
+                                                 responseObject:nil
+                                                          flags:0] ]];
+}
+
+- (void)handleShowSetTitles:(NSString *)result {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidFetchSetTitlesStringOption
+                                                        object:self];
+    _shouldSetTitles = [result isEqualToString:@"on"];
+}
+
+- (void)handleShowSetTitlesString:(NSString *)setTitlesString {
+    _setTitlesString = [setTitlesString copy];
 }
 
 - (void)guessVersion {

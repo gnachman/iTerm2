@@ -22,6 +22,7 @@ static NSString *const iTermSessionTitleArgTTY = @"tty";
 static NSString *const iTermSessionTitleArgUser = @"username";
 static NSString *const iTermSessionTitleArgHost = @"hostname";
 static NSString *const iTermSessionTitleArgTmux = @"tmux";
+static NSString *const iTermSessionTitleArgTmuxPane = @"tmuxPane";
 static NSString *const iTermSessionTitleArgTmuxRole = @"tmuxRole";
 static NSString *const iTermSessionTitleArgTmuxClientName = @"tmuxClientName";
 static NSString *const iTermSessionTitleArgIconName = @"iconName";
@@ -45,6 +46,7 @@ static NSString *const iTermSessionTitleSession = @"session";
        iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
        iTermSessionTitleArgHost: iTermVariableKeySessionHostname,
        iTermSessionTitleArgTmux: iTermVariableKeySessionTmuxWindowTitleEval,
+       iTermSessionTitleArgTmuxPane: iTermVariableKeySessionTmuxPaneTitle,
        iTermSessionTitleArgTmuxRole: iTermVariableKeySessionTmuxRole,
        iTermSessionTitleArgTmuxClientName: iTermVariableKeySessionTmuxClientName,
        iTermSessionTitleArgIconName: iTermVariableKeySessionIconName,
@@ -106,6 +108,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *user = trim(parameters[iTermSessionTitleArgUser]);
     NSString *host = trim(parameters[iTermSessionTitleArgHost]);
     NSString *tmux = trim(parameters[iTermSessionTitleArgTmux]);
+    NSString *tmuxPane = trim(parameters[iTermSessionTitleArgTmuxPane]);
     NSString *iconName = trim(parameters[iTermSessionTitleArgIconName]);
     NSString *windowName = trim(parameters[iTermSessionTitleArgWindowName]);
     iTermTitleComponents titleComponents;
@@ -121,6 +124,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                             user:user
                                             host:host
                                             tmux:tmux
+                                        tmuxPane:tmuxPane
                                         iconName:iconName
                                       windowName:windowName
                                       components:titleComponents
@@ -152,18 +156,23 @@ static NSString *const iTermSessionTitleSession = @"session";
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
                              tmux:(NSString *)tmuxVariable
+                         tmuxPane:(NSString *)tmuxPaneVariable
                          iconName:(NSString *)iconName
                        windowName:(NSString *)windowName
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle {
-    DLog(@"Compute title for sessionName=%@ profileName=%@ jobVariable=%@ commandLineVariable=%@ pwdVariable=%@ ttyVariable=%@ userVariable=%@ hostVariable=%@ tmuxVariable=%@",
-         sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable, userVariable, hostVariable, tmuxVariable);
+    DLog(@"Compute title for sessionName=%@ profileName=%@ jobVariable=%@ commandLineVariable=%@ pwdVariable=%@ ttyVariable=%@ userVariable=%@ hostVariable=%@ tmuxVariable=%@ tmuxPaneVariable=%@",
+         sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable, userVariable, hostVariable, tmuxVariable, tmuxPaneVariable);
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
     if (titleComponents == iTermTitleComponentsCustom) {
         // This can happen when the session is synthesized
         return @"";
+    }
+
+    if (tmuxPaneVariable.length) {
+        return tmuxPaneVariable;
     }
 
     NSString *effectiveSessionName;

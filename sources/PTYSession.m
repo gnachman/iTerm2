@@ -83,6 +83,7 @@
 #import "iTermTheme.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermTmuxStatusBarMonitor.h"
+#import "iTermTmuxTitleMonitor.h"
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -507,7 +508,8 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
     iTermWorkingDirectoryPoller *_pwdPoller;
-    
+    iTermTmuxTitleMonitor *_tmuxTitleMonitor;
+
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
     iTermCacheableImage *_customIcon;
@@ -754,7 +756,10 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(apiDidStop:)
                                                      name:iTermAPIHelperDidStopNotification
                                                    object:nil];
-
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:kTmuxControllerDidFetchSetTitlesStringOption
+                                                     name:@selector(tmuxDidFetchSetTitlesStringOption)
+                                                   object:nil];
         [iTermSetFindStringNotification subscribe:self
                                             block:^(iTermSetFindStringNotification * _Nonnull notification) {
                                                 [weakSelf useStringForFind:notification.string];
@@ -852,6 +857,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_metaFrustrationDetector release];
     [_tmuxStatusBarMonitor setActive:NO];
     [_tmuxStatusBarMonitor release];
+    [_tmuxTitleMonitor release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
@@ -2134,6 +2140,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxStatusBarMonitor.active = NO;
         [_tmuxStatusBarMonitor release];
         _tmuxStatusBarMonitor = nil;
+
+        [self uninstallTmuxTitleMonitor];
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
@@ -2150,6 +2158,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _tmuxController = nil;
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
 
     // The source pane may have just exited. Dogs and cats living together!
     // Mass hysteria!
@@ -4669,6 +4678,26 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)tmuxDidFetchSetTitlesStringOption:(NSNotification *)notification {
+    if (!self.isTmuxClient) {
+        return;
+    }
+    if (notification.object != _tmuxController) {
+        return;
+    }
+    if (_tmuxController.shouldSetTitles) {
+        if (_tmuxTitleMonitor) {
+            return;
+        }
+        [self installTmuxTitleMonitor];
+    } else {
+        if (!_tmuxTitleMonitor) {
+            return;
+        }
+        [self uninstallTmuxTitleMonitor];
+    }
+}
+
 - (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
         NSArray *args = [notification object];
@@ -5676,20 +5705,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 break;
             case TMUX_CLIENT:
                 name = @"client";
-                assert(!_tmuxStatusBarMonitor);
-                _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
-                                                                                     scope:self.variablesScope];
-                _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
-                if ([iTermAdvancedSettingsModel useTmuxStatusBar] ||
-                    [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
-                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
-                                                                                                                              scope:nil
-                                                                                                                             window:self.delegate.tmuxWindow] dictionaryValue] }];
-                }
+                [self installTmuxStatusBarMonitor];
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
     });
+}
+
+- (void)installTmuxStatusBarMonitor {
+    assert(!_tmuxStatusBarMonitor);
+    _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                         scope:self.variablesScope];
+    _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
+    if ([iTermAdvancedSettingsModel useTmuxStatusBar] ||
+        [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
+        [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
+                                                                                                                  scope:nil
+                                                                                                                 window:self.delegate.tmuxWindow] dictionaryValue] }];
+    }
+}
+
+- (void)installTmuxTitleMonitor {
+    assert(!_tmuxTitleMonitor);
+    _tmuxTitleMonitor = [[iTermTmuxTitleMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                 scope:self.variablesScope
+                                                                format:@"#{pane_title}"
+                                                                target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
+                                                          variableName:iTermVariableKeySessionTmuxPaneTitle];
+}
+
+- (void) uninstallTmuxTitleMonitor {
+    assert(_tmuxTitleMonitor);
+    [_tmuxTitleMonitor invalidate];
+    _tmuxTitleMonitor = nil;
 }
 
 - (PTYSessionTmuxMode)tmuxMode {
@@ -6050,6 +6098,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
     [_tmuxController guessVersion];
+    [_tmuxController loadTitleFormat];
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {

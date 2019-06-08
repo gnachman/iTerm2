@@ -38,6 +38,14 @@
     return [iTermVariableScope newSessionScopeWithVariables:[self valueForVariableName:iTermVariableKeyTabCurrentSession]];
 }
 
+- (NSString *)tabTmuxTitle {
+    return [self valueForVariableName:iTermVariableKeyTabTmuxTitle];
+}
+
+- (void)setTabTmuxTitle:(NSString *)tabTmuxTitle {
+    [self setValue:tabTmuxTitle forVariableNamed:iTermVariableKeyTabTmuxTitle];
+}
+
 - (NSNumber *)tmuxWindow {
     return [self valueForVariableName:iTermVariableKeyTabTmuxWindow];
 }

@@ -19,6 +19,7 @@ extern NSString *const iTermVariableKeyApplicationEffectiveTheme;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
 extern NSString *const iTermVariableKeyTabTitleOverrideFormat;
+extern NSString *const iTermVariableKeyTabTmuxTitle;
 extern NSString *const iTermVariableKeyTabCurrentSession;
 extern NSString *const iTermVariableKeyTabID;
 extern NSString *const iTermVariableKeyTabWindow;
@@ -48,6 +49,7 @@ extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;
 extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
+extern NSString *const iTermVariableKeySessionTmuxPaneTitle;  // Evaluation of 'show-options -v -g set-titles-string'
 extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux window panes share the same window title
 extern NSString *const iTermVariableKeySessionTmuxWindowTitleEval;  // Result of evaluating NSString *const iTermVariableKeySessionTmuxWindowTitle
 extern NSString *const iTermVariableKeySessionTmuxRole;  // Unset (normal session), "gateway" (where you ran tmux -CC), or "client".

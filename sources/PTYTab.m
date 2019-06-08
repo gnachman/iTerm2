@@ -42,6 +42,7 @@
 #import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
+#import "iTermTmuxTitleMonitor.h"
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
@@ -214,6 +215,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Used so next/previous session will work consistently post-maximization.
     NSArray<NSString *> *_orderedGUIDs;
     iTermBuiltInFunctions *_methods;
+    iTermTmuxTitleMonitor *_tmuxTitleMonitor;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -3658,9 +3660,28 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [tabViewItem_ setView:tabView_];
 }
 
-- (TmuxController *)tmuxController
-{
+- (TmuxController *)tmuxController {
     return tmuxController_;
+}
+
+- (void)installTmuxTitleMonitor {
+    assert(!_tmuxTitleMonitor);
+    _tmuxTitleMonitor = [[iTermTmuxTitleMonitor alloc] initWithGateway:tmuxController_.gateway
+                                                                 scope:self.variablesScope
+                                                                format:tmuxController_.setTitlesString
+                                                                target:[NSString stringWithFormat:@"@%@", @(self.tmuxWindow)]
+                                                          variableName:iTermVariableKeyTabTmuxTitle];
+    if (self.titleOverride.length == 0) {
+        // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
+        // already set a title override.
+        [self setTitleOverride:[NSString stringWithFormat:@"\\(%@?)", iTermVariableKeyTabTmuxTitle]];
+    }
+}
+
+- (void)uninstallTmuxTitleMonitor {
+    assert(_tmuxTitleMonitor);
+    [_tmuxTitleMonitor invalidate];
+    _tmuxTitleMonitor = nil;
 }
 
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
@@ -5274,6 +5295,26 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)screenParametersDidChange:(NSNotification *)notification {
     [self bounceMetal];
+}
+
+- (void)tmuxDidFetchSetTitlesStringOption:(NSNotification *)notification {
+    if (!self.isTmuxTab) {
+        return;
+    }
+    if (notification.object != tmuxController_) {
+        return;
+    }
+    if (tmuxController_.shouldSetTitles) {
+        if (_tmuxTitleMonitor) {
+            return;
+        }
+        [self installTmuxTitleMonitor];
+    } else {
+        if (!_tmuxTitleMonitor) {
+            return;
+        }
+        [self uninstallTmuxTitleMonitor];
+    }
 }
 
 - (void)bounceMetal {
