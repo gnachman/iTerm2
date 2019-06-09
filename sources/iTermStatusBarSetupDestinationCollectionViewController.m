@@ -302,7 +302,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     if ([draggingInfo.draggingSource isKindOfClass:[self class]]) {
         return NSDragOperationMove;
     } else {
-        return NSDragOperationCopy;
+        return NSDragOperationMove;
     }
 }
 
