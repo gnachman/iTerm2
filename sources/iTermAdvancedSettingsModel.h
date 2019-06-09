@@ -76,6 +76,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableWindowShadowWhenTransparencyPreMojave;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
++ (BOOL)disregardDockSettingToOpenTabsInsteadOfWindows;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (BOOL)doNotSetCtype;
 + (BOOL)doubleClickTabToEdit;

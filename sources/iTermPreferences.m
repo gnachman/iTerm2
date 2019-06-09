@@ -125,6 +125,7 @@ NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClick
 NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickPerformsSmartSelection";
 
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
+NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
 
 NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
@@ -162,6 +163,37 @@ static NSString *sPreviousVersion;
     return sPreviousVersion;
 }
 
++ (NSSet<NSString *> *)allAppVersionsUsedOnThisMachine {
+    static NSSet<NSString *> *versions;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        versions = [NSSet setWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+    });
+    return versions;
+
+}
+
++ (void)initializeAppVersionBeforeThisLaunch:(NSString *)thisVersion {
+    // Force it to be lazy-loaded.
+    [self appVersionBeforeThisLaunch];
+    // Then overwrite it with the current version
+    [[NSUserDefaults standardUserDefaults] setObject:thisVersion forKey:kPreferenceKeyAppVersion];
+}
+
++ (void)initializeAllAppVersionsUsedOnThisMachine:(NSString *)thisVersion {
+    // Update all app versions ever seena.
+    NSMutableSet *allVersions = [NSMutableSet setWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+    
+    NSString *const before = [self appVersionBeforeThisLaunch];
+    if (before) {
+        [allVersions addObject:before];
+    }
+
+    [allVersions addObject:thisVersion];
+    [allVersions removeObject:@"unknown"];
+    [[NSUserDefaults standardUserDefaults] setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
+}
+
 + (void)initializeUserDefaults {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
 
@@ -180,12 +212,12 @@ static NSString *sPreviousVersion;
     // immediately), and generally sucks with a terminal.
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
 
-    // Store the current app version in prefs
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    // Force it to be lazy-loaded.
-    [self appVersionBeforeThisLaunch];
-    [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
+    NSString *const thisVersion = infoDictionary[@"CFBundleVersion"];
+    [self initializeAppVersionBeforeThisLaunch:thisVersion];
+    [self initializeAllAppVersionsUsedOnThisMachine:thisVersion];
 
+    
     // Disable under-titlebar mirror view.
 
     // OS 10.10 has a spiffy feature where it finds a scrollview that is

@@ -11,6 +11,8 @@
 
 NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 static NSString *const iTermSecureKeyboardEntryEnabledUserDefaultsKey = @"Secure Input";
+// Set to YES after warning the user about respecting the dock setting to prefer tabs over windows.
+static NSString *const kPreferenceKeyHaveBeenWarnedAboutTabDockSetting = @"NoSyncHaveBeenWarnedAboutTabDockSetting";
 
 static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory";
 
@@ -64,6 +66,14 @@ static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id 
         return iTermAppleWindowTabbingModeManual;
     }
     return iTermAppleWindowTabbingModeFullscreen;
+}
+
++ (BOOL)haveBeenWarnedAboutTabDockSetting {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
+}
+
++ (void)setHaveBeenWarnedAboutTabDockSetting:(BOOL)haveBeenWarnedAboutTabDockSetting {
+    [[NSUserDefaults standardUserDefaults] setBool:haveBeenWarnedAboutTabDockSetting forKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
 }
 
 @end

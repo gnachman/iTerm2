@@ -66,7 +66,10 @@
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "PTYWindow.h"
+
 #include <objc/runtime.h>
+
+@import Sparkle;
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -1173,7 +1176,7 @@ static iTermController *gSharedInstance;
     if (preventTab) {
         return nil;
     }
-    if (!respectTabbingMode) {
+    if (!respectTabbingMode || [iTermAdvancedSettingsModel disregardDockSettingToOpenTabsInsteadOfWindows]) {
         return preferredWindowController;
     }
     switch ([iTermUserDefaults appleWindowTabbingMode]) {
@@ -1183,6 +1186,7 @@ static iTermController *gSharedInstance;
             if (preferredWindowController) {
                 return preferredWindowController;
             }
+            [self maybeWarnAboutOpeningInTab];
             return [self currentTerminal];
         case iTermAppleWindowTabbingModeFullscreen: {
             if (preferredWindowController) {
@@ -1190,11 +1194,32 @@ static iTermController *gSharedInstance;
             }
             PseudoTerminal *tempTerm = [[iTermController sharedInstance] currentTerminal];
             if (tempTerm && tempTerm.windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+                [self maybeWarnAboutOpeningInTab];
                 return tempTerm;
             }
             return nil;
         }
     }
+}
+
+- (void)maybeWarnAboutOpeningInTab {
+#if ENABLE_RESPECT_DOCK_PREFER_TABS_SETTING
+    NSString *const firstVersionRespectingSetting = @"SET THIS";
+    if (iTermUserDefaults.haveBeenWarnedAboutTabDockSetting) {
+        return;
+    }
+    id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
+    const BOOL haveUsedOlderVersion = [[iTermPreferences allAppVersionsUsedOnThisMachine].allObjects anyWithBlock:^BOOL(NSString *version) {
+        return [comparator compareVersion:firstVersionRespectingSetting toVersion:version] == NSOrderedDescending;
+    }];
+    if (!haveUsedOlderVersion) {
+        return;
+    }
+    [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Creating a tab"
+                                                                     detail:@"The system preference to open a tab instead of a window is now respected in iTerm2."
+                                                                        URL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/wikis/Prefer-Tabs-When-Opening-Documents"]];
+    iTermUserDefaults.haveBeenWarnedAboutTabDockSetting = YES;
+#endif
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData

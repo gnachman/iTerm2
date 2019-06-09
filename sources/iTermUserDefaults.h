@@ -23,6 +23,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 };
 
 @property (class, nonatomic, readonly) iTermAppleWindowTabbingMode appleWindowTabbingMode;
+@property (class, nonatomic) BOOL haveBeenWarnedAboutTabDockSetting;
 
 @end
 
