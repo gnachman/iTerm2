@@ -138,7 +138,6 @@ static const CGFloat kHelpMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [tableView_ release];
     [scrollView_ release];
-    [boldFont_ release];
     [super dealloc];
 }
 
