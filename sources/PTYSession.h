@@ -236,6 +236,7 @@ typedef enum {
 - (void)sessionDidInvalidateStatusBar:(PTYSession *)session;
 - (void)sessionAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
 - (iTermVariableScope *)sessionTabScope;
+- (void)sessionDidReportSelectedTmuxPane:(PTYSession *)session;
 
 @end
 
@@ -798,7 +799,6 @@ typedef enum {
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
 - (void)triggerDidChangeNameTo:(NSString *)newName;
-- (void)setTmuxWindowTitle:(NSString *)newName;
 - (void)didInitializeSessionWithName:(NSString *)name;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;

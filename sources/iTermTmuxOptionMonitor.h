@@ -1,5 +1,5 @@
 //
-//  iTermTmuxTitleMonitor.h
+//  iTermTmuxOptionMonitor.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 6/2/19.
@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxGateway;
 @class iTermVariableScope;
 
-@interface iTermTmuxTitleMonitor : NSObject
+@interface iTermTmuxOptionMonitor : NSObject
 
 @property (nonatomic, weak) TmuxGateway *gateway;
 @property (nonatomic, strong) iTermVariableScope *scope;
@@ -22,7 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
                           scope:(iTermVariableScope *)scope
                          format:(NSString *)format
                          target:(NSString *)tmuxTarget
-                   variableName:(NSString *)variableName NS_DESIGNATED_INITIALIZER;
+                   variableName:(NSString *)variableName
+                          block:(void (^ _Nullable)(NSString *))block NS_DESIGNATED_INITIALIZER;
+
+- (void)updateOnce;
+
+// Begin regular updates
+- (void)startTimer;
 
 // Call this to stop the timer. The scope will no longer be updated.
 - (void)invalidate;

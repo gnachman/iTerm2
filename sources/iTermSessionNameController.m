@@ -156,7 +156,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         // Add tmux variables we use for adding formatting.
         for (NSString *tmuxVariableName in @[ iTermVariableKeySessionTmuxClientName,
                                               iTermVariableKeySessionTmuxRole,
-                                              iTermVariableKeySessionTmuxWindowTitleEval ]) {
+                                              iTermVariableKeySessionTmuxPaneTitle ]) {
             [scope valueForVariableName:tmuxVariableName];
         }
         for (iTermVariableReference *ref in _refs) {

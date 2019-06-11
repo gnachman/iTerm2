@@ -61,8 +61,6 @@
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,
                                     iTermVariableKeySessionTmuxPaneTitle,
-                                    iTermVariableKeySessionTmuxWindowTitle,
-                                    iTermVariableKeySessionTmuxWindowTitleEval,
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,
                                     iTermVariableKeySessionAutoNameFormat,
@@ -87,7 +85,8 @@
     // Tab context
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverrideFormat inContext:iTermVariablesSuggestionContextTab];
-    [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxTitle inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindowName inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindowTitle inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindow inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabID inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyTabWindow

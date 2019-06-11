@@ -22,10 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
-                             tmux:(nullable NSString *)tmuxVariable
                          tmuxPane:(nullable NSString *)tmuxPaneVariable
                          iconName:(NSString *)iconName
                        windowName:(NSString *)windowName
+                   tmuxWindowName:(nullable NSString *)tmuxWindowName
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle;
 

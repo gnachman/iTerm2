@@ -83,7 +83,7 @@
 #import "iTermTheme.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermTmuxStatusBarMonitor.h"
-#import "iTermTmuxTitleMonitor.h"
+#import "iTermTmuxOptionMonitor.h"
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -501,14 +501,13 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
-    iTermSwiftyString *_tmuxWindowTitleSwiftyString;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
     iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
     iTermWorkingDirectoryPoller *_pwdPoller;
-    iTermTmuxTitleMonitor *_tmuxTitleMonitor;
+    iTermTmuxOptionMonitor *_tmuxTitleMonitor;
 
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
@@ -643,21 +642,6 @@ static const NSUInteger kMaxHosts = 100;
             return newValue;
         };
 
-        [_tmuxWindowTitleSwiftyString invalidate];
-        [_tmuxWindowTitleSwiftyString autorelease];
-        _tmuxWindowTitleSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
-                                                                     sourcePath:iTermVariableKeySessionTmuxWindowTitle
-                                                                destinationPath:iTermVariableKeySessionTmuxWindowTitleEval];
-        _tmuxWindowTitleSwiftyString.contextProvider = ^iTermVariableScope *{
-            return weakSelf.delegate.sessionTabScope;
-        };
-        _tmuxWindowTitleSwiftyString.observer = ^NSString *(NSString * _Nonnull newValue, NSError *error) {
-            if ([weakSelf checkForCyclesInSwiftyStrings]) {
-                weakSelf.variablesScope.tmuxWindowTitleEval = @"[Cycle detected]";
-            }
-            return newValue;
-        };
-        
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
@@ -756,10 +740,6 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(apiDidStop:)
                                                      name:iTermAPIHelperDidStopNotification
                                                    object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:kTmuxControllerDidFetchSetTitlesStringOption
-                                                     name:@selector(tmuxDidFetchSetTitlesStringOption)
-                                                   object:nil];
         [iTermSetFindStringNotification subscribe:self
                                             block:^(iTermSetFindStringNotification * _Nonnull notification) {
                                                 [weakSelf useStringForFind:notification.string];
@@ -850,7 +830,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_autoNameSwiftyString release];
-    [_tmuxWindowTitleSwiftyString release];
     [_statusBarViewController release];
     [_echoProbe release];
     [_backgroundDrawingHelper release];
@@ -1506,10 +1485,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     } else {
         // Is a tmux pane
-        NSString *title = [state objectForKey:@"title"];
-        if (title) {
-            [aSession setTmuxWindowTitle:title];
-        }
+        // NOTE: There used to be code here that used state[@"title"] but AFAICT that didn't exist.
         if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
             startAutoLog = YES;
         }
@@ -1851,10 +1827,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     iTermVariableKeySessionAutoNameFormat: newName }];
 }
 
-- (void)setTmuxWindowTitle:(NSString *)newName {
-    [self.variablesScope setValue:newName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
-}
-
 - (void)didInitializeSessionWithName:(NSString *)name {
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionAutoNameFormat];
 }
@@ -2157,7 +2129,6 @@ ITERM_WEAKLY_REFERENCEABLE
     _hideAfterTmuxWindowOpens = NO;
     _tmuxController = nil;
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
 
     // The source pane may have just exited. Dogs and cats living together!
@@ -3809,10 +3780,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)checkForCyclesInSwiftyStrings {
     iTermSwiftyStringGraph *graph = [[[iTermSwiftyStringGraph alloc] init] autorelease];
-    [graph addSwiftyString:_tmuxWindowTitleSwiftyString
-            withFormatPath:iTermVariableKeySessionTmuxWindowTitle
-            evaluationPath:iTermVariableKeySessionTmuxWindowTitleEval
-                     scope:self.variablesScope];
     [graph addSwiftyString:_autoNameSwiftyString
             withFormatPath:iTermVariableKeySessionAutoNameFormat
             evaluationPath:iTermVariableKeySessionAutoName
@@ -4600,9 +4567,15 @@ ITERM_WEAKLY_REFERENCEABLE
         [self isTmuxClient] &&
         [theGuid isEqualToString:_profile[KEY_GUID]]) {
         Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
-        [_tmuxController renameWindowWithId:_delegate.tmuxWindow
-                                  inSession:nil
-                                     toName:profile[KEY_NAME]];
+        if (_tmuxController.canRenamePane) {
+            [_tmuxController renamePane:self.tmuxPane toTitle:profile[KEY_NAME]];
+            [_tmuxTitleMonitor updateOnce];
+        } else {
+            // Legacy code path for pre tmux 2.6
+            [_tmuxController renameWindowWithId:_delegate.tmuxWindow
+                                      inSession:nil
+                                         toName:profile[KEY_NAME]];
+        }
         _tmuxTitleOutOfSync = NO;
     }
 }
@@ -4675,26 +4648,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)annotationVisibilityDidChange:(NSNotification *)notification {
     if ([iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
         [_delegate sessionUpdateMetalAllowed];
-    }
-}
-
-- (void)tmuxDidFetchSetTitlesStringOption:(NSNotification *)notification {
-    if (!self.isTmuxClient) {
-        return;
-    }
-    if (notification.object != _tmuxController) {
-        return;
-    }
-    if (_tmuxController.shouldSetTitles) {
-        if (_tmuxTitleMonitor) {
-            return;
-        }
-        [self installTmuxTitleMonitor];
-    } else {
-        if (!_tmuxTitleMonitor) {
-            return;
-        }
-        [self uninstallTmuxTitleMonitor];
     }
 }
 
@@ -5663,6 +5616,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         if (focused && [self isTmuxClient]) {
             [_tmuxController selectPane:self.tmuxPane];
+            [self.delegate sessionDidReportSelectedTmuxPane:self];
         }
     }
 }
@@ -5706,6 +5660,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             case TMUX_CLIENT:
                 name = @"client";
                 [self installTmuxStatusBarMonitor];
+                [self installTmuxTitleMonitor];
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
@@ -5725,17 +5680,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+// NOTE: Despite the name, this doesn't continuously monitor because that is
+// too expensive. Instead, we manually poll at times when a change is likely.
 - (void)installTmuxTitleMonitor {
-    assert(!_tmuxTitleMonitor);
-    _tmuxTitleMonitor = [[iTermTmuxTitleMonitor alloc] initWithGateway:_tmuxController.gateway
+    if (_tmuxTitleMonitor) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
                                                                  scope:self.variablesScope
                                                                 format:@"#{pane_title}"
                                                                 target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
-                                                          variableName:iTermVariableKeySessionTmuxPaneTitle];
+                                                          variableName:iTermVariableKeySessionTmuxPaneTitle
+                                                                 block:^(NSString * _Nonnull title) {
+                                                                     if (title) {
+                                                                         [weakSelf setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""}];
+                                                                     }
+                                                                 }];
+    [_tmuxTitleMonitor updateOnce];
 }
 
-- (void) uninstallTmuxTitleMonitor {
-    assert(_tmuxTitleMonitor);
+- (void)uninstallTmuxTitleMonitor {
+    if (!_tmuxTitleMonitor) {
+        return;
+    }
     [_tmuxTitleMonitor invalidate];
     _tmuxTitleMonitor = nil;
 }
@@ -6143,7 +6111,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     });
     self.tmuxMode = TMUX_NONE;
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
@@ -8523,6 +8491,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
+    [_tmuxTitleMonitor updateOnce];
+    
 }
 
 - (BOOL)screenWindowIsFullscreen {

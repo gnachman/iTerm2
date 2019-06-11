@@ -19,9 +19,10 @@ extern NSString *const iTermVariableKeyApplicationEffectiveTheme;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
 extern NSString *const iTermVariableKeyTabTitleOverrideFormat;
-extern NSString *const iTermVariableKeyTabTmuxTitle;
 extern NSString *const iTermVariableKeyTabCurrentSession;
 extern NSString *const iTermVariableKeyTabID;
+extern NSString *const iTermVariableKeyTabTmuxWindowTitle;
+extern NSString *const iTermVariableKeyTabTmuxWindowName;
 extern NSString *const iTermVariableKeyTabWindow;
 
 // If this window is a tmux client, this is the window number defined by
@@ -50,8 +51,6 @@ extern NSString *const iTermVariableKeySessionJob;
 extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
 extern NSString *const iTermVariableKeySessionTmuxPaneTitle;  // Evaluation of 'show-options -v -g set-titles-string'
-extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux window panes share the same window title
-extern NSString *const iTermVariableKeySessionTmuxWindowTitleEval;  // Result of evaluating NSString *const iTermVariableKeySessionTmuxWindowTitle
 extern NSString *const iTermVariableKeySessionTmuxRole;  // Unset (normal session), "gateway" (where you ran tmux -CC), or "client".
 extern NSString *const iTermVariableKeySessionTmuxClientName;  // Set on tmux gateways. Gives a name for the tmux session.
 extern NSString *const iTermVariableKeySessionTmuxWindowPane;  // NSNumber. Window pane number. Set if the session is a tmux session;

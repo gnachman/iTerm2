@@ -151,6 +151,8 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
 - (void)requestDetach;
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
+- (BOOL)canRenamePane;
+- (void)renamePane:(int)windowPane toTitle:(NSString *)newTitle;
 - (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
 - (NSDictionary *)hotkeyForWindowPane:(int)windowPane;
 

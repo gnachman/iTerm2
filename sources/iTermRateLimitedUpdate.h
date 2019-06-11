@@ -24,6 +24,9 @@
                           onTarget:(id)target
                         withObject:(id)object;
 
+// If there is a pending block, do it now (synchronously) and cancel the delayed perform.
+- (void)force;
+
 @end
 
 // Remembers the delay across restarts. Useful for things like checking for updates every N days.

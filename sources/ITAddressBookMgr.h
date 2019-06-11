@@ -242,6 +242,7 @@
 
 // Session-only key
 #define KEY_SESSION_HOTKEY                   @"Session Hotkey"
+#define KEY_TMUX_PANE_TITLE                  @"tmux Pane Title"
 
 @class iTermVariableScope;
 

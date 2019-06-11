@@ -1,11 +1,11 @@
 //
-//  iTermTmuxTitleMonitor.m
+//  iTermTmuxOptionMonitor.m
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 6/2/19.
 //
 
-#import "iTermTmuxTitleMonitor.h"
+#import "iTermTmuxOptionMonitor.h"
 
 #import "DebugLogging.h"
 #import "iTermVariables.h"
@@ -13,33 +13,40 @@
 #import "NSTimer+iTerm.h"
 #import "TmuxGateway.h"
 
-@implementation iTermTmuxTitleMonitor {
+@implementation iTermTmuxOptionMonitor {
     NSTimer *_timer;
     NSString *_format;
     BOOL _haveOutstandingRequest;
     NSString *_target;
     NSString *_variableName;
+    void (^_block)(NSString *);
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                           scope:(iTermVariableScope *)scope
                          format:(NSString *)format
                          target:(NSString *)target
-                   variableName:(NSString *)variableName {
+                   variableName:(NSString *)variableName
+                          block:(void (^)(NSString *))block {
     self = [super init];
     if (self) {
         _gateway = gateway;
         _scope = scope;
         _format = [format copy];
         _target = [target copy];
-        _variableName = [_variableName copy];
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1
-                                                      target:self
-                                                    selector:@selector(updateTitle:)
-                                                    userInfo:nil
-                                                     repeats:YES];
+        _variableName = [variableName copy];
+        _block = [block copy];
     }
     return self;
+}
+
+- (void)startTimer {
+    [_timer invalidate];
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1
+                                                  target:self
+                                                selector:@selector(update:)
+                                                userInfo:nil
+                                                 repeats:YES];
 }
 
 - (void)invalidate {
@@ -53,26 +60,32 @@
             stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
 }
 
-- (void)updateTitle:(NSTimer *)timer {
+- (void)update:(NSTimer *)timer {
+    [self updateOnce];
+}
+
+- (void)updateOnce {
     if (_haveOutstandingRequest) {
         DLog(@"Not making a request because one is outstanding");
         return;
     }
     _haveOutstandingRequest = YES;
-    // Window pane has a % prefix
     NSString *command = [NSString stringWithFormat:@"display-message -t '%@' -p '%@'", _target, self.escapedFormat];
-    DLog(@"Request title with command %@", command);
+    DLog(@"Request option with command %@", command);
     [self.gateway sendCommand:command
                responseTarget:self
-             responseSelector:@selector(didFetchTitle:)
+             responseSelector:@selector(didFetch:)
                responseObject:nil
                         flags:0];
 }
 
-- (void)didFetchTitle:(NSString *)title {
-    DLog(@"Did fetch title %@", title);
+- (void)didFetch:(NSString *)value {
+    DLog(@"Did fetch %@", value);
     _haveOutstandingRequest = NO;
-    [self.scope setValue:title forVariableNamed:_variableName];
+    [self.scope setValue:value forVariableNamed:_variableName];
+    if (_block) {
+        _block(value);
+    }
 }
 
 @end

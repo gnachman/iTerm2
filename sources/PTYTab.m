@@ -42,7 +42,7 @@
 #import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
-#import "iTermTmuxTitleMonitor.h"
+#import "iTermTmuxOptionMonitor.h"
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
@@ -215,7 +215,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Used so next/previous session will work consistently post-maximization.
     NSArray<NSString *> *_orderedGUIDs;
     iTermBuiltInFunctions *_methods;
-    iTermTmuxTitleMonitor *_tmuxTitleMonitor;
+    iTermTmuxOptionMonitor *_tmuxTitleMonitor;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -376,6 +376,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             tmuxController_ = [oldTab tmuxController];
             parseTree_ = oldTab->parseTree_;
             [tmuxController_ changeWindow:self.tmuxWindow tabTo:self];
+            [self updateTmuxTitleMonitor];
         }
         if (parentWindow) {
             [self setParentWindow:parentWindow];
@@ -437,6 +438,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(screenParametersDidChange:)
                                                  name:NSApplicationDidChangeScreenParametersNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxDidFetchSetTitlesStringOption:)
+                                                 name:kTmuxControllerDidFetchSetTitlesStringOption
                                                object:nil];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
@@ -660,7 +665,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
     NSString *value = self.variablesScope.tabTitleOverride;
     if (value.length == 0) {
-        value = newName ?: @"";
+        if (self.tmuxTab) {
+            value = [NSString stringWithFormat:@"↣ %@", [self.variablesScope valueForVariableName:iTermVariableKeyTabTmuxWindowName]];
+        } else {
+            value = newName ?: @"";
+        }
     }
     [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
@@ -2771,6 +2780,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                          inTab:theTab
                                                  forObjectType:objectType]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
+    [theTab updateTmuxTitleMonitor];
     return theTab;
 }
 
@@ -3120,17 +3130,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSString *)tmuxWindowName {
-    return self.activeSession.variablesScope.tmuxWindowTitleEval ?: @"tmux";
+    return [self.variablesScope valueForVariableName:iTermVariableKeyTabTmuxWindowName];
 }
 
+// Note this is to inform of us of the window name, not to initiate a change of it.
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName {
     [[self realParentWindow] setWindowTitle];
-    for (PTYSession *session in self.sessions) {
-        [session.variablesScope setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
-    }
-    if (tmuxWindowName != nil) {
-        self.variablesScope.tabTitleOverrideFormat = tmuxWindowName;
-    }
+    [self.variablesScope setValue:tmuxWindowName forVariableNamed:iTermVariableKeyTabTmuxWindowName];
+    // In case the name change causes the title to change
+    [_tmuxTitleMonitor updateOnce];
     [self updateTabTitle];
 }
 
@@ -3249,7 +3257,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [term appendTab:theTab];
     }
     [theTab didAddToTerminal:term withArrangement:arrangement];
-
+    [theTab updateTmuxTitleMonitor];
     return theTab;
 }
 
@@ -3666,15 +3674,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)installTmuxTitleMonitor {
     assert(!_tmuxTitleMonitor);
-    _tmuxTitleMonitor = [[iTermTmuxTitleMonitor alloc] initWithGateway:tmuxController_.gateway
+    if (self.tmuxWindow < 0) {
+        return;
+    }
+    _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:tmuxController_.gateway
                                                                  scope:self.variablesScope
                                                                 format:tmuxController_.setTitlesString
                                                                 target:[NSString stringWithFormat:@"@%@", @(self.tmuxWindow)]
-                                                          variableName:iTermVariableKeyTabTmuxTitle];
+                                                          variableName:iTermVariableKeyTabTmuxWindowTitle
+                                                                 block:nil];
+    [_tmuxTitleMonitor updateOnce];
     if (self.titleOverride.length == 0) {
         // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
         // already set a title override.
-        [self setTitleOverride:[NSString stringWithFormat:@"\\(%@?)", iTermVariableKeyTabTmuxTitle]];
+        self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"\\(%@?)", iTermVariableKeyTabTmuxWindowTitle];
     }
 }
 
@@ -4278,9 +4291,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setTitleOverride:(NSString *)titleOverride {
     if (self.tmuxTab) {
-        [self.tmuxController renameWindowWithId:self.tmuxWindow
-                                      inSession:nil
-                                         toName:titleOverride];
+        if (titleOverride) {
+            [self.tmuxController renameWindowWithId:self.tmuxWindow
+                                          inSession:nil
+                                             toName:titleOverride];
+        }
         return;
     }
     NSString *const sanitized = titleOverride.length ? titleOverride : nil;
@@ -5298,10 +5313,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)tmuxDidFetchSetTitlesStringOption:(NSNotification *)notification {
-    if (!self.isTmuxTab) {
+    if (notification.object != tmuxController_) {
         return;
     }
-    if (notification.object != tmuxController_) {
+
+    
+    [self updateTmuxTitleMonitor];
+}
+
+- (void)updateTmuxTitleMonitor {
+    if (!self.isTmuxTab) {
         return;
     }
     if (tmuxController_.shouldSetTitles) {
@@ -5552,6 +5573,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (iTermVariableScope *)sessionTabScope {
     return self.variablesScope;
+}
+
+- (void)sessionDidReportSelectedTmuxPane:(PTYSession *)session {
+    [_tmuxTitleMonitor updateOnce];
 }
 
 #pragma mark - iTermObject
