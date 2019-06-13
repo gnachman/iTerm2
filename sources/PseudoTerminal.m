@@ -1087,6 +1087,7 @@ ITERM_WEAKLY_REFERENCEABLE
             preferredStyle != TAB_STYLE_MINIMAL &&
             !togglingFullScreen_ &&
             (self.window.styleMask & NSWindowStyleMaskTitled) &&
+            ![self titleBarShouldAppearTransparent] &&
             ![self anyFullScreen] &&
             ![self tabBarVisibleOnTop]);
 }
