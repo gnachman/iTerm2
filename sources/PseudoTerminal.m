@@ -8289,12 +8289,31 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return exitingLionFullscreen_;
 }
 
+- (BOOL)isDark {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_MINIMAL:
+            assert(NO);
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return NO;
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return YES;
+    }
+}
+
 - (BOOL)shouldShowBorder {
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     }
     if (@available(macOS 10.14, *)) {
-        return self.anyPaneIsTransparent;
+        if (self.anyPaneIsTransparent) {
+            return YES;
+        }
+        return !self.isDark;
     }
     return YES;
 }
@@ -8312,28 +8331,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (BOOL)haveBottomBorder
-{
+- (BOOL)haveBottomBorder {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL bottomTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
     if (!self.shouldShowBorder) {
         return NO;
-    } else if ([self anyFullScreen] ||
-               self.windowType == WINDOW_TYPE_BOTTOM) {
-        return NO;
-    } else if (!bottomTabBar) {
-        // Nothing on the bottom, so need a border.
-        return YES;
-    } else if (!tabBarVisible) {
-        // Invisible bottom tab bar
-        return YES;
-    } else if ([iTermPreferences boolForKey:kPreferenceKeyTabStyle] == TAB_STYLE_DARK) {
-        // Dark tab style needs a border
-        return YES;
-    } else {
-        // Visible bottom tab bar with light style. It's light enough so it doesn't need a border.
+    }
+    if ([self anyFullScreen] ||
+        self.windowType == WINDOW_TYPE_BOTTOM) {
         return NO;
     }
+    if (!bottomTabBar) {
+        // Nothing on the bottom, so need a border.
+        return YES;
+    }
+    if (!tabBarVisible) {
+        // Invisible bottom tab bar
+        return YES;
+    }
+    if (@available(macOS 10.14, *)) {} else {
+        if (self.isDark) {
+            // Dark tab style needs a border on 10.13 and earlier
+            return YES;
+        }
+    }
+    // Visible bottom tab bar with light style. It's light enough so it doesn't need a border.
+    return NO;
 }
 
 - (BOOL)haveTopBorder {
