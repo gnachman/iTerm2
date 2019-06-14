@@ -425,6 +425,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermBuiltInFunctions *_methods;
 
     BOOL _anyPaneIsTransparent;
+    BOOL _windowDidResize;
 }
 
 @synthesize scope = _scope;
@@ -4082,6 +4083,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     PtyLog(@"%@", [NSThread callStackSymbols]);
+    _windowDidResize = YES;
 
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
@@ -7559,7 +7561,26 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     DLog(@"Set window frame to %@", NSStringFromRect(frame));
+    
+    self.contentView.autoresizesSubviews = NO;
+    _windowDidResize = NO;
+    DLog(@"Call self.window.setFrame:%@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
+    self.contentView.autoresizesSubviews = YES;
+    if (_windowDidResize) {
+        // This is mostly paranoia. Showing or hiding the tabbar causes this
+        // method to be called. When the window is resized, the tabbar hasn't
+        // been added yet so everything grows because of autoresizing. Then,
+        // windowDidResize: gets called and it does layoutSubviews. That causes
+        // everything to return to the proper size. In order to avoid this
+        // problem, I want the layout to be updated explicitly via
+        // layoutSubviews only. That *ought* to happen in windowDidResize:. But
+        // I do not trust Cocoa, so this is a backstop to ensure we don't end
+        // up with a screwy layout in case it doesn't get called in som edge
+        // case.
+        DLog(@"Using backstop - windowDidResize DID NOT RUN");
+        [self repositionWidgets];
+    }
 
     if (bugFixView) {
         // Restore _contentView.tabView's autoresizingMask and remove the stupid bugFixView.
