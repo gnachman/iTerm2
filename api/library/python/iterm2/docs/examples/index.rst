@@ -26,6 +26,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`mousemode` — Demonstrates a status bar component that responds to changes in a variable.
 
+:doc:`gmtclock` - Demonstrates a status bar component that shows the current time in the GMT time zone.
+
 ----
 
 **Tmux**
