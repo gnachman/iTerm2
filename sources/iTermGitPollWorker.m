@@ -223,7 +223,11 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)killScript {
-    DLog(@"KILL command runner %@", self->_commandRunner);
+    if (!_commandRunner) {
+        DLog(@"Command runner is already nil, doing nothing.");
+        return;
+    }
+    DLog(@"KILL command runner %@", _commandRunner);
     DLog(@"killing wedged git poller script");
     [_terminatingCommandRunners addObject:_commandRunner];
     [_commandRunner terminate];
