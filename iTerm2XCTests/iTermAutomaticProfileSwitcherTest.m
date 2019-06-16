@@ -356,6 +356,13 @@
     XCTAssert([_profile isEqualToProfile:[self profileHostIterm]]);
 }
 
+- (void)testUserNameWithAtSign {
+    Profile *profile = @{ KEY_NAME: @"Default", KEY_GUID: @"200", KEY_BOUND_HOSTS: @[ @"hostname*" ] };
+    _allProfiles = @[ self.profileUserGeorge, profile ];
+    [_aps setHostname:@"hostname.com" username:@"user@example.com" path:@"/" job:@"whatever"];
+    XCTAssert([_profile isEqualToProfile:profile]);
+}
+
 #pragma mark - iTermAutomaticProfileSwitcherDelegate
 
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {

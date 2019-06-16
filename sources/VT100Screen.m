@@ -3563,7 +3563,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
     DLog(@"Set remote host to %@ %@", remoteHost, self);
-    NSRange atRange = [remoteHost rangeOfString:@"@"];
+    // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
+    NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
     NSString *user = nil;
     NSString *host = nil;
     if (atRange.length == 1) {
