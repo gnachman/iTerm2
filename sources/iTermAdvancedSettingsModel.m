@@ -323,6 +323,7 @@ DEFINE_BOOL(showHintsInSplitPaneMenuItems, NO, SECTION_GENERAL @"Show hints in s
 DEFINE_BOOL(useOldStyleDropDownViews, NO, SECTION_GENERAL @"Use old-style find and paste progress indicator views.\nThis change will only affect new windows.");
 DEFINE_BOOL(loadFromFindPasteboard, YES, SECTION_GENERAL @"Synchronize search queries across windows and applications.\nNormally, when you enter a search query in a Find field all find fields in all applications get updated to hold the same value. This is utter nonsense, and can be disabled by setting this preference to No.");
 DEFINE_STRING(dynamicProfilesPath, @"", SECTION_GENERAL @"Path to folder with dynamic profiles.\nWhen empty, ~/Library/Application Support/iTerm2/DynamicProfiles will be used. You must restart iTerm2 after modifying this setting.");
+DEFINE_STRING(gitSearchPath, @"", SECTION_GENERAL @"$PATH used when running git for the status bar component.\nChange this to use a custom install of git. You must restart iTerm2 for a change here to take effect.");
 
 #pragma mark - Drawing
 

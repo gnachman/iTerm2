@@ -8,6 +8,7 @@
 #import "iTermGitPollWorker.h"
 
 #import "DebugLogging.h"
+
 #import "iTermCommandRunner.h"
 #import "iTermGitCache.h"
 #import "iTermTuple.h"
@@ -138,6 +139,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
                                                                  error:nil] componentsSeparatedByString:@"\n"] componentsJoinedByString:@" "];
         assert(sandboxConfig.length > 0);
         _commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/usr/bin/sandbox-exec" withArguments:@[ @"-p", sandboxConfig, script ] path:@"/"];
+        [_commandRunner loadPathForGit];
         if (_commandRunner) {
             gNumberOfCommandRunners++;
             DLog(@"Incremented number of command runners to %@", @(gNumberOfCommandRunners));

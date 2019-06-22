@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "FontSizeEstimator.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermGitPoller.h"
@@ -429,12 +430,22 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     }];
 }
 
+- (NSString *)pathToGit {
+    NSString *custom = [iTermAdvancedSettingsModel gitSearchPath];
+    NSString *path = [[custom componentsSeparatedByString:@":"] firstObject];
+    if (path.length) {
+        return [path stringByAppendingPathComponent:@"git"];
+    }
+    return @"/usr/bin/git";
+}
+
 - (void)runGitCommandWithArguments:(NSArray<NSString *> *)args
                            timeout:(NSTimeInterval)timeout
                         completion:(void (^)(NSString * _Nullable output, int status))completion {
-    iTermBufferedCommandRunner *runner = [[iTermBufferedCommandRunner alloc] initWithCommand:@"/usr/bin/git"
+    iTermBufferedCommandRunner *runner = [[iTermBufferedCommandRunner alloc] initWithCommand:[self pathToGit]
                                                                                withArguments:args
                                                                                         path:_gitPoller.currentDirectory];
+
     __weak iTermBufferedCommandRunner *weakRunner = runner;
     runner.completion = ^(int status) {
         iTermBufferedCommandRunner *strongRunner = weakRunner;
@@ -516,7 +527,7 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     [self showPopover];
     NSMenuItem *menuItem = sender;
     iTermGitMenuItemContext *context = menuItem.representedObject;
-    _logRunner = [[iTermCommandRunner alloc] initWithCommand:@"/usr/bin/git"
+    _logRunner = [[iTermCommandRunner alloc] initWithCommand:[self pathToGit]
                                                withArguments:args
                                                         path:context.directory];
     iTermTextPopoverViewController *popoverVC = _popoverVC;

@@ -100,6 +100,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (BOOL)fullHeightCursor;
++ (NSString *)gitSearchPath;
 + (BOOL)hideStuckTooltips;
 + (double)hotKeyDoubleTapMaxDelay;
 + (double)hotKeyDoubleTapMinDelay;

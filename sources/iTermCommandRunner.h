@@ -14,6 +14,7 @@
 @property (nonatomic, copy) NSString *currentDirectoryPath;
 @property (nonatomic, copy) void (^completion)(int);
 @property (nonatomic, copy) void (^outputHandler)(NSData *);
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *environment;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
@@ -35,6 +36,9 @@
 - (void)runWithTimeout:(NSTimeInterval)timeout;
 - (void)write:(NSData *)data completion:(void (^)(size_t, int))completion;
 - (void)terminate;
+
+// You can configure a special git path in advanced prefs. Call this to update $PATH.
+- (void)loadPathForGit;
 
 @end
 
