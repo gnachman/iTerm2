@@ -76,11 +76,15 @@
                responseTarget:self
              responseSelector:@selector(didFetch:)
                responseObject:nil
-                        flags:0];
+                        flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)didFetch:(NSString *)value {
     DLog(@"Did fetch %@", value);
+    if (!value) {
+        // Probably the pane went away and we'll be dealloced soon.
+        return;
+    }
     _haveOutstandingRequest = NO;
     [self.scope setValue:value forVariableNamed:_variableName];
     if (_block) {

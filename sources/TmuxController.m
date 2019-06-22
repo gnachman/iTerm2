@@ -792,6 +792,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+- (void)ping {
+    [gateway_ sendCommand:@"display-message -p -F ."
+           responseTarget:self
+         responseSelector:@selector(handlePingResponse:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)handlePingResponse:(NSString *)ignore {
+}
+
 // Make sure that current tmux options are compatible with iTerm.
 - (void)validateOptions
 {

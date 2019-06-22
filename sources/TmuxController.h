@@ -103,6 +103,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)windowDidResize:(NSWindowController<iTermWindowController> *)term;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
+- (void)ping;
 
 // Issue tmux commands to infer bounds on the version.
 - (void)guessVersion;
