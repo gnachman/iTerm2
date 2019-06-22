@@ -47,8 +47,14 @@
 @interface CPKColorWell() <CPKColorWellViewDelegate>
 @end
 
+@interface NSColorPanel (Private)
+- (id)__target;
+@end
+
+
 @implementation CPKColorWellView {
     NSPoint _mouseDownLocation;
+    BOOL _haveSetColorPanelTarget;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -65,6 +71,22 @@
         [self colorWellViewCommonInit];
     }
     return self;
+}
+
+- (void)dealloc {
+    NSColorPanel *panel = [NSColorPanel sharedColorPanel];
+    if (_haveSetColorPanelTarget) {
+        // NSColorPanel holds an unsafe unretained reference to its target.
+        // See https://bugs.chromium.org/p/chromium/issues/detail?id=767598
+        // (╯°□°)╯︵ ┻━┻
+        BOOL respondsToPrivateTargetMethod =
+        [panel respondsToSelector:@selector(__target)];
+        if (respondsToPrivateTargetMethod &&
+            [panel __target] == self) {
+            panel.target = nil;
+            panel.action = nil;
+        }
+    }
 }
 
 - (void)colorWellViewCommonInit {
@@ -231,6 +253,7 @@
     colorPanel.accessoryView = container;
 
     [colorPanel setTarget:self];
+    _haveSetColorPanelTarget = YES;
     [colorPanel setAction:@selector(colorPanelColorDidChange:)];
     [colorPanel orderFront:nil];
     colorPanel.showsAlpha = self.alphaAllowed;
