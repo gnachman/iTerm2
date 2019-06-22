@@ -152,7 +152,11 @@ static void iTermPowerManagerSourceDidChange(void *context) {
 
     number = (CFNumberRef)CFDictionaryGetValue(info, CFSTR(kIOPSCurrentCapacityKey));
     int percentage = -1;
-    CFNumberGetValue(number, kCFNumberIntType, &percentage);
+    if (number) {
+        CFNumberGetValue(number, kCFNumberIntType, &percentage);
+    } else {
+        percentage = 100;
+    }
 
     iTermPowerState *state = [[iTermPowerState alloc] init];
     if ((CFBooleanRef)CFDictionaryGetValue(info, CFSTR(kIOPSIsChargingKey)) == kCFBooleanTrue) {
@@ -163,7 +167,9 @@ static void iTermPowerManagerSourceDidChange(void *context) {
         number = (CFNumberRef)CFDictionaryGetValue(info, CFSTR(kIOPSTimeToEmptyKey));
     }
     int time = -1;
-    CFNumberGetValue(number, kCFNumberIntType, &time);
+    if (number) {
+        CFNumberGetValue(number, kCFNumberIntType, &time);
+    }
 
     state.powerStatus = (__bridge NSString *)CFDictionaryGetValue(info, CFSTR(kIOPSPowerSourceStateKey));
     state.percentage = @(percentage);
