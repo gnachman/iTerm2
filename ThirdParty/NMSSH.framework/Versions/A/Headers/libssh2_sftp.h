@@ -79,6 +79,9 @@ typedef struct _LIBSSH2_SFTP_STATVFS        LIBSSH2_SFTP_STATVFS;
 #define LIBSSH2_SFTP_READLINK           1
 #define LIBSSH2_SFTP_REALPATH           2
 
+/* Flags for sftp_mkdir() */
+#define LIBSSH2_SFTP_DEFAULT_MODE      -1
+
 /* SFTP attribute flag bits */
 #define LIBSSH2_SFTP_ATTR_SIZE              0x00000001
 #define LIBSSH2_SFTP_ATTR_UIDGID            0x00000002
@@ -221,12 +224,13 @@ LIBSSH2_API unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp);
 LIBSSH2_API LIBSSH2_CHANNEL *libssh2_sftp_get_channel(LIBSSH2_SFTP *sftp);
 
 /* File / Directory Ops */
-LIBSSH2_API LIBSSH2_SFTP_HANDLE *libssh2_sftp_open_ex(LIBSSH2_SFTP *sftp,
-                                                      const char *filename,
-                                                      unsigned int filename_len,
-                                                      unsigned long flags,
-                                                      long mode, int open_type);
-#define libssh2_sftp_open(sftp, filename, flags, mode) \
+LIBSSH2_API LIBSSH2_SFTP_HANDLE *
+libssh2_sftp_open_ex(LIBSSH2_SFTP *sftp,
+                     const char *filename,
+                     unsigned int filename_len,
+                     unsigned long flags,
+                     long mode, int open_type);
+#define libssh2_sftp_open(sftp, filename, flags, mode)                  \
     libssh2_sftp_open_ex((sftp), (filename), strlen(filename), (flags), \
                          (mode), LIBSSH2_SFTP_OPENFILE)
 #define libssh2_sftp_opendir(sftp, path) \
@@ -328,7 +332,8 @@ LIBSSH2_API int libssh2_sftp_symlink_ex(LIBSSH2_SFTP *sftp,
                                         const char *path,
                                         unsigned int path_len,
                                         char *target,
-                                        unsigned int target_len, int link_type);
+                                        unsigned int target_len,
+                                        int link_type);
 #define libssh2_sftp_symlink(sftp, orig, linkpath) \
     libssh2_sftp_symlink_ex((sftp), (orig), strlen(orig), (linkpath), \
                             strlen(linkpath), LIBSSH2_SFTP_SYMLINK)
