@@ -25,6 +25,7 @@
 - (BOOL)haveBottomBorder;
 - (BOOL)haveLeftBorder;
 - (BOOL)haveRightBorder;
+- (BOOL)haveRightBorderRegardlessOfScrollBar;
 - (BOOL)anyFullScreen;
 - (BOOL)tabBarAlwaysVisible;
 - (NSEdgeInsets)tabBarInsets;

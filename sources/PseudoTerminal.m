@@ -8398,14 +8398,22 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             windowTypeCompatibleWithTopBorder);
 }
 
-- (BOOL)haveRightBorder {
+- (BOOL)haveRightBorderRegardlessOfScrollBar {
     if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
                self.windowType == WINDOW_TYPE_RIGHT ) {
         return NO;
-    } else if (![[[[self currentSession] view] scrollview] isLegacyScroller] ||
-               ![self scrollbarShouldBeVisible]) {
+    }
+    return YES;
+}
+
+- (BOOL)haveRightBorder {
+    if (![self haveRightBorderRegardlessOfScrollBar]) {
+        return NO;
+    }
+    if (![[[[self currentSession] view] scrollview] isLegacyScroller] ||
+        ![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
     } else {
@@ -8448,7 +8456,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if ([self haveBottomBorder]) {
         ++decorationSize.height;
     }
-    if ([self haveTopBorder]) {
+    if ([self haveTopBorder] && ![self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
         ++decorationSize.height;
     }
     if (self.divisionViewShouldBeVisible) {

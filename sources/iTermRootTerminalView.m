@@ -434,7 +434,7 @@ typedef struct {
 
         const BOOL haveLeft = self.delegate.haveLeftBorder;
         const BOOL haveTop = self.delegate.haveTopBorder;
-        const BOOL haveRight = self.delegate.haveRightBorder;
+        const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
         const BOOL haveBottom = self.delegate.haveBottomBorder;
 
         if (haveLeft) {
@@ -870,7 +870,7 @@ typedef struct {
             decorationHeights.top += _tabBarControl.height;
         }
     }
-    if (_delegate.haveTopBorder) {
+    if (_delegate.haveTopBorder && ![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
         decorationHeights.top += 1;
     }
     if (_delegate.divisionViewShouldBeVisible) {
