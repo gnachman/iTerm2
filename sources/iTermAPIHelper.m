@@ -2022,7 +2022,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         sessions = [self allSessions];
     } else {
         PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
-        if (!session || session.exited) {
+        if (!session) {
             ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
             response.status = ITMSplitPaneResponse_Status_SessionNotFound;
             handler(response);
