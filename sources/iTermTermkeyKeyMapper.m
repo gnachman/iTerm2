@@ -468,6 +468,10 @@
     return [NSString stringWithCharacters:&controlCode length:1];
 }
 
+static BOOL CodePointInPrivateUseArea(unichar c) {
+    return c >= 0xE000 && c <= 0xF8FF;
+}
+
 - (NSString *)termkeySequenceForCodePoint:(unichar)codePoint
                                 modifiers:(NSEventModifierFlags)eventModifiers
                                   keyCode:(int)keyCode {
@@ -478,10 +482,11 @@
         return sequence;
     }
 
+    const NSEventModifierFlags maybeFunction = CodePointInPrivateUseArea(codePoint) ? NSEventModifierFlagFunction : 0;
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift |
-                                                        NSEventModifierFlagFunction);
+                                                        maybeFunction);
 
     // Special and very special keys
     // Function keys, arrows, and keypad in application keypad mode.
@@ -501,7 +506,7 @@
     // Modified unicode - control
     const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
                                                                NSEventModifierFlagOption |
-                                                               NSEventModifierFlagFunction);
+                                                               maybeFunction);
     if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagControl) {
         NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint shiftPressed:!!(eventModifiers & NSEventModifierFlagShift)];
         if (string) {
