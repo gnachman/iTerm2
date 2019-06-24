@@ -55,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                        dimOnlyText:(BOOL)dimOnlyText
                                              adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount;
 
+NS_ASSUME_NONNULL_END
 
 // Default text color for status bar.
 - (NSColor *)statusBarTextColorForEffectiveAppearance:(NSAppearance *)effectiveAppearance
@@ -63,5 +64,3 @@ NS_ASSUME_NONNULL_BEGIN
                                         mainAndActive:(BOOL)mainAndActive;
 
 @end
-
-NS_ASSUME_NONNULL_END
