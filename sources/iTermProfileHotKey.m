@@ -204,9 +204,10 @@ static NSString *const kArrangement = @"Arrangement";
              @(app.it_imeOpen));
         return NSFloatingWindowLevel;
     }
-    if ([NSApp keyWindow] != _windowController.window) {
+    NSWindow *const keyWindow = [NSApp keyWindow];
+    if (keyWindow != nil && keyWindow != _windowController.window) {
         DLog(@"Use normal window level. Key window is %@, my window is %@",
-             NSApp.keyWindow, _windowController.window);
+             keyWindow, _windowController.window);
         return NSNormalWindowLevel;
     }
     DLog(@"Use status window level (I am key, no detected panels are open)");
