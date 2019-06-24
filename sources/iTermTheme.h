@@ -57,10 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 // Default text color for status bar.
-- (NSColor *)statusBarTextColorForEffectiveAppearance:(NSAppearance *)effectiveAppearance
-                                             colorMap:(iTermColorMap *)colorMap
-                                             tabStyle:(id<PSMTabStyle>)tabStyle
-                                        mainAndActive:(BOOL)mainAndActive;
+- (nullable NSColor *)statusBarTextColorForEffectiveAppearance:(NSAppearance *)effectiveAppearance
+                                                      colorMap:(iTermColorMap *)colorMap
+                                                      tabStyle:(id<PSMTabStyle>)tabStyle
+                                                 mainAndActive:(BOOL)mainAndActive;
 
 @end
 
