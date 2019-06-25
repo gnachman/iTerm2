@@ -40,6 +40,7 @@
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
+@property(nonatomic, assign) VT100GridCoord preferredCursorPosition;
 
 // Serialized state, but excludes screen contents.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
@@ -194,7 +195,8 @@
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.
-- (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
+// Returns whether the cursor position was set.
+- (BOOL)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines;
 
@@ -255,6 +257,9 @@
 
 // Reset timestamps to the uninitialized state.
 - (void)resetTimestamps;
+
+// If there is a preferred cursor position that is legal, restore it.
+- (void)restorePreferredCursorPositionIfPossible;
 
 #pragma mark - Testing use only
 

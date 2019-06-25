@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "NSObject+iTerm.h"
 
 typedef struct {
     int x;
@@ -445,3 +446,31 @@ NS_INLINE BOOL VT100GridCoordInRect(VT100GridCoord coord, VT100GridRect rect) {
 VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
                                     int width);
+
+NS_INLINE NSDictionary *VT100GridCoordToDictionary(VT100GridCoord coord) {
+    return @{ @"x": @(coord.x), @"y": @(coord.y) };
+}
+
+NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary *dict, VT100GridCoord *coord) {
+    if (!dict) {
+        return NO;
+    }
+
+    if (![dict isKindOfClass:[NSDictionary class]]) {
+        return NO;
+    }
+
+    NSNumber *x = [NSNumber castFrom:dict[@"x"]];
+    if (!x) {
+        return NO;
+    }
+
+    NSNumber *y = [NSNumber castFrom:dict[@"y"]];
+    if (!y) {
+        return NO;
+    }
+
+    *coord = VT100GridCoordMake(x.intValue, y.intValue);
+    return YES;
+}
+

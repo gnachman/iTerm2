@@ -58,6 +58,7 @@ static NSString *const kGridSizeKey = @"Size";
         [self setSize:size];
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
         scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
+        _preferredCursorPosition = VT100GridCoordMake(-1, -1);
     }
     return self;
 }
@@ -1316,7 +1317,7 @@ static NSString *const kGridSizeKey = @"Size";
                             adjustedLength);
 }
 
-- (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
+- (BOOL)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines {
     // Move scrollback lines into screen
@@ -1381,6 +1382,7 @@ static NSString *const kGridSizeKey = @"Size";
         }
         --destLineNumber;
     }
+    return foundCursor;
 }
 
 
@@ -1649,6 +1651,17 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)resetTimestamps {
     for (VT100LineInfo *info in lineInfos_) {
         info.timestamp = 0;
+    }
+}
+
+- (void)restorePreferredCursorPositionIfPossible {
+    if (_preferredCursorPosition.x >= 0 &&
+        _preferredCursorPosition.y >= 0 &&
+        _preferredCursorPosition.x <= size_.width &&
+        _preferredCursorPosition.y < size_.height) {
+        DLog(@"Restore preferred cursor position to %@", VT100GridCoordDescription(_preferredCursorPosition));
+        self.cursor = _preferredCursorPosition;
+        _preferredCursorPosition = VT100GridCoordMake(-1, -1);
     }
 }
 

@@ -58,6 +58,7 @@ NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
 NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
 NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 NSString *const kScreenStateNumberOfLinesDroppedKey = @"Number of Lines Dropped";
+NSString *const kScreenStateCursorCoord = @"Cursor Coord";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -5378,7 +5379,6 @@ static void SwapInt(int *a, int *b) {
     }
     [currentGrid_ appendLines:numLines toLineBuffer:temp];
     NSMutableDictionary *dict = [[[temp dictionary] mutableCopy] autorelease];
-    static NSString *const kScreenStateTabStopsKey = @"Tab Stops";
     dict[kScreenStateKey] =
         [@{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
             kScreenStateTerminalKey: [terminal_ stateDictionary] ?: @{},
@@ -5400,7 +5400,8 @@ static void SwapInt(int *a, int *b) {
             kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
             kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: @{},
             kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
-            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
+            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity),
+            kScreenStateCursorCoord: VT100GridCoordToDictionary(primaryGrid_.cursor),
             } dictionaryByRemovingNullValues];
     return dict;
 }
@@ -5457,13 +5458,35 @@ static void SwapInt(int *a, int *b) {
     }
     int linesRestored = MIN(MAX(0, maxLinesToRestore),
                             [lineBuffer numLinesWithWidth:self.width]);
-    [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
-                              withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:linesRestored];
+    BOOL setCursorPosition = [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
+                                                       withDefaultChar:[currentGrid_ defaultChar]
+                                                     maxLinesToRestore:linesRestored];
     DLog(@"appendFromDictionary: Grid size is %dx%d", currentGrid_.size.width, currentGrid_.size.height);
     DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
-    currentGrid_.cursorY = linesRestored + 1;
-    currentGrid_.cursorX = 0;
+    DLog(@"setCursorPosition=%@", @(setCursorPosition));
+    if (!setCursorPosition) {
+        VT100GridCoord coord;
+        if (VT100GridCoordFromDictionary(screenState[kScreenStateCursorCoord], &coord)) {
+            // The initial size of this session might be smaller than its eventual size.
+            // Save the coord because after the window is set to its correct size it might be
+            // possible to place the cursor in this position.
+            currentGrid_.preferredCursorPosition = coord;
+            DLog(@"Save preferred cursor position %@", VT100GridCoordDescription(coord));
+            if (coord.x >= 0 &&
+                coord.y >= 0 &&
+                coord.x <= self.width &&
+                coord.y < self.height) {
+                DLog(@"Also set the cursor to this position");
+                currentGrid_.cursor = coord;
+                setCursorPosition = YES;
+            }
+        }
+    }
+    if (!setCursorPosition) {
+        DLog(@"Place the cursor on the first column of the last line");
+        currentGrid_.cursorY = linesRestored + 1;
+        currentGrid_.cursorX = 0;
+    }
 
     // Reduce line buffer's max size to not include the grid height. This is its final state.
     [lineBuffer setMaxLines:maxScrollbackLines_];

@@ -2855,6 +2855,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self fitTabsToWindow];
+
+    // Sessions were created at the wrong size, which means they might not have been able to position
+    // their cursors where they needed to be. Move the cursors to their rightful places. See the
+    // comment where preferredCursorPosition is set for more details.
+    for (PTYSession *session in self.allSessions) {
+        DLog(@"restore preferred cursor position for %@", session);
+        [session.screen.currentGrid restorePreferredCursorPositionIfPossible];
+    }
     [_contentView updateToolbeltForWindow:self.window];
     return YES;
 }
