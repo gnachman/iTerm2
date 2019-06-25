@@ -54,6 +54,7 @@
 @property(nonatomic, assign) BOOL keypadMode;  // YES=application, NO=numeric
 - (void)forceSetKeypadMode:(BOOL)mode;  // ignores allowKeypadMode
 @property(nonatomic, assign) BOOL allowKeypadMode;
+@property(nonatomic, assign) BOOL allowPasteBracketing;
 
 // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
 @property(nonatomic, assign) BOOL bracketedPasteMode;

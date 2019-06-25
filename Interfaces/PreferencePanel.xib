@@ -1269,7 +1269,6 @@ DQ
                 <outlet property="_hideMenuBarInFullscreen" destination="awA-hH-ziY" id="CDd-B7-fbl"/>
                 <outlet property="_hideScrollbar" destination="4561" id="I02-gk-NqP"/>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
-                <outlet property="_tabsHaveCloseButtons" destination="1dE-aB-uR8" id="SWy-mD-56q"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PIE-R6-5sO"/>
                 <outlet property="_perPaneStatusBars" destination="rf8-fE-qJb" id="76w-3w-lRJ"/>
                 <outlet property="_preserveWindowSizeWhenTabBarVisibilityChanges" destination="vJk-74-qzt" id="UoO-2M-VxB"/>
@@ -1286,6 +1285,7 @@ DQ
                 <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
                 <outlet property="_tabStyleLabel" destination="ThU-HR-f8F" id="cJn-Ll-T5a"/>
                 <outlet property="_tabView" destination="W2g-ef-8zn" id="vt5-hg-gLc"/>
+                <outlet property="_tabsHaveCloseButtons" destination="1dE-aB-uR8" id="SWy-mD-56q"/>
                 <outlet property="_uiElement" destination="zde-kb-c7t" id="kdn-MM-Kyo"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="view" destination="yCt-fi-XI9" id="KeB-DX-cn6"/>
@@ -1580,6 +1580,7 @@ DQ
         </customObject>
         <customObject id="gMD-DK-gev" userLabel="Prefs&gt;Profiles&gt;Terminal View Controller" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
+                <outlet property="_allowPasteBracketing" destination="4Ha-Ub-4AS" id="0m4-El-bQ1"/>
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
                 <outlet property="_answerBackString" destination="tcJ-V2-9Fd" id="wc8-xa-PRR"/>
                 <outlet property="_answerBackStringLabel" destination="Fzk-rB-88j" id="xcc-hw-dLN"/>
@@ -3266,7 +3267,7 @@ DQ
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" id="2390">
-                    <rect key="frame" x="166" y="370" width="331" height="26"/>
+                    <rect key="frame" x="166" y="370" width="377" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -3319,7 +3320,7 @@ DQ
                     </connections>
                 </textField>
                 <comboBox verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2405">
-                    <rect key="frame" x="168" y="342" width="329" height="26"/>
+                    <rect key="frame" x="168" y="342" width="375" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
                         <font key="font" metaFont="system"/>
@@ -3394,7 +3395,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="tcJ-V2-9Fd" userLabel="ENQ Answer Back text field">
-                    <rect key="frame" x="168" y="317" width="326" height="22"/>
+                    <rect key="frame" x="168" y="317" width="372" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="UkZ-8d-b91">
                         <font key="font" metaFont="system"/>
@@ -3407,7 +3408,7 @@ DQ
                     </connections>
                 </textField>
                 <button id="2397">
-                    <rect key="frame" x="19" y="196" width="164" height="18"/>
+                    <rect key="frame" x="19" y="178" width="164" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3431,7 +3432,7 @@ DQ
                     </connections>
                 </button>
                 <button id="2403">
-                    <rect key="frame" x="283" y="176" width="160" height="18"/>
+                    <rect key="frame" x="283" y="158" width="160" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3443,7 +3444,7 @@ DQ
                     </connections>
                 </button>
                 <button id="3553">
-                    <rect key="frame" x="283" y="196" width="122" height="18"/>
+                    <rect key="frame" x="283" y="178" width="122" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3455,9 +3456,9 @@ DQ
                     </connections>
                 </button>
                 <button id="2404">
-                    <rect key="frame" x="19" y="176" width="258" height="18"/>
+                    <rect key="frame" x="19" y="158" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Send Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
+                    <buttonCell key="cell" type="check" title="Notification Center Alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -3467,7 +3468,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2438">
-                    <rect key="frame" x="18" y="220" width="136" height="17"/>
+                    <rect key="frame" x="18" y="202" width="136" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Notifications" id="2439">
                         <font key="font" metaFont="systemBold"/>
@@ -3574,7 +3575,7 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" id="ZMH-MS-a4p">
-                    <rect key="frame" x="35" y="146" width="87" height="28"/>
+                    <rect key="frame" x="193" y="151" width="87" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Filter Alerts" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7Pi-Gm-UyI">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3618,6 +3619,17 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="gMD-DK-gev" id="90k-i4-YmX"/>
                         <outlet property="nextKeyView" destination="5081" id="HbF-m4-ezb"/>
+                    </connections>
+                </button>
+                <button toolTip="This may be a security risk in an untrusted environment, especially if the terminal can set the title." id="4Ha-Ub-4AS">
+                    <rect key="frame" x="21" y="233" width="251" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Terminal may enable paste bracketing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="s2Z-za-TW8">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="iUk-Ja-UUi"/>
                     </connections>
                 </button>
             </subviews>

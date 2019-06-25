@@ -173,6 +173,7 @@
 #define KEY_UNICODE_VERSION                   @"Unicode Version"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
+#define KEY_ALLOW_PASTE_BRACKETING            @"Allow Paste Bracketing"
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"

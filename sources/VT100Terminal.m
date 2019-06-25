@@ -58,6 +58,7 @@ NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
 NSString *const kTerminalStateCursorModeKey = @"Cursor Mode";
 NSString *const kTerminalStateKeypadModeKey = @"Keypad Mode";
 NSString *const kTerminalStateAllowKeypadModeKey = @"Allow Keypad Mode";
+NSString *const kTerminalStateAllowPasteBracketing = @"Allow Paste Bracketing";
 NSString *const kTerminalStateBracketedPasteModeKey = @"Bracketed Paste Mode";
 NSString *const kTerminalStateAnsiModeKey = @"ANSI Mode";
 NSString *const kTerminalStateNumLockKey = @"Numlock";
@@ -237,6 +238,7 @@ static const int kMaxScreenRows = 4096;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
+        _allowPasteBracketing = YES;
 
         numLock_ = YES;
         [self saveCursor];  // initialize save area
@@ -668,7 +670,7 @@ static const int kMaxScreenRows = 4096;
 
             case 2004:
                 // Set bracketed paste mode
-                self.bracketedPasteMode = mode;
+                self.bracketedPasteMode = mode && self.allowPasteBracketing;
                 break;
 
         }
@@ -2973,6 +2975,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateKeypadModeKey: @(self.keypadMode),
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
+           kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
            kTerminalStateAnsiModeKey: @(ansiMode_),
            kTerminalStateNumLockKey: @(numLock_),
@@ -3021,6 +3024,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
+    self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];
     self.url = [dict[kTerminalStateURL] nilIfNull];
     self.urlParams = [dict[kTerminalStateURLParams] nilIfNull];
 

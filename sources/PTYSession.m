@@ -3641,6 +3641,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
                                                               inProfile:aDict]];
+    const BOOL didAllowPasteBracketing = _terminal.allowPasteBracketing;
+    [_terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
+                                                                 inProfile:aDict]];
+    if (didAllowPasteBracketing && !_terminal.allowPasteBracketing) {
+        // If the user flips the setting off, disable bracketed paste.
+        _terminal.bracketedPasteMode = NO;
+    }
     [_terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
                                                             inProfile:aDict]];
     [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
@@ -5597,8 +5604,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_shell hasCoprocess];
 }
 
-- (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
-{
+- (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
+    DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
     coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
