@@ -2786,7 +2786,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_shortLivedSingleUse) {
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
         [self appendBrokenPipeMessage:@"Finished"];
-        [_delegate closeSession:self];
+        // restart is not respected here because it doesn't make sense and would make for an awful bug.
+        if (self.endAction == iTermSessionEndActionClose) {
+            [_delegate closeSession:self];
+        }
         return;
     }
     if (self.tmuxMode == TMUX_GATEWAY) {

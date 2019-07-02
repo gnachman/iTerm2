@@ -125,7 +125,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 @property (nonatomic, readonly) NSFileManager *fileManager;
 
 // Tests can subclass and override these methods to avoid interacting with the filesystem.
-- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments wait:(BOOL)wait;
+- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments completion:(void (^)(void))completion;
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path;
 - (BOOL)openFile:(NSString *)fullPath;
 - (BOOL)openURL:(NSURL *)url;

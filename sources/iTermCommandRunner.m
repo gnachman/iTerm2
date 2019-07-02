@@ -260,12 +260,23 @@
 
 - (void)didReadData:(NSData *)inData {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (!self->_output) {
-            self->_output = [NSMutableData data];
-        }
-        [self->_output appendData:inData];
+        [self saveData:inData];
     });
     [super didReadData:inData];
+}
+
+- (void)saveData:(NSData *)inData {
+    if (!_output) {
+        _output = [NSMutableData data];
+    }
+    if (_truncated) {
+        return;
+    }
+    [_output appendData:inData];
+    if (_maximumOutputSize && _output.length > _maximumOutputSize.unsignedIntegerValue) {
+        _output.length = _maximumOutputSize.unsignedIntegerValue;
+        _truncated = YES;
+    }
 }
 
 @end

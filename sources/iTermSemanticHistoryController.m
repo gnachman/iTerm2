@@ -27,6 +27,8 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCachingFileManager.h"
+#import "iTermCommandRunner.h"
+#import "iTermController.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermLaunchServices.h"
@@ -35,9 +37,11 @@
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermVariableScope.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "RegexKitLite.h"
@@ -55,10 +59,19 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 @implementation iTermSemanticHistoryController {
     iTermExpressionEvaluator *_expressionEvaluator;
+    NSMutableArray<iTermCommandRunner *> *_commandRunners;
 }
 
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _commandRunners = [NSMutableArray array];
+    }
+    return self;
+}
 
 - (NSString *)cleanedUpPathFromPath:(NSString *)path
                              suffix:(NSString *)suffix
@@ -199,7 +212,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
     DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, args);
-    [self launchTaskWithPath:executable arguments:args wait:NO];
+    [self launchTaskWithPath:executable arguments:args completion:nil];
 }
 
 - (void)launchVSCodeWithPath:(NSString *)path {
@@ -214,7 +227,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
         if ([self.fileManager fileExistsAtPath:codeExecutable]) {
             DLog(@"Launch VSCode %@ %@", codeExecutable, path);
-            [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] wait:NO];
+            [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] completion:nil];
         } else {
             // This isn't as good as opening "code -g" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running VSCode.  We can't
@@ -256,7 +269,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     // Normally it will fail unless you've enabled the daemon.
     [self launchTaskWithPath:emacsClient
                    arguments:[@[ @"-n", @"-a", fallback, args] flattenedArray]
-                        wait:NO];
+                  completion:nil];
 
 }
 
@@ -276,7 +289,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             [bundlePath stringByAppendingPathComponent:@"Contents/SharedSupport/bin/subl"];
         if ([self.fileManager fileExistsAtPath:sublExecutable]) {
             DLog(@"Launch sublime text %@ %@", sublExecutable, path);
-            [self launchTaskWithPath:sublExecutable arguments:@[ path ] wait:NO];
+            [self launchTaskWithPath:sublExecutable arguments:@[ path ] completion:nil];
         } else {
             // This isn't as good as opening "subl" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
@@ -379,11 +392,85 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
 }
 
-- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments wait:(BOOL)wait {
-    NSTask *task = [NSTask launchedTaskWithLaunchPath:path arguments:arguments];
-    if (wait) {
-        [task waitUntilExit];
+- (void)launchTaskWithPath:(NSString *)path
+                 arguments:(NSArray *)arguments
+                completion:(void (^)(void))completion {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __weak __typeof(self) weakSelf = self;
+    [self _launchTaskWithPath:path arguments:arguments completion:^(iTermBufferedCommandRunner *runner, int status) {
+        [weakSelf didFinishCommand:[@[path ?: @""] arrayByAddingObjectsFromArray:arguments]
+                        withStatus:status
+                            runner:runner];
+        dispatch_group_leave(group);
+    }];
+    if (completion) {
+        dispatch_group_notify(group, dispatch_get_main_queue(), completion);
     }
+}
+
+- (void)didFinishCommand:(NSArray *)parts
+              withStatus:(int)status
+                  runner:(iTermBufferedCommandRunner *)runner {
+    [_commandRunners removeObject:runner];
+    DLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(_commandRunners.count));
+    if (!status) {
+        return;
+    }
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = [NSString stringWithFormat:@"The following command returned a non-zero exit code:\n\n“%@”",
+                     [parts componentsJoinedByString:@" "]];
+    warning.heading = @"Semantic History Command Failed";
+    static const iTermSingleUseWindowOptions options = iTermSingleUseWindowOptionsShortLived;
+    NSMutableData *inject = [runner.output mutableCopy];
+    NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;[output truncated]\n", 27];
+    if (runner.truncated) {
+        [inject appendData:[truncationWarning dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+    [inject it_replaceOccurrencesOfData:[NSData dataWithBytes:"\n" length:1]
+                               withData:[NSData dataWithBytes:"\r\n" length:2]];
+    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
+                                [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
+                                    [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
+                                                                                              inject:inject
+                                                                                         environment:nil
+                                                                                                 pwd:@"/"
+                                                                                             options:options
+                                                                                          completion:nil];
+                                }] ];
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    NSString *name;
+    if ([parts[0] isEqualToString:@"/bin/sh"] && [parts[1] isEqualToString:@"-c"] && parts.count > 2) {
+        name = parts[2];
+    } else {
+        name = parts[0];
+    }
+    warning.identifier = [@"NoSyncSemanticHistoryCommandFailed_" stringByAppendingString:name];
+    [warning runModal];
+}
+
+- (void)_launchTaskWithPath:(NSString *)path
+                  arguments:(NSArray *)arguments
+                 completion:(void (^)(iTermBufferedCommandRunner *runner, int status))completion {
+    iTermBufferedCommandRunner *runner =
+    [[iTermBufferedCommandRunner alloc] initWithCommand:path
+                                          withArguments:arguments
+                                                   path:[[NSFileManager defaultManager] currentDirectoryPath]];
+    DLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
+    runner.maximumOutputSize = @(1024 * 10);
+    __weak __typeof(runner) weakRunner = runner;
+    __weak __typeof(self) weakSelf = self;
+    runner.completion = ^(int status) {
+        __strong __typeof(runner) strongRunner = weakRunner;
+        __strong __typeof(self) strongSelf = weakSelf;
+        DLog(@"Command finished");
+        if (strongSelf && strongRunner) {
+            [strongSelf->_commandRunners removeObject:strongRunner];
+            completion(strongRunner, status);
+        }
+    };
+    [_commandRunners addObject:runner];
+    [runner run];
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
@@ -461,11 +548,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch raw action: /bin/sh -c %@", evaluator.value);
-            if (!evaluator.error) {
-                [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
+            if (evaluator.error) {
+                completion(YES);
+                return;
             }
+            [weakSelf launchTaskWithPath:@"/bin/sh"
+                               arguments:@[ @"-c", evaluator.value ?: @"" ]
+                               completion:^{
+                                   completion(YES);
+                               }];
         }];
-        completion(YES);
         return;
     }
 
@@ -480,10 +572,15 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Running /bin/sh -c %@", evaluator.value);
-            if (!evaluator.error) {
-                [weakSelf launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", evaluator.value ?: @"" ] wait:YES];
+            if (evaluator.error) {
                 completion(YES);
+                return;
             }
+            [weakSelf launchTaskWithPath:@"/bin/sh"
+                               arguments:@[ @"-c", evaluator.value ?: @"" ]
+                              completion:^{
+                                  completion(YES);
+                              }];
         }];
         return;
     }
@@ -492,10 +589,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch coprocess with script %@", evaluator.value);
-            if (!evaluator.error) {
-                [weakSelf.delegate semanticHistoryLaunchCoprocessWithCommand:evaluator.value];
+            if (evaluator.error) {
                 completion(YES);
             }
+            [weakSelf.delegate semanticHistoryLaunchCoprocessWithCommand:evaluator.value];
+            completion(YES);
         }];
         return;
     }

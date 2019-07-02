@@ -45,5 +45,7 @@
 // Saves all data read into output.
 @interface iTermBufferedCommandRunner : iTermCommandRunner
 @property (nonatomic, readonly) NSData *output;
+@property (nonatomic, strong) NSNumber *maximumOutputSize;
+@property (nonatomic, readonly) BOOL truncated;
 @end
 
