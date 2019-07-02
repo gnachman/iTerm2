@@ -316,7 +316,7 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     BOOL didConnectToAgent = NO;
-    if (agentAllowed) {
+    if (agentAllowed && !self.hasPredecessor) {
         [self.session connectToAgent];
         // Check a private property to see if the connection to the agent was made.
         if ([self.session respondsToSelector:@selector(agent)]) {
