@@ -31,6 +31,16 @@
         return string;
     }
 
+    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
+                                                        NSEventModifierFlagOption |
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
+    if (_event.keyCode == kVK_Space &&
+        (_event.modifierFlags & allEventModifierFlags) == NSEventModifierFlagShift) {
+        // Shift+Space is special. No other unicode character + shift reports a CSI u.
+        return [self termkeySequenceForEvent];
+    }
+
     const BOOL onlyControlPressed = (modifiers & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption)) == NSEventModifierFlagControl;
     if (!onlyControlPressed) {
         DLog(@"Not only-control-pressed");
