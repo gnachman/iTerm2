@@ -923,8 +923,65 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [weakSelf setWindowTitle];
         return newValue;
     };
+    [self updateVariables];
     _windowNeedsInitialSize = YES;
     DLog(@"Done initializing PseudoTerminal %@", self);
+}
+
+- (void)updateVariables {
+    const NSRect rect = self.window.frame;
+    [_scope setValue:@[ @(rect.origin.x),
+                        @(rect.origin.y),
+                        @(rect.size.width),
+                        @(rect.size.height) ]
+    forVariableNamed:iTermVariableKeyWindowFrame];
+
+    NSString *style = @"unknown";
+    switch (_windowType) {
+        case WINDOW_TYPE_NORMAL:
+            style = @"normal";
+            break;
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            style = @"non-native full screen";
+            break;
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            style = @"native full screen";
+            break;
+        case WINDOW_TYPE_TOP:
+            style = @"full-width top";
+            break;
+        case WINDOW_TYPE_BOTTOM:
+            style = @"full-width bottom";
+            break;
+        case WINDOW_TYPE_LEFT:
+            style = @"full-height left";
+            break;
+        case WINDOW_TYPE_RIGHT:
+            style = @"full-height right";
+            break;
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            style = @"bottom";
+            break;
+        case WINDOW_TYPE_TOP_PARTIAL:
+            style = @"top";
+            break;
+        case WINDOW_TYPE_LEFT_PARTIAL:
+            style = @"left";
+            break;
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            style = @"right";
+            break;
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            style = @"no-title-bar";
+            break;
+        case WINDOW_TYPE_COMPACT:
+            style = @"compact";
+            break;
+        case WINDOW_TYPE_ACCESSORY:
+            style = @"accessory";
+            break;
+    }
+    [_scope setValue:style forVariableNamed:iTermVariableKeyWindowStyle];
 }
 
 - (void)setTerminalGuid:(NSString *)terminalGuid {
@@ -4084,6 +4141,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     _windowIsMoving = NO;
+    [self updateVariables];
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
@@ -4130,6 +4188,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // If the toolbelt changed size by autoresizing, keep things in sync.
     _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
     [_contentView updateToolbeltProportionsIfNeeded];
+    [self updateVariables];
 }
 
 - (void)clearTransientTitle {
@@ -4439,6 +4498,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [myWindow _setContentHasShadow:NO];
         }
     }
+    [self updateVariables];
     return myWindow;
 }
 

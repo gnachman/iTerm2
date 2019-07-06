@@ -82,6 +82,8 @@ NSString *const iTermVariableKeyWindowTitleOverrideFormat = @"titleOverrideForma
 NSString *const iTermVariableKeyWindowTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 NSString *const iTermVariableKeyWindowID = @"id";
+NSString *const iTermVariableKeyWindowFrame = @"frame";
+NSString *const iTermVariableKeyWindowStyle = @"style";
 
 // NOTE: If you add here, also update +recordBuiltInVariables
 

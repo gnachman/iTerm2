@@ -102,7 +102,8 @@
                              leadingToContext:iTermVariablesSuggestionContextSession];
 
     // Window context
-    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverrideFormat inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverrideFormat
+                         inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfVariableNamed:iTermVariableKeyWindowID inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyWindowCurrentTab
                                     inContext:iTermVariablesSuggestionContextWindow
@@ -110,6 +111,10 @@
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyGlobalScopeName
                                     inContext:iTermVariablesSuggestionContextWindow
                              leadingToContext:iTermVariablesSuggestionContextApp];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowFrame
+                         inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowStyle
+                         inContext:iTermVariablesSuggestionContextWindow];
 
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
