@@ -211,7 +211,7 @@ static NSString *const kArrangement = @"Arrangement";
         return NSNormalWindowLevel;
     }
     DLog(@"Use status window level (I am key, no detected panels are open)");
-    return NSStatusWindowLevel;
+    return NSTornOffMenuWindowLevel;
 }
 
 - (NSPoint)destinationPointForInitialPoint:(NSPoint)point
