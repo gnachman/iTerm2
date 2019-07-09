@@ -376,19 +376,21 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         if ([arg.argumentName hasSuffix:@"WithCompletion"]) {
             temp[i] = [completion copy];
         } else {
+            assert(parameters[arg.argumentName]);
             temp[i] = [parameters[arg.argumentName] nilIfNull];
-            assert(temp[i]);
         }
         Class requiredClass = _types[arg.argumentName];
         if (requiredClass) {
-            if ([parameters[arg.argumentName] isKindOfClass:[NSNull class]] &&
+            const BOOL isNull = [parameters[arg.argumentName] isKindOfClass:[NSNull class]];
+            if (isNull &&
                 ![_optionalArguments containsObject:arg.argumentName]) {
                 completion(nil, [self typeMismatchError:arg.argumentName
                                                  wanted:requiredClass
                                                     got:nil]);
                 return;
             }
-            if (![parameters[arg.argumentName] isKindOfClass:requiredClass]) {
+            if (!isNull &&
+                ![parameters[arg.argumentName] isKindOfClass:requiredClass]) {
                 Class actualClass = [parameters[arg.argumentName] class];
                 completion(nil, [self typeMismatchError:arg.argumentName
                                                  wanted:requiredClass

@@ -666,7 +666,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSString *value = self.variablesScope.tabTitleOverride;
     if (value.length == 0) {
         if (self.tmuxTab) {
-            value = [NSString stringWithFormat:@"↣ %@", [self.variablesScope valueForVariableName:iTermVariableKeyTabTmuxWindowName]];
+            NSString *tmuxWindowName = [self.variablesScope valueForVariableName:iTermVariableKeyTabTmuxWindowName];
+            if (tmuxWindowName.length) {
+                value = [NSString stringWithFormat:@"↣ %@", tmuxWindowName];
+            } else {
+                value = [NSString stringWithFormat:@"↣ %@", self.activeSession.name];
+            }
         } else {
             value = newName ?: @"";
         }

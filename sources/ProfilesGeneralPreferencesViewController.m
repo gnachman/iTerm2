@@ -1010,14 +1010,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)tabTitleDidChange {
-    NSString *value = _tabTitle.stringValue;
-    if (value.length == 0) {
-        value = nil;
-    }
+    NSString *value = _tabTitle.stringValue ?: @"";
     // Do this rather than updating the variable directly because tmux needs special handling.
     iTermCallMethodByIdentifier(self.scope.tab.tabID,
                                 @"iterm2.set_title",
-                                @{ @"title": value ?: [NSNull null] },
+                                @{ @"title": value },
                                 nil);
 }
 
