@@ -331,10 +331,7 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
     } else if (menuItem == maximizePane) {
-        if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
-            // Things get too complex if you allow this. It crashes.
-            return NO;
-        } else if ([[[[[iTermController sharedInstance] currentTerminal] currentTab] activeSession] isTmuxClient]) {
+        if ([[[[[iTermController sharedInstance] currentTerminal] currentTab] activeSession] isTmuxClient]) {
             return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane]) {
             return YES;

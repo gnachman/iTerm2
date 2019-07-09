@@ -26,7 +26,6 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyMigrationHelper.h"
-#import "iTermInstantReplayWindowController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPreferences.h"
@@ -182,7 +181,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
-    iTermInstantReplayWindowController *_instantReplayWindowController;
 
     // This is either 0 or 1. If 1, then a tab item is in the process of being
     // added and the tabBarControl will be shown if it is added successfully
@@ -806,7 +804,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)iterm_dealloc {
     [_contentView shutdown];
 
-    [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
     _wellFormed = NO;
 
@@ -1549,7 +1546,6 @@ return NO;
     }
     if (okToClose) {
         // Just in case IR is open, close it first.
-        [self closeInstantReplay:self];
         [self closeSession:aSession];
     }
 }
@@ -2549,10 +2545,6 @@ return NO;
 }
 
 - (void)closeInstantReplayWindow {
-    [_instantReplayWindowController close];
-    _instantReplayWindowController.delegate = nil;
-    [_instantReplayWindowController release];
-    _instantReplayWindowController = nil;
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
@@ -2581,10 +2573,6 @@ return NO;
 
     // Save frame position for last window
     if ([[[iTermController sharedInstance] terminals] count] == 1) {
-        if (_instantReplayWindowController) {
-            // We don't want the IR window to survive us, nor be saved in the restorable state.
-            [self closeInstantReplayWindow];
-        }
         if ([iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
             [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
         } else {
@@ -4102,7 +4090,6 @@ return NO;
         [self disableBlur];
     }
 
-    [_instantReplayWindowController updateInstantReplayView];
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:[[tabViewItem identifier] activeSession]];
@@ -4111,7 +4098,6 @@ return NO;
     for (PTYSession *s in [self allSessions]) {
       [s setFocused:(s == activeSession)];
     }
-    [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
     [self refreshTools];
@@ -4157,12 +4143,6 @@ return NO;
 
 - (void)showOrHideInstantReplayBar
 {
-    PTYSession* aSession = [self currentSession];
-    if ([aSession liveSession] && aSession.dvr) {
-        [self setInstantReplayBarVisible:YES];
-    } else {
-        [self setInstantReplayBarVisible:NO];
-    }
 }
 
 - (void)saveAffinitiesAndOriginsForController:(TmuxController *)tmuxController
@@ -4915,115 +4895,6 @@ return NO;
     [sheet release];
 }
 
-#pragma mark - iTermInstantReplayDelegate
-
-- (long long)instantReplayCurrentTimestamp {
-    DVR* dvr = [[self currentSession] dvr];
-    DVRDecoder* decoder = nil;
-
-    if (dvr) {
-        decoder = [[self currentSession] dvrDecoder];
-        return [decoder timestamp];
-    }
-    return -1;
-}
-
-- (long long)instantReplayFirstTimestamp {
-    DVR* dvr = [[self currentSession] dvr];
-
-    if (dvr) {
-        return [dvr firstTimeStamp];
-    } else {
-        return -1;
-    }
-}
-
-- (long long)instantReplayLastTimestamp {
-    DVR* dvr = [[self currentSession] dvr];
-
-    if (dvr) {
-        return [dvr lastTimeStamp];
-    } else {
-        return -1;
-    }
-}
-
-- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
-    if ([[self currentSession] liveSession]) {
-        [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
-    }
-}
-
-- (void)instantReplaySeekTo:(float)position {
-    if (![[self currentSession] liveSession]) {
-        [self replaySession:[self currentSession]];
-    }
-    [[self currentSession] irSeekToAtLeast:[self timestampForFraction:position]];
-}
-
-- (void)instantReplayStep:(int)direction {
-    [self irAdvance:direction];
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
-}
-
-- (void)irAdvance:(int)dir {
-    if (![[self currentSession] liveSession]) {
-        if (dir > 0) {
-            // Can't go forward in time from live view (though that would be nice!)
-            NSBeep();
-            return;
-        }
-        [self replaySession:[self currentSession]];
-    }
-    [[self currentSession] irAdvance:dir];
-}
-
-- (BOOL)inInstantReplay
-{
-    return _instantReplayWindowController != nil;
-}
-
-- (NSPoint)originForAccessoryOfSize:(NSSize)size {
-    NSPoint p;
-    NSRect screenRect = self.window.screen.visibleFrame;
-    NSRect windowRect = self.window.frame;
-
-    p.x = windowRect.origin.x + round((windowRect.size.width - size.width) / 2);
-    if (screenRect.origin.y + size.height < windowRect.origin.y) {
-        // Is there space below?
-        p.y = windowRect.origin.y - size.height;
-    } else if (screenRect.origin.y + screenRect.size.height >
-               windowRect.origin.y + windowRect.size.height + size.height) {
-        // Is there space above?
-        p.y = windowRect.origin.y + windowRect.size.height;
-    } else {
-        p.y = [_contentView.tabView convertRect:NSMakeRect(0, 0, 0, 0) toView:nil].origin.y - size.height;
-    }
-    return p;
-}
-
-// Toggle instant replay bar.
-- (void)showHideInstantReplay
-{
-    BOOL hide = [self inInstantReplay];
-    if (hide) {
-        [self closeInstantReplayWindow];
-    } else {
-        _instantReplayWindowController = [[iTermInstantReplayWindowController alloc] init];
-        NSPoint origin =
-            [self originForAccessoryOfSize:_instantReplayWindowController.window.frame.size];
-        [_instantReplayWindowController.window setFrameOrigin:origin];
-        _instantReplayWindowController.delegate = self;
-        [_instantReplayWindowController.window orderFront:nil];
-        [_instantReplayWindowController updateInstantReplayView];
-    }
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
-}
-
-- (void)closeInstantReplay:(id)sender {
-    [self closeInstantReplayWindow];
-}
-
 - (void)fitWindowToTab:(PTYTab*)tab
 {
     [self fitWindowToTabSize:[tab size]];
@@ -5060,17 +4931,6 @@ return NO;
 }
 
 - (void)replaySession:(PTYSession *)oldSession {
-    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
-        // Nothing recorded (not enough memory for one frame, perhaps?).
-        return;
-    }
-
-    PTYSession *newSession = [self syntheticSessionForSession:oldSession];
-
-    [[self tabForSession:oldSession] setDvrInSession:newSession];
-    if (![self inInstantReplay]) {
-        [self showHideInstantReplay];
-    }
 }
 
 - (IBAction)zoomOut:(id)sender {
@@ -5107,7 +4967,6 @@ return NO;
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PTYTab *theTab = [self tabForSession:replaySession];
-    [_instantReplayWindowController updateInstantReplayView];
 
     [self sessionInitiatedResize:replaySession
                            width:[[liveSession screen] width]
@@ -5165,14 +5024,12 @@ return NO;
 {
     [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
-    [_instantReplayWindowController updateInstantReplayView];
 }
 
 - (IBAction)irNext:(id)sender
 {
     [self irAdvance:1];
     [[self window] makeFirstResponder:[[self currentSession] textview]];
-    [_instantReplayWindowController updateInstantReplayView];
 }
 
 - (void)_openSplitSheetForVertical:(BOOL)vertical
@@ -5359,10 +5216,6 @@ return NO;
 
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark
 {
-    if ([self inInstantReplay]) {
-    // Things get very complicated in this case. Just disallow it.
-        return NO;
-    }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
     NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
     NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
@@ -6206,7 +6059,6 @@ return NO;
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
     // Things would get really complicated if you could do this in IR, so just
     // close it.
-    [self closeInstantReplay:nil];
     for (PTYSession *aSession in [self allSessions]) {
         if (mode) {
             [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
@@ -6516,9 +6368,6 @@ return NO;
 // Show or hide instant replay bar.
 - (void)setInstantReplayBarVisible:(BOOL)visible
 {
-    if ([self inInstantReplay] != visible) {
-        [self showHideInstantReplay];
-    }
 }
 
 - (BOOL)exitingLionFullscreen {
@@ -6766,10 +6615,6 @@ return NO;
 // Copy state from 'other' to this terminal.
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
-    if ([other inInstantReplay]) {
-        [other closeInstantReplayWindow];
-        [self showHideInstantReplay];
-    }
 }
 
 // Set the session's profile dictionary and initialize its screen and name. Sets the
@@ -7134,10 +6979,6 @@ return NO;
         result = logging == YES ? NO : YES;
     } else if ([item action] == @selector(logStop:)) {
         result = logging == NO ? NO : YES;
-    } else if ([item action] == @selector(irPrev:)) {
-        result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
-    } else if ([item action] == @selector(irNext:)) {
-        result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleCursorGuide:)) {
       PTYSession *session = [self currentSession];
       [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
@@ -7210,7 +7051,7 @@ return NO;
     } else if ([item action] == @selector(saveTabAsWindowArrangement:)) {
         return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
-        return ![self inInstantReplay] && [[self currentSession] hasSelection];
+        return [[self currentSession] hasSelection];
     } else if ([item action] == @selector(showFindPanel:) ||
                [item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||

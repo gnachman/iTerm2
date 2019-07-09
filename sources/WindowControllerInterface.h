@@ -284,19 +284,6 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)showLiveSession:(PTYSession*)liveSession
               inPlaceOf:(PTYSession*)replaySession;
 
-// Is the window currently in IR mode?
-- (BOOL)inInstantReplay;
-
-// Hide the IR bar and end instant replay.
-- (void)closeInstantReplay:(id)sender;
-
-// Step forward/back in IR.
-- (void)irPrev:(id)sender;
-- (void)irNext:(id)sender;
-
-// Toggle the visibility of IR.
-- (void)showHideInstantReplay;
-
 // Exit a synthetic view (a generalized version of an IR session).
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded;
 

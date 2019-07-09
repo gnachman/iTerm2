@@ -3363,9 +3363,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSubviewsToRoot];
     } else {
         DLog(@"Parse tree does not match the root's view hierarchy.");
-        if ([[self realParentWindow] inInstantReplay]) {
-            [[self realParentWindow] showHideInstantReplay];
-        }
         [self replaceViewHierarchyWithParseTree:parseTree];
         shouldZoom = NO;
     }

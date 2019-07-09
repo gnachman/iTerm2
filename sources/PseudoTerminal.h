@@ -202,12 +202,6 @@ extern NSString *const iTermTabDidChangePositionInWindowNotification;
 // Open the session preference panel.
 - (void)editCurrentSession:(id)sender;
 
-// Are we in in IR?
-- (BOOL)inInstantReplay;
-
-// Move backward/forward in time by one frame.
-- (void)irAdvance:(int)dir;
-
 // Does any session want to be prompted for closing?
 - (iTermPromptOnCloseReason *)promptOnCloseReason;
 

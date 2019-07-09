@@ -5865,37 +5865,6 @@ verticalSpacing:(float)verticalSpacing {
         // The zoomOut: IBAction doesn't get performed by shortcut, I guess because Esc is not a
         // valid shortcut. So we do it here.
         [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
-    } else if ([[_delegate realParentWindow] inInstantReplay]) {
-        DLog(@"PTYSession keyDown in IR");
-        
-        // Special key handling in IR mode, and keys never get sent to the live
-        // session, even though it might be displayed.
-        if (unicode == 27) {
-            // Escape exits IR
-            [[_delegate realParentWindow] closeInstantReplay:self];
-            return;
-        } else if (unmodunicode == NSLeftArrowFunctionKey) {
-            // Left arrow moves to prev frame
-            int n = 1;
-            if (modflag & NSShiftKeyMask) {
-                n = 15;
-            }
-            for (int i = 0; i < n; i++) {
-                [[_delegate realParentWindow] irPrev:self];
-            }
-        } else if (unmodunicode == NSRightArrowFunctionKey) {
-            // Right arrow moves to next frame
-            int n = 1;
-            if (modflag & NSShiftKeyMask) {
-                n = 15;
-            }
-            for (int i = 0; i < n; i++) {
-                [[_delegate realParentWindow] irNext:self];
-            }
-        } else {
-            NSBeep();
-        }
-        return;
     }
     
     unsigned short keycode = [event keyCode];
@@ -6557,7 +6526,7 @@ verticalSpacing:(float)verticalSpacing {
 - (BOOL)textViewDelegateHandlesAllKeystrokes
 {
     [self resumeOutputIfNeeded];
-    return [[_delegate realParentWindow] inInstantReplay];
+    return NO;
 }
 
 - (BOOL)textViewIsActiveSession {
