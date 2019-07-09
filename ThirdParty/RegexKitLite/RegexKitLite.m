@@ -230,12 +230,11 @@ typedef uint32_t RKLLookasideCache_t;
 #pragma mark Utility functions and macros
 
 
-/*
- UNUSED
+#if 1
  RKL_STATIC_INLINE BOOL NSRangeInsideRange(NSRange cin, NSRange win) RKL_WARN_UNUSED;
 
 RKL_STATIC_INLINE BOOL NSRangeInsideRange(NSRange cin, NSRange win) { return((((cin.location - win.location) <= win.length) && ((NSMaxRange(cin) - win.location) <= win.length)) ? YES : NO); }
-*/
+#endif
 #define NSMakeRange(loc, len) ((NSRange){.location=(NSUInteger)(loc),      .length=(NSUInteger)(len)})
 #define CFMakeRange(loc, len) ((CFRange){.location=   (CFIndex)(loc),      .length=   (CFIndex)(len)})
 #define NSNotFoundRange       ((NSRange){.location=(NSUInteger)NSNotFound, .length=              0UL})

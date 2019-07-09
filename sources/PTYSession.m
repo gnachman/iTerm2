@@ -4693,6 +4693,7 @@ verticalSpacing:(float)verticalSpacing {
     return [_view snapshot];
 }
 
+#if 0
 - (void)askAboutAbortingDownload {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
@@ -4722,6 +4723,7 @@ verticalSpacing:(float)verticalSpacing {
                                                 }];
     [self queueAnnouncement:announcement identifier:@"AbortUploadOnKeyPressAnnouncement"];
 }
+#endif
 
 #pragma mark - Captured Output
 
@@ -5426,6 +5428,7 @@ verticalSpacing:(float)verticalSpacing {
         [self didInferEndOfCommand];
     }
     
+#if 0
     if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
         if (self.terminal.receivingFile) {
             // Offer to abort download if you press ^c while downloading an inline file
@@ -5434,6 +5437,7 @@ verticalSpacing:(float)verticalSpacing {
             [self askAboutAbortingUpload];
         }
     }
+#endif
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     if (_view.currentAnnouncement.dismissOnKeyDown) {
         [_view.currentAnnouncement dismiss];
