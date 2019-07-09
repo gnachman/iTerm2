@@ -6640,19 +6640,18 @@
 			};
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "Therm" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
-				English,
-				Japanese,
-				French,
-				German,
-				Chinese,
 				zh_CN,
 				zh_TW,
-				Korean,
 				en,
 				Base,
+				fr,
+				de,
+				ja,
+				zh,
+				ko,
 			);
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
