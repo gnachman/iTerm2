@@ -842,7 +842,7 @@ static const int kDragThreshold = 3;
         } else {
             // No need to redraw the whole screen because nothing is
             // changing because of the scroll.
-            canSkipRedraw = YES;
+//            canSkipRedraw = YES;
         }
         [self scrollRectToVisible:scrollRect];
     }
