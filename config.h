@@ -1,1 +1,1 @@
-#define THERM_VERSION "0.2.1"
+#define THERM_VERSION "0.2.2"

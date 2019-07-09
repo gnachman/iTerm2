@@ -428,6 +428,8 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 #pragma mark - Drag Support
 
 - (NSImage *)dragImage {
+    return nil;
+#if 0
     NSRect cellFrame =
         [[[self psmTabControlView] style] dragRectForTabCell:self
                                                  orientation:[[self psmTabControlView] orientation]];
@@ -457,6 +459,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         [piImage release];
     }
     return returnImage;
+#endif
 }
 
 #pragma mark - NSCoding
