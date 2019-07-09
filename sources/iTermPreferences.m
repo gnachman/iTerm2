@@ -511,8 +511,11 @@ static NSString *sPreviousVersion;
 
 // Text fields don't like nil strings.
 + (NSString *)computedCustomFolder {
+    return @"";
+#if 0
     NSString *prefsCustomFolder = [self uncomputedObjectForKey:kPreferenceKeyCustomFolder];
     return prefsCustomFolder ?: @"";
+#endif
 }
 
 // Text fields don't like nil strings.

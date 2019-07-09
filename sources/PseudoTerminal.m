@@ -3870,28 +3870,8 @@ return NO;
     // which is what the defaultFrame contains.
     proposedFrame.origin.x = [sender frame].origin.x;
     proposedFrame.origin.y = defaultFrame.origin.y;
-    BOOL verticalOnly = NO;
-
-    BOOL maxVerticallyPref;
-    if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
-        // Going into lion fullscreen mode. Disregard the "maximize vertically"
-        // preference.
-        verticalOnly = NO;
-    } else {
-        maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
-        if (maxVerticallyPref ^
-            (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
-            verticalOnly = YES;
-        }
-    }
-
-    if (verticalOnly) {
-        // Keep the width the same
-        proposedFrame.size.width = [sender frame].size.width;
-    } else {
-        proposedFrame.size.width = defaultFrame.size.width;
-        proposedFrame.origin.x = defaultFrame.origin.x;
-    }
+    proposedFrame.size.width = defaultFrame.size.width;
+    proposedFrame.origin.x = defaultFrame.origin.x;
     proposedFrame.size.height = defaultFrame.size.height;
     proposedFrame.origin.y = defaultFrame.origin.y;
     return proposedFrame;

@@ -1417,6 +1417,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)sessionDidChangeFontSize:(PTYSession *)session {
+#if 0
     if (![[self parentWindow] anyFullScreen]) {
         if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
             [[self parentWindow] fitWindowToTab:self];
@@ -1430,6 +1431,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     } else {
         [self fitSessionToCurrentViewSize:session];
     }
+#endif
+        [self fitSessionToCurrentViewSize:session];
 }
 
 - (void)removeSession:(PTYSession*)aSession {

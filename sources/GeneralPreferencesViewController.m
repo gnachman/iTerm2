@@ -42,7 +42,7 @@ enum {
     IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
     // Quit when all windows are closed
-    IBOutlet NSButton *_quitWhenAllWindowsClosed;
+    // IBOutlet NSButton *_quitWhenAllWindowsClosed;
 
     // Confirm closing multiple sessions
     IBOutlet id _confirmClosingMultipleSessions;
@@ -68,10 +68,9 @@ enum {
     // Load prefs from custom folder
     IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
     IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
-    IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
-    IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
-    IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
-    IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
+    // IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
+    // IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
+    // IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
     IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
 
     // Copy to clipboard on selection
@@ -92,22 +91,22 @@ enum {
     IBOutlet NSButton *_smartPlacement;
 
     // Adjust window size when changing font size
-    IBOutlet NSButton *_adjustWindowForFontSizeChange;
+    // IBOutlet NSButton *_adjustWindowForFontSizeChange;
 
     // Zoom vertically only
-    IBOutlet NSButton *_maxVertically;
+    // IBOutlet NSButton *_maxVertically;
 
     // Lion-style fullscreen
-    IBOutlet NSButton *_lionStyleFullscreen;
+    // IBOutlet NSButton *_lionStyleFullscreen;
 
     // Open tmux windows in [windows, tabs]
-    IBOutlet NSPopUpButton *_openTmuxWindows;
+    // IBOutlet NSPopUpButton *_openTmuxWindows;
 
     // Open tmux dashboard if there are more than N windows
-    IBOutlet NSTextField *_tmuxDashboardLimit;
+    // IBOutlet NSTextField *_tmuxDashboardLimit;
 
     // Hide the tmux client session
-    IBOutlet NSButton *_autoHideTmuxClientSession;
+    // IBOutlet NSButton *_autoHideTmuxClientSession;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -161,9 +160,6 @@ enum {
              return YES;
          }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
-    [self defineControl:_quitWhenAllWindowsClosed
-                    key:kPreferenceKeyQuitWhenAllWindowsClosed
-                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_confirmClosingMultipleSessions
                     key:kPreferenceKeyConfirmClosingMultipleTabs
@@ -173,6 +169,9 @@ enum {
                     key:kPreferenceKeyPromptOnQuit
                    type:kPreferenceInfoTypeCheckbox];
 #if 0
+    [self defineControl:_quitWhenAllWindowsClosed
+                    key:kPreferenceKeyQuitWhenAllWindowsClosed
+                   type:kPreferenceInfoTypeCheckbox];
     info = [self defineControl:_irMemory
                            key:kPreferenceKeyInstantReplayMemoryMegabytes
                           type:kPreferenceInfoTypeIntegerTextField];
@@ -271,6 +270,7 @@ enum {
                     key:kPreferenceKeySmartWindowPlacement
                    type:kPreferenceInfoTypeCheckbox];
 
+#if 0
     [self defineControl:_adjustWindowForFontSizeChange
                     key:kPreferenceKeyAdjustWindowForFontSizeChange
                    type:kPreferenceInfoTypeCheckbox];
@@ -279,11 +279,9 @@ enum {
                     key:kPreferenceKeyMaximizeVerticallyOnly
                    type:kPreferenceInfoTypeCheckbox];
 
-#if 0
     [self defineControl:_lionStyleFullscreen
                     key:kPreferenceKeyLionStyleFullscren
                    type:kPreferenceInfoTypeCheckbox];
-#endif
 
     info = [self defineControl:_openTmuxWindows
                            key:kPreferenceKeyOpenTmuxWindowsIn
@@ -299,15 +297,19 @@ enum {
     [self defineControl:_autoHideTmuxClientSession
                     key:kPreferenceKeyAutoHideTmuxClientSession
                    type:kPreferenceInfoTypeCheckbox];
+#endif
 }
 
+#if 0
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];
 }
 
+
 - (IBAction)pushToCustomFolder:(id)sender {
     [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
 }
+#endif
 
 #pragma mark - Notifications
 
@@ -320,6 +322,7 @@ enum {
 #pragma mark - Remote Prefs
 
 - (void)updateRemotePrefsViews {
+#if 0
     BOOL shouldLoadRemotePrefs =
         [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
     [_browseCustomFolder setEnabled:shouldLoadRemotePrefs];
@@ -342,6 +345,7 @@ enum {
                         ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);
     [_autoSaveOnQuit setEnabled:isValidFile];
     [_pushToCustomFolder setEnabled:isValidFile];
+#endif
 }
 
 - (void)loadPrefsFromCustomFolderDidChange {
@@ -372,6 +376,7 @@ enum {
 }
 
 - (BOOL)choosePrefsCustomFolder {
+#if 0
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
@@ -384,6 +389,8 @@ enum {
     }  else {
         return NO;
     }
+#endif
+    return NO;
 }
 
 @end
