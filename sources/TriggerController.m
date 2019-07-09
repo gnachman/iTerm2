@@ -290,9 +290,13 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
         [indexes addObject:@(idx)];
     }];
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes];
-    [pasteboard declareTypes:@[ kiTermTriggerControllerPasteboardType ] owner:self];
-    [pasteboard setData:data forType:kiTermTriggerControllerPasteboardType];
+    if (@available(macOS 10.11, *)) {
+        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes];
+        [pasteboard declareTypes:@[ kiTermTriggerControllerPasteboardType ] owner:self];
+        [pasteboard setData:data forType:kiTermTriggerControllerPasteboardType];
+    } else {
+        // Fallback on earlier versions
+    }
     return YES;
 }
 

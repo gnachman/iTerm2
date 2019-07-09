@@ -157,7 +157,7 @@ static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
-static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
+//static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
@@ -483,6 +483,10 @@ static const NSUInteger kMaxHosts = 100;
     return [self initSynthetic:NO];
 }
 
+- (void)encodeWithCoder:(nonnull NSCoder *)aCoder { 
+}
+
+
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
@@ -497,12 +501,12 @@ static const NSUInteger kMaxHosts = 100;
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
-
+        
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
         // TODO: How do slower machines fare?
         static const int kMaxOutstandingExecuteCalls = 4;
         _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
-
+        
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
         _pasteHelper = [[iTermPasteHelper alloc] init];
@@ -512,10 +516,10 @@ static const NSUInteger kMaxHosts = 100;
         _shell = [[PTYTask alloc] init];
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
-            [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
+        [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
-
+        
         _overriddenFields = [[NSMutableSet alloc] init];
         _creationDate = [[NSDate date] retain];
         _tmuxSecureLogging = NO;
@@ -534,15 +538,15 @@ static const NSUInteger kMaxHosts = 100;
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
         _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
         _cadenceController.delegate = self;
-/*
-        _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
-        _updateSubscriptions = [[NSMutableDictionary alloc] init];
-        _promptSubscriptions = [[NSMutableDictionary alloc] init];
-        _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
-        _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
-*/
+        /*
+         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
+         _updateSubscriptions = [[NSMutableDictionary alloc] init];
+         _promptSubscriptions = [[NSMutableDictionary alloc] init];
+         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
+         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
+         */
         _statusChangedAbsLine = -1;
-
+        
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -569,12 +573,12 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(sessionHotkeyDidChange:)
                                                      name:kProfileSessionHotkeyDidChange
                                                    object:nil];
-/*
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(apiServerUnsubscribe:)
-                                                     name:iTermRemoveAPIServerSubscriptionsNotification
-                                                   object:nil];
-*/
+        /*
+         [[NSNotificationCenter defaultCenter] addObserver:self
+         selector:@selector(apiServerUnsubscribe:)
+         name:iTermRemoveAPIServerSubscriptionsNotification
+         object:nil];
+         */
         // Detach before windows get closed. That's why we have to use the
         // iTermApplicationWillTerminate notification instead of
         // NSApplicationWillTerminate, since this gets run before the windows
@@ -596,7 +600,7 @@ static const NSUInteger kMaxHosts = 100;
                                                      name:NSWindowDidEndLiveResizeNotification
                                                    object:nil];
         [self updateVariables];
-
+        
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
@@ -665,34 +669,34 @@ ITERM_WEAKLY_REFERENCEABLE
     [_jobName release];
     [_automaticProfileSwitcher release];
     [_throughputEstimator release];
-
+    
     [_keyLabels release];
     [_keyLabelsStack release];
     [_missingSavedArrangementProfileGUID release];
     [_currentHost release];
-/*
-    [_keystrokeSubscriptions release];
-    [_updateSubscriptions release];
-    [_promptSubscriptions release];
-    [_locationChangeSubscriptions release];
-    [_customEscapeSequenceNotifications release];
-*/
+    /*
+     [_keystrokeSubscriptions release];
+     [_updateSubscriptions release];
+     [_promptSubscriptions release];
+     [_locationChangeSubscriptions release];
+     [_customEscapeSequenceNotifications release];
+     */
     [_copyModeState release];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-
+    
     if (_dvrDecoder) {
         [_dvr releaseDecoder:_dvrDecoder];
         [_dvr release];
     }
-
+    
     [super dealloc];
 }
 
 - (NSString *)description
 {
     return [NSString stringWithFormat:@"<%@: %p %dx%d>",
-               [self class], self, [_screen width], [_screen height]];
+            [self class], self, [_screen width], [_screen height]];
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -723,16 +727,16 @@ ITERM_WEAKLY_REFERENCEABLE
         if (dir < 0) {
             [[_delegate realParentWindow] replaySession:self];
             PTYSession* irSession = [[_delegate realParentWindow] currentSession];
-             if (irSession != self) {
-                 // Failed to enter replay mode (perhaps nothing to replay?)
+            if (irSession != self) {
+                // Failed to enter replay mode (perhaps nothing to replay?)
                 [irSession irAdvance:dir];
-             }
+            }
             return;
         } else {
             NSBeep();
             return;
         }
-
+        
     }
     if (dir > 0) {
         if (![_dvrDecoder next]) {
@@ -768,7 +772,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)educateAboutCopyMode {
     [iTermMenuOpener revealMenuWithPath:@[ @"Help", @"Copy Mode Shortcuts" ]
                                 message:@"You have entered Copy Mode.\nWhile in copy mode, you use keyboard\nshortcuts to modify the selection.\nYou can always find the list of\nshortcuts in the Help menu."];
-
+    
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
@@ -781,7 +785,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
     }
-
+    
     _copyMode = copyMode;
     [_copyModeState autorelease];
     if (copyMode) {
@@ -790,7 +794,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                   _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
         _copyModeState.numberOfLines = _screen.numberOfLines;
         _copyModeState.textView = _textview;
-
+        
         if (_textview.selection.allSubSelections.count == 1) {
             [_textview.window makeFirstResponder:_textview];
             iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
@@ -816,7 +820,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionName];
     }
-
+    
     _variables[kVariableKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
     _variables[kVariableKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
 #if 0
@@ -849,19 +853,19 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [_variables removeObjectForKey:kVariableKeySessionTTY];
     }
-
+    
     if (_variables[kVariableKeyTermID] == nil) {
         // Variables that only need to be updated once.
         _variables[kVariableKeyTermID] = [self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."];
-
+        
         NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
         dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
         _variables[kVariableKeySessionCreationTimeString] = [dateFormatter stringFromDate:_creationDate];
-
+        
         _variables[kVariableKeySessionPID] = [@(getpid()) stringValue];
         _variables[kVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
     }
-
+    
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -873,7 +877,7 @@ ITERM_WEAKLY_REFERENCEABLE
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
 {
     Profile* theBookmark =
-        [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
+    [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
     }
@@ -921,23 +925,23 @@ ITERM_WEAKLY_REFERENCEABLE
         [_missingSavedArrangementProfileGUID autorelease];
         _missingSavedArrangementProfileGUID = [thisProfile[KEY_GUID] copy];
         announcement =
-            [iTermAnnouncementViewController announcementWithTitle:notice
-                                                             style:kiTermAnnouncementViewStyleWarning
-                                                       withActions:actions
-                                                        completion:^(int selection) {
-                                                            if (selection == 0) {
-                                                                [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
-                                                            } else if (selection == 1) {
-                                                                // Repair
-                                                                Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
-                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
-                                                                                                         replacingMissingGUID:thisProfile[KEY_GUID]
-                                                                                                                     withGUID:similarlyNamedProfile[KEY_GUID]];
-                                                                [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
-                                                                                                                    object:thisProfile[KEY_GUID]
-                                                                                                                  userInfo:@{ @"new profile": similarlyNamedProfile }];
-                                                            }
-                                                        }];
+        [iTermAnnouncementViewController announcementWithTitle:notice
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:actions
+                                                    completion:^(int selection) {
+                                                        if (selection == 0) {
+                                                            [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+                                                        } else if (selection == 1) {
+                                                            // Repair
+                                                            Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
+                                                            [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
+                                                                                                     replacingMissingGUID:thisProfile[KEY_GUID]
+                                                                                                                 withGUID:similarlyNamedProfile[KEY_GUID]];
+                                                            [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
+                                                                                                                object:thisProfile[KEY_GUID]
+                                                                                                              userInfo:@{ @"new profile": similarlyNamedProfile }];
+                                                        }
+                                                    }];
         announcement.dismissOnKeyDown = YES;
     }
 #endif
@@ -951,10 +955,10 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Restoring session from arrangement");
     PTYSession* aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
-
+    
     [[sessionView findViewController] setDelegate:aSession];
     Profile* theBookmark =
-        [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
+    [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     BOOL needDivorce = NO;
     iTermAnnouncementViewController *announcement = nil;
     if (!theBookmark) {
@@ -962,7 +966,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (![[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid]) {
             announcement = [aSession announcementForMissingProfileInArrangement:arrangement];
         }
-
+        
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
     }
@@ -1000,13 +1004,13 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         theBookmark = [theBookmark dictionaryBySettingObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     }
-
+    
     [[aSession screen] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
-
-     // set our preferences
+    
+    // set our preferences
     [aSession setProfile:theBookmark];
-
+    
     [aSession setScreenSize:[sessionView frame] parent:[delegate realParentWindow]];
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
@@ -1027,7 +1031,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[delegate realParentWindow] setWindowTitle];
     }
     aSession.delegate = delegate;
-
+    
     BOOL haveSavedProgramData = YES;
     if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = arrangement[SESSION_ARRANGEMENT_PROGRAM];
@@ -1046,20 +1050,20 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         haveSavedProgramData = NO;
     }
-
+    
     if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
         aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
     } else {
         haveSavedProgramData = NO;
     }
-
-
+    
+    
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
     } else {
         haveSavedProgramData = NO;
     }
-
+    
     // This must be done before setContentsFromLineBufferDictionary:includeRestorationBanner:reattached:
     // because it will show an announcement if mouse reporting is on.
 #if 0
@@ -1068,7 +1072,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession screenCurrentHostDidChange:lastRemoteHost];
     }
 #endif
-
+    
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
@@ -1090,13 +1094,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 // serverPid might be -1 if the user turned on session restoration and then quit.
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid]) {
                     DLog(@"Success!");
-
+                    
                     if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
                         DLog(@"Was a tmux gateway. Start recovery mode in parser.");
                         // Before attaching to the server we can put the parser into "tmux recovery mode".
                         [aSession.terminal.parser startTmuxRecoveryMode];
                     }
-
+                    
                     runCommand = NO;
                     attachedToServer = YES;
                     aSession.shell.tty = arrangement[SESSION_ARRANGEMENT_TTY];
@@ -1107,7 +1111,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 }
             }
         }
-
+        
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
         if (arrangement[SESSION_ARRANGEMENT_GUID]) {
@@ -1131,7 +1135,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
-
+        
         if (runCommand) {
             // This path is NOT taken when attaching to a running server.
             //
@@ -1147,7 +1151,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     NSMutableDictionary *temp = [[aSession.environment mutableCopy] autorelease];
                     temp[PWD_ENVNAME] = oldCWD;
                     aSession.environment = temp;
-
+                    
                     if ([aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]]) {
                         // Create a login session that drops you in the old directory instead of
                         // using login -fp "$USER". This lets saved arrangements properly restore
@@ -1166,7 +1170,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                  substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
             }
         }
-
+        
         DLog(@"Have contents=%@", @(contents != nil));
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
@@ -1192,7 +1196,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession divorceAddressBookEntryFromPreferences];
         [aSession sessionProfileDidChange];
     }
-
+    
     // This is done after divorce out of paranoia, since it will modify the profile.
     NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
     if (shortcutDictionary) {
@@ -1200,8 +1204,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         forSession:aSession];
         [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
     }
-
-
+    
+    
     if (tmuxPaneNumber) {
         [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
@@ -1251,14 +1255,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 #endif
-
+    
     if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
     }
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
         aSession.automaticProfileSwitcher =
-            [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
-                                                         savedState:arrangement[SESSION_ARRANGEMENT_APS]];
+        [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
+                                                     savedState:arrangement[SESSION_ARRANGEMENT_APS]];
     }
     if (didRestoreContents && attachedToServer) {
         Interval *interval = aSession.screen.lastPromptMark.entry.interval;
@@ -1266,13 +1270,15 @@ ITERM_WEAKLY_REFERENCEABLE
             VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
             aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
         }
-
+        
         if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
             aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
         }
+#if 0
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
         }
+#endif
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
@@ -1284,7 +1290,7 @@ ITERM_WEAKLY_REFERENCEABLE
             aSession->_lastDirectoryIsRemote = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] boolValue];
         }
     }
-
+    
     if (state) {
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
@@ -1340,16 +1346,16 @@ ITERM_WEAKLY_REFERENCEABLE
 #if 0
     NSString *notice = @"This already-running session was restored but its contents were not saved.";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:notice
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Why?" ]
-                                                    completion:^(int selection) {
-                                                        if (selection == 0) {
-                                                            // Why?
-                                                            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
-                                                            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
-                                                        }
-                                                    }];
+    [iTermAnnouncementViewController announcementWithTitle:notice
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Why?" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        // Why?
+                                                        NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+                                                        [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                    }
+                                                }];
     announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 #endif
@@ -1358,19 +1364,19 @@ ITERM_WEAKLY_REFERENCEABLE
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
-
+    
     // Allocate the root per-session view.
     if (!_view) {
         self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
         [[_view findViewController] setDelegate:self];
     }
-
+    
     _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
-
+    
     // Allocate a text view
     NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
-
+    
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
                                           colorMap:_colorMap];
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
@@ -1381,18 +1387,18 @@ ITERM_WEAKLY_REFERENCEABLE
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     const float theBlend =
-        [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
+    [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
-
+    
     [_wrapper addSubview:_textview];
     [_textview setFrame:NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height - [iTermAdvancedSettingsModel terminalVMargin])];
     [_textview release];
-
+    
     // assign terminal and task objects
     _terminal.delegate = _screen;
     [_shell setDelegate:self];
-
+    
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
     NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
@@ -1401,13 +1407,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                                      borderType:_view.scrollview.borderType
                                                     controlSize:NSRegularControlSize
                                                   scrollerStyle:_view.scrollview.scrollerStyle];
-
+    
     int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
     int height = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
     [_screen destructivelySetScreenWidth:width height:height];
     [self setName:@"Shell"];
     [self setDefaultName:@"Shell"];
-
+    
     [_textview setDataSource:_screen];
     [_textview setDelegate:self];
     [_view.scrollview setDocumentView:_wrapper];
@@ -1416,7 +1422,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view.scrollview setLineScroll:[_textview lineHeight]];
     [_view.scrollview setPageScroll:2 * [_textview lineHeight]];
     [_view.scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
-
+    
     _antiIdleCode = 0;
     [_antiIdleTimer invalidate];
     _antiIdleTimer = nil;
@@ -1463,7 +1469,7 @@ ITERM_WEAKLY_REFERENCEABLE
                substitutions:(NSDictionary *)substitutions {
     NSString *pwd;
     BOOL isUTF8;
-
+    
     // Grab the addressbook command
     Profile* profile = [self profile];
     Profile *profileForComputingCommand = profile;
@@ -1475,7 +1481,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                         forObjectType:objectType];
     NSString *theName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
-
+    
     if (forceUseOldCWD) {
         pwd = oldCWD;
     } else {
@@ -1490,9 +1496,9 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
-
+    
     [[_delegate realParentWindow] setName:theName forSession:self];
-
+    
     // Start the command
     [self startProgram:cmd
            environment:@{ @"PWD": pwd }
@@ -1585,10 +1591,10 @@ ITERM_WEAKLY_REFERENCEABLE
     switch ([[_profile objectForKey:KEY_PROMPT_CLOSE] intValue]) {
         case PROMPT_ALWAYS:
             return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
-
+            
         case PROMPT_NEVER:
             return [iTermPromptOnCloseReason noReason];
-
+            
         case PROMPT_EX_JOBS: {
             NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
@@ -1606,7 +1612,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-
+    
     // This shouldn't happen
     return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
@@ -1642,7 +1648,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
-
+    
     NSString *program = [command stringByPerformingSubstitutions:substitutions];
     NSArray *components = [program componentsInShellCommand];
     NSArray *arguments;
@@ -1652,16 +1658,16 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         arguments = @[];
     }
-
+    
     NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:environment];
-
+    
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
     }
     if (env[COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil) {
         env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
-
+    
     DLog(@"Begin locale logic");
     if (!_profile[KEY_SET_LOCALE_VARS] ||
         [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
@@ -1681,26 +1687,26 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-
+    
     if (env[PWD_ENVNAME] == nil) {
         // Set "PWD"
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
     }
-
+    
     // Remove trailing slashes, unless the path is just "/"
     NSString *trimmed = [env[PWD_ENVNAME] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
     if (trimmed.length == 0) {
         trimmed = @"/";
     }
     env[PWD_ENVNAME] = trimmed;
-
+    
     NSString *itermId = [self sessionId];
     env[@"ITERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     env[@"TERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM"] = @"iTerm.app";
     env[@"COLORTERM"] = @"truecolor";
-
+    
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
@@ -1709,7 +1715,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               shouldAppend:NO];
     }
     @synchronized(self) {
-      _registered = YES;
+        _registered = YES;
     }
     [_shell launchWithPath:program
                  arguments:arguments
@@ -1814,7 +1820,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
-
+    
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
@@ -1854,18 +1860,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxController release];
     _hideAfterTmuxWindowOpens = NO;
     _tmuxController = nil;
-
+    
     // The source pane may have just exited. Dogs and cats living together!
     // Mass hysteria!
     [[MovePaneController sharedInstance] exitMovePaneMode];
-
+    
     // deregister from the notification center
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-
+    
     if (_liveSession) {
         [_liveSession terminate];
     }
-
+    
     _exited = YES;
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
@@ -1875,26 +1881,26 @@ ITERM_WEAKLY_REFERENCEABLE
         [self hardStop];
     }
     [[iTermSessionHotkeyController sharedInstance] removeSession:self];
-
+    
     // final update of display
     [self updateDisplay];
-
+    
     [_delegate removeSession:self];
-
+    
     _colorMap.delegate = nil;
-
+    
     _screen.delegate = nil;
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
     if ([[_view findViewController] delegate] == self) {
         [[_view findViewController] setDelegate:nil];
     }
-
+    
     [_pasteHelper abort];
-
+    
     [[_delegate realParentWindow] sessionDidTerminate:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
-
+    
     _delegate = nil;
 }
 
@@ -1919,9 +1925,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // If _registered, -stop will cause -taskWasDeregistered to be called on a background thread,
     // which will release this object. Otherwise we autorelease now.
     @synchronized(self) {
-      if (!_registered) {
-          [self autorelease];
-      }
+        if (!_registered) {
+            [self autorelease];
+        }
     }
     [_shell stop];
     [_textview setDataSource:nil];
@@ -1963,11 +1969,11 @@ ITERM_WEAKLY_REFERENCEABLE
         _terminal.delegate = _screen;
         _shell.paused = NO;
         _view.findViewController.delegate = self;
-
+        
         NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:self.profile];
         iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
         [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut forSession:self];
-
+        
         [_view autorelease];  // This balances a retain in -terminate prior to calling -makeTerminationUndoable
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionRevivedNotification object:self];
         return YES;
@@ -2076,7 +2082,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case NSLeftArrowFunctionKey:
                 moved = [_copyModeState moveBackwardWord];
                 break;
-
+                
             case 'f':
             case NSRightArrowFunctionKey:
                 moved = [_copyModeState moveForwardWord];
@@ -2278,7 +2284,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)taskWasDeregistered {
     DLog(@"taskWasDeregistered");
     @synchronized(self) {
-      _registered = NO;
+        _registered = NO;
     }
     // This is called on the background thread. After this is called, we won't get any more calls
     // on the background thread and it is safe for us to be dealloc'ed. This pairs with the retain
@@ -2292,7 +2298,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case iTermEchoProbeOff:
             case iTermEchoProbeFailed:
                 return;
-
+                
             case iTermEchoProbeWaiting:
                 if (buffer[i] == '*') {
                     _echoProbeState = iTermEchoProbeOneAsterisk;
@@ -2301,7 +2307,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return;
                 }
                 break;
-
+                
             case iTermEchoProbeOneAsterisk:
                 if (buffer[i] == '\b') {
                     _echoProbeState = iTermEchoProbeBackspaceOverAsterisk;
@@ -2310,7 +2316,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return;
                 }
                 break;
-
+                
             case iTermEchoProbeBackspaceOverAsterisk:
                 if (buffer[i] == ' ') {
                     _echoProbeState = iTermEchoProbeSpaceOverAsterisk;
@@ -2319,7 +2325,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return;
                 }
                 break;
-
+                
             case iTermEchoProbeSpaceOverAsterisk:
                 if (buffer[i] == '\b') {
                     _echoProbeState = iTermEchoProbeBackspaceOverSpace;
@@ -2328,7 +2334,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return;
                 }
                 break;
-
+                
             case iTermEchoProbeBackspaceOverSpace:
                 _echoProbeState = iTermEchoProbeFailed;
                 return;
@@ -2344,24 +2350,24 @@ ITERM_WEAKLY_REFERENCEABLE
             [self updateEchoProbeStateWithBuffer:buffer length:length];
         }
     }
-
+    
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
-
+    
     // Parse the input stream into an array of tokens.
     CVector vector;
     CVectorCreate(&vector, 100);
     [_terminal.parser addParsedTokensToVector:&vector];
-
+    
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
         return;
     }
-
+    
     // This limits the number of outstanding execution blocks to prevent the main thread from
     // getting bogged down.
     dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
-
+    
     [self retain];
     dispatch_retain(_executionSemaphore);
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -2369,13 +2375,13 @@ ITERM_WEAKLY_REFERENCEABLE
             [_throughputEstimator addByteCount:length];
         }
         [self executeTokens:&vector bytesHandled:length];
-
+        
         // Unblock the background thread; if it's ready, it can send the main thread more tokens
         // now.
         dispatch_semaphore_signal(_executionSemaphore);
         dispatch_release(_executionSemaphore);
         [self release];
-        });
+    });
 }
 
 - (void)synchronousReadTask:(NSString *)string {
@@ -2402,7 +2408,7 @@ ITERM_WEAKLY_REFERENCEABLE
     STOPWATCH_START(executing);
     DLog(@"Session %@ begins executing tokens", self);
     int n = CVectorCount(vector);
-
+    
     if (_shell.paused || _copyMode) {
         // Session was closed or is not accepting new tokens because it's in copy mode. These can
         // be handled later (unclose or exit copy mode), so queu them up.
@@ -2421,19 +2427,19 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [_queuedTokens removeAllObjects];
     }
-
+    
     for (int i = 0; i < n; i++) {
         if (![self shouldExecuteToken]) {
             break;
         }
-
+        
         VT100Token *token = CVectorGetObject(vector, i);
         DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
         [_terminal executeToken:token];
     }
-
+    
     [self finishedHandlingNewOutputOfLength:length];
-
+    
     // When busy, we spend a lot of time performing recycleObject, so farm it
     // off to a background thread.
     CVector temp = *vector;
@@ -2458,7 +2464,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
     }
     _newOutput = YES;
-
+    
     // Make sure the screen gets redrawn soonish
     self.active = YES;
     [[ProcessCache sharedInstance] notifyNewOutput];
@@ -2495,14 +2501,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)checkTriggersOnPartialLine:(BOOL)partial
                         stringLine:(iTermStringLine *)stringLine
-                                  lineNumber:(long long)startAbsLineNumber {
+                        lineNumber:(long long)startAbsLineNumber {
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
-
+    
     // If a trigger changes the current profile then _triggers gets released and we should stop
     // processing triggers. This can happen with automatic profile switching.
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
-
+    
     for (Trigger *trigger in triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
@@ -2518,7 +2524,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_triggerLineNumber == -1) {
         _triggerLineNumber = _screen.numberOfScrollbackLines + _screen.cursorY - 1 + _screen.totalScrollbackOverflow;
     }
-
+    
     // We used to build up the string so you could write triggers that included bells. That doesn't
     // really make sense, especially in the new model, but it's so useful to be able to customize
     // the bell that I'll add this special case.
@@ -2619,11 +2625,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                          andNotification:@"Broken Pipes"];
 #endif
     }
-
+    
     _exited = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
-
+    
     if (_shouldRestart) {
         [_terminal resetByUserRequest:NO];
         [self appendBrokenPipeMessage:@"Session Restarted"];
@@ -2646,25 +2652,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Restart", @"Don’t Ask Again" ]
-                                                    completion:^(int selection) {
-                                                        switch (selection) {
-                                                            case -2:  // Dismiss programmatically
-                                                                break;
-
-                                                            case -1: // No
-                                                                break;
-
-                                                            case 0: // Yes
-                                                                [self replaceTerminatedShellWithNewInstance];
-                                                                break;
-
-                                                            case 1: // Don't ask again
-                                                                [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
-                                                        }
-                                                    }];
+    [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Restart", @"Don’t Ask Again" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            [self replaceTerminatedShellWithNewInstance];
+                                                            break;
+                                                            
+                                                        case 1: // Don't ask again
+                                                            [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
@@ -2692,12 +2698,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                   [_screen height] * [_textview lineHeight] + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
-        [PTYScrollView frameSizeForContentSize:innerSize
-                       horizontalScrollerClass:nil
-                         verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
-                                    borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
-                                 scrollerStyle:scrollerStyle];
+    [PTYScrollView frameSizeForContentSize:innerSize
+                   horizontalScrollerClass:nil
+                     verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
+                                borderType:NSNoBorder
+                               controlSize:NSRegularControlSize
+                             scrollerStyle:scrollerStyle];
     return outerSize;
 }
 
@@ -2707,17 +2713,17 @@ ITERM_WEAKLY_REFERENCEABLE
         changed = YES;
     }
     [[self.view scrollview] setHasVerticalScroller:visible];
-
+    
     if (self.view.scrollview.scrollerStyle != style) {
         changed = YES;
     }
     [[self.view scrollview] setScrollerStyle:style];
     [[self textview] updateScrollerForBackgroundColor];
-
+    
     if (changed) {
         [self.view updateLayout];
     }
-
+    
     return changed;
 }
 
@@ -2728,11 +2734,11 @@ ITERM_WEAKLY_REFERENCEABLE
     unichar unmodunicode;
     int keyBindingAction;
     NSString *keyBindingText;
-
+    
     modflag = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
-
+    
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
@@ -2781,7 +2787,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [iTermKeyBindingMgr removeMappingWithCode:NSRightArrowFunctionKey
                                     modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
                                    inBookmark:temp];
-
+    
     ProfileModel* model;
     if (_isDivorced) {
         model = [ProfileModel sessionsInstance];
@@ -2804,8 +2810,8 @@ ITERM_WEAKLY_REFERENCEABLE
         model = [ProfileModel sharedInstance];
     }
     [model setObject:[NSNumber numberWithBool:NO]
-                                       forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
-                                   inBookmark:_profile];
+              forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
+          inBookmark:_profile];
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO]
                                               forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
                                                       [_profile objectForKey:KEY_GUID]]];
@@ -2867,17 +2873,17 @@ ITERM_WEAKLY_REFERENCEABLE
     unichar unmodunicode;
     int keyBindingAction;
     NSString *keyBindingText;
-
+    
     modflag = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
-
+    
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
                                                        text:&keyBindingText
                                                 keyMappings:[iTermKeyBindingMgr globalKeyMap]];
-
+    
     return [PTYSession performKeyBindingAction:keyBindingAction
                                      parameter:keyBindingText
                                          event:event];
@@ -2951,7 +2957,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_exited) {
         return;
     }
-
+    
     // Note: there used to be a weird special case where 0xa5 got converted to
     // backslash. I think it was based on a misunderstanding of how encodings
     // work and it should've been removed like 10 years ago.
@@ -2989,13 +2995,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)deleteBackward:(id)sender {
     unsigned char p = 0x08; // Ctrl+H
-
+    
     [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES];
 }
 
 - (void)deleteForward:(id)sender {
     unsigned char p = 0x7F; // DEL
-
+    
     [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES];
 }
 
@@ -3015,7 +3021,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return YES;
     }
     BOOL windowIsObscured =
-        ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow]);
+    ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow]);
     return (windowIsObscured);
 }
 
@@ -3033,7 +3039,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         lineNumber = _textview.selection.liveRange.coordRange.start.y;
     }
-
+    
     // TODO: Figure out if this is a remote host and download/open if that's the case.
     NSString *workingDirectory = [_screen workingDirectoryOnLine:lineNumber];
     NSString *selection = [_textview selectedText];
@@ -3041,14 +3047,14 @@ ITERM_WEAKLY_REFERENCEABLE
         NSBeep();
         return;
     }
-
+    
     NSString *filename =
-        [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
-                                                              suffix:@""
-                                                    workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:nil
-                                                charsTakenFromSuffix:nil
-                                                      trimWhitespace:YES];
+    [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
+                                                          suffix:@""
+                                                workingDirectory:workingDirectory
+                                            charsTakenFromPrefix:nil
+                                            charsTakenFromSuffix:nil
+                                                  trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         if ([_textview openSemanticHistoryPath:filename
@@ -3058,15 +3064,15 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
     }
-
+    
     // Try to open it as a URL.
     NSURL *url =
-          [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+    [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
     }
-
+    
     NSBeep();
 }
 
@@ -3101,7 +3107,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSColor *bgColor;
     fgColor = [ITAddressBookMgr decodeColor:fg];
     bgColor = [ITAddressBookMgr decodeColor:bg];
-
+    
     int bgNum = -1;
     int fgNum = -1;
     for(int i = 0; i < 16; ++i) {
@@ -3113,7 +3119,7 @@ ITERM_WEAKLY_REFERENCEABLE
             bgNum = i;
         }
     }
-
+    
     if (bgNum < 0 || fgNum < 0) {
         if ([iTermAdvancedSettingsModel useColorfgbgFallback]) {
             if ([fgColor brightnessComponent] > [bgColor brightnessComponent]) {
@@ -3124,7 +3130,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return nil;
     }
-
+    
     return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
 }
 
@@ -3173,7 +3179,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [self sanityCheck];
-
+    
     // Copy non-overridden fields over.
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     NSMutableArray *noLongerOverriddenFields = [NSMutableArray array];
@@ -3198,7 +3204,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-
+    
     // For fields that are no longer overridden because the shared profile took on the same value
     // as the sessions profile, remove those keys from overriddenFields.
     for (NSString *key in noLongerOverriddenFields) {
@@ -3206,7 +3212,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_overriddenFields removeObject:key];
     }
     DLog(@"After shared profile change overridden keys are: %@", _overriddenFields);
-
+    
     // Update saved state.
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
     [self setPreferencesFromAddressBookEntry:temp];
@@ -3221,7 +3227,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // only reference to the divorced profile, but that is too big a project to take on right now.
     if (_isDivorced) {
         NSDictionary *sessionsProfile =
-                [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
+        [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         if (!sessionsProfile && _profile) {
             [[ProfileModel sessionsInstance] addBookmark:_profile];
         }
@@ -3234,9 +3240,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     NSDictionary *updatedProfile =
-        [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
+    [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
     [self sanityCheck];
-
+    
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
     for (NSString *aKey in keys) {
@@ -3272,7 +3278,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_originalProfile autorelease];
         _originalProfile = [sharedProfile copy];
     }
-
+    
     if (_isDivorced) {
         NSDictionary *sessionProfile = [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         if (![sessionProfile isEqual:_profile]) {
@@ -3281,7 +3287,7 @@ ITERM_WEAKLY_REFERENCEABLE
             didChange = YES;
         }
     }
-
+    
     _textview.badgeLabel = [self badgeLabel];
     [self sanityCheck];
     return didChange;
@@ -3290,20 +3296,20 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
     int i;
     NSDictionary *aDict = aePrefs;
-
+    
     if (aDict == nil) {
         aDict = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (aDict == nil) {
         return;
     }
-
+    
     if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
         _tmuxTitleOutOfSync = YES;
     }
-
+    
     BOOL useUnderline = [iTermProfilePreferences boolForKey:KEY_USE_UNDERLINE_COLOR inProfile:aDict];
-
+    
     NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
                               @(kColorMapBackground): KEY_BACKGROUND_COLOR,
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
@@ -3314,72 +3320,72 @@ ITERM_WEAKLY_REFERENCEABLE
                               @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR,
                               @(kColorMapUnderline): (useUnderline ? KEY_UNDERLINE_COLOR : [NSNull null])
                               };
-
+    
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
-
+        
         NSColor *theColor = nil;
         if ([profileKey isKindOfClass:[NSString class]]) {
             theColor = [[iTermProfilePreferences objectForKey:profileKey
                                                     inProfile:aDict] colorValue];
-            }
-
+        }
+        
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
-
+    
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
                                                          inProfile:aDict] colorValueWithDefaultAlpha:0.25];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];
     }
-
+    
     for (i = 0; i < 16; i++) {
         NSString *profileKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
         NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
-
+    
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:KEY_SMART_CURSOR_COLOR
                                                         inProfile:aDict]];
-
+    
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:KEY_MINIMUM_CONTRAST
                                                         inProfile:aDict]];
-
+    
     _colorMap.mutingAmount = [iTermProfilePreferences floatForKey:KEY_CURSOR_BOOST
                                                         inProfile:aDict];
-
+    
     // background image
     [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
     [self setBackgroundImageTiled:[iTermProfilePreferences boolForKey:KEY_BACKGROUND_IMAGE_TILED
                                                             inProfile:aDict]];
-
+    
     // Color scheme
     // ansiColosMatchingForeground:andBackground:inBookmark does an equality comparison, so
     // iTermProfilePreferences is not used here.
     [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[KEY_FOREGROUND_COLOR]
                                                     andBackground:aDict[KEY_BACKGROUND_COLOR]
                                                        inBookmark:aDict]];
-
+    
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR inProfile:aDict]];
-
+    
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
     self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
-
+    
     self.asciiLigatures = [iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:aDict];
     self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
-
+    
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
-
+    
     // Italic - this default has changed from NO to YES as of 1/30/15
     [self setUseItalicFont:[iTermProfilePreferences boolForKey:KEY_USE_ITALIC_FONT inProfile:aDict]];
-
+    
     // Set up the rest of the preferences
     [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
     [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
@@ -3389,7 +3395,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:[iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
-
+    
     PTYTab* currentTab = [[_delegate parentWindow] currentTab];
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
         [_delegate recheckBlur];
@@ -3425,7 +3431,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
                                                            inProfile:aDict]];
     [self setXtermMouseReportingAllowMouseWheel:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
-                                                           inProfile:aDict]];
+                                                                          inProfile:aDict]];
     [self setUnicodeVersion:[iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION
                                                          inProfile:aDict]];
     [_terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
@@ -3438,15 +3444,15 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               inProfile:aDict]];
     [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
                                                             inProfile:aDict]];
-
+    
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
     _textview.badgeLabel = [self badgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NORMAL_FONT]]
-        nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
-        horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
-        verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
+     nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
+horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
+  verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
     [_screen setSaveToScrollbackInAlternateScreen:[iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                                                                             inProfile:aDict]];
     
@@ -3455,7 +3461,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut
                                                     forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
-
+    
     if (self.isTmuxClient) {
         NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
         if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {
@@ -3534,7 +3540,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_defaultName isEqualToString:theName]) {
         return;
     }
-
+    
     if (_defaultName) {
         // clear the window title if it is not different
         if (_windowTitle == nil || [_name isEqualToString:_windowTitle]) {
@@ -3549,7 +3555,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                      [NSBundle bundleForClass:[self class]],
                                                      @"Profiles");
     }
-
+    
     _defaultName = [theName copy];
 }
 
@@ -3586,7 +3592,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_name isEqualToString:theName]) {
         return;
     }
-
+    
     if (_name) {
         // clear the window title if it is not different
         if ([_name isEqualToString:_windowTitle]) {
@@ -3601,16 +3607,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                                      [NSBundle bundleForClass:[self class]],
                                                      @"Profiles");
     }
-
+    
     _name = [theName retain];
     // sync the window title if it is not set to something else
     if (_windowTitle == nil) {
         [self setWindowTitle:theName];
     }
-
+    
     [_delegate nameOfSession:self didChangeTo:[self name]];
     [self setBell:NO];
-
+    
     // get the session submenu to be rebuilt
     if ([[iTermController sharedInstance] currentTerminal] == [_delegate parentWindow]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNameOfSessionDidChange"
@@ -3633,14 +3639,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([theTitle isEqualToString:_windowTitle]) {
         return;
     }
-
+    
     [_windowTitle autorelease];
     _windowTitle = nil;
-
+    
     if (theTitle != nil && [theTitle length] > 0) {
         _windowTitle = [theTitle copy];
     }
-
+    
     if ([_delegate sessionBelongsToVisibleTab]) {
         [[_delegate parentWindow] setWindowTitle];
     }
@@ -3753,10 +3759,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [_backgroundImagePath release];
         _backgroundImagePath = nil;
     }
-
+    
     [_patternedImage release];
     _patternedImage = nil;
-
+    
     [_textview setNeedsDisplay:YES];
 }
 
@@ -3825,9 +3831,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setAntiIdle:(BOOL)set {
     [_antiIdleTimer invalidate];
     _antiIdleTimer = nil;
-
+    
     _antiIdlePeriod = MAX(_antiIdlePeriod, kMinimumAntiIdlePeriod);
-
+    
     if (set) {
         _antiIdleTimer = [NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
                                                           target:self.weakSelf
@@ -3891,6 +3897,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermUnicodeVersionDidChangeNotification
                                                         object:nil];
 }
+
+static BOOL _xtermMouseReporting;
 
 - (void)setXtermMouseReporting:(BOOL)set
 {
@@ -3980,7 +3988,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // profile that's stored in a saved window arrangement. It doesn't get
     // saved back into the arrangement, unfortunately.
     [ProfileModel migratePromptOnCloseInMutableBookmark:mutableProfile];
-
+    
     NSString *originalGuid = newProfile[KEY_ORIGINAL_GUID];
     if (originalGuid) {
         // This code path is taken when changing an existing session's profile.
@@ -3996,7 +4004,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _originalProfile = [NSDictionary dictionaryWithDictionary:mutableProfile];
         [_originalProfile retain];
     }
-
+    
     [_profile release];
     _profile = [mutableProfile retain];
     [[_delegate realParentWindow] invalidateRestorableState];
@@ -4013,7 +4021,7 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
-
+    
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
@@ -4032,7 +4040,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (shortcutDictionary) {
         result[SESSION_ARRANGEMENT_HOTKEY] = shortcutDictionary;
     }
-
+    
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
     }
@@ -4046,27 +4054,27 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *contentsDictionary = [_screen contentsDictionary];
         result[SESSION_ARRANGEMENT_CONTENTS] = contentsDictionary;
         int numberOfLinesDropped =
-            [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
+        [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
         VT100GridCoordRange range = _commandRange;
         range.start.y -= numberOfLinesDropped;
         range.end.y -= numberOfLinesDropped;
         result[SESSION_ARRANGEMENT_COMMAND_RANGE] =
-            [NSDictionary dictionaryWithGridCoordRange:range];
-        result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
+        [NSDictionary dictionaryWithGridCoordRange:range];
+    //    result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE] = @(self.lastDirectoryIsRemote);
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
-            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
+        [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
-            [_liveSession arrangementWithContents:includeContents];
+        [_liveSession arrangementWithContents:includeContents];
     }
     if (includeContents && !self.isTmuxClient) {
         // These values are used for restoring sessions after a crash. It's only saved when contents
@@ -4087,7 +4095,7 @@ ITERM_WEAKLY_REFERENCEABLE
             result[SESSION_ARRANGEMENT_TMUX_DCS_ID] = dcsID;
         }
     }
-
+    
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
@@ -4096,7 +4104,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
 #endif
-
+    
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     return result;
@@ -4132,7 +4140,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (value) {
         result[SESSION_ARRANGEMENT_TMUX_TAB_COLOR] = value;
     }
-
+    
     return result;
 }
 
@@ -4158,7 +4166,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![self isTmuxGateway]) {
         [_delegate updateLabelAttributes];
     }
-
+    
     static const NSTimeInterval kUpdateTitlePeriod = 0.7;
     if ([_delegate sessionIsActiveInTab:self]) {
         // Update window info for the active tab.
@@ -4174,20 +4182,20 @@ ITERM_WEAKLY_REFERENCEABLE
         self.jobName = [_shell currentJob:NO];
         [self.view setTitle:self.name];
     }
-
+    
     DLog(@"Session %@ calling refresh", self);
     const BOOL somethingIsBlinking = [_textview refresh];
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
-
+    
     // Even if "active" isn't changing we need the side effect of setActive: that updates the
     // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
-
+    
     if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
         [self stopTailFind];
     }
-
+    
     [self checkPartialLineTriggers];
     _passwordInput = _shell.passwordInput;
     _timerRunning = NO;
@@ -4202,7 +4210,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate nameOfSession:self didChangeTo:[self name]];
         [self.view setTitle:self.name];
     }
-
+    
     if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
         [[_delegate parentWindow] setWindowTitle];
@@ -4225,7 +4233,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-
+    
     if (![self isTmuxGateway] && now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
         // This feature is hopeless for tmux gateways. Issue 5231.
         [self writeLatin1EncodedData:[NSData dataWithBytes:&_antiIdleCode length:1]
@@ -4275,9 +4283,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setFont:(NSFont*)font
-     nonAsciiFont:(NSFont*)nonAsciiFont
-    horizontalSpacing:(float)horizontalSpacing
-    verticalSpacing:(float)verticalSpacing {
+   nonAsciiFont:(NSFont*)nonAsciiFont
+horizontalSpacing:(float)horizontalSpacing
+verticalSpacing:(float)verticalSpacing {
     DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
     NSWindow *window = [[_delegate realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -4297,9 +4305,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Line height was %f", (float)[_textview lineHeight]);
     [_textview setFont:font
-         nonAsciiFont:nonAsciiFont
-        horizontalSpacing:horizontalSpacing
-        verticalSpacing:verticalSpacing];
+          nonAsciiFont:nonAsciiFont
+     horizontalSpacing:horizontalSpacing
+       verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", (float)[_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -4350,13 +4358,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)apiServerUnsubscribe:(NSNotification *)notification {
     /*
-    [_promptSubscriptions removeObjectForKey:notification.object];
-    [_keystrokeSubscriptions removeObjectForKey:notification.object];
-    [_updateSubscriptions removeObjectForKey:notification.object];
-    [_locationChangeSubscriptions removeObjectForKey:notification.object];
-    [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
-*/
-     }
+     [_promptSubscriptions removeObjectForKey:notification.object];
+     [_keystrokeSubscriptions removeObjectForKey:notification.object];
+     [_updateSubscriptions removeObjectForKey:notification.object];
+     [_locationChangeSubscriptions removeObjectForKey:notification.object];
+     [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
+     */
+}
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
@@ -4454,18 +4462,18 @@ ITERM_WEAKLY_REFERENCEABLE
         vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
     }
     [self setFont:font nonAsciiFont:nonAsciiFont horizontalSpacing:hs verticalSpacing:vs];
-
+    
     if (dir || _isDivorced) {
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
-
+        
         [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [font stringValue],
                                                  KEY_NON_ASCII_FONT: [nonAsciiFont stringValue] }];
         // Set the font in the bookmark dictionary
-
+        
         // Update the model's copy of the bookmark.
         [[ProfileModel sessionsInstance] setBookmark:[self profile] withGuid:guid];
-
+        
         // Update an existing one-bookmark prefs dialog, if open.
         if ([[[PreferencePanel sessionsInstance] windowIfLoaded] isVisible]) {
             [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
@@ -4493,7 +4501,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
-
+    
     // Update this session's copy of the bookmark
     [self reloadProfile];
 }
@@ -4518,17 +4526,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
     DLog(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
     [[ProfileModel sessionsInstance] addBookmark:[[bookmark copy] autorelease]];
-
+    
     NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
     if (!existingOriginalGuid ||
         ![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid] ||
         ![existingOriginalGuid isEqualToString:_originalProfile[KEY_GUID]]) {
         // The bookmark doesn't already have a valid original GUID.
         bookmark = [[ProfileModel sessionsInstance] setObject:guid
-                                                        forKey:KEY_ORIGINAL_GUID
-                                                    inBookmark:bookmark];
+                                                       forKey:KEY_ORIGINAL_GUID
+                                                   inBookmark:bookmark];
     }
-
+    
     // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
     DLog(@"Allocating a new guid for this profile. The new guid is %@", guid);
@@ -4587,17 +4595,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)toggleFindPanel
 {
-	BOOL isHidden = [[[_view findViewController] view] isHidden];
-	for (PTYSession *aSession in [[_delegate realParentWindow] allSessions]) {
-		if (![[[aSession->_view findViewController] view] isHidden]) {
-			[[aSession->_view findViewController] hide];
-		}
-	}
-	if (isHidden) {
-		[[_view findViewController] makeVisible];
-	} else {
-         	[[_view findViewController] close];
+    BOOL isHidden = [[[_view findViewController] view] isHidden];
+    for (PTYSession *aSession in [[_delegate realParentWindow] allSessions]) {
+        if (![[[aSession->_view findViewController] view] isHidden]) {
+            [[aSession->_view findViewController] hide];
         }
+    }
+    if (isHidden) {
+        [[_view findViewController] makeVisible];
+    } else {
+        [[_view findViewController] close];
+    }
 }
 
 - (void)showFindPanel
@@ -4651,7 +4659,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      mode:(iTermFindMode)mode
+              mode:(iTermFindMode)mode
         withOffset:(int)offset {
     [_textview findString:aString
          forwardDirection:direction
@@ -4687,14 +4695,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)askAboutAbortingDownload {
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"OK", @"Cancel" ]
-                                                    completion:^(int selection) {
-                                                        if (selection == 0) {
-                                                            [self.terminal stopReceivingFile];
-                                                        }
-                                                    }];
+    [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"OK", @"Cancel" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        [self.terminal stopReceivingFile];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:@"AbortDownloadOnKeyPressAnnouncement"];
 }
 
@@ -4760,7 +4768,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // It looks like we're at a password prompt. Send the password.
                 ok = YES;
                 break;
-
+                
             case iTermEchoProbeFailed:
             case iTermEchoProbeOff:
             case iTermEchoProbeSpaceOverAsterisk:
@@ -4771,10 +4779,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _echoProbeState = iTermEchoProbeOff;
     }
-
+    
     if (prompt) {
         ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
-                                                 @"like what you're typing is echoed to the screen."
+               @"like what you're typing is echoed to the screen."
                                          actions:@[ @"Cancel", @"Enter Password" ]
                                       identifier:nil
                                      silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
@@ -4814,12 +4822,12 @@ ITERM_WEAKLY_REFERENCEABLE
         NSPasteboard *pboard = [NSPasteboard pasteboardWithName:_pasteboard];
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setData:_pbtext forType:NSStringPboardType];
-
+        
         [_pasteboard release];
         _pasteboard = nil;
         [_pbtext release];
         _pbtext = nil;
-
+        
         // In case it was the find pasteboard that chagned
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                             object:nil
@@ -4853,13 +4861,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setFocused:(BOOL)focused {
     // if (focused != _focused) {
-        _focused = focused;
-        if ([_terminal reportFocus]) {
-            [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
-        }
-        if (focused && [self isTmuxClient]) {
-            [_tmuxController selectPane:_tmuxPane];
-        }
+    _focused = focused;
+    if ([_terminal reportFocus]) {
+        [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
+    }
+    if (focused && [self isTmuxClient]) {
+        [_tmuxController selectPane:_tmuxPane];
+    }
     // }
 }
 
@@ -4869,8 +4877,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // That means the find window is open, we're not already doing a tail find,
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
     return !_tailFindTimer &&
-           ![[[_view findViewController] view] isHidden] &&
-           [_textview findContext].substring != nil;
+    ![[[_view findViewController] view] isHidden] &&
+    [_textview findContext].substring != nil;
 }
 
 - (void)hideSession {
@@ -4907,11 +4915,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  profileModel:model];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
-
+    
     // We intentionally don't send anything to tmux yet. We wait to get a
     // begin-end pair from it to make sure everything is cool (we have a legit
     // session) and then we start going.
-
+    
     // This is to fix issue 4429, where we used to send a command immediately
     // and tmux would terminate immediately and we would spam the user's
     // command line.
@@ -4923,7 +4931,7 @@ ITERM_WEAKLY_REFERENCEABLE
     //    %begin time 1 0
     //    %end time 1 0
     //    %window-add @id
-
+    
     // tmux -CC attach with no existing session prints this unsolicited;
     // %begin time 1 0
     // no sessions
@@ -4932,7 +4940,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // tmux -CC attach with an existing session prints this unsolicited:
     // %begin time 1 0
     // %end time 1 0
-
+    
     // One of tmuxInitialCommandDidCompleteSuccessfully: or
     // tmuxInitialCommandDidFailWithError: will be called on the first %end or
     // %error, respectively.
@@ -4944,7 +4952,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self printTmuxMessage:@"  X    Force-quit tmux mode."];
     [self printTmuxMessage:@"  L    Toggle logging."];
     [self printTmuxMessage:@"  C    Run tmux command."];
-
+    
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
         _hideAfterTmuxWindowOpens = YES;
     }
@@ -5022,14 +5030,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)addNoteAtCursor {
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     VT100GridCoordRange rangeAtCursor =
-        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 1,
-                                                       _screen.cursorY - 1)];
+    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 1,
+                                                   _screen.cursorY - 1)];
     VT100GridCoordRange rangeBeforeCursor =
-        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 2,
-                                                       _screen.cursorY - 1)];
+    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 2,
+                                                   _screen.cursorY - 1)];
     VT100GridCoordRange rangeAfterCursor =
-        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
-                                                       _screen.cursorY - 1)];
+    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
+                                                   _screen.cursorY - 1)];
     if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
         [_screen addNote:note inRange:rangeAtCursor];
     } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
@@ -5045,10 +5053,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
-        VT100GridCoordRangeMake(0,
-                                0,
-                                _screen.width,
-                                _screen.height + [_screen numberOfScrollbackLines]);
+    VT100GridCoordRangeMake(0,
+                            0,
+                            _screen.width,
+                            _screen.height + [_screen numberOfScrollbackLines]);
     NSArray *notes = [_screen notesInRange:range];
     BOOL anyNoteIsVisible = NO;
     for (PTYNoteViewController *note in notes) {
@@ -5159,7 +5167,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_hideAfterTmuxWindowOpens) {
         _hideAfterTmuxWindowOpens = NO;
         [self hideSession];
-
+        
         static NSString *const kAutoBurialKey = @"NoSyncAutoBurialReveal";
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kAutoBurialKey]) {
             [iTermMenuOpener revealMenuWithPath:@[ @"Session", @"Buried Sessions" ]
@@ -5225,7 +5233,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tmuxHostDisconnected:(NSString *)dcsID {
     _hideAfterTmuxWindowOpens = NO;
-
+    
     [_tmuxController detach];
     // Autorelease the gateway because it called this function so we can't free
     // it immediately.
@@ -5241,7 +5249,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [dcsID release];
     });
     self.tmuxMode = TMUX_NONE;
-
+    
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
         [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
@@ -5253,15 +5261,15 @@ ITERM_WEAKLY_REFERENCEABLE
     
     NSString *message = [NSString stringWithFormat:@"Because of a bug in tmux 2.2, the character “%@” cannot be sent.", string];
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:message
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ @"Why?" ]
-                                                    completion:^(int selection) {
-                                                        if (selection == 0) {
-                                                            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
-                                                            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
-                                                        }
-                                                    }];
+    [iTermAnnouncementViewController announcementWithTitle:message
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Why?" ]
+                                                completion:^(int selection) {
+                                                    if (selection == 0) {
+                                                        NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
+                                                        [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                    }
+                                                }];
     announcement.dismissOnKeyDown = YES;
     [session queueAnnouncement:announcement identifier:@"Tmux2.2SupplementaryPlaneAnnouncement"];
 }
@@ -5352,6 +5360,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+#if 0
+- (TmuxController *)tmuxController { 
+    // nothing to do here
+    return nil;
+}
+#endif
+
 - (NSString*)encodingName
 {
     // Get the encoding, perhaps as a fully written out name.
@@ -5377,7 +5392,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-
+    
     if (ianaEncoding != nil) {
         // Mangle the names slightly
         NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];
@@ -5386,9 +5401,9 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"After mangling, encoding is now %@", encoding);
         return encoding;
     }
-
+    
     DLog(@"Return nil encoding");
-
+    
     return nil;
 }
 
@@ -5410,7 +5425,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
         [self didInferEndOfCommand];
     }
-
+    
     if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
         if (self.terminal.receivingFile) {
             // Offer to abort download if you press ^c while downloading an inline file
@@ -5425,38 +5440,38 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     } else {
         /*
-        if (_keystrokeSubscriptions.count) {
-            ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
-            keystrokeNotification.characters = event.characters;
-            keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
-            if (event.modifierFlags & NSControlKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Control];
-            }
-            if (event.modifierFlags & NSAlternateKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Option];
-            }
-            if (event.modifierFlags & NSCommandKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Command];
-            }
-            if (event.modifierFlags & NSShiftKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Shift];
-            }
-            if (event.modifierFlags & NSNumericPadKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Numpad];
-            }
-            if (event.modifierFlags & NSFunctionKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
-            }
-            keystrokeNotification.keyCode = event.keyCode;
-            keystrokeNotification.session = self.guid;
-            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-            notification.keystrokeNotification = keystrokeNotification;
-
-            [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-                [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
-            }];
-        }
-        */
+         if (_keystrokeSubscriptions.count) {
+         ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
+         keystrokeNotification.characters = event.characters;
+         keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
+         if (event.modifierFlags & NSControlKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Control];
+         }
+         if (event.modifierFlags & NSAlternateKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Option];
+         }
+         if (event.modifierFlags & NSCommandKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Command];
+         }
+         if (event.modifierFlags & NSShiftKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Shift];
+         }
+         if (event.modifierFlags & NSNumericPadKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Numpad];
+         }
+         if (event.modifierFlags & NSFunctionKeyMask) {
+         [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
+         }
+         keystrokeNotification.keyCode = event.keyCode;
+         keystrokeNotification.session = self.guid;
+         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+         notification.keystrokeNotification = keystrokeNotification;
+         
+         [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+         }];
+         }
+         */
         return YES;
     }
 }
@@ -5467,7 +5482,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case -1:
             // No action
             return NO;
-
+            
         case KEY_ACTION_MOVE_TAB_LEFT:
         case KEY_ACTION_MOVE_TAB_RIGHT:
         case KEY_ACTION_NEXT_MRU_TAB:
@@ -5525,7 +5540,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_BELOW:
             return NO;
             break;
-
+            
         case KEY_ACTION_SELECT_MENU_ITEM:
             [PTYSession selectMenuItem:keyBindingText];
             return YES;
@@ -5545,7 +5560,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
-
+    
     switch (keyBindingAction) {
         case KEY_ACTION_MOVE_TAB_LEFT:
             [[_delegate realParentWindow] moveTabLeft:nil];
@@ -5636,7 +5651,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SELECT_MENU_ITEM:
             [PTYSession selectMenuItem:keyBindingText];
             break;
-
+            
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             if (_exited || isTmuxGateway) {
                 return;
@@ -5699,7 +5714,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_LOAD_COLOR_PRESET: {
             // Divorce & update self
             [self setColorsFromPresetNamed:keyBindingText];
-
+            
             // Try to update the backing profile if possible, which may undivorce you. The original
             // profile may not exist so this could do nothing.
             ProfileModel *model = [ProfileModel sharedInstance];
@@ -5714,20 +5729,20 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
         }
-
+            
         case KEY_ACTION_FIND_REGEX:
             [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
                                                                           mode:iTermFindModeCaseSensitiveRegex];
             break;
-
+            
         case KEY_FIND_AGAIN_DOWN:
             [self searchNext];
             break;
-
-         case KEY_FIND_AGAIN_UP:
+            
+        case KEY_FIND_AGAIN_UP:
             [self searchPrevious];
             break;
-
+            
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
             NSString *string = [[iTermController sharedInstance] lastSelection];
             if (string.length) {
@@ -5736,7 +5751,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
         }
-
+            
         case KEY_ACTION_PASTE_SPECIAL: {
             NSString *string = [NSString stringFromPasteboard];
             if (string.length) {
@@ -5760,7 +5775,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_UNDO:
             [PTYSession selectMenuItemWithSelector:@selector(undo:)];
             break;
-
+            
         case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
             [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
                                  inDirection:kPTYTextViewSelectionExtensionDirectionLeft
@@ -5781,21 +5796,21 @@ ITERM_WEAKLY_REFERENCEABLE
                                  inDirection:kPTYTextViewSelectionExtensionDirectionRight
                                           by:[keyBindingText integerValue]];
             break;
-
+            
         case KEY_ACTION_DECREASE_HEIGHT:
             [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
             break;
         case KEY_ACTION_INCREASE_HEIGHT:
             [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
             break;
-
+            
         case KEY_ACTION_DECREASE_WIDTH:
             [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
             break;
         case KEY_ACTION_INCREASE_WIDTH:
             [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
             break;
-
+            
         case KEY_ACTION_SWAP_PANE_LEFT:
             [[[iTermController sharedInstance] currentTerminal] swapPaneLeft];
             break;
@@ -5808,7 +5823,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_BELOW:
             [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
             break;
-
+            
         default:
             XLog(@"Unknown key action %d", keyBindingAction);
             break;
@@ -5825,12 +5840,12 @@ ITERM_WEAKLY_REFERENCEABLE
     int send_pchr = -1;
     int keyBindingAction;
     NSString *keyBindingText;
-
+    
     unsigned int modflag;
     NSString *keystr;
     NSString *unmodkeystr;
     unichar unicode, unmodunicode;
-
+    
     modflag = [event modifierFlags];
     keystr  = [event characters];
     unmodkeystr = [event charactersIgnoringModifiers];
@@ -5848,7 +5863,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     } else if ([[_delegate realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");
-
+        
         // Special key handling in IR mode, and keys never get sent to the live
         // session, even though it might be displayed.
         if (unicode == 27) {
@@ -5878,18 +5893,18 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return;
     }
-
+    
     unsigned short keycode = [event keyCode];
     DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
          event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
          (modflag & NSNumericPadKeyMask));
-
+    
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
                                                        text:&keyBindingText
                                                 keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
-
+    
     if (keyBindingAction >= 0) {
         DLog(@"PTYSession keyDown action=%d", keyBindingAction);
         // A special action was bound to this key combination.
@@ -5901,39 +5916,39 @@ ITERM_WEAKLY_REFERENCEABLE
         if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
             (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
              keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
-            // Warn users about outdated default key bindings.
-            int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
-            int tempKeyCode = unmodunicode;
-            if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
-                (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
-                [[_delegate sessions] count] > 1) {
-                if ([self _askAboutOutdatedKeyMappings]) {
-                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                    alert.messageText = @"Outdated Key Mapping Found";
-                    alert.informativeText = @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?";
-                    [alert addButtonWithTitle:@"Remove it"];
-                    [alert addButtonWithTitle:@"Remind me later"];
-                    [alert addButtonWithTitle:@"Keep it"];
-                    switch ([alert runModal]) {
-                        case NSAlertFirstButtonReturn:
-                            // Remove it
-                            [self _removeOutdatedKeyMapping];
-                            return;
-                            break;
-                        case NSAlertSecondButtonReturn:
-                            // Remind me later
-                            break;
-                        case NSAlertThirdButtonReturn:
-                            // Keep it
-                            [self _setKeepOutdatedKeyMapping];
-                            break;
-                        default:
-                            break;
+                // Warn users about outdated default key bindings.
+                int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+                int tempKeyCode = unmodunicode;
+                if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+                    (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
+                    [[_delegate sessions] count] > 1) {
+                    if ([self _askAboutOutdatedKeyMappings]) {
+                        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                        alert.messageText = @"Outdated Key Mapping Found";
+                        alert.informativeText = @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?";
+                        [alert addButtonWithTitle:@"Remove it"];
+                        [alert addButtonWithTitle:@"Remind me later"];
+                        [alert addButtonWithTitle:@"Keep it"];
+                        switch ([alert runModal]) {
+                            case NSAlertFirstButtonReturn:
+                                // Remove it
+                                [self _removeOutdatedKeyMapping];
+                                return;
+                                break;
+                            case NSAlertSecondButtonReturn:
+                                // Remind me later
+                                break;
+                            case NSAlertThirdButtonReturn:
+                                // Keep it
+                                [self _setKeepOutdatedKeyMapping];
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }
-        }
-
+        
         [self performKeyBindingAction:keyBindingAction parameter:keyBindingText event:event];
     } else {
         // Key is not bound to an action.
@@ -5946,16 +5961,16 @@ ITERM_WEAKLY_REFERENCEABLE
             DebugLog(@"Terminal already dead");
             return;
         }
-
+        
         BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
         BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
-
+        
         // No special binding for this key combination.
         if (modflag & NSFunctionKeyMask) {
             DLog(@"PTYSession keyDown is a function key");
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
-
+            
             switch (unicode) {
                 case NSUpArrowFunctionKey:
                     data = [_terminal.output keyArrowUp:modflag];
@@ -5992,11 +6007,11 @@ ITERM_WEAKLY_REFERENCEABLE
                     data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
                     break;
             }
-
+            
             if (NSF1FunctionKey <= unicode && unicode <= NSF35FunctionKey) {
                 data = [_terminal.output keyFunction:unicode - NSF1FunctionKey + 1];
             }
-
+            
             if (data != nil) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
@@ -6017,10 +6032,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 assert(rightAltPressed);
                 mode = [self rightOptionKey];
             }
-
+            
             NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
-                [keystr dataUsingEncoding:_terminal.encoding]:
-                [unmodkeystr dataUsingEncoding:_terminal.encoding];
+            [keystr dataUsingEncoding:_terminal.encoding]:
+            [unmodkeystr dataUsingEncoding:_terminal.encoding];
             if (keydat != nil) {
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
@@ -6037,7 +6052,7 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"PTYSession keyDown regular path");
             // Regular path for inserting a character from a keypress.
             NSData *data = nil;
-
+            
             if (keystr.length != 1 || [keystr characterAtIndex:0] > 0x7f) {
                 DLog(@"PTYSession keyDown non-ascii");
                 data = [keystr dataUsingEncoding:_terminal.encoding];
@@ -6047,7 +6062,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // necessary for some Japanese input sources, but is vague.
                 data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
             }
-
+            
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                 modflag |= NSNumericPadKeyMask;
@@ -6077,13 +6092,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
                 modflag |= NSNumericPadKeyMask;
             }
-
+            
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 DLog(@"PTYSession keyDown numeric keypad");
                 data = [_terminal.output keypadData:unicode keystr:keystr];
             }
-
+            
             int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
             if ((indMask & NSCommandKeyMask) &&   // pressing cmd
                 ([keystr isEqualToString:@"0"] ||  // pressed 0 key
@@ -6166,36 +6181,36 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_HEX_CODE:
             data = [self dataForHexCodes:keyBindingText];
             break;
-
+            
         case KEY_ACTION_TEXT:
             data = [keyBindingText dataUsingEncoding:self.encoding];
             break;
-
+            
         case KEY_ACTION_VIM_TEXT:
             data = [[keyBindingText stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
             break;
-
+            
         case KEY_ACTION_ESCAPE_SEQUENCE:
             data = [[@"\e" stringByAppendingString:keyBindingText] dataUsingEncoding:self.encoding];
             break;
-
+            
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             data = [@"\010" dataUsingEncoding:self.encoding];
             break;
-
+            
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
             data = [@"\177" dataUsingEncoding:self.encoding];
             break;
-
+            
         case -1:
             data = [NSData dataWithBytes:&del length:1];
             break;
-
+            
         default:
             data = nil;
             break;
     }
-
+    
     return data;
 }
 
@@ -6252,7 +6267,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
     }
-
+    
     DLog(@"Calling pasteString:flags: on helper...");
     [_pasteHelper pasteString:theString
                        slowly:!!(flags & kPTYSessionPasteSlowly)
@@ -6332,7 +6347,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         double dx = image.size.width / _view.frame.size.width;
         double dy = image.size.height / _view.frame.size.height;
-
+        
         NSRect sourceRect = NSMakeRect(localRect.origin.x * dx,
                                        localRect.origin.y * dy,
                                        localRect.size.width * dx,
@@ -6343,7 +6358,7 @@ ITERM_WEAKLY_REFERENCEABLE
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
-
+        
         if (blendDefaultBackground) {
             // Blend default background color over background image.
             [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
@@ -6376,14 +6391,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewDidFindDirtyRects {
     /*
-    if (_updateSubscriptions.count) {
-        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-        notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
-        notification.screenUpdateNotification.session = self.guid;
-        [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-            [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
-        }];
-    }
+     if (_updateSubscriptions.count) {
+     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+     notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
+     notification.screenUpdateNotification.session = self.guid;
+     [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+     [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+     }];
+     }
      */
 }
 
@@ -6571,7 +6586,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord));
-
+    
     switch (eventType) {
         case NSLeftMouseDown:
         case NSRightMouseDown:
@@ -6585,22 +6600,22 @@ ITERM_WEAKLY_REFERENCEABLE
                     [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                 withModifiers:modifiers
                                                                            at:coord]
-                             broadcastAllowed:NO];
+                                broadcastAllowed:NO];
                     return YES;
-
+                    
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HILITE:
                     break;
             }
             break;
-
+            
         case NSLeftMouseUp:
         case NSRightMouseUp:
         case NSOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
-
+                
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
@@ -6609,17 +6624,17 @@ ITERM_WEAKLY_REFERENCEABLE
                         [self writeLatin1EncodedData:[_terminal.output mouseRelease:button
                                                                       withModifiers:modifiers
                                                                                  at:coord]
-                                 broadcastAllowed:NO];
+                                    broadcastAllowed:NO];
                         return YES;
-
+                        
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HILITE:
                         break;
                 }
             }
             break;
-
-
+            
+            
         case NSMouseMoved:
             if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
@@ -6627,38 +6642,38 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self writeLatin1EncodedData:[_terminal.output mouseMotion:MOUSE_BUTTON_NONE
                                                              withModifiers:modifiers
                                                                         at:coord]
-                         broadcastAllowed:NO];
+                            broadcastAllowed:NO];
                 return YES;
             }
             break;
-
+            
         case NSLeftMouseDragged:
         case NSRightMouseDragged:
         case NSOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
-
+                
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                         [self writeLatin1EncodedData:[_terminal.output mouseMotion:button
                                                                      withModifiers:modifiers
                                                                                 at:coord]
-                                 broadcastAllowed:NO];
+                                    broadcastAllowed:NO];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
                         // Don't do selection when mouse reporting during a drag, even if the drag
                         // is not reported (the clicks are).
                         return YES;
-
+                        
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HILITE:
                         break;
                 }
             }
             break;
-
+            
         case NSScrollWheel:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
@@ -6672,24 +6687,24 @@ ITERM_WEAKLY_REFERENCEABLE
                             [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                         withModifiers:modifiers
                                                                                    at:coord]
-                                     broadcastAllowed:NO];
+                                        broadcastAllowed:NO];
                         }
                         [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                     withModifiers:modifiers
                                                                                at:coord]
-                                 broadcastAllowed:NO];
+                                    broadcastAllowed:NO];
                     }
                     // If deltaY is 0 we still return YES because the
                     // scrollview moves anyway (likely because our caller is
                     // not using the high-precision wheel API).
                     return YES;
-
+                    
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HILITE:
                     break;
             }
             break;
-
+            
         default:
             assert(NO);
             break;
@@ -6706,7 +6721,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
         long long absCursorY = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
-
+        
         if (self.isAtShellPrompt ||
             _screen.startOfRunningCommandOutput.x == -1 ||
             (absCursorY == _screen.startOfRunningCommandOutput.y && _screen.cursorX == 1)) {
@@ -6735,10 +6750,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         VT100GridAbsCoordRange range =
-            VT100GridAbsCoordRangeMake(_commandRange.start.x,
-                                       _commandRange.start.y + _screen.totalScrollbackOverflow,
-                                       _commandRange.end.x,
-                                       _commandRange.end.y + _screen.totalScrollbackOverflow);
+        VT100GridAbsCoordRangeMake(_commandRange.start.x,
+                                   _commandRange.start.y + _screen.totalScrollbackOverflow,
+                                   _commandRange.end.x,
+                                   _commandRange.end.y + _screen.totalScrollbackOverflow);
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
         return [extractor rangeByTrimmingWhitespaceFromRange:range];
     }
@@ -6748,7 +6763,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Return YES if command history has never been used so we can show the informational message.
     return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
-
+    
 }
 
 - (BOOL)textViewCanSelectCurrentCommand {
@@ -6796,27 +6811,27 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"Do you want the scroll wheel to move the cursor in interactive programs like this?"
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Don‘t Ask Again" ]
-                                                    completion:^(int selection) {
-                                                        switch (selection) {
-                                                            case -2:  // Dismiss programmatically
-                                                                break;
-                                                                
-                                                            case -1: // No
-                                                                break;
-                                                                
-                                                            case 0: // Yes
-                                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"AlternateMouseScroll"];
-                                                                break;
-                                                                
-                                                            case 1: { // Never
-                                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kNeverAskAboutAltMouseScroll];
-                                                                break;
-                                                            }
+    [iTermAnnouncementViewController announcementWithTitle:@"Do you want the scroll wheel to move the cursor in interactive programs like this?"
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"Don‘t Ask Again" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"AlternateMouseScroll"];
+                                                            break;
+                                                            
+                                                        case 1: { // Never
+                                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kNeverAskAboutAltMouseScroll];
+                                                            break;
                                                         }
-                                                    }];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
@@ -6891,7 +6906,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDelegate:nil];
     [[iTermBuriedSessions sharedInstance] addBuriedSession:self];
     [_delegate sessionRemoveSession:self];
-
+    
     _delegate = nil;
 }
 
@@ -6950,7 +6965,30 @@ ITERM_WEAKLY_REFERENCEABLE
     [self launchCoprocessWithCommand:command mute:NO];
 }
 
+- (BOOL)alertOnNextMark {
+    return NO;
+    
+}
+
+
+
+- (BOOL)xtermMouseReporting {
+    return YES;
+    
+}
 #if 0
+
+- (PTYTask *)shell {
+    return nil;
+    
+}
+
+- (BOOL)xtermMouseReportingAllowMouseWheel {
+    return YES;
+    
+}
+
+
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
     SCPFile *previous = nil;
@@ -6962,7 +7000,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *filename = [file lastPathComponent];
         scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
         scpFile.localPath = file;
-
+        
         if (previous) {
             previous.successor = scpFile;
         }
@@ -7073,7 +7111,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 withOffset:0
                  inContext:_tailFindContext
            multipleResults:YES];
-
+    
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
     [_screen restoreSavedPositionToFindContext:_tailFindContext];
@@ -7128,7 +7166,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     // Keep a copy of the current locale setting for this process
     char* backupLocale = setlocale(LC_CTYPE, NULL);
-
+    
     // Try to set it to the proposed locale
     BOOL supported;
     if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
@@ -7136,7 +7174,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         supported = NO;
     }
-
+    
     // Restore locale and return
     setlocale(LC_CTYPE, backupLocale);
     return supported;
@@ -7440,7 +7478,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)highlightCursorLine {
-  return _textview.highlightCursorLine;
+    return _textview.highlightCursorLine;
 }
 
 - (BOOL)screenHasView {
@@ -7469,10 +7507,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate sessionSelectContainingTab];
     }
     if (okToActivateApp) {
-      DLog(@"Activate the app");
+        DLog(@"Activate the app");
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
-
+    
     DLog(@"Make this session active in delegate %@", _delegate);
     [_delegate setActiveSession:self];
 }
@@ -7564,12 +7602,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenPromptDidEndAtLine:(int)line {
     /*
-    [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-        notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
-        notification.promptNotification.session = self.guid;
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
-    }];
+     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+     notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+     notification.promptNotification.session = self.guid;
+     [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+     }];
      */
 }
 
@@ -7679,7 +7717,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_pbtext length] + data.length > kMaxPasteboardBytes) {
         [self setPasteboard:nil];
     }
-
+    
     [_pbtext appendData:data];
 }
 
@@ -7712,13 +7750,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenRequestUpload:(NSString *)args {
-return;
+    return;
 #if 0
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = YES;
-
+    
     [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
         if (result == NSFileHandlingPanelOKButton) {
             [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
@@ -7792,7 +7830,7 @@ return;
 }
 
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
-    _alertOnNextMark = alertOnNextMark;
+ //   _alertOnNextMark = alertOnNextMark;
     [_textview setNeedsDisplay:YES];
 }
 
@@ -7806,7 +7844,7 @@ return;
             break;
         case VT100AttentionRequestTypeStartBouncingDockIcon:
             _requestAttentionId =
-                [NSApp requestUserAttention:NSCriticalRequest];
+            [NSApp requestUserAttention:NSCriticalRequest];
             break;
     }
 }
@@ -7833,46 +7871,46 @@ return;
         [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
         return;
     }
-
-
+    
+    
     NSString *title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:title
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                    completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
-                    break;
-
-                case 1: { // Always
-                    NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
-                    if (!allowed) {
-                        allowed = @[];
-                    }
-                    allowed = [allowed arrayByAddingObject:filename];
-                    [userDefaults setObject:allowed forKey:kAllowedFilesKey];
-                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
-                    break;
-                }
-                case 2: {  // Never
-                    NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
-                    if (!denied) {
-                        denied = @[];
-                    }
-                    denied = [denied arrayByAddingObject:filename];
-                    [userDefaults setObject:denied forKey:kDeniedFilesKey];
-                    break;
-                }
-            }
-        }];
+    [iTermAnnouncementViewController announcementWithTitle:title
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                                                            break;
+                                                            
+                                                        case 1: { // Always
+                                                            NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
+                                                            if (!allowed) {
+                                                                allowed = @[];
+                                                            }
+                                                            allowed = [allowed arrayByAddingObject:filename];
+                                                            [userDefaults setObject:allowed forKey:kAllowedFilesKey];
+                                                            [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                                                            break;
+                                                        }
+                                                        case 2: {  // Never
+                                                            NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
+                                                            if (!denied) {
+                                                                denied = @[];
+                                                            }
+                                                            denied = [denied arrayByAddingObject:filename];
+                                                            [userDefaults setObject:denied forKey:kDeniedFilesKey];
+                                                            break;
+                                                        }
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kIdentifier];
 }
 
@@ -7907,7 +7945,7 @@ return;
     if (!color) {
         return;
     }
-
+    
     NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
@@ -7947,7 +7985,7 @@ return;
     } else {
         dict = @{ KEY_USE_TAB_COLOR: @NO };
     }
-
+    
     [self setSessionSpecificProfileValues:dict];
 }
 
@@ -7992,13 +8030,13 @@ return;
     }
     [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
-
+    
     [[_delegate realParentWindow] sessionHostDidChange:self to:host];
-
+    
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
-
+    
     if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
         NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
         if ([number boolValue]) {
@@ -8032,7 +8070,7 @@ return;
         }
     }
     self.currentHost = host;
-
+    
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
     notification.locationChangeNotification.hostName = host.hostname;
@@ -8054,100 +8092,100 @@ return;
 
 - (void)offerToTurnOffMouseReportingOnHostChange {
     NSString *title =
-        @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:title
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                    completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
-                    break;
-
-                case 1: // Always
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
-                    break;
-
-                case 2: // Never
-                    [[NSUserDefaults standardUserDefaults] setBool:NO
-                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-            }
-        }];
+    [iTermAnnouncementViewController announcementWithTitle:title
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                                                            break;
+                                                            
+                                                        case 1: // Always
+                                                            [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                    forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+                                                            self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                                                            break;
+                                                            
+                                                        case 2: // Never
+                                                            [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                                                                    forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)offerToTurnOffFocusReportingOnHostChange {
     NSString *title =
-        @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:title
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                    completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    self.terminal.reportFocus = NO;
-                    break;
-
-                case 1: // Always
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-                    self.terminal.reportFocus = NO;
-                    break;
-
-                case 2: // Never
-                    [[NSUserDefaults standardUserDefaults] setBool:NO
-                                                            forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-            }
-        }];
+    [iTermAnnouncementViewController announcementWithTitle:title
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            self.terminal.reportFocus = NO;
+                                                            break;
+                                                            
+                                                        case 1: // Always
+                                                            [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                    forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                                                            self.terminal.reportFocus = NO;
+                                                            break;
+                                                            
+                                                        case 2: // Never
+                                                            [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                                                                    forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)offerToTurnOffBracketedPasteOnHostChange {
     NSString *title =
-        @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:title
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                    completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    self.terminal.bracketedPasteMode = NO;
-                    break;
-
-                case 1: // Always
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-                    self.terminal.bracketedPasteMode = NO;
-                    break;
-
-                case 2: // Never
-                    [[NSUserDefaults standardUserDefaults] setBool:NO
-                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-            }
-        }];
+    [iTermAnnouncementViewController announcementWithTitle:title
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            self.terminal.bracketedPasteMode = NO;
+                                                            break;
+                                                            
+                                                        case 1: // Always
+                                                            [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                    forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                                                            self.terminal.bracketedPasteMode = NO;
+                                                            break;
+                                                            
+                                                        case 2: // Never
+                                                            [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                                                                    forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
 }
 
@@ -8165,14 +8203,14 @@ return;
     } else {
         [_variables removeObjectForKey:kVariableKeySessionPath];
     }
-
+    
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath];
     [_textview setBadgeLabel:[self badgeLabel]];
-
+    
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
     notification.locationChangeNotification.session = self.guid;
@@ -8186,14 +8224,14 @@ return;
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload {
     /*
-    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-    notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
-    notification.customEscapeSequenceNotification.session = self.guid;
-    notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
-    notification.customEscapeSequenceNotification.payload = payload;
-    [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
-    }];
+     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+     notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
+     notification.customEscapeSequenceNotification.session = self.guid;
+     notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
+     notification.customEscapeSequenceNotification.payload = payload;
+     [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+     [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+     }];
      */
 }
 
@@ -8228,7 +8266,7 @@ return;
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
     }
-
+    
     return [command stringByTrimmingLeadingWhitespace];
 }
 
@@ -8249,9 +8287,9 @@ return;
     }
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
-        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     return [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
-                                                                     onHost:host];
+                                                                                  onHost:host];
 }
 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
@@ -8260,7 +8298,7 @@ return;
     BOOL hadCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
-
+    
     if (haveCommand) {
         VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
         mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
@@ -8280,14 +8318,14 @@ return;
         DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
         if (haveCommand) {
             [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                                   inSession:self
+                                                                  inSession:self
                                                                 popIfNeeded:NO];
         }
     }
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-return;
+    return;
 #if 0
     _shellIntegrationEverUsed = YES;
     NSString *command = [self commandInRange:range];
@@ -8295,7 +8333,7 @@ return;
          command, VT100GridCoordRangeDescription(range));
     if (command) {
         NSString *trimmedCommand =
-            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
             VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
@@ -8305,9 +8343,9 @@ return;
             mark.outputStart = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,
                                                      _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow);
             [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
-                                                 onHost:[_screen remoteHostOnLine:range.end.y]
-                                            inDirectory:[_screen workingDirectoryOnLine:range.end.y]
-                                               withMark:mark];
+                                                              onHost:[_screen remoteHostOnLine:range.end.y]
+                                                         inDirectory:[_screen workingDirectoryOnLine:range.end.y]
+                                                            withMark:mark];
             [_commands addObject:trimmedCommand];
             [self trimCommandsIfNeeded];
         }
@@ -8351,16 +8389,16 @@ return;
         return NO;
     }
     _lastBell = now;
-
+    
     // If the bell rings more often than once every X seconds, you will eventually get an offer to
     // silence it.
     static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 0.02;
-
+    
     // Initial value that will require a reasonable amount of bell-ringing to overcome. This value
     // was chosen so that one bell per second will cause the moving average's value to fall below 4
     // after 3 seconds.
     const NSTimeInterval kMaxDuration = 20;
-
+    
     if (!_bellRate) {
         _bellRate = [[MovingAverage alloc] init];
         _bellRate.alpha = 0.95;
@@ -8388,7 +8426,7 @@ return;
         _ignoreBellUntil = now + 60;
         return YES;
     }
-
+    
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
         !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
@@ -8397,85 +8435,85 @@ return;
         if (audible) {
             DLog(@"Want to show a bell announcement. The bell is audible.");
             announcement =
-                [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
-                                                                 style:kiTermAnnouncementViewStyleQuestion
-                                                           withActions:@[ @"Silence Bell Temporarily",
-                                                                          @"Suppress All Output",
-                                                                          @"Don't Offer Again",
-                                                                          @"Silence Automatically" ]
-                                                            completion:^(int selection) {
-                        // Release the moving average so the count will restart after the announcement goes away.
-                        [_bellRate release];
-                        _bellRate = nil;
-                        switch (selection) {
-                            case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
-                                break;
-
-                            case -1: // No
-                                DLog(@"Dismiss temporarily");
-                                _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
-                                break;
-
-                            case 0: // Suppress bell temporarily
-                                DLog(@"Suppress bell temporarily");
-                                _ignoreBellUntil = now + 60;
-                                break;
-
-                            case 1: // Suppress all output
-                                DLog(@"Suppress all output");
-                                _suppressAllOutput = YES;
-                                break;
-
-                            case 2: // Never offer again
-                                DLog(@"Never offer again");
-                                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                        forKey:kSuppressAnnoyingBellOffer];
-                                break;
-
-                            case 3:  // Silence automatically
-                                DLog(@"Silence automatically");
-                                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                        forKey:kSilenceAnnoyingBellAutomatically];
-                                break;
-                        }
-                    }];
+            [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
+                                                             style:kiTermAnnouncementViewStyleQuestion
+                                                       withActions:@[ @"Silence Bell Temporarily",
+                                                                      @"Suppress All Output",
+                                                                      @"Don't Offer Again",
+                                                                      @"Silence Automatically" ]
+                                                        completion:^(int selection) {
+                                                            // Release the moving average so the count will restart after the announcement goes away.
+                                                            [_bellRate release];
+                                                            _bellRate = nil;
+                                                            switch (selection) {
+                                                                case -2:  // Dismiss programmatically
+                                                                    DLog(@"Dismiss programatically");
+                                                                    break;
+                                                                    
+                                                                case -1: // No
+                                                                    DLog(@"Dismiss temporarily");
+                                                                    _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                                                                    break;
+                                                                    
+                                                                case 0: // Suppress bell temporarily
+                                                                    DLog(@"Suppress bell temporarily");
+                                                                    _ignoreBellUntil = now + 60;
+                                                                    break;
+                                                                    
+                                                                case 1: // Suppress all output
+                                                                    DLog(@"Suppress all output");
+                                                                    _suppressAllOutput = YES;
+                                                                    break;
+                                                                    
+                                                                case 2: // Never offer again
+                                                                    DLog(@"Never offer again");
+                                                                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                            forKey:kSuppressAnnoyingBellOffer];
+                                                                    break;
+                                                                    
+                                                                case 3:  // Silence automatically
+                                                                    DLog(@"Silence automatically");
+                                                                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                            forKey:kSilenceAnnoyingBellAutomatically];
+                                                                    break;
+                                                            }
+                                                        }];
         } else if (visible) {
             DLog(@"Want to show a bell announcement. The bell is visible but inaudible.");
             // Neither audible nor visible.
             announcement =
-                [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
-                                                                 style:kiTermAnnouncementViewStyleQuestion
-                                                           withActions:@[ @"Suppress All Output",
-                                                                          @"Don't Offer Again" ]
-                                                            completion:^(int selection) {
-                        // Release the moving average so the count will restart after the announcement goes away.
-                        [_bellRate release];
-                        _bellRate = nil;
-                        switch (selection) {
-                            case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
-                                break;
-
-                            case -1: // No
-                                DLog(@"Dismiss temporarily");
-                                _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
-                                break;
-
-                            case 0: // Suppress all output
-                                DLog(@"Suppress all output");
-                                _suppressAllOutput = YES;
-                                break;
-
-                            case 1: // Never offer again
-                                DLog(@"Don't offer again");
-                                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                        forKey:kSuppressAnnoyingBellOffer];
-                                break;
-                        }
-                    }];
+            [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
+                                                             style:kiTermAnnouncementViewStyleQuestion
+                                                       withActions:@[ @"Suppress All Output",
+                                                                      @"Don't Offer Again" ]
+                                                        completion:^(int selection) {
+                                                            // Release the moving average so the count will restart after the announcement goes away.
+                                                            [_bellRate release];
+                                                            _bellRate = nil;
+                                                            switch (selection) {
+                                                                case -2:  // Dismiss programmatically
+                                                                    DLog(@"Dismiss programatically");
+                                                                    break;
+                                                                    
+                                                                case -1: // No
+                                                                    DLog(@"Dismiss temporarily");
+                                                                    _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                                                                    break;
+                                                                    
+                                                                case 0: // Suppress all output
+                                                                    DLog(@"Suppress all output");
+                                                                    _suppressAllOutput = YES;
+                                                                    break;
+                                                                    
+                                                                case 1: // Never offer again
+                                                                    DLog(@"Don't offer again");
+                                                                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                            forKey:kSuppressAnnoyingBellOffer];
+                                                                    break;
+                                                            }
+                                                        }];
         }
-
+        
         if (announcement) {
             // Set the auto-dismiss timeout.
             announcement.timeout = 10;
@@ -8492,8 +8530,8 @@ return;
         return profile[KEY_NAME];
     }
     return _profile
-
-
+    
+    
     [KEY_NAME];
 }
 
@@ -8562,8 +8600,8 @@ return;
 }
 
 - (BOOL)screenAllowTitleSetting {
-return NO;
-// may cause problems
+    return NO;
+    // may cause problems
 #if 0
     NSNumber *n = _profile[KEY_ALLOW_TITLE_SETTING];
     if (!n) {
@@ -8588,15 +8626,15 @@ return NO;
         [_textview installShellIntegration:nil];
     } else {
         iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"It looks like you're not at a command prompt."
-                                       actions:@[ @"Run Installer Anyway", @"Cancel" ]
-                                    identifier:nil
-                                   silenceable:kiTermWarningTypePersistent];
+        [iTermWarning showWarningWithTitle:@"It looks like you're not at a command prompt."
+                                   actions:@[ @"Run Installer Anyway", @"Cancel" ]
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent];
         switch (selection) {
             case kiTermWarningSelection0:
                 [_textview installShellIntegration:nil];
                 break;
-
+                
             default:
                 break;
         }
@@ -8605,33 +8643,33 @@ return NO;
 
 - (void)screenSuggestShellIntegrationUpgrade {
     VT100RemoteHost *currentRemoteHost = [self currentHost];
-
+    
     NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     if ([userDefaults boolForKey:theKey]) {
         return;
     }
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"This account’s Shell Integration scripts are out of date."
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ @"Upgrade", @"Silence Warning" ]
-                                                    completion:^(int selection) {
-                switch (selection) {
-                    case -2:  // Dismiss programmatically
-                        break;
-
-                    case -1: // No
-                        break;
-
-                    case 0: // Yes
-                        [self tryToRunShellIntegrationInstallerWithPromptCheck:YES];
-                        break;
-
-                    case 1: // Never for this account
-                        [userDefaults setBool:YES forKey:theKey];
-                        break;
-                }
-            }];
+    [iTermAnnouncementViewController announcementWithTitle:@"This account’s Shell Integration scripts are out of date."
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Upgrade", @"Silence Warning" ]
+                                                completion:^(int selection) {
+                                                    switch (selection) {
+                                                        case -2:  // Dismiss programmatically
+                                                            break;
+                                                            
+                                                        case -1: // No
+                                                            break;
+                                                            
+                                                        case 0: // Yes
+                                                            [self tryToRunShellIntegrationInstallerWithPromptCheck:YES];
+                                                            break;
+                                                            
+                                                        case 1: // Never for this account
+                                                            [userDefaults setBool:YES forKey:theKey];
+                                                            break;
+                                                    }
+                                                }];
     [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 }
 
@@ -8682,7 +8720,7 @@ return NO;
     labels.name = value;
     labels.map = _keyLabels;
     [_keyLabelsStack addObject:labels];
-
+    
     if (![value hasPrefix:@"."]) {
         [_keyLabels removeAllObjects];
     }
@@ -8735,6 +8773,11 @@ return NO;
     }
     return self.variables[name];
 }
+
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host { 
+    // nothing
+}
+
 
 #pragma mark - Announcements
 

@@ -373,9 +373,10 @@
     }];
 }
 
+#if 0
+
 - (void)setIsUIElement:(BOOL)uiElement {
 return;
-#if 0
     if (uiElement == _isUIElement) {
         return;
     }
@@ -405,8 +406,9 @@ return;
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
         self.statusBarItem = nil;
     }
-#endif
 }
+#endif
+
 
 - (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
     NSArray<NSWindow *> *panels = [[iTermHotKeyController sharedInstance] visibleFloatingHotkeyWindows] ?: @[];

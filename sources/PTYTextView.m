@@ -3327,9 +3327,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)clearTextViewBuffer:(id)sender
 {
-    [_delegate clearBuffer];
+//    [_delegate clearBuffer];
     [self refresh];
-    // [_dataSource clearBuffer];
+    [_dataSource clearBuffer];
 }
 
 - (void)addViewForNote:(PTYNoteViewController *)note

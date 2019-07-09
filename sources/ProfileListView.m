@@ -223,9 +223,13 @@ const CGFloat kDefaultTagsWidth = 80;
         rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
     }
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
-    [pboard declareTypes:[NSArray arrayWithObject:kProfileTableViewDataType] owner:self];
-    [pboard setData:data forType:kProfileTableViewDataType];
+    if (@available(macOS 10.11, *)) {
+        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
+        [pboard declareTypes:[NSArray arrayWithObject:kProfileTableViewDataType] owner:self];
+        [pboard setData:data forType:kProfileTableViewDataType];
+    } else {
+        // Fallback on earlier versions
+    }
     return YES;
 }
 

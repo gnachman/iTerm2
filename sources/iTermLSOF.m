@@ -103,8 +103,9 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
     __block pid_t result = -1;
+#if 0
     [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
-        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
+        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *myStop) {
             int family = [self addressFamilyForFDInfo:fdInfo];
             if (family != AF_INET && family != AF_INET6) {
                 return;
@@ -118,9 +119,10 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
                 return;
             }
             result = pid;
-            *stop = YES;
+            *myStop = YES;
         }];
     }];
+#endif
     return result;
 }
 
