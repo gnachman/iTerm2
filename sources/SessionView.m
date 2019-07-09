@@ -102,7 +102,7 @@ static NSDate* lastResizeDate_;
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
+        [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.pancake.therm.psm.controlitem" ]];
         [lastResizeDate_ release];
         lastResizeDate_ = [[NSDate date] retain];
         _announcements = [[NSMutableArray alloc] init];

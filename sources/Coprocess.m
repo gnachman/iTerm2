@@ -176,7 +176,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 - (void)monitorErrorsOnFileDescriptor:(int)errorFd {
-    dispatch_queue_t queue = dispatch_queue_create("com.iterm2.coprocess-errors", 0);
+    dispatch_queue_t queue = dispatch_queue_create("com.pancake.therm.coprocess-errors", 0);
     _errors = [[NSMutableString alloc] init];
 
     dispatch_async(queue, ^{

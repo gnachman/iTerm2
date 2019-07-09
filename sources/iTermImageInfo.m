@@ -76,7 +76,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     static NSMutableArray *blocks;
     dispatch_once(&onceToken, ^{
         blocks = [[NSMutableArray alloc] init];
-        queue = dispatch_queue_create("com.iterm2.LazyImageDecoding", DISPATCH_QUEUE_SERIAL);
+        queue = dispatch_queue_create("com.pancake.therm.LazyImageDecoding", DISPATCH_QUEUE_SERIAL);
     });
 
     if (!_dictionary) {

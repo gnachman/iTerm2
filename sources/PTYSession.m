@@ -5299,7 +5299,7 @@ verticalSpacing:(float)verticalSpacing {
     static dispatch_queue_t tmuxQueue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        tmuxQueue = dispatch_queue_create("com.iterm2.tmuxReadTask", 0);
+        tmuxQueue = dispatch_queue_create("com.pancake.therm.tmuxReadTask", 0);
     });
     return tmuxQueue;
 }
@@ -9000,7 +9000,7 @@ verticalSpacing:(float)verticalSpacing {
         return NSDragOperationNone;
     }
     
-    if (!([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound)) {
+    if (!([[[sender draggingPasteboard] types] indexOfObject:@"com.pancake.therm.psm.controlitem"] != NSNotFound)) {
         if ([[MovePaneController sharedInstance] isMovingSession:self]) {
             // Moving me onto myself
             return NSDragOperationMove;

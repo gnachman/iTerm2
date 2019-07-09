@@ -82,7 +82,7 @@ typedef struct {
             _collections[i] = calloc(1, sizeof(ObjectCollection));
             _collections[i]->objects = malloc(sizeof(iTermPooledObject *) * objectsPerCollection);
             NSString *queueName =
-                [NSString stringWithFormat:@"com.iterm2.ObjectPool.%@.collection%d", _class, i];
+                [NSString stringWithFormat:@"com.pancake.therm.ObjectPool.%@.collection%d", _class, i];
             _collections[i]->queue = dispatch_queue_create([queueName UTF8String], 0);
         }
         _class = theClass;

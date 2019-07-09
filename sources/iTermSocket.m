@@ -75,7 +75,7 @@
         return NO;
     }
 
-    _acceptQueue = dispatch_queue_create("com.iterm2.accept", NULL);
+    _acceptQueue = dispatch_queue_create("com.pancake.therm.accept", NULL);
 
     int fd = _fd;
     dispatch_async(_acceptQueue, ^{

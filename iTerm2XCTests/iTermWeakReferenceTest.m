@@ -166,8 +166,8 @@ ITERM_WEAKLY_REFERENCEABLE
 // you learn nothing, but if it crashes you have a bug :). It has caught a few problems so I'll
 // keep it around with a low number of iterations.
 - (void)testRaceConditions {
-    dispatch_queue_t q1 = dispatch_queue_create("com.iterm2.WeakReferenceTest1", NULL);
-    dispatch_queue_t q2 = dispatch_queue_create("com.iterm2.WeakReferenceTest2", NULL);
+    dispatch_queue_t q1 = dispatch_queue_create("com.pancake.therm.WeakReferenceTest1", NULL);
+    dispatch_queue_t q2 = dispatch_queue_create("com.pancake.therm.WeakReferenceTest2", NULL);
     dispatch_group_t startGroup = dispatch_group_create();
     dispatch_group_t raceGroup = dispatch_group_create();
     dispatch_group_t doneGroup = dispatch_group_create();

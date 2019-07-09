@@ -148,7 +148,7 @@
 
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbItem setString:[@([[control cells] indexOfObject:cell]) stringValue]
-              forType:@"com.iterm2.psm.controlitem"];
+              forType:@"com.pancake.therm.psm.controlitem"];
 
     NSImage *imageToDrag;
     NSRect draggingRect;
