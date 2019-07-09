@@ -19,7 +19,7 @@ debug: Development
 
 dist: prod
 	cd build/Deployment/ && zip -r Therm.app.zip Therm.app
-	mv build/Deployment/Therm.app.zip .
+	mv build/Deployment/Therm.app.zip Therm-$(VERSION).zip
 
 config.h: version.txt
 	echo "#define THERM_VERSION \"`cat version.txt`\"" > config.h
