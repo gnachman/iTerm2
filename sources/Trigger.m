@@ -125,12 +125,18 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return NO;
 }
 
+- (BOOL)instantTriggerCanFireMultipleTimesPerLine {
+    return NO;
+}
+
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber
  useInterpolation:(BOOL)useInterpolation {
-    if (_partialLine && _lastLineNumber == lineNumber) {
+    if (_partialLine &&
+        !self.instantTriggerCanFireMultipleTimesPerLine &&
+        _lastLineNumber == lineNumber) {
         // Already fired a on a partial line on this line.
         if (!partialLine) {
             _lastLineNumber = -1;

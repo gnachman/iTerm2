@@ -27,6 +27,7 @@ extern NSString * const kTriggerPartialLineKey;
 @property (nonatomic, readonly) NSData *digest;
 @property (nonatomic, retain) NSColor *textColor;
 @property (nonatomic, retain) NSColor *backgroundColor;
+@property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
 
 + (Trigger *)triggerFromDict:(NSDictionary *)dict;
 - (NSString *)action;

@@ -173,6 +173,10 @@ enum {
     return [NSArray arrayWithObjects:fgbg, fg, bg, nil];
 }
 
+- (BOOL)instantTriggerCanFireMultipleTimesPerLine {
+    return YES;
+}
+
 - (NSInteger)indexForObject:(id)object {
     int i = 0;
     BOOL isFirst = YES;
