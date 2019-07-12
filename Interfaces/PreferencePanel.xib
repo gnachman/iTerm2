@@ -370,20 +370,20 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="269" y="110" width="924" height="463"/>
+            <rect key="contentRect" x="269" y="110" width="877" height="415"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="1924">
-                <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
+                <rect key="frame" x="0.0" y="0.0" width="877" height="415"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <tabView type="noTabsNoBorder" initialItem="1944" id="1943" userLabel="Top level NSTabView">
-                        <rect key="frame" x="13" y="0.0" width="911" height="454"/>
+                        <rect key="frame" x="13" y="0.0" width="864" height="406"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
                             <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="Tab View Item - General">
                                 <view key="view" id="1947" userLabel="Filler">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="864" height="406"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
@@ -627,7 +627,7 @@ Gw
                 <outlet property="delegate" destination="-2" id="2982"/>
                 <outlet property="initialFirstResponder" destination="1959" id="5303"/>
             </connections>
-            <point key="canvasLocation" x="-288" y="-1058.5"/>
+            <point key="canvasLocation" x="-311.5" y="-1082.5"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="1971"/>
         <customView id="3079" userLabel="FontAccessory">
@@ -1894,7 +1894,7 @@ DQ
                     </connections>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="868" y="-873"/>
+            <point key="canvasLocation" x="557" y="-1083"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="307"/>
@@ -2319,7 +2319,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="1149" y="-330"/>
+            <point key="canvasLocation" x="1242" y="-463"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="411"/>
@@ -2666,7 +2666,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="-513" y="380"/>
+            <point key="canvasLocation" x="-206" y="-69"/>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="378"/>
@@ -2998,7 +2998,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="146" y="363"/>
+            <point key="canvasLocation" x="446" y="4"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="578" height="545"/>
@@ -3372,7 +3372,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="442" y="-273"/>
+            <point key="canvasLocation" x="566" y="-512"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="420"/>
@@ -3640,7 +3640,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="1580.5" y="807"/>
+            <point key="canvasLocation" x="446" y="494"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="657" height="438"/>
@@ -3809,14 +3809,14 @@ DQ
                     </connections>
                 </matrix>
             </subviews>
-            <point key="canvasLocation" x="-322" y="-115"/>
+            <point key="canvasLocation" x="-156" y="-547"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="505"/>
+            <rect key="frame" x="0.0" y="0.0" width="559" height="434"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5837">
-                    <rect key="frame" x="14" y="367" width="108" height="17"/>
+                    <rect key="frame" x="14" y="397" width="108" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Smart Selection" id="5855">
                         <font key="font" metaFont="systemBold"/>
@@ -3825,7 +3825,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5838">
-                    <rect key="frame" x="14" y="325" width="526" height="34"/>
+                    <rect key="frame" x="15" y="349" width="526" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Quad-click selects a string under the cursor that best matches a regular expression from a collection of rules." id="5854">
                         <font key="font" metaFont="system"/>
@@ -3834,7 +3834,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5930">
-                    <rect key="frame" x="14" y="241" width="118" height="17"/>
+                    <rect key="frame" x="15" y="262" width="118" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Semantic History" id="5933">
                         <font key="font" metaFont="systemBold"/>
@@ -3842,36 +3842,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="rvX-rY-vYV">
-                    <rect key="frame" x="15" y="99" width="191" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Automatic Profile Switching" id="gUo-d2-CFJ">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5931">
-                    <rect key="frame" x="14" y="216" width="526" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="⌘-Click on a filename referring to an existing file performs an action on that file." id="5932">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="qhZ-5m-jNF">
-                    <rect key="frame" x="15" y="6" width="512" height="85"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="KiW-Ze-D3g">
-                        <font key="font" metaFont="system"/>
-                        <string key="title">Any session will switch to this profile automatically when your hostname, username, and current path match a rule below. A rule may specify a username, hostname, or path. For example, “user@host:/path”, “user@”, “host”, or “/path”. Hostnames and paths may use * wildcards. If the rule stops matching, the profile switches back unless the rule begins with “!”.</string>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <button verticalHuggingPriority="750" id="5908">
-                    <rect key="frame" x="11" y="289" width="96" height="32"/>
+                    <rect key="frame" x="11" y="313" width="96" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Edit" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5909">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3881,75 +3853,12 @@ DQ
                         <action selector="editSmartSelection:" target="Qvt-kg-svI" id="95P-a1-2IX"/>
                     </connections>
                 </button>
-                <box verticalHuggingPriority="750" boxType="separator" id="5928">
-                    <rect key="frame" x="16" y="397" width="522" height="5"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="5929">
-                    <rect key="frame" x="17" y="274" width="521" height="5"/>
+                    <rect key="frame" x="12" y="297" width="521" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
-                <box verticalHuggingPriority="750" boxType="separator" id="PK0-AA-WAR">
-                    <rect key="frame" x="18" y="122" width="520" height="5"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </box>
-                <popUpButton verticalHuggingPriority="750" id="5934">
-                    <rect key="frame" x="14" y="184" width="193" height="26"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Run coprocess…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="6406" id="5935">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="5936">
-                            <items>
-                                <menuItem title="Open with default app" tag="1" id="5937"/>
-                                <menuItem title="Open URL…" tag="2" id="5938"/>
-                                <menuItem title="Open with editor…" tag="3" id="5939"/>
-                                <menuItem title="Run command…" tag="4" id="5940"/>
-                                <menuItem title="Always run command…" tag="5" id="6055"/>
-                                <menuItem title="Run coprocess…" state="on" tag="6" id="6406"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="actionChanged:" target="5949" id="5953"/>
-                    </connections>
-                </popUpButton>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5941">
-                    <rect key="frame" x="212" y="186" width="326" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5942">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="5949" id="fxC-np-Rm3"/>
-                    </connections>
-                </textField>
-                <popUpButton verticalHuggingPriority="750" id="5943">
-                    <rect key="frame" x="209" y="184" width="199" height="26"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="5944">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="5945"/>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="actionChanged:" target="5949" id="OCG-h7-odw"/>
-                    </connections>
-                </popUpButton>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5957">
-                    <rect key="frame" x="14" y="133" width="526" height="47"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="5958">
-                        <font key="font" metaFont="smallSystem"/>
-                        <string key="title">Up to three lines of information go here. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="A9f-o2-dhh">
-                    <rect key="frame" x="17" y="-80" width="521" height="78"/>
+                    <rect key="frame" x="17" y="-151" width="521" height="78"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
@@ -3993,7 +3902,7 @@ DQ
                     </scroller>
                 </scrollView>
                 <button id="6w1-48-KZZ">
-                    <rect key="frame" x="18" y="-112" width="24" height="24"/>
+                    <rect key="frame" x="18" y="-183" width="24" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QG6-AD-MgE">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4004,7 +3913,7 @@ DQ
                     </connections>
                 </button>
                 <button id="gfT-wm-XMY">
-                    <rect key="frame" x="41" y="-112" width="24" height="24"/>
+                    <rect key="frame" x="41" y="-183" width="24" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" enabled="NO" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zc5-m9-9aK">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4015,7 +3924,7 @@ DQ
                     </connections>
                 </button>
                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="GNq-Xf-6Vi">
-                    <rect key="frame" x="515" y="-112" width="25" height="25"/>
+                    <rect key="frame" x="515" y="-183" width="25" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lxV-Yu-rQk">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4026,7 +3935,7 @@ DQ
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4Ri-qB-jBs">
-                    <rect key="frame" x="206" y="243" width="334" height="11"/>
+                    <rect key="frame" x="206" y="265" width="334" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Disabled by “⌘-Click Opens Filename/URL” setting in Pointer preferences" id="fXe-U0-Ddw">
                         <font key="font" metaFont="miniSystem"/>
@@ -4035,7 +3944,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="vOf-y1-Eeu">
-                    <rect key="frame" x="184" y="-107" width="327" height="17"/>
+                    <rect key="frame" x="184" y="-178" width="327" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration must be installed to use this feature." id="1bp-B6-W52">
                         <font key="font" metaFont="system"/>
@@ -4043,8 +3952,95 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="rvX-rY-vYV">
+                    <rect key="frame" x="15" y="120" width="191" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Automatic Profile Switching" id="gUo-d2-CFJ">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5931">
+                    <rect key="frame" x="14" y="237" width="526" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="⌘-Click on a filename referring to an existing file performs an action on that file." id="5932">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="qhZ-5m-jNF">
+                    <rect key="frame" x="15" y="27" width="512" height="85"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="KiW-Ze-D3g">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">Any session will switch to this profile automatically when your hostname, username, and current path match a rule below. A rule may specify a username, hostname, or path. For example, “user@host:/path”, “user@”, “host”, or “/path”. Hostnames and paths may use * wildcards. If the rule stops matching, the profile switches back unless the rule begins with “!”.</string>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <box verticalHuggingPriority="750" boxType="separator" id="PK0-AA-WAR">
+                    <rect key="frame" x="18" y="143" width="520" height="5"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </box>
+                <popUpButton verticalHuggingPriority="750" id="5934">
+                    <rect key="frame" x="14" y="205" width="193" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Run coprocess…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="6406" id="5935">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="5936">
+                            <items>
+                                <menuItem title="Open with default app" tag="1" id="5937"/>
+                                <menuItem title="Open URL…" tag="2" id="5938"/>
+                                <menuItem title="Open with editor…" tag="3" id="5939"/>
+                                <menuItem title="Run command…" tag="4" id="5940"/>
+                                <menuItem title="Always run command…" tag="5" id="6055"/>
+                                <menuItem title="Run coprocess…" state="on" tag="6" id="6406"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="actionChanged:" target="5949" id="5953"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5941">
+                    <rect key="frame" x="212" y="207" width="326" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5942">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="5949" id="fxC-np-Rm3"/>
+                    </connections>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="5943">
+                    <rect key="frame" x="209" y="205" width="199" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="5944">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="5945"/>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="actionChanged:" target="5949" id="OCG-h7-odw"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5957">
+                    <rect key="frame" x="14" y="154" width="526" height="47"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="5958">
+                        <font key="font" metaFont="smallSystem"/>
+                        <string key="title">Up to three lines of information go here. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
-            <point key="canvasLocation" x="786" y="469"/>
+            <point key="canvasLocation" x="1113" y="422"/>
         </customView>
         <customView id="zBG-6Q-502" userLabel="Prefs - General" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="705" height="262"/>
@@ -4193,7 +4189,7 @@ DQ
                     </connections>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="1581" y="222"/>
+            <point key="canvasLocation" x="1169" y="-7"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="744" height="398"/>
