@@ -854,11 +854,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
         }
     }
+#if 0
+// commented to have a flat style
     for (PSMTabBarCell *cell in [bar cells]) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect) && cell.state == NSOnState) {
             [cell drawPostHocDecorationsOnSelectedCell];
         }
     }
+#endif
 }
 
 #pragma mark - Archiving
