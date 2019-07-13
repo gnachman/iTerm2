@@ -240,7 +240,15 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     [_readData setLength:0];
     _commandRunner = nil;
     [_queue removeAllObjects];
+
+    // Report failure.
+    NSArray<NSMutableArray<iTermGitCallback> *> *callbackArrays = _outstanding.allValues;
     [_outstanding removeAllObjects];
+    for (NSArray<iTermGitCallback> *callbacks in callbackArrays) {
+        for (iTermGitCallback callback in callbacks) {
+            callback(nil);
+        }
+    }
 }
 
 - (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
