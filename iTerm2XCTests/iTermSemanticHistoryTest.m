@@ -119,8 +119,9 @@
     return _fakeFileManager;
 }
 
-- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments wait:(BOOL)wait {
+- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments completion:(void (^)(void))completion {
     self.scriptArguments = arguments;
+    completion();
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
