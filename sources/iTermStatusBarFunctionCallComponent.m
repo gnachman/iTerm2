@@ -70,7 +70,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
     NSDictionary *attributes = @{ NSForegroundColorAttributeName: self.textColor ?: [NSNull null],
                                   NSParagraphStyleAttributeName: style };
-    return [[NSAttributedString alloc] initWithString:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarLabelKey]
+    return [[NSAttributedString alloc] initWithString:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarLabelKey] ?: @""
                                            attributes:[attributes dictionaryByRemovingNullValues]];
 }
 
