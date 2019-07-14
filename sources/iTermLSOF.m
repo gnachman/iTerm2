@@ -123,7 +123,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     while (offset < argmax && argv.count < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
-            [argv addObject:[string stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            [argv addObject:[string stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @""];
             start = procargs + offset + 1;
         }
         offset++;
