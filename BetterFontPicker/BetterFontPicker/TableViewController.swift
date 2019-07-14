@@ -119,15 +119,17 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
 
     // MARK:- Layout
 
-    private func layOutTableView() {
-        let scrollView = tableView.enclosingScrollView!
+    private func desiredTableViewFrame() -> CGRect {
+        guard let scrollView = tableView.enclosingScrollView else {
+            return tableView.frame
+        }
         var frame = tableView.frame
-        frame.size.width = NSScrollView.contentSize(forFrameSize: scrollView.frame.size,
-                                                    horizontalScrollerClass: scrollView.horizontalScroller == nil ? nil : type(of: scrollView.horizontalScroller!),
-                                                    verticalScrollerClass: scrollView.verticalScroller == nil ? nil : type(of: scrollView.verticalScroller!),
-                                                    borderType: scrollView.borderType,
-                                                    controlSize: .regular,
-                                                    scrollerStyle: scrollView.scrollerStyle).width
+        frame.size.width = scrollView.frame.size.width
+        return frame
+    }
+
+    private func layOutTableView() {
+        let frame = desiredTableViewFrame()
         tableView.frame = frame
         let starWidth = CGFloat(StarTableViewCell.width)
         let checkmarkWidth = starWidth - 10
