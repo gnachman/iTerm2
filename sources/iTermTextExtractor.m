@@ -384,9 +384,11 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        if (theChar.complexChar ||
                                            theChar.code < ITERM2_PRIVATE_BEGIN || theChar.code > ITERM2_PRIVATE_END) {
                                            NSString *theString = ScreenCharToStr(&theChar);
-                                           [substrings insertObject:theString atIndex:0];
-                                           [coords insertObject:[NSValue valueWithGridCoord:coord] atIndex:0];
-                                           [stringLengthsInPrefix insertObject:@(theString.length) atIndex:0];
+                                           if (theString) {
+                                               [substrings insertObject:theString atIndex:0];
+                                               [coords insertObject:[NSValue valueWithGridCoord:coord] atIndex:0];
+                                               [stringLengthsInPrefix insertObject:@(theString.length) atIndex:0];
+                                           }
                                        }
                                    }
                                    return !isInWord;
