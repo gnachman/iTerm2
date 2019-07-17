@@ -14,6 +14,7 @@
 @implementation iTermWorkingDirectoryPoller {
     iTermRateLimitedUpdate *_pwdPollRateLimit;
     BOOL _okToPollForWorkingDirectoryChange;
+    BOOL _haveFoundInitialDirectory;
     BOOL _wantsPoll;
 }
 
@@ -29,6 +30,7 @@
 #pragma mark - API
 
 - (void)didReceiveLineFeed {
+    DLog(@"didReceiveLineFeed");
     [_pwdPollRateLimit performRateLimitedSelector:@selector(maybePollForWorkingDirectory) onTarget:self withObject:nil];
     [self pollIfNeeded];
 }
@@ -54,9 +56,11 @@
 - (void)maybePollForWorkingDirectory {
     DLog(@"maybePollForWorkingDirectory called");
     if (![self.delegate workingDirectoryPollerShouldPoll]) {
+        DLog(@"NO: delegate declined");
         return;
     }
-    if (!_okToPollForWorkingDirectoryChange) {
+    if (_haveFoundInitialDirectory && !_okToPollForWorkingDirectoryChange) {
+        DLog(@"NO: Not OK to poll");
         _wantsPoll = YES;
         return;
     }
@@ -64,6 +68,7 @@
 }
 
 - (void)pollForWorkingDirectory {
+    DLog(@"polling");
     _okToPollForWorkingDirectoryChange = NO;
     DLog(@"polling");
     pid_t pid = [self.delegate workingDirectoryPollerProcessID];
@@ -80,6 +85,9 @@
 }
 
 - (void)didInferWorkingDirectory:(NSString *)pwd {
+    if (pwd) {
+        _haveFoundInitialDirectory = YES;
+    }
     [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd];
 }
 
