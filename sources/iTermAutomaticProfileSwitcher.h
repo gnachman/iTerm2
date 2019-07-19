@@ -43,7 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermAutomaticProfileSwitcher : NSObject
 
 // You should set this or nothing will work.
-@property(nonatomic, assign) id<iTermAutomaticProfileSwitcherDelegate> delegate;
+@property(nonatomic, weak) id<iTermAutomaticProfileSwitcherDelegate> delegate;
 @property(nonatomic, readonly) NSString *profileStackString;  // For tests
 
 - (instancetype)initWithDelegate:(id<iTermAutomaticProfileSwitcherDelegate>)delegate NS_DESIGNATED_INITIALIZER;
