@@ -12,6 +12,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PointerPreferencesViewController.h"
@@ -47,6 +48,7 @@
     IBOutlet NSView *_semanticHistoryAction;
 
     IBOutlet NSTextField *_disabledTip;
+    IBOutlet NSButton *_enableAPSLogging;
 
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
@@ -82,6 +84,7 @@
                    displayName:@"Semantic history"
                        phrases:@[ @"cmd click", @"open file", @"open url" ]
                            key:nil];
+    _enableAPSLogging.state = iTermUserDefaults.enableAutomaticProfileSwitchingLogging ? NSOnState : NSOffState;
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -360,6 +363,12 @@
 - (void)updateSemanticHistoryDisabledLabel:(NSNotification *)notification {
     _disabledTip.hidden = [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
     _semanticHistoryPrefController.enabled = _disabledTip.hidden;
+}
+
+#pragma mark - Actions
+
+- (IBAction)didToggleAutomaticProfileSwitchingDebugLogging:(id)sender {
+    iTermUserDefaults.enableAutomaticProfileSwitchingLogging = (_enableAPSLogging.state == NSOnState);
 }
 
 @end

@@ -10,11 +10,29 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermRule.h"
+#import "iTermScriptHistory.h"
+#import "iTermUserDefaults.h"
 #import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
 
-// #define APSLog ELog
-#define APSLog DLog
+static void APSWriteToScriptHistory(id<iTermAutomaticProfileSwitcherDelegate> delegate,
+                                    NSString *format, ...) {
+    if (![iTermUserDefaults enableAutomaticProfileSwitchingLogging]) {
+        return;
+    }
+    [[iTermScriptHistory sharedInstance] addAPSLoggingEntryIfNeeded];
+
+    va_list args;
+    va_start(args, format);
+    NSString *string = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+    NSString *output = [NSString stringWithFormat:@"[%@] %@\n",
+                        [delegate automaticProfileSwitcherSessionName],
+                        string];
+    [[iTermScriptHistoryEntry apsEntry] addOutput:output];
+}
+
+#define APSLog(args...) do { DLog(args); APSWriteToScriptHistory(self.delegate, args); } while (0)
 
 static NSString *const kProfileKey = @"Profile";
 static NSString *const kOriginalProfileKey = @"Original Profile";
@@ -41,19 +59,18 @@ NS_ASSUME_NONNULL_BEGIN
               kOverriddenFieldsKey: _overriddenFields ?: [NSNull null] };
 }
 
-- (void)dealloc {
-    [_profile release];
-    [_originalProfile release];
-    [_overriddenFields release];
-    [super dealloc];
-}
-
 @end
 
 static NSString *const kStackKey = @"Profile Stack";
 
 @implementation iTermAutomaticProfileSwitcher {
     NSMutableArray<iTermSavedProfile *> *_profileStack;
+    NSString *_lastHostname;
+    NSString *_lastUsername;
+    NSString *_lastPath;
+    NSString *_lastJob;
+    NSString *_lastProfileGUID;
+    BOOL _dirty;
 }
 
 - (instancetype)initWithDelegate:(id<iTermAutomaticProfileSwitcherDelegate>)delegate {
@@ -61,6 +78,7 @@ static NSString *const kStackKey = @"Profile Stack";
     if (self) {
         _profileStack = [[NSMutableArray alloc] init];
         _delegate = delegate;
+        [self commonInit];
     }
     return self;
 }
@@ -70,19 +88,27 @@ static NSString *const kStackKey = @"Profile Stack";
     self = [self initWithDelegate:delegate];
     if (self) {
         for (NSDictionary *dict in savedState[kStackKey]) {
-            iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] initWithSavedState:dict] autorelease];
+            iTermSavedProfile *savedProfile = [[iTermSavedProfile alloc] initWithSavedState:dict];
             if (savedProfile) {
                 [_profileStack addObject:savedProfile];
             }
-            APSLog(@"Initialized automatic profile switcher %@", self);
+            DLog(@"Initialized automatic profile switcher %@", self);
         }
+        [self commonInit];
     }
     return self;
 }
 
-- (void)dealloc {
-    [_profileStack release];
-    [super dealloc];
+- (void)commonInit {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadAllProfiles)
+                                                 name:kReloadAllProfiles
+                                               object:nil];
+}
+
+- (void)reloadAllProfiles {
+    APSLog(@"A profile has changed. This will cause APS to re-check its state.");
+    _dirty = YES;
 }
 
 #pragma mark - APIs
@@ -91,7 +117,24 @@ static NSString *const kStackKey = @"Profile Stack";
            username:(nullable NSString *)username
                path:(nullable NSString *)path
                 job:(nullable NSString *)job {
-    APSLog(@"APS: hostname=%@, username=%@, path=%@", hostname, username, path);
+    NSString *guid = [self.delegate automaticProfileSwitcherCurrentProfile][KEY_GUID];
+    if (!_dirty &&
+        [hostname isEqualToString:_lastHostname] &&
+        [username isEqualToString:_lastUsername] &&
+        [path isEqualToString:_lastPath] &&
+        [job isEqualToString:_lastJob] &&
+        [_lastProfileGUID isEqualToString:guid]) {
+        return;
+    }
+    _lastHostname = [hostname copy];
+    _lastUsername = [username copy];
+    _lastPath = [path copy];
+    _lastJob = [job copy];
+    _lastProfileGUID = [guid copy];
+    _dirty = NO;
+
+    APSLog(@"APS: Updating configuration to hostname=%@, username=%@, path=%@, job=%@",
+           hostname, username, path, job);
     BOOL sticky = NO;
 
     Profile *currentProfile = [_delegate automaticProfileSwitcherCurrentProfile];
@@ -102,11 +145,11 @@ static NSString *const kStackKey = @"Profile Stack";
                                                              job:job];
     double scoreForTopmostMatchingSavedProfile = 0;
     iTermSavedProfile *topmostMatchingSavedProfile =
-        [[[self topmostSavedProfileMatchingHostname:hostname
-                                           username:username
-                                               path:path
-                                                job:job
-                                              score:&scoreForTopmostMatchingSavedProfile] retain] autorelease];
+        [self topmostSavedProfileMatchingHostname:hostname
+                                         username:username
+                                             path:path
+                                              job:job
+                                            score:&scoreForTopmostMatchingSavedProfile];
     APSLog(@"Score for current profile %@ is %f. Topmost matching profile is %@ with score of %f",
            currentProfile[KEY_NAME],
            scoreForCurrentProfile,
@@ -116,14 +159,16 @@ static NSString *const kStackKey = @"Profile Stack";
     if (topmostMatchingSavedProfile &&
         ![topmostMatchingSavedProfile.originalProfile isEqualToProfile:currentProfile] &&
         scoreForTopmostMatchingSavedProfile > scoreForCurrentProfile) {
-        APSLog(@"%@ is in the stack and matches. Popping until we remove it", topmostMatchingSavedProfile.profile[KEY_NAME]);
+        APSLog(@"%@ is in the stack and matches. Will use it. First, remove it and subsequent entries from the stack.", topmostMatchingSavedProfile.profile[KEY_NAME]);
         while (_profileStack.lastObject.originalProfile == topmostMatchingSavedProfile.originalProfile) {
             APSLog(@"Pop");
             [_profileStack removeLastObject];
         }
         APSLog(@"Stack is now: %@", self.profileStackString);
+        APSLog(@"Switch to saved profile %@", topmostMatchingSavedProfile.profile[KEY_NAME]);
         [_delegate automaticProfileSwitcherLoadProfile:topmostMatchingSavedProfile];
     } else {
+        APSLog(@"Not switching to a profile in the stack. Check if any profile not in the stack outranks the current profile.");
         double scoreOfHighestScoringProfile = 0;
         Profile *highestScoringProfile = [self highestScoringProfileForHostname:hostname
                                                                        username:username
@@ -131,27 +176,31 @@ static NSString *const kStackKey = @"Profile Stack";
                                                                             job:job
                                                                          sticky:&sticky
                                                                           score:&scoreOfHighestScoringProfile];
+        APSLog(@"The highest scoring profile is %@ with a score of %@",
+               highestScoringProfile[KEY_NAME],
+               @(scoreOfHighestScoringProfile));
         if (highestScoringProfile && ![highestScoringProfile isEqualToProfile:currentProfile]) {
-            APSLog(@"Switching to %@", highestScoringProfile[KEY_NAME]);
+            APSLog(@"Push and switch to profile %@", highestScoringProfile[KEY_NAME]);
             [self pushCurrentProfileIfNeeded];
 
-            iTermSavedProfile *newSavedProfile = [[[iTermSavedProfile alloc] init] autorelease];
+            iTermSavedProfile *newSavedProfile = [[iTermSavedProfile alloc] init];
             newSavedProfile.originalProfile = highestScoringProfile;
             [_delegate automaticProfileSwitcherLoadProfile:newSavedProfile];
 
             if (sticky) {
-                DLog(@"Found a sticky rule so clearing the stack and pushing the new profile");
+                APSLog(@"This profile's rule is sticky. Clearing the stack and pushing the new profile.");
                 [_profileStack removeAllObjects];
                 [self pushCurrentProfileIfNeeded];
             }
         } else if (!highestScoringProfile && _profileStack.count) {
+            APSLog(@"No rule was matched by any profile, but the stack is not empty.");
             // Restore first profile in stack
             if (_profileStack.count > 1) {
-                APSLog(@"  Removing all but first object in stack");
+                APSLog(@"Removing all but first object in stack");
                 [_profileStack removeObjectsInRange:NSMakeRange(1, _profileStack.count - 1)];
             }
             if (![_profileStack.firstObject.originalProfile isEqualToProfile:currentProfile]) {
-                APSLog(@"Restoring the stack to the root element: %@", [_profileStack.firstObject profile][KEY_NAME]);
+                APSLog(@"Switch to first profile in stack: %@", [_profileStack.firstObject profile][KEY_NAME]);
                 [_delegate automaticProfileSwitcherLoadProfile:_profileStack.firstObject];
             }
         }
@@ -226,11 +275,11 @@ static NSString *const kStackKey = @"Profile Stack";
     if (![_profileStack.lastObject.originalProfile isEqualToProfile:_delegate.automaticProfileSwitcherCurrentProfile]) {
         // Push the current profile state onto the stack if its guid is different that the one
         // already on the stack. This means if you make changes in Edit Info they'll be lost.
-        APSLog(@"*** push %@", _delegate.automaticProfileSwitcherCurrentProfile[KEY_NAME]);
+        APSLog(@"Push profile on to stack: %@", _delegate.automaticProfileSwitcherCurrentProfile[KEY_NAME]);
         [_profileStack addObject:_delegate.automaticProfileSwitcherCurrentSavedProfile];
         APSLog(@"Stack is now: %@", [self profileStackString]);
     } else {
-        APSLog(@"(not pushing %@ because it matches the top of the stack)",
+        APSLog(@"Not pushing profile %@ because it matches the top of the stack.",
              _delegate.automaticProfileSwitcherCurrentProfile[KEY_NAME]);
     }
 }

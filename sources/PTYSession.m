@@ -10289,6 +10289,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermAutomaticProfileSwitcherDelegate
 
+- (NSString *)automaticProfileSwitcherSessionName {
+    return [NSString stringWithFormat:@"%@ — %@", [_nameController presentationSessionTitle], self.tty];
+}
+
 - (iTermSavedProfile *)automaticProfileSwitcherCurrentSavedProfile {
     iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
     savedProfile.profile = _profile;

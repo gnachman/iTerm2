@@ -1626,6 +1626,7 @@ DQ
                 <outlet property="_boundHostTitle" destination="rvX-rY-vYV" id="Mmn-KW-gOJ"/>
                 <outlet property="_boundHostsTableView" destination="69M-P0-mzb" id="ZAz-IG-Mss"/>
                 <outlet property="_disabledTip" destination="4Ri-qB-jBs" id="A05-nf-kOf"/>
+                <outlet property="_enableAPSLogging" destination="wNo-OJ-ifP" id="nCF-Db-XRU"/>
                 <outlet property="_removeBoundHost" destination="gfT-wm-XMY" id="Z6O-cE-9Bh"/>
                 <outlet property="_removeHost" destination="gfT-wm-XMY" id="nhN-4I-zB3"/>
                 <outlet property="_semanticHistoryAction" destination="5934" id="UtR-up-bB9"/>
@@ -4322,7 +4323,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -4383,17 +4384,6 @@ DQ
                         <action selector="removeBoundHost:" target="Qvt-kg-svI" id="UpG-yz-O0I"/>
                     </connections>
                 </button>
-                <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="GNq-Xf-6Vi">
-                    <rect key="frame" x="515" y="0.0" width="25" height="25"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lxV-Yu-rQk">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="help:" target="Qvt-kg-svI" id="sHe-fn-c5u"/>
-                    </connections>
-                </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4Ri-qB-jBs">
                     <rect key="frame" x="206" y="355" width="334" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4403,18 +4393,40 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="vOf-y1-Eeu">
-                    <rect key="frame" x="184" y="5" width="327" height="17"/>
+                <button verticalHuggingPriority="750" id="wNo-OJ-ifP">
+                    <rect key="frame" x="93" y="3" width="447" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration must be installed to use this feature." id="1bp-B6-W52">
+                    <buttonCell key="cell" type="check" title="Write Automatic Profile Switching debug logs to Script Console (⌥⌘J)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Ebv-oG-GFZ">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="didToggleAutomaticProfileSwitchingDebugLogging:" target="Qvt-kg-svI" id="g0r-t7-3Vr"/>
+                    </connections>
+                </button>
+                <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="GNq-Xf-6Vi">
+                    <rect key="frame" x="517" y="207" width="21" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lxV-Yu-rQk">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="help:" target="Qvt-kg-svI" id="sHe-fn-c5u"/>
+                    </connections>
+                </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="vOf-y1-Eeu">
+                    <rect key="frame" x="226" y="211" width="285" height="14"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration must be installed to use this feature." id="1bp-B6-W52">
+                        <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
             </subviews>
             <accessibility identifier="prefsProfilesAdvanced"/>
-            <point key="canvasLocation" x="1320" y="1438"/>
+            <point key="canvasLocation" x="1283.5" y="1364.5"/>
         </customView>
         <customView id="zBG-6Q-502" userLabel="Prefs - General" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="788" height="511"/>

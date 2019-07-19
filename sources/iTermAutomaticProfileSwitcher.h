@@ -34,6 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns all profiles in user defaults. Exposed for testing.
 - (NSArray<Profile *> *)automaticProfileSwitcherAllProfiles;
 
+// Returns the session's name for logging.
+- (NSString *)automaticProfileSwitcherSessionName;
+
 @end
 
 // This class encapsulates the logic needed by automatic profile switching.

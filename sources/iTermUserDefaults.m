@@ -15,6 +15,7 @@ static NSString *const iTermSecureKeyboardEntryEnabledUserDefaultsKey = @"Secure
 static NSString *const kPreferenceKeyHaveBeenWarnedAboutTabDockSetting = @"NoSyncHaveBeenWarnedAboutTabDockSetting";
 
 static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory";
+static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging = @"NoSyncEnableAutomaticProfileSwitchingLogging";
 
 @implementation iTermUserDefaults
 
@@ -74,6 +75,15 @@ static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id 
 
 + (void)setHaveBeenWarnedAboutTabDockSetting:(BOOL)haveBeenWarnedAboutTabDockSetting {
     [[NSUserDefaults standardUserDefaults] setBool:haveBeenWarnedAboutTabDockSetting forKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
+}
+
++ (BOOL)enableAutomaticProfileSwitchingLogging {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+}
+
++ (void)setEnableAutomaticProfileSwitchingLogging:(BOOL)enableAutomaticProfileSwitchingLogging {
+    [[NSUserDefaults standardUserDefaults] setBool:enableAutomaticProfileSwitchingLogging
+                                            forKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
 }
 
 @end
