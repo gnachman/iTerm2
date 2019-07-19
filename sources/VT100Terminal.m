@@ -2642,6 +2642,7 @@ static const int kMaxScreenRows = 4096;
         case 'A':
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
+            inCommand_ = NO;  // Issue 7954
             [delegate_ terminalPromptDidStart];
             break;
 
