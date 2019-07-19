@@ -208,6 +208,8 @@ static NSString *const kStackKey = @"Profile Stack";
             } else {
                 APSLog(@"Not switching profiles because the topmost profile in the stack equals the current profile.");
             }
+        } else {
+            APSLog(@"Not doing anything. Can't improve on the status quo.");
         }
     }
 }
