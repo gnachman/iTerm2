@@ -1713,6 +1713,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (IBAction)closeTerminalWindow:(id)sender {
+    [self close];
+}
+
 - (void)performClose:(id)sender {
     [self close];
 }
@@ -9077,6 +9081,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return !self.currentSession.screen.dvr.empty;
     } else if (item.action == @selector(toggleSizeChangesAffectProfile:)) {
         item.state = [iTermPreferences boolForKey:kPreferenceKeySizeChangesAffectProfile] ? NSOnState : NSOffState;
+        return YES;
+    } else if (item.action == @selector(performClose:)) {
         return YES;
     }
 

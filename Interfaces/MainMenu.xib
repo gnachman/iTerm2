@@ -197,7 +197,7 @@
                             </menuItem>
                             <menuItem title="Close Terminal Window" keyEquivalent="W" identifier="Close Terminal Window" id="598">
                                 <connections>
-                                    <action selector="performClose:" target="-1" id="599"/>
+                                    <action selector="closeTerminalWindow:" target="-1" id="0gb-0b-Ecd"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Close All Panes in Tab" keyEquivalent="w" identifier="Close All Panes in Tab" id="635">
