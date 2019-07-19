@@ -5105,6 +5105,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.windowType = self.savedWindowType;
     [self didChangeAnyFullScreen];
+    [self updateWindowForWindowType:self.windowType];
 
     [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
@@ -8020,14 +8021,20 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     assert(_windowType == WINDOW_TYPE_NORMAL || _windowType == WINDOW_TYPE_COMPACT);
     assert(self.windowType == WINDOW_TYPE_NORMAL || self.windowType == WINDOW_TYPE_COMPACT);
+
+    [self updateWindowForWindowType:self.windowType];
+
+    _windowType = self.windowType;
+}
+
+- (void)updateWindowForWindowType:(iTermWindowType)windowType {
     NSRect frame = self.window.frame;
     NSString *title = [[self.window.title copy] autorelease];
-    [self replaceWindowWithWindowOfType:self.windowType];
+    [self replaceWindowWithWindowOfType:windowType];
     [self.window setFrame:frame display:YES];
     [self.window orderFront:nil];
     [self repositionWidgets];
     self.window.title = title;
-    _windowType = self.windowType;
 }
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
