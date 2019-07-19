@@ -150,7 +150,7 @@ static NSString *const kStackKey = @"Profile Stack";
                                              path:path
                                               job:job
                                             score:&scoreForTopmostMatchingSavedProfile];
-    APSLog(@"Score for current profile %@ is %f. Topmost matching profile is %@ with score of %f",
+    APSLog(@"The current profile is %@ with a score of %0.2f. The highest-ranking profile in the stack is %@, with score of %0.2f",
            currentProfile[KEY_NAME],
            scoreForCurrentProfile,
            topmostMatchingSavedProfile.profile[KEY_NAME],
@@ -159,16 +159,16 @@ static NSString *const kStackKey = @"Profile Stack";
     if (topmostMatchingSavedProfile &&
         ![topmostMatchingSavedProfile.originalProfile isEqualToProfile:currentProfile] &&
         scoreForTopmostMatchingSavedProfile > scoreForCurrentProfile) {
-        APSLog(@"%@ is in the stack and matches. Will use it. First, remove it and subsequent entries from the stack.", topmostMatchingSavedProfile.profile[KEY_NAME]);
+        APSLog(@"Profile %@ is in the stack and outranks the current profile. Will switch, but first, remove it and subsequent entries from the stack.", topmostMatchingSavedProfile.profile[KEY_NAME]);
         while (_profileStack.lastObject.originalProfile == topmostMatchingSavedProfile.originalProfile) {
             APSLog(@"Pop");
             [_profileStack removeLastObject];
         }
         APSLog(@"Stack is now: %@", self.profileStackString);
-        APSLog(@"Switch to saved profile %@", topmostMatchingSavedProfile.profile[KEY_NAME]);
+        APSLog(@"Switch to saved profile from stack: %@", topmostMatchingSavedProfile.profile[KEY_NAME]);
         [_delegate automaticProfileSwitcherLoadProfile:topmostMatchingSavedProfile];
     } else {
-        APSLog(@"Not switching to a profile in the stack. Check if any profile not in the stack outranks the current profile.");
+        APSLog(@"No profile in the stack outranks the current profile. Check if any profile not in the stack outranks the current profile.");
         double scoreOfHighestScoringProfile = 0;
         Profile *highestScoringProfile = [self highestScoringProfileForHostname:hostname
                                                                        username:username
@@ -180,11 +180,12 @@ static NSString *const kStackKey = @"Profile Stack";
                highestScoringProfile[KEY_NAME],
                @(scoreOfHighestScoringProfile));
         if (highestScoringProfile && ![highestScoringProfile isEqualToProfile:currentProfile]) {
-            APSLog(@"Push and switch to profile %@", highestScoringProfile[KEY_NAME]);
+            APSLog(@"Will switch to profile %@", highestScoringProfile[KEY_NAME]);
             [self pushCurrentProfileIfNeeded];
 
             iTermSavedProfile *newSavedProfile = [[iTermSavedProfile alloc] init];
             newSavedProfile.originalProfile = highestScoringProfile;
+            APSLog(@"Switch to profile %@", highestScoringProfile[KEY_NAME]);
             [_delegate automaticProfileSwitcherLoadProfile:newSavedProfile];
 
             if (sticky) {
@@ -192,16 +193,20 @@ static NSString *const kStackKey = @"Profile Stack";
                 [_profileStack removeAllObjects];
                 [self pushCurrentProfileIfNeeded];
             }
+            APSLog(@"Stack is now: %@", self.profileStackString);
         } else if (!highestScoringProfile && _profileStack.count) {
             APSLog(@"No rule was matched by any profile, but the stack is not empty.");
             // Restore first profile in stack
             if (_profileStack.count > 1) {
-                APSLog(@"Removing all but first object in stack");
+                APSLog(@"Removing all but first profile in the stack since no rule was matched.");
                 [_profileStack removeObjectsInRange:NSMakeRange(1, _profileStack.count - 1)];
+                APSLog(@"Stack is now: %@", self.profileStackString);
             }
             if (![_profileStack.firstObject.originalProfile isEqualToProfile:currentProfile]) {
-                APSLog(@"Switch to first profile in stack: %@", [_profileStack.firstObject profile][KEY_NAME]);
+                APSLog(@"Switch to the topmost profile in the stack: %@", [_profileStack.firstObject profile][KEY_NAME]);
                 [_delegate automaticProfileSwitcherLoadProfile:_profileStack.firstObject];
+            } else {
+                APSLog(@"Not switching profiles because the topmost profile in the stack equals the current profile.");
             }
         }
     }
