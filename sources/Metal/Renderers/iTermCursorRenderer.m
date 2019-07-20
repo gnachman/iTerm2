@@ -360,7 +360,7 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat width = [self barCursorWidth];
     tState.vertexBuffer =
         [_cellRenderer newQuadOfSize:CGSizeMake(tState.configuration.scale * width,
-                                                tState.cellConfiguration.cellSize.height)
+                                                tState.cellConfiguration.cellSizeWithoutSpacing.height)
                          poolContext:tState.poolContext];
 }
 
