@@ -292,10 +292,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
 }
 
-- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
-    iTermCursorRendererTransientState *tState = transientState;
-
+- (iTermCursorDescription)cursorDescriptionWithTransientState:(iTermCursorRendererTransientState *)tState {
     const CGFloat rowNumber = (tState.cellConfiguration.gridSize.height - tState.coord.y - 1);
     const CGSize cellSize = tState.cellConfiguration.cellSize;
     const CGSize cellSizeWithoutSpacing = tState.cellConfiguration.cellSizeWithoutSpacing;
@@ -316,6 +313,13 @@ NS_ASSUME_NONNULL_BEGIN
             1
         }
     };
+    return description;
+}
+
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
+    iTermCursorRendererTransientState *tState = transientState;
+    iTermCursorDescription description = [self cursorDescriptionWithTransientState:tState];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
@@ -374,6 +378,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRendererTransientState *tState,
+                                                             iTermMetalCellRenderer *cellRenderer) {
+    int d = tState.doubleWidth ? 2 : 1;
+    const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
+                              tState.cellConfiguration.cellSizeWithoutSpacing.width);
+    return [cellRenderer newQuadWithFrame:CGRectMake(0,
+                                                     0,
+                                                     width * d,
+                                                     tState.cursorHeight)
+                             textureFrame:CGRectMake(0, 0, 1, 1)
+                              poolContext:tState.poolContext];
+}
+
+
 @implementation iTermBlockCursorRenderer
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
@@ -382,15 +400,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermCursorRendererTransientState *tState = transientState;
-    int d = tState.doubleWidth ? 2 : 1;
-    const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
-                              tState.cellConfiguration.cellSizeWithoutSpacing.width);
-    tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(0,
-                                                                     0,
-                                                                     width * d,
-                                                                     tState.cursorHeight)
-                                             textureFrame:CGRectMake(0, 0, 1, 1)
-                                              poolContext:tState.poolContext];
+    tState.vertexBuffer = iTermNewVertexBufferWithBlockCursorQuad(tState, _cellRenderer);
     [super drawWithFrameData:frameData transientState:transientState];
 }
 
@@ -413,34 +423,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermFrameCursorRendererTransientState *tState = transientState;
-    int d = tState.doubleWidth ? 2 : 1;
-    const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
-                              tState.cellConfiguration.cellSizeWithoutSpacing.width);
-    tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(0,
-                                                                     0,
-                                                                     width * d,
-                                                                     tState.cursorHeight)
-                                             textureFrame:CGRectMake(0, 0, 1, 1)
-                                              poolContext:tState.poolContext];
-    iTermCursorDescription description = {
-        .origin = {
-            tState.cellConfiguration.cellSize.width * tState.coord.x,
-            tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
-        },
-        .color = {
-            tState.color.redComponent,
-            tState.color.greenComponent,
-            tState.color.blueComponent,
-            1
-        }
-    };
+    tState.vertexBuffer = iTermNewVertexBufferWithBlockCursorQuad(tState, _cellRenderer);
+    iTermCursorDescription description = [self cursorDescriptionWithTransientState:tState];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
-                             numberOfPIUs:tState.cellConfiguration.gridSize.width
+                             numberOfPIUs:0
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                              @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
