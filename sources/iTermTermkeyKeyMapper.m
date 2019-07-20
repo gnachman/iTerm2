@@ -326,6 +326,7 @@
     if (!anyModifierPressed) {
         switch (keyCode) {
             case kVK_Return:
+            case kVK_ANSI_KeypadEnter:  // Keypad enter appears to be unspecified.
                 return [self stringWithCharacter:0x0d];
             case kVK_Escape:
                 return [self stringWithCharacter:0x1b];
@@ -342,6 +343,7 @@
     // Some modifier pressed. These support reporting the shift key.
     switch (keyCode) {
         case kVK_Return:
+        case kVK_ANSI_KeypadEnter:  // Keypad enter appears to be unspecified.
             return [self csiUForCode:@"13" eventModifiers:eventModifiers];
         case kVK_Escape:
             return [self csiUForCode:@"27" eventModifiers:eventModifiers];
@@ -567,6 +569,7 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 - (BOOL)shiftAllowedForKeycode:(int)code {
     switch (code) {
         case kVK_Return:
+        case kVK_ANSI_KeypadEnter:  // Keypad enter appears to be unspecified.
         case kVK_Escape:
         case kVK_Delete:  // backspace
         case kVK_Space:
