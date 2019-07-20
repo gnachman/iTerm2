@@ -1113,7 +1113,7 @@ typedef struct iTermTextColorContext {
                             positions:(CTVector(CGFloat) *)positions
                             inContext:(CGContextRef)ctx
                       backgroundColor:(NSColor *)backgroundColor {
-    NSPoint point = initialPoint;
+    const NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
     for (id<iTermAttributedString> singlePartAttributedString in attributedStrings) {
@@ -1132,6 +1132,7 @@ typedef struct iTermTextColorContext {
             offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
                                              atPoint:offsetPoint
+                                     unadjustedPoint:point
                                               origin:origin
                                            positions:subpositions
                                            inContext:ctx
@@ -1223,8 +1224,11 @@ typedef struct iTermTextColorContext {
 
 // Just like drawTextOnlyAttributedString but 2-3x faster. Uses
 // CGContextShowGlyphsAtPositions instead of CTFontDrawGlyphs.
+// NOTE: point is adjusted when vertical spacing is not 100% to vertically center the text box.
+// unadjustedPoint gives the bottom of the line.
 - (int)drawFastPathString:(iTermCheapAttributedString *)cheapString
                   atPoint:(NSPoint)point
+          unadjustedPoint:(NSPoint)unadjustedPoint
                    origin:(VT100GridCoord)origin
                 positions:(CGFloat *)positions
                 inContext:(CGContextRef)ctx
@@ -1234,7 +1238,7 @@ typedef struct iTermTextColorContext {
         unichar *chars = (unichar *)cheapString.characters;
         for (NSUInteger i = 0; i < cheapString.length; i++) {
             unichar c = chars[i];
-            NSPoint p = NSMakePoint(point.x + positions[i], point.y);
+            NSPoint p = NSMakePoint(unadjustedPoint.x + positions[i], unadjustedPoint.y);
             [self drawBoxDrawingCharacter:c
                            withAttributes:cheapString.attributes
                                        at:p];
