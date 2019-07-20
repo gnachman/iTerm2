@@ -43,7 +43,7 @@ static char iTermAdvancedSettingsTableKey;
                 }
                 break;
             case NSBackgroundStyleEmphasized:
-                self.textColor = [NSColor labelColor];
+                self.textColor = [NSColor selectedMenuItemTextColor];
                 if (self.selectedAttributedString) {
                     self.attributedStringValue = self.selectedAttributedString;
                 }
@@ -84,7 +84,7 @@ static char iTermAdvancedSettingsTableKey;
 
 @end
 
-@interface iTermTableViewTextFieldWrapper : NSView
+@interface iTermTableViewTextFieldWrapper : NSTableCellView
 @end
 
 @implementation iTermTableViewTextFieldWrapper
@@ -217,7 +217,11 @@ static NSDictionary *gIntrospection;
                                                                     attributes:spacerAttributes];
     NSColor *textColor;
     if (@available(macOS 10.14, *)) {
-        textColor = [NSColor labelColor];
+        if (selected) {
+            textColor = [NSColor selectedMenuItemTextColor];
+        } else {
+            textColor = [NSColor labelColor];
+        }
     } else {
         textColor = (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor];
     }
@@ -406,7 +410,11 @@ static NSDictionary *gIntrospection;
     if (subtitle) {
         NSColor *color;
         if (@available(macOS 10.14, *)) {
-            color = [NSColor secondaryLabelColor];
+            if (selected) {
+                color = [[NSColor selectedMenuItemTextColor] colorWithAlphaComponent:0.5];
+            } else {
+                color = [NSColor secondaryLabelColor];
+            }
         } else {
             color = (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor grayColor];
         }
