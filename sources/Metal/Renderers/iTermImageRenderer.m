@@ -141,7 +141,6 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     const CGSize cellSize = self.cellConfiguration.cellSize;
     const CGPoint offset = CGPointMake(self.margins.left, self.margins.top);
     const CGFloat height = self.configuration.viewportSize.y;
-    const CGFloat bottom = self.margins.top;
 
     [_runs enumerateObjectsUsingBlock:^(iTermMetalImageRun * _Nonnull run, NSUInteger idx, BOOL * _Nonnull stop) {
         id key = [self keyForRun:run];
@@ -155,7 +154,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
                                                (chunkSize.height) / textureSize.height);
 
         id<MTLBuffer> vertexBuffer = [self->_cellRenderer newQuadWithFrame:CGRectMake(run.startingCoordOnScreen.x * cellSize.width + offset.x,
-                                                                                      bottom + height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
+                                                                                      height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
                                                                                       run.length * cellSize.width,
                                                                                       cellSize.height)
                                                               textureFrame:textureFrame
