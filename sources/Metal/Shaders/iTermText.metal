@@ -359,20 +359,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                               dimensions->scale);
     }
     // Underlined not emoji.
-    const half underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                 in.clipSpacePosition.xy,
-                                                                 in.viewportSize,
-                                                                 in.cellOffset,
-                                                                 dimensions->underlineOffset,
-                                                                 dimensions->underlineThickness,
-                                                                 dimensions->textureSize,
-                                                                 in.textureOffset,
-                                                                 in.textureCoordinate,
-                                                                 dimensions->glyphSize,
-                                                                 dimensions->cellSize,
-                                                                 texture,
-                                                                 textureSampler,
-                                                                 dimensions->scale);
+    const half underlineWeight = 0;
 
     half4 recoloredTextColor = static_cast<half4>(in.textColor);
     recoloredTextColor.w = dot(textureColor, in.alphaVector);
