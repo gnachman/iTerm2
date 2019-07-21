@@ -4450,8 +4450,10 @@ ITERM_WEAKLY_REFERENCEABLE
                          initialFrame:(NSRect)initialFrame {
     // For reasons that defy comprehension, you have to do this when switching to full-size content
     // view style mask. Otherwise, you are left with an unusable title bar.
-    while (self.window.titlebarAccessoryViewControllers.count > 0) {
-        [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
+    if (self.window.styleMask & NSWindowStyleMaskTitled) {
+        while (self.window.titlebarAccessoryViewControllers.count > 0) {
+            [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
+        }
     }
 
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) || (windowType == WINDOW_TYPE_ACCESSORY);
