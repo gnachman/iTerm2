@@ -384,6 +384,25 @@ class Window:
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))
 
+    async def async_get_variable(self, name: str) -> typing.Any:
+        """
+        Fetches a window variable.
+
+        See the Scripting Fundamentals documentation for more information on variables.
+
+        :param name: The variable's name.
+
+        :returns: The variable's value or empty string if it is undefined.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(self.connection, window_id=self.__window_id, gets=[name])
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+        else:
+            return json.loads(result.variable_response.values[0])
+
     async def async_set_variable(self, name: str, value: typing.Any) -> None:
         """
         Sets a user-defined variable in the window.

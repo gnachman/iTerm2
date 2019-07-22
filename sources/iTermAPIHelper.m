@@ -60,7 +60,7 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
 
 static iTermAPIHelper *sAPIHelperInstance;
 
-@interface iTermAllSessionsSubscription : NSObject
+@interface iTermAllObjectsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
 @property (nonatomic, copy) NSString *connectionKey;
 @end
@@ -230,7 +230,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 
 @end
 
-@implementation iTermAllSessionsSubscription
+@implementation iTermAllObjectsSubscription
 @end
 
 @interface iTermBlockTargetActionForwarder : NSObject
@@ -297,10 +297,13 @@ static iTermAPIHelper *sAPIHelperInstance;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_tabVariableSubscriptions;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_windowVariableSubscriptions;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_sessionVariableSubscriptions;
+
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_allSessionVariableSubscriptions; // Will have one entry per session
+    NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_allWindowVariableSubscriptions; // Will have one entry per window
     // signature -> ( connection, request )
     NSMutableDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *_internalServerOriginatedRPCSubscriptions;
-    NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;  // Has one entry per "all" subscription
+    NSMutableArray<iTermAllObjectsSubscription *> *_allSessionsSubscriptions;  // Has one entry per "all" subscription for sessions
+    NSMutableArray<iTermAllObjectsSubscription *> *_allWindowsSubscriptions;  // Has one entry per "all" subscription for windows
     NSMutableDictionary<NSString *, iTermServerOriginatedRPCCompletionBlock> *_serverOriginatedRPCCompletionBlocks;
     // connectionKey -> RPC ID (RPC ID is key in _serverOriginatedRPCCompletionBlocks)
     // WARNING: These can exist after the block has been removed from
@@ -400,6 +403,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         _serverOriginatedRPCCompletionBlocks = [NSMutableDictionary dictionary];
         _outstandingRPCs = [NSMutableDictionary dictionary];
         _allSessionsSubscriptions = [NSMutableArray array];
+        _allWindowsSubscriptions = [NSMutableArray array];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionDidTerminate:)
@@ -449,6 +453,10 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                    object:nil];
         // End layoutChanged:
 
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didCreateTerminalWindow:)
+                                                     name:iTermDidCreateTerminalWindowNotification
+                                                   object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
@@ -522,9 +530,15 @@ static iTermAPIHelper *sAPIHelperInstance;
     [_tabVariableSubscriptions removeAllObjects];
     [_windowVariableSubscriptions removeAllObjects];
     [_sessionVariableSubscriptions removeAllObjects];
+
     [_allSessionVariableSubscriptions removeAllObjects];
+    [_allWindowVariableSubscriptions removeAllObjects];
+
     [_internalServerOriginatedRPCSubscriptions removeAllObjects];
+
     [_allSessionsSubscriptions removeAllObjects];
+    [_allWindowsSubscriptions removeAllObjects];
+
     [_serverOriginatedRPCCompletionBlocks removeAllObjects];
     [_outstandingRPCs removeAllObjects];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIHelperDidStopNotification object:nil];
@@ -534,15 +548,31 @@ static iTermAPIHelper *sAPIHelperInstance;
     [_apiServer postAPINotification:notification toConnectionKey:connectionKey];
 }
 
+- (void)didCreateTerminalWindow:(NSNotification *)notification {
+    PseudoTerminal *term = notification.object;
+    for (iTermAllObjectsSubscription *sub in _allWindowsSubscriptions) {
+        if (sub.request.notificationType == ITMNotificationType_NotifyOnVariableChange) {
+            [self monitorVariableChangesForConnectionKey:sub.connectionKey
+                                              identifier:term.subscribableIdentifier
+                                                 request:sub.request
+                                                   scope:term.scope
+                                    mutableVariablesDict:_allWindowVariableSubscriptions];
+            continue;
+        }
+        [term handleAPINotificationRequest:sub.request
+                             connectionKey:sub.connectionKey];
+    }
+}
+
 - (void)sessionCreated:(NSNotification *)notification {
     PTYSession *session = notification.object;
-    for (iTermAllSessionsSubscription *sub in _allSessionsSubscriptions) {
+    for (iTermAllObjectsSubscription *sub in _allSessionsSubscriptions) {
         if (sub.request.notificationType == ITMNotificationType_NotifyOnVariableChange) {
             [self monitorVariableChangesForConnectionKey:sub.connectionKey
                                               identifier:session.guid
                                                  request:sub.request
                                                    scope:session.variablesScope
-                                           subscriptions:_allSessionVariableSubscriptions];
+                                    mutableVariablesDict:_allSessionVariableSubscriptions];
              continue;
         }
         [session handleAPINotificationRequest:sub.request
@@ -1265,6 +1295,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         _windowVariableSubscriptions = [[NSMutableDictionary alloc] init];
         _sessionVariableSubscriptions = [[NSMutableDictionary alloc] init];
         _allSessionVariableSubscriptions = [[NSMutableDictionary alloc] init];
+        _allWindowVariableSubscriptions = [[NSMutableDictionary alloc] init];
         _profileChangeSubscriptions = [[NSMutableDictionary alloc] init];
     }
 }
@@ -1303,7 +1334,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                     identifier:(NSString *)identifier
                                        request:(ITMNotificationRequest *)request
                                          scope:(iTermVariableScope *)scope
-                                 subscriptions:(NSMutableDictionary<id,NSMutableArray<iTermTuple<ITMNotificationRequest *,iTermVariableReference *> *> *> *)subscriptions {
+                          mutableVariablesDict:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)dict {
     NSString *name = request.variableMonitorRequest.name;
     iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:name
                                                                         vendor:scope];
@@ -1318,13 +1349,13 @@ static iTermAPIHelper *sAPIHelperInstance;
             [weakSelf postAPINotification:notification toConnectionKey:connectionKey];
         }
     };
-    [subscriptions it_addObject:[iTermTuple tupleWithObject:request andObject:ref] toMutableArrayForKey:connectionKey];
+    [dict it_addObject:[iTermTuple tupleWithObject:request andObject:ref] toMutableArrayForKey:connectionKey];
 }
 
 - (BOOL)monitorVariableChangesForConnectionKey:(NSString *)connectionKey
                                     identifier:(NSString *)identifier
                                        request:(ITMNotificationRequest *)request
-                                 subscriptions:(NSMutableDictionary<id,NSMutableArray<iTermTuple<ITMNotificationRequest *,iTermVariableReference *> *> *> *)subscriptions {
+                          mutableVariablesDict:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)dict {
     iTermVariableScope *scope = [self scopeForCategory:request.variableMonitorRequest.scope identifier:identifier];
     if (scope == nil) {
         return NO;
@@ -1333,7 +1364,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                       identifier:identifier
                                          request:request
                                            scope:scope
-                                   subscriptions:subscriptions];
+                            mutableVariablesDict:dict];
     return YES;
 }
 
@@ -1348,13 +1379,19 @@ static iTermAPIHelper *sAPIHelperInstance;
     // Handle the special case of (un)subscribing to "all" sessions.
     NSString *identifier = request.variableMonitorRequest.identifier;
     if ([identifier isEqualToString:@"all"]) {
-        if (request.variableMonitorRequest.scope != ITMVariableScope_Session) {
-            // TODO, I guess.
-            response.status = ITMNotificationResponse_Status_InvalidIdentifier;
-            return response;
+        switch (request.variableMonitorRequest.scope) {
+            case ITMVariableScope_Session:
+                return [self handleSubscriptionRequestForAllSessionsFromConnectionKey:connectionKey
+                                                                              request:request];
+            case ITMVariableScope_Window:
+                return [self handleSubscriptionRequestForAllWindowsFromConnectionKey:connectionKey
+                                                                             request:request];
+            case ITMVariableScope_App:
+            case ITMVariableScope_Tab:
+                // TODO
+                response.status = ITMNotificationResponse_Status_InvalidIdentifier;
+                return response;
         }
-        return [self handleSubscriptionRequestForAllSessionsFromConnectionKey:connectionKey
-                                                                      request:request];
     }
 
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *subscriptions =
@@ -1373,7 +1410,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         BOOL ok = [self monitorVariableChangesForConnectionKey:connectionKey
                                                     identifier:identifier
                                                        request:request
-                                                 subscriptions:subscriptions];
+                                          mutableVariablesDict:subscriptions];
         if (ok) {
             response.status = ITMNotificationResponse_Status_Ok;
         } else {
@@ -1550,9 +1587,11 @@ static iTermAPIHelper *sAPIHelperInstance;
     }];
 }
 
-- (BOOL)unsubscribeFromVariableChangeNotificationsForAllSessionsForConnectionKey:(NSString *)connectionKey
-                                                                         request:(ITMNotificationRequest *)request {
-    NSMutableArray *array = _allSessionVariableSubscriptions[connectionKey];
+- (BOOL)unsubscribeFromVariableChangeNotificationsForAllObjects:(NSArray<id<iTermSubscribable>> *)objects
+                                                    mutableSubs:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)subs
+                                               forConnectionKey:(NSString *)connectionKey
+                                                        request:(ITMNotificationRequest *)request {
+    NSMutableArray *array = subs[connectionKey];
     NSIndexSet *indexes = [array indexesOfObjectsPassingTest:^BOOL(iTermTuple<ITMNotificationRequest *, iTermVariableReference *> * _Nonnull tuple,
                                                                    NSUInteger idx,
                                                                    BOOL * _Nonnull stop) {
@@ -1568,28 +1607,37 @@ static iTermAPIHelper *sAPIHelperInstance;
     return indexes.count > 0;
 }
 
-- (void)subscribeToVariableChangeNotificationsForAllSessionsForConnectionKey:(NSString *)connectionKey
-                                                                     request:(ITMNotificationRequest *)request {
-    for (PTYSession *session in [self allSessions]) {
+- (void)subscribeToVariableChangeNotificationsForAllObjects:(NSArray<id<iTermSubscribable>> *)objects
+                                       mutableVariablesDict:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)dict
+                                           forConnectionKey:(NSString *)connectionKey
+                                                    request:(ITMNotificationRequest *)request {
+    for (id<iTermSubscribable> object in objects) {
         [self monitorVariableChangesForConnectionKey:connectionKey
-                                          identifier:session.guid
+                                          identifier:object.subscribableIdentifier
                                              request:request
-                                       subscriptions:_allSessionVariableSubscriptions];
+                                mutableVariablesDict:dict];
     }
 }
 
-- (ITMNotificationResponse *)handleVariableSubscriptionRequestForAllSessionsForConnection:(NSString *)connectionKey request:(ITMNotificationRequest *)request {
+- (ITMNotificationResponse *)handleVariableSubscriptionRequestForAllObjects:(NSArray<id<iTermSubscribable>> *)objects
+                                                       mutableVariablesDict:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)dict
+                                                              forConnection:(NSString *)connectionKey
+                                                                    request:(ITMNotificationRequest *)request {
     [self createSubscriptionDictionariesIfNeeded];
     if (request.subscribe) {
-        [self subscribeToVariableChangeNotificationsForAllSessionsForConnectionKey:connectionKey
-                                                                           request:request];
+        [self subscribeToVariableChangeNotificationsForAllObjects:objects
+                                             mutableVariablesDict:dict
+                                                 forConnectionKey:connectionKey
+                                                          request:request];
         ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
         response.status = ITMNotificationResponse_Status_Ok;
         return response;
     }
 
-    const BOOL wasSubscribed = [self unsubscribeFromVariableChangeNotificationsForAllSessionsForConnectionKey:connectionKey
-                                                                                                      request:request];
+    const BOOL wasSubscribed = [self unsubscribeFromVariableChangeNotificationsForAllObjects:objects
+                                                                                 mutableSubs:dict
+                                                                            forConnectionKey:connectionKey
+                                                                                     request:request];
     ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
     if (wasSubscribed) {
         response.status = ITMNotificationResponse_Status_Ok;
@@ -1599,18 +1647,23 @@ static iTermAPIHelper *sAPIHelperInstance;
     return response;
 }
 
-- (ITMNotificationResponse *)handleSubscriptionRequestForAllSessionsFromConnectionKey:(NSString *)connectionKey
-                                                                              request:(ITMNotificationRequest *)request {
+- (ITMNotificationResponse *)handleSubscriptionRequestForAllObjects:(NSArray<id<iTermSubscribable>> *)objects
+                                                        mutableSubs:(NSMutableArray<iTermAllObjectsSubscription *> *)subscriptions
+                                               mutableVariablesDict:(NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)dict
+                                                  fromConnectionKey:(NSString *)connectionKey
+                                                            request:(ITMNotificationRequest *)request {
     if (request.notificationType == ITMNotificationType_NotifyOnVariableChange) {
-        ITMNotificationResponse *response = [self handleVariableSubscriptionRequestForAllSessionsForConnection:connectionKey
-                                                                                                       request:request];
+        ITMNotificationResponse *response = [self handleVariableSubscriptionRequestForAllObjects:objects
+                                                                            mutableVariablesDict:dict
+                                                                                   forConnection:connectionKey
+                                                                                         request:request];
         if (response.status != ITMNotificationResponse_Status_Ok) {
             return response;
         }
     } else {
-        for (PTYSession *session in [self allSessions]) {
-            ITMNotificationResponse *response = [session handleAPINotificationRequest:request
-                                                                        connectionKey:connectionKey];
+        for (id<iTermSubscribable> object in objects) {
+            ITMNotificationResponse *response = [object handleAPINotificationRequest:request
+                                                                       connectionKey:connectionKey];
             if (response.status != ITMNotificationResponse_Status_AlreadySubscribed &&
                 response.status != ITMNotificationResponse_Status_NotSubscribed &&
                 response.status != ITMNotificationResponse_Status_Ok) {
@@ -1620,18 +1673,18 @@ static iTermAPIHelper *sAPIHelperInstance;
     }
 
     if (request.subscribe) {
-        iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
+        iTermAllObjectsSubscription *sub = [[iTermAllObjectsSubscription alloc] init];
         sub.request = [request copy];
         sub.connectionKey = connectionKey;
-        [_allSessionsSubscriptions addObject:sub];
+        [subscriptions addObject:sub];
     } else {
         ITMNotificationRequest *requestToRemove = [request copy];
         requestToRemove.subscribe = YES;
-        const NSInteger countBefore = _allSessionsSubscriptions.count;
-        [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllSessionsSubscription *sub) {
+        const NSInteger countBefore = subscriptions.count;
+        [subscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
             return [NSObject object:sub.request isEqualToObject:requestToRemove];
         }];
-        const NSInteger countAfter = _allSessionsSubscriptions.count;
+        const NSInteger countAfter = subscriptions.count;
         if (countBefore == countAfter) {
             ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
             response.status = ITMNotificationResponse_Status_NotSubscribed;
@@ -1641,6 +1694,25 @@ static iTermAPIHelper *sAPIHelperInstance;
     ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
     response.status = ITMNotificationResponse_Status_Ok;
     return response;
+}
+
+
+- (ITMNotificationResponse *)handleSubscriptionRequestForAllSessionsFromConnectionKey:(NSString *)connectionKey
+                                                                              request:(ITMNotificationRequest *)request {
+    return [self handleSubscriptionRequestForAllObjects:[self allSessions]
+                                            mutableSubs:_allSessionsSubscriptions
+                                   mutableVariablesDict:_allSessionVariableSubscriptions
+                                      fromConnectionKey:connectionKey
+                                                request:request];
+}
+
+- (ITMNotificationResponse *)handleSubscriptionRequestForAllWindowsFromConnectionKey:(NSString *)connectionKey
+                                                                             request:(ITMNotificationRequest *)request {
+    return [self handleSubscriptionRequestForAllObjects:[[iTermController sharedInstance] terminals]
+                                            mutableSubs:_allWindowsSubscriptions
+                                   mutableVariablesDict:_allWindowVariableSubscriptions
+                                      fromConnectionKey:connectionKey
+                                                request:request];
 }
 
 - (void)apiServerNotification:(ITMNotificationRequest *)request
@@ -1687,6 +1759,9 @@ static iTermAPIHelper *sAPIHelperInstance;
     [_allSessionVariableSubscriptions[connectionKey] enumerateObjectsUsingBlock:^(iTermTuple<ITMNotificationRequest *,iTermVariableReference *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
         [tuple.secondObject removeAllLinks];
     }];
+    [_allWindowVariableSubscriptions[connectionKey] enumerateObjectsUsingBlock:^(iTermTuple<ITMNotificationRequest *,iTermVariableReference *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        [tuple.secondObject removeAllLinks];
+    }];
     NSMutableDictionary *empty = [NSMutableDictionary dictionary];
     NSArray<NSMutableDictionary<id, ITMNotificationRequest *> *> *dicts =
     @[ _newSessionSubscriptions ?: empty,
@@ -1695,13 +1770,17 @@ static iTermAPIHelper *sAPIHelperInstance;
        _layoutChangeSubscriptions ?: empty,
        _focusChangeSubscriptions ?: empty,
        _broadcastDomainChangeSubscriptions ?: empty,
-       _allSessionVariableSubscriptions ?: empty];
+       _allSessionVariableSubscriptions ?: empty,
+       _allWindowVariableSubscriptions ?: empty];
     [dicts enumerateObjectsUsingBlock:^(NSMutableDictionary<id,ITMNotificationRequest *> * _Nonnull dict,
                                         NSUInteger idx,
                                         BOOL * _Nonnull stop) {
         [dict removeObjectForKey:connectionKey];
     }];
-    [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllSessionsSubscription *sub) {
+    [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
+        return [sub.connectionKey isEqual:connectionKey];
+    }];
+    [_allWindowsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
         return [sub.connectionKey isEqual:connectionKey];
     }];
     if (rpcsRemoved) {

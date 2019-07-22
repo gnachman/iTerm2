@@ -478,7 +478,7 @@ class Session:
         """
         Fetches a session variable.
 
-        See Badges documentation for more information on variables.
+        See the Scripting Fundamentals documentation for more information on variables.
 
         :param name: The variable's name.
 

@@ -2,6 +2,7 @@
 
 #import "Api.pbobjc.h"
 #import "DVR.h"
+#import "iTermAPIHelper.h"
 #import "iTermEchoProbe.h"
 #import "iTermFindDriver.h"
 #import "iTermFileDescriptorClient.h"
@@ -245,6 +246,7 @@ typedef enum {
 @interface PTYSession : NSResponder <
     iTermEchoProbeDelegate,
     iTermFindDriverDelegate,
+    iTermSubscribable,
     iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,

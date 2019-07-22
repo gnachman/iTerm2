@@ -10889,70 +10889,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return response;
 }
 
-- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
-                                            connectionKey:(NSString *)connectionKey {
-    ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
-    if (!request.hasSubscribe) {
-        response.status = ITMNotificationResponse_Status_RequestMalformed;
-        return response;
-    }
-
-    NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions = nil;
-    switch (request.notificationType) {
-        case ITMNotificationType_NotifyOnPrompt:
-            subscriptions = _promptSubscriptions;
-            break;
-        case ITMNotificationType_NotifyOnKeystroke:
-            subscriptions = _keystrokeSubscriptions;
-            break;
-        case ITMNotificationType_KeystrokeFilter:
-            subscriptions = _keyboardFilterSubscriptions;
-            break;
-        case ITMNotificationType_NotifyOnScreenUpdate:
-            subscriptions = _updateSubscriptions;
-            break;
-        case ITMNotificationType_NotifyOnCustomEscapeSequence:
-            subscriptions = _customEscapeSequenceNotifications;
-            break;
-
-        case ITMNotificationType_NotifyOnVariableChange:  // Gets special handling before this method is called
-        case ITMNotificationType_NotifyOnNewSession:
-        case ITMNotificationType_NotifyOnTerminateSession:
-        case ITMNotificationType_NotifyOnLayoutChange:
-        case ITMNotificationType_NotifyOnFocusChange:
-        case ITMNotificationType_NotifyOnServerOriginatedRpc:
-        case ITMNotificationType_NotifyOnBroadcastChange:
-        case ITMNotificationType_NotifyOnProfileChange:
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        case ITMNotificationType_NotifyOnLocationChange:
-#pragma clang diagnostic pop
-            // We won't get called for this
-            assert(NO);
-            break;
-    }
-    if (!subscriptions) {
-        response.status = ITMNotificationResponse_Status_RequestMalformed;
-        return response;
-    }
-    if (request.subscribe) {
-        if (subscriptions[connectionKey]) {
-            response.status = ITMNotificationResponse_Status_AlreadySubscribed;
-            return response;
-        }
-        subscriptions[connectionKey] = request;
-    } else {
-        if (!subscriptions[connectionKey]) {
-            response.status = ITMNotificationResponse_Status_NotSubscribed;
-            return response;
-        }
-        [subscriptions removeObjectForKey:connectionKey];
-    }
-
-    response.status = ITMNotificationResponse_Status_Ok;
-    return response;
-}
-
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples
                                                             scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
@@ -11491,6 +11427,76 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (iTermVariableScope *)objectScope {
     return self.variablesScope;
+}
+
+#pragma mark - iTermSubscribable
+
+- (NSString *)subscribableIdentifier {
+    return self.guid;
+}
+
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey {
+    ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
+    if (!request.hasSubscribe) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+
+    NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions = nil;
+    switch (request.notificationType) {
+        case ITMNotificationType_NotifyOnPrompt:
+            subscriptions = _promptSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnKeystroke:
+            subscriptions = _keystrokeSubscriptions;
+            break;
+        case ITMNotificationType_KeystrokeFilter:
+            subscriptions = _keyboardFilterSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnScreenUpdate:
+            subscriptions = _updateSubscriptions;
+            break;
+        case ITMNotificationType_NotifyOnCustomEscapeSequence:
+            subscriptions = _customEscapeSequenceNotifications;
+            break;
+
+        case ITMNotificationType_NotifyOnVariableChange:  // Gets special handling before this method is called
+        case ITMNotificationType_NotifyOnNewSession:
+        case ITMNotificationType_NotifyOnTerminateSession:
+        case ITMNotificationType_NotifyOnLayoutChange:
+        case ITMNotificationType_NotifyOnFocusChange:
+        case ITMNotificationType_NotifyOnServerOriginatedRpc:
+        case ITMNotificationType_NotifyOnBroadcastChange:
+        case ITMNotificationType_NotifyOnProfileChange:
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        case ITMNotificationType_NotifyOnLocationChange:
+#pragma clang diagnostic pop
+            // We won't get called for this
+            assert(NO);
+            break;
+    }
+    if (!subscriptions) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+    if (request.subscribe) {
+        if (subscriptions[connectionKey]) {
+            response.status = ITMNotificationResponse_Status_AlreadySubscribed;
+            return response;
+        }
+        subscriptions[connectionKey] = request;
+    } else {
+        if (!subscriptions[connectionKey]) {
+            response.status = ITMNotificationResponse_Status_NotSubscribed;
+            return response;
+        }
+        [subscriptions removeObjectForKey:connectionKey];
+    }
+
+    response.status = ITMNotificationResponse_Status_Ok;
+    return response;
 }
 
 @end

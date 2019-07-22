@@ -21,7 +21,7 @@ class VariableMonitor:
    :param connection: The connection to iTerm2.
    :param scope: The scope in which the variable should be evaluated.
    :param name: The variable name.
-   :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` the identifier may be "all" or "active".
+   :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` or `WINDOW` the identifier may be "all" or "active".
 
     .. seealso::
         * Example ":ref:`colorhost_example`"

@@ -373,6 +373,7 @@ def _string_rpc_registration_request(rpc):
     return rpc.name + "(" + ",".join(args) + ")"
 
 async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, key=None, profile_change_request=None):
+    """Note: session argument is ignored for variable-change notifications."""
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
 
@@ -452,17 +453,22 @@ async def _async_dispatch_helper(connection, message):
 
     return bool(handlers)
 
-def _get_all_sessions_handler_key_from_notification(notification):
+def _get_all_sessions_handler_keys_from_notification(notification):
+    """Returns keys into _get_handlers() for a notification for the caller may
+    have registered for all sessions/windows."""
     if notification.HasField('variable_changed_notification'):
-        return (iterm2.api_pb2.VariableScope.Value("SESSION"),
-                "all",
-                notification.variable_changed_notification.name,
-                iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
-    else:
-        standard_key, _ = _get_handler_key_from_notification(notification)
-        return (None, standard_key[1])
+        return [(iterm2.api_pb2.VariableScope.Value("SESSION"),
+                 "all",
+                 notification.variable_changed_notification.name,
+                 iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE),
 
-    return None
+                (iterm2.api_pb2.VariableScope.Value("WINDOW"),
+                 "all",
+                 notification.variable_changed_notification.name,
+                 iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)]
+    # Convert a session-specific key into an all-sessions key.
+    standard_key, _ = _get_handler_key_from_notification(notification)
+    return [(None, standard_key[1])]
 
 
 def _get_handler_key_from_notification(notification):
@@ -518,13 +524,15 @@ def _get_notification_handlers(message):
     if key is None:
         return ([], None)
 
-    # This fallback catches "all"-style subscriptions.
-    fallback = _get_all_sessions_handler_key_from_notification(message.notification)
+    # These keys catch "all"-style subscriptions.
+    all_objects_key = _get_all_sessions_handler_keys_from_notification(message.notification)
 
     if key in _get_handlers():
         return (_get_handlers()[key], sub_notification)
-    elif fallback in _get_handlers():
-        return (_get_handlers()[fallback], sub_notification)
+    handlers = _get_handlers()
+    for all_objects_key in all_objects_key:
+        if all_objects_key in handlers:
+            return (handlers[all_objects_key], sub_notification)
     return ([], None)
 
 def _register_notification_handler(session, rpc_registration_request, notification_type, coro):

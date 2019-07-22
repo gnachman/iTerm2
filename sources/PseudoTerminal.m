@@ -8859,12 +8859,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
-        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+        if (self.windowInitialized && !_restoringWindow) {
             if (self.tabs.count == 1) {
                 // It's important to do this before makeKeyAndOrderFront because API clients need
                 // to know the window exists before learning that it has focus.
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidCreateTerminalWindowNotification object:self];
             }
+        }
+        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
@@ -10148,5 +10150,21 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (iTermVariableScope *)objectScope {
     return self.scope;
 }
+
+#pragma mark - iTermSubscribable
+
+- (NSString *)subscribableIdentifier {
+    return self.terminalGuid;
+}
+
+// Only variable-changed notifications are relevant for windows. Everything else is just for sessions.
+// Variable-changed notifs are handled before this is called.
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey {
+    ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
+    response.status = ITMNotificationResponse_Status_RequestMalformed;
+    return response;
+}
+
 
 @end

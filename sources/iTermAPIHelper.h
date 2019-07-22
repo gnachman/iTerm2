@@ -34,6 +34,15 @@ typedef NS_ENUM(NSUInteger, iTermAPIHelperErrorCode) {
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
+@protocol iTermSubscribable<NSObject>
+
+- (NSString *)subscribableIdentifier;
+
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey;
+
+@end
+
 @interface iTermSessionTitleProvider : NSObject
 @property (nonatomic, readonly) NSString *displayName;
 @property (nonatomic, readonly) NSString *invocation;
