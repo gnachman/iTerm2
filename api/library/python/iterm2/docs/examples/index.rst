@@ -45,6 +45,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`colorhost` — Demonstrates monitoring for different kinds of events concurrently.
 
+:doc:`fs-only-status-bar` - Demonstrates monitoring for the creation of windows and the change of window style.
+
 :doc:`theme` — Demonstrates monitoring a variable and using color presets.
 
 :doc:`copycolor` — Demonstrates monitoring for session creation and using color presets.
