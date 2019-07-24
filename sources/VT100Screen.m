@@ -5421,6 +5421,42 @@ static void SwapInt(int *a, int *b) {
     return [temp dictionary];
 }
 
+- (void)appendSessionRestoredBanner {
+    // Save graphic rendition. Set to system message color.
+    const VT100GraphicRendition saved = terminal_.graphicRendition;
+
+    VT100GraphicRendition temp = saved;
+    temp.fgColorMode = ColorModeAlternate;
+    temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
+    temp.bgColorMode = ColorModeAlternate;
+    temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
+    terminal_.graphicRendition = temp;
+
+    // Record the cursor position and append the message.
+    const int yBefore = currentGrid_.cursor.y;
+    if (currentGrid_.cursor.x > 0) {
+        [self crlf];
+    }
+    [self terminalEraseLineBeforeCursor:YES afterCursor:YES];
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    dateFormatter.dateStyle = NSDateFormatterMediumStyle;
+    dateFormatter.timeStyle = NSDateFormatterShortStyle;
+    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+    [self appendStringAtCursor:message];
+
+    // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
+    terminal_.graphicRendition = saved;
+    [self crlf];
+    const int delta = currentGrid_.cursor.y - yBefore;
+
+    // Update the preferred cursor position if needed.
+    if (currentGrid_.preferredCursorPosition.y >= 0 && currentGrid_.preferredCursorPosition.y + 1 < currentGrid_.size.height) {
+        VT100GridCoord coord = currentGrid_.preferredCursorPosition;
+        coord.y = MAX(0, MIN(currentGrid_.size.height - 1, coord.y + delta));
+        currentGrid_.preferredCursorPosition = coord;
+    }
+}
+
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                 knownTriggers:(NSArray *)triggers
@@ -5428,7 +5464,7 @@ static void SwapInt(int *a, int *b) {
     if (!altGrid_) {
         altGrid_ = [primaryGrid_ copy];
     }
-    NSDictionary *screenState = reattached ? dictionary[kScreenStateKey] : nil;
+    NSDictionary *screenState = dictionary[kScreenStateKey];
     if (screenState) {
         if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
             currentGrid_ = primaryGrid_;
@@ -5438,12 +5474,6 @@ static void SwapInt(int *a, int *b) {
     }
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
-    if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
-        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
-        dateFormatter.dateStyle = NSDateFormatterMediumStyle;
-        dateFormatter.timeStyle = NSDateFormatterShortStyle;
-        [lineBuffer appendMessage:[NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]]];
-    }
     [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
     if (!unlimitedScrollback_) {
         [lineBuffer dropExcessLinesWithWidth:self.width];
@@ -5487,6 +5517,9 @@ static void SwapInt(int *a, int *b) {
         currentGrid_.cursorY = linesRestored + 1;
         currentGrid_.cursorX = 0;
     }
+    if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
+        [self appendSessionRestoredBanner];
+    }
 
     // Reduce line buffer's max size to not include the grid height. This is its final state.
     [lineBuffer setMaxLines:maxScrollbackLines_];
@@ -5527,9 +5560,11 @@ static void SwapInt(int *a, int *b) {
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [self reloadMarkCache];
-        commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
-        commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
-        _startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        if (reattached) {
+            commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
+            commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
+            _startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        }
         _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];

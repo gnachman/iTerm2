@@ -96,27 +96,6 @@ NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 #define NUM_CHARSETS 4
 
 typedef struct {
-    BOOL bold;
-    BOOL blink;
-    BOOL underline;
-    BOOL strikethrough;
-    BOOL reversed;
-    BOOL faint;
-    BOOL italic;
-    // TODO: Add invisible and protected
-
-    int fgColorCode;
-    int fgGreen;
-    int fgBlue;
-    ColorMode fgColorMode;
-
-    int bgColorCode;
-    int bgGreen;
-    int bgBlue;
-    ColorMode bgColorMode;
-} VT100GraphicRendition;
-
-typedef struct {
     VT100GridCoord position;
     int charset;
     BOOL lineDrawing[NUM_CHARSETS];
@@ -135,8 +114,6 @@ typedef struct {
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
-    VT100GraphicRendition graphicRendition_;
-
     VT100SavedCursor mainSavedCursor_;
     VT100SavedCursor altSavedCursor_;
 
@@ -152,6 +129,7 @@ typedef struct {
 
 @synthesize delegate = delegate_;
 @synthesize receivingFile = receivingFile_;
+@synthesize graphicRendition = graphicRendition_;
 
 #define DEL  0x7f
 
