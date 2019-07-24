@@ -68,7 +68,7 @@ the session ID in which an RPC was invoked. You could register it this way:
 .. code-block:: python
 
         @iterm2.RPC
-        async def clear_session(session_id=iterm2.Reference("id"):
+        async def clear_session(session_id=iterm2.Reference("id")):
             code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
             session = app.get_session_by_id(session_id)
             if session:
