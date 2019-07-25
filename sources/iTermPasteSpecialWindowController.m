@@ -172,6 +172,8 @@
     _preview.automaticDataDetectionEnabled = NO;
     _preview.automaticLinkDetectionEnabled = NO;
     _preview.smartInsertDeleteEnabled = NO;
+    _preview.richText = NO;
+    _preview.font = [NSFont fontWithName:@"Menlo" size:[NSFont systemFontSize]];
 
     __block NSUInteger indexToSelect = 0;
     if ([iTermAdvancedSettingsModel includePasteHistoryInAdvancedPaste]) {
