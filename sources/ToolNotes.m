@@ -88,6 +88,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [textView_ setDelegate:self];
 
         [textView_ readRTFDFromFile:[self filename]];
+        textView_.font = [NSFont fontWithName:@"Menlo" size:[NSFont smallSystemFontSize]];
         textView_.automaticSpellingCorrectionEnabled = NO;
         textView_.automaticDashSubstitutionEnabled = NO;
         textView_.automaticQuoteSubstitutionEnabled = NO;
