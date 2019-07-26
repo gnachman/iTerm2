@@ -573,6 +573,7 @@ DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell ic
 DEFINE_BOOL(workAroundNumericKeypadBug, YES, SECTION_EXPERIMENTAL @"Treat the equals sign on the numeric keypad as a key on the numeric keypad.\nFor mysterious reasons, macOS does not treat this key as belonging to the numeric keypad. Enable this setting to work around the bug.");
 DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2ul really fast.");
 DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll view for better GPU performance?\nThis was a dangerous hack that was necessary in 10.14 for performance but seems not to be needed in 10.15. This setting only affects macOS 10.15 and later.");
+DEFINE_BOOL(multiserver, NO, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

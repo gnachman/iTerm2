@@ -67,7 +67,7 @@
                command:(NSString *)command
            makeSession:(void (^)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
         didMakeSession:(void (^)(PTYSession *))didMakeSession
-            completion:(void (^ _Nullable)(BOOL))completion {
+            completion:(void (^ _Nullable)(PTYSession *, BOOL))completion {
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
     launcher.url = url;
     launcher.hotkeyWindowType = hotkeyWindowType;
@@ -97,7 +97,7 @@
     return self;
 }
 
-- (void)launchWithCompletion:(void (^ _Nullable)(BOOL ok))completion {
+- (void)launchWithCompletion:(void (^ _Nullable)(PTYSession *session, BOOL ok))completion {
     assert(!_launched);
     _launched = YES;
 
@@ -243,7 +243,7 @@
                                                                       substitutions:nil
                                                                    windowController:windowController
                                                                          completion:
-                     ^(BOOL ok) {
+                     ^(PTYSession *newSession, BOOL ok) {
                          DLog(@"launch by url finished with ok=%@", @(ok));
                          [weakSelf setFinishedWithSuccess:ok];
                      }];
@@ -266,7 +266,7 @@
                                     withCommand:_command
                                     environment:nil
                                  didMakeSession:^(PTYSession *session) { completion(session, YES); }
-                                     completion:^(BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
+                                completion:^(PTYSession *newSession, BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
@@ -514,13 +514,18 @@
 }
 
 - (void)setFinishedWithSuccess:(BOOL)ok {
-    DLog(@"setFInishedWithSuccess:%@", @(ok));
+    DLog(@"setFinishedWithSuccess:%@", @(ok));
     if (_finished) {
         return;
     }
     _finished = YES;
     if (_completion) {
-        _completion(ok);
+        // Ensure the completion block runs after the caller returns for better consistency.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.completion) {
+                self.completion(self.session, ok);
+            }
+        });
     }
     [self maybeBreakRetainCycle];
 }

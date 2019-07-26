@@ -12,25 +12,29 @@
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 
-@implementation iTermLegacyJobManager {
-    pid_t _childPid;
-}
+@interface iTermLegacyJobManager()
+@property (atomic) pid_t childPid;
+@end
+
+@implementation iTermLegacyJobManager
 
 @synthesize fd = _fd;
 @synthesize tty = _tty;
+@synthesize queue = _queue;
 
-- (instancetype)init {
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
+        _queue = queue;
         _fd = -1;
-        _childPid = -1;
+        self.childPid = -1;
     }
     return self;
 }
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p fd=%d tty=%@ childPid=%@>",
-            NSStringFromClass([self class]), self, _fd, _tty, @(_childPid)];
+            NSStringFromClass([self class]), self, _fd, _tty, @(self.childPid)];
 }
 
 - (pid_t)serverPid {
@@ -53,9 +57,33 @@
                         argpath:(const char *)argpath
                            argv:(const char **)argv
                      initialPwd:(const char *)initialPwd
-                     newEnviron:(char **)newEnviron
+                     newEnviron:(const char **)newEnviron
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+    __block iTermJobManagerForkAndExecStatus status = iTermJobManagerForkAndExecStatusSuccess;
+    dispatch_sync(self.queue, ^{
+        status =
+        [self queueForkAndExecWithTtyState:ttyStatePtr
+                                   argpath:argpath
+                                      argv:argv
+                                initialPwd:initialPwd
+                                newEnviron:newEnviron
+                                      task:task];
+    });
+    if (status == iTermJobManagerForkAndExecStatusSuccess) {
+        [[TaskNotifier sharedInstance] registerTask:task];
+    }
+    if (completion) {
+        completion(status);
+    }
+}
+
+- (iTermJobManagerForkAndExecStatus)queueForkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
+                                                         argpath:(const char *)argpath
+                                                            argv:(const char **)argv
+                                                      initialPwd:(const char *)initialPwd
+                                                      newEnviron:(const char **)newEnviron
+                                                            task:(id<iTermTask>)task {
     iTermForkState forkState = {
         .connectionFd = -1,
         .deadMansPipe = { 0, 0 },
@@ -68,13 +96,12 @@
                                                initialPwd,
                                                newEnviron);
     // If you get here you're the parent.
-    _childPid = forkState.pid;
-    if (_childPid > 0) {
-        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
+    self.childPid = forkState.pid;
+    if (self.childPid > 0) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:self.childPid];
     }
     if (forkState.pid < (pid_t)0) {
-        completion(iTermJobManagerForkAndExecStatusFailedToFork);
-        return;
+        return iTermJobManagerForkAndExecStatusFailedToFork;
     }
 
     // Make sure the master side of the pty is closed on future exec() calls.
@@ -83,25 +110,30 @@
 
     self.tty = [NSString stringWithUTF8String:ttyStatePtr->tty];
     fcntl(self.fd, F_SETFL, O_NONBLOCK);
-    [[TaskNotifier sharedInstance] registerTask:task];
-    completion(iTermJobManagerForkAndExecStatusSuccess);
+    return iTermJobManagerForkAndExecStatusSuccess;
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
+- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task {
-
+    return YES;
 }
 
 - (void)sendSignal:(int)signo toProcessGroup:(BOOL)toProcessGroup {
-    if (_childPid <= 0) {
+    dispatch_async(self.queue, ^{
+        [self queueSendSignal:signo toProcessGroup:toProcessGroup];
+    });
+}
+
+- (void)queueSendSignal:(int)signo toProcessGroup:(BOOL)toProcessGroup {
+    if (self.childPid <= 0) {
         return;
     }
-    [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
+    [[iTermProcessCache sharedInstance] unregisterTrackedPID:self.childPid];
     if (toProcessGroup) {
-        killpg(_childPid, signo);
+        killpg(self.childPid, signo);
     } else {
-        kill(_childPid, signo);
+        kill(self.childPid, signo);
     }
 }
 
@@ -123,13 +155,14 @@
         case iTermJobManagerKillingModeProcessGroup:
             [self sendSignal:SIGHUP toProcessGroup:YES];
             break;
+
         case iTermJobManagerKillingModeBrokenPipe:
             break;
     }
 }
 
 - (pid_t)pidToWaitOn {
-    return _childPid;
+    return self.childPid;
 }
 
 - (BOOL)isSessionRestorationPossible {
@@ -137,15 +170,19 @@
 }
 
 - (pid_t)externallyVisiblePid {
-    return _childPid;
+    return self.childPid;
 }
 
 - (BOOL)hasJob {
-    return _childPid != -1;
+    return self.childPid != -1;
 }
 
 - (id)sessionRestorationIdentifier {
     return nil;
+}
+
+- (BOOL)ioAllowed {
+    return self.fd >= 0;
 }
 
 @end

@@ -6,9 +6,38 @@
 //
 //
 
-#import <Foundation/Foundation.h>
 #include <assert.h>
 
+#ifndef __OBJC__
+// Straight C codepath
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <unistd.h>
+
+static void CLogImpl(const char *func, const char *file, int line, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *temp = NULL;
+    asprintf(&temp,
+#ifdef ITERM_SERVER
+             "iTermServer"
+#else
+             "iTermMultiClient"
+#endif
+             "(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    vsyslog(LOG_DEBUG, temp, args);
+    va_end(args);
+    free(temp);
+}
+
+// Shared by main iTerm2 app and iTermServer
+#define CLog(args...) CLogImpl(__FUNCTION__, __FILE__, __LINE__, args)
+#else
+
+// Rest of the file is Obj-C code path
+#import <Foundation/Foundation.h>
 extern BOOL gDebugLogging;
 
 #define USE_STOPWATCH 0
@@ -202,3 +231,4 @@ BOOL TurnOffDebugLoggingSilently(void);
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
+#endif  // __OBJC__

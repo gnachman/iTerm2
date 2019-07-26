@@ -149,6 +149,17 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     [GetDebugLogLock() unlock];
 }
 
+int CDebugLogImpl(const char *file, int line, const char *function, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *stringValue = "";
+    vasprintf(&stringValue, format, args);
+    NSString *value = [NSString stringWithUTF8String:stringValue] ?: @"utf8 encoding problem in C string";
+    free(stringValue);
+    va_end(args);
+    return DebugLogImpl(file, line, function, value);
+}
+
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
 {
     if (gDebugLogging) {

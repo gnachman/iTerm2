@@ -303,8 +303,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
                targetSession:(PTYSession *)targetSession
-                  completion:(void (^)(PTYSession *))completion
-                       ready:(void (^)(BOOL ok))ready;
+                  completion:(void (^)(PTYSession *, BOOL ok))completion
+                       ready:(void (^)(PTYSession *newSession, BOOL ok))ready;
 
 // Cause every session in this window to reload its bookmark.
 - (void)reloadBookmarks;
@@ -318,7 +318,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
-                       completion:(void (^)(BOOL ok))completion;
+                       completion:(void (^)(PTYSession *newSession, BOOL ok))completion;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
