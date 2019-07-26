@@ -14,6 +14,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A663197722FF349700C502BD"
+               BuildableName = "iTermServer"
+               BlueprintName = "iTermServer"
+               ReferencedContainer = "container:iTerm2.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "874206460564169600CFC3F1"
                BuildableName = "iTerm2.app"
                BlueprintName = "iTerm2"

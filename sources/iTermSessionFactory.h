@@ -9,6 +9,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermFileDescriptorClient.h"
+#import "PTYTask.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,10 +23,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (PTYSession *)newSessionWithProfile:(Profile *)profile;
 
+// Completion block is passed whether it was possible to create a session. If the user cancels a
+// substitution prompt, it will fail. On the other hand, if the command fails immediately
+// (e.g., no such file to exec) it will return success and immediately brokenPipe.
 - (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
                              canPrompt:(BOOL)canPrompt
                             objectType:(iTermObjectType)objectType
-                      serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
+                      serverConnection:(iTermGeneralServerConnection * _Nullable)serverConnection
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
                            environment:(nullable NSDictionary *)environment
@@ -36,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 isUTF8:(nullable NSNumber *)isUTF8Number // Overrides profile's iSUTF8 if nonnil
                          substitutions:(nullable NSDictionary *)substitutions
                       windowController:(PseudoTerminal * _Nonnull)windowController
-                            completion:(void (^ _Nullable)(BOOL))completion;  // If nonnil this may be async
+                            completion:(void (^ _Nullable)(PTYSession * _Nullable, BOOL))completion;  // If nonnil this may be async
 @end
 
 NS_ASSUME_NONNULL_END

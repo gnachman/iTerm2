@@ -28,6 +28,7 @@ extern NSString *const kCoprocessStatusChangeNotification;
 
 - (void)processRead;
 - (void)processWrite;
+// Called on any thread
 - (void)brokenPipe;
 - (void)writeTask:(NSData *)data;
 
@@ -50,6 +51,9 @@ extern NSString *const kCoprocessStatusChangeNotification;
 
 - (void)lock;
 - (void)unlock;
+
+- (void)pipeDidBreakForExternalProcessID:(pid_t)pid
+                                  status:(int)status;
 
 void UnblockTaskNotifier(void);
 

@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) void (^didCreateSession)(PTYSession * _Nullable session);
 
 // Called on completion. ok gives whether it succeeded.
-@property (nullable, nonatomic, copy) void (^completion)(BOOL ok);
+@property (nullable, nonatomic, copy) void (^completion)(PTYSession *session, BOOL ok);
 
 // If a window is to be created, what kind of window?
 // Defaults to .none.
@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
                command:(nullable NSString *)command
            makeSession:(void (^ _Nullable)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
         didMakeSession:(void (^ _Nullable)(PTYSession *))didMakeSession
-            completion:(void (^ _Nullable)(BOOL))completion;
+            completion:(void (^ _Nullable)(PTYSession *, BOOL))completion;
 
 + (void)launchBookmark:(nullable NSDictionary *)bookmarkData
             inTerminal:(nullable PseudoTerminal *)theTerm
@@ -83,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 // Launch and call completion block asynchronously.
-- (void)launchWithCompletion:(void (^ _Nullable)(BOOL ok))completion;
+- (void)launchWithCompletion:(void (^ _Nullable)(PTYSession *session, BOOL ok))completion;
 
 @end
 

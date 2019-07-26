@@ -551,7 +551,7 @@ typedef enum {
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
 
-- (void)didFinishInitialization:(BOOL)ok;
+- (void)didFinishInitialization;
 
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
@@ -602,7 +602,7 @@ typedef enum {
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
 // to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]
 // is YES.
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection;
 
 - (void)softTerminate;
 - (void)terminate;

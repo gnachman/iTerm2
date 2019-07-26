@@ -179,7 +179,7 @@
                                                     before:NO
                                                    profile:profile
                                              targetSession:[[self.delegate realParentWindow] currentSession]
-                                                completion:^(PTYSession *session) {
+                                                completion:^(PTYSession *session, BOOL ok) {
         theSession = session;
     }
                                                      ready:^(BOOL ok) {

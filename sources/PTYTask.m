@@ -4,6 +4,7 @@
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
 #import "iTermNotificationController.h"
+#import "iTermPosixTTYReplacements.h"
 #import "iTermProcessCache.h"
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
@@ -14,6 +15,7 @@
 #import "iTermLSOF.h"
 #import "iTermLegacyJobManager.h"
 #import "iTermMonoServerJobManager.h"
+#import "iTermMultiServerJobManager.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOrphanServerAdopter.h"
 #import "NSDictionary+iTerm.h"
@@ -44,17 +46,12 @@ static void HandleSigChld(int n) {
     UnblockTaskNotifier();
 }
 
-@interface PTYTaskLock : NSObject
-@end
-
-@implementation PTYTaskLock
-@end
-
 @interface PTYTask ()<iTermTask>
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
 @property(atomic, readwrite) int fd;
 @property(atomic, weak) iTermLoggingHelper *loggingHelper;
+@property(atomic, strong) id<iTermJobManager> jobManager;
 @end
 
 @implementation PTYTask {
@@ -67,7 +64,7 @@ static void HandleSigChld(int n) {
 
 
     Coprocess *coprocess_;  // synchronized (self)
-    BOOL brokenPipe_;
+    BOOL brokenPipe_;  // synchronized (self)
     NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
 
     // Number of spins of the select loop left before we tell the delegate we were deregistered.
@@ -78,18 +75,23 @@ static void HandleSigChld(int n) {
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
-    id<iTermJobManager> _jobManager;
+    dispatch_queue_t _jobManagerQueue;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _jobManagerQueue = dispatch_queue_create("com.iterm2.job-manager", DISPATCH_QUEUE_SERIAL);
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
-            _jobManager = [[iTermMonoServerJobManager alloc] init];
+            if ([iTermAdvancedSettingsModel multiserver]) {
+                self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:_jobManagerQueue];
+            } else {
+                self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:_jobManagerQueue];
+            }
         } else {
-            _jobManager = [[iTermLegacyJobManager alloc] init];
+            self.jobManager = [[iTermLegacyJobManager alloc] initWithQueue:_jobManagerQueue];
         }
         self.fd = -1;
     }
@@ -103,7 +105,7 @@ static void HandleSigChld(int n) {
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
     // not in other places. I suspect it's what we ought to use everywhere.
-    [_jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
+    [self.jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -117,7 +119,10 @@ static void HandleSigChld(int n) {
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p jobManager=%@ tmuxClientProcessID=%@>",
-            NSStringFromClass([self class]), self, _jobManager, _tmuxClientProcessID];
+            NSStringFromClass([self class]),
+            self,
+            self.jobManager,
+            _tmuxClientProcessID];
 }
 
 #pragma mark - APIs
@@ -137,29 +142,29 @@ static void HandleSigChld(int n) {
 }
 
 - (pid_t)pidToWaitOn {
-    return _jobManager.pidToWaitOn;
+    return self.jobManager.pidToWaitOn;
 }
 
 - (BOOL)isSessionRestorationPossible {
-    return _jobManager.isSessionRestorationPossible;
+    return self.jobManager.isSessionRestorationPossible;
 }
 
-- (NSString *)sessionRestorationIdentifier {
-    return _jobManager.sessionRestorationIdentifier;
+- (id)sessionRestorationIdentifier {
+    return self.jobManager.sessionRestorationIdentifier;
 }
 
 - (int)fd {
-    assert(_jobManager);
-    return _jobManager.fd;
+    assert(self.jobManager);
+    return self.jobManager.fd;
 }
 
 - (void)setFd:(int)fd {
-    assert(_jobManager);
-    _jobManager.fd = fd;
+    assert(self.jobManager);
+    self.jobManager.fd = fd;
 }
 
 - (pid_t)pid {
-    return _jobManager.externallyVisiblePid;
+    return self.jobManager.externallyVisiblePid;
 }
 
 - (int)status {
@@ -230,7 +235,9 @@ static void HandleSigChld(int n) {
 }
 
 - (BOOL)hasBrokenPipe {
-    return brokenPipe_;
+    @synchronized(self) {
+        return brokenPipe_;
+    }
 }
 
 - (NSString *)originalCommand {
@@ -248,7 +255,7 @@ static void HandleSigChld(int n) {
     DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
          progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
 
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermAdvancedSettingsModel multiserver]) {
         // We want to run
         //   iTerm2 --server progpath args
         NSArray *updatedArgs = [@[ @"--server", progpath ] arrayByAddingObjectsFromArray:args];
@@ -350,7 +357,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
-    [_jobManager killWithMode:mode];
+    [self.jobManager killWithMode:mode];
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -362,9 +369,8 @@ static void HandleSigChld(int n) {
         return;
     }
 
-    NSSize safeViewSize = iTermTTYClampWindowSize(viewSize);
-    _desiredSize.gridSize = size;
-    _desiredSize.viewSize = safeViewSize;
+    _desiredSize.cellSize = iTermTTYCellSizeMake(size.width, size.height);
+    _desiredSize.pixelSize = iTermTTYPixelSizeMake(viewSize.width, viewSize.height);
 
     [self rateLimitedSetSizeToDesiredSize];
 }
@@ -406,7 +412,9 @@ static void HandleSigChld(int n) {
 }
 
 - (void)brokenPipe {
-    brokenPipe_ = YES;
+    @synchronized(self) {
+        brokenPipe_ = YES;
+    }
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [self.delegate threadedTaskBrokenPipe];
 }
@@ -492,32 +500,83 @@ static void HandleSigChld(int n) {
                                                  waitUntilDone:NO];
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
-    [_jobManager attachToServer:serverConnection withProcessID:nil task:self];
+- (void)setJobManagerType:(iTermGeneralServerConnectionType)type {
+    assert([self canAttach]);
+    switch (type) {
+        case iTermGeneralServerConnectionTypeMono:
+            if ([self.jobManager isKindOfClass:[iTermMonoServerJobManager class]]) {
+                return;
+            }
+            DLog(@"Replace jobmanager %@ with monoserver instance", self.jobManager);
+            self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
+            break;
+
+        case iTermGeneralServerConnectionTypeMulti:
+            if ([self.jobManager isKindOfClass:[iTermMultiServerJobManager class]]) {
+                return;
+            }
+            DLog(@"Replace jobmanager %@ with multiserver instance", self.jobManager);
+            self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
+            break;
+    }
 }
 
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty {
+// This works for any kind of connection. It finishes the process of attaching a PTYTask to a child
+// that we know is in a server, either newly launched or an orphan.
+- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection {
+    assert([self canAttach]);
+    [self setJobManagerType:serverConnection.type];
+    return [_jobManager attachToServer:serverConnection withProcessID:nil task:self];
+}
+
+- (BOOL)canAttach {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
     }
-    if (_jobManager.hasJob) {
+    if (self.jobManager.hasJob) {
+        return NO;
+    }
+    return YES;
+}
+
+// Monoserver only. Used when restoring a non-ophan session. May block while connecting to the
+// server. Deletes the socket after connecting.
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty {
+    if (![self canAttach]) {
         return NO;
     }
 
-    // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
-    // logs. These should eventually become DLog's and the log statements in the server should
-    // become LOG_DEBUG level.
     DLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d, tty %@", (int)thePid, tty);
     iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(thePid);
     if (!serverConnection.ok) {
         NSLog(@"Failed with error %s", serverConnection.error);
         return NO;
-    } else {
-        DLog(@"Succeeded.");
-        [_jobManager attachToServer:serverConnection withProcessID:@(thePid) task:self];
-        [self setTty:tty];
-        return YES;
     }
+    DLog(@"Succeeded.");
+    iTermGeneralServerConnection general = {
+        .type = iTermGeneralServerConnectionTypeMono,
+        .mono = serverConnection
+    };
+    [self setJobManagerType:general.type];
+    [self.jobManager attachToServer:general withProcessID:@(thePid) task:self];
+    [self setTty:tty];
+    return YES;
+}
+
+// Multiserver only. Used when restoring a non-orphan session. May block while connecting to the
+// server.
+- (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier {
+    if (![self canAttach]) {
+        return NO;
+    }
+    iTermGeneralServerConnection generalConnection;
+    if (![iTermMultiServerJobManager getGeneralConnection:&generalConnection
+                                fromRestorationIdentifier:restorationIdentifier]) {
+        return NO;
+    }
+
+    DLog(@"tryToAttachToMultiserverWithRestorationIdentifier:%@", restorationIdentifier);
+    return [self attachToServer:generalConnection];
 }
 
 - (void)registerAsCoprocessOnlyTask {
@@ -570,7 +629,7 @@ static void HandleSigChld(int n) {
 // in "env" are added or override existing environment vars. Both the returned
 // array and all string pointers within it are malloced and should be free()d
 // by the caller.
-- (char **)environWithOverrides:(NSDictionary *)env {
+- (const char **)environWithOverrides:(NSDictionary *)env {
     NSMutableDictionary *environmentDict = [self mutableEnvironmentDictionary];
     for (NSString *k in env) {
         environmentDict[k] = env[k];
@@ -582,7 +641,7 @@ static void HandleSigChld(int n) {
         environment[i++] = strdup([temp UTF8String]);
     }
     environment[i] = NULL;
-    return environment;
+    return (const char **)environment;
 }
 
 - (NSDictionary *)environmentBySettingShell:(NSDictionary *)originalEnvironment {
@@ -621,15 +680,11 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)tty {
-    @synchronized([PTYTaskLock class]) {
-        return _jobManager.tty;
-    }
+    return self.jobManager.tty;
 }
 
 - (void)setTty:(NSString *)tty {
-    @synchronized([PTYTaskLock class]) {
-        _jobManager.tty = tty;
-    }
+    self.jobManager.tty = tty;
     if ([NSThread isMainThread]) {
         [self.delegate taskDidChangeTTY:self];
     } else {
@@ -655,8 +710,11 @@ static void HandleSigChld(int n) {
     DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
          progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
 
-    iTermTTYState ttyState;
-    iTermTTYStateInit(&ttyState, gridSize, viewSize, isUTF8);
+    __block iTermTTYState ttyState;
+    iTermTTYStateInit(&ttyState,
+                      iTermTTYCellSizeMake(gridSize.width, gridSize.height),
+                      iTermTTYPixelSizeMake(viewSize.width, viewSize.height),
+                      isUTF8);
 
     [self setCommand:progpath];
     if (customShell) {
@@ -683,52 +741,64 @@ static void HandleSigChld(int n) {
     signal(SIGCHLD, HandleSigChld);
 
     int max = (args == nil) ? 0 : [args count];
-    const char* argv[max + 2];
+    const char **argv = (const char **)iTermMalloc(sizeof(char *) * (max + 2));
     [self populateArgvArray:argv fromProgram:progpath args:args count:max];
 
     DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
     DLog(@"Environment is\n%@", env);
-    char **newEnviron = [self environWithOverrides:env];
+    const char **newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     DLog(@"initialPwd=%s", initialPwd);
 
-    [_jobManager forkAndExecWithTtyState:&ttyState
-                                 argpath:argpath
-                                    argv:argv
-                              initialPwd:initialPwd
-                              newEnviron:newEnviron
-                                    task:self
-                              completion:
+    [self.jobManager forkAndExecWithTtyState:&ttyState
+                                     argpath:argpath
+                                        argv:argv
+                                  initialPwd:initialPwd
+                                  newEnviron:newEnviron
+                                        task:self
+                                  completion:
      ^(iTermJobManagerForkAndExecStatus status) {
-         [self freeEnvironment:newEnviron];
-         switch (status) {
-             case iTermJobManagerForkAndExecStatusSuccess:
-                 // Parent
-                 [self setTty:self->_jobManager.tty];
-                 DLog(@"finished succesfully");
-                 break;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            free(argv);
+            [self freeEnvironment:(char **)newEnviron];
+            [self didForkAndExec:progpath
+                      withStatus:status
+                     errorNumber:errno];
+            if (completion) {
+                completion();
+            }
+        });
+    }];
+}
 
-             case iTermJobManagerForkAndExecStatusTempFileError:
-                 [self showFailedToCreateTempSocketError];
-                 break;
+// Main queue
+- (void)didForkAndExec:(NSString *)progpath
+            withStatus:(iTermJobManagerForkAndExecStatus)status
+           errorNumber:(int)errorNumber {
+    switch (status) {
+        case iTermJobManagerForkAndExecStatusSuccess:
+            // Parent
+            [self setTty:self.jobManager.tty];
+            DLog(@"finished succesfully");
+            break;
 
-             case iTermJobManagerForkAndExecStatusFailedToFork:
-                 DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
-                 [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
-                                                      withDescription:@"You may have too many processes already running."];
-                 break;
+        case iTermJobManagerForkAndExecStatusTempFileError:
+            [self showFailedToCreateTempSocketError];
+            break;
 
-             case iTermJobManagerForkAndExecStatusTaskDiedImmediately:
-                 [self->_delegate taskDiedImmediately];
-                 break;
-         }
-         if (completion != nil) {
-             completion();
-         }
-     }];
+        case iTermJobManagerForkAndExecStatusFailedToFork:
+            DLog(@"Unable to fork %@: %s", progpath, strerror(errorNumber));
+            [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
+                                                 withDescription:@"You may have too many processes already running."];
+            break;
 
+        case iTermJobManagerForkAndExecStatusTaskDiedImmediately:
+        case iTermJobManagerForkAndExecStatusServerError:
+            [self->_delegate taskDiedImmediately];
+            break;
+    }
 }
 
 - (void)showFailedToCreateTempSocketError {
@@ -742,7 +812,10 @@ static void HandleSigChld(int n) {
 #pragma mark I/O
 
 - (BOOL)wantsRead {
-    return !self.paused;
+    if (self.paused) {
+        return NO;
+    }
+    return self.jobManager.ioAllowed;
 }
 
 - (BOOL)wantsWrite {
@@ -750,9 +823,12 @@ static void HandleSigChld(int n) {
         return NO;
     }
     [writeLock lock];
-    BOOL wantsWrite = [writeBuffer length] > 0;
+    const BOOL wantsWrite = [writeBuffer length] > 0;
     [writeLock unlock];
-    return wantsWrite;
+    if (!wantsWrite) {
+        return NO;
+    }
+    return self.jobManager.ioAllowed;
 }
 
 - (BOOL)hasOutput {
@@ -807,7 +883,12 @@ static void HandleSigChld(int n) {
 }
 
 - (void)setTerminalSizeToDesiredSize {
-    DLog(@"Set size of %@ to %@ cells, %@ px", _delegate, VT100GridSizeDescription(_desiredSize.gridSize), NSStringFromSize(_desiredSize.viewSize));
+    DLog(@"Set size of %@ to %@x%@ cells, %@x%@ px",
+         _delegate,
+         @(_desiredSize.cellSize.width),
+         @(_desiredSize.cellSize.height),
+         @(_desiredSize.pixelSize.width),
+         @(_desiredSize.pixelSize.height));
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
 
     iTermSetTerminalSize(self.fd, _desiredSize);

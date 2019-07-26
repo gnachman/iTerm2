@@ -9,32 +9,34 @@
 
 #import "DebugLogging.h"
 
+#include <stdbool.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 static cc_t iTermTTYMakeControlKey(char c) {
     return c - 'A' + 1;
 }
 
-static BOOL iTermWinSizeEqualsTaskSize(struct winsize lhs, PTYTaskSize rhs) {
-    if (lhs.ws_col != rhs.gridSize.width) {
-        return NO;
+static bool iTermWinSizeEqualsTaskSize(struct winsize lhs, PTYTaskSize rhs) {
+    if (lhs.ws_col != rhs.cellSize.width) {
+        return false;
     }
-    if (lhs.ws_row != rhs.gridSize.height) {
-        return NO;
+    if (lhs.ws_row != rhs.cellSize.height) {
+        return false;
     }
-    if (lhs.ws_xpixel != rhs.viewSize.width) {
-        return NO;
+    if (lhs.ws_xpixel != rhs.pixelSize.width) {
+        return false;
     }
-    if (lhs.ws_ypixel != rhs.viewSize.height) {
-        return NO;
+    if (lhs.ws_ypixel != rhs.pixelSize.height) {
+        return false;
     }
-    return YES;
+    return true;
 }
 
 void iTermTTYStateInit(iTermTTYState *ttyState,
-                       VT100GridSize gridSize,
-                       NSSize viewSize,
-                       BOOL isUTF8) {
+                       iTermTTYCellSize cellSize,
+                       iTermTTYPixelSize pixelSize,
+                       int isUTF8) {
     struct termios *term = &ttyState->term;
     struct winsize *win = &ttyState->win;
 
@@ -69,11 +71,10 @@ void iTermTTYStateInit(iTermTTYState *ttyState,
     term->c_ispeed = B38400;
     term->c_ospeed = B38400;
 
-    NSSize safeViewSize = iTermTTYClampWindowSize(viewSize);
-    win->ws_row = gridSize.height;
-    win->ws_col = gridSize.width;
-    win->ws_xpixel = safeViewSize.width;
-    win->ws_ypixel = safeViewSize.height;
+    win->ws_row = cellSize.height;
+    win->ws_col = cellSize.width;
+    win->ws_xpixel = pixelSize.width;
+    win->ws_ypixel = pixelSize.height;
 }
 
 static struct winsize iTermGetTerminalSize(int fd) {
@@ -84,13 +85,13 @@ static struct winsize iTermGetTerminalSize(int fd) {
 
 static void iTermForceSetTerminalSize(int fd, PTYTaskSize taskSize) {
     struct winsize winsize = {
-        .ws_col = taskSize.gridSize.width,
-        .ws_row = taskSize.gridSize.height,
-        .ws_xpixel = taskSize.viewSize.width,
-        .ws_ypixel = taskSize.viewSize.height
+        .ws_col = taskSize.cellSize.width,
+        .ws_row = taskSize.cellSize.height,
+        .ws_xpixel = taskSize.pixelSize.width,
+        .ws_ypixel = taskSize.pixelSize.height
     };
 
-    DLog(@"Set window size to cells=(%d x %d) pixels=(%d x %d)",
+    CLog("Set window size to cells=(%d x %d) pixels=(%d x %d)",
          winsize.ws_col,
          winsize.ws_row,
          winsize.ws_xpixel,
@@ -105,3 +106,42 @@ void iTermSetTerminalSize(int fd, PTYTaskSize taskSize) {
     }
 
 }
+
+iTermTTYPixelSize iTermTTYPixelSizeMake(double width, double height) {
+    iTermTTYPixelSize result;
+    if (width < 0) {
+        result.width = 0;
+    } else if (width > USHRT_MAX) {
+        result.width = USHRT_MAX;
+    } else {
+        result.width = width;
+    }
+    if (height < 0) {
+        result.height = 0;
+    } else if (height > USHRT_MAX) {
+        result.height = USHRT_MAX;
+    } else {
+        result.height = height;
+    }
+    return result;
+}
+
+iTermTTYCellSize iTermTTYCellSizeMake(double width, double height) {
+    iTermTTYCellSize result;
+    if (width < 0) {
+        result.width = 0;
+    } else if (width > USHRT_MAX) {
+        result.width = USHRT_MAX;
+    } else {
+        result.width = width;
+    }
+    if (height < 0) {
+        result.height = 0;
+    } else if (height > USHRT_MAX) {
+        result.height = USHRT_MAX;
+    } else {
+        result.height = height;
+    }
+    return result;
+}
+

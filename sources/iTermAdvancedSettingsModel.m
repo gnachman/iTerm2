@@ -571,6 +571,7 @@ DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll vie
 DEFINE_BOOL(fastForegroundJobUpdates, NO, SECTION_EXPERIMENTAL @"Enable low-latency updates of the current foreground job");
 DEFINE_STRING(fontsForGenerousRounding, @"consolas", SECTION_EXPERIMENTAL @"List of fonts to use alternate rounding algorithm for line height calculation.\nThis fixes consolas and emulates Terminal.app’s behavior on macOS 10.15. This is a comma-delimited list of font family substrings.");
 DEFINE_BOOL(pidinfoXPC, NO, SECTION_EXPERIMENTAL @"Call proc_pidinfo from an XPC service.\nThis makes current directory detection more reliable in the presence of flaky network mounts. You must restart iTerm2 after changing this setting.");
+DEFINE_BOOL(multiserver, NO, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

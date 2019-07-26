@@ -18,6 +18,10 @@
 
 #import <Foundation/Foundation.h>
 
+@interface iTermMonoServerJobManager()
+@property (atomic, strong, readwrite) dispatch_queue_t queue;
+@end
+
 @implementation iTermMonoServerJobManager {
     pid_t _serverChildPid;
     pid_t _serverPid;
@@ -28,10 +32,12 @@
 
 @synthesize fd = _fd;
 @synthesize tty = _tty;
+@synthesize queue;
 
-- (instancetype)init {
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
+        self.queue = queue;
         _serverPid = (pid_t)-1;
         _serverChildPid = -1;
         _socketFd = -1;
@@ -65,9 +71,42 @@
                         argpath:(const char *)argpath
                            argv:(const char **)argv
                      initialPwd:(const char *)initialPwd
-                     newEnviron:(char **)newEnviron
+                     newEnviron:(const char **)newEnviron
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+    // Completion wrapper. NOT called on self.queue because that will deadlock.
+    void (^wrapper)(iTermJobManagerForkAndExecStatus) = ^(iTermJobManagerForkAndExecStatus status) {
+        if (status == iTermJobManagerForkAndExecStatusSuccess) {
+            [[TaskNotifier sharedInstance] registerTask:task];
+        }
+        completion(status);
+    };
+
+    __block iTermJobManagerForkAndExecStatus savedStatus = iTermJobManagerForkAndExecStatusSuccess;
+    dispatch_sync(self.queue, ^{
+        [self queueForkAndExecWithTtyState:ttyStatePtr
+                                   argpath:argpath
+                                      argv:argv
+                                initialPwd:initialPwd
+                                newEnviron:newEnviron
+                                      task:task
+                                completion:^(iTermJobManagerForkAndExecStatus status) {
+            // Completion handler called after queueForkAndExecWithTtyState returns, but still
+            // on self.queue.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                wrapper(savedStatus);
+            });
+        }];
+    });
+}
+
+- (void)queueForkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
+                             argpath:(const char *)argpath
+                                argv:(const char **)argv
+                          initialPwd:(const char *)initialPwd
+                          newEnviron:(const char **)newEnviron
+                                task:(id<iTermTask>)task
+                          completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     DLog(@"get path to UDS");
     NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
@@ -101,16 +140,16 @@
         return;
     }
 
-    [self didForkParent:&forkState
-               ttyState:ttyStatePtr
-                   task:task
-             completion:completion];
+    [self queueDidForkParent:&forkState
+                    ttyState:ttyStatePtr
+                        task:task
+                  completion:completion];
 }
 
-- (void)didForkParent:(const iTermForkState *)forkStatePtr
-             ttyState:(iTermTTYState *)ttyStatePtr
-                 task:(id<iTermTask>)task
-           completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+- (void)queueDidForkParent:(const iTermForkState *)forkStatePtr
+                  ttyState:(iTermTTYState *)ttyStatePtr
+                      task:(id<iTermTask>)task
+                completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
     fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
@@ -127,21 +166,21 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
                                                                                              deadmansPipeFd);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self didCompleteHandshakeWithForkState:forkState
-                                           ttyState:ttyState
-                                   serverConnection:serverConnection
-                                               task:task
-                                         completion:completion];
+        dispatch_async(self.queue, ^{
+            iTermJobManagerForkAndExecStatus status =
+            [self queueDidCompleteHandshakeWithForkState:forkState
+                                                ttyState:ttyState
+                                        serverConnection:serverConnection
+                                                    task:task];
+            completion(status);
         });
     });
 }
 
-- (void)didCompleteHandshakeWithForkState:(iTermForkState)state
-                                 ttyState:(const iTermTTYState)ttyState
-                         serverConnection:(iTermFileDescriptorServerConnection)serverConnection
-                                     task:(id<iTermTask>)task
-                               completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+- (iTermJobManagerForkAndExecStatus)queueDidCompleteHandshakeWithForkState:(iTermForkState)state
+                                                                  ttyState:(const iTermTTYState)ttyState
+                                                          serverConnection:(iTermFileDescriptorServerConnection)serverConnection
+                                                                      task:(id<iTermTask>)task {
     DLog(@"Handshake complete");
     close(state.deadMansPipe[0]);
     if (serverConnection.ok) {
@@ -159,39 +198,51 @@
 
         // Connect this task to the server's PIDs and file descriptor.
         DLog(@"attaching...");
-        [self attachToServer:serverConnection task:task];
+        iTermGeneralServerConnection general = {
+            .type = iTermGeneralServerConnectionTypeMono,
+            .mono = serverConnection
+        };
+        [self queueAttachToServer:general task:task];
         DLog(@"attached. Set nonblocking");
         self.tty = [NSString stringWithUTF8String:ttyState.tty];
-        fcntl(_fd, F_SETFL, O_NONBLOCK);
+
+        int flags = fcntl(_fd, F_GETFL);
+        fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
+
         DLog(@"fini");
-        completion(iTermJobManagerForkAndExecStatusSuccess);
-    } else {
-        close(_fd);
-        DLog(@"Server died immediately!");
-        DLog(@"fini");
-        completion(iTermJobManagerForkAndExecStatusTaskDiedImmediately);
+        return iTermJobManagerForkAndExecStatusSuccess;
     }
+    close(_fd);
+    DLog(@"Server died immediately!");
+    DLog(@"fini");
+    return iTermJobManagerForkAndExecStatusTaskDiedImmediately;
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
-                  task:(id<iTermTask>)task {
+// After this returns you must do:
+//     [[TaskNotifier sharedInstance] registerTask:task];
+// but not on self.queue!
+- (void)queueAttachToServer:(iTermGeneralServerConnection)serverConnection
+                       task:(id<iTermTask>)task {
+    assert(serverConnection.type == iTermGeneralServerConnectionTypeMono);
     assert([iTermAdvancedSettingsModel runJobsInServers]);
-    _fd = serverConnection.ptyMasterFd;
-    _serverPid = serverConnection.serverPid;
-    _serverChildPid = serverConnection.childPid;
+    _fd = serverConnection.mono.ptyMasterFd;
+    _serverPid = serverConnection.mono.serverPid;
+    _serverChildPid = serverConnection.mono.childPid;
+    _socketFd = serverConnection.mono.socketFd;
     if (_serverChildPid > 0) {
         [[iTermProcessCache sharedInstance] registerTrackedPID:_serverChildPid];
     }
-    _socketFd = serverConnection.socketFd;
-    [[TaskNotifier sharedInstance] registerTask:task];
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
+- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)pidNumber
                   task:(id<iTermTask>)task {
-    [self attachToServer:serverConnection task:task];
+    dispatch_sync(self.queue, ^{
+        [self queueAttachToServer:serverConnection task:task];
+    });
+    [[TaskNotifier sharedInstance] registerTask:task];
     if (pidNumber == nil) {
-        return;
+        return YES;
     }
 
     const pid_t thePid = pidNumber.integerValue;
@@ -200,6 +251,7 @@
     iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);
     [[iTermOrphanServerAdopter sharedInstance] removePath:[NSString stringWithUTF8String:buffer]];
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    return YES;
 }
 
 - (void)closeSocketFd {
@@ -216,7 +268,7 @@
         kill(_serverPid, signo);
         return;
     }
-    if (_serverChildPid < 0) {
+    if (_serverChildPid <= 0) {
         return;
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
@@ -225,22 +277,24 @@
 
 // Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
 - (void)killServerIfRunning {
-    if (_serverPid < 0) {
-        return;
-    }
-    // This makes the server unlink its socket and exit immediately.
-    kill(_serverPid, SIGUSR1);
-
+    __block pid_t serverPid = 0;
+    dispatch_sync(self.queue, ^{
+        if (_serverPid < 0) {
+            return;
+        }
+        // This makes the server unlink its socket and exit immediately.
+        kill(_serverPid, SIGUSR1);
+        serverPid = _serverPid;
+        // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
+        // the server is dead it's not needed any more.
+        [self closeSocketFd];
+    });
     // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
     // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
     // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
     // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
     // and that it's rare enough that the zombies don't pile up. Not much else I can do.
-    [[TaskNotifier sharedInstance] waitForPid:_serverPid];
-
-    // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
-    // the server is dead it's not needed any more.
-    [self closeSocketFd];
+    [[TaskNotifier sharedInstance] waitForPid:serverPid];
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
@@ -283,15 +337,35 @@
 }
 
 - (pid_t)externallyVisiblePid {
-    return _serverChildPid;
+    __block pid_t result = 0;
+    dispatch_sync(self.queue, ^{
+        result = _serverChildPid;
+    });
+    return result;
 }
 
 - (BOOL)hasJob {
-    return _serverChildPid != -1;
+    __block BOOL result = NO;
+    dispatch_sync(self.queue, ^{
+        result = (_serverChildPid != -1);
+    });
+    return result;
 }
 
 - (id)sessionRestorationIdentifier {
-    return @(_serverPid);
+    __block id result;
+    dispatch_sync(self.queue, ^{
+        result = @(_serverPid);
+    });
+    return result;
+}
+
+- (BOOL)ioAllowed {
+    __block BOOL result;
+    dispatch_sync(self.queue, ^{
+        result = (_fd != -1);
+    });
+    return result;
 }
 
 @end

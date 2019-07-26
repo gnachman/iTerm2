@@ -84,6 +84,26 @@ static int unblockPipeW;
     [super dealloc];
 }
 
+- (void)pipeDidBreakForExternalProcessID:(pid_t)pid status:(int)status {
+    assert(pid >= 0);
+    [tasksLock lock];
+    const NSInteger i = [_tasks indexOfObjectPassingTest:^BOOL(id<iTermTask>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.pid == pid;
+    }];
+    if (i == NSNotFound) {
+        [tasksLock unlock];
+        // This is the normal case — usually there'll be an error status on the FD and
+        // -deregisterTask: will take care of it.
+        return;
+    }
+    id<iTermTask> task = [[_tasks[i] retain] autorelease];
+    [_tasks removeObjectAtIndex:i];
+    tasksChanged = YES;
+    [tasksLock unlock];
+
+    [task brokenPipe];
+}
+
 - (void)registerTask:(id<iTermTask>)task {
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];

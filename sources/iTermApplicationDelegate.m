@@ -63,6 +63,7 @@
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
+#import "iTermSessionFactory.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
@@ -152,7 +153,7 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate, iTermObject>
+@interface iTermApplicationDelegate () <iTermOrphanServerAdopterDelegate, iTermPasswordManagerDelegate, iTermObject>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -292,7 +293,7 @@ static BOOL hasBecomeActive = NO;
                                                            andSelector:@selector(getUrl:withReplyEvent:)
                                                          forEventClass:kInternetEventClass
                                                             andEventID:kAEGetURL];
-
+        [[iTermOrphanServerAdopter sharedInstance] setDelegate:self];
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
         _focusFollowsMouseController = [[iTermFocusFollowsMouseController alloc] init];
@@ -2345,6 +2346,51 @@ static BOOL hasBecomeActive = NO;
 
 - (iTermVariableScope *)objectScope {
     return [iTermVariableScope globalsScope];
+}
+
+#pragma mark - iTermOrphanServerAdopterDelegate
+
+- (void)orphanServerAdopterOpenSessionForConnection:(iTermGeneralServerConnection)generalConnection
+                                           inWindow:(id)desiredWindow
+                                         completion:(void (^)(PTYSession *session))completion {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:desiredWindow
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:NO
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:nil
+                             makeSession:^(NSDictionary * _Nonnull profile,
+                                           PseudoTerminal * _Nonnull term,
+                                           void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
+        PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
+        [term addSessionInNewTab:session];
+        iTermGeneralServerConnection temp = generalConnection;
+        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
+                                                                  canPrompt:NO
+                                                                 objectType:iTermWindowObject
+                                                           serverConnection:&temp
+                                                                  urlString:nil
+                                                               allowURLSubs:NO
+                                                                environment:@{}
+                                                                customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
+                                                                     oldCWD:nil
+                                                             forceUseOldCWD:NO
+                                                                    command:nil
+                                                                     isUTF8:nil
+                                                              substitutions:nil
+                                                           windowController:term
+                                                                 completion:nil];
+        didMakeSession(ok ? session : nil);
+    }
+                          didMakeSession:^(PTYSession * _Nonnull session) {
+        [session showOrphanAnnouncement];
+        completion(session);
+    }
+                              completion:nil];
 }
 
 @end
