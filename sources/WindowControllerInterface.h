@@ -364,8 +364,8 @@
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
                targetSession:(PTYSession *)targetSession
-                  completion:(void (^)(PTYSession *))completion
-                       ready:(void (^)(BOOL ok))ready;
+                  completion:(void (^)(PTYSession *, BOOL ok))completion
+                       ready:(void (^)(PTYSession *, BOOL ok))ready;
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target

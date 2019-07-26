@@ -37,7 +37,8 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
     iTermJobManagerForkAndExecStatusSuccess,
     iTermJobManagerForkAndExecStatusTempFileError,
     iTermJobManagerForkAndExecStatusFailedToFork,
-    iTermJobManagerForkAndExecStatusTaskDiedImmediately
+    iTermJobManagerForkAndExecStatusTaskDiedImmediately,
+    iTermJobManagerForkAndExecStatusServerError
 };
 
 typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
@@ -48,25 +49,47 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
     iTermJobManagerKillingModeBrokenPipe,         // Removes unix domain socket and file descriptor for it. Ensures server is waitpid()ed on. This does not directly kill the child process.
 };
 
+typedef struct {
+    pid_t pid;
+    int number;
+} iTermFileDescriptorMultiServerProcess;
+
+typedef NS_ENUM(NSUInteger, iTermGeneralServerConnectionType) {
+    iTermGeneralServerConnectionTypeMono,
+    iTermGeneralServerConnectionTypeMulti,
+};
+
+typedef struct {
+    iTermGeneralServerConnectionType type;
+    union {
+        iTermFileDescriptorServerConnection mono;
+        iTermFileDescriptorMultiServerProcess multi;
+    };
+} iTermGeneralServerConnection;
+
 @protocol iTermJobManager<NSObject>
 
-@property (nonatomic) int fd;
-@property (nonatomic, copy) NSString *tty;
-@property (nonatomic, readonly) pid_t externallyVisiblePid;
-@property (nonatomic, readonly) BOOL hasJob;
-@property (nonatomic, readonly) id sessionRestorationIdentifier;
-@property (nonatomic, readonly) pid_t pidToWaitOn;
-@property (nonatomic, readonly) BOOL isSessionRestorationPossible;
+@property (atomic) int fd;
+@property (atomic, copy) NSString *tty;
+@property (atomic, readonly) pid_t externallyVisiblePid;
+@property (atomic, readonly) BOOL hasJob;
+@property (atomic, readonly) id sessionRestorationIdentifier;
+@property (atomic, readonly) pid_t pidToWaitOn;
+@property (atomic, readonly) BOOL isSessionRestorationPossible;
+@property (atomic, readonly) BOOL ioAllowed;
+@property (atomic, readonly) dispatch_queue_t queue;
+
+- (instancetype)initWithQueue:(dispatch_queue_t)queue;
 
 - (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
                         argpath:(const char *)argpath
                            argv:(const char **)argv
                      initialPwd:(const char *)initialPwd
-                     newEnviron:(char **)newEnviron
+                     newEnviron:(const char **)newEnviron
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
+- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task;
 
@@ -132,21 +155,28 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 
 - (void)stop;
 
+// Called on any thread
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
 
 - (void)stopCoprocess;
 
+// Monoserver:
 // If [iTermAdvancedSettingsModel runJobsInServers] is on, then try for up to
 // |timeout| seconds to connect to the server. Returns YES on success.
 // If successful, it will be wired up as the task's file descriptor and process.
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty;
 
+// Multiserver
+// Synchronously attaches. Returns whether it succeeded.
+- (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier;
+
 // Wire up the server as the task's file descriptor and process. The caller
 // will have connected to the server to get this info. Requires
-// [iTermAdvancedSettingsModel runJobsInServers].
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
+// [iTermAdvancedSettingsModel runJobsInServers]. Multiservers may return failure (NO) here
+// if the pid is not known.
+- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection;
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 

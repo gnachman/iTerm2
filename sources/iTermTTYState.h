@@ -5,14 +5,8 @@
 //  Created by George Nachman on 11/18/19.
 //
 
-#import <AppKit/AppKit.h>
-
-#import "VT100GridTypes.h"
-
 #include <limits.h>
 #import <termios.h>
-
-NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
     struct termios term;
@@ -21,20 +15,26 @@ typedef struct {
 } iTermTTYState;
 
 typedef struct {
-    VT100GridSize gridSize;
-    NSSize viewSize;
+    unsigned short width;
+    unsigned short height;
+} iTermTTYCellSize;
+
+typedef struct {
+    unsigned short width;
+    unsigned short height;
+} iTermTTYPixelSize;
+
+iTermTTYPixelSize iTermTTYPixelSizeMake(double width, double height);
+iTermTTYCellSize iTermTTYCellSizeMake(double width, double height);
+
+typedef struct {
+    iTermTTYCellSize cellSize;
+    iTermTTYPixelSize pixelSize;
 } PTYTaskSize;
 
 void iTermTTYStateInit(iTermTTYState *ttyState,
-                       VT100GridSize gridSize,
-                       NSSize viewSize,
-                       BOOL isUTF8);
-
-NS_INLINE NSSize iTermTTYClampWindowSize(NSSize viewSize) {
-    return NSMakeSize(MAX(0, MIN(viewSize.width, USHRT_MAX)),
-                      MAX(0, MIN(viewSize.height, USHRT_MAX)));
-}
+                       iTermTTYCellSize gridSize,
+                       iTermTTYPixelSize viewSize,
+                       int isUTF8);
 
 void iTermSetTerminalSize(int fd, PTYTaskSize taskSize);
-
-NS_ASSUME_NONNULL_END
