@@ -12,7 +12,7 @@ typedef struct {
     pid_t serverPid;
 } iTermFileDescriptorServerConnection;
 
-// Connects to the server at the given path (which is a Unix Domain Socket) and receives a file
+// Connects to the server at a path to a Unix Domain Socket inferred from `pid` and receives a file
 // descriptor and PID for the child it owns. The socket is left open. When iTerm2 dies unexpectedly,
 // the socket will be closed; the server won't accept another connection until that happens.
 iTermFileDescriptorServerConnection iTermFileDescriptorClientRun(pid_t pid);

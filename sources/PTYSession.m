@@ -133,6 +133,7 @@
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
+#import "TaskNotifier.h"
 #import "TerminalFile.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
@@ -211,7 +212,8 @@ static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly u
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
-static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
+static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration. Only for monoserver.
+static NSString *const SESSION_ARRANGEMENT_SERVER_DICT = @"Server Dict";  // NSDictionary. Describes server connection. Only for multiserver.
 // TODO: Make server report the TTY to us since orphans will end up with a nil tty.
 static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
@@ -722,7 +724,7 @@ static const NSUInteger kMaxHosts = 100;
         _expect = [[iTermExpect alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
-                                                     name:@"kCoprocessStatusChangeNotification"
+                                                     name:kCoprocessStatusChangeNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionContentsChanged:)
@@ -918,7 +920,7 @@ ITERM_WEAKLY_REFERENCEABLE
                [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid];
 }
 
-- (void)didFinishInitialization:(BOOL)ok {
+- (void)didFinishInitialization {
     [_pwdPoller poll];
     if ([self.variablesScope valueForVariableName:iTermVariableKeySessionUsername] == nil) {
         [self.variablesScope setValue:NSUserName() forVariableNamed:iTermVariableKeySessionUsername];
@@ -1393,8 +1395,11 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
     BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
     BOOL attachedToServer = NO;
-    typedef void (^iTermBooleanCompletionBlock)(BOOL ok);
-    void (^runCommandBlock)(iTermBooleanCompletionBlock) = ^(void (^completion)(BOOL)) { completion(YES); };
+    typedef void (^iTermSessionCreationCompletionBlock)(PTYSession *, BOOL ok);
+    void (^runCommandBlock)(iTermSessionCreationCompletionBlock) =
+    ^(iTermSessionCreationCompletionBlock innerCompletion) {
+        innerCompletion(aSession, YES);
+    };
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
@@ -1403,7 +1408,8 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Configured to run jobs in servers");
             // iTerm2 is currently configured to run jobs in servers, but we
             // have to check if the arrangement was saved with that setting on.
-            if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+            BOOL didAttach = NO;
+            if ([NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_PID]]) {
                 DLog(@"Have a server PID in the arrangement");
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 DLog(@"Try to attach to pid %d", (int)serverPid);
@@ -1411,20 +1417,31 @@ ITERM_WEAKLY_REFERENCEABLE
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid
                                                                               tty:arrangement[SESSION_ARRANGEMENT_TTY]]) {
                     DLog(@"Success!");
-
-                    if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
-                        DLog(@"Was a tmux gateway. Start recovery mode in parser.");
-                        // Before attaching to the server we can put the parser into "tmux recovery mode".
-                        [aSession.terminal.parser startTmuxRecoveryMode];
-                    }
-
-                    runCommand = NO;
-                    attachedToServer = YES;
-                    shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
-                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
-                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
-                    tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
+                    didAttach = YES;
                 }
+            } else if ([iTermAdvancedSettingsModel multiserver] &&
+                       [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]]) {
+                DLog(@"Have a server dict in the arrangement");
+                NSDictionary *serverDict = arrangement[SESSION_ARRANGEMENT_SERVER_DICT];
+                DLog(@"Try to attach to %@", serverDict);
+                if ([aSession tryToAttachToMultiserverWithRestorationIdentifier:serverDict]) {
+                    DLog(@"Attached to multiserver!");
+                    didAttach = YES;
+                }
+            }
+            if (didAttach) {
+                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
+                    // Before attaching to the server we can put the parser into "tmux recovery mode".
+                    [aSession.terminal.parser startTmuxRecoveryMode];
+                }
+
+                runCommand = NO;
+                attachedToServer = YES;
+                shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
+                                       arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
+                                       arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
+                tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
             }
         }
 
@@ -1491,7 +1508,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 substitutionsArg = aSession.substitutions;
                 customShell = aSession.customShell;
             }
-            runCommandBlock = ^(iTermBooleanCompletionBlock completion) {
+            runCommandBlock = ^(iTermSessionCreationCompletionBlock completion) {
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
                 [factory attachOrLaunchCommandInSession:aSession
                                               canPrompt:NO
@@ -1522,7 +1539,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [aSession.screen restoreInitialSize];
 
-    void (^finish)(BOOL) = ^(BOOL ok) {
+    void (^finish)(PTYSession *, BOOL) = ^(PTYSession *newSession, BOOL ok) {
         if (!ok) {
             return;
         }
@@ -1539,7 +1556,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        state:state
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
                                               missingProfile:missingProfile];
-        [aSession didFinishInitialization:YES];
+        [aSession didFinishInitialization];
     };
     if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
         [aSession retain];
@@ -1696,7 +1713,20 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
+- (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier {
+    if ([_shell tryToAttachToMultiserverWithRestorationIdentifier:restorationIdentifier]) {
+        @synchronized(self) {
+            _registered = YES;
+        }
+        DLog(@"Success, attached.");
+        return YES;
+    } else {
+        DLog(@"Failed to attach");
+        return NO;
+    }
+}
+
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection];
@@ -2917,7 +2947,7 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"  brokenPipe: Already exited");
         return;
     }
-    // Ensure we don't leak the unix domain socket file descriptor.
+    // Ensure we don't leak the monoserver unix domain socket file descriptor.
     [_shell killWithMode:iTermJobManagerKillingModeBrokenPipe];
     if ([self shouldPostUserNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
@@ -4510,7 +4540,12 @@ ITERM_WEAKLY_REFERENCEABLE
         // These values are used for restoring sessions after a crash. It's only saved when contents
         // are included since saved window arrangements have no business knowing the process id.
         if ([iTermAdvancedSettingsModel runJobsInServers] && _shell.isSessionRestorationPossible) {
-            result[SESSION_ARRANGEMENT_SERVER_PID] = _shell.sessionRestorationIdentifier;
+            NSObject *restorationIdentifier = _shell.sessionRestorationIdentifier;
+            if ([restorationIdentifier isKindOfClass:[NSNumber class]]) {
+                result[SESSION_ARRANGEMENT_SERVER_PID] = restorationIdentifier;
+            } else if ([restorationIdentifier isKindOfClass:[NSDictionary class]]) {
+                result[SESSION_ARRANGEMENT_SERVER_DICT] = restorationIdentifier;
+            }
             if (self.tty) {
                 result[SESSION_ARRANGEMENT_TTY] = self.tty;
             }

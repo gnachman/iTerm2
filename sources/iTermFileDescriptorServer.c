@@ -14,53 +14,10 @@
 #include <syslog.h>
 #include <unistd.h>
 
-static const int kMaxConnections = 1;
-static int gRunningServer;
-
 // These variables are global because signal handlers use them.
 static pid_t gChildPid;
 static char *gPath;
 static int gPipe[2];
-
-void iTermFileDescriptorServerLog(char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    char temp[1000];
-    snprintf(temp, sizeof(temp) - 1, "%s(%d) %s", gRunningServer ? "Server" : "ParentServer", getpid(), format);
-    vsyslog(LOG_DEBUG, temp, args);
-    va_end(args);
-}
-
-static ssize_t SendMessageAndFileDescriptor(int connectionFd,
-                                            void *buffer,
-                                            size_t bufferSize,
-                                            int fdToSend) {
-    iTermFileDescriptorControlMessage controlMessage;
-    struct msghdr message;
-    message.msg_control = controlMessage.control;
-    message.msg_controllen = sizeof(controlMessage.control);
-
-    struct cmsghdr *messageHeader = CMSG_FIRSTHDR(&message);
-    messageHeader->cmsg_len = CMSG_LEN(sizeof(int));
-    messageHeader->cmsg_level = SOL_SOCKET;
-    messageHeader->cmsg_type = SCM_RIGHTS;
-    *((int *) CMSG_DATA(messageHeader)) = fdToSend;
-
-    message.msg_name = NULL;
-    message.msg_namelen = 0;
-
-    struct iovec iov[1];
-    iov[0].iov_base = buffer;
-    iov[0].iov_len = bufferSize;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-
-    int rc = sendmsg(connectionFd, &message, 0);
-    while (rc == -1 && errno == EINTR) {
-        rc = sendmsg(connectionFd, &message, 0);
-    }
-    return rc;
-}
 
 static pid_t Wait() {
     pid_t pid;
@@ -88,54 +45,9 @@ static void SigUsr1Handler(int arg) {
 }
 
 
-int iTermSelect(int *fds, int count, int *results) {
-    int result;
-    int theError;
-    fd_set readset;
-    do {
-        FD_ZERO(&readset);
-        int max = 0;
-        for (int i = 0; i < count; i++) {
-            if (fds[i] > max) {
-                max = fds[i];
-            }
-            FD_SET(fds[i], &readset);
-        }
-        FDLog(LOG_DEBUG, "Calling select...");
-        result = select(max + 1, &readset, NULL, NULL, NULL);
-        theError = errno;
-        FDLog(LOG_DEBUG, "select returned %d, error = %s", result, strerror(theError));
-    } while (result == -1 && theError == EINTR);
-
-    int n = 0;
-    for (int i = 0; i < count; i++) {
-        results[i] = FD_ISSET(fds[i], &readset);
-        if (results[i]) {
-            n++;
-        }
-    }
-    return n;
-}
-
-int iTermFileDescriptorServerAccept(int socketFd) {
-    // incoming unix domain socket connection to get FDs
-    struct sockaddr_un remote;
-    socklen_t sizeOfRemote = sizeof(remote);
-    int connectionFd = -1;
-    do {
-        FDLog(LOG_DEBUG, "accept()");
-        connectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
-        FDLog(LOG_DEBUG, "accept() returned %d error=%s", connectionFd, strerror(errno));
-    } while (connectionFd == -1 && errno == EINTR);
-    if (connectionFd != -1) {
-        close(socketFd);
-    }
-    return connectionFd;
-}
-
 static int SendFileDescriptorAndWait(int connectionFd) {
     FDLog(LOG_DEBUG, "send master fd and child pid %d", (int)gChildPid);
-    int rc = SendMessageAndFileDescriptor(connectionFd, &gChildPid, sizeof(gChildPid), 0);
+    int rc = iTermFileDescriptorServerSendMessageAndFileDescriptor(connectionFd, &gChildPid, sizeof(gChildPid), 0);
     if (rc <= 0) {
         FDLog(LOG_NOTICE, "send failed %s", strerror(errno));
         close(connectionFd);
@@ -145,7 +57,7 @@ static int SendFileDescriptorAndWait(int connectionFd) {
     FDLog(LOG_DEBUG, "All done. Waiting for client to disconnect or child to die.");
     int fds[2] = { gPipe[0], connectionFd };
     int results[2];
-    iTermSelect(fds, sizeof(fds) / sizeof(*fds), results);
+    iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, 0);
     FDLog(LOG_DEBUG, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
     close(connectionFd);
 
@@ -157,44 +69,13 @@ static int SendFileDescriptorAndWait(int connectionFd) {
 }
 
 static int PerformAcceptActivity(int socketFd) {
-    int connectionFd = iTermFileDescriptorServerAccept(socketFd);
+    int connectionFd = iTermFileDescriptorServerAcceptAndClose(socketFd);
     if (connectionFd == -1) {
         FDLog(LOG_DEBUG, "accept failed %s", strerror(errno));
         return 0;
     }
 
     return SendFileDescriptorAndWait(connectionFd);
-}
-
-int iTermFileDescriptorServerSocketBindListen(const char *path) {
-    int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (socketFd == -1) {
-        FDLog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
-        return -1;
-    }
-    // Mask off all permissions for group and other. Only user can use this socket.
-    mode_t oldMask = umask(S_IRWXG | S_IRWXO);
-
-    struct sockaddr_un local;
-    local.sun_family = AF_UNIX;
-    assert(strlen(path) + 1 < sizeof(local.sun_path));
-    strcpy(local.sun_path, path);
-    unlink(local.sun_path);
-    int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
-    if (bind(socketFd, (struct sockaddr *)&local, len) == -1) {
-        FDLog(LOG_NOTICE, "bind() failed: %s", strerror(errno));
-        umask(oldMask);
-        return -1;
-    }
-    FDLog(LOG_DEBUG, "bind() created %s", local.sun_path);
-
-    if (listen(socketFd, kMaxConnections) == -1) {
-        FDLog(LOG_DEBUG, "listen() failed: %s", strerror(errno));
-        umask(oldMask);
-        return -1;
-    }
-    umask(oldMask);
-    return socketFd;
 }
 
 static int Initialize(char *path, pid_t childPid) {
@@ -239,7 +120,7 @@ static void MainLoop(char *path) {
 }
 
 int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
-    gRunningServer = 1;
+    SetRunningServer();
     // syslog raises sigpipe when the parent job dies on 10.12.
     signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path, childPid);

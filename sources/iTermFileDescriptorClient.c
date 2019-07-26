@@ -49,9 +49,9 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                 FDLog(LOG_DEBUG, "Calling select to get a file descriptor...");
                 int fds[2] = { fd, deadMansPipeReadEnd };
                 int readable[2];
-                iTermSelect(fds, 2, readable);
+                iTermSelect(fds, 2, readable, 0);
                 if (readable[1]) {
-                    FDLog(LOG_DEBUG, "Server was dead before recevmsg. Did the shell terminate immediately?");
+                    FDLog(LOG_DEBUG, "Server was dead before recvmsg. Did the shell terminate immediately?");
                     return -1;
                 }
                 FDLog(LOG_DEBUG, "assuming socket is readable");
