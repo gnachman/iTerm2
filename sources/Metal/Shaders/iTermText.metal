@@ -340,11 +340,8 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                      min_filter::linear);
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
-
-    half4 recoloredTextColor = static_cast<half4>(textureColor);
-
-    // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
-    half4 result = recoloredTextColor;
+    half4 result = static_cast<half4>(in.textColor);
+    result.w = dot(textureColor, in.alphaVector);
     result.xyz *= result.w;
     return result;
 }
