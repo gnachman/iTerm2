@@ -341,17 +341,13 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
 
-    half strikethroughWeight = 0;
-    // Underlined not emoji.
-    const half underlineWeight = 0;
-
     half4 recoloredTextColor = static_cast<half4>(in.textColor);
     recoloredTextColor.w = dot(textureColor, in.alphaVector);
 
     // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
     half4 result = mix(recoloredTextColor,
                        in.underlineColor,
-                       max(strikethroughWeight, underlineWeight));
+                       0);
     result.xyz *= result.w;
     return result;
 }
