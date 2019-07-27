@@ -45,7 +45,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
     out.textureOffset = perInstanceUniforms[iid].textureOffset;
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
-    out.textColor = perInstanceUniforms[iid].textColor;
+    out.textColor = static_cast<half4>(perInstanceUniforms[iid].textColor);
     out.backgroundColor = perInstanceUniforms[iid].backgroundColor;
     out.colorModelIndex = perInstanceUniforms[iid].colorModelIndex;
     out.viewportSize = viewportSize;
@@ -256,7 +256,7 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
         discard_fragment();
     }
 
-    half4 textColor = RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
+    half4 textColor = RemapColor(static_cast<float4>(in.textColor) * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
     return mix(textColor, in.underlineColor, underlineWeight);
 }
 
@@ -340,7 +340,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                      min_filter::linear);
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
-    half4 result = static_cast<half4>(in.textColor);
+    half4 result = in.textColor;
     result.w = dot(textureColor, in.alphaVector);
     result.xyz *= result.w;
     return result;

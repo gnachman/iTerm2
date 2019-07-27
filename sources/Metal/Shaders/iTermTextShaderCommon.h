@@ -16,7 +16,7 @@ typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
-    float4 textColor;
+    half4 textColor;
     float4 backgroundColor;
     half4 underlineColor;
     int3 colorModelIndex;
