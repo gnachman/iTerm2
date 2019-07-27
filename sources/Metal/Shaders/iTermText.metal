@@ -343,7 +343,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
 
     half strikethroughWeight = 0;
     // Underlined not emoji.
-    const half underlineWeight = fmod(in.clipSpacePosition.y, 10) >= 9;
+    const half underlineWeight = 0;
 
     half4 recoloredTextColor = static_cast<half4>(in.textColor);
     recoloredTextColor.w = dot(textureColor, in.alphaVector);
