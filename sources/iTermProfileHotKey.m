@@ -210,8 +210,23 @@ static NSString *const kArrangement = @"Arrangement";
              keyWindow, _windowController.window);
         return NSNormalWindowLevel;
     }
-    DLog(@"Use status window level (I am key, no detected panels are open)");
-    return NSTornOffMenuWindowLevel;
+    DLog(@"Use main menu window level (I am key, no detected panels are open)");
+    // NSStatusWindowLevel overlaps the menu bar and the dock. This is obviously desirable because
+    // you don't want these things blocking your view. But if you've configured your menu bar to
+    // automatically hide (system prefs > general > automatically hide and show menu bar) then the
+    // menu bar gets overlapped when you show it and that is lame (issue 7924).
+    //
+    // NSTornOffMenuWindowLevel does not overlap the dock, so it is no good. You can't go having
+    // your dock overlapping your fullscreen hotkey window, as that is lame (issue 7963).
+    //
+    // NSMainMenuWindowLevel seems to do what you'd want, but I think it just works by accident.
+    //
+    // It seems the sweet spot is between the dock and main menu levels, of which there are
+    // three (21…23). They are unnamed.
+    //
+    // It is ok to be leveled below the main menu because the window is always positioned under the
+    // menu bar *except* when the menu bar is auto-hidden.
+    return (NSWindowLevel)(NSMainMenuWindowLevel - 1);
 }
 
 - (NSPoint)destinationPointForInitialPoint:(NSPoint)point
