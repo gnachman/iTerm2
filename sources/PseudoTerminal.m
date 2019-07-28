@@ -5005,6 +5005,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
+    [self updateVariables];
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
@@ -5037,6 +5038,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_contentView didChangeCompactness];
         [_contentView layoutSubviews];
     }
+    [self updateVariables];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -5125,6 +5127,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView layoutSubviews];
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
+    [self updateVariables];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
