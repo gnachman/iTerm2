@@ -459,6 +459,9 @@ enum {
 }
 
 - (void)showPopover {
+    if (!text_.window) {
+        return;
+    }
     [_popoverVC.popover close];
     _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
                                                                   bundle:[NSBundle bundleForClass:self.class]];
