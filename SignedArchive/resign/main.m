@@ -23,6 +23,23 @@ SIGIdentity *FindSigningIdentity(NSString *query) {
     return nil;
 }
 
+NSURL *CreateTemporaryURL(NSURL *eventualDestinationURL) {
+    NSURL *destinationURL = eventualDestinationURL;
+
+    NSError *error = nil;
+    NSURL *temporaryDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSItemReplacementDirectory
+                                                                          inDomain:NSUserDomainMask
+                                                                 appropriateForURL:destinationURL
+                                                                            create:YES
+                                                                             error:&error];
+    if (!temporaryDirectoryURL || error) {
+        return nil;
+    }
+
+    NSString *temporaryFilename = [[NSProcessInfo processInfo] globallyUniqueString];
+    return [temporaryDirectoryURL URLByAppendingPathComponent:temporaryFilename];
+}
+
 NSURL *TemporaryURLOfExtractedUnverifiedPayload(NSURL *archiveURL) {
     SIGArchiveReader *reader;
     reader = [[SIGArchiveReader alloc] initWithURL:archiveURL];
@@ -33,11 +50,55 @@ NSURL *TemporaryURLOfExtractedUnverifiedPayload(NSURL *archiveURL) {
     NSError *error;
     [reader load:&error];
     if (error) {
+        fprintf(stderr, "Failed to load %s: %s\n", archiveURL.path.UTF8String, error.localizedDescription.UTF8String);
         return nil;
     }
 
-    NSInputStream *input = [reader payload
+    NSInputStream *readStream = [reader payloadInputStream:&error];
+    if (error || !readStream) {
+        fprintf(stderr, "Could not realize input stream from %s: %s\n", archiveURL.path.UTF8String, error.localizedDescription.UTF8String);
+        return nil;
+    }
+    [readStream open];
+
+    NSURL *url = CreateTemporaryURL([NSURL fileURLWithPath:NSTemporaryDirectory()]);
+    if (!url) {
+        fprintf(stderr, "Could not create temporary file in %s\n", NSTemporaryDirectory().UTF8String);
+        return nil;
+    }
+
+    NSOutputStream *writeStream = [[NSOutputStream alloc] initWithURL:url append:NO];
+    if (!writeStream) {
+        fprintf(stderr, "Could not create output stream to write to %s\n", url.path.UTF8String);
+        return nil;
+    }
+    [writeStream open];
+
+    NSInteger numberOfBytesCopied = 0;
+    while ([readStream hasBytesAvailable]) {
+        uint8_t buffer[4096];
+        const NSInteger numberOfBytesRead = [readStream read:buffer maxLength:sizeof(buffer)];
+        if (numberOfBytesRead == 0) {
+            break;
+        }
+        if (numberOfBytesRead < 0) {
+            fprintf(stderr, "Error %s reading from %s\n", readStream.streamError.localizedDescription.UTF8String, archiveURL.path.UTF8String);
+            return nil;
+        }
+
+        const NSInteger numberOfBytesWritten = [writeStream write:buffer maxLength:numberOfBytesRead];
+        if (numberOfBytesWritten != numberOfBytesRead) {
+            fprintf(stderr, "Error %s while writing to %s\n", writeStream.streamError.localizedDescription.UTF8String, url.path.UTF8String);
+            return nil;
+        }
+
+        numberOfBytesCopied += numberOfBytesWritten;
+    }
+    [writeStream close];
+
+    return url;
 }
+
 
 int main(int argc, const char * argv[]) {
     if (argc != 4) {
@@ -48,24 +109,32 @@ int main(int argc, const char * argv[]) {
     @autoreleasepool {
         NSURL *oldArchiveURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:argv[1]]];
         NSURL *payloadURL = TemporaryURLOfExtractedUnverifiedPayload(oldArchiveURL);
-        if (!payloadURL) {
-            fprintf(stderr, "Could not extract from %s\n", argv[1]);
-            return -1;
-        }
-        SIGIdentity *identity = FindSigningIdentity([NSString stringWithUTF8String:argv[2]]);
-        if (!identity) {
-            fprintf(stderr, "No identity found\n");
-            return -1;
-        }
-        SIGArchiveBuilder *builder = [[SIGArchiveBuilder alloc] initWithPayloadFileURL:payloadURL
-                                                                              identity:identity];
+        do {
+            if (!payloadURL) {
+                fprintf(stderr, "Could not extract from %s\n", argv[1]);
+                break;
+            }
+            SIGIdentity *identity = FindSigningIdentity([NSString stringWithUTF8String:argv[2]]);
+            if (!identity) {
+                fprintf(stderr, "No identity found\n");
+                break;
+            }
+            SIGArchiveBuilder *builder = [[SIGArchiveBuilder alloc] initWithPayloadFileURL:payloadURL
+                                                                                  identity:identity];
+
+            NSError *error = nil;
+            NSURL *outputURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:argv[3]]];
+            const BOOL ok = [builder writeToURL:outputURL error:&error];
+            if (!ok) {
+                fprintf(stderr, "Signing error: %s\n", error.localizedDescription.UTF8String);
+                break;
+            }
+        } while (0);
 
         NSError *error = nil;
-        NSURL *outputURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:argv[3]]];
-        const BOOL ok = [builder writeToURL:outputURL error:&error];
-        if (!ok) {
-            fprintf(stderr, "Signing error: %s\n", error.localizedDescription.UTF8String);
-            return 1;
+        [[NSFileManager defaultManager] removeItemAtURL:payloadURL error:&error];
+        if (error) {
+            fprintf(stderr, "While deleting temp file %s: %s\n", payloadURL.path.UTF8String, error.localizedDescription.UTF8String);
         }
     }
     return 0;
