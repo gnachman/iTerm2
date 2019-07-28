@@ -923,6 +923,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                      iconName:@"“Shell”"
                                                                                    windowName:@""
                                                                                tmuxWindowName:nil
+                                                                              tmuxWindowTitle:nil
                                                                                    components:value
                                                                                 isWindowTitle:NO];
 
