@@ -65,6 +65,9 @@
                            session:(PTYSession *)aSession
                 absoluteLineNumber:(long long)lineNumber {
     NSURL *url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
+    if (!url) {
+        return;
+    }
 
     // add URL to URL Store and retrieve URL code for later reference
     unsigned short code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
