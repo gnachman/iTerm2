@@ -236,12 +236,20 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
     // You always get the iterm2 module so don't bother to pip install it.
     dependencies = [dependencies arrayByRemovingObject:@"iterm2"];
-    NSString *to;
+
+    // Decide where to put it and make the directory if needed.
+    NSString *containingFolder;
     if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
-        to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
+        containingFolder = [[NSFileManager defaultManager] autolaunchScriptPath];
     } else {
-        to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];
+        containingFolder = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     }
+    [[NSFileManager defaultManager] createDirectoryAtPath:containingFolder
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+
+    NSString *to = [containingFolder stringByAppendingPathComponent:self.name];
 
     // Create a symlink from the final location to the temporary location so shebangs will work.
     // First try to remove a dangling link.
