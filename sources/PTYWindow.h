@@ -69,6 +69,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic, readonly) BOOL titleChangedRecently;
 @property(nonatomic, readonly) BOOL isCompact;
 @property(nonatomic) NSInteger it_openingSheet;
+@property (nonatomic) BOOL it_becomingKey;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
@@ -94,7 +95,6 @@ typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
 
 // A normal terminal window.
 @interface iTermWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
-
 @end
 
 @interface iTermCompactWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
@@ -102,7 +102,6 @@ typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
 
 // A floating hotkey window. This can overlap a lion fullscreen window.
 @interface iTermPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
-
 @end
 
 @interface iTermCompactPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>

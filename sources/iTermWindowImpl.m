@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 @synthesize it_openingSheet;
+@synthesize it_becomingKey;
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
@@ -266,7 +267,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    self.it_becomingKey = YES;
     [super makeKeyAndOrderFront:sender];
+    self.it_becomingKey = NO;
 }
 
 - (BOOL)canBecomeKeyWindow {
