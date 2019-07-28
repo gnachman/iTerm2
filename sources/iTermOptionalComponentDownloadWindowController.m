@@ -15,7 +15,7 @@
 
 // SEE ALSO iTermWebSocketConnectionMinimumPythonLibraryVersion
 // NOTE: This does not affect full-environment scripts.
-const int iTermMinimumPythonEnvironmentVersion = 50;
+const int iTermMinimumPythonEnvironmentVersion = 53;
 
 @protocol iTermOptionalComponentDownloadPhaseDelegate<NSObject>
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender;
