@@ -65,6 +65,10 @@
 }
 
 - (unsigned short)codeForURL:(NSURL *)url withParams:(NSString *)params {
+    if (!url.absoluteString || !params) {
+        DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
+        return 0;
+    }
     NSDictionary *key = @{ @"url": url.absoluteString, @"params": params };
     NSNumber *number = _store[key];
     unsigned short truncatedCode;
