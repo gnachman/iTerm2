@@ -327,13 +327,17 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     const CGFloat y = iTermStatusBarSparklineBottomMargin + rect.origin.y + 0.5;
     NSBezierPath *path = [[NSBezierPath alloc] init];
     path.miterLimit = 1;
-    [path moveToPoint:NSMakePoint(x0, y)];
     const double ceiling = MAX(1, self.ceiling);
     int i = 0;
     for (NSNumber *n in values) {
         const CGFloat height = n.doubleValue * (rect.size.height - iTermStatusBarSparklineBottomMargin * 2) / ceiling;
         const CGFloat x = x0 + i * barWidth;
-        [path lineToPoint:NSMakePoint(x, y + height)];
+        const NSPoint point = NSMakePoint(x, y + height);
+        if (i == 0) {
+            [path moveToPoint:point];
+        } else {
+            [path lineToPoint:point];
+        }
         i++;
     }
     return path;
