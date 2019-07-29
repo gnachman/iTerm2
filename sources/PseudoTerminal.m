@@ -7861,7 +7861,8 @@ return NO;
         _touchBarRateLimitedUpdate.minimumInterval = 0.5;
     }
     [_touchBarRateLimitedUpdate performRateLimitedBlock:^{
-        [self updateTouchBarWithWordAtCursor:word];
+        NSString *title = [[self currentSession] windowTitle];
+        [self updateTouchBarWithWordAtCursor:word forTitle:title];
     }];
 }
 

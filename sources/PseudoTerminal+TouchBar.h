@@ -16,6 +16,6 @@
 
 - (void)updateTouchBarIfNeeded;
 - (void)updateTouchBarFunctionKeyLabels;
-- (void)updateTouchBarWithWordAtCursor:(NSString *)word;
+- (void)updateTouchBarWithWordAtCursor:(NSString *)word withTitle:(NSString *)title;
 
 @end

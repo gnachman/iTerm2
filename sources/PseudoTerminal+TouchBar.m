@@ -56,12 +56,12 @@ ITERM_IGNORE_PARTIAL_BEGIN
     [self updateStatus];
 }
 
-- (void)updateTouchBarWithWordAtCursor:(NSString *)word {
+- (void)updateTouchBarWithWordAtCursor:(NSString *)word forTitle:(NSString *)title {
     if (IsTouchBarAvailable() && [self respondsToSelector:@selector(touchBar)]) {
         NSTouchBarItem *item = [self.touchBar itemForIdentifier:iTermTouchBarIdentifierManPage];
         if (item) {
             iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
-            [self updateManPageButton:button word:word];
+            [self updateManPageButton:button word:word forTitle:title];
         }
     }
 }
@@ -167,7 +167,29 @@ ITERM_IGNORE_PARTIAL_BEGIN
     return touchBar;
 }
 
-- (void)updateManPageButton:(iTermTouchBarButton *)button word:(NSString *)word {
+- (void)updateManPageButton:(iTermTouchBarButton *)button word:(NSString *)word forTitle:(NSString *)title {
+    if (title && [title isEqualToString: @"radare2"]) {
+        word = @"radare2";
+        if (![button.title isEqualToString:word]) {
+            button.title = word;
+            button.imagePosition = NSImageLeft;
+            button.enabled = YES;
+            NSString *manCommand = [NSString stringWithFormat:[iTermAdvancedSettingsModel viewManPageCommand],
+                                    [word stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            button.keyBindingAction = @{ @"command": manCommand };
+////
+if (0) {
+        iTermTouchBarButton *b = [iTermTouchBarButton buttonWithTitle:@"i" target:self action:@selector(functionKeyTouchBarItemSelected:)];
+        b.tag = 2;
+        [b sizeToFit];
+        [[b view] addSubview:button];
+        b.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addConstraintsToButton:b superView:[b view] previous:nil];
+}
+////
+        }
+        return;
+    }
     if (word) {
         if (![button.title isEqualToString:word]) {
             button.title = word;
