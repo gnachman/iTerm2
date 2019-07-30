@@ -4362,6 +4362,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            @"zsh": @5,
            @"fish": @5 };
     NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
+    if (shell) {
+        [delegate_ screenDidDetectShell:shell];
+    }
     if (!shell || versionNumber < latestKnownVersion) {
         [delegate_ screenSuggestShellIntegrationUpgrade];
     }
