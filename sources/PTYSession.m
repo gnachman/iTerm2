@@ -226,6 +226,7 @@ static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in
 static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
 static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
 static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Lived Single Use";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to Shell";  // NSString -> NSString (example: example.com -> fish)
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -653,6 +654,7 @@ static const NSUInteger kMaxHosts = 100;
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
+        _hostnameToShell = [[NSMutableDictionary alloc] init];
         _automaticProfileSwitcher = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
         _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
@@ -820,6 +822,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keyLabelsStack release];
     [_missingSavedArrangementProfileGUID release];
     [_currentHost release];
+    [_hostnameToShell release];
 
     [_keystrokeSubscriptions release];
     [_keyboardFilterSubscriptions release];
@@ -1349,6 +1352,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
+    aSession.hostnameToShell = [arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -4258,6 +4262,9 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
     result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
+    if (self.hostnameToShell) {
+        result[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] = [[self.hostnameToShell copy] autorelease];
+    }
 
     NSDictionary *shortcutDictionary = [[[iTermSessionHotkeyController sharedInstance] shortcutForSession:self] dictionaryValue];
     if (shortcutDictionary) {
@@ -9325,12 +9332,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                        job:self.variablesScope.jobName];
 
     if (hadHost) {
-        [self maybeResetTerminalStateOnHostChange];
+        [self maybeResetTerminalStateOnHostChange:host];
     }
     self.currentHost = host;
 }
 
-- (void)maybeResetTerminalStateOnHostChange {
+- (BOOL)shellIsFishForHost:(VT100RemoteHost *)host {
+    NSString *name = host.usernameAndHostname;
+    if (!name) {
+        return NO;
+    }
+    return [self.hostnameToShell[name] isEqualToString:@"fish"];
+}
+
+- (void)maybeResetTerminalStateOnHostChange:(VT100RemoteHost *)newRemoteHost {
     if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
         NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
         if ([number boolValue]) {
@@ -9355,7 +9370,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self offerToTurnOffFocusReportingOnHostChange];
         }
     }
-    if (self.terminal.bracketedPasteMode) {
+    if (self.terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
         NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
         if ([number boolValue]) {
             self.terminal.bracketedPasteMode = NO;
@@ -9971,6 +9986,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             default:
                 break;
         }
+    }
+}
+
+- (void)screenDidDetectShell:(NSString *)shell {
+    NSString *name = self.currentHost.usernameAndHostname;
+    if (name && shell) {
+        self.hostnameToShell[name] = shell;
     }
 }
 

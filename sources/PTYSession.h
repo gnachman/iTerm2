@@ -503,6 +503,7 @@ typedef enum {
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
+@property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
 
 #pragma mark - methods
 
