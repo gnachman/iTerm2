@@ -17,7 +17,7 @@
 				<string>pl</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
+			<string>Therm.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Terminal scripts</string>
 			<key>CFBundleTypeRole</key>
@@ -39,9 +39,9 @@
 				<string>itermcolors</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
+			<string>Therm.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>iTerm2 Color Presets</string>
+			<string>Therm Color Presets</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
@@ -59,11 +59,11 @@
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
-	<string>iTerm2 Help</string>
+	<string>Therm Help</string>
 	<key>CFBundleHelpBookName</key>
 	<string>Therm Help</string>
 	<key>CFBundleIconFile</key>
-	<string>iTerm2.icns</string>
+	<string>Therm.icns</string>
         <key>ATSApplicationFontsPath</key>
         <string>fonts</string>
 	<key>CFBundleIdentifier</key>
@@ -197,7 +197,7 @@
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>New iTerm2 Tab Here</string>
+				<string>New Therm Tab Here</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>openTab</string>
@@ -216,7 +216,7 @@
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>New iTerm2 Window Here</string>
+				<string>New Therm Window Here</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>openWindow</string>
