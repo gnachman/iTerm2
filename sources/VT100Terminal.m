@@ -1025,9 +1025,11 @@ static const int kMaxScreenRows = 4096;
 // The main and alternate screens have different saved cursors. This returns the current one. In
 // tmux mode, only one is used to more closely approximate tmux's behavior.
 - (VT100SavedCursor *)savedCursor {
+#if 0
     if ([delegate_ terminalInTmuxMode]) {
         return &mainSavedCursor_;
     }
+#endif
     VT100SavedCursor *savedCursor;
     if ([delegate_ terminalIsShowingAltBuffer]) {
         savedCursor = &altSavedCursor_;
@@ -1184,6 +1186,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeToken:(VT100Token *)token {
+#if 0
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [delegate_ terminalStartTmuxModeWithDCSIdentifier:token.string];
@@ -1192,6 +1195,7 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalHandleTmuxInput:token];
         return;
     }
+#endif
 
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {

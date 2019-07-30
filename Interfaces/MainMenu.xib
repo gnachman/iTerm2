@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -39,14 +39,14 @@
                                     <action selector="toggleSecureInput:" target="201" id="1175"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Make Therm Default Term" keyEquivalent="\" identifier="Make Therm Default Term" id="1470">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
+                            <menuItem title="Set As Default System Terminal" keyEquivalent=" " identifier="Make Therm Default Term" id="1470">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="makeDefaultTerminal:" target="201" id="1472"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Set As Default Terminal" alternate="YES" keyEquivalent="\" identifier="Make Terminal Default Term" id="1473">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" option="YES" command="YES"/>
+                            <menuItem title="Revert Default Teminal" alternate="YES" keyEquivalent=" " identifier="Make Terminal Default Term" id="1473">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="unmakeDefaultTerminal:" target="201" id="1475"/>
                                 </connections>
@@ -155,41 +155,6 @@
                             <menuItem isSeparatorItem="YES" id="1307">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="tmux" id="1448">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="tmux" id="1449">
-                                    <items>
-                                        <menuItem title="Detach" alternate="YES" keyEquivalent="D" identifier="tmux.Detach" id="1459">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="detachTmux:" target="-1" id="1460"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="New Tmux Window" alternate="YES" keyEquivalent="N" identifier="tmux.New Tmux Window" id="1455">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="newTmuxWindow:" target="-1" id="1456"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="New Tmux Tab" alternate="YES" keyEquivalent="T" identifier="tmux.New Tmux Tab" id="1452">
-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="newTmuxTab:" target="-1" id="1453"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Dashboard" alternate="YES" identifier="tmux.Dashboard" id="1461">
-                                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="openDashboard:" target="-1" id="1463"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1439"/>
                             <menuItem title="Page Setup..." identifier="Page Setup..." id="685">
                                 <connections>
                                     <action selector="runPageLayout:" target="-1" id="691"/>

@@ -1299,6 +1299,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)setTmuxState:(NSDictionary *)state
 {
+return;
+#if 0
     BOOL inAltScreen = [[self objectInDictionary:state
                                 withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
                                                   kStateDictSavedGrid,
@@ -1378,6 +1380,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (wrap) {
         [terminal_ setWraparoundMode:!![wrap intValue]];
     }
+#endif
 }
 
 - (void)highlightTextInRange:(NSRange)range
@@ -1595,11 +1598,11 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                                                             width:currentGrid_.size.width
                                                                                ok:&ok];
             assert(ok);
-            long long s = startPosCoord.y;
+            unsigned long long s = startPosCoord.y;
             s *= currentGrid_.size.width;
             s += startPosCoord.x;
 
-            long long l = lastPositionCoord.y;
+            unsigned long long l = lastPositionCoord.y;
             l *= currentGrid_.size.width;
             l += lastPositionCoord.x;
 
@@ -3036,15 +3039,15 @@ return;
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
-    [delegate_ screenStartTmuxModeWithDCSIdentifier:dcsID];
+    // [delegate_ screenStartTmuxModeWithDCSIdentifier:dcsID];
 }
 
 - (void)terminalHandleTmuxInput:(VT100Token *)token {
-    [delegate_ screenHandleTmuxInput:token];
+    // [delegate_ screenHandleTmuxInput:token];
 }
 
 - (BOOL)terminalInTmuxMode {
-    return [delegate_ screenInTmuxMode];
+    return NO; // return [delegate_ screenInTmuxMode];
 }
 
 - (int)terminalWidth {
