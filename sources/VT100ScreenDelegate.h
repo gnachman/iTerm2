@@ -245,6 +245,7 @@
                     isSuitableForOldPWD:(BOOL)isSuitableForOldPWD;
 
 - (void)screenSuggestShellIntegrationUpgrade;
+- (void)screenDidDetectShell:(NSString *)shell;
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename;
 - (void)screenSetBadgeFormat:(NSString *)theFormat;
