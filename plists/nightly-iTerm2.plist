@@ -62,25 +62,6 @@
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>New Therm Tab Here</string>
-			</dict>
-			<key>NSMessage</key>
-			<string>openTab</string>
-			<key>NSRequiredContext</key>
-			<dict>
-				<key>NSTextContent</key>
-				<string>FilePath</string>
-			</dict>
-			<key>NSSendTypes</key>
-			<array>
-				<string>NSFilenamesPboardType</string>
-				<string>public.plain-text</string>
-			</array>
-		</dict>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
 				<string>New Therm Window Here</string>
 			</dict>
 			<key>NSMessage</key>
