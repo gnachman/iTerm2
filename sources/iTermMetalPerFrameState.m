@@ -680,6 +680,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSUInteger sketch = *sketchPtr;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
+    const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
     // Prime numbers chosen more or less arbitrarily.
     const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
     const vector_float4 fmul = simd_make_float4(17, 19, 23, 1) * 255;
@@ -805,7 +806,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             } else {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             }
-        } else if (line[x].urlCode) {
+        } else if (line[x].urlCode && underlineHyperlinks) {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
         } else {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;

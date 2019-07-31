@@ -251,6 +251,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)typingClearsSelection;
 + (double)underlineCursorHeight;
 + (double)underlineCursorOffset;
++ (BOOL)underlineHyperlinks;
 + (double)updateScreenParamsDelay;
 + (BOOL)useTmuxStatusBar;
 + (NSString *)URLCharacterSet;

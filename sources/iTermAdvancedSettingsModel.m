@@ -349,6 +349,8 @@ DEFINE_BOOL(preferSpeedToFullLigatureSupport, YES, SECTION_DRAWING @"Improves dr
 DEFINE_BOOL(useLowPowerGPUWhenUnplugged, NO, SECTION_DRAWING @"Metal renderer uses integrated GPU when not connected to power?\nFor this to be effective you must disable “Disable Metal renderer when not connected to power”.");
 #endif
 
+DEFINE_BOOL(underlineHyperlinks, YES, SECTION_DRAWING @"Underline OSC 8 hyperlinks");
+
 #pragma mark - Semantic History
 
 #define SECTION_SEMANTIC_HISTORY @"Semantic History: "

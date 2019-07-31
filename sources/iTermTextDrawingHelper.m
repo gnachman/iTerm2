@@ -2473,6 +2473,9 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         }
 
         case NSUnderlinePatternDash: {
+            if (![iTermAdvancedSettingsModel underlineHyperlinks]) {
+                break;
+            }
             [path moveToPoint:origin];
             [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
             [path setLineWidth:lineWidth];
