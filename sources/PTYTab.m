@@ -5584,6 +5584,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_tmuxTitleMonitor updateOnce];
 }
 
+- (void)sessionDidUpdatePaneTitle:(PTYSession *)session {
+    [_tmuxTitleMonitor updateOnce];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {
