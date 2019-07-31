@@ -458,7 +458,7 @@ class Session:
 
         See the Scripting Fundamentals documentation for more information on user-defined variables.
 
-        :param name: The variable's name.
+        :param name: The variable's name. Must begin with "user."
         :param value: The new value to assign.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
