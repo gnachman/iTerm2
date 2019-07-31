@@ -5708,6 +5708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                  block:^(NSString * _Nonnull title) {
                                                                      if (title) {
                                                                          [weakSelf setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""}];
+                                                                         [weakSelf.delegate sessionDidUpdatePaneTitle:self];
                                                                      }
                                                                  }];
     [_tmuxTitleMonitor updateOnce];

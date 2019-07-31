@@ -239,6 +239,7 @@ typedef enum {
 - (void)sessionAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
 - (iTermVariableScope *)sessionTabScope;
 - (void)sessionDidReportSelectedTmuxPane:(PTYSession *)session;
+- (void)sessionDidUpdatePaneTitle:(PTYSession *)session;
 
 @end
 
