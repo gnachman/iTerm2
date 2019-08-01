@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 GIT_BINARY=$(command -v git)
-NICE=/usr/bin/nice -n 20
+NICE="/usr/bin/nice -n 20"
 PRIORITY=20
 
 xcode() {

@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermVariableScope;
 
 @interface iTermGitState : NSObject<NSCopying>
+@property (nonatomic, copy) NSString *directory;
 @property (nonatomic, copy) NSString *xcode;
 @property (nonatomic, copy) NSString *pushArrow;
 @property (nonatomic, copy) NSString *pullArrow;

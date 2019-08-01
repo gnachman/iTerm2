@@ -58,57 +58,63 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)invalidateCacheForPath:(NSString *)path {
+    DLog(@"git poll worker for bucket %d: remove cache entry for path %@", _bucket, path);
     [_cache removeStateForPath:path];
 }
 
 - (void)requestPath:(NSString *)path completion:(iTermGitCallback)completion {
+    DLog(@"git poll worker for bucket %d: got request for path %@", _bucket, path);
     iTermGitState *cached = [_cache stateForPath:path];
     if (cached) {
+        DLog(@"git poll worker for bucket %d: return cached value %@ for path %@", _bucket, cached, path);
         completion(cached);
         return;
     }
 
-    DLog(@"git poll worker %d got request for path %@", _bucket, path);
-
     NSMutableArray<iTermGitCallback> *callbacks = _outstanding[path];
     if (callbacks) {
-        DLog(@"Attach request for %@ to existing callback", path);
+        DLog(@"git poll worker for bucket %d: Attach request for %@ to existing callback", _bucket, path);
         [callbacks addObject:[completion copy]];
         return;
     }
-    DLog(@"enqueue request for %@", path);
+    DLog(@"git poll worker for bucket %d: enqueue request for %@", _bucket, path);
     callbacks = [NSMutableArray array];
     _outstanding[path] = callbacks;
 
     if (![self createCommandRunnerIfNeeded]) {
-        DLog(@"Can't create command runner for %@", path);
+        DLog(@"git poll worker for bucket %d: Can't create command runner for %@", _bucket, path);
         [_outstanding removeObjectForKey:path];
         completion(nil);
         return;
     }
-    DLog(@"Using command runner %@ for path %@", _commandRunner, path);
+    DLog(@"git poll worker for bucket %d: Using command runner %@ for path %@", _bucket, _commandRunner, path);
     __block BOOL finished = NO;
+    const int bucket = _bucket;
     void (^wrapper)(iTermGitState *) = ^(iTermGitState *state) {
         if (state) {
             [self->_cache setState:state forPath:path ttl:2];
         }
         if (!finished) {
-            DLog(@"Command runner %@ finished", self->_commandRunner);
+            DLog(@"git poll worker for bucket %d: Command runner %@ finished", bucket, self->_commandRunner);
             finished = YES;
             completion(state);
         } else {
-            DLog(@"[already killed] - Command runner %@ finished", self->_commandRunner);
+            DLog(@"git poll worker for bucket %d: [already killed] - Command runner %@ finished",
+                 bucket, self->_commandRunner);
         }
     };
     [callbacks addObject:[wrapper copy]];
     [_queue addObject:path];
 
     [_commandRunner write:[[path stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding] completion:^(size_t written, int error) {
-        DLog(@"git component wrote %d bytes, got error code %d", (int)written, error);
+        DLog(@"git component for bucket %d: wrote %d bytes, got error code %d", bucket, (int)written, error);
     }];
 
+    DLog(@"git poll worker for bucket %d: starting two second timer after requesting %@",
+         bucket, path);
     const NSTimeInterval timeout = 2;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DLog(@"git poll worker for bucket %d: Two second timer for %@ fired. finished=%@", bucket, path, @(finished));
         if (!finished) {
             finished = YES;
             [self killScript];
@@ -124,16 +130,16 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 - (BOOL)createCommandRunnerIfNeeded {
     if (!_commandRunner) {
         if (![self canCreateCommandRunner]) {
-            DLog(@"Can't create task runner");
+            DLog(@"git poll worker for bucket %d: Can't create task runner - already have the maximum number of them", _bucket);
             return NO;
         }
         NSBundle *bundle = [NSBundle bundleForClass:self.class];
         NSString *script = [bundle pathForResource:@"iterm2_git_poll" ofType:@"sh"];
         if (!script) {
-            DLog(@"failed to get path to script from bundle %@", bundle);
+            DLog(@"git poll worker for bucket %d: failed to get path to script from bundle %@", _bucket, bundle);
             return NO;
         }
-        DLog(@"Launch new git poller script from %@", script);
+        DLog(@"git poll worker for bucket %d: Launch new git poller script from %@", _bucket, script);
         NSString *sandboxConfig = [[[NSString stringWithContentsOfFile:[bundle pathForResource:@"git" ofType:@"sb"]
                                                               encoding:NSUTF8StringEncoding
                                                                  error:nil] componentsSeparatedByString:@"\n"] componentsJoinedByString:@" "];
@@ -142,7 +148,8 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         [_commandRunner loadPathForGit];
         if (_commandRunner) {
             gNumberOfCommandRunners++;
-            DLog(@"Incremented number of command runners to %@", @(gNumberOfCommandRunners));
+            DLog(@"git poll worker for bucket %d: Incremented number of command runners to %@",
+                 _bucket, @(gNumberOfCommandRunners));
         }
         __weak __typeof(self) weakSelf = self;
         _commandRunner.outputHandler = ^(NSData *data) {
@@ -158,12 +165,12 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)didRead:(NSData *)data {
-    DLog(@"Read %@ bytes from git poller script", @(data.length));
+    DLog(@"git poll worker for bucket %d: Read %@ bytes from git poller script", _bucket, @(data.length));
 
     // If more than 100k gets queued up something has gone terribly wrong
     const size_t maxBytes = 100000;
     if (_readData.length + data.length > maxBytes) {
-        DLog(@"wtf, have queued up more than 100k of output from the git poller script");
+        DLog(@"git poll worker for bucket %d: wtf, have queued up more than 100k of output from the git poller script", _bucket);
         [self killScript];
         return;
     }
@@ -189,7 +196,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     [_readData replaceBytesInRange:thisRange withBytes:"" length:0];
     NSString *string = [[NSString alloc] initWithData:thisData
                                              encoding:NSUTF8StringEncoding];
-    DLog(@"Read this string from git poller script:\n%@", string);
+    DLog(@"git poll worker for bucket %d: Read this string from git poller script:\n%@", _bucket, string);
     NSArray<NSString *> *lines = [string componentsSeparatedByString:@"\n"];
     NSDictionary<NSString *, NSString *> *dict = [lines keyValuePairsWithBlock:^iTermTuple *(NSString *line) {
         NSRange colon = [line rangeOfString:@": "];
@@ -201,7 +208,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         return [iTermTuple tupleWithObject:key andObject:value];
     }];
 
-    DLog(@"Parsed dict:\n%@", dict);
+    DLog(@"git poll worker for bucket %d: Parsed dict:\n%@", _bucket, dict);
     iTermGitState *state = [[iTermGitState alloc] init];
     state.xcode = dict[@"XCODE"];
     state.dirty = [dict[@"DIRTY"] isEqualToString:@"dirty"];
@@ -213,7 +220,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 
     NSString *path = _queue.firstObject;
     if (path) {
-        DLog(@"Invoking callbacks for path %@", path);
+        DLog(@"git poll worker for bucket %d: Invoking callbacks for path %@", _bucket, path);
         [_queue removeObjectAtIndex:0];
         NSArray<iTermGitCallback> *callbacks = _outstanding[path];
         [_outstanding removeObjectForKey:path];
@@ -225,12 +232,13 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)killScript {
+    DLog(@"git poll worker for bucket %d: killScript called", _bucket);
     if (!_commandRunner) {
         DLog(@"Command runner is already nil, doing nothing.");
         return;
     }
-    DLog(@"KILL command runner %@", _commandRunner);
-    DLog(@"killing wedged git poller script");
+    DLog(@"git poll worker for bucket %d: KILL command runner %@", _bucket, _commandRunner);
+    DLog(@"git poll worker for bucket %d: killing wedged git poller script", _bucket);
     [_terminatingCommandRunners addObject:_commandRunner];
     [_commandRunner terminate];
     [self reset];
@@ -252,13 +260,14 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 }
 
 - (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
-    DLog(@"* command runner died: %@ *", commandRunner);
+    DLog(@"git poll worker for bucket %d: * command runner died: %@ *", _bucket, commandRunner);
     if (!commandRunner) {
-        DLog(@"nil command runner");
+        DLog(@"git poll worker for bucket %d: nil command runner", _bucket);
         return;
     }
     gNumberOfCommandRunners--;
-    DLog(@"Decremented number of command runners to %@", @(gNumberOfCommandRunners));
+    DLog(@"git poll worker for bucket %d: Decremented number of command runners to %@",
+         _bucket, @(gNumberOfCommandRunners));
     if ([_terminatingCommandRunners containsObject:commandRunner]) {
         [_terminatingCommandRunners removeObject:commandRunner];
         return;

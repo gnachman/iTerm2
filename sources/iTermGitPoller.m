@@ -38,6 +38,11 @@ NS_ASSUME_NONNULL_BEGIN
     [_timer invalidate];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p dir=%@ last=%@>",
+            self.class, self, _currentDirectory, _lastPollTime];
+}
+
 #pragma mark - Private
 
 - (void)setEnabled:(BOOL)enabled {
@@ -46,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _enabled = enabled;
     if (!enabled) {
+        DLog(@"%@: Enabled set to true. Calling update.", self);
         _update();
     }
 }
@@ -60,7 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)bump {
-    DLog(@"Bump");
+    DLog(@"%@: Bump", self);
     [self poll];
     // Restart the timer to avoid a double-tap
     if (_timer) {
@@ -73,23 +79,25 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)poll {
-    DLog(@"poller running %@", self);
+    DLog(@"%@: poller running", self);
     if (!self.enabled) {
-        DLog(@"don't poll: not enabled");
+        DLog(@"%@: don't poll: not enabled", self);
         return;
     }
     if (!self.currentDirectory.length) {
-        DLog(@"don't poll: current directory unknown");
+        DLog(@"%@: don't poll: current directory unknown", self);
         return;
     }
     if (![self.delegate gitPollerShouldPoll:self]) {
-        DLog(@"don't poll: delegate %@ declined", self.delegate);
+        DLog(@"%@: don't poll: delegate %@ declined", self, self.delegate);
         return;
     }
     _lastPollTime = [NSDate date];
     __weak __typeof(self) weakSelf = self;
-    DLog(@"don't poll: request path %@", self.currentDirectory);
-    [[iTermGitPollWorker instanceForPath:self.currentDirectory] requestPath:self.currentDirectory completion:^(iTermGitState *state) {
+    DLog(@"%@: POLL: request path %@", self, self.currentDirectory);
+    iTermGitPollWorker *worker = [iTermGitPollWorker instanceForPath:self.currentDirectory];
+    DLog(@"%@: Using worker %@", self, worker);
+    [worker requestPath:self.currentDirectory completion:^(iTermGitState *state) {
         [weakSelf didPollWithUpdatedState:state];
     }];
 }
@@ -99,26 +107,29 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setState:(iTermGitState *)state {
+    DLog(@"%@: Update state of git poller to %@", self, state);
     _state = state;
     _update();
 }
 
 - (void)setCurrentDirectory:(NSString *)currentDirectory {
-    DLog(@"Set current directory of %@ to %@", self, currentDirectory);
+    DLog(@"%@: Set current directory to %@", self, currentDirectory);
     if (currentDirectory == _currentDirectory ||
         [currentDirectory isEqualToString:_currentDirectory]) {
-        DLog(@"Not changing");
+        DLog(@"%@: Not changing", self);
         return;
     }
     if (currentDirectory) {
-        DLog(@"Attempt to invalidate cache");
+        DLog(@"%@: Attempt to invalidate cache", self);
         [_rateLimit performRateLimitedBlock:^{
-            DLog(@"Invalidate cache");
-            [[iTermGitPollWorker instanceForPath:currentDirectory] invalidateCacheForPath:currentDirectory];
+            DLog(@"%@: Invalidate cache", self);
+            iTermGitPollWorker *worker = [iTermGitPollWorker instanceForPath:currentDirectory];
+            DLog(@"%@: Worker for %@ is %@", self, currentDirectory, worker);
+            [worker invalidateCacheForPath:currentDirectory];
         }];
     }
     _currentDirectory = [currentDirectory copy];
-    DLog(@"Request poll");
+    DLog(@"%@: Request poll", self);
     [self poll];
 }
 
