@@ -663,6 +663,7 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
         return NO;
     }
 
+    DLog(@"returning YES");
     return YES;
 }
 

@@ -39,6 +39,7 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
                 return nil;
             }
         }
+        _directory = [scope valueForVariableName:iTermVariableKeySessionID] ?: @"(null)";
         _branch = [scope valueForVariableName:iTermGitStateVariableNameGitBranch];
         _pushArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPushCount];
         _pullArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPullCount];
@@ -61,6 +62,11 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
     return theCopy;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p dir=%@ xcode=%@ push=%@ pull=%@ branch=%@ dirty=%@ adds=%@ deletes=%@>",
+            self.class, self,
+            _directory, _xcode, _pushArrow, _pullArrow, _branch, @(_dirty), @(_adds), @(_deletes)];
+}
 @end
 
 @implementation iTermRemoteGitStateObserver {
