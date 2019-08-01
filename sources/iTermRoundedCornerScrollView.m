@@ -7,11 +7,8 @@
 //
 
 #import "iTermRoundedCornerScrollView.h"
-#import "NSView+iTerm.h"
 
-@implementation iTermRoundedCornerScrollView {
-    NSVisualEffectView *_vev;
-}
+@implementation iTermRoundedCornerScrollView
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
   self = [super initWithFrame:frameRect];
@@ -34,14 +31,6 @@
     [self makeBackingLayer];
     self.layer.cornerRadius = 4;
     self.borderType = NSNoBorder;
-    _vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
-    _vev.material = NSVisualEffectMaterialMenu;
-    _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    [self insertSubview:_vev atIndex:0];
 }
 
-- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
-    [super resizeSubviewsWithOldSize:oldSize];
-    _vev.frame = self.bounds;
-}
 @end
