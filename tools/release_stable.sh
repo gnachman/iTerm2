@@ -1,7 +1,6 @@
 #!/bin/bash
 
-echo WARNING - THIS IS THE FIRST TRANSITIONAL STABLE BUILD - TEST THE DICKENS OUT OF SPARKLE
-exit 1
+set -x
 
 function die {
   echo $1
@@ -14,10 +13,24 @@ if [ $# -ne 1 ]; then
 fi
 
 test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
+echo Enter the EdDSA private key
+read -s EDPRIVKEY
+
 # Usage: SparkleSign final.xml final_template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
+    echo "Signature is "
+    cat /tmp/sig.txt
+    actualsize=$(wc -c < /tmp/sig.txt)
+    if (( $actualsize < 60)); then
+        die "signature file too small"
+    fi
+
+    ../../tools/sign_update iTerm2-${NAME}.zip "$EDPRIVKEY" > /tmp/newsig.txt || die SparkleSignNew
+    echo "New signature is"
+    cat /tmp/newsig.txt
+
     SIG=$(cat /tmp/sig.txt)
     NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
@@ -32,6 +45,9 @@ function SparkleSign {
     sed -e "s/%LENGTH%/$LENGTH/" | \
     sed -e "s,%SIG%,${SIG}," | \
     sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
+
+    echo "Updated appcasts file $SVNDIR/source/appcasts/$1"
+    cat $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/stable/
 }
 
@@ -126,12 +142,12 @@ Build $BUILDTYPE "" "OS 10.12+" "This is the recommended build for most users." 
 git checkout -- version.txt
 #set -x
 
-
 git tag v${VERSION}
 git commit -am ${VERSION}
-git push origin HEAD
-git push --tags
+#git push origin HEAD
+#git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
-git push origin HEAD
+#git push origin HEAD
 
+echo WARNING - NOT PUSHED TO HEAD - DO IT MANUALLY FOR BOTH REPOS
