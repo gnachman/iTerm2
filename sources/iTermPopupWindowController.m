@@ -416,18 +416,10 @@
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingMiddle;
 
     NSColor* textColor;
-    if (@available(macOS 10.14, *)) {
-        if (isSelected) {
-            textColor = [NSColor whiteColor];
-        } else {
-            textColor = [NSColor blackColor];
-        }
+    if (isSelected) {
+        textColor = [NSColor selectedMenuItemTextColor];
     } else {
-        if (isSelected) {
-            textColor = [NSColor selectedMenuItemTextColor];
-        } else {
-            textColor = [NSColor labelColor];
-        }
+        textColor = [NSColor labelColor];
     }
     NSColor* lightColor = [textColor colorWithAlphaComponent:0.4];
     NSDictionary* lightAttributes = @{ NSFontAttributeName: sysFont,
