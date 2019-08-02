@@ -7,6 +7,8 @@
 //
 
 #import "NSWindow+iTerm.h"
+
+#import "iTermApplication.h"
 #import "PTYWindow.h"
 
 NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
@@ -57,6 +59,10 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
         i <<= 1;
     }
     return [array componentsJoinedByString:@" "];
+}
+
+- (void)it_makeKeyAndOrderFront {
+    [[iTermApplication sharedApplication] it_makeWindowKey:self];
 }
 
 @end

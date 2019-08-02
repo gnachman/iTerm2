@@ -65,6 +65,7 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 @property(nonatomic) BOOL it_characterPanelIsOpen;
 @property(nonatomic, readonly) BOOL it_modalWindowOpen;
 @property(nonatomic, readonly) BOOL it_imeOpen;
+@property(nonatomic, readonly) NSWindow *it_windowBecomingKey;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
@@ -74,5 +75,6 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 - (NSArray<iTermScriptingWindow *> *)orderedScriptingWindows;
 
 - (void)activateAppWithCompletion:(void (^)(void))completion;
+- (void)it_makeWindowKey:(NSWindow *)window;
 
 @end

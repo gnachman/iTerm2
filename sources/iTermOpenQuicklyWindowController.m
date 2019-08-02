@@ -14,6 +14,7 @@
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWindow+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "SolidColorView.h"
@@ -103,7 +104,7 @@
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];
-    [self.window makeKeyAndOrderFront:nil];
+    [self.window it_makeKeyAndOrderFront];
 
     // After the window is rendered, call update which will animate to the new frame.
     [self performSelector:@selector(update) withObject:nil afterDelay:0];

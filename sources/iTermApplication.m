@@ -66,6 +66,10 @@ NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidClose
 
 static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
+@interface iTermApplication()
+@property(nonatomic, retain, readwrite) NSWindow *it_windowBecomingKey;
+@end
+
 @implementation iTermApplication {
     BOOL _it_characterPanelIsOpen;
     BOOL _it_characterPanelShouldOpenSoon;
@@ -553,6 +557,13 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         }
         return open || ([NSDate timeIntervalSinceReferenceDate] < deadlineToOpen);  // keep running while open
     }];
+}
+
+- (void)it_makeWindowKey:(NSWindow *)window {
+    NSWindow *saved = [self.it_windowBecomingKey retain];
+    self.it_windowBecomingKey = window;
+    [window makeKeyAndOrderFront:nil];
+    self.it_windowBecomingKey = [saved autorelease];
 }
 
 @end

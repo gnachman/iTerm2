@@ -463,6 +463,14 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         DLog(@"The key window does not auto-hide the hotkey window: %@", keyWindow);
         return NO;
     }
+
+    NSWindow *keyWindowElect = [[iTermApplication sharedApplication] it_windowBecomingKey];
+    if ([keyWindowElect respondsToSelector:@selector(autoHidesHotKeyWindow)] &&
+        ![keyWindowElect autoHidesHotKeyWindow]) {
+        DLog(@"The key window-elect does not auto-hide the hotkey window: %@", keyWindowElect);
+        return NO;
+    }
+
     NSWindowController *keyWindowController = [keyWindow windowController];
     if ([keyWindowController respondsToSelector:@selector(autoHidesHotKeyWindow)] &&
         ![keyWindowController autoHidesHotKeyWindow]) {
