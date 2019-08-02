@@ -2698,6 +2698,7 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_async(dispatch_get_main_queue(), ^{
         [titleTextField.window makeFirstResponder:titleTextField];
     });
+    [NSApp activateIgnoringOtherApps:YES];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [self.scope setValue:titleTextField.stringValue.length ? titleTextField.stringValue : nil
             forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
@@ -6221,6 +6222,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
     __weak __typeof(self) weakSelf = self;
+    [NSApp activateIgnoringOtherApps:YES];
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
         [weakSelf releaseTabTitleTextFieldDelegate];
         if (returnCode == NSAlertFirstButtonReturn) {

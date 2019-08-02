@@ -9017,6 +9017,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = YES;
 
+    [NSApp activateIgnoringOtherApps:YES];
     [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
         if (result == NSFileHandlingPanelOKButton) {
             [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
