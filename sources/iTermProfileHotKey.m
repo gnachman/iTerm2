@@ -226,7 +226,26 @@ static NSString *const kArrangement = @"Arrangement";
     //
     // It is ok to be leveled below the main menu because the window is always positioned under the
     // menu bar *except* when the menu bar is auto-hidden.
+    //
+    // However, there is an exception for floating panels. iTerm2 does not get activated when you
+    // open a floating panel. That means it does not have the ability to hide the menu bar.
+    // We *want* floating panels to be overlapped by an auto-hiding menu barm, but not by a fixed
+    // menu bar. So use the status window level for them when the menu bar is set to auto-hide.
+    // See issue 7984 for why we want a floating panel hotkey window to overlap the menu bar.
+    //
+    // Mind you, this is all irrelevant if iTerm2's "auto-hide menu bar in non-native full screen"
+    // is turned off. Then the window is just shifted down and the menu bar hangs around.
+    if (self.hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
+        if (![self menuBarAutoHides]) {
+            // Floating panel and fixed menu bar — overlap the menu bar.
+            return NSStatusWindowLevel;
+        }
+    }
     return (NSWindowLevel)(NSMainMenuWindowLevel - 1);
+}
+
+- (BOOL)menuBarAutoHides {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"_HIHideMenuBar"];
 }
 
 - (NSPoint)destinationPointForInitialPoint:(NSPoint)point
