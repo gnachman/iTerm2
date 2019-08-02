@@ -4664,9 +4664,9 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="5049">
-                                                <rect key="frame" x="18" y="18" width="286" height="18"/>
+                                                <rect key="frame" x="18" y="18" width="195" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Update to beta test versions when available" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5065">
+                                                <buttonCell key="cell" type="check" title="Update to Beta test releases" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5065">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
