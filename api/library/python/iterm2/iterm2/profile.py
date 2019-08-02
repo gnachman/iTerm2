@@ -805,7 +805,7 @@ class LocalWriteOnlyProfile:
     def set_custom_directory(self, value: str):
         """Sets the initial working directory.
 
-        The initial_directory_mode must be set to "Yes" for this to take effect.
+        The initial_directory_mode must be set to `InitialWorkingDirectory.INITIAL_WORKING_DIRECTORY_CUSTOM` for this to take effect.
         """
         return self._simple_set("Working Directory", value)
 
@@ -1677,7 +1677,7 @@ class WriteOnlyProfile:
     async def async_set_custom_directory(self, value: str):
         """Sets the initial working directory.
 
-        The initial_directory_mode must be set to "Yes" for this to take effect.
+        The initial_directory_mode must be set to `InitialWorkingDirectory.INITIAL_WORKING_DIRECTORY_CUSTOM` for this to take effect.
 
         :param value: The path to use.
         """
@@ -2698,7 +2698,7 @@ class Profile(WriteOnlyProfile):
     def initial_directory_mode(self):
         """Returns wether to use a custom (not home) initial working directory.
 
-        :returns: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
+        :returns: A value in `InitialWorkingDirectory`.
         """
         return self._simple_get("Custom Directory")
 
@@ -2706,7 +2706,7 @@ class Profile(WriteOnlyProfile):
     def custom_directory(self):
         """Returns the initial working directory.
 
-        The initial_directory_mode must be set to "Yes" for this to take effect.
+        The initial_directory_mode must be set to `InitialWorkingDirectory.INITIAL_WORKING_DIRECTORY_CUSTOM` for this to take effect.
 
         :returns: The specific directory this profile has been set to start in.
         """
