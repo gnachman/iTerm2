@@ -426,6 +426,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
+    BOOL _willClose;
 }
 
 @synthesize scope = _scope;
@@ -3256,6 +3257,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:nil
                                                       userInfo:nil];
     [self didFinishFullScreenTransitionSuccessfully:NO];
+    _willClose = YES;
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification {
@@ -4505,6 +4507,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
+    if (_willClose) {
+        return;
+    }
     NSWindow *oldWindow = self.window;
     oldWindow.delegate = nil;
     [[_contentView retain] autorelease];
@@ -8028,6 +8033,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)updateWindowForWindowType:(iTermWindowType)windowType {
+    if (_willClose) {
+        return;
+    }
     NSRect frame = self.window.frame;
     NSString *title = [[self.window.title copy] autorelease];
     [self replaceWindowWithWindowOfType:windowType];
