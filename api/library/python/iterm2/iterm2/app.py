@@ -407,7 +407,7 @@ class App:
         Sets a user-defined variable in the application.
 
         See the Scripting Fundamentals documentation for more information on user-defined variables.
-        :param name: The variable's name.
+        :param name: The variable's name. Must begin with `user.`.
         :param value: The new value to assign.
 
         :throws: :class:`RPCException` if something goes wrong.
