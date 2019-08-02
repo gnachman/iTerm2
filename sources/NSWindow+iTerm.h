@@ -19,4 +19,9 @@ extern NSString *const iTermWindowAppearanceDidChange;
 @property (nonatomic, readonly) NSArray<__kindof NSTitlebarAccessoryViewController *> *it_titlebarAccessoryViewControllers;
 @property (nonatomic, readonly) NSString *it_styleMaskDescription;
 
+// Use this when making a panel key so it won't dismiss the hotkey window. It works around a problem
+// in Cocoa where windowDidResginKey gets called before the new window is key, which I observed
+// with the open quickly window.
+- (void)it_makeKeyAndOrderFront;
+
 @end
