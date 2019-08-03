@@ -72,6 +72,10 @@
   "php": [
     "php"
   ],
+  "postgres": [
+    "postgres",
+    "psql"
+  ],
   "ruby": [
     "irb",
     "sidekiq",
