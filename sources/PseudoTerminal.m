@@ -427,6 +427,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
     BOOL _willClose;
+    BOOL _updatingWindowType;  // updateWindowType is not reentrant
 }
 
 @synthesize scope = _scope;
@@ -4511,7 +4512,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_willClose) {
         return;
     }
-    NSWindow *oldWindow = self.window;
+    if (newWindowType == _windowType) {
+        return;
+    }
+    NSWindow *oldWindow = [[self.window retain] autorelease];
     oldWindow.delegate = nil;
     [[_contentView retain] autorelease];
     [self setWindowWithWindowType:newWindowType
@@ -8026,10 +8030,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.windowType == _windowType) {
         return;
     }
+    // -updateWindowForWindowType: assigns a new contentView which causes
+    // -viewDidChangeEffectiveAppearance to be called, which eventually calls back into this method.
+    // Then cocoa 💩s when you try to change the content view from within setContentView:.
+    if (_updatingWindowType) {
+        return;
+    }
     assert(_windowType == WINDOW_TYPE_NORMAL || _windowType == WINDOW_TYPE_COMPACT);
     assert(self.windowType == WINDOW_TYPE_NORMAL || self.windowType == WINDOW_TYPE_COMPACT);
 
+    _updatingWindowType = YES;
     [self updateWindowForWindowType:self.windowType];
+    _updatingWindowType = NO;
 
     _windowType = self.windowType;
 }
