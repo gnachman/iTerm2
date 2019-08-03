@@ -85,17 +85,6 @@
     return [NSString stringWithFormat:@"<%@: %p pid=%@>", self.class, self, @(_task.processIdentifier)];
 }
 
-- (void)loadPathForGit {
-    NSString *searchPath = [iTermAdvancedSettingsModel gitSearchPath];
-    if (searchPath.length) {
-        NSMutableDictionary *environment = [[[NSProcessInfo processInfo] environment] mutableCopy];
-        NSString *key = @"PATH";
-        NSString *existingPath = environment[key] ?: @"/usr/bin:/bin:/usr/sbin:/sbin";
-        environment[key] = [NSString stringWithFormat:@"%@:%@", searchPath, existingPath];
-        self.environment = [environment copy];
-    }
-}
-
 - (void)run {
     dispatch_async(_readingQueue, ^{
         [self runSynchronously];

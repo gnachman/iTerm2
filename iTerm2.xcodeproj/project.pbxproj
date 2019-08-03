@@ -2670,6 +2670,8 @@
 		A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */; };
 		A6A802ED226EEAE900BC70DC /* PTYTask+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */; };
 		A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */; };
+		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
+		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55DE217256A600142244 /* iTermLineBlockArray.h */; };
 		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
 		A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */; };
@@ -5489,6 +5491,8 @@
 		A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPrintGuard.m; sourceTree = "<group>"; };
 		A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+MRR.h"; sourceTree = "<group>"; };
 		A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+MRR.m"; sourceTree = "<group>"; };
+		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
+		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AB55DE217256A600142244 /* iTermLineBlockArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLineBlockArray.h; sourceTree = "<group>"; };
 		A6AB55DF217256A600142244 /* iTermLineBlockArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLineBlockArray.m; sourceTree = "<group>"; };
 		A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCumulativeSumCache.h; sourceTree = "<group>"; };
@@ -7665,6 +7669,8 @@
 				A618FFC42245F6A300B8FD88 /* iTermStatusBarActionComponent.m */,
 				5308BF8722828268004BECAC /* iTermStatusBarBatteryComponent.h */,
 				5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */,
+				A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */,
+				A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -9878,6 +9884,7 @@
 				A65D3AE221D16FE200384015 /* iTermBacktraceFrame.h in Headers */,
 				A655E6952066C78700DC21B9 /* iTermScrollAccumulator.h in Headers */,
 				A631FC8D20EDDAEA00EB824F /* iTermSearchFieldCell.h in Headers */,
+				A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */,
 				A638D29D22222B5D001CD688 /* iTermSwiftyStringGraph.h in Headers */,
 				5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */,
 				A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */,
@@ -12305,6 +12312,7 @@
 				A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */,
 				A65D3AE321D16FE200384015 /* iTermBacktraceFrame.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
+				A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
 				537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
