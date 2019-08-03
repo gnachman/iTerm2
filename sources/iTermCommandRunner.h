@@ -37,9 +37,6 @@
 - (void)write:(NSData *)data completion:(void (^)(size_t, int))completion;
 - (void)terminate;
 
-// You can configure a special git path in advanced prefs. Call this to update $PATH.
-- (void)loadPathForGit;
-
 @end
 
 // Saves all data read into output.
