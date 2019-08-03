@@ -197,7 +197,7 @@ DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In minimal tab 
 DEFINE_FLOAT(minimalSplitPaneDividerProminence, 0.15, SECTION_TABS @"In minimal tab style, how prominent should split pane dividers be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
 DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.5, SECTION_TABS @"How prominent should the text in a non-selected tab be when there are colored tabs in a window?\nTakes a value in 0 to 1, the alpha value.");
 DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In the minimal tab style, should the area left of the tab bar be treated as part of the first tab?");
-DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for compact windows with minimal theme.");
+DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for minimal theme.\nThe default is 38. Use 22 to match the compact theme's height.");
 DEFINE_FLOAT(defaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height")
 DEFINE_BOOL(doubleClickTabToEdit, YES, SECTION_TABS @"Should double-clicking a tab open a window to edit its title?");
 DEFINE_FLOAT(minimumTabLabelWidth, 35, SECTION_TABS @"Minimum width for tab labels.\nThe activity/bell icon will be hidden when the space for the label drops below this size (in points)");
