@@ -291,17 +291,23 @@ typedef struct {
 
 - (void)updateImageViewFrame {
     NSRect myFrame = NSInsetRect(self.bounds, 6, 6);
+    myFrame.size.width = MAX(0, myFrame.size.width);
+    myFrame.size.height = MAX(0, myFrame.size.height);
     if (_loremIpsum.image.size.height == 0 || myFrame.size.height == 0) {
         _loremIpsum.frame = myFrame;
     }
     CGFloat imageAspectRatio = _loremIpsum.image.size.width / _loremIpsum.image.size.height;
+    if (imageAspectRatio != imageAspectRatio || _loremIpsum.image.size.height < 1) {
+        _loremIpsum.frame = NSZeroRect;
+        return;
+    }
     CGFloat myAspectRatio = myFrame.size.width / myFrame.size.height;
     if (imageAspectRatio > myAspectRatio) {
         // image is wider
         _loremIpsum.frame = NSMakeRect(myFrame.origin.x,
                                        myFrame.origin.y + myFrame.size.height - (myFrame.size.width / imageAspectRatio),
-                                       myFrame.size.width,
-                                       myFrame.size.width / imageAspectRatio);
+                                       MAX(0, myFrame.size.width),
+                                       MAX(0, myFrame.size.width / imageAspectRatio));
     } else {
         // image is taller
         _loremIpsum.frame = NSMakeRect(myFrame.size.width - (myFrame.size.height * imageAspectRatio),
