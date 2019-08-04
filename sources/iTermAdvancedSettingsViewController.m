@@ -332,7 +332,7 @@ static NSDictionary *gIntrospection;
     textField.editable = YES;
     textField.selectable = YES;
     textField.stringValue = string;
-    textField.bezeled = NO;
+    textField.bezeled = YES;
     textField.drawsBackground = NO;
     textField.usesSingleLineMode = YES;
     [textField sizeToFit];
