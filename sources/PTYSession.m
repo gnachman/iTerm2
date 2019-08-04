@@ -529,6 +529,7 @@ static const NSUInteger kMaxHosts = 100;
 
     // When this is true, changing the font size does not cause the window size to change.
     BOOL _windowAdjustmentDisabled;
+    NSSize _badgeLabelSizeFraction;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -3693,6 +3694,9 @@ ITERM_WEAKLY_REFERENCEABLE
     _badgeFontName = [[iTermProfilePreferences stringForKey:KEY_BADGE_FONT inProfile:aDict] copy];
 
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
+    _badgeLabelSizeFraction = NSMakeSize([iTermProfilePreferences floatForKey:KEY_BADGE_MAX_WIDTH inProfile:aDict],
+                                         [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:aDict]);
+
     // forces the badge to update
     _textview.badgeLabel = @"";
     [self updateBadgeLabel];
@@ -11329,9 +11333,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSSize)badgeLabelSizeFraction {
-    const CGFloat width = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_WIDTH inProfile:self.profile];
-    const CGFloat height = [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:self.profile];
-    return NSMakeSize(width, height);
+    return _badgeLabelSizeFraction;
 }
 
 #pragma mark - iTermCopyModeHandlerDelegate
