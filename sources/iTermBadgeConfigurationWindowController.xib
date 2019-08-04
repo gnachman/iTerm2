@@ -191,7 +191,7 @@ Gw
                     </textField>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vet-fX-Tzt" customClass="BFPCompositeView">
                         <rect key="frame" x="20" y="104" width="440" height="27"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     </customView>
                 </subviews>
             </view>
