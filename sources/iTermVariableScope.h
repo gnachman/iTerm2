@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)stringValueForVariableName:(NSString *)name;
 // Values of NSNull get unset
-- (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
+- (void)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
 
 // nil or NSNull value means unset it.
 // Returns whether it was set. If the value is unchanged, it does not get set.
