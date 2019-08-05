@@ -89,6 +89,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;
++ (double)extraSpaceBeforeCompactTopTabBar;
 + (NSString *)fallbackLCCType;
 + (double)findDelaySeconds;
 

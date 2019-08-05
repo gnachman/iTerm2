@@ -408,6 +408,7 @@ DEFINE_FLOAT(invalidateShadowTimesPerSecond, 15, SECTION_WINDOWS @"How many time
 DEFINE_BOOL(disableWindowShadowWhenTransparencyOnMojave, YES, SECTION_WINDOWS @"Disable the window shadow on Mojave when the window has a transparent session to improve performance.");
 DEFINE_BOOL(disableWindowShadowWhenTransparencyPreMojave, YES, SECTION_WINDOWS @"Disable the window shadow on High Sierra and earlier when the window has a transparent session to prevent text shadows.");
 DEFINE_BOOL(restoreWindowsWithinScreens, YES, SECTION_WINDOWS @"When restoring a window arrangement, ensure windows are entirely within the bounds of the current displays.")
+DEFINE_FLOAT(extraSpaceBeforeCompactTopTabBar, 0, SECTION_WINDOWS @"Amount of extra space (in points) between stoplight buttons and inline tab bar.\nThis only takes effect for the Compact and Minimal themes when the tab bar is visible and located at the top of the window.");
 
 #pragma mark tmux
 

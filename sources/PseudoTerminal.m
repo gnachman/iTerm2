@@ -3871,13 +3871,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
+    const CGFloat stoplightButtonsWidth = 75;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
-                return NSEdgeInsetsMake(0, 75 + iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth, 0, 0);
+                const CGFloat leftInset = (stoplightButtonsWidth +
+                                           iTermRootTerminalViewWindowNumberLabelMargin * 2 +
+                                           iTermRootTerminalViewWindowNumberLabelWidth +
+                                           MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]));
+                return NSEdgeInsetsMake(0,
+                                        leftInset,
+                                        0,
+                                        0);
             } else {
-                // Make room for stoplight buttons when there is not tab title.
-                return NSEdgeInsetsMake(0, 75, 0, 0);
+                // Make room for stoplight buttons when there is no tab title.
+                return NSEdgeInsetsMake(0, stoplightButtonsWidth, 0, 0);
             }
 
         case PSMTab_LeftTab:
