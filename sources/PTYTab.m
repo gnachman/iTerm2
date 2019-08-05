@@ -5602,6 +5602,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"select_pane_in_direction"
+                                            defaultValues:@{}
+                                                    types:@{ @"direction": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(selectPaneInDirectionWithCompletion:direction:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -5610,6 +5619,33 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          title:(NSString *)title {
     [self setTitleOverride:title];
     completion(nil, nil);
+}
+
+- (void)selectPaneInDirectionWithCompletion:(void (^)(id, NSError *))completion
+                                  direction:(NSString *)direction {
+    PTYSession *activeSession = [self activeSession];
+    PTYSession *session;
+    if ([direction isEqualToString:@"left"]) {
+        session = [self sessionLeftOf:activeSession];
+    } else if ([direction isEqualToString:@"right"]) {
+        session = [self sessionRightOf:activeSession];
+    } else if ([direction isEqualToString:@"above"]) {
+        session = [self sessionAbove:activeSession];
+    } else if ([direction isEqualToString:@"below"]) {
+        session = [self sessionBelow:activeSession];
+    } else {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.select-pane-in-direction"
+                                             code:0
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Invalid direction. Should be left, right, above or below." }];
+        completion(nil, error);
+        return;
+    }
+    if (!session) {
+        completion(nil, nil);
+        return;
+    }
+    [self setActiveSession:session];
+    completion(session.guid, nil);
 }
 
 - (iTermVariableScope *)objectScope {
