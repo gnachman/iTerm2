@@ -59,4 +59,8 @@
                                               tabVariables:[[self variablesInScopeNamed:nil] lastObject]];
 }
 
+- (NSString *)tmuxWindowName {
+    return [self valueForVariableName:iTermVariableKeyTabTmuxWindowName];
+}
+
 @end

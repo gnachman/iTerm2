@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSNumber *tmuxWindow;
 @property (nullable, nonatomic, strong) NSString *tabID;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermWindowScope> *window;
+@property (nullable, nonatomic, readonly) NSString *tmuxWindowName;
 
 @end
 
