@@ -14,6 +14,10 @@ NS_INLINE BOOL iscontrol(int c) {
     return c <= 0x1f;
 }
 
+NS_INLINE BOOL isc1(int c) {
+    return c >= 0x84 && c <= 0x9f;
+}
+
 @interface VT100ControlParser : NSObject
 
 // If a DCS hook is present, returns a description of it for debug logging.

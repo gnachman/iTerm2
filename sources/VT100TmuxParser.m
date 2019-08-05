@@ -48,7 +48,9 @@
     return @"[TMUX GATEWAY]";
 }
 
-- (BOOL)handleInput:(iTermParserContext *)context token:(VT100Token *)result {
+- (BOOL)handleInput:(iTermParserContext *)context
+support8BitControlCharacters:(BOOL)support8BitControlCharacters
+              token:(VT100Token *)result {
     int bytesTilNewline = iTermParserNumberOfBytesUntilCharacter(context, '\n');
     if (bytesTilNewline == -1) {
         DLog(@"No newline found.");

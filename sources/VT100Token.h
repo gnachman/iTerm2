@@ -39,6 +39,23 @@ typedef enum {
     VT100CC_US = 31,   // Not used
     VT100CC_DEL = 127, // Backspaces
 
+    VT100CC_C1_IND = 0x84,
+    VT100CC_C1_NEL = 0x85,
+    VT100CC_C1_HTS = 0x88,
+    VT100CC_C1_RI = 0x8d,
+    VT100CC_C1_SS2 = 0x8e,
+    VT100CC_C1_SS3 = 0x8f,
+    VT100CC_C1_DCS = 0x90,
+    VT100CC_C1_SPA = 0x96,
+    VT100CC_C1_EPA = 0x97,
+    VT100CC_C1_SOS = 0x98,
+    VT100CC_C1_DECID = 0x9a,
+    VT100CC_C1_CSI = 0x9b,
+    VT100CC_C1_ST = 0x9c,
+    VT100CC_C1_OSC = 0x9d,
+    VT100CC_C1_PM = 0x9e,
+    VT100CC_C1_APC = 0x9f,
+
     VT100_WAIT = 1000,
     VT100_NOTSUPPORT,
     VT100_SKIP,

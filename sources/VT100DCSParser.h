@@ -17,6 +17,7 @@
 
 // Return YES if it should unhook.
 - (BOOL)handleInput:(iTermParserContext *)context
+support8BitControlCharacters:(BOOL)support8BitControlCharacters
               token:(VT100Token *)result;
 
 @end
@@ -28,7 +29,10 @@ typedef NS_ENUM(NSInteger, DcsTermcapTerminfoRequestName) {
     kDcsTermcapTerminfoRequestTerminfoName
 };
 
-NS_INLINE BOOL isDCS(unsigned char *code, int len) {
+NS_INLINE BOOL isDCS(unsigned char *code, int len, BOOL support8BitControlCharacters) {
+    if (support8BitControlCharacters && len >= 1 && code[0] == VT100CC_C1_DCS) {
+        return YES;
+    }
     return (len >= 2 && code[0] == VT100CC_ESC && code[1] == 'P');
 }
 

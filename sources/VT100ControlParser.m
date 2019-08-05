@@ -71,7 +71,8 @@
                     encoding:(NSStringEncoding)encoding
                   savedState:(NSMutableDictionary *)savedState
                    dcsHooked:(BOOL *)dcsHooked {
-    if (_dcsParser.isHooked || isDCS(datap, datalen)) {
+    const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
+    if (_dcsParser.isHooked || isDCS(datap, datalen, support8BitControlCharacters)) {
         [self parseDCSWithData:datap
                        datalen:datalen
                          rmlen:rmlen
@@ -79,13 +80,14 @@
                       encoding:encoding
                     savedState:savedState];
         *dcsHooked = self.dcsParser.isHooked;
-    } else if (isCSI(datap, datalen)) {
+    } else if (isCSI(datap, datalen, support8BitControlCharacters)) {
         iTermParserContext context = iTermParserContextMake(datap, datalen);
         [VT100CSIParser decodeFromContext:&context
+             support8BitControlCharacters:support8BitControlCharacters
                               incidentals:incidentals
                                     token:token];
         *rmlen = context.rmlen;
-    } else if (isXTERM(datap, datalen)) {
+    } else if (isXTERM(datap, datalen, support8BitControlCharacters)) {
         iTermParserContext context = iTermParserContextMake(datap, datalen);
         [VT100XtermParser decodeFromContext:&context
                                 incidentals:incidentals
@@ -123,6 +125,52 @@
                                          encoding:encoding];
                 }
                 break;
+
+            case VT100CC_C1_IND:
+                if (support8BitControlCharacters) {
+                    token->type = VT100CSI_IND;
+                    *rmlen = 1;
+                    break;
+                }
+                // Fall through
+
+            case VT100CC_C1_NEL:
+                if (support8BitControlCharacters) {
+                    token->type = VT100CSI_NEL;
+                    *rmlen = 1;
+                    break;
+                }
+                // Fall through
+
+            case VT100CC_C1_HTS:
+                if (support8BitControlCharacters) {
+                    token->type = VT100CSI_HTS;
+                    *rmlen = 1;
+                    break;
+                }
+                // Fall through
+
+            case VT100CC_C1_RI:
+                if (support8BitControlCharacters) {
+                    token->type = VT100CSI_RI;
+                    *rmlen = 1;
+                    break;
+                }
+                // Fall through
+
+            case VT100CC_C1_SS2:
+            case VT100CC_C1_SS3:
+            case VT100CC_C1_SPA:
+            case VT100CC_C1_EPA:
+            case VT100CC_C1_SOS:
+            case VT100CC_C1_DECID:
+            case VT100CC_C1_PM:
+                if (support8BitControlCharacters) {
+                    token->type = VT100_NOTSUPPORT;
+                    *rmlen = 1;
+                    break;
+                }
+                // Fall through
 
             default:
                 token->type = *datap;
