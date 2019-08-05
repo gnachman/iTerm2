@@ -410,7 +410,7 @@ NSString *const iTermVariableKeyWindowNumber = @"number";
             DLog(@"Assigned %@ = %@ for %@", name, value, self);
             [self didChangeNonterminalValueWithPath:name];
         } else {
-            DLog(@"Set variable %@ = %@ (%@)", name, value, self);
+            DLog(@"Set variable %@ = %@ (%@)\n%@", name, value, self, [NSThread callStackSymbols]);
             const BOOL wasVariables = [[self valueByUnwrappingWeakVariables:_values[name]] isKindOfClass:[iTermVariables class]];
             _values[name] = [value copy];
             DLog(@"Assigned %@ = %@ for %@", name, value, self);
