@@ -115,6 +115,8 @@
                          inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfVariableNamed:iTermVariableKeyWindowStyle
                          inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowNumber
+                         inContext:iTermVariablesSuggestionContextWindow];
 
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];

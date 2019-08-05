@@ -884,6 +884,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     self.windowInitialized = YES;
     useTransparency_ = [iTermProfilePreferences boolForKey:KEY_INITIAL_USE_TRANSPARENCY inProfile:profile];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
+    [_scope setValue:@(number_ + 1) forVariableNamed:@"number"];
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [self hideMenuBar];
     }
