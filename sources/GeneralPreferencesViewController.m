@@ -113,6 +113,7 @@ enum {
     IBOutlet NSButton *_autoHideTmuxClientSession;
     
     IBOutlet NSButton *_useTmuxProfile;
+    IBOutlet NSButton *_useTmuxStatusBar;
 
     IBOutlet NSTabView *_tabView;
 
@@ -419,6 +420,10 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
     [self defineControl:_useTmuxProfile
                     key:kPreferenceKeyUseTmuxProfile
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_useTmuxStatusBar
+                    key:kPreferenceKeyUseTmuxStatusBar
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 }
