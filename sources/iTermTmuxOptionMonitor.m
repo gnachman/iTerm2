@@ -86,7 +86,9 @@
         return;
     }
     _haveOutstandingRequest = NO;
-    [self.scope setValue:value forVariableNamed:_variableName];
+    if (_variableName) {
+        [self.scope setValue:value forVariableNamed:_variableName];
+    }
     if (_block) {
         _block(value);
     }

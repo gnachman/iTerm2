@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermLSOF.h"
 #import "iTermRateLimitedUpdate.h"
+#import "iTermTmuxOptionMonitor.h"
 
 @implementation iTermWorkingDirectoryPoller {
     iTermRateLimitedUpdate *_pwdPollRateLimit;
@@ -23,6 +24,24 @@
     if (self) {
         _pwdPollRateLimit = [[iTermRateLimitedUpdate alloc] init];
         _pwdPollRateLimit.minimumInterval = 1;
+    }
+    return self;
+}
+
+- (instancetype)initWithTmuxGateway:(TmuxGateway *)gateway
+                              scope:(iTermVariableScope *)scope
+                         windowPane:(int)windowPane {
+    self = [self init];
+    if (self) {
+        __weak __typeof(self) weakSelf = self;
+        _tmuxOptionMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:gateway
+                                                                       scope:scope
+                                                                      format:@"#{pane_current_path}"
+                                                                      target:[NSString stringWithFormat:@"%%%@", @(windowPane)]
+                                                                variableName:nil
+                                                                       block:^(NSString * _Nonnull directory) {
+                                                                           [weakSelf tmuxOptionMonitorDidProduceDirectory:directory];
+                                                                       }];
     }
     return self;
 }
@@ -71,6 +90,10 @@
     DLog(@"polling");
     _okToPollForWorkingDirectoryChange = NO;
     DLog(@"polling");
+    if (_tmuxOptionMonitor) {
+        [_tmuxOptionMonitor updateOnce];
+        return;
+    }
     pid_t pid = [self.delegate workingDirectoryPollerProcessID];
     if (pid == -1) {
         DLog(@"No pid!");
@@ -79,9 +102,13 @@
     __weak __typeof(self) weakSelf = self;
     [iTermLSOF asyncWorkingDirectoryOfProcess:pid block:^(NSString *pwd) {
         DLog(@"Got: %@", pwd);
-        [weakSelf didInferWorkingDirectory:pwd];
-        [weakSelf pollIfNeeded];
+        [weakSelf setDirectory:pwd];
     }];
+}
+
+- (void)setDirectory:(NSString *)directory {
+    [self didInferWorkingDirectory:directory];
+    [self pollIfNeeded];
 }
 
 - (void)didInferWorkingDirectory:(NSString *)pwd {
@@ -89,6 +116,10 @@
         _haveFoundInitialDirectory = YES;
     }
     [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd];
+}
+
+- (void)tmuxOptionMonitorDidProduceDirectory:(NSString *)directory {
+    [self setDirectory:directory];
 }
 
 @end

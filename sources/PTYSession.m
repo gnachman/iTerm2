@@ -5685,10 +5685,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 name = @"client";
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
+                [self replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller];
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
     });
+}
+
+- (void)replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller {
+    _pwdPoller.delegate = nil;
+    [_pwdPoller release];
+
+    _pwdPoller = [[iTermWorkingDirectoryPoller alloc] initWithTmuxGateway:_tmuxController.gateway
+                                                                    scope:self.variablesScope
+                                                               windowPane:self.tmuxPane];
+    _pwdPoller.delegate = self;
+    [_pwdPoller poll];
 }
 
 - (void)installTmuxStatusBarMonitor {

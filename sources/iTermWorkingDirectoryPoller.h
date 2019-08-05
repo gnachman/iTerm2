@@ -9,6 +9,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermTmuxOptionMonitor;
+@class iTermVariableScope;
+@class TmuxGateway;
+
 @protocol iTermWorkingDirectoryPollerDelegate<NSObject>
 - (BOOL)workingDirectoryPollerShouldPoll;
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)path;
@@ -18,6 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermWorkingDirectoryPoller : NSObject
 
 @property (nonatomic, weak) id<iTermWorkingDirectoryPollerDelegate> delegate;
+@property (nonatomic, nullable, strong) iTermTmuxOptionMonitor *tmuxOptionMonitor;
+
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithTmuxGateway:(TmuxGateway *)gateway
+                              scope:(iTermVariableScope *)scope
+                         windowPane:(int)windowPane;
 
 - (void)poll;
 - (void)didReceiveLineFeed;
