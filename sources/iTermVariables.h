@@ -68,6 +68,7 @@ extern NSString *const iTermVariableKeyWindowTitleOverride;
 extern NSString *const iTermVariableKeyWindowID;
 extern NSString *const iTermVariableKeyWindowFrame;
 extern NSString *const iTermVariableKeyWindowStyle;
+extern NSString *const iTermVariableKeyWindowNumber;
 
 @protocol iTermObject;
 @class iTermVariables;
