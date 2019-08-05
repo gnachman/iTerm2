@@ -202,7 +202,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [variables hasLinkToReference:reference path:tail];
 }
 
-- (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict {
+- (void)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict {
     // Transform dict from {name: object} to {owner: {stripped_name: object}}
     NSMutableDictionary<NSValue *, NSMutableDictionary<NSString *, id> *> *valuesByOwner = [NSMutableDictionary dictionary];
     for (NSString *key in dict) {
@@ -217,19 +217,15 @@ NS_ASSUME_NONNULL_BEGIN
         }
         inner[stripped] = object;
     }
-    __block BOOL changed = NO;
     [valuesByOwner enumerateKeysAndObjectsUsingBlock:^(NSValue * _Nonnull ownerValue, NSDictionary<NSString *,id> * _Nonnull setDict, BOOL * _Nonnull stop) {
         iTermVariables *owner = [ownerValue nonretainedObjectValue];
-        if ([owner setValuesFromDictionary:setDict]) {
-            changed = YES;
-        }
+        [owner setValuesFromDictionary:setDict];
     }];
     if ([dict.allValues anyWithBlock:^BOOL(id anObject) {
         return [anObject isKindOfClass:[iTermVariables class]];
     }]) {
         [self resolveDanglingReferences];
     }
-    return changed;
 }
 
 - (BOOL)setValue:(nullable id)value forPath:(NSString *)firstName, ... {

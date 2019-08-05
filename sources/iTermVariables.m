@@ -392,7 +392,7 @@ NSString *const iTermVariableKeyWindowStyle = @"style";
 
     const BOOL changed = ![NSObject object:value isEqualToObject:[self valueByUnwrappingWeakVariables:_values[name]]];
     if (!changed) {
-        return nil;
+        return self;
     }
     iTermVariables *child = [iTermVariables castFrom:value];
     if (child && !weak) {
