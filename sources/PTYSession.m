@@ -9330,7 +9330,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     DLog(@"Current host did change to %@ %@", host, self);
-    const BOOL hadHost = (_currentHost != nil);
+    NSString *previousHostName = _currentHost.hostname;
 
     NSNull *null = [NSNull null];
     NSDictionary *variablesUpdate = @{ iTermVariableKeySessionHostname: host.hostname ?: null,
@@ -9349,7 +9349,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                       path:path
                                        job:self.variablesScope.jobName];
 
-    if (hadHost) {
+    // Ignore changes to username; only update on hostname changes. See issue 8030.
+    if (previousHostName && ![previousHostName isEqualToString:host.hostname]) {
         [self maybeResetTerminalStateOnHostChange:host];
     }
     self.currentHost = host;
@@ -9380,16 +9381,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self offerToTurnOffFocusReportingOnHostChange];
         }
     }
-    if (self.terminal.reportFocus) {
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-        if ([number boolValue]) {
-            self.terminal.reportFocus = NO;
-        } else if (!number) {
-            [self offerToTurnOffFocusReportingOnHostChange];
-        }
-    }
     if (self.terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+        NSNumber *number = [[NSUserDefaults standardUserD
+                             efaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
         if ([number boolValue]) {
             self.terminal.bracketedPasteMode = NO;
         } else if (!number) {
