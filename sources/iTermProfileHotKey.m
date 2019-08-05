@@ -513,7 +513,10 @@ static NSString *const kArrangement = @"Arrangement";
                 break;
 
             case WINDOW_TYPE_LION_FULL_SCREEN:
-                assert(false);
+                [self moveToPreferredScreen];
+                [self fadeIn];
+                DLog(@"WTF WTF WTF WTF");
+//                assert(false);
         }
     } else {
         [self moveToPreferredScreen];
