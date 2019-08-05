@@ -4634,34 +4634,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didExitTraditionalFullScreenMode {
-    NSSize contentSize = [[[self window] contentView] frame].size;
+    NSSize contentSize = self.window.frame.size;
+    NSSize decorationSize = self.windowDecorationSize;
     if (_contentView.shouldShowToolbelt) {
-        contentSize.width -= _contentView.toolbelt.frame.size.width;
+        decorationSize.width += _contentView.toolbelt.frame.size.width;
     }
-    if ([self tabBarShouldBeVisible]) {
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                contentSize.width -= _contentView.leftTabBarWidth;
-                break;
-
-            case PSMTab_TopTab:
-            case PSMTab_BottomTab:
-                contentSize.height -= _contentView.tabBarControl.height;
-                break;
-        }
-    }
-    if ([self haveLeftBorder]) {
-        --contentSize.width;
-    }
-    if ([self haveRightBorder]) {
-        --contentSize.width;
-    }
-    if ([self haveBottomBorder]) {
-        --contentSize.height;
-    }
-    if ([self haveTopBorder]) {
-        --contentSize.height;
-    }
+    contentSize.width -= decorationSize.width;
+    contentSize.height -= decorationSize.height;
 
     [self fitWindowToTabSize:contentSize];
 }
@@ -4938,7 +4917,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (lionFullScreen_) {
             self.window.styleMask = self.styleMask | NSWindowStyleMaskFullScreen;
         } else {
+            NSRect frameBefore = self.window.frame;
             self.window.styleMask = [self styleMask];
+            if (!_fullScreen) {
+                // Changing the style mask can cause the frame to change.
+                [self.window setFrame:frameBefore display:YES];
+            }
         }
         [self repositionWidgets];
     }
