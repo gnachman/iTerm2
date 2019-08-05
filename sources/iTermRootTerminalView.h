@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "SolidColorView.h"
+#import "VT100GridTypes.h"
 
 @class iTermRootTerminalView;
 @class iTermStatusBarViewController;
@@ -49,6 +50,7 @@
 - (BOOL)rootTerminalViewWindowHasFullSizeContentView;
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop;
 - (BOOL)rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden;
+- (VT100GridSize)rootTerminalViewCurrentSessionSize;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
@@ -130,5 +132,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)updateToolbeltProportionsIfNeeded;
 - (void)setToolbeltProportions:(NSDictionary *)proportions;
 - (void)invalidateAutomaticTabBarBackingHiding;
+- (void)setShowsWindowSize:(BOOL)showsWindowSize NS_AVAILABLE_MAC(10_14);
+- (void)windowDidResize;
 
 @end

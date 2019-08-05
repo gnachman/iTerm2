@@ -19,6 +19,7 @@
 #import "iTermDragHandleView.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermPreferences.h"
+#import "iTermWindowSizeView.h"
 #import "iTermStandardWindowButtonsView.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermStoplightHotbox.h"
@@ -96,6 +97,7 @@ typedef struct {
     iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
     iTermGenericStatusBarContainer *_statusBarContainer;
     NSDictionary *_desiredToolbeltProportions;
+    iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -580,6 +582,32 @@ typedef struct {
     if (_desiredToolbeltProportions) {
         [self.toolbelt setProportions:_desiredToolbeltProportions];
         _desiredToolbeltProportions = nil;
+    }
+}
+
+- (void)setShowsWindowSize:(BOOL)showsWindowSize {
+    if (!showsWindowSize) {
+        // Hide
+        [_windowSizeView removeFromSuperview];
+        _windowSizeView = nil;
+        return;
+    }
+
+    // Show
+    if (_windowSizeView) {
+        return;
+    }
+    _windowSizeView = [[iTermWindowSizeView alloc] init];
+    [self addSubview:_windowSizeView];
+    NSRect myBounds = self.bounds;
+    _windowSizeView.frame = NSMakeRect(NSMidX(myBounds), NSMidY(myBounds), 0, 0);
+    _windowSizeView.autoresizingMask = (NSViewMinXMargin | NSViewMaxXMargin | NSViewMinYMargin | NSViewMaxYMargin);
+    [_windowSizeView setWindowSize:[self.delegate rootTerminalViewCurrentSessionSize]];
+}
+
+- (void)windowDidResize {
+    if (@available(macOS 10.14, *)) {
+        [_windowSizeView setWindowSize:[self.delegate rootTerminalViewCurrentSessionSize]];
     }
 }
 
