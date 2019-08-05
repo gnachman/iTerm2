@@ -34,7 +34,10 @@
     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
     VT100Token *token = [[[VT100Token alloc] init] autorelease];
     _context = iTermParserContextMake((unsigned char *)data.bytes, data.length);
-    [VT100CSIParser decodeFromContext:&_context incidentals:&_incidentals token:token];
+    [VT100CSIParser decodeFromContext:&_context
+         support8BitControlCharacters:NO
+                          incidentals:&_incidentals
+                                token:token];
     return token;
 }
 

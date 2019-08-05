@@ -385,4 +385,9 @@
     return _allProfiles;
 }
 
+- (nonnull NSString *)automaticProfileSwitcherSessionName {
+    return @"";
+}
+
+
 @end

@@ -907,6 +907,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetPreferredProxyIcon:(NSString *)value {
 }
 
+- (void)screenDidDetectShell:(NSString *)shell {
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
