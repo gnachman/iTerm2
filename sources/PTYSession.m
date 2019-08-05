@@ -5708,7 +5708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
                                                                          scope:self.variablesScope];
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
-    if ([iTermAdvancedSettingsModel useTmuxStatusBar] ||
+    if ([iTermPreferences boolForKey:kPreferenceKeyUseTmuxStatusBar] ||
         [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
         [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
                                                                                                                   scope:nil
