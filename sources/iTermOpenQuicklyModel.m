@@ -10,6 +10,8 @@
 #import "iTermOpenQuicklyItem.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermVariableScope.h"
+#import "iTermVariableScope+Session.h"
+#import "iTermVariableScope+Tab.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
@@ -116,6 +118,23 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     }
 }
 
+- (NSString *)documentForSession:(PTYSession *)session {
+    NSString *sessionName = session.name;
+    NSString *tabTitle = session.variablesScope.tab.tabTitleOverride;
+    NSString *tmuxWindowName = session.variablesScope.tab.tmuxWindowName;
+    if (tabTitle.length == 0) {
+        tabTitle = tmuxWindowName;
+    }
+    if (tabTitle.length == 0) {
+        return sessionName;
+    }
+    if ([tabTitle containsString:sessionName]) {
+        return tabTitle;
+    } else {
+        return [NSString stringWithFormat:@"%@ — %@", tabTitle, sessionName];
+    }
+}
+
 - (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (PTYSession *session in self.sessions) {
@@ -137,7 +156,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                 item.title = attributedName;
             } else {
                 item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                               value:session.name
+                                                                               value:[self documentForSession:session]
                                                                   highlightedIndexes:nil];
             }
 
@@ -459,7 +478,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     if (session.name) {
         NSMutableArray *nameFeature = [NSMutableArray array];
         score += [self scoreUsingMatcher:matcher
-                               documents:@[ session.name ]
+                               documents:@[ [self documentForSession:session] ]
                               multiplier:kSessionNameMultiplier
                                     name:nil
                                 features:nameFeature
