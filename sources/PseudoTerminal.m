@@ -4540,12 +4540,13 @@ ITERM_WEAKLY_REFERENCEABLE
             [_shortcutAccessoryViewController removeFromParentViewController];
         }
     }
-    self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     [self.window setOpaque:NO];
     self.window.alphaValue = 0;
     if (self.ptyWindow.isCompact) {
         [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
+        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     } else {
+        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         self.window.styleMask = [self styleMask];
         [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
                       display:YES];
@@ -4554,12 +4555,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)willExitTraditionalFullScreenMode {
-    self.windowType = self.savedWindowType;
     if ([PseudoTerminal windowType:self.savedWindowType shouldBeCompactWithSavedWindowType:self.savedWindowType]) {
         [self replaceWindowWithWindowOfType:self.savedWindowType];
+        self.windowType = self.savedWindowType;
     } else {
         // NOTE: Setting the style mask causes the presentation options to be
         // changed (menu/dock hidden) because refreshTerminal gets called.
+        self.windowType = self.savedWindowType;
         self.window.styleMask = [self styleMask];
     }
     [self showMenuBar];
