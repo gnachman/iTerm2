@@ -9899,6 +9899,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
     _lastDirectoryIsUnsuitableForOldPWD = isUnsuitableForOldPWD;
+    if (!isUnsuitableForOldPWD && lastDirectory) {
+        DLog(@"Set path to %@", lastDirectory);
+        self.variablesScope.path = lastDirectory;
+    }
     [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
