@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
                           scope:(iTermVariableScope *)scope
                          format:(NSString *)format
                          target:(NSString *)tmuxTarget
-                   variableName:(NSString *)variableName
+                   variableName:(nullable NSString *)variableName
                           block:(void (^ _Nullable)(NSString *))block NS_DESIGNATED_INITIALIZER;
 
 - (void)updateOnce;
