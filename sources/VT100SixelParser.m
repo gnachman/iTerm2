@@ -45,6 +45,7 @@
 
 // Return YES if it should unhook.
 - (BOOL)handleInput:(iTermParserContext *)context
+support8BitControlCharacters:(BOOL)support8BitControlCharacters
               token:(VT100Token *)result {
     if (!iTermParserCanAdvance(context)) {
         result->type = VT100_WAIT;
@@ -53,18 +54,37 @@
 
     while (iTermParserCanAdvance(context)) {
         // Scan to ST
-        if (iTermParserPeek(context) == VT100CC_ESC) {
-            return [self handleInputBeginningWithEsc:context token:result];
+        switch (iTermParserPeek(context)) {
+            case VT100CC_C1_ST:
+                if (support8BitControlCharacters) {
+                    iTermParserConsume(context);
+                    result->type = DCS_SIXEL;
+                    result.savedData = _accumulator;
+                    return YES;
+                }
+                break;
+            case VT100CC_ESC:
+                return [self handleInputBeginningWithEsc:context token:result];
         }
 
-        int n = iTermParserNumberOfBytesUntilCharacter(context, VT100CC_ESC);
+        // Search for next ESC or ST.
+        int n = -1;
+        if (support8BitControlCharacters) {
+            n = iTermParserNumberOfBytesUntilCharacter(context, VT100CC_C1_ST);
+        }
+        if (n < 0) {
+            n = iTermParserNumberOfBytesUntilCharacter(context, VT100CC_ESC);
+        }
+
         if (n >= 0) {
+            // Handle input up to the next ESC or ST.
             [self handleInputOfLength:n
                               context:context
                                 token:result];
             continue;
         }
 
+        // There is no forthcoming ESC or ST. Handle all the input.
         [self handleInputOfLength:iTermParserLength(context)
                           context:context
                             token:result];
@@ -78,13 +98,18 @@
     iTermParserConsume(context);
     unsigned char c;
     const BOOL consumed = iTermParserTryConsume(context, &c);
-    if (!consumed || c != '\\') {
+    if (!consumed) {
         iTermParserBacktrack(context);
         result->type = VT100_WAIT;
         return NO;
     }
-    result->type = DCS_SIXEL;
+    if (c != '\\') {
+        // esc + something unexpected. Broken sequence.
+        result->type = VT100_NOTSUPPORT;
+        return YES;
+    }
 
+    result->type = DCS_SIXEL;
     result.savedData = _accumulator;
     return YES;
 }

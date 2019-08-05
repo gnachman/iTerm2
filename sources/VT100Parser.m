@@ -76,16 +76,19 @@
         }
     } else {
         int rmlen = 0;
+        const NSStringEncoding encoding = self.encoding;
+        const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
+        
         if (isAsciiString(datap) && !_dcsHooked) {
-            ParseString(datap, datalen, &rmlen, token, self.encoding);
+            ParseString(datap, datalen, &rmlen, token, encoding);
             position = datap;
-        } else if (iscontrol(datap[0]) || _dcsHooked) {
+        } else if (iscontrol(datap[0]) || _dcsHooked || (support8BitControlCharacters && isc1(datap[0]))) {
             [_controlParser parseControlWithData:datap
                                          datalen:datalen
                                            rmlen:&rmlen
                                      incidentals:vector
                                            token:token
-                                        encoding:self.encoding
+                                        encoding:encoding
                                       savedState:_savedStateForPartialParse
                                        dcsHooked:&_dcsHooked];
             if (token->type != VT100_WAIT) {
@@ -103,8 +106,8 @@
 
                 case DCS_TMUX_CODE_WRAP: {
                     VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
-                    tempParser.encoding = self.encoding;
-                    NSData *data = [token.string dataUsingEncoding:self.encoding];
+                    tempParser.encoding = encoding;
+                    NSData *data = [token.string dataUsingEncoding:encoding];
                     [tempParser putStreamData:data.bytes length:data.length];
                     [tempParser addParsedTokensToVector:vector];
                     break;
@@ -123,8 +126,8 @@
             }
             position = datap;
         } else {
-            if (isString(datap, self.encoding)) {
-                ParseString(datap, datalen, &rmlen, token, self.encoding);
+            if (isString(datap, encoding)) {
+                ParseString(datap, datalen, &rmlen, token, encoding);
                 // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
                 if (token->type != VT100_WAIT && rmlen == 0) {
                     token->type = VT100_UNKNOWNCHAR;

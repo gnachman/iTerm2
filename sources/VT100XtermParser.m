@@ -120,8 +120,14 @@ typedef enum {
 //   ESC <anything else>  Fails
 //   File= KVP code       Finish prior to true end of OSC
 //   CAN or SUB           Fails
+//
+// When 8-bit control sequences are supported, the following behaviors are added:
+//   C1 ST                Finished parsing
+//   C1 OSC               This is ignored
+//   Other C1 codes       Fails
 // Other characters are appended to |data|.
 + (iTermXtermParserState)parseNextCharsInStringFromContext:(iTermParserContext *)context
+                              support8BitControlCharacters:(BOOL)support8BitControlCharacters
                                                       data:(NSMutableData *)data
                                                       mode:(int)mode {
     iTermXtermParserState nextState = kXtermParserParsingStringState;
@@ -171,6 +177,39 @@ typedef enum {
                 case VT100CC_BEL:
                     nextState = kXtermParserFinishedState;
                     break;
+
+                case VT100CC_C1_ST:
+                    if (support8BitControlCharacters) {
+                        nextState = kXtermParserFinishedState;
+                        break;
+                    }
+                    // fall through
+                case VT100CC_C1_OSC:
+                    if (support8BitControlCharacters) {
+                        append = NO;
+                        nextState = kXtermParserParsingStringState;
+                        break;
+                    }
+                    // fall through
+                case VT100CC_C1_IND:
+                case VT100CC_C1_NEL:
+                case VT100CC_C1_HTS:
+                case VT100CC_C1_RI:
+                case VT100CC_C1_SS2:
+                case VT100CC_C1_SS3:
+                case VT100CC_C1_DCS:
+                case VT100CC_C1_SPA:
+                case VT100CC_C1_EPA:
+                case VT100CC_C1_SOS:
+                case VT100CC_C1_DECID:
+                case VT100CC_C1_CSI:
+                case VT100CC_C1_PM:
+                case VT100CC_C1_APC:
+                    if (support8BitControlCharacters) {
+                        nextState = kXtermParserFailedState;
+                        break;
+                    }
+                    // fall through
 
                 default:
                     nextState = kXtermParserParsingStringState;
@@ -256,6 +295,7 @@ typedef enum {
     int mode = 0;
     iTermXtermParserState state = kXtermParserParsingModeState;
     BOOL multitokenHeaderEmitted = NO;
+    BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
 
     if (savedState.count) {
         data = savedState[kXtermParserSavedStateDataKey];
@@ -265,9 +305,22 @@ typedef enum {
         state = [savedState[kXtermParserSavedStateStateKey] intValue];
         multitokenHeaderEmitted = [savedState[kXtermParserMultitokenHeaderEmittedkey] boolValue];
     } else {
-        iTermParserConsumeOrDie(context, VT100CC_ESC);
-        // 99% of the time the next byte is a ], but it could be a _ which is APC (used by tmux).
-        if (iTermParserConsume(context) == '_') {
+        unsigned char peek = iTermParserPeek(context);
+        BOOL apc = NO;
+        if (support8BitControlCharacters && (peek == VT100CC_C1_OSC ||
+                                             peek == VT100CC_C1_APC)) {
+            if (peek == VT100CC_C1_APC) {
+                apc = YES;
+            }
+            iTermParserConsume(context);
+        } else {
+            iTermParserConsumeOrDie(context, VT100CC_ESC);
+            // 99% of the time the next byte is a ], but it could be a _ which is APC (used by tmux).
+            if (iTermParserConsume(context) == '_') {
+                apc = YES;
+            }
+        }
+        if (apc) {
             mode = kAPCMode;
             state = kXtermParserParsingStringState;
         }
@@ -288,7 +341,9 @@ typedef enum {
                 break;
 
             case kXtermParserParsingStringState:
-                state = [self parseNextCharsInStringFromContext:context data:data mode:mode];
+                state = [self parseNextCharsInStringFromContext:context
+                                   support8BitControlCharacters:support8BitControlCharacters
+                                                           data:data mode:mode];
                 break;
 
             case kXtermParserHeaderEndState:
@@ -304,7 +359,10 @@ typedef enum {
                 break;
 
             case kXtermParserFailingState:
-                state = [self parseNextCharsInStringFromContext:context data:nil mode:0];
+                state = [self parseNextCharsInStringFromContext:context
+                                   support8BitControlCharacters:support8BitControlCharacters
+                                                           data:nil
+                                                           mode:0];
 
                 // Convert success states into failure states.
                 if (state == kXtermParserFinishedState) {

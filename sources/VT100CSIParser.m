@@ -41,6 +41,7 @@ static int32_t SetPrefixByteInPackedCommand(int32_t command, unsigned char c) {
 // then NO is returned. If all is well, YES is returned and parsing can
 // continue. Non-canceling control characters are appended to |incidentals|
 static BOOL AdvanceAndEatControlChars(iTermParserContext *context,
+                                      BOOL support8BitControlCharacters,
                                       CVector *incidentals) {
     // First, advance if possible.
     iTermParserTryAdvance(context);
@@ -70,6 +71,17 @@ static BOOL AdvanceAndEatControlChars(iTermParserContext *context,
             case VT100CC_ESC:
                 return NO;
 
+            case VT100CC_C1_ST:
+            case VT100CC_C1_CSI:
+            case VT100CC_C1_SOS:
+            case VT100CC_C1_PM:
+            case VT100CC_C1_APC:
+            case VT100CC_C1_DCS:
+                if (support8BitControlCharacters) {
+                    return NO;
+                }
+                // fall through
+
             default:
                 if (c >= 0x20) {
                     return YES;
@@ -90,14 +102,23 @@ static void CSIParamInitialize(CSIParam *param) {
     }
 }
 
-static BOOL ParseCSIPrologue(iTermParserContext *context, CVector *incidentals) {
-    iTermParserConsumeOrDie(context, VT100CC_ESC);
-    assert(iTermParserCanAdvance(context));
-    assert(iTermParserPeek(context) == '[');
-    return AdvanceAndEatControlChars(context, incidentals);
+static BOOL ParseCSIPrologue(iTermParserContext *context, BOOL support8BitControlCharacters, CVector *incidentals) {
+    if (support8BitControlCharacters && iTermParserPeek(context) == VT100CC_C1_CSI) {
+        // Do nothing, will advance on next statement after the if.
+    } else {
+        iTermParserConsumeOrDie(context, VT100CC_ESC);
+        assert(iTermParserCanAdvance(context));
+        assert(iTermParserPeek(context) == '[');
+    }
+    return AdvanceAndEatControlChars(context,
+                                     support8BitControlCharacters,
+                                     incidentals);
 }
 
-static BOOL ParseCSIPrefix(iTermParserContext *context, CVector *incidentals, CSIParam *param) {
+static BOOL ParseCSIPrefix(iTermParserContext *context,
+                           BOOL support8BitControlCharacters,
+                           CVector *incidentals,
+                           CSIParam *param) {
     // Now we parse Parameter Bytes (ECMA-48, 5.4 - (b))
     //
     // CSI P...P I...I F
@@ -138,7 +159,7 @@ static BOOL ParseCSIPrefix(iTermParserContext *context, CVector *incidentals, CS
             case '>':
             case '?':
                 param->cmd = SetPrefixByteInPackedCommand(param->cmd, c);
-                if (!AdvanceAndEatControlChars(context, incidentals)) {
+                if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                     return NO;
                 }
                 break;
@@ -151,6 +172,7 @@ static BOOL ParseCSIPrefix(iTermParserContext *context, CVector *incidentals, CS
 }
 
 static BOOL ParseCSIParameters(iTermParserContext *context,
+                               BOOL support8BitControlCharacters,
                                CVector *incidentals,
                                CSIParam *param,
                                BOOL *unrecognized) {
@@ -180,7 +202,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                         *unrecognized = YES;
                     }
                     n = n * 10 + (c - '0');
-                    if (!AdvanceAndEatControlChars(context, incidentals)) {
+                    if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                         return NO;
                     }
                 }
@@ -219,7 +241,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 // reset the parameter flag
                 readNumericParameter = NO;
 
-                if (!AdvanceAndEatControlChars(context, incidentals)) {
+                if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                     return NO;
                 }
                 break;
@@ -250,7 +272,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 //
                 // In this usage, ":" are certainly treated as sub-parameter separators.
                 isSub = YES;
-                if (!AdvanceAndEatControlChars(context, incidentals)) {
+                if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                     return NO;
                 }
                 break;
@@ -258,7 +280,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
             default:
                 // '<', '=', '>', or '?'
                 *unrecognized = YES;
-                if (!AdvanceAndEatControlChars(context, incidentals)) {
+                if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                     return NO;
                 }
                 break;
@@ -269,6 +291,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
 }
 
 static BOOL ParseCSIIntermediate(iTermParserContext *context,
+                                 BOOL support8BitControlCharacters,
                                  CVector *incidentals,
                                  CSIParam *param) {
     // Now we parse intermediate bytes (ECMA-48, 5.4 - (c))
@@ -280,14 +303,17 @@ static BOOL ParseCSIIntermediate(iTermParserContext *context,
     unsigned char c;
     while (iTermParserTryPeek(context, &c) && c >= 0x20 && c <= 0x2f) {
         param->cmd = SetIntermediateByteInPackedCommand(param->cmd, c);
-        if (!AdvanceAndEatControlChars(context, incidentals)) {
+        if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
             return NO;
         }
     }
     return YES;
 }
 
-static BOOL ParseCSIGarbage(iTermParserContext *context, CVector *incidentals, BOOL *unrecognized) {
+static BOOL ParseCSIGarbage(iTermParserContext *context,
+                            BOOL support8BitControlCharacters,
+                            CVector *incidentals,
+                            BOOL *unrecognized) {
     // compatibility HACK:
     //
     // CSI P...P I...I (G...G) F
@@ -306,7 +332,7 @@ static BOOL ParseCSIGarbage(iTermParserContext *context, CVector *incidentals, B
                 // a character in the range [0x20,0x3f] occur after an 0x7f.
                 *unrecognized = YES;
             }
-            if (!AdvanceAndEatControlChars(context, incidentals)) {
+            if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                 return NO;
             }
         }
@@ -332,7 +358,10 @@ static void ParseCSIFinal(iTermParserContext *context, CSIParam *param, BOOL *un
     }
 }
 
-static void ParseCSISequence(iTermParserContext *context, CSIParam *param, CVector *incidentals) {
+static void ParseCSISequence(iTermParserContext *context,
+                             BOOL support8BitControlCharacters,
+                             CSIParam *param,
+                             CVector *incidentals) {
     // A CSI sequence consists of a prefix byte, zero or more parameters (optionally with sub-
     // parameters), zero or more intermediate bytes, and a final byte.
     //
@@ -365,11 +394,11 @@ static void ParseCSISequence(iTermParserContext *context, CSIParam *param, CVect
 
     CSIParamInitialize(param);
 
-    if (ParseCSIPrologue(context, incidentals) &&
-        ParseCSIPrefix(context, incidentals, param) &&
-        ParseCSIParameters(context, incidentals, param, &unrecognized) &&
-        ParseCSIIntermediate(context, incidentals, param) &&
-        ParseCSIGarbage(context, incidentals, &unrecognized)) {
+    if (ParseCSIPrologue(context, support8BitControlCharacters, incidentals) &&
+        ParseCSIPrefix(context, support8BitControlCharacters, incidentals, param) &&
+        ParseCSIParameters(context, support8BitControlCharacters, incidentals, param, &unrecognized) &&
+        ParseCSIIntermediate(context, support8BitControlCharacters, incidentals, param) &&
+        ParseCSIGarbage(context, support8BitControlCharacters, incidentals, &unrecognized)) {
         ParseCSIFinal(context, param, &unrecognized);
     } else {
         param->cmd = INVALID_CSI_CMD;
@@ -664,12 +693,13 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
 }
 
 + (void)decodeFromContext:(iTermParserContext *)context
+support8BitControlCharacters:(BOOL)support8BitControlCharacters
               incidentals:(CVector *)incidentals
                     token:(VT100Token *)result {
     CSIParam *param = result.csi;
     iTermParserContext savedContext = *context;
 
-    ParseCSISequence(context, param, incidentals);
+    ParseCSISequence(context, support8BitControlCharacters, param, incidentals);
     SetCSITypeAndDefaultParameters(param, result);
     if (result->type == VT100_WAIT) {
         *context = savedContext;
