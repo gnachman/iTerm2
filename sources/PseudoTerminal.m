@@ -5145,9 +5145,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        savedWindowType:self.savedWindowType
                                                       hotkeyWindowType:_hotkeyWindowType];
     }
-    self.windowType = self.savedWindowType;
+    const iTermWindowType desiredWindowType = self.savedWindowType;
+    [self updateWindowForWindowType:desiredWindowType];
+    self.windowType = desiredWindowType;
     [self didChangeAnyFullScreen];
-    [self updateWindowForWindowType:self.windowType];
 
     [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
