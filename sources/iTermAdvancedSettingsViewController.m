@@ -35,6 +35,9 @@ static char iTermAdvancedSettingsTableKey;
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
     if (@available(macOS 10.14, *)) {
+        if (self.editable) {
+            return;
+        }
         switch (backgroundStyle) {
             case NSBackgroundStyleNormal:
                 self.textColor = [NSColor labelColor];
