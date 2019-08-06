@@ -16,7 +16,7 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
-  return [NSColor whiteColor];
+    return selected ? [NSColor blackColor] : [NSColor whiteColor];
 }
 
 - (NSColor *)accessoryTextColor {
@@ -24,7 +24,7 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-  CGFloat value = !selected ? 0.20 : 0.03;
+  CGFloat value = selected ? 0.80 : 0.03;
   if (selected) {
     value += highlightAmount * 0.05;
   }
