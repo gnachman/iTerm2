@@ -12,12 +12,15 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermProfilePreferences.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
+#import "PTYSession.h"
 
 @implementation PTYSession (ARC)
 
 - (void)fetchAutoLogFilenameSynchronously:(BOOL)synchronous
                                completion:(void (^)(NSString *filename))completion {
+    [self setTermIDIfPossible];
     if (![self.profile[KEY_AUTOLOG] boolValue]) {
         completion(nil);
         return;
@@ -49,6 +52,13 @@
         DLog(@"Using autolog filename %@ from format %@", filename, format);
         completion(filename);
     }];
+}
+
+- (void)setTermIDIfPossible {
+    if (self.delegate.tabNumberForItermSessionId >= 0) {
+        [self.variablesScope setValue:[self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]
+                     forVariableNamed:iTermVariableKeySessionTermID];
+    }
 }
 
 @end

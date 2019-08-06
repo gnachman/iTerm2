@@ -749,9 +749,6 @@ static const NSUInteger kMaxHosts = 100;
                                                 [weakSelf useStringForFind:notification.string];
                                             }];
 
-        [self.variablesScope setValue:[self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]
-                     forVariableNamed:iTermVariableKeySessionTermID];
-
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
@@ -1825,7 +1822,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didMoveSession {
-    [self.variablesScope setValue:self.sessionId forVariableNamed:iTermVariableKeySessionTermID];
+    // TODO: Is it really desirable to update this? It'll get out of sync with the environment variable & autolog filename.
+    [self setTermIDIfPossible];
 }
 
 - (void)triggerDidChangeNameTo:(NSString *)newName {
@@ -3857,6 +3855,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                windowPane:self.tmuxPane
                                   session:self];
     }
+    BOOL needsTermID = (_delegate == nil);
     _delegate = delegate;
     if ([self isTmuxClient]) {
         [_tmuxController registerSession:self
@@ -3869,6 +3868,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:[delegate sessionTabVariables]
                  forVariableNamed:iTermVariableKeySessionTab
                              weak:YES];
+    if (needsTermID) {
+        [self setTermIDIfPossible];
+    }
 }
 
 - (NSString *)name {
