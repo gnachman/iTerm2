@@ -506,6 +506,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
 @property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
+@property(nonatomic, readonly) NSString *sessionId;
 
 #pragma mark - methods
 

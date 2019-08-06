@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchAutoLogFilenameSynchronously:(BOOL)synchronous
                                completion:(void (^)(NSString *filename))completion;
+- (void)setTermIDIfPossible;
 
 @end
 
