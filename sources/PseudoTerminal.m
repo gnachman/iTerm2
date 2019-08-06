@@ -5167,6 +5167,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
+
+    // Windows forget their collection behavior when exiting full screen when the app is a LSUIElement. Issue 8048.
+    if ([[iTermApplication sharedApplication] isUIElement]) {
+        self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
+    }
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
