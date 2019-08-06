@@ -148,6 +148,13 @@ class Window:
         return session
 
     @property
+    def window_number(self) -> int:
+        """
+        :returns: The window's number. When less than 10, this is the number part of the shortcut to switch to the window.
+        """
+        return self.__number
+
+    @property
     def window_id(self) -> str:
         """
         :returns: the window's unique identifier.
