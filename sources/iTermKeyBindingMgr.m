@@ -669,10 +669,10 @@ exit:
 
     // parse the mapping
     retCode = [[theKeyMapping objectForKey: @"Action"] intValue];
-    if(text != nil)
+    if (text != nil) {
         *text = [theKeyMapping objectForKey: @"Text"];
-
-    return (retCode);
+    }
+    return retCode;
 }
 
 + (void)_loadGlobalKeyMap {
