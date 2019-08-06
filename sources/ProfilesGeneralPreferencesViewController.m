@@ -215,7 +215,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     _customCommand.hidden = YES;
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
-                   displayName:@"Profile customc ommand"
+                   displayName:@"Profile custom ommand"
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL {
         __strong __typeof(weakSelf) strongSelf = self;
