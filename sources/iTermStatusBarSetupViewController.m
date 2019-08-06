@@ -148,7 +148,10 @@ NS_ASSUME_NONNULL_BEGIN
 
     _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
     [_destinationViewController setLayout:_layout];
-
+    __weak __typeof(self) weakSelf = self;
+    _destinationViewController.onChange = ^{
+        [weakSelf apply];
+    };
     [self setFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
     [self initializeColorWell:_separatorColorWell
                    withAction:@selector(noop:)
@@ -264,6 +267,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)ok:(id)sender {
     _ok = YES;
     [self endSheet];
+}
+
+- (void)apply {
+    if (self.applyBlock) {
+        self.applyBlock(self.layoutDictionary);
+    }
 }
 
 - (IBAction)cancel:(id)sender {

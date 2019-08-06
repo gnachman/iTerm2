@@ -17,6 +17,7 @@
 @property (nonatomic, strong) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 @property (nonatomic, strong) NSColor *defaultBackgroundColor;
 @property (nonatomic, strong) NSColor *defaultTextColor;
+@property (nonatomic, copy) void (^onChange)(void);
 
 - (void)setLayout:(iTermStatusBarLayout *)layout;
 - (NSDictionary *)layoutDictionary;

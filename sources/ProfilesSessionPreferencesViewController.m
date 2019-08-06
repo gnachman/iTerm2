@@ -350,20 +350,23 @@
                                                                                                                     isFirstResponder:YES
                                                                                                                          dimOnlyText:[self boolForKey:kPreferenceKeyDimOnlyText]
                                                                                                                adjustedDimmingAmount:0];
+    __weak __typeof(self) weakSelf = self;
+    _statusBarSetupViewController.applyBlock = ^(NSDictionary *layoutDictionary) {
+        [weakSelf setObject:layoutDictionary forKey:KEY_STATUS_BAR_LAYOUT];
+    };
 
     _statusBarSetupWindow =
         [[iTermStatusBarSetupPanel alloc] initWithContentRect:_statusBarSetupViewController.view.frame
                                                     styleMask:NSWindowStyleMaskResizable
                                                       backing:NSBackingStoreBuffered
                                                         defer:NO];
+    NSDictionary *savedLayoutDictionary = [_statusBarSetupViewController.layoutDictionary copy];
     _statusBarSetupWindow.contentView = _statusBarSetupViewController.view;
-    __weak __typeof(self) weakSelf = self;
     [self.view.window beginSheet:_statusBarSetupWindow completionHandler:^(NSModalResponse returnCode) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (strongSelf) {
-            if (strongSelf->_statusBarSetupViewController.ok) {
-                [strongSelf setObject:strongSelf->_statusBarSetupViewController.layoutDictionary
-                               forKey:KEY_STATUS_BAR_LAYOUT];
+            if (!strongSelf->_statusBarSetupViewController.ok) {
+                [strongSelf setObject:savedLayoutDictionary forKey:KEY_STATUS_BAR_LAYOUT];
             }
             strongSelf->_statusBarSetupWindow = nil;
             strongSelf->_statusBarSetupViewController = nil;

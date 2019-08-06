@@ -111,6 +111,7 @@
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView deleteItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
+    [self didChange];
 }
 
 - (void)autoRainbowWithDarkBackground:(BOOL)darkBackground {
@@ -125,6 +126,7 @@
         [component statusBarComponentSetKnobValues:knobValues];
         h += stride;
     }];
+    [self didChange];
 }
 
 - (NSCollectionView *)collectionView {
@@ -140,6 +142,7 @@
     _advancedConfiguration = advancedConfiguration;
     iTermStatusBarLayout *temporaryLayout = [[iTermStatusBarLayout alloc] initWithDictionary:[self layoutDictionary] scope:nil];
     [self loadElementsFromLayout:temporaryLayout];
+    [self didChange];
 }
 
 - (void)loadElementsFromLayout:(iTermStatusBarLayout *)layout {
@@ -183,6 +186,12 @@
     [self collectionView:self.collectionView didSelectItemsAtIndexPaths:indexPaths];
     if (_configureButton.enabled) {
         [_configureButton.target it_performNonObjectReturningSelector:_configureButton.action withObject:_configureButton];
+    }
+}
+
+- (void)didChange {
+    if (self.onChange) {
+        self.onChange();
     }
 }
 
@@ -340,6 +349,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     @catch (NSException *exception) {
         return NO;
     }
+    [self didChange];
     return YES;
 }
 
@@ -351,6 +361,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     [indexPaths enumerateObjectsUsingBlock:^(NSIndexPath * _Nonnull indexPath, BOOL * _Nonnull stop) {
         [[collectionView itemAtIndexPath:indexPath] setHighlightState:highlightState];
     }];
+    [self didChange];
 }
 
 - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldSelectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
@@ -394,6 +405,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
+    [self didChange];
 }
 
 #pragma mark - Actions
