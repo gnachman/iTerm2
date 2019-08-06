@@ -112,7 +112,11 @@ CF_EXTERN_C_BEGIN
 @class ITMProfileChangeRequest;
 @class ITMProfileChangedNotification;
 @class ITMProfileProperty;
+@class ITMPromptMonitorRequest;
 @class ITMPromptNotification;
+@class ITMPromptNotificationCommandEnd;
+@class ITMPromptNotificationCommandStart;
+@class ITMPromptNotificationPrompt;
 @class ITMRPCRegistrationRequest;
 @class ITMRPCRegistrationRequest_RPCArgument;
 @class ITMRPCRegistrationRequest_RPCArgumentSignature;
@@ -273,6 +277,22 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMVariableScope_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMPromptMonitorMode
+
+typedef GPB_ENUM(ITMPromptMonitorMode) {
+  ITMPromptMonitorMode_Prompt = 1,
+  ITMPromptMonitorMode_CommandStart = 2,
+  ITMPromptMonitorMode_CommandEnd = 3,
+};
+
+GPBEnumDescriptor *ITMPromptMonitorMode_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMPromptMonitorMode_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMInvokeFunctionResponse_Status
 
@@ -3430,6 +3450,21 @@ typedef GPB_ENUM(ITMProfileChangeRequest_FieldNumber) {
 
 @end
 
+#pragma mark - ITMPromptMonitorRequest
+
+typedef GPB_ENUM(ITMPromptMonitorRequest_FieldNumber) {
+  ITMPromptMonitorRequest_FieldNumber_ModesArray = 1,
+};
+
+@interface ITMPromptMonitorRequest : GPBMessage
+
+// |modesArray| contains |ITMPromptMonitorMode|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *modesArray;
+/** The number of items in @c modesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger modesArray_Count;
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
@@ -3441,6 +3476,7 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_VariableMonitorRequest = 6,
   ITMNotificationRequest_FieldNumber_ProfileChangeRequest = 7,
   ITMNotificationRequest_FieldNumber_KeystrokeFilterRequest = 8,
+  ITMNotificationRequest_FieldNumber_PromptMonitorRequest = 9,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
@@ -3450,6 +3486,7 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_VariableMonitorRequest = 6,
   ITMNotificationRequest_Arguments_OneOfCase_ProfileChangeRequest = 7,
   ITMNotificationRequest_Arguments_OneOfCase_KeystrokeFilterRequest = 8,
+  ITMNotificationRequest_Arguments_OneOfCase_PromptMonitorRequest = 9,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -3484,6 +3521,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMProfileChangeRequest *profileChangeRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeFilterRequest *keystrokeFilterRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPromptMonitorRequest *promptMonitorRequest;
 
 @end
 
@@ -3746,10 +3785,61 @@ typedef GPB_ENUM(ITMScreenUpdateNotification_FieldNumber) {
 
 @end
 
+#pragma mark - ITMPromptNotificationPrompt
+
+typedef GPB_ENUM(ITMPromptNotificationPrompt_FieldNumber) {
+  ITMPromptNotificationPrompt_FieldNumber_Placeholder = 1,
+};
+
+@interface ITMPromptNotificationPrompt : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *placeholder;
+/** Test to see if @c placeholder has been set. */
+@property(nonatomic, readwrite) BOOL hasPlaceholder;
+
+@end
+
+#pragma mark - ITMPromptNotificationCommandStart
+
+typedef GPB_ENUM(ITMPromptNotificationCommandStart_FieldNumber) {
+  ITMPromptNotificationCommandStart_FieldNumber_Command = 1,
+};
+
+@interface ITMPromptNotificationCommandStart : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** Test to see if @c command has been set. */
+@property(nonatomic, readwrite) BOOL hasCommand;
+
+@end
+
+#pragma mark - ITMPromptNotificationCommandEnd
+
+typedef GPB_ENUM(ITMPromptNotificationCommandEnd_FieldNumber) {
+  ITMPromptNotificationCommandEnd_FieldNumber_Status = 1,
+};
+
+@interface ITMPromptNotificationCommandEnd : GPBMessage
+
+@property(nonatomic, readwrite) int32_t status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
+
 #pragma mark - ITMPromptNotification
 
 typedef GPB_ENUM(ITMPromptNotification_FieldNumber) {
   ITMPromptNotification_FieldNumber_Session = 1,
+  ITMPromptNotification_FieldNumber_Prompt = 2,
+  ITMPromptNotification_FieldNumber_CommandStart = 3,
+  ITMPromptNotification_FieldNumber_CommandEnd = 4,
+};
+
+typedef GPB_ENUM(ITMPromptNotification_Event_OneOfCase) {
+  ITMPromptNotification_Event_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMPromptNotification_Event_OneOfCase_Prompt = 2,
+  ITMPromptNotification_Event_OneOfCase_CommandStart = 3,
+  ITMPromptNotification_Event_OneOfCase_CommandEnd = 4,
 };
 
 @interface ITMPromptNotification : GPBMessage
@@ -3758,7 +3848,20 @@ typedef GPB_ENUM(ITMPromptNotification_FieldNumber) {
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
 
+@property(nonatomic, readonly) ITMPromptNotification_Event_OneOfCase eventOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotificationPrompt *prompt;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotificationCommandStart *commandStart;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotificationCommandEnd *commandEnd;
+
 @end
+
+/**
+ * Clears whatever value was set for the oneof 'event'.
+ **/
+void ITMPromptNotification_ClearEventOneOfCase(ITMPromptNotification *message);
 
 #pragma mark - ITMLocationChangeNotification
 

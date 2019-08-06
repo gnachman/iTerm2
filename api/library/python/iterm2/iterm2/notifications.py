@@ -141,7 +141,7 @@ async def async_subscribe_to_screen_update_notification(connection, callback, se
         callback,
         session=session)
 
-async def async_subscribe_to_prompt_notification(connection, callback, session=None):
+async def async_subscribe_to_prompt_notification(connection, callback, session, modes):
     """
     Registers a callback to be run when a shell prompt is received.
 
@@ -149,6 +149,7 @@ async def async_subscribe_to_prompt_notification(connection, callback, session=N
     :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.PromptNotification.
     :param session: The session to monitor, or None.
+    :param modes: The modes to subscribe to.
 
     :returns: A token that can be passed to unsubscribe.
     """
@@ -157,7 +158,8 @@ async def async_subscribe_to_prompt_notification(connection, callback, session=N
         True,
         iterm2.api_pb2.NOTIFY_ON_PROMPT,
         callback,
-        session=session)
+        session=session,
+        prompt_monitor_modes=modes)
 
 async def async_subscribe_to_custom_escape_sequence_notification(connection,
                                                                  callback,
@@ -372,7 +374,7 @@ def _string_rpc_registration_request(rpc):
     args = sorted(map(lambda x: x.name, rpc.arguments))
     return rpc.name + "(" + ",".join(args) + ")"
 
-async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, key=None, profile_change_request=None):
+async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, key=None, profile_change_request=None, prompt_monitor_modes=None):
     """Note: session argument is ignored for variable-change notifications."""
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
@@ -397,7 +399,8 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
         rpc_registration_request,
         keystroke_monitor_request,
         variable_monitor_request,
-        profile_change_request)
+        profile_change_request,
+        prompt_monitor_modes)
     status = response.notification_response.status
     status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 

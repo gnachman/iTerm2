@@ -4310,6 +4310,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         DLog(@"No last command mark found.");
     }
+    [delegate_ screenCommandDidExitWithCode:returnCode];
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

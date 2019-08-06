@@ -8870,11 +8870,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                   y);
     mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-        notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
-        notification.promptNotification.session = self.guid;
-        [[iTermAPIHelper sharedInstance] postAPINotification:notification
-                                             toConnectionKey:key];
+        if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
+            [obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_Prompt]) {
+            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+            notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+            notification.promptNotification.session = self.guid;
+            notification.promptNotification.prompt.placeholder = @"";
+            [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                                 toConnectionKey:key];
+        }
     }];
 }
 
@@ -9691,6 +9695,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
     [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
+    [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandStart]) {
+            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+            notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+            notification.promptNotification.session = self.guid;
+            notification.promptNotification.commandStart.command = command;
+            [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                                 toConnectionKey:key];
+        }
+    }];
+}
+
+- (void)screenCommandDidExitWithCode:(int)code {
+    [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
+            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+            notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
+            notification.promptNotification.session = self.guid;
+            notification.promptNotification.commandEnd.status = code;
+            [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                                 toConnectionKey:key];
+        }
+    }];
 }
 
 - (BOOL)screenShouldPlacePromptAtFirstColumn {

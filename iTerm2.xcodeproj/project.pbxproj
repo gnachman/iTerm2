@@ -1531,6 +1531,8 @@
 		A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */; };
 		A6153D6021F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */; };
 		A6153D6121F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5F21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m */; };
+		A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */; };
+		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -4619,6 +4621,8 @@
 		A6153D5B21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarBaseLayoutAlgorithm.m; sourceTree = "<group>"; };
 		A6153D5E21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarStableLayoutAlgorithm.h; sourceTree = "<group>"; };
 		A6153D5F21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarStableLayoutAlgorithm.m; sourceTree = "<group>"; };
+		A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GPBEnumArray+iTerm.h"; sourceTree = "<group>"; };
+		A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GPBEnumArray+iTerm.m"; sourceTree = "<group>"; };
 		A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameState.h; sourceTree = "<group>"; };
 		A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalPerFrameState.m; sourceTree = "<group>"; };
 		A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameStateConfiguration.h; sourceTree = "<group>"; };
@@ -7170,6 +7174,8 @@
 				A656674E219EA46E005FE60E /* NSNumber+iTerm.m */,
 				A6566751219EA582005FE60E /* NSNull+iTerm.h */,
 				A6566752219EA582005FE60E /* NSNull+iTerm.m */,
+				A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */,
+				A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -9967,6 +9973,7 @@
 				A6D4C26621E18CB5009CF11B /* iTermScriptInspector.h in Headers */,
 				A65D3ADB21D163B800384015 /* iTermBacktrace.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
+				A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */,
 				A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
 				530098502259A44D00A69348 /* iTermSoundPlayer.h in Headers */,
@@ -12326,6 +12333,7 @@
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
 				A6D8CC3220CE417000E79512 /* URLAction.m in Sources */,
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
+				A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */,
 				A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */,
 				530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */,
 				5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */,

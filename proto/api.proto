@@ -894,6 +894,16 @@ message ProfileChangeRequest {
   optional string guid = 1;
 }
 
+enum PromptMonitorMode {
+  PROMPT = 1;
+  COMMAND_START = 2;
+  COMMAND_END = 3;
+}
+
+message PromptMonitorRequest {
+  repeated PromptMonitorMode modes = 1;
+}
+
 message NotificationRequest {
   // See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
   // NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
@@ -913,6 +923,7 @@ message NotificationRequest {
     VariableMonitorRequest variable_monitor_request = 6;
     ProfileChangeRequest profile_change_request = 7;
     KeystrokeFilterRequest keystroke_filter_request = 8;
+    PromptMonitorRequest prompt_monitor_request = 9;
   }
 }
 
@@ -988,8 +999,25 @@ message ScreenUpdateNotification {
   optional string session = 1;
 }
 
+message PromptNotificationPrompt {
+  optional string placeholder = 1;
+}
+
+message PromptNotificationCommandStart {
+  optional string command = 1;
+}
+
+message PromptNotificationCommandEnd {
+  optional int32 status = 1;
+}
+
 message PromptNotification {
   optional string session = 1;
+  oneof event {
+    PromptNotificationPrompt prompt = 2;
+    PromptNotificationCommandStart command_start = 3;
+    PromptNotificationCommandEnd command_end = 4;
+  }
 }
 
 message LocationChangeNotification {
