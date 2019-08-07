@@ -64,6 +64,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
 @property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
+@property(nonatomic, readonly) int lineNumberOfCursor;
 
 // Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.
@@ -184,7 +185,7 @@ extern int kVT100ScreenMinRows;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
 - (BOOL)containsMark:(id<iTermMark>)mark;
 
-- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line isSuitableForOldPWD:(BOOL)isSuitableForOldPWD;
+- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command

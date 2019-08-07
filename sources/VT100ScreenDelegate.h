@@ -243,7 +243,7 @@
 
 - (void)screenLogWorkingDirectoryAtLine:(int)line
                           withDirectory:(NSString *)directory
-                    isSuitableForOldPWD:(BOOL)isSuitableForOldPWD;
+                                 pushed:(BOOL)pushed;
 
 - (void)screenSuggestShellIntegrationUpgrade;
 - (void)screenDidDetectShell:(NSString *)shell;

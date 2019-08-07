@@ -17,6 +17,7 @@
     BOOL _okToPollForWorkingDirectoryChange;
     BOOL _haveFoundInitialDirectory;
     BOOL _wantsPoll;
+    NSInteger _generation;
 }
 
 - (instancetype)init {
@@ -63,6 +64,10 @@
     [self pollForWorkingDirectory];
 }
 
+- (void)invalidateOutstandingRequests {
+    _generation += 1;
+}
+
 #pragma mark - Private
 
 - (void)pollIfNeeded {
@@ -100,26 +105,30 @@
         return;
     }
     __weak __typeof(self) weakSelf = self;
+    NSInteger generation = _generation;
     [iTermLSOF asyncWorkingDirectoryOfProcess:pid block:^(NSString *pwd) {
         DLog(@"Got: %@", pwd);
-        [weakSelf setDirectory:pwd];
+        [weakSelf setDirectory:pwd generation:generation];
     }];
 }
 
-- (void)setDirectory:(NSString *)directory {
-    [self didInferWorkingDirectory:directory];
+- (void)setDirectory:(NSString *)directory generation:(NSInteger)generation {
+    [self didInferWorkingDirectory:directory valid:generation == _generation];
     [self pollIfNeeded];
 }
 
-- (void)didInferWorkingDirectory:(NSString *)pwd {
+- (void)didInferWorkingDirectory:(NSString *)pwd valid:(BOOL)valid {
     if (pwd) {
         _haveFoundInitialDirectory = YES;
     }
-    [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd];
+    [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd
+                                                     invalidated:!valid];
 }
 
 - (void)tmuxOptionMonitorDidProduceDirectory:(NSString *)directory {
-    [self setDirectory:directory];
+    // These can't be invalidated because we don't have local lookups competing with remote.
+    // Remote should always win.
+    [self setDirectory:directory generation:_generation];
 }
 
 @end

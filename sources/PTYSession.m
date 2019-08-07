@@ -9918,21 +9918,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-// isRemote is a misnomer. It's really "is unsuitable for old PWD", since it would be YES for
-// when shell integration had never been used and the lastDirectory is not updated reliably.
-- (void)setLastDirectory:(NSString *)lastDirectory isUnsuitableForOldPWD:(BOOL)isUnsuitableForOldPWD {
-    DLog(@"Set last directory to %@", lastDirectory);
-    if (lastDirectory) {
+- (void)setLastDirectory:(NSString *)lastDirectory remote:(BOOL)directoryIsRemote pushed:(BOOL)pushed {
+    DLog(@"setLastDirectory:%@ remote:%@ pushed:%@\n%@", lastDirectory, @(directoryIsRemote), @(pushed), [NSThread callStackSymbols]);
+    if (pushed && lastDirectory) {
         [_directories addObject:lastDirectory];
         [self trimDirectoriesIfNeeded];
     }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
-    _lastDirectoryIsUnsuitableForOldPWD = isUnsuitableForOldPWD;
-    if (!isUnsuitableForOldPWD && lastDirectory) {
+    _lastDirectoryIsUnsuitableForOldPWD = directoryIsRemote;
+    if (lastDirectory) {
         DLog(@"Set path to %@", lastDirectory);
         self.variablesScope.path = lastDirectory;
     }
+    // Update the proxy icon
     [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
@@ -9962,33 +9961,46 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastRemoteHost = [lastRemoteHost retain];
 }
 
-// isSuitableForOldPWD means that if we don't know what the hostname is then this should be used
-// in place of asking the OS what the PWD is from now on. It's useful for users who set up a trigger
-// to report the PWD but don't report the hostname, or for users who use the CurrentDir control
-// sequence but not RemoteHost. Issue 5878, May 2019 comments.
+// We trust push more than pull because pulls don't include hostname and are done unnecessarily
+// all the time.
 - (void)screenLogWorkingDirectoryAtLine:(int)line
                           withDirectory:(NSString *)directory
-                    isSuitableForOldPWD:(BOOL)isSuitableForOldPWD {
-    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
-    BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
-                   [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
-    [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
-                                                           onHost:[_screen remoteHostOnLine:line]
-                                                         isChange:!isSame];
-    BOOL unsuitable;
-    if (remoteHost == nil && isSuitableForOldPWD) {
-        // Special dispensation. Trust the caller that this working directory will be kept up to date.
-        unsuitable = NO;
-    } else {
-        // In this case a nil remoteHost is considered unsuitable because we believe this is an
-        // odd one-off (such as by setting the title) and we can't count on it being updated
-        // reliably. We'll pull pwd from the child process via the kernel.
-        unsuitable = !remoteHost.isLocalhost;
+                                 pushed:(BOOL)pushed {
+    DLog(@"screenLogWorkingDirectoryAtLine:%@ withDirectory:%@ pushed:%@", @(line), directory, @(pushed));
+
+    if (pushed) {
+        // If we're currently polling for a working directory, do not create a
+        // mark for the result when the poll completes because this mark is
+        // from a higher-quality data source.
+        DLog(@"Invalidate outstanding PWD poller requests.");
+        [_pwdPoller invalidateOutstandingRequests];
     }
-    DLog(@"Calling setLastDirectory:%@ isUnsuitableForOldPWD:%@. remoteHost is %@\n%@",
-         directory, @(unsuitable), remoteHost, [NSThread callStackSymbols]);
-    [self setLastDirectory:directory isUnsuitableForOldPWD:unsuitable];
-    self.lastRemoteHost = remoteHost;
+
+    // Update shell integration DB.
+    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    DLog(@"remoteHost is %@, is local is %@", remoteHost, @(!remoteHost.isLocalhost));
+    if (pushed) {
+        BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
+                       [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
+        [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
+                                                               onHost:[_screen remoteHostOnLine:line]
+                                                             isChange:!isSame];
+    }
+    // This has been a big ugly hairball for a long time. Because of the
+    // working directory poller I think it's safe to simplify it now. Before,
+    // we'd track whether the update was trustworthy and likely to happen
+    // again. These days, it should always be regular so that is not
+    // interesting. Instead, we just want to make sure we know if the directory
+    // is local or remote because we want to ignore local directories when we
+    // know the user is ssh'ed somewhere.
+    const BOOL directoryIsRemote = pushed && remoteHost && !remoteHost.isLocalhost;
+
+    // Update lastDirectory, proxy icon, "path" variable.
+    [self setLastDirectory:directory remote:directoryIsRemote pushed:pushed];
+
+    if (pushed) {
+        self.lastRemoteHost = remoteHost;
+    }
 }
 
 - (BOOL)screenAllowTitleSetting {
@@ -11323,11 +11335,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _shell.pid;;
 }
 
-- (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd {
+- (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
     if (_shellIntegrationEverUsed) {
         return;
     }
-    [self.variablesScope setValue:pwd forVariableNamed:iTermVariableKeySessionPath];
+    if (invalidated) {
+        DLog(@"Not creating a mark because of invalidation");
+        [self setLastDirectory:pwd remote:NO pushed:NO];
+        return;
+    }
+
+    // Updates the mark
+    DLog(@"Will create a mark");
+    [self.screen setWorkingDirectory:pwd
+                              onLine:[self.screen lineNumberOfCursor]
+                              pushed:NO];
 }
 
 #pragma mark - iTermStandardKeyMapperDelegate
