@@ -171,10 +171,10 @@ static NSString *const iTermSessionTitleSession = @"session";
                   tmuxWindowTitle:(NSString *)tmuxWindowTitle
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle {
-    DLog(@"sessionName=%@ profileName=%@ job=%@ commandLine=%@ pwd=%@ tty=%@ user=%@ host=%@ tmuxPane=%@ iconName=%@ windowName=%@ tmuxWindowName=%@ tmuxWindowTitle=%@",
+    DLog(@"sessionName=%@ profileName=%@ job=%@ commandLine=%@ pwd=%@ tty=%@ user=%@ host=%@ tmuxPane=%@ iconName=%@ windowName=%@ tmuxWindowName=%@ tmuxWindowTitle=%@ isWindowTitle=%@",
          sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable,
          userVariable, hostVariable, tmuxPaneVariable, iconName, windowName, tmuxWindowName,
-         tmuxWindowTitle);
+         tmuxWindowTitle, @(isWindowTitle));
 
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
