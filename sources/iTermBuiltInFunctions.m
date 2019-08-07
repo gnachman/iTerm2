@@ -9,6 +9,7 @@
 
 #import "iTermAlertBuiltInFunction.h"
 #import "iTermReflection.h"
+#import "iTermSetStatusBarComponentUnreadCountBuiltInFunction.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -126,6 +127,7 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
     [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     [iTermAlertBuiltInFunction registerBuiltInFunction];
     [iTermGetStringBuiltInFunction registerBuiltInFunction];
+    [iTermSetStatusBarComponentUnreadCountBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {

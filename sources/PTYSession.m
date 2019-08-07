@@ -43,6 +43,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
+#import "iTermStatusBarUnreadCountController.h"
 #import "iTermSoundPlayer.h"
 #import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
@@ -11449,8 +11450,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    target:self
                                                    action:@selector(sendTmuxCommandWithCompletion:command:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_status_bar_component_unread_count"
+                                            defaultValues:@{}
+                                                    types:@{ @"identifier": [NSString class],
+                                                             @"count": [NSNumber class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(setStatusBarComponentUnreadCountWithCompletion:identifier:count:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
+}
+
+- (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion
+                                            identifier:(NSString *)identifier
+                                                 count:(NSNumber *)count {
+    [[iTermStatusBarUnreadCountController sharedInstance] setUnreadCountForComponentWithIdentifier:identifier
+                                                                                             count:count.integerValue
+                                                                                         sessionID:self.guid];
+    completion(nil, nil);
 }
 
 - (void)sendTmuxCommandWithCompletion:(void (^)(id, NSError *))completion

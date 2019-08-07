@@ -2,6 +2,7 @@
 
 import json
 import iterm2.api_pb2
+import iterm2.capabilities
 import iterm2.color
 import iterm2.connection
 import iterm2.registration
@@ -156,6 +157,28 @@ class StatusBarComponent:
                 session_id,
                 html,
                 size)
+
+    async def async_set_unread_count(self, session_id: typing.Optional[str], count: int):
+        """
+        Sets the unread count that is displayed in the status bar component. If 0, it is removed.
+
+        Requires iTerm2 version 3.3.2.
+
+        :param session_id: The session identifier, or none to update all instances.
+        :param count: The number to show, or 0 to remove it.
+        :raises: AppVersionTooOld if not supported by this version of iTerm2.
+        """
+        if not iterm2.capabilities.supports_status_bar_unread_count(self.__connection):
+            raise iterm2.capabilities.AppVersionTooOld("Unread count in status bar components is not support in this version of iTerm2. Please upgrade to use this script.")
+
+        invocation = iterm2.util.invocation_string(
+                "iterm2.set_status_bar_component_unread_count",
+                {"identifier": self.__identifier,
+                 "count": count })
+        if session_id:
+            await iterm2.rpc.async_invoke_method(self.__connection, session_id, invocation, -1)
+        else:
+            await iterm2.async_invoke_function(self.__connection, invocation)
 
     async def async_register(
             self,

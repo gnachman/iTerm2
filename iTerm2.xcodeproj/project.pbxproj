@@ -1581,6 +1581,12 @@
 		A61ED2AA20E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ED2A820E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m */; };
 		A61ED2AD20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2AB20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.h */; };
 		A61ED2AE20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ED2AC20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.m */; };
+		A61F456E22FA52CD00E2054A /* iTermUnreadCountView.h in Headers */ = {isa = PBXBuildFile; fileRef = A61F456C22FA52CD00E2054A /* iTermUnreadCountView.h */; };
+		A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F456D22FA52CD00E2054A /* iTermUnreadCountView.m */; };
+		A61F457222FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = A61F457022FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h */; };
+		A61F457322FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F457122FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m */; };
+		A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */; };
+		A61F457722FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
 		A621DDA8211D01D50095A399 /* NSAppearance+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */; };
 		A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */; };
@@ -4661,6 +4667,12 @@
 		A61ED2A820E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarVariableBaseComponent.m; sourceTree = "<group>"; };
 		A61ED2AB20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarSearchFieldComponent.h; sourceTree = "<group>"; };
 		A61ED2AC20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarSearchFieldComponent.m; sourceTree = "<group>"; };
+		A61F456C22FA52CD00E2054A /* iTermUnreadCountView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUnreadCountView.h; sourceTree = "<group>"; };
+		A61F456D22FA52CD00E2054A /* iTermUnreadCountView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUnreadCountView.m; sourceTree = "<group>"; };
+		A61F457022FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSetStatusBarComponentUnreadCountBuiltInFunction.h; sourceTree = "<group>"; };
+		A61F457122FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSetStatusBarComponentUnreadCountBuiltInFunction.m; sourceTree = "<group>"; };
+		A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarUnreadCountController.h; sourceTree = "<group>"; };
+		A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarUnreadCountController.m; sourceTree = "<group>"; };
 		A61F8E2E1E62591800D315D0 /* iTermFakeUserDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFakeUserDefaults.h; sourceTree = "<group>"; };
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
 		A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAppearance+iTerm.h"; sourceTree = "<group>"; };
@@ -7711,6 +7723,10 @@
 				A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */,
 				A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */,
 				A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */,
+				A61F456C22FA52CD00E2054A /* iTermUnreadCountView.h */,
+				A61F456D22FA52CD00E2054A /* iTermUnreadCountView.m */,
+				A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */,
+				A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -8830,6 +8846,8 @@
 				A6481653228FD511008E7E0C /* iTermVariablesIndex.m */,
 				A6481656228FDB89008E7E0C /* iTermObject.h */,
 				A6481657228FE6B1008E7E0C /* iTermObject.m */,
+				A61F457022FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h */,
+				A61F457122FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m */,
 			);
 			name = Language;
 			sourceTree = "<group>";
@@ -9924,7 +9942,9 @@
 				A630116D20E60C8E008114B7 /* iTermStatusBarContainerView.h in Headers */,
 				535D0914224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.h in Headers */,
 				A6BC8ACF21C7608B00796BF3 /* iTermImageCache.h in Headers */,
+				A61F457222FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h in Headers */,
 				A66719131DCE36C3000CE608 /* iTermPreviousState.h in Headers */,
+				A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */,
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
 				A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
@@ -10086,6 +10106,7 @@
 				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
+				A61F456E22FA52CD00E2054A /* iTermUnreadCountView.h in Headers */,
 				53850903212FA8910039AFC7 /* iTermMetaFrustrationDetector.h in Headers */,
 				A62F8FD021D9A603008EA71C /* iTermTermkeyKeyMapper.h in Headers */,
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
@@ -12496,6 +12517,7 @@
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
+				A61F457322FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m in Sources */,
 				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
@@ -12534,6 +12556,7 @@
 				A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */,
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
+				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
 				A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
@@ -12586,6 +12609,7 @@
 				53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */,
 				531E71F52229A54500915960 /* iTermParsedExpression.m in Sources */,
 				A69C9338212108E900531438 /* iTermsStatusBarComposerViewController.m in Sources */,
+				A61F457722FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m in Sources */,
 				A67960D61F81FCBB008A42BC /* iTermMarkRenderer.m in Sources */,
 				A6D4C26D21E19155009CF11B /* iTermSessionTabWindowOutlineDelegate.m in Sources */,
 				A62EED9F20E010C000943DE3 /* iTermScriptImporter.m in Sources */,

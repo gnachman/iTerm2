@@ -21,3 +21,7 @@ def supports_select_pane_in_direction(connection):
 def supports_prompt_monitor_modes(connection):
     min_ver = (1, 1)
     return ge(connection.iterm2_protocol_version, min_ver)
+
+def supports_status_bar_unread_count(connection):
+    min_ver = (1, 2)
+    return ge(connection.iterm2_protocol_version, min_ver)

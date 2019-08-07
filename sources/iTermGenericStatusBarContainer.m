@@ -23,6 +23,17 @@
 
 @synthesize statusBarViewController = _statusBarViewController;
 
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        if (@available(macOS 10.14, *)) {
+            self.wantsLayer = YES;
+            self.layer.masksToBounds = NO;
+        }
+    }
+    return self;
+}
+
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
     [self layoutStatusBar];
@@ -74,10 +85,22 @@
     }
 }
 
+- (BOOL)wantsDefaultClipping {
+    if (@available(macOS 10.14, *)) {
+        return NO;
+    } else {
+        return [super wantsDefaultClipping];
+    }
+}
+
 - (void)viewDidMoveToWindow {
     if (!_backing) {
         if (@available(macOS 10.14, *)) {
             _backing = [[iTermStatusBarBacking alloc] init];
+            if (@available(macOS 10.14, *)) {
+                _backing.wantsLayer = YES;
+                _backing.layer.masksToBounds = NO;
+            }
             _backing.autoresizesSubviews = NO;
             _backing.blendingMode = NSVisualEffectBlendingModeWithinWindow;
             _backing.material = NSVisualEffectMaterialTitlebar;

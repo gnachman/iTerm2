@@ -8,6 +8,7 @@
 #import "iTermStatusBarContainerView.h"
 
 #import "DebugLogging.h"
+#import "iTermUnreadCountView.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImageView+iTerm.h"
@@ -23,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimer *_timer;
     BOOL _needsUpdate;
     NSView *_view;
+    iTermUnreadCountView *_unreadCountView;
 }
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
@@ -34,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super initWithFrame:NSMakeRect(0, 0, preferredWidth, 21)];
     if (self) {
         self.wantsLayer = YES;
+        if (@available(macOS 10.14, *)) {
+            self.layer.masksToBounds = NO;
+        }
         _component = component;
         _backgroundColor = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
         _view = component.statusBarComponentView;
@@ -65,12 +70,22 @@ NS_ASSUME_NONNULL_BEGIN
             NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(clickRecognized:)];
             [_view addGestureRecognizer:recognizer];
         }
+        _unreadCountView = [[iTermUnreadCountView alloc] init];
+        [self addSubview:_unreadCountView];
     }
     return self;
 }
 
 - (void)dealloc {
     [_timer invalidate];
+}
+
+- (void)setUnreadCount:(NSInteger)count {
+    if (count == _unreadCount) {
+        return;
+    }
+    _unreadCount = count;
+    _unreadCountView.count = count;
 }
 
 - (CGFloat)minimumWidthIncludingIcon {
@@ -142,6 +157,22 @@ NS_ASSUME_NONNULL_BEGIN
                              [self retinaRound:(myHeight - viewHeight) / 2 + _component.statusBarComponentVerticalOffset],
                              [self retinaRoundUp:self.preferredWidthForComponentView],
                              [self retinaRoundUp:viewHeight]);
+    CGFloat margin = -2;
+    if (@available(macOS 10.14, *)) { } else {
+        margin = 0;
+    }
+    _unreadCountView.frame = NSMakeRect(NSMaxX(self.bounds) - NSWidth(_unreadCountView.frame) - margin,
+                                        [self retinaRound:NSMidY(self.bounds) - NSHeight(_unreadCountView.frame) / 2.0],
+                                        NSWidth(_unreadCountView.frame),
+                                        NSHeight(_unreadCountView.frame));
+}
+
+- (BOOL)wantsDefaultClipping {
+    if (@available(macOS 10.14, *)) {
+        return NO;
+    } else {
+        return [super wantsDefaultClipping];
+    }
 }
 
 - (void)viewDidMoveToWindow {
