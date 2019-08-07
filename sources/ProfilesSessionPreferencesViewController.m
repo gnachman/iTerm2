@@ -360,6 +360,7 @@
                                                     styleMask:NSWindowStyleMaskResizable
                                                       backing:NSBackingStoreBuffered
                                                         defer:NO];
+    _statusBarSetupWindow.minSize = _statusBarSetupViewController.view.frame.size;
     NSDictionary *savedLayoutDictionary = [_statusBarSetupViewController.layoutDictionary copy];
     _statusBarSetupWindow.contentView = _statusBarSetupViewController.view;
     [self.view.window beginSheet:_statusBarSetupWindow completionHandler:^(NSModalResponse returnCode) {
