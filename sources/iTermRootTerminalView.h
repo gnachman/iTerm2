@@ -41,7 +41,7 @@
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender;
 - (NSColor *)rootTerminalViewTabBarTextColorForTitle;
 - (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber;
-- (NSColor *)rootTerminalViewTabBarBackgroundColor;
+- (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
 - (NSImage *)rootTerminalViewCurrentTabIcon;

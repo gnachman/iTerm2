@@ -418,7 +418,7 @@ typedef struct {
     if (@available(macOS 10.14, *)) {
         if ([_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
             // Draw background color for fake title bar.
-            NSColor *const backgroundColor = [_delegate rootTerminalViewTabBarBackgroundColor];
+            NSColor *const backgroundColor = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
             const CGFloat height = [_delegate rootTerminalViewHeightOfTabBar:self];
             [backgroundColor set];
             NSRectFill(NSMakeRect(0,
@@ -1409,7 +1409,7 @@ typedef struct {
 #pragma mark - iTermGenericStatusBarContainer
 
 - (NSColor *)genericStatusBarContainerBackgroundColor {
-    return [self.delegate rootTerminalViewTabBarBackgroundColor];
+    return [self.delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:YES];
 }
 
 @end
