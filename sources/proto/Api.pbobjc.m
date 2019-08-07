@@ -7215,6 +7215,7 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
 @dynamic hasExemplar, exemplar;
 @dynamic hasUpdateCadence, updateCadence;
 @dynamic hasUniqueIdentifier, uniqueIdentifier;
+@dynamic iconsArray, iconsArray_Count;
 
 typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ {
   uint32_t _has_storage_[1];
@@ -7224,6 +7225,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
   NSMutableArray *knobsArray;
   NSString *exemplar;
   NSString *uniqueIdentifier;
+  NSMutableArray *iconsArray;
 } ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_;
 
 // This method is threadsafe because it is initially called
@@ -7285,6 +7287,15 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, uniqueIdentifier),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "iconsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon),
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_IconsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, iconsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -7437,6 +7448,61 @@ BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_IsValidVal
       return NO;
   }
 }
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon
+
+@implementation ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon
+
+@dynamic hasData_p, data_p;
+@dynamic hasScale, scale;
+
+typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_ {
+  uint32_t _has_storage_[1];
+  float scale;
+  NSData *data_p;
+} ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "data_p",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Data_p,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_, data_p),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBytes,
+      },
+      {
+        .name = "scale",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Scale,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_, scale),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
 
 #pragma mark - ITMRegisterToolResponse
 

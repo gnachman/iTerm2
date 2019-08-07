@@ -122,6 +122,7 @@ CF_EXTERN_C_BEGIN
 @class ITMRPCRegistrationRequest_RPCArgumentSignature;
 @class ITMRPCRegistrationRequest_SessionTitleAttributes;
 @class ITMRPCRegistrationRequest_StatusBarComponentAttributes;
+@class ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon;
 @class ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob;
 @class ITMRange;
 @class ITMRegisterToolRequest;
@@ -3256,6 +3257,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Exemplar = 4,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence = 5,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UniqueIdentifier = 6,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_IconsArray = 7,
 };
 
 @interface ITMRPCRegistrationRequest_StatusBarComponentAttributes : GPBMessage
@@ -3287,6 +3289,10 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
 /** Test to see if @c uniqueIdentifier has been set. */
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon*> *iconsArray;
+/** The number of items in @c iconsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger iconsArray_Count;
 
 @end
 
@@ -3321,6 +3327,24 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Fie
 /** Test to see if @c key has been set. */
 @property(nonatomic, readwrite) BOOL hasKey;
 
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Data_p = 1,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Scale = 2,
+};
+
+@interface ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSData *data_p;
+/** Test to see if @c data_p has been set. */
+@property(nonatomic, readwrite) BOOL hasData_p;
+
+@property(nonatomic, readwrite) float scale;
+
+@property(nonatomic, readwrite) BOOL hasScale;
 @end
 
 #pragma mark - ITMRegisterToolResponse

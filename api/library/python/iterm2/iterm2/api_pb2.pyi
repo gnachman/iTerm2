@@ -2107,6 +2107,19 @@ class RPCRegistrationRequest(google___protobuf___message___Message):
             def MergeFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
             def CopyFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
 
+        class Icon(google___protobuf___message___Message):
+            data = ... # type: bytes
+            scale = ... # type: float
+
+            def __init__(self,
+                data : typing___Optional[bytes] = None,
+                scale : typing___Optional[float] = None,
+                ) -> None: ...
+            @classmethod
+            def FromString(cls, s: bytes) -> RPCRegistrationRequest.StatusBarComponentAttributes.Icon: ...
+            def MergeFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
+            def CopyFrom(self, other_msg: google___protobuf___message___Message) -> None: ...
+
         short_description = ... # type: typing___Text
         detailed_description = ... # type: typing___Text
         exemplar = ... # type: typing___Text
@@ -2116,6 +2129,9 @@ class RPCRegistrationRequest(google___protobuf___message___Message):
         @property
         def knobs(self) -> google___protobuf___internal___containers___RepeatedCompositeFieldContainer[RPCRegistrationRequest.StatusBarComponentAttributes.Knob]: ...
 
+        @property
+        def icons(self) -> google___protobuf___internal___containers___RepeatedCompositeFieldContainer[RPCRegistrationRequest.StatusBarComponentAttributes.Icon]: ...
+
         def __init__(self,
             short_description : typing___Optional[typing___Text] = None,
             detailed_description : typing___Optional[typing___Text] = None,
@@ -2123,6 +2139,7 @@ class RPCRegistrationRequest(google___protobuf___message___Message):
             exemplar : typing___Optional[typing___Text] = None,
             update_cadence : typing___Optional[float] = None,
             unique_identifier : typing___Optional[typing___Text] = None,
+            icons : typing___Optional[typing___Iterable[RPCRegistrationRequest.StatusBarComponentAttributes.Icon]] = None,
             ) -> None: ...
         @classmethod
         def FromString(cls, s: bytes) -> RPCRegistrationRequest.StatusBarComponentAttributes: ...

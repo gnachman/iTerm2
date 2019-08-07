@@ -801,6 +801,12 @@ message RPCRegistrationRequest {
     // Identifies this component uniquely. Must not conflict with other components.
     // Use a backwards domain name identifying yourself and the feature, like "com.example.featurename"
     optional string unique_identifier = 6;
+
+    message Icon {
+      optional bytes data = 1;
+      optional float scale = 2;
+    }
+    repeated Icon icons = 7;
   }
 
   oneof RoleSpecificAttributes {

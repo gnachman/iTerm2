@@ -1,5 +1,6 @@
 """Status bar customization interfaces."""
 
+import base64
 import json
 import iterm2.api_pb2
 import iterm2.capabilities
@@ -109,6 +110,7 @@ class StatusBarComponent:
     :param exemplar: Example value to show in the picker UI as the sample content of the component.
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
     :param identifier: A string uniquely identifying this component. Use a backwards domain name. For example, `com.example.calculator` for a calculator component provided by example.com.
+    :param icons: An array of `StatusBarComponent.Icon` objects. Should contain one with scale 1 and one with scale 2, of size 16x17 points. May be empty if you don't want an icon.
 
     .. seealso::
         * Example ":ref:`escindicator_example`"
@@ -116,13 +118,35 @@ class StatusBarComponent:
         * Example ":ref:`mousemode_example`"
         * Example ":ref:`statusbar_example`"
     """
+    class Icon:
+        """Contains a status bar icon.
+
+        The scale gives the ratio between pixels and points. For example, a 32x34 image with scale 2 has a size of 16x17 points.
+
+        Status bar icons should be 16x17 points. Use a two point margin around the edges. The text baseline is 3.5 points up from the bottom of the image.
+
+        :param scale: 2 for a retina (high-DPI) image, or 1 for a regular (low-DPI) image.
+        :param base64_data: Base64-encoded data with the icon's image in PNG format.
+        """
+        def __init__(self, scale: float, base64_data: str):
+            self.__scale = scale
+            self.__data = base64.b64decode(base64_data)
+            print(self.__data)
+
+        def to_status_bar_icon(self):
+            proto = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Icon()
+            proto.data = self.__data
+            proto.scale = self.__scale
+            return proto
+
     def __init__(self,
             short_description: str,
             detailed_description: str,
             knobs: typing.List[Knob],
             exemplar: str,
             update_cadence: typing.Union[float, None],
-            identifier: str):
+            identifier: str,
+            icons: typing.List[Icon]=[]):
         """Initializes a status bar component.
         """
         self.__short_description = short_description
@@ -131,6 +155,7 @@ class StatusBarComponent:
         self.__exemplar = exemplar
         self.__update_cadence = update_cadence
         self.__identifier = identifier
+        self.__icons = icons
 
     def set_fields_in_proto(self, proto):
         proto.short_description = self.__short_description
@@ -139,6 +164,8 @@ class StatusBarComponent:
         proto.knobs.extend(knob_protos)
         proto.exemplar = self.__exemplar
         proto.unique_identifier = self.__identifier
+        icons = list(map(lambda x: x.to_status_bar_icon(), self.__icons))
+        proto.icons.extend(icons)
         if self.__update_cadence is not None:
             proto.update_cadence = self.__update_cadence
 
