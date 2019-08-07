@@ -428,6 +428,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _windowDidResize;
     BOOL _willClose;
     BOOL _updatingWindowType;  // updateWindowType is not reentrant
+    BOOL _suppressMakeCurrentTerminal;
 }
 
 @synthesize scope = _scope;
@@ -2868,7 +2869,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     const BOOL savedRestoringWindow = _restoringWindow;
     _restoringWindow = YES;
+    _suppressMakeCurrentTerminal = (self.hotkeyWindowType != iTermHotkeyWindowTypeNone);
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement sessions:sessions];
+    _suppressMakeCurrentTerminal = NO;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
         return NO;
@@ -8942,7 +8945,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        [[iTermController sharedInstance] setCurrentTerminal:self];
+        if (!_suppressMakeCurrentTerminal) {
+            [[iTermController sharedInstance] setCurrentTerminal:self];
+        }
     }
 }
 

@@ -254,6 +254,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)makeKeyAndOrderFront:(nullable id)sender {
     DLog(@"%@ makeKeyAndOrderFront: layoutDone=%@ %@", NSStringFromClass([self class]), @(_layoutDone), [NSThread callStackSymbols]);
+    DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     if (!_layoutDone) {
         DLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
@@ -288,18 +289,21 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)orderFrontRegardless {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super orderFrontRegardless];
 }
 
 - (void)orderFront:(nullable id)sender {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super orderFront:sender];
 }
 
 - (void)orderBack:(nullable id)sender {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
+    DLog(@"%@\n%@", NSStringFromSelector(_cmd), [NSThread callStackSymbols]);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super orderBack:sender];
 }
