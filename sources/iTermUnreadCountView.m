@@ -49,6 +49,7 @@
 
     _textField = [NSTextField newLabelStyledTextField];
     _textField.font = [NSFont systemFontOfSize:11];
+    _textField.textColor = [NSColor whiteColor];
     _textField.drawsBackground = NO;
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterDecimalStyle;
