@@ -8992,6 +8992,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession *)aSession {
     [aSession didInitializeSessionWithName:theSessionName];
+    [aSession setSessionSpecificProfileValues:@{ KEY_NAME: theSessionName }];
 }
 
 // Assign a value to the 'uniqueNumber_' member variable which is used for storing
