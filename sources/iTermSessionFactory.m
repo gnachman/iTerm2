@@ -14,6 +14,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermVariableScope.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
@@ -154,7 +155,19 @@ NS_ASSUME_NONNULL_BEGIN
     cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
     name = [name stringByPerformingSubstitutions:substitutions];
-    
+
+    {
+        NSString *hostSub = substitutions[@"$$HOST$$"];
+        NSString *userSub = substitutions[@"$$USER$$"];
+        if (hostSub) {
+            [aSession.variablesScope setValue:hostSub forVariableNamed:iTermVariableKeySessionHostname];
+        }
+
+        if (userSub) {
+            [aSession.variablesScope setValue:userSub forVariableNamed:iTermVariableKeySessionUsername];
+        }
+    }
+
     BOOL isUTF8;
     if (isUTF8Number) {
         isUTF8 = isUTF8Number.boolValue;
