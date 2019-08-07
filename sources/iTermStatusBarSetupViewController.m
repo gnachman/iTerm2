@@ -294,6 +294,9 @@ NS_ASSUME_NONNULL_BEGIN
     [self.view.window endSheet:_advancedPanel];
 }
 
+- (IBAction)help:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/status-bar-layout"]];
+}
 
 - (void)advancedPanelDidClose {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
