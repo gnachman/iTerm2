@@ -30,6 +30,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`diskspace` - Demonstrates a status bar component that updates itself periodically, showing the amount of free disk space.
 
+:doc:`unread` - Demonstrates a status bar component with an icon and an "unread count".
+
 ----
 
 **Tmux**
