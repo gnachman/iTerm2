@@ -5520,8 +5520,10 @@ static void SwapInt(int *a, int *b) {
         currentGrid_.cursorY = linesRestored + 1;
         currentGrid_.cursorX = 0;
     }
+    BOOL addedBanner = NO;
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         [self appendSessionRestoredBanner];
+        addedBanner = YES;
     }
 
     // Reduce line buffer's max size to not include the grid height. This is its final state.
@@ -5573,7 +5575,11 @@ static void SwapInt(int *a, int *b) {
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
         _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
+        VT100GridCoord savedCursor = primaryGrid_.cursor;
         [primaryGrid_ setStateFromDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+        if (addedBanner && currentGrid_.preferredCursorPosition.x < 0 && currentGrid_.preferredCursorPosition.y < 0) {
+            primaryGrid_.cursor = savedCursor;
+        }
         [altGrid_ setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
     }
 }
