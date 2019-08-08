@@ -3327,6 +3327,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession updateDisplayBecause:@"windowDidBecomeKey"];
         [[aSession view] setBackgroundDimmed:NO];
         [aSession setFocused:aSession == [self currentSession]];
+        [aSession.view setNeedsDisplay:YES];
     }
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
@@ -3702,6 +3703,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[aSession textview] endFindCursor];
         }
         [[aSession textview] removeUnderline];
+        [aSession.view setNeedsDisplay:YES];
     }
 
     if (togglingFullScreen_) {
