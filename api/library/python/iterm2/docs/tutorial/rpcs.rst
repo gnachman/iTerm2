@@ -209,13 +209,13 @@ example:
     @iterm2.RPC
     async def times(a, b):
         return a * b
-    await add.async_register(connection)
+    await times.async_register(connection)
 
     @iterm2.RPC
     async def show(s):
         session = app.current_terminal_window.current_tab.current_session
         await session.async_inject(bytes(str(s), encoding="utf-8"))
-    await add.async_register(connection)
+    await show.async_register(connection)
 
 
 To compute 1+2*3 and inject it into the current session, use this invocation:
