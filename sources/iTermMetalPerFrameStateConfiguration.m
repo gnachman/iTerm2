@@ -76,12 +76,15 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                       cellHeight:_cellSize.height];
     _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_asciiFont.font];
 
-    _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
-    _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineForFont:_nonAsciiFont.font
-                                                                            yOffset:0
-                                                                         cellHeight:_cellSize.height];
-    _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
-
+    if (_useNonAsciiFont) {
+        _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
+        _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineForFont:_nonAsciiFont.font
+                                                                                yOffset:0
+                                                                             cellHeight:_cellSize.height];
+        _nonAsciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_nonAsciiFont.font];
+    } else {
+        _nonAsciiUnderlineDescriptor = _asciiUnderlineDescriptor;
+    }
     // We use the ASCII font's color and underline thickness for strikethrough.
     _strikethroughUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
     _strikethroughUnderlineDescriptor.offset = [drawingHelper yOriginForStrikethroughForFont:_asciiFont.font
