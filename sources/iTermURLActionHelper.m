@@ -227,6 +227,10 @@
     }
 
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+    if ([iTermAdvancedSettingsModel restrictSemanticHistoryPrefixAndSuffixToLogicalWindow]) {
+        [extractor restrictToLogicalWindowIncludingCoord:coord];
+    }
+
     DLog(@"openTargetWithEvent generation %@ has action=%@", @(generation), action);
     if (action) {
         switch (action.actionType) {
