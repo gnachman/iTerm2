@@ -284,6 +284,21 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return size;
 }
 
+- (void)loadTemporaryStatusBarFindDriverWithStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
+    _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;
+    NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
+                             iTermStatusBarSearchComponentIsTemporaryKey: @YES };
+    NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
+    iTermStatusBarSearchFieldComponent *component =
+    [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration
+                                                                scope:self.delegate.sessionViewScope];
+    _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
+    _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
+    component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;
+    statusBarViewController.temporaryLeftComponent = component;
+    [_temporaryStatusBarFindDriver open];
+}
+
 - (void)showFindUI {
     iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
     if (_findDriverType == iTermSessionViewFindDriverPermanentStatusBar) {
@@ -291,23 +306,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     } else if (self.findViewIsHidden) {
         if (statusBarViewController) {
             if (!statusBarViewController.temporaryLeftComponent) {
-                _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;
-                NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
-                                         iTermStatusBarSearchComponentIsTemporaryKey: @YES };
-                NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
-                iTermStatusBarSearchFieldComponent *component =
-                    [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration
-                                                                                scope:self.delegate.sessionViewScope];
-                _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
-                _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
-                component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;
-                statusBarViewController.temporaryLeftComponent = component;
-                [_temporaryStatusBarFindDriver open];
+                [self loadTemporaryStatusBarFindDriverWithStatusBarViewController:statusBarViewController];
             }
         } else {
             _findDriverType = iTermSessionViewFindDriverDropDown;
             [_temporaryStatusBarFindDriver open];
         }
+    } else if (self.findDriver == nil) {
+        assert(statusBarViewController);
+        assert(statusBarViewController.temporaryLeftComponent);
+        _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController];
+        _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
+        [_temporaryStatusBarFindDriver open];
     }
     [self.findDriver makeVisible];
 }
