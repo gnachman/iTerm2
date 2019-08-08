@@ -23,7 +23,6 @@ const CGFloat iTermWindowSizeViewMargin = 12;
         _vev.material = NSVisualEffectMaterialHUDWindow;
         _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
         _vev.wantsLayer = YES;
-        _vev.layer.cornerRadius = 15.0;
         [self addSubview:_vev];
         _label = [NSTextField newLabelStyledTextField];
         _label.font = [NSFont systemFontOfSize:22];
