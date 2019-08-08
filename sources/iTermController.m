@@ -1134,6 +1134,9 @@ static iTermController *gSharedInstance;
         }
         [tempString appendString:part];
     }
+    if (url.port) {
+        [tempString appendFormat:@" %@", url.port];
+    }
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                        KEY_CUSTOM_COMMAND: @"Yes" }];
 }
