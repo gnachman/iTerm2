@@ -24,11 +24,17 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-  CGFloat value = selected ? 0.1 : 0.03;
-  if (selected) {
-    value += highlightAmount * 0.05;
-  }
-  return [NSColor colorWithCalibratedWhite:value alpha:1.00];
+    BOOL shouldBeLight;
+    if (@available(macOS 10.14, *)) {
+        shouldBeLight = selected;
+    } else {
+        shouldBeLight = !selected;
+    }
+    CGFloat value = shouldBeLight ? 0.2 : 0.03;
+    if (selected) {
+        value += highlightAmount * 0.05;
+    }
+    return [NSColor colorWithCalibratedWhite:value alpha:1.00];
 }
 
 - (CGFloat)fontSize {
