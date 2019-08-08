@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL dirty;
 @property (nonatomic) NSInteger adds;
 @property (nonatomic) NSInteger deletes;
+@property (nonatomic, readonly) NSTimeInterval age;
 
 - (instancetype)initWithScope:(iTermVariableScope *)scope;
 

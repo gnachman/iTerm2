@@ -28,8 +28,15 @@
     });
 }
 
-- (iTermGitState *)stateForPath:(NSString *)path {
-    return _cache[path];
+- (iTermGitState *)stateForPath:(NSString *)path maximumAge:(NSTimeInterval)maximumAge {
+    iTermGitState *state = _cache[path];
+    if (!state) {
+        return nil;
+    }
+    if (state.age > maximumAge) {
+        return nil;
+    }
+    return state;
 }
 
 - (void)removeStateForPath:(NSString *)path {

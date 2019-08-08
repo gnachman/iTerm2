@@ -98,7 +98,9 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 
 - (void)requestPath:(NSString *)path completion:(iTermGitCallback)completion {
     DLog(@"git poll worker for bucket %d: got request for path %@", _bucket, path);
-    iTermGitState *cached = [_cache stateForPath:path];
+    // This age limits the polling rate. If an older cache entry is around it will still be used
+    // until expiry when the poll command fails.
+    iTermGitState *cached = [_cache stateForPath:path maximumAge:2];
     if (cached) {
         DLog(@"git poll worker for bucket %d: return cached value %@ for path %@", _bucket, cached, path);
         completion(cached);
@@ -142,7 +144,8 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     void (^callbackWrapper)(iTermGitState *) = ^(iTermGitState *state) {
         DLog(@"git poll worker for bucket %d: Callback wrapper invoked with state %@", bucket, state);
         if (state) {
-            [self->_cache setState:state forPath:path ttl:2];
+            // This gives the maximum age to show a stale entry. It does not limit the polling rate.
+            [self->_cache setState:state forPath:path ttl:10];
         }
         if (!finished) {
             DLog(@"git poll worker for bucket %d: Command runner %@ finished", bucket, self->_commandRunner);
@@ -232,13 +235,14 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 
     NSString *path = _queue.firstObject;
     if (path) {
-        DLog(@"git poll worker for bucket %d: Invoking callbacks for path %@", _bucket, path);
+        DLog(@"git poll worker for bucket %d: Invoking callbacks for path %@ with state %@", _bucket, path, state);
         [_queue removeObjectAtIndex:0];
         NSArray<iTermGitCallback> *callbacks = _outstanding[path];
         [_outstanding removeObjectForKey:path];
         for (iTermGitCallback block in callbacks) {
             block(state);
         }
+        DLog(@"git poll worker for bucket %d: Done nvoking callbacks", _bucket);
     }
     return YES;
 }
@@ -261,13 +265,15 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     [_queue removeAllObjects];
 
     // Report failure.
-    NSArray<NSMutableArray<iTermGitCallback> *> *callbackArrays = _outstanding.allValues;
+    NSDictionary<NSString *, NSMutableArray<iTermGitCallback> *> *outstanding = _outstanding.copy;
     [_outstanding removeAllObjects];
-    for (NSArray<iTermGitCallback> *callbacks in callbackArrays) {
+    [outstanding enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull path, NSArray<iTermGitCallback> * _Nonnull callbacks, BOOL * _Nonnull stop) {
+        iTermGitState *cached = [self->_cache stateForPath:path maximumAge:INFINITY];
         for (iTermGitCallback callback in callbacks) {
-            callback(nil);
+            DLog(@"git poll worker for bucket %d: RESET - run callback with %@ for %@", self->_bucket, cached, path);
+            callback(cached);
         }
-    }
+    }];
 }
 
 - (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
