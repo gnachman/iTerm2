@@ -77,11 +77,11 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     if ([self.delegate statusBarComposerShouldForceDarkAppearance:self]) {
         if (@available(macOS 10.14, *)) {
             _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
-        } else {
-            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
         }
     } else {
-        _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        if (@available(macOS 10.14, *)) {
+            _popoverVC.view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        }
     }
     _popoverVC.textView.string = _comboBox.stringValue;
     _popoverVC.textView.font = [self.delegate statusBarComposerFont:self];
