@@ -77,7 +77,8 @@ NS_ASSUME_NONNULL_BEGIN
     if (hasIcon) {
         icon.template = YES;
         _iconImageView = [NSImageView imageViewWithImage:icon];
-        [_iconImageView it_setTintColor:[NSColor labelColor]];
+        NSColor *tintColor = [self.component statusBarTextColor] ?: [self.component.delegate statusBarComponentDefaultTextColor];
+        [_iconImageView it_setTintColor:tintColor];
         [_iconImageView sizeToFit];
         [self addSubview:_iconImageView];
         NSRect area = NSMakeRect(0, 0, iTermStatusBarViewControllerIconWidth, 21);
