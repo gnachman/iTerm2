@@ -74,6 +74,7 @@
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
@@ -429,6 +430,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _willClose;
     BOOL _updatingWindowType;  // updateWindowType is not reentrant
     BOOL _suppressMakeCurrentTerminal;
+    NSArray *_screenConfigurationAtTimeOfForceFrame;
+    NSRect _forceFrame;
+    NSTimeInterval _forceFrameUntil;
 }
 
 @synthesize scope = _scope;
@@ -1125,6 +1129,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_toggleFullScreenModeCompletionBlocks release];
     [_currentTabTitleTextFieldDelegate release];
     [_methods release];
+    [_screenConfigurationAtTimeOfForceFrame release];
 
     [super dealloc];
 }
@@ -4116,6 +4121,26 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
+    // See comments on -forceFrame:
+    DLog(@"windowDidChangeScreen frame=%@ forceFrame=%@ time left in forceFrameUntil=%@ screenConfig=%@\n%@",
+         NSStringFromRect(self.window.frame),
+         NSStringFromRect(_forceFrame),
+         @([NSDate it_timeSinceBoot] - _forceFrameUntil),
+         _screenConfigurationAtTimeOfForceFrame,
+         [NSThread callStackSymbols]);
+    if (!NSEqualRects(self.window.frame, _forceFrame) &&
+        !NSEqualRects(NSZeroRect, _forceFrame) &&
+        [NSDate it_timeSinceBoot] < _forceFrameUntil &&
+        [[self screenConfiguration] isEqual:_screenConfigurationAtTimeOfForceFrame]) {
+        DLog(@"Schedule a set frame");
+        NSRect rect = _forceFrame;
+        DLog(@"Setting frame due to force-frame to %@", NSStringFromRect(rect));
+        [self.window setFrame:rect display:YES animate:NO];
+        DLog(@"Returning early");
+        return;
+    } else {
+        DLog(@"Allowing screen change to go on");
+    }
     BOOL canonicalize = ![self miniaturizedWindowShouldPreserveFrameUntilDeminiaturized];
     // This gets called when any part of the window enters or exits the screen and
     // appears to be spuriously called for nonnative fullscreen windows.
@@ -4141,9 +4166,42 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Returning from windowDidChangeScreen:.");
 }
 
+- (NSArray *)screenConfiguration {
+    return [[NSScreen screens] mapWithBlock:^id(NSScreen *screen) {
+        return @{ @"frame": NSStringFromRect(screen.frame),
+                  @"visibleFrame": NSStringFromRect(screen.visibleFrame) };
+    }];
+}
+
+// When you replace the window with one of a different type and then order it
+// front, the window gets moved to the first screen after a little while. It's
+// not after one spin of the runloop, but just a little while later. I can't 
+// tell why. But it's horrible and I can't find a better workaround than to
+// just muscle it back to the frame we want if it changes for apparently no
+// reason for some time.
+- (void)forceFrame:(NSRect)frame {
+    if (![iTermAdvancedSettingsModel workAroundMultiDisplayOSBug]) {
+        return;
+    }
+    [self clearForceFrame];
+    _forceFrame = frame;
+    _screenConfigurationAtTimeOfForceFrame = [[self screenConfiguration] retain];
+    _forceFrameUntil = [NSDate it_timeSinceBoot] + 2;
+    DLog(@"Force frame to %@", NSStringFromRect(frame));
+    [self.window setFrame:frame display:YES animate:NO];
+}
+
+- (void)clearForceFrame {
+    [_screenConfigurationAtTimeOfForceFrame autorelease];
+    _screenConfigurationAtTimeOfForceFrame = nil;
+    _forceFrameUntil = 0;
+    _forceFrame = NSZeroRect;
+}
+
 - (void)windowWillMove:(NSNotification *)notification {
-    // AFAICT this is only called when you move the window by dragging it.
+    // AFAICT this is only called when you move the window by dragging it or double-click the title bar.
     DLog(@"Looks like the user started dragging the window.");
+    [self clearForceFrame];
     _windowIsMoving = YES;
     _screenBeforeMoving = [[NSScreen screens] indexOfObject:self.window.screen];
 }
@@ -4523,12 +4581,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return myWindow;
 }
 
-- (void)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
+- (BOOL)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
     if (_willClose) {
-        return;
+        return NO;
     }
     if (newWindowType == _windowType) {
-        return;
+        return NO;
     }
     NSWindow *oldWindow = [[self.window retain] autorelease];
     oldWindow.delegate = nil;
@@ -4543,6 +4601,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.window.opaque = NO;
     self.window.delegate = self;
     [oldWindow close];
+    return YES;
 }
 
 - (void)willEnterTraditionalFullScreenMode {
@@ -4569,8 +4628,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)willExitTraditionalFullScreenMode {
+    BOOL shouldForce = NO;
     if ([PseudoTerminal windowType:self.savedWindowType shouldBeCompactWithSavedWindowType:self.savedWindowType]) {
-        [self replaceWindowWithWindowOfType:self.savedWindowType];
+        shouldForce = [self replaceWindowWithWindowOfType:self.savedWindowType];
         self.windowType = self.savedWindowType;
     } else {
         // NOTE: Setting the style mask causes the presentation options to be
@@ -4586,6 +4646,22 @@ ITERM_WEAKLY_REFERENCEABLE
         oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
     }
     [self.window setFrame:oldFrame_ display:YES];
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            if (shouldForce) {
+                [self forceFrame:oldFrame_];
+            }
+            break;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            break;
+    }
+
     [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
     PtyLog(@"toggleFullScreenMode - allocate new terminal");
 }
@@ -4709,6 +4785,20 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"toggleFullScreenMode returning");
     togglingFullScreen_ = false;
 
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            [self forceFrame:self.window.frame];
+            break;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            break;
+    }
+
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     if (self.savedWindowType == WINDOW_TYPE_COMPACT ||
@@ -4829,6 +4919,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
+    [self clearForceFrame];
     liveResize_ = YES;
     if (@available(macOS 10.14, *)) {
         if (![self windowTitleIsVisible] && !self.anyFullScreen) {
@@ -8108,11 +8199,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     NSRect frame = self.window.frame;
     NSString *title = [[self.window.title copy] autorelease];
-    [self replaceWindowWithWindowOfType:windowType];
+    const BOOL changed = [self replaceWindowWithWindowOfType:windowType];
     [self.window setFrame:frame display:YES];
     [self.window orderFront:nil];
     [self repositionWidgets];
     self.window.title = title;
+
+    if (changed) {
+        [self forceFrame:frame];
+    }
 }
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
