@@ -1393,6 +1393,13 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
         return;
     }
 
+    if (self.numberOfVisibleTabs == 1 &&
+        [self.delegate respondsToSelector:@selector(tabViewCanDragSolitaryTab:)] &&
+        ![self.delegate tabViewCanDragSolitaryTab:_tabView]) {
+        [self.window performWindowDragWithEvent:theEvent];
+        return;
+    }
+
     NSRect cellFrame;
     NSPoint trackingStartPoint = [self convertPoint:_initialDragLocation fromView:nil];
     PSMTabBarCell *cell = [self cellForPoint:trackingStartPoint cellFrame:&cellFrame];

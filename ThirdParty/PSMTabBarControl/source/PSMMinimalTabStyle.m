@@ -679,5 +679,4 @@
     return [tabColor colorWithAlphaComponent:alpha];
 }
 
-
 @end

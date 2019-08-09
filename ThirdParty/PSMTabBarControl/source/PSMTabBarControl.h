@@ -133,6 +133,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel;  //
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
+- (BOOL)tabViewCanDragSolitaryTab:(NSTabViewItem *)tabView;
 
 @end
 

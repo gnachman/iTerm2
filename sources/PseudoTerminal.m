@@ -6551,6 +6551,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (BOOL)tabViewCanDragSolitaryTab:(NSTabView *)tabView {
+    if (![iTermAdvancedSettingsModel convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme]) {
+        return YES;
+    }
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            return NO;
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+        case TAB_STYLE_AUTOMATIC:
+            return YES;
+    }
+}
+
 - (BOOL)isInitialized
 {
     return _contentView.tabView != nil;

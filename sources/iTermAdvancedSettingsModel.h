@@ -61,6 +61,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)coloredUnselectedTabTextProminence;
 + (double)compactMinimalTabBarHeight;
 + (BOOL)conservativeURLGuessing;
++ (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
 + (BOOL)copyWithStylesByDefault;
 + (BOOL)darkThemeHasBlackTitlebar;
 + (CGFloat)defaultTabBarHeight;
