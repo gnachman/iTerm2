@@ -30,7 +30,7 @@ iTermFullScreenFlashVertexShader(uint vertexID [[ vertex_id ]],
 fragment float4
 iTermFullScreenFlashFragmentShader(iTermFullScreenFlashVertexFunctionOutput in [[stage_in]],
                                    constant float4 *color [[ buffer(iTermFragmentBufferIndexFullScreenFlashColor) ]],
-                                   texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                                   texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     return *color;
 }
 

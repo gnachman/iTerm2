@@ -14,28 +14,28 @@
 // Because of pretty ascii overlap, it is not used currently. It could be used for the first
 // pass though, and I don't want this code to get stale, so I'm keeping it around for now.
 
-fragment half4
+fragment float4
 iTermTextFragmentShaderSolidBackgroundEmoji(iTermTextVertexFunctionOutputEmoji in [[stage_in]],
-                                            texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                            texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                             constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                             constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                            texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+                                            texture2d<float> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
     return texture.sample(textureSampler, in.textureCoordinate);
 }
 
-fragment half4
+fragment float4
 iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_in]],
-                                       texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                       texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                        constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                        constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                       texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+                                       texture2d<float> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
+    float4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
@@ -51,21 +51,21 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                exactColorModels[i.y + bwIntIndices.y],
                                exactColorModels[i.z + bwIntIndices.z],
                                255);
-    return static_cast<half4>(rgba) / 255;
+    return static_cast<float4>(rgba) / 255;
 }
 
-fragment half4
+fragment float4
 iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
-                                                      texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                                      texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                                       constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                                       constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                                      texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+                                                      texture2d<float> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
+    float4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
-    half strikethroughWeight = 0;
+    float strikethroughWeight = 0;
     if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
         strikethroughWeight = ComputeWeightOfUnderlineRegular(iTermMetalGlyphAttributesUnderlineStrikethrough,
                                                               in.clipSpacePosition.xy,
@@ -83,7 +83,7 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
                                                               dimensions->scale);
     }
     // Emoji, underlined
-    half underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
+    float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
                                                            in.clipSpacePosition.xy,
                                                            in.viewportSize,
                                                            in.cellOffset,
@@ -102,17 +102,17 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
                max(strikethroughWeight, underlineWeight));
 }
 
-fragment half4
+fragment float4
 iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput in [[stage_in]],
-                                                 texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                                 texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                                  constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                                  constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                                 texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+                                                 texture2d<float> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-    half underlineWeight = 0;
+    float4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
+    float underlineWeight = 0;
 
     // Not emoji, underlined
     underlineWeight = ComputeWeightOfUnderlineInverted(in.underlineStyle,
@@ -143,7 +143,7 @@ iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput i
                                exactColorModels[i.y + bwIntIndices.y],
                                exactColorModels[i.z + bwIntIndices.z],
                                255);
-    half4 textColor = static_cast<half4>(rgba) / 255;
+    float4 textColor = static_cast<float4>(rgba) / 255;
 
     return mix(textColor, in.underlineColor, underlineWeight);
 }

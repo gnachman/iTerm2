@@ -33,11 +33,11 @@ iTermMarkVertexShader(uint vertexID [[ vertex_id ]],
 
 fragment float4
 iTermMarkFragmentShader(iTermMarkVertexFunctionOutput in [[stage_in]],
-                        texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                        texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      coord::pixel);
 
-    const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    const float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     return float4(colorSample);
 }
