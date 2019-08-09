@@ -4557,6 +4557,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                     styleMask:styleMask
                                                                       backing:NSBackingStoreBuffered
                                                                         defer:defer] autorelease];
+    myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
