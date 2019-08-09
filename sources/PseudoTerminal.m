@@ -8425,11 +8425,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     // If screens have separate spaces then all screens have a menu bar.
     if (currentScreen == menubarScreen || [NSScreen screensHaveSeparateSpaces]) {
-        DLog(@"set flags to auto-hide dock");
-        int flags = NSApplicationPresentationAutoHideDock;
+        NSApplicationPresentationOptions flags = 0;
+        if (currentScreen == menubarScreen) {
+            DLog(@"Set flag to auto-hide dock");
+            flags = NSApplicationPresentationAutoHideDock;
+        }
         if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
             [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
-            DLog(@"Set flags to auto-hide menu bar");
+            DLog(@"Set flag to auto-hide menu bar");
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
         NSApplicationPresentationOptions presentationOptions =
