@@ -10,19 +10,19 @@ using namespace metal;
 #import "iTermTextShaderCommon.h"
 
 
-// Fills in result with color of neighboring pixels in texture. Result must hold 8 half4's.
+// Fills in result with color of neighboring pixels in texture. Result must hold 8 float4's.
 void SampleNeighbors(float2 textureSize,
                      float2 textureOffset,
                      float2 textureCoordinate,
                      float2 glyphSize,
                      float scale,
-                     texture2d<half> texture,
+                     texture2d<float> texture,
                      sampler textureSampler,
-                     thread half4 *result) {
+                     thread float4 *result) {
     const float2 pixel = (scale / 2) / textureSize;
     // I have to inset the limits by one pixel on the left and right. I guess
     // this is because clip space coordinates represent the center of a pixel,
-    // so they are offset by a half pixel and will sample their neighbors. I'm
+    // so they are offset by a float pixel and will sample their neighbors. I'm
     // not 100% sure what's going on here, but it's definitely required.
     const float2 minTextureCoord = textureOffset + pixel;
     const float2 maxTextureCoord = minTextureCoord + (glyphSize / textureSize) - (scale * pixel.x * 2);
@@ -38,14 +38,14 @@ void SampleNeighbors(float2 textureSize,
 }
 
 // Sample eight neighbors of textureCoordinate and returns a value with the minimum components from all of them.
-half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
+float4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
                                            float2 glyphSize,
                                            float scale,
-                                           texture2d<half> texture,
+                                           texture2d<float> texture,
                                            sampler textureSampler) {
-    half4 neighbors[8];
+    float4 neighbors[8];
     SampleNeighbors(textureSize,
                     textureOffset,
                     textureCoordinate,
@@ -55,7 +55,7 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                     textureSampler,
                     neighbors);
 
-    const half4 mask = min(neighbors[0],
+    const float4 mask = min(neighbors[0],
                            min(neighbors[1],
                                min(neighbors[2],
                                    min(neighbors[3],
@@ -67,14 +67,14 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
 }
 
 // Sample eight neighbors of textureCoordinate and returns a value with the maximum components from all of them.
-half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
+float4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
                                            float2 glyphSize,
                                            float scale,
-                                           texture2d<half> texture,
+                                           texture2d<float> texture,
                                            sampler textureSampler) {
-    half4 neighbors[8];
+    float4 neighbors[8];
     SampleNeighbors(textureSize,
                     textureOffset,
                     textureCoordinate,
@@ -84,7 +84,7 @@ half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                     textureSampler,
                     neighbors);
 
-    const half4 mask = max(neighbors[0],
+    const float4 mask = max(neighbors[0],
                            max(neighbors[1],
                                max(neighbors[2],
                                    max(neighbors[3],
@@ -101,7 +101,7 @@ float FractionOfPixelThatIntersectsUnderline(float2 clipSpacePosition,
                                              float2 cellOffset,
                                              float underlineOffset,
                                              float underlineThickness) {
-    // Flip the clipSpacePosition and shift it by half a pixel so it refers to the minimum coordinate
+    // Flip the clipSpacePosition and shift it by float a pixel so it refers to the minimum coordinate
     // that contains this pixel with y=0 on the bottom. This only considers the vertical position
     // of the line.
     float originOnScreenInPixelSpace = viewportSize.y - (clipSpacePosition.y - 0.5);
@@ -193,7 +193,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 textureCoordinate,
                                        float2 glyphSize,
                                        float2 cellSize,
-                                       texture2d<half> texture,
+                                       texture2d<float> texture,
                                        sampler textureSampler,
                                        float scale) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
@@ -212,7 +212,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
         return weight;
     }
-    half4 mask = GetMinimumColorComponentsOfNeighbors(textureSize,
+    float4 mask = GetMinimumColorComponentsOfNeighbors(textureSize,
                                                       textureOffset,
                                                       textureCoordinate,
                                                       glyphSize,
@@ -242,7 +242,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 textureCoordinate,
                                       float2 glyphSize,
                                       float2 cellSize,
-                                      texture2d<half> texture,
+                                      texture2d<float> texture,
                                       sampler textureSampler,
                                       float scale) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
@@ -261,7 +261,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
         return weight;
     }
-    half maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
+    float maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
                                                          textureOffset,
                                                          textureCoordinate,
                                                          glyphSize,

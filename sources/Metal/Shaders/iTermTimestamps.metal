@@ -29,12 +29,12 @@ iTermTimestampsVertexShader(uint vertexID [[ vertex_id ]],
 
 fragment float4
 iTermTimestampsFragmentShader(iTermTimestampsVertexFunctionOutput in [[stage_in]],
-                              texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                              texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     colorSample.xyz *= colorSample.w;
-    return float4(colorSample);
+    return colorSample;
 }
 
