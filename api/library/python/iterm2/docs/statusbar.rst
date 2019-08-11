@@ -7,6 +7,7 @@ Status Bar
 .. autoclass:: iterm2.StringKnob
 .. autoclass:: iterm2.PositiveFloatingPointKnob
 .. autoclass:: iterm2.ColorKnob
+.. autoclass:: iterm2.StatusBarComponent.Icon
 
 
 ----
