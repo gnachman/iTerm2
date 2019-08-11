@@ -4183,6 +4183,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![iTermAdvancedSettingsModel workAroundMultiDisplayOSBug]) {
         return;
     }
+    if (NSEqualRects(frame, NSIntersectionRect(frame, NSScreen.screens.firstObject.frame))) {
+        DLog(@"Frame is entirely in the first screen. Not forcing.");
+        return;
+    }
     [self clearForceFrame];
     _forceFrame = frame;
     _screenConfigurationAtTimeOfForceFrame = [[self screenConfiguration] retain];
