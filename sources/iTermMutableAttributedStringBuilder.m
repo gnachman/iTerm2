@@ -93,6 +93,10 @@
     if ([attributes isEqualToDictionary:_attributes]) {
         return;
     }
+    NSNumber *underlineStyleNumber = attributes[NSUnderlineStyleAttributeName];
+    if (underlineStyleNumber && [underlineStyleNumber integerValue] != NSUnderlineStyleNone) {
+        _canUseFastPath = NO;
+    }
     [self build];
     [_attributes release];
     _attributes = [attributes copy];
