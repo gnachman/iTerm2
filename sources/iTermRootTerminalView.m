@@ -271,8 +271,29 @@ typedef struct {
 - (NSEdgeInsets)insetsForStoplightHotbox {
     if (![self.delegate enableStoplightHotbox]) {
         NSEdgeInsets insets = NSEdgeInsetsZero;
-        insets.left = insets.right = 6;
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
         insets.bottom = -[self.delegate rootTerminalViewStoplightButtonsOffset:self];
+        switch (preferredStyle) {
+            case TAB_STYLE_MINIMAL:
+                insets.left = insets.right = MAX(0, -insets.bottom);
+                break;
+            case TAB_STYLE_COMPACT:
+                insets.left = insets.right = 0;
+                break;
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                insets.left = insets.right = 0;
+                break;
+        }
+
+        insets.left = [self retinaRound:insets.left];
+        insets.top = [self retinaRound:insets.top];
+        insets.bottom = [self retinaRound:insets.bottom];
+        insets.right = [self retinaRound:insets.right];
+
         return insets;
     }
 
