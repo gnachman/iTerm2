@@ -220,6 +220,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 // black or white.
 + (double)smartCursorColorFgThreshold;
 
++ (NSString *)spacelessApplicationSupport;
 + (NSString *)sshSchemePath;
 + (BOOL)sshURLsSupportPath;
 + (BOOL)startDebugLoggingAutomatically;

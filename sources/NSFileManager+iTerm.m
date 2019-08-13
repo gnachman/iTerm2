@@ -122,7 +122,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                                   inDomain:NSUserDomainMask
                                        appendPathComponent:nil
                                                      error:&error];
-    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support" withString:@"ApplicationSupport"];
+    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
+                                                                   withString:[iTermAdvancedSettingsModel spacelessApplicationSupport]];
     NSString *executableName =
         [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     return [nospaces stringByAppendingPathComponent:executableName];
@@ -147,7 +148,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                                   inDomain:NSUserDomainMask
                                        appendPathComponent:nil
                                                      error:&error];
-    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support" withString:@"ApplicationSupport"];
+    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
+                                                                   withString:[iTermAdvancedSettingsModel spacelessApplicationSupport]];
     [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
 
     NSString *executableName =
