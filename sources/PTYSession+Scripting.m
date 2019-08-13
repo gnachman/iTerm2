@@ -336,7 +336,7 @@
 }
 
 - (void)setName:(NSString *)name {
-    self.variablesScope.autoNameFormat = name;
+    [self setSessionSpecificProfileValues:@{ KEY_NAME: name ?: @"" }];
 }
 
 #pragma mark ANSI Colors
