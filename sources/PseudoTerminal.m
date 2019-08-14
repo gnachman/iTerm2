@@ -5047,6 +5047,10 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
 
         case PSMTab_TopTab:
+            if ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
+                ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+                return NO;
+            }
             break;
     }
 
