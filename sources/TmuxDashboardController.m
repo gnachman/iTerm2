@@ -190,6 +190,15 @@
                               toSession:targetSession];
 }
 
+- (void)moveWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession
+{
+    [[self tmuxController] moveWindowId:windowId
+                              inSession:sessionName
+                              toSession:targetSession];
+}
+
 #pragma mark TmuxWindowsTableProtocol
 
 - (void)reloadWindows

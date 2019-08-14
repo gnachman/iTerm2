@@ -163,6 +163,9 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)linkWindowId:(int)windowId
            inSession:(NSString *)sessionName
            toSession:(NSString *)targetSession;
+- (void)moveWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession;
 
 - (void)renameSession:(NSString *)oldName to:(NSString *)newName;
 - (void)killSession:(NSString *)sessionName;

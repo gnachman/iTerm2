@@ -1422,6 +1422,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          responseSelector:nil];
 }
 
+- (void)moveWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession {
+    [gateway_ sendCommand:[NSString stringWithFormat:@"move-window -s \"%@:@%d\" -t \"%@:+\"",
+                           sessionName, windowId, targetSession]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 // Find a position for any key in panes and remove all entries with keys in panes.
 - (NSValue *)positionForWindowWithPanes:(NSArray *)panes
 {
