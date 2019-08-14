@@ -8975,6 +8975,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenDidAddNote:(PTYNoteViewController *)note {
     [_textview addViewForNote:note];
     [_textview setNeedsDisplay:YES];
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (void)screenDidEndEditingNote {
