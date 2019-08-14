@@ -227,7 +227,7 @@ typedef struct {
 
 - (NSView *)hitTest:(NSPoint)point {
     NSView *view = [super hitTest:point];
-    if (!_tabBarControlOnLoan && !_windowNumberLabel.hidden && view == _windowNumberLabel) {
+    if (!_tabBarControlOnLoan && !_windowNumberLabel.hidden && view == _windowNumberLabel && !_tabBarControl.isHidden) {
         return _tabBarControl;
     } else if (!_windowTitleLabel.hidden && view == _windowTitleLabel) {
         return self;
