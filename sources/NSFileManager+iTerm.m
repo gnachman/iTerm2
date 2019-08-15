@@ -148,9 +148,14 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                                   inDomain:NSUserDomainMask
                                        appendPathComponent:nil
                                                      error:&error];
+    NSString *linkName = [iTermAdvancedSettingsModel spacelessApplicationSupport];
     NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
-                                                                   withString:[iTermAdvancedSettingsModel spacelessApplicationSupport]];
-    [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
+                                                                   withString:linkName];
+    if (linkName.length) {
+        [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
+    } else {
+        linkName = @"_ApplicationSupport";
+    }
 
     NSString *executableName =
         [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
