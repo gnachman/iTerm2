@@ -9,6 +9,7 @@
 #import "ContextMenuActionPrefsController.h"
 #import "FutureMethods.h"
 #import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
 #import "VT100RemoteHost.h"
 
 static NSString* kTitleKey = @"title";
@@ -59,8 +60,7 @@ static NSString* kParameterKey = @"parameter";
 }
 
 + (NSString *)parameterValue:(NSString *)parameter
-            encodedForAction:(ContextMenuActions)action
-{
+            encodedForAction:(ContextMenuActions)action {
     switch (action) {
         case kRunCommandContextMenuAction:
         case kRunCommandInWindowContextMenuAction:
@@ -68,8 +68,9 @@ static NSString* kParameterKey = @"parameter";
             return [parameter stringWithEscapedShellCharactersIncludingNewlines:NO];
         case kOpenFileContextMenuAction:
             return parameter;
-        case kOpenUrlContextMenuAction:
-            return [parameter stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+        case kOpenUrlContextMenuAction: {
+            return [NSURL URLWithUserSuppliedString:parameter].absoluteString;
+        }
         case kSendTextContextMenuAction:
             return parameter;
     }
