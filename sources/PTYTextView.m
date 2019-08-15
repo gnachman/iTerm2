@@ -6041,7 +6041,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     if (event.type == NSEventTypeScrollWheel) {
-        return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
+        return ([self xtermMouseReportingAllowMouseWheel]);
     } else {
         PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
         return (frontTextView == self && [self xtermMouseReporting]);

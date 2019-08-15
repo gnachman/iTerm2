@@ -114,17 +114,10 @@
             relatedView:_answerBackStringLabel
                    type:kPreferenceInfoTypeStringTextField];
 
-    info = [self defineControl:_xtermMouseReporting
-                           key:KEY_XTERM_MOUSE_REPORTING
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
-        [strongSelf->_xtermMouseReportingAllowMouseWheel setEnabled:[strongSelf boolForKey:KEY_XTERM_MOUSE_REPORTING]];
-    };
+    [self defineControl:_xtermMouseReporting
+                    key:KEY_XTERM_MOUSE_REPORTING
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_xtermMouseReportingAllowMouseWheel
                     key:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL

@@ -3612,7 +3612,7 @@ DQ
                     </connections>
                 </button>
                 <button id="EMG-WL-JwE">
-                    <rect key="frame" x="45" y="273" width="215" height="18"/>
+                    <rect key="frame" x="20" y="273" width="215" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Report mouse wheel events" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="DCM-jj-J4m">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
