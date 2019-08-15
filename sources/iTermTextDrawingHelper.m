@@ -127,8 +127,8 @@ typedef struct iTermTextColorContext {
 } iTermTextColorContext;
 
 @implementation iTermTextDrawingHelper {
-    // Current font. Only valid for the duration of a single drawing context.
-    NSFont *_selectedFont;
+    NSFont *_cachedFont;
+    CGFontRef _cgFont;
 
     // Last position of blinking cursor
     VT100GridCoord _oldCursorPosition;
@@ -199,7 +199,8 @@ typedef struct iTermTextColorContext {
     [_markedText release];
     [_colorMap release];
 
-    [_selectedFont release];
+    [_cachedFont release];
+    CFRelease(_cgFont);
 
     [_missingImages release];
     [_backgroundStripesImage release];
@@ -290,9 +291,6 @@ typedef struct iTermTextColorContext {
         [c set];
         NSFrameRect(rect);
     }
-
-    [_selectedFont release];
-    _selectedFont = nil;
 
     // Release cached CTLineRefs from the last set of drawings and update them with the new ones.
     // This keeps us from having too many lines cached at once.
@@ -1167,20 +1165,16 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)selectFont:(NSFont *)font inContext:(CGContextRef)ctx {
-    if (font != _selectedFont) {
-        // This method is really slow so avoid doing it when it's not
-        // necessary. It is also deprecated but CoreText is extremely slow so
-        // we'll keep using until Apple fixes that.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        CGContextSelectFont(ctx,
-                            [[font fontName] UTF8String],
-                            [font pointSize],
-                            kCGEncodingMacRoman);
-#pragma clang diagnostic pop
-        [_selectedFont release];
-        _selectedFont = [font retain];
+    if (font != _cachedFont) {
+        [_cachedFont release];
+        _cachedFont = [font retain];
+        if (_cgFont) {
+            CFRelease(_cgFont);
+        }
+        _cgFont = CTFontCopyGraphicsFont((__bridge CTFontRef)font, NULL);
     }
+    CGContextSetFont(ctx, _cgFont);
+    CGContextSetFontSize(ctx, font.pointSize);
 }
 
 - (int)setSmoothingWithContext:(CGContextRef)ctx
@@ -1274,11 +1268,6 @@ typedef struct iTermTextColorContext {
                                                    smear:(BOOL)smear {
     if (cheapString.length == 0) {
         return 0;
-    }
-    if (smear) {
-        // Force the font to be updated because it's a temporary context.
-        [_selectedFont release];
-        _selectedFont = nil;
     }
     NSDictionary *attributes = cheapString.attributes;
     if (attributes[iTermImageCodeAttribute]) {
