@@ -200,7 +200,9 @@ typedef struct iTermTextColorContext {
     [_colorMap release];
 
     [_cachedFont release];
-    CFRelease(_cgFont);
+    if (_cgFont) {
+        CFRelease(_cgFont);
+    }
 
     [_missingImages release];
     [_backgroundStripesImage release];
