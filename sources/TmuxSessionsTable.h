@@ -21,6 +21,9 @@
 - (void)linkWindowId:(int)windowId
            inSession:(NSString *)sessionName
            toSession:(NSString *)targetSession;
+- (void)moveWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession;
 - (void)detach;
 
 @end

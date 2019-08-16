@@ -164,9 +164,15 @@ extern NSString *kWindowPasteboardType;
     NSString *targetSession = [model_ objectAtIndex:row];
     for (NSArray *tuple in draggedItems) {
         NSNumber *windowId = [tuple objectAtIndex:1];
-        [delegate_ linkWindowId:[windowId intValue]
-                      inSession:sessionName
-                      toSession:targetSession];
+        if (info.draggingSourceOperationMask & NSDragOperationLink) {
+            [delegate_ linkWindowId:[windowId intValue]
+                          inSession:sessionName
+                          toSession:targetSession];
+        } else {
+            [delegate_ moveWindowId:[windowId intValue]
+                          inSession:sessionName
+                          toSession:targetSession];
+        }
     }
     return YES;
 }
@@ -177,7 +183,11 @@ extern NSString *kWindowPasteboardType;
        proposedDropOperation:(NSTableViewDropOperation)operation
 {
     if (operation == NSTableViewDropOn) {
-        return NSDragOperationLink;
+        if (info.draggingSourceOperationMask & NSDragOperationLink) {
+            return NSDragOperationLink;
+        } else {
+            return NSDragOperationMove;
+        }
     } else {
         return NSDragOperationNone;
     }
