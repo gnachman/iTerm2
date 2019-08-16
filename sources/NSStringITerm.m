@@ -1906,6 +1906,28 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     [s replaceOccurrencesOfString:@"\f" withString:@"\\f" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
     [s replaceOccurrencesOfString:@"\r" withString:@"\\r" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
     [s replaceOccurrencesOfString:@"\t" withString:@"\\t" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [s length])];
+
+    static dispatch_once_t onceToken;
+    static NSMutableArray *froms;
+    static NSMutableArray *tos;
+    static const int numberOfControlCharacters = 0x20;
+    dispatch_once(&onceToken, ^{
+        froms = [[NSMutableArray alloc] init];
+        tos = [[NSMutableArray alloc] init];
+        for (int i = 0; i < numberOfControlCharacters; i++) {
+            char utf8[2] = { i, 0 };
+            NSString *from = [NSString stringWithUTF8String:utf8];
+            NSString *to = [NSString stringWithFormat:@"\\u%04x", i];
+            [froms addObject:from];
+            [tos addObject:to];
+        }
+    });
+    for (int i = 0; i < numberOfControlCharacters ; i++) {
+        [s replaceOccurrencesOfString:froms[i]
+                           withString:tos[i]
+                              options:0
+                                range:NSMakeRange(0, [s length])];
+    }
     return [NSString stringWithFormat:@"\"%@\"", s];
 }
 
