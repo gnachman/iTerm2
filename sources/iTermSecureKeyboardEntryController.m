@@ -41,6 +41,9 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
+        if ([NSApp isActive]) {
+            [self update];
+        }
     }
     return self;
 }
