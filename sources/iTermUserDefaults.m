@@ -14,7 +14,9 @@ static NSString *const iTermSecureKeyboardEntryEnabledUserDefaultsKey = @"Secure
 // Set to YES after warning the user about respecting the dock setting to prefer tabs over windows.
 static NSString *const kPreferenceKeyHaveBeenWarnedAboutTabDockSetting = @"NoSyncHaveBeenWarnedAboutTabDockSetting";
 
-static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory";
+static NSString *const iTermUserDefaultsKeyBuggySecureKeyboardEntry = @"NoSyncSearchHistory";  // DEPRECATED - See issue 8118
+static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory2";
+
 static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging = @"NoSyncEnableAutomaticProfileSwitchingLogging";
 
 @implementation iTermUserDefaults
@@ -41,12 +43,23 @@ static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id 
 }
 
 + (BOOL)secureKeyboardEntry {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeySearchHistory];
+    NSNumber *buggy = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry]];
+    if (buggy) {
+        // If the buggy one exists and is a number, then it was your secure keyboard setting as
+        // written by version 3.3.0 or 3.3.1. Prefer it because updating the secure keyboard entry
+        // setting in 3.3.2 or later will remove the buggy value.
+        // If it exists and is not a number then it may have been set in an earlier
+        // (non-buggy) version.
+        return [buggy boolValue];
+    }
+    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
 }
 
 + (void)setSecureKeyboardEntry:(BOOL)secureKeyboardEntry {
+    // See comment in +secureKeyboardEntry.
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
     [[NSUserDefaults standardUserDefaults] setBool:secureKeyboardEntry
-                                            forKey:iTermUserDefaultsKeySearchHistory];
+                                            forKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
 }
 
 + (iTermAppleWindowTabbingMode)appleWindowTabbingMode {
