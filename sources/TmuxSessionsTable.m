@@ -164,7 +164,7 @@ extern NSString *kWindowPasteboardType;
     NSString *targetSession = [model_ objectAtIndex:row];
     for (NSArray *tuple in draggedItems) {
         NSNumber *windowId = [tuple objectAtIndex:1];
-        if( info.draggingSourceOperationMask & NSDragOperationLink ) {
+        if (info.draggingSourceOperationMask & NSDragOperationLink) {
             [delegate_ linkWindowId:[windowId intValue]
                           inSession:sessionName
                           toSession:targetSession];
@@ -183,7 +183,7 @@ extern NSString *kWindowPasteboardType;
        proposedDropOperation:(NSTableViewDropOperation)operation
 {
     if (operation == NSTableViewDropOn) {
-        if( info.draggingSourceOperationMask & NSDragOperationLink ) {
+        if (info.draggingSourceOperationMask & NSDragOperationLink) {
             return NSDragOperationLink;
         } else {
             return NSDragOperationMove;
