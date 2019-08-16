@@ -1289,6 +1289,8 @@ static BOOL hasBecomeActive = NO;
     if ([iTermAPIHelper isEnabled]) {
         [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
     }
+    // This causes it to enable secure keyboard entry if needed.
+    [iTermSecureKeyboardEntryController sharedInstance];
 }
 
 - (NSMenu *)statusBarMenu {
