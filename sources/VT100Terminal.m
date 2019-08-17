@@ -1796,11 +1796,11 @@ static const int kMaxScreenRows = 4096;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
+            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
             break;
         case XTERMCC_WINICON_TITLE:
-            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
-            [delegate_ terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharsWithQuestionMark]]];
+            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+            [delegate_ terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
             break;
         case XTERMCC_PASTE64: {
             if (token.string) {
@@ -1815,7 +1815,7 @@ static const int kMaxScreenRows = 4096;
             [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE:
-            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
+            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]];
             break;
         case VT100CSI_ICH:
             [delegate_ terminalInsertEmptyCharsAtCursor:token.csi->p[0]];

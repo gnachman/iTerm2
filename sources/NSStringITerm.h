@@ -200,7 +200,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 + (NSString *)uuid;
 
 // Characters in [0, 31] and 127 get replaced with ?
-- (NSString *)stringByReplacingControlCharsWithQuestionMark;
+- (NSString *)stringByReplacingControlCharactersWithCaretLetter;
 
 // Returns the set of $$VARIABLES$$ in the string.
 - (NSSet *)doubleDollarVariables;

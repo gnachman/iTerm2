@@ -534,4 +534,29 @@
     XCTAssertEqualObjects(actual, expected);
 }
 
+- (void)testReplaceControlCharactersWithCaretLetter_Empty {
+    NSString *actual = [@"" stringByReplacingControlCharactersWithCaretLetter];
+    XCTAssertEqualObjects(actual, @"");
+}
+
+- (void)testReplaceControlCharactersWithCaretLetter_JustAControlCharacter {
+    NSString *actual = [[NSString stringWithFormat:@"%c", 1] stringByReplacingControlCharactersWithCaretLetter];
+    XCTAssertEqualObjects(actual, @"^A");
+}
+
+- (void)testReplaceControlCharactersWithCaretLetter_Backspace {
+    NSString *actual = [[NSString stringWithFormat:@"%c", 0x7f] stringByReplacingControlCharactersWithCaretLetter];
+    XCTAssertEqualObjects(actual, @"^?");
+}
+
+- (void)testReplaceControlCharactersWithCaretLetter_JustTwoControlCharacters {
+    NSString *actual = [[NSString stringWithFormat:@"%c%c", 1, 2] stringByReplacingControlCharactersWithCaretLetter];
+    XCTAssertEqualObjects(actual, @"^A^B");
+}
+
+- (void)testReplaceControlCharactersWithCaretLetter_MixOfRegularAndControlCharacters {
+    NSString *actual = [[NSString stringWithFormat:@"12%c34%c56", 1, 2] stringByReplacingControlCharactersWithCaretLetter];
+    XCTAssertEqualObjects(actual, @"12^A34^B56");
+}
+
 @end
