@@ -49,6 +49,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextP
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionDimmingAmount;  // Double in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab;  // Boolean
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel;  // NSNumber CFGloat points
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility;  // NSNumber boolean
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>
@@ -133,7 +134,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel;  //
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
-- (BOOL)tabViewCanDragSolitaryTab:(NSTabViewItem *)tabView;
+- (BOOL)tabViewCanDragSolitaryTab:(NSTabView *)tabView;
 
 @end
 

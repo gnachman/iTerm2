@@ -51,6 +51,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDimmingAmount = @"PSMTabBarContr
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab = @"PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
     @"PSMTabBarControlOptionMinimumSpaceForLabel";
+PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility = @"PSMTabBarControlOptionHighVisibility";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
