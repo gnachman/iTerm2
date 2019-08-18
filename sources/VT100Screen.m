@@ -3711,8 +3711,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else if (parts.count >= 4) {
         message = parts[0];
         length = [parts[1] intValue];
-        location.x = MIN(MAX(0, [parts[2] intValue]), location.x);
-        location.y = MIN(MAX(0, [parts[3] intValue]), location.y);
+        VT100GridCoord limit = {
+            .x = self.width - 1,
+            .y = self.height - 1
+        };
+        location.x = MIN(MAX(0, [parts[2] intValue]), limit.x);
+        location.y = MIN(MAX(0, [parts[3] intValue]), limit.y);
     }
     VT100GridCoord end = location;
     end.x += length;
