@@ -150,6 +150,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _fakeBold;
     BOOL _fakeItalic;
     NSFont *_font;
+    // Large enough to hold glyphSize * maxParts in both horizontal and vertical direction.
     CGSize _size;
     BOOL _boxDrawing;
     BOOL _useNativePowerlineGlyphs;
@@ -157,6 +158,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     
     CTLineRef _lineRefs[4];
     CGContextRef _context;
+    // These have size _bytesPerRow * _numberOfRows.
     NSMutableArray<NSMutableData *> *_datas;
 
     NSAttributedString *_attributedStrings[4];
@@ -174,6 +176,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     NSInteger _numberOfIterationsNeeded;
     iTermBitmapData *_postprocessedData;
     BOOL _isAscii;
+    // These metrics are for _context.
+    NSInteger _bytesPerRow;
+    NSInteger _numberOfRows;
 }
 
 + (NSRect)boundingRectForCharactersInRange:(NSRange)range
@@ -277,11 +282,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         ITAssertWithMessage(_font, @"Nil font for string=%@ attributes=%@", string, attributes);
         _attributes = attributes;
         _radius = radius;
-        _size = CGSizeMake(descriptor.glyphSize.width * self.maxParts,
-                           descriptor.glyphSize.height * self.maxParts);
+        _size = CGSizeMake(ceil(descriptor.glyphSize.width) * self.maxParts,
+                           ceil(descriptor.glyphSize.height) * self.maxParts);
         _boxDrawing = boxDrawing;
         _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
         _context = context;
+
+        _bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
+        _numberOfRows = CGBitmapContextGetHeight(_context);
+
         CGContextRetain(context);
 
         for (int i = 0; i < 4; i++) {
@@ -327,8 +336,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 #pragma mark - APIs
 
+// NOTE: This is only called for monochrome (non-subpixel-antialiased) text.
 - (void)performPostProcessing {
-    _postprocessedData = [iTermBitmapData dataOfLength:_size.width * 4 * _size.height];
+    // Be conservative and allocate more space than needed if there's any imprecision.
+    const NSInteger destinationLength = ceil(_size.width) * 4 * ceil(_size.height);
+    _postprocessedData = [iTermBitmapData dataOfLength:destinationLength];
     unsigned char *destination = _postprocessedData.mutableBytes;
 
     unsigned char *data[4];
@@ -336,8 +348,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         data[i] = _datas[i].mutableBytes;
     }
 
+    // Byte arrays in _datas[j] have this size.
+    const NSInteger readBound = _numberOfRows * _bytesPerRow;
+
+    // The destination has this size.
+    const NSInteger writeBound = destinationLength;
+
+    // Don't attempt to access past this limit. In theory these would be the
+    // same. In practice there were crashes I can't explain.
+    const NSInteger bound = MIN(readBound, writeBound);
+
     // i indexes into the array of pixels, always to the red value.
-    for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
+    for (int i = 0 ; i + 3 < bound; i += 4) {
         // j indexes a destination color component and a source bitmap.
         for (int j = 0; j < 4; j++) {
             destination[i + j] = data[j][i + 3];
@@ -352,9 +374,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     const int radius = _radius;
     const int dx = iTermImagePartDX(part) + radius;
     const int dy = iTermImagePartDY(part) + radius;
-    const size_t sourceRowSize = _size.width * 4;
-    const size_t destRowSize = _descriptor.glyphSize.width * 4;
-    const NSUInteger length = destRowSize * _descriptor.glyphSize.height;
+    const NSInteger glyphWidth = ceil(_descriptor.glyphSize.width);
+    const size_t destRowSize = glyphWidth * 4;
+    const NSInteger glyphHeight = ceil(_descriptor.glyphSize.height);
+    const NSUInteger length = destRowSize * glyphHeight;
 
     if (iTermTextIsMonochrome()) {
         if (!_postprocessed && !_isEmoji) {
@@ -362,25 +385,29 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     const unsigned char *bitmapBytes = _postprocessedData.bytes;
+    NSInteger sourceLength = ceil(_size.width) * 4 * ceil(_size.height);
+    size_t sourceRowSize = ceil(_size.width) * 4;
     if (!bitmapBytes) {
         bitmapBytes = _datas[0].bytes;
+        sourceLength = _numberOfRows * _bytesPerRow;
+        sourceRowSize = _bytesPerRow;
     }
 
     iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
-    bitmap.size = _descriptor.glyphSize;
+    bitmap.size = NSMakeSize(glyphWidth, glyphHeight);
 
     BOOL saveBitmapsForDebugging = NO;
     if (saveBitmapsForDebugging) {
         NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmapBytes length:bitmap.data.length]
-                                              size:_descriptor.glyphSize
+                                              size:bitmap.size
                                      bitsPerSample:8
                                    samplesPerPixel:4
                                           hasAlpha:YES
                                     colorSpaceName:NSDeviceRGBColorSpace];
         [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
 
-        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:_size.width*_size.height*4];
+        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:sourceLength];
         image = [NSImage imageWithRawData:bigData
                                      size:_size
                             bitsPerSample:8
@@ -396,9 +423,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     // Flip vertically and copy. The vertical flip is for historical reasons
     // (i.e., if I had more time I'd undo it but it's annoying because there
     // are assumptions about vertical flipping all over the fragment shader).
-    size_t destOffset = (_descriptor.glyphSize.height - 1) * destRowSize;
-    size_t sourceOffset = (dx * 4 * _descriptor.glyphSize.width) + (dy * _descriptor.glyphSize.height * sourceRowSize);
-    for (int i = 0; i < _descriptor.glyphSize.height; i++) {
+    ssize_t destOffset = (glyphHeight - 1) * destRowSize;
+    ssize_t sourceOffset = (dx * 4 * glyphWidth) + (dy * glyphHeight * sourceRowSize);
+    for (int i = 0;
+         (destOffset >= 0 &&
+          i < glyphHeight &&
+          sourceOffset + destRowSize <= sourceLength);
+         i++) {
         memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
         sourceOffset += sourceRowSize;
         destOffset -= destRowSize;
