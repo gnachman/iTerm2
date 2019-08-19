@@ -509,9 +509,16 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         if recents.names.count == 1 {
             dirty = true
             // Insert row for separator
-            indexSet.insert(firstRowForDataSource(recents)! + 1)
+            guard let row = firstRowForDataSource(recents) else {
+                tableView.reloadData()
+                return
+            }
+            indexSet.insert(row + 1)
         }
-        let firstRow = firstRowForDataSource(recents)!
+        guard let firstRow = firstRowForDataSource(recents) else {
+            tableView.reloadData()
+            return
+        }
         indexSet.insert(firstRow + recents.names.count - 1)
 
         // Insert the row and separator, if added.
