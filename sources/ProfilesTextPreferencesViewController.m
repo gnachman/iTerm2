@@ -7,11 +7,14 @@
 //
 
 #import "ProfilesTextPreferencesViewController.h"
+
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
@@ -410,10 +413,18 @@
     NSInteger (^clamp)(NSInteger value) = ^NSInteger(NSInteger value) {
         return MIN(MAX(value, 50), 200);
     };
-    [self setObjectsFromDictionary:@{ KEY_HORIZONTAL_SPACING: @(clamp(_asciiFontPicker.horizontalSpacing.size) / 100.0),
-                                      KEY_VERTICAL_SPACING: @(clamp(_asciiFontPicker.verticalSpacing.size) / 100.0),
-                                      KEY_NORMAL_FONT: _asciiFontPicker.font.stringValue,
-                                      KEY_NON_ASCII_FONT: _nonASCIIFontPicker.font.stringValue }];
+    // I don't know why these would sometimes be null, but let's not crash if
+    // that happens. It was one of the major crashes in 3.3.1.
+    id normalFont = _asciiFontPicker.font.stringValue ?: [NSNull null];
+    id nonAsciiFont = _nonASCIIFontPicker.font.stringValue ?: [NSNull null];
+    DLog(@"Save changes from font picker. asciiFontPicker=%@ asciiFontPicker.font=%@ asciiFontPicker.font.stringValue=%@", _asciiFontPicker, _asciiFontPicker.font, _asciiFontPicker.font.stringValue);
+    DLog(@"Save changes from font picker. nonASCIIFontPicker=%@ asciiFontPicker.font=%@ asciiFontPicker.font.stringValue=%@", _nonASCIIFontPicker, _nonASCIIFontPicker.font, _nonASCIIFontPicker.font.stringValue);
+    NSDictionary *dictionaryWithNulls = @{ KEY_HORIZONTAL_SPACING: @(clamp(_asciiFontPicker.horizontalSpacing.size) / 100.0),
+                                           KEY_VERTICAL_SPACING: @(clamp(_asciiFontPicker.verticalSpacing.size) / 100.0),
+                                           KEY_NORMAL_FONT: normalFont,
+                                           KEY_NON_ASCII_FONT: nonAsciiFont };
+    NSDictionary *dict = [dictionaryWithNulls dictionaryByRemovingNullValues];
+    [self setObjectsFromDictionary:dict];
 }
 
 @end
