@@ -56,7 +56,14 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (id<PSMTabStyle>)terminalWindowTabStyle;
 - (NSColor *)terminalWindowDecorationControlColor;
 - (BOOL)terminalWindowUseMinimalStyle;
-- (BOOL)ptyWindowFullScreen;
+
+typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
+    PTYWindowTitleBarFlavorDefault,
+    PTYWindowTitleBarFlavorOnePoint,  // One-point tall. Prevents overlapping the menu bar. Otherwise basically invisible.
+    PTYWindowTitleBarFlavorZeroPoints  // Completely invisible and overlaps the menu bar.
+};
+
+- (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor;
 @end
 
 // Common methods implemented by terminal windows of both kinds.

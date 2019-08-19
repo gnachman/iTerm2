@@ -71,12 +71,18 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 
 // Height of built-in titlebar to create.
 - (CGFloat)_titlebarHeight {
-    if ([self.window.ptyWindow.ptyDelegate ptyWindowFullScreen]) {
-        if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {
-            return [super _titlebarHeight];
-        }
+    switch ([self.window.ptyWindow.ptyDelegate ptyWindowTitleBarFlavor]) {
+        case PTYWindowTitleBarFlavorDefault:
+            if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {
+                return [super _titlebarHeight];
+            }
+            return 1;
+        case PTYWindowTitleBarFlavorOnePoint:
+            return 1;
+        case PTYWindowTitleBarFlavorZeroPoints:
+            return 0;
     }
-    return 1;
+    assert(NO);
 }
 
 @end

@@ -1671,8 +1671,34 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.shouldUseMinimalStyle;
 }
 
-- (BOOL)ptyWindowFullScreen {
-    return self.lionFullScreen || togglingLionFullScreen_;
+- (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor {
+    if (self.lionFullScreen || togglingLionFullScreen_) {
+        return PTYWindowTitleBarFlavorDefault;
+    }
+    switch (_windowType) {
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            // This shouldn't happen.
+            return PTYWindowTitleBarFlavorDefault;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
+            return PTYWindowTitleBarFlavorZeroPoints;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            return PTYWindowTitleBarFlavorOnePoint;
+    }
+
+    assert(NO);
 }
 
 - (void)closeSession:(PTYSession *)aSession {
