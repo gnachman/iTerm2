@@ -531,6 +531,9 @@ static const NSUInteger kMaxHosts = 100;
     // When this is true, changing the font size does not cause the window size to change.
     BOOL _windowAdjustmentDisabled;
     NSSize _badgeLabelSizeFraction;
+
+    // To debug a problem where a session is divorced but its guid is not in the sessions instance profile model.
+    NSString *_divorceDecree;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -864,6 +867,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_variablesScope release];
     [_printGuard release];
     [_methods release];
+    [_divorceDecree release];
 
     [super dealloc];
 }
@@ -4869,18 +4873,30 @@ ITERM_WEAKLY_REFERENCEABLE
     return nil;
 }
 
-- (NSString*)divorceAddressBookEntryFromPreferences
-{
-    Profile* bookmark = [self profile];
-    NSString* guid = [bookmark objectForKey:KEY_GUID];
+- (void)setDivorceDecree:(NSString *)decree {
+    [_divorceDecree autorelease];
+    _divorceDecree = [decree copy];
+}
+
+#define DIVORCE_LOG(args...) do { \
+    DLog(args); \
+    [logs addObject:[NSString stringWithFormat:args]]; \
+} while (0)
+
+- (NSString *)divorceAddressBookEntryFromPreferences {
+    Profile *bookmark = [self profile];
+    NSString *guid = [bookmark objectForKey:KEY_GUID];
     if (_isDivorced) {
-        assert([[ProfileModel sessionsInstance] bookmarkWithGuid:guid]);
+        ITAssertWithMessage([[ProfileModel sessionsInstance] bookmarkWithGuid:guid] != nil,
+                            @"I am divorced with guid %@ but the sessions instance has no such guid. Log:\n%@\n\nModel log:\n%@",
+                            guid, _divorceDecree, [[ProfileModel sessionsInstance] debugHistoryForGuid:guid]);
         return guid;
     }
     _isDivorced = YES;
-    DLog(@"Remove profile with guid %@ from sessions instance", guid);
+    NSMutableArray<NSString *> *logs = [NSMutableArray array];
+    DIVORCE_LOG(@"Remove profile with guid %@ from sessions instance", guid);
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
-    DLog(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
+    DIVORCE_LOG(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
     [[ProfileModel sessionsInstance] addBookmark:[[bookmark copy] autorelease]];
 
     NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
@@ -4895,13 +4911,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
-    DLog(@"Allocating a new guid for this profile. The new guid is %@", guid);
+    DIVORCE_LOG(@"Allocating a new guid for this profile. The new guid is %@", guid);
+    [[ProfileModel sessionsInstance] addGuidToDebug:guid];
     [[ProfileModel sessionsInstance] setObject:guid
                                         forKey:KEY_GUID
                                     inBookmark:bookmark];
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setProfile:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
+    [logs addObject:@"Stack trace:"];
+    [logs addObject:[[NSThread callStackSymbols] componentsJoinedByString:@"\n"]];
+    [self setDivorceDecree:[logs componentsJoinedByString:@"\n"]];
     return guid;
 }
 

@@ -42,6 +42,8 @@ int gMigrated;
 @implementation ProfileModel {
     NSString *_modelName;
     NSMutableArray<NSNotification *> *_delayedNotifications;
+    NSMutableSet<NSString *> *_debugGuids;
+    NSMutableDictionary<NSString *, NSMutableArray<NSString *> *> *_debugHistory;
 }
 
 + (void)initialize
@@ -54,17 +56,20 @@ int gMigrated;
     return gMigrated;
 }
 
-+ (NSMutableArray<NSString *> *)debugHistory {
-#if BETA
-    static dispatch_once_t onceToken;
-    static NSMutableArray<NSString *> *gProfileHistory;
-    dispatch_once(&onceToken, ^{
-        gProfileHistory = [[NSMutableArray alloc] init];
-    });
-    return gProfileHistory;
-#else
-    return nil;
-#endif
+- (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid {
+    if ([_debugGuids containsObject:guid]) {
+        if (!_debugHistory) {
+            _debugHistory = [[NSMutableDictionary alloc] init];
+        }
+        NSMutableArray *entries = _debugHistory[guid];
+        if (!entries) {
+            entries = [[[NSMutableArray alloc] init] autorelease];
+            _debugHistory[guid] = entries;
+        }
+        return entries;
+    } else {
+        return nil;
+    }
 }
 
 - (ProfileModel*)initWithName:(NSString *)modelName {
@@ -74,6 +79,7 @@ int gMigrated;
         bookmarks_ = [[NSMutableArray alloc] init];
         defaultBookmarkGuid_ = @"";
         journal_ = [[NSMutableArray alloc] init];
+        _debugGuids = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -113,6 +119,8 @@ int gMigrated;
     [journal_ release];
     [_modelName release];
     [_delayedNotifications release];
+    [_debugGuids release];
+    [_debugHistory release];
     NSLog(@"Deallocating bookmark model!");
     [super dealloc];
 }
@@ -421,9 +429,13 @@ int gMigrated;
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
     [self postChangeNotification];
-    [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Add bookmark with guid %@ from\n%@",
-                                            self,
-                                            bookmark[KEY_GUID], [NSThread trimCallStackSymbols]]];
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Add bookmark with guid %@ from\n%@",
+                                                              self,
+                                                              bookmark[KEY_GUID], [NSThread trimCallStackSymbols]]];
+}
+
+- (void)addGuidToDebug:(NSString *)guid {
+    [_debugGuids addObject:guid];
 }
 
 - (BOOL)bookmark:(Profile*)bookmark hasTag:(NSString*)tag
@@ -456,10 +468,10 @@ int gMigrated;
         assert(i >= 0);
 
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
-        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
-                                                self,
-                                                bookmarks_[i][KEY_GUID],
-                                                [NSThread trimCallStackSymbols]]];
+        [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+                                                                       self,
+                                                                       bookmarks_[i][KEY_GUID],
+                                                                       [NSThread trimCallStackSymbols]]];
         [bookmarks_ removeObjectAtIndex:i];
         if (![self defaultBookmark] && [bookmarks_ count]) {
             [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
@@ -472,10 +484,10 @@ int gMigrated;
     DLog(@"Remove profile at index %d", i);
     assert(i >= 0);
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
-    [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
-                                            self,
-                                            bookmarks_[i][KEY_GUID],
-                                            [NSThread trimCallStackSymbols]]];
+    [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+                                                                   self,
+                                                                   bookmarks_[i][KEY_GUID],
+                                                                   [NSThread trimCallStackSymbols]]];
     [bookmarks_ removeObjectAtIndex:i];
     DLog(@"Number of profiles is now %d", (int)bookmarks_.count);
     if (![self defaultBookmark] && [bookmarks_ count]) {
