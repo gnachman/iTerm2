@@ -1028,6 +1028,10 @@ typedef struct {
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
+            if (self.tabBarControl.flashing) {
+                // Overlaps content
+                return frame;
+            }
             break;
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
@@ -1352,16 +1356,22 @@ typedef struct {
     if (preferredStyle != TAB_STYLE_MINIMAL) {
         return YES;
     }
+    BOOL isTop = NO;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
             return YES;
 
         case PSMTab_TopTab:
+            isTop = YES;
             break;
     }
     if ([_delegate lionFullScreen] || [_delegate enteringLionFullscreen]) {
-        return NO;
+        if (isTop) {
+            return [iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen];
+        } else {
+            return NO;
+        }
     }
 
     return YES;
