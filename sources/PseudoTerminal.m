@@ -4616,7 +4616,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_willClose) {
         return NO;
     }
-    if (newWindowType == _windowType) {
+    iTermWindowType effectiveWindowType;
+    if (_windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        effectiveWindowType = _savedWindowType;
+    } else {
+        effectiveWindowType = _windowType;
+    }
+    if (newWindowType == effectiveWindowType) {
         return NO;
     }
     NSWindow *oldWindow = [[self.window retain] autorelease];
@@ -4628,6 +4634,8 @@ ITERM_WEAKLY_REFERENCEABLE
                  hotkeyWindowType:_hotkeyWindowType
                      initialFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]];
     [self.window.ptyWindow setLayoutDone];
+    [[_contentView retain] autorelease];
+    [_contentView removeFromSuperview];
     self.window.contentView = _contentView;
     self.window.opaque = NO;
     self.window.delegate = self;
