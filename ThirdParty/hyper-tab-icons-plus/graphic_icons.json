@@ -41,6 +41,23 @@
     "docker",
     "docker-compose"
   ],
+  "elixir": [
+    "elixir",
+    "elixirc",
+    "iex",
+    "mix"
+  ],
+  "erlang": [
+    "beam",
+    "beam.smp",
+    "dialyzer",
+    "epmd",
+    "erl",
+    "erlc",
+    "escript",
+    "run_erl",
+    "to_erl"
+  ],
   "ethereum": [
     "ethereum",
     "geth",
