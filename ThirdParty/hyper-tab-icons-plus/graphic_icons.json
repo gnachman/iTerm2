@@ -24,6 +24,7 @@
     "sqlite3"
   ],
   "docker": [
+    "docker",
     "docker-compose"
   ],
   "ethereum": [
@@ -64,12 +65,15 @@
     "node"
   ],
   "npm": [
-    "npm"
+    "npm",
+    "npx"
   ],
   "perl": [
     "perl"
   ],
   "php": [
+    "composer",
+    "composer.phar",
     "php"
   ],
   "ruby": [
@@ -106,6 +110,8 @@
     "yarnpkg"
   ],
   "zip": [
+    "bzip2",
+    "bunzip2",
     "unzip",
     "zip",
     "gzip",
@@ -120,6 +126,8 @@
     "curl"
   ],
   "python": [
+    "easy_install",
+    "pip",
     "Python",
     "python",
     "python2",
