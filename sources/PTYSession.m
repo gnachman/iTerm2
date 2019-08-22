@@ -11341,7 +11341,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermWorkingDirectoryPollerDelegate
 
 - (BOOL)workingDirectoryPollerShouldPoll {
-    if (_shellIntegrationEverUsed) {
+    if (_shellIntegrationEverUsed && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
         DLog(@"Should not poll for working directory: shell integration used");
         return NO;
     }
@@ -11357,7 +11357,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
-    if (_shellIntegrationEverUsed) {
+    if (_shellIntegrationEverUsed && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
         return;
     }
     if (invalidated) {
