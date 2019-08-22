@@ -299,8 +299,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
-                     [self updateTitleSettingsMenu];
-                     [self updateSelectedTitleComponents];
+                     [weakSelf updateTitleSettingsMenu];
+                     [weakSelf updateSelectedTitleComponents];
+                     [weakSelf updateEnabledState];
                      return YES;
                  }];
     [self defineControl:_titleSettingsForEditCurrentSession
@@ -310,8 +311,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
-                     [self updateTitleSettingsMenu];
-                     [self updateSelectedTitleComponents];
+                     [weakSelf updateTitleSettingsMenu];
+                     [weakSelf updateSelectedTitleComponents];
+                     [weakSelf updateEnabledState];
                      return YES;
                  }
              searchable:NO];
@@ -536,6 +538,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.enabled = NO;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
+    const iTermTitleComponents components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+    const iTermTitleComponents mask = (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName | iTermTitleComponentsCustom);
+    const BOOL titleChangingAllowed = (components & mask) != 0;
+    _allowTitleSetting.enabled = titleChangingAllowed;
 }
 
 #pragma mark - Badge
