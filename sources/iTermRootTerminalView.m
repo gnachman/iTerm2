@@ -1208,8 +1208,24 @@ typedef struct {
     DLog(@"repositionWidgets - return.");
 }
 
+- (CGFloat)minimumTabBarWidth {
+    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return 50;
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            return 114;
+    }
+    assert(NO);
+}
+
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
-    const CGFloat minimumWidth = 50;
+    const CGFloat minimumWidth = [self minimumTabBarWidth];
     const CGFloat maximumWidth = round(contentWidth / 3);
     return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
 }
