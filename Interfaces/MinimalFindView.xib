@@ -105,7 +105,7 @@ Gw
                     </connections>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="ZCE-vD-EeM"/>
-                <menuItem title="Erase Search History" tag="4" id="cGh-hQ-V9H">
+                <menuItem title="Erase Search History" tag="5" id="cGh-hQ-V9H">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="eraseSearchHistory:" target="-2" id="6sW-DK-Wkc"/>
