@@ -32,6 +32,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 #pragma mark - Accessors
 
 + (BOOL)aboutToPasteTabsWithCancel;
++ (BOOL)accelerateUploads;
 + (BOOL)acceptOSC7;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;

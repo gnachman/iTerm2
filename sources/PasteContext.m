@@ -40,6 +40,11 @@
 }
 
 - (void)updateValues {
+    if (_isUpload && [iTermAdvancedSettingsModel accelerateUploads]) {
+        _bytesPerCall = 40960;
+        _delayBetweenCalls = 0.01;
+        return;
+    }
     if (_bytesPerCallKey && [[NSUserDefaults standardUserDefaults] objectForKey:_bytesPerCallKey]) {
         _bytesPerCall = [[NSUserDefaults standardUserDefaults] integerForKey:_bytesPerCallKey];
     }

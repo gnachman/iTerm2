@@ -526,6 +526,7 @@ DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell ic
 DEFINE_BOOL(workAroundNumericKeypadBug, YES, SECTION_EXPERIMENTAL @"Treat the equals sign on the numeric keypad as a key on the numeric keypad.\nFor mysterious reasons, macOS does not treat this key as belonging to the numeric keypad. Enable this setting to work around the bug.");
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, NO, SECTION_EXPERIMENTAL @"Allow variable window sizes in tmux integration");
 DEFINE_BOOL(aggressiveBaseCharacterDetection, NO, SECTION_EXPERIMENTAL @"Detect base unicode characters with lookup table.\nApple's algorithm for segmenting composed characters makes bad choices, such as for Tamil. Enable this to reduce text overlapping.");
+DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2ul really fast.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
