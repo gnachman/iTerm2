@@ -66,7 +66,6 @@ int kVT100ScreenMinRows = 2;
 static const int kDefaultScreenColumns = 80;
 static const int kDefaultScreenRows = 25;
 static const int kDefaultMaxScrollbackLines = 1000;
-static const int kDefaultTabstopWidth = 8;
 
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
 NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
@@ -4729,7 +4728,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     [tabStops_ removeAllObjects];
     const int kInitialTabWindow = 1000;
-    for (int i = 0; i < kInitialTabWindow; i += kDefaultTabstopWidth) {
+    const int width = [iTermAdvancedSettingsModel defaultTabStopWidth];
+    for (int i = 0; i < kInitialTabWindow; i += width) {
         [tabStops_ addObject:[NSNumber numberWithInt:i]];
     }
 }
