@@ -814,6 +814,7 @@ typedef enum {
 - (void)applyAction:(iTermAction *)action;
 - (void)didUseShellIntegration;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
+- (Profile *)profileForSplit;
 
 #pragma mark - API
 

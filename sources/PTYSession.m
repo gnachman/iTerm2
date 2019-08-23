@@ -1708,6 +1708,42 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
 }
 
+- (Profile *)profileForSplit {
+    if ([iTermAdvancedSettingsModel useDivorcedProfileToSplit]) {
+        if (self.isDivorced) {
+            // NOTE: This counts on splitVertically:before:profile:targetSession: rewriting the GUID.
+            return self.profile;
+        }
+    }
+
+    // Get the profile this session was originally created with. But look it up from its GUID because
+    // it might have changed since it was copied into originalProfile when the profile was
+    // first created.
+    Profile *result = nil;
+    Profile *originalProfile = [self originalProfile];
+    if (originalProfile && originalProfile[KEY_GUID]) {
+        result = [[ProfileModel sharedInstance] bookmarkWithGuid:originalProfile[KEY_GUID]];
+    }
+
+    // If that fails, use the current profile.
+    if (!result) {
+        result = self.profile;
+    }
+
+    // I don't think that'll ever fail, but to be safe try using the original profile.
+    if (!result) {
+        result = originalProfile;
+    }
+
+    // I really don't think this'll ever happen, but there's always a default profile to fall back
+    // on.
+    if (!result) {
+        result = [[ProfileModel sharedInstance] defaultBookmark];
+    }
+
+    return result;
+}
+
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
     // TODO: It would be nice not to have to pass the session into the view. I
     // can (kind of) live with it because the view just passes it through
@@ -7560,9 +7596,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
 {
-    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    Profile *profile;
     if (guid) {
         profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    } else {
+        profile = [self profileForSplit];
     }
     [[_delegate realParentWindow] splitVertically:vertically
                                      withBookmark:profile

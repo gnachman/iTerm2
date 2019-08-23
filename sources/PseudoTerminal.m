@@ -7618,41 +7618,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (Profile *)profileForSplittingCurrentSession {
-    Profile *theBookmark = nil;
-    PTYSession *sourceSession = self.currentSession;
-
-    if ([iTermAdvancedSettingsModel useDivorcedProfileToSplit]) {
-        if (sourceSession.isDivorced) {
-            // NOTE: This counts on splitVertically:before:profile:targetSession: rewriting the GUID.
-            return self.currentSession.profile;
-        }
-    }
-
-    // Get the bookmark this session was originally created with. But look it up from its GUID because
-    // it might have changed since it was copied into originalProfile when the bookmark was
-    // first created.
-    Profile* originalBookmark = [sourceSession originalProfile];
-    if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
-        theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
-    }
-
-    // If that fails, use its current bookmark.
-    if (!theBookmark) {
-        theBookmark = [[self currentSession] profile];
-    }
-
-    // I don't think that'll ever fail, but to be safe try using the original bookmark.
-    if (!theBookmark) {
-        theBookmark = originalBookmark;
-    }
-
-    // I really don't think this'll ever happen, but there's always a default bookmark to fall back
-    // on.
-    if (!theBookmark) {
-        theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-
-    return theBookmark;
+    return [self.currentSession profileForSplit] ?: [[ProfileModel sharedInstance] defaultBookmark];
 }
 
 - (IBAction)splitVertically:(id)sender {
