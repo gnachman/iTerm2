@@ -3248,7 +3248,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [aSession.view setShowTitle:YES adjustScrollView:NO];
         }
     }
-
+    // You have to update the scrollbar style before calling -appendTab: or else the calculated size
+    // of the tmux client will be wrong in fullscreen when the system is configured for legacy scrollers.
+    const BOOL hasScrollbar = [term scrollbarShouldBeVisible];
+    const NSScrollerStyle style = [term scrollerStyle];
+    for (PTYSession *session in [theTab sessions]) {
+        [session setScrollBarVisible:hasScrollbar style:style];
+    }
     theTab.tmuxWindow = tmuxWindow;
     theTab->parseTree_ = parseTree;
 
