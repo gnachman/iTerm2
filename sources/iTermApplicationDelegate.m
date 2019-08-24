@@ -1441,11 +1441,20 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)updateAddressBookMenu:(NSNotification*)aNotification {
-    DLog(@"Updating address book menu");
+    DLog(@"Updating address book menu"); // aka Profiles menu
     JournalParams params;
-    params.selector = @selector(newSessionInTabAtIndex:);
+    if( [iTermAdvancedSettingsModel openProfilesInNewWindow] ) {
+        params.selector = @selector(newSessionInWindowAtIndex:);
+        params.alternateSelector = @selector(newSessionInTabAtIndex:);
+        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
+        [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
+    } else {
+        params.selector = @selector(newSessionInTabAtIndex:);
+        params.alternateSelector = @selector(newSessionInWindowAtIndex:);
+        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
+        [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
+    }
     params.openAllSelector = @selector(newSessionsInWindow:);
-    params.alternateSelector = @selector(newSessionInWindowAtIndex:);
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = [iTermController sharedInstance];
 
