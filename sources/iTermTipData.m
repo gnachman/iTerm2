@@ -282,6 +282,9 @@
 
             @"0077": @{ kTipTitleKey: @"Tab Icons",
                         kTipBodyKey: @"Tabs can show an icon indicating the current application. Configure it in “Prefs > Profiles > General > Icon.”" },
+
+            @"0078": @{ kTipTitleKey: @"Drag Window by Tab",
+                        kTipBodyKey: @"Hold ⌥ while dragging a tab to move the window. This is useful in the Compact and Minimal themes, which have a very small area for dragging the window." },
             };
 }
 

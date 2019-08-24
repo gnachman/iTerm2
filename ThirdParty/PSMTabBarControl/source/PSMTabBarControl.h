@@ -134,7 +134,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility;  // NSNum
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
-- (BOOL)tabViewCanDragSolitaryTab:(NSTabView *)tabView;
+- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView;
 
 @end
 

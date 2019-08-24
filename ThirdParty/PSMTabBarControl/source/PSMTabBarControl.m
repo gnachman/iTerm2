@@ -1394,9 +1394,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility = @"PSMTabBarCont
         return;
     }
 
-    if (self.numberOfVisibleTabs == 1 &&
-        [self.delegate respondsToSelector:@selector(tabViewCanDragSolitaryTab:)] &&
-        ![self.delegate tabViewCanDragSolitaryTab:_tabView]) {
+    if ([self.delegate respondsToSelector:@selector(tabViewShouldDragWindow:)] &&
+        [self.delegate tabViewShouldDragWindow:_tabView]) {
         [self.window performWindowDragWithEvent:theEvent];
         return;
     }

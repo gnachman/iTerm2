@@ -6690,22 +6690,43 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (BOOL)tabViewCanDragSolitaryTab:(NSTabView *)tabView {
-    if (![iTermAdvancedSettingsModel convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme]) {
-        return YES;
-    }
+- (BOOL)themeSupportsAlternateDragModes {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
         case TAB_STYLE_MINIMAL:
         case TAB_STYLE_COMPACT:
-            return NO;
+            return YES;
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_DARK:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
         case TAB_STYLE_AUTOMATIC:
-            return YES;
+            return NO;
     }
+    assert(NO);
+}
+
+- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+        // Pressing option converts drag to window drag.
+        return YES;
+    }
+
+    // Consider automatic conversion.
+    if (![self themeSupportsAlternateDragModes]) {
+        // Never convert to window drag in traditional themes.
+        return NO;
+    }
+    if (_contentView.tabBarControl.numberOfVisibleTabs > 1) {
+        // Otherwise we won't consider doing it automatically with multiple tabs.
+        return NO;
+    }
+    if (![iTermAdvancedSettingsModel convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme]) {
+        // And if the user has disabled it, then we don't do it automatically.
+        return NO;
+    }
+    // Convert drag of a solitary tab into a window drag.
+    return YES;
 }
 
 - (BOOL)isInitialized
