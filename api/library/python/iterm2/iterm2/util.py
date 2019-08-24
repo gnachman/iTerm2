@@ -9,7 +9,7 @@ class Size:
 
   Can be used where api_pb2.Size is accepted."""
 
-  def __init__(self, width: float, height: float):
+  def __init__(self, width: int, height: int):
     """Constructs a new size.
 
     :param width: A nonnegative number giving the width.
@@ -19,19 +19,19 @@ class Size:
     self.__height = height
 
   @property
-  def width(self) -> float:
+  def width(self) -> int:
     return self.__width
 
   @width.setter
-  def width(self, value: float):
+  def width(self, value: int):
     self.__width = value
 
   @property
-  def height(self) -> float:
+  def height(self) -> int:
     return self.__height
 
   @height.setter
-  def height(self, value: float):
+  def height(self, value: int):
     self.__height = value
 
   @property
@@ -67,7 +67,7 @@ class Point:
 
   Can be used where api_pb2.Point is accepted."""
 
-  def __init__(self, x: float, y: float):
+  def __init__(self, x: int, y: int):
     """Constructs a new point.
 
     :param x: A number giving the X coordinate.
@@ -84,19 +84,19 @@ class Point:
       return Point(proto.x, proto.y)
 
   @property
-  def x(self) -> float:
+  def x(self) -> int:
     return self.__x
 
   @x.setter
-  def x(self, value: float):
+  def x(self, value: int):
     self.__x = value
 
   @property
-  def y(self) -> float:
+  def y(self) -> int:
     return self.__y
 
   @y.setter
-  def y(self, value: float):
+  def y(self, value: int):
     self.__y = value
 
   @property
