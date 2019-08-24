@@ -263,6 +263,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;
 + (BOOL)useAdaptiveFrameRate;
++ (BOOL)useBlackFillerColorForTmuxInFullScreen;
 + (BOOL)useColorfgbgFallback;
 + (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;

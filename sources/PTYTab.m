@@ -899,6 +899,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSColor *)flexibleViewColor {
+    if ([realParentWindow_ anyFullScreen] && [iTermAdvancedSettingsModel useBlackFillerColorForTmuxInFullScreen]) {
+        return [NSColor blackColor];
+    }
+
     NSColor *backgroundColor = [self.activeSession.colorMap colorForKey:kColorMapBackground];
     CGFloat components[4];
     [backgroundColor getComponents:components];
