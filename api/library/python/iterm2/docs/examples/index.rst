@@ -71,6 +71,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`change_default_profile` - Demonstrates changing the default profile.
 
+:doc:`setprofile` - Demonstrates changing a session's profile.
+
 ----
 
 **Standalone Scripts**
