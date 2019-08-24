@@ -791,6 +791,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     _savedWindowType = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
+    // This is necessary to do here because the collection behavior is computed in setWindowWithWindowType,
+    // and the window may become full screen thereafter. That's no good for a hotkey window.to
+    _hotkeyWindowType = hotkeyWindowType;
     [self setWindowWithWindowType:windowType
                   savedWindowType:savedWindowType
            windowTypeForStyleMask:(windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) ? windowType : savedWindowType
