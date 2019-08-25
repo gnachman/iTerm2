@@ -675,10 +675,9 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 }
 
-- (void)restoreAlternateScreenFromTemporaryLineBuffer:(LineBuffer *)altScreenLineBuffer
-                                       realLineBuffer:(LineBuffer *)realLineBuffer
-                                              oldSize:(VT100GridSize)oldSize
-                                              newSize:(VT100GridSize)newSize {
+- (void)restorePrimaryGridWithLineBuffer:(LineBuffer *)realLineBuffer
+                                 oldSize:(VT100GridSize)oldSize
+                                 newSize:(VT100GridSize)newSize {
     primaryGrid_.size = newSize;
     [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
@@ -696,36 +695,26 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
                               withDefaultChar:[primaryGrid_ defaultChar]
                             maxLinesToRestore:MIN(oldSize.height, newSize.height)];
+}
+
+- (NSArray *)subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:(VT100Grid *)copyOfAltGrid
+                                                        linesMovedUp:(int)linesMovedUp
+                                                        toLineBuffer:(LineBuffer *)realLineBuffer
+                                                  subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
+                                                originalLastPosition:(LineBufferPosition *)originalLastPos
+                                                             oldSize:(VT100GridSize)oldSize
+                                                             newSize:(VT100GridSize)newSize
+                                                          usedHeight:(int)usedHeight
+                                                 intervalTreeObjects:(NSArray *)altScreenNotes {
+    [self restorePrimaryGridWithLineBuffer:realLineBuffer
+                                   oldSize:oldSize
+                                   newSize:newSize];
 
     // Any onscreen notes in primary grid get moved to savedIntervalTree_.
     currentGrid_ = primaryGrid_;
     [self swapNotes];
     currentGrid_ = altGrid_;
-}
 
-- (NSArray *)subSelectionsAfterRestoringAlternateScreen:(VT100Grid *)copyOfAltGrid
-                                         fromLineBuffer:(LineBuffer *)altScreenLineBuffer
-                                           toLineBuffer:(LineBuffer *)realLineBuffer
-                                     subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
-                                   originalLastPosition:(LineBufferPosition *)originalLastPos
-                                                oldSize:(VT100GridSize)oldSize
-                                                newSize:(VT100GridSize)newSize
-                                             usedHeight:(int)usedHeight
-                                    intervalTreeObjects:(NSArray *)altScreenNotes {
-    // In alternate screen mode, the screen contents move up when the screen gets smaller.
-    // For example, if your alt screen looks like this before:
-    //   abcd
-    //   ef..
-    // And then gets shrunk to 3 wide, it becomes
-    //   d..
-    //   ef.
-    // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
-    // of the alt screen that were lost.
-    const int linesMovedUp = [altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width];
-    [self restoreAlternateScreenFromTemporaryLineBuffer:altScreenLineBuffer
-                                         realLineBuffer:realLineBuffer
-                                                oldSize:oldSize
-                                                newSize:newSize];
     ///////////////////////////////////////
     // Create a cheap append-only copy of the line buffer and add the
     // screen to it. This sets up the current state so that if there is a
@@ -985,15 +974,24 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     if (wasShowingAltScreen) {
         // If we're in the alternate screen, restore its contents from the temporary
         // linebuffer.
-        newSubSelections = [self subSelectionsAfterRestoringAlternateScreen:copyOfAltGrid
-                                                             fromLineBuffer:altScreenLineBuffer
-                                                               toLineBuffer:realLineBuffer
-                                                         subSelectionTuples:altScreenSubSelectionTuples
-                                                       originalLastPosition:originalLastPos
-                                                                    oldSize:oldSize
-                                                                    newSize:newSize
-                                                                 usedHeight:usedHeight
-                                                        intervalTreeObjects:altScreenNotes];
+        // In alternate screen mode, the screen contents move up when the screen gets smaller.
+        // For example, if your alt screen looks like this before:
+        //   abcd
+        //   ef..
+        // And then gets shrunk to 3 wide, it becomes
+        //   d..
+        //   ef.
+        // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
+        // of the alt screen that were lost.
+        newSubSelections = [self subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:copyOfAltGrid
+                                                                            linesMovedUp:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]
+                                                                            toLineBuffer:realLineBuffer
+                                                                      subSelectionTuples:altScreenSubSelectionTuples
+                                                                    originalLastPosition:originalLastPos
+                                                                                 oldSize:oldSize
+                                                                                 newSize:newSize
+                                                                              usedHeight:usedHeight
+                                                                     intervalTreeObjects:altScreenNotes];
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
         [self updateAlternateScreenIntervalTreeForNewSize:newSize];
