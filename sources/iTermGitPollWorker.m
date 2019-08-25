@@ -100,7 +100,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
     DLog(@"git poll worker for bucket %d: got request for path %@", _bucket, path);
     // This age limits the polling rate. If an older cache entry is around it will still be used
     // until expiry when the poll command fails.
-    iTermGitState *cached = [_cache stateForPath:path maximumAge:2];
+    iTermGitState *cached = [_cache stateForPath:path maximumAge:[iTermAdvancedSettingsModel gitTimeout]];
     if (cached) {
         DLog(@"git poll worker for bucket %d: return cached value %@ for path %@", _bucket, cached, path);
         completion(cached);
@@ -163,12 +163,12 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
         DLog(@"git component for bucket %d: wrote %d bytes, got error code %d", bucket, (int)written, error);
     }];
 
-    DLog(@"git poll worker for bucket %d: starting two second timer after requesting %@",
-         bucket, path);
+    const NSTimeInterval timeout = [iTermAdvancedSettingsModel gitTimeout];
+    DLog(@"git poll worker for bucket %d: starting %f sec timer after requesting %@",
+         bucket, (double)timeout, path);
     __weak __typeof(_commandRunner) weakCommandRunner = _commandRunner;
-    const NSTimeInterval timeout = 2;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        DLog(@"git poll worker for bucket %d: Two second timer for %@ fired. finished=%@", bucket, path, @(finished));
+        DLog(@"git poll worker for bucket %d: Timer for %@ fired. finished=%@", bucket, path, @(finished));
         if (finished) {
             DLog(@"git poll worker for bucket %d: was already finished", bucket);
             return;
