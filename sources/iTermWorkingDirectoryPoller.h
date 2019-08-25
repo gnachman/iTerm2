@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermWorkingDirectoryPollerDelegate<NSObject>
 - (BOOL)workingDirectoryPollerShouldPoll;
-- (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)path invalidated:(BOOL)invalidated;
+- (void)workingDirectoryPollerDidFindWorkingDirectory:(nullable NSString *)path invalidated:(BOOL)invalidated;
 - (pid_t)workingDirectoryPollerProcessID;
 @end
 

@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Query Coordinates
 
-- (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
+- (nullable iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
 
 #pragma mark - Open URL
 

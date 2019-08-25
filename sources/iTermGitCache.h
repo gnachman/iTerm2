@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermGitCache : NSObject
 
 - (void)setState:(iTermGitState *)state forPath:(NSString *)path ttl:(NSTimeInterval)ttl;
-- (iTermGitState *)stateForPath:(NSString *)path maximumAge:(NSTimeInterval)maximumAge;
+- (nullable iTermGitState *)stateForPath:(NSString *)path maximumAge:(NSTimeInterval)maximumAge;
 - (void)removeStateForPath:(NSString *)path;
 
 @end

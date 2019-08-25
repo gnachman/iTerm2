@@ -43,7 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                  adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount;
 
 // Background color for fake title bar in minimal, shared status bar.
-- (NSColor *)tabBarBackgroundColorForTabColor:(NSColor *)tabColor
+- (NSColor *)tabBarBackgroundColorForTabColor:(nullable NSColor *)tabColor
                                         style:(id<PSMTabStyle>)tabStyle;
 
 // Default background color for status bar. Accounts for shared vs non-shared.

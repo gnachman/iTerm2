@@ -1340,7 +1340,9 @@ static iTermController *gSharedInstance;
                                                                 synchronous:synchronous
                                                                  completion:completion];
         if (!ok) {
-            completion(NO);
+            if (completion) {
+                completion(NO);
+            }
             session = nil;
         }
     } else {

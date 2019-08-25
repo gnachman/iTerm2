@@ -408,7 +408,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #else
     _metalView.layer.opaque = YES;
 #endif
-    _metalView.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    _metalView.colorspace = colorSpace;
+    CFRelease(colorSpace);
     
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;

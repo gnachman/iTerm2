@@ -148,7 +148,8 @@ typedef struct {
                 
             case iTermBackgroundImageModeScaleAspectFit:
                 image = backgroundImage;
-                dirtyRectInAdjustedContainerCoords = NSIntersectionRect(dirtyRectInAdjustedContainerCoords, containerView.bounds);
+                // TODO: The analyze complained about this dead store, which suggests I'm assing the wrong argument for dirtyRect below.
+                // dirtyRectInAdjustedContainerCoords = NSIntersectionRect(dirtyRectInAdjustedContainerCoords, containerView.bounds);
                 sourceRect = [iTermBackgroundDrawingHelper scaleAspectFitSourceRectForForImageSize:image.size
                                                                                    destinationRect:windowVisibleAreaRect
                                                                                          dirtyRect:dirtyRectInContainerCoords

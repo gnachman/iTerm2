@@ -383,7 +383,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   }];
 }
 
-- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage
+- (void)importDidFinishWithErrorMessage:(nullable NSString *)errorMessage
                                location:(NSURL *)location
                             originalURL:(NSURL *)url {
     if (errorMessage) {

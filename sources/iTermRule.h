@@ -9,10 +9,10 @@
 #import <Foundation/Foundation.h>
 
 @interface iTermRule : NSObject
-@property(nonatomic, readonly) NSString *username;
-@property(nonatomic, readonly) NSString *hostname;
-@property(nonatomic, readonly) NSString *path;
-@property(nonatomic, readonly) NSString *job;
+@property(nonatomic, copy, readonly) NSString *username;
+@property(nonatomic, copy, readonly) NSString *hostname;
+@property(nonatomic, copy, readonly) NSString *path;
+@property(nonatomic, copy, readonly) NSString *job;
 @property(nonatomic, readonly, getter=isSticky) BOOL sticky;
 
 + (instancetype)ruleWithString:(NSString *)string;

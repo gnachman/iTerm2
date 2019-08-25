@@ -2043,7 +2043,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (state) {
         state.refcount = state.refcount + 1;
     } else {
-        state = [[iTermTmuxWindowState alloc] init];
+        state = [[[iTermTmuxWindowState alloc] init] autorelease];
         state.tab = tab;
         state.refcount = 1;
         state.profile = tab.sessions.firstObject.profile;

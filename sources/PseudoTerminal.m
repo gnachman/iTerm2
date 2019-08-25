@@ -5927,12 +5927,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
     [viewImage lockFocus];
-    BOOL isHorizontal = YES;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
             viewRect.origin.x += _contentView.leftTabBarWidth;
             viewRect.size.width -= _contentView.leftTabBarWidth;
-            isHorizontal = NO;
             break;
 
         case PSMTab_TopTab:

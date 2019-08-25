@@ -11,6 +11,12 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
+@interface iTermProcessInfoLock : NSObject
+@end
+
+@implementation iTermProcessInfoLock
+@end
+
 @interface iTermProcessInfo()
 @property(nonatomic, weak, readwrite) iTermProcessInfo *parent;
 @property(atomic, strong) NSString *nameValue;
@@ -24,7 +30,7 @@
     BOOL _haveDeepestForegroundJob;
     NSString *_name;
     NSNumber *_isForegroundJob;
-    dispatch_once_t _once;
+    BOOL _initialized;
     NSNumber *_testValueForForegroundJob;
     BOOL _computingTreeString;
 }
@@ -151,8 +157,16 @@
     }];
 }
 
+- (BOOL)shouldInitialize {
+    @synchronized ([iTermProcessInfoLock class]) {
+        BOOL value = _initialized;
+        _initialized = YES;
+        return !value;
+    }
+}
+
 - (void)doSlowLookup {
-    dispatch_once(&_once, ^{
+    if ([self shouldInitialize]) {
         BOOL fg = NO;
         // This is the "real" name, not the hacked one with a leading hyphen.
         self.nameValue = [iTermLSOF nameOfProcessWithPid:self->_processID isForeground:&fg];
@@ -161,7 +175,7 @@
             self.commandLineValue = [iTermLSOF commandForProcess:self->_processID execName:nil];
         }
         self.isForegroundJobValue = @(fg);
-    });
+    }
 }
 
 - (NSString *)name {
@@ -195,7 +209,7 @@
 
 - (void)privateSetIsForegroundJob:(BOOL)value {
     _testValueForForegroundJob = @(value);
-    dispatch_once(&_once, ^{});
+    [self shouldInitialize];
 }
 
 @end

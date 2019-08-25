@@ -86,7 +86,7 @@ static NSString *iTermPasteViewControllerNibName(BOOL mini) {
         return;
     }
 
-    NSShadow *shadow = [[NSShadow alloc] init];
+    NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
     shadow.shadowOffset = NSMakeSize(2, -2);
     shadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.3];
     shadow.shadowBlurRadius = 2;

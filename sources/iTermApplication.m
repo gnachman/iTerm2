@@ -79,6 +79,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     [_fakeCurrentEvent release];
     [_statusBarItem release];
     [self removeObserver:self forKeyPath:@"modalWindow"];
+    [_it_windowBecomingKey release];
     [super dealloc];
 }
 

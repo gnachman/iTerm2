@@ -26,7 +26,7 @@ const CGFloat iTermStatusBarViewControllerMargin = 10;
 }
 
 + (instancetype)layoutAlgorithmWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
-                                    mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
+                                    mandatoryView:(nullable iTermStatusBarContainerView *)mandatoryView
                                    statusBarWidth:(CGFloat)statusBarWidth
                                           setting:(iTermStatusBarLayoutAlgorithmSetting)setting {
     switch (setting) {

@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) id value;
 
 + (instancetype)notificationWithKey:(NSString *)key
-                              value:(id)value;
+                              value:(nullable id)value;
 
 + (void)subscribe:(NSObject *)owner
             block:(void (^)(iTermPreferenceDidChangeNotification * _Nonnull notification))block;

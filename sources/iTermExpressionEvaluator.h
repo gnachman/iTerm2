@@ -16,8 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 // If you access this before calling evaluateWithTimeout you get the result of the synchronous
 // evaluation.
 @property (nonatomic, readonly) id value;
-@property (nonatomic, readonly) NSError *error;
-@property (nonatomic, readonly) NSSet<NSString *> *missingValues;
+@property (nullable, nonatomic, readonly) NSError *error;
+@property (nullable, nonatomic, readonly) NSSet<NSString *> *missingValues;
 @property (nonatomic) BOOL debug;
 @property (nullable, nonatomic, copy) NSString *(^escapingFunction)(NSString *string);
 

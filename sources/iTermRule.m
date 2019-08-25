@@ -86,20 +86,13 @@
         // host
         hostname = string;
     }
-    iTermRule *rule = [[[iTermRule alloc] init] autorelease];
+    iTermRule *rule = [[iTermRule alloc] init];
     rule.username = username;
     rule.hostname = hostname;
     rule.path = path;
     rule.sticky = sticky;
     rule.job = job;
     return rule;
-}
-
-- (void)dealloc {
-  [_hostname release];
-  [_username release];
-  [_path release];
-  [super dealloc];
 }
 
 - (NSString *)description {
@@ -132,7 +125,6 @@
     const int kHostPartialMatchScore = acc;
     acc *= 2;
     const int kHostExactMatchScore = acc;
-    acc *= 2;
 
     double score = 0;
 

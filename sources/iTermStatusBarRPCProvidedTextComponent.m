@@ -214,7 +214,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     if (_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.iconsArray.count == 0) {
         return nil;
     }
@@ -524,11 +524,11 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 #pragma mark - iTermObject
 
-- (iTermBuiltInFunctions *)objectMethodRegistry {
+- (nullable iTermBuiltInFunctions *)objectMethodRegistry {
     return nil;
 }
 
-- (iTermVariableScope *)objectScope {
+- (nullable iTermVariableScope *)objectScope {
     return nil;
 }
 

@@ -1355,7 +1355,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
-    aSession.hostnameToShell = [arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy];
+    aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -11473,7 +11473,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
-    iTermCopyModeState *state = [[iTermCopyModeState alloc] init];
+    iTermCopyModeState *state = [[[iTermCopyModeState alloc] init] autorelease];
     state.coord = VT100GridCoordMake(_screen.cursorX - 1,
                                      _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
     state.numberOfLines = _screen.numberOfLines;

@@ -280,7 +280,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (NSWindowPersistableFrameDescriptor)stringWithSavedFrame {
-    return nil;
+    return @"";
 }
 
 - (void)setFrameFromString:(NSWindowPersistableFrameDescriptor)string {

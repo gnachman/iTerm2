@@ -96,17 +96,18 @@
         array = [NSMutableArray array];
     });
     __block BOOL complete = NO;
-    __block iTermParsedExpression *expression = [self callFunction:invocation
-                                                          receiver:receiver
-                                                           timeout:timeout
-                                                             scope:scope
-                                                        completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
-                                                            completion(result, error, missing);
-                                                            if (expression) {
-                                                                [array removeObject:expression];
-                                                            }
-                                                            complete = YES;
-                                                        }];
+    __block iTermParsedExpression *expression = nil;
+    expression = [self callFunction:invocation
+                           receiver:receiver
+                            timeout:timeout
+                              scope:scope
+                         completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+                             completion(result, error, missing);
+                             if (expression) {
+                                 [array removeObject:expression];
+                             }
+                             complete = YES;
+                         }];
     if (retainSelf && !complete) {
         [array addObject:expression];
     }

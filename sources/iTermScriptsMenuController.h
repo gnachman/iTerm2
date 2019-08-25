@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)moveScriptToAutoLaunch:(NSString *)fullPath;
 - (BOOL)couldMoveScriptToAutoLaunch:(NSString *)fullPath;
 
-- (void)importDidFinishWithErrorMessage:(NSString *)errorMessage
+- (void)importDidFinishWithErrorMessage:(nullable NSString *)errorMessage
                                location:(NSURL *)location
                             originalURL:(NSURL *)url;
 
