@@ -44,7 +44,7 @@
 }
 
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^)(void))block {
-    NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
+    NSImage *image = [[NSImage alloc] initWithSize:size];
     [image it_drawWithBlock:block];
     return image;
 }
@@ -56,18 +56,6 @@
     [self lockFocus];
     block();
     [self unlockFocus];
-}
-
-+ (NSMutableData *)argbDataForImageOfSize:(NSSize)size drawBlock:(void (^)(CGContextRef context))block {
-    NSMutableData *data = [NSMutableData data];
-    CGContextRef context = [NSImage newBitmapContextOfSize:size storage:data];
-    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:NO];
-    NSGraphicsContext *savedContext = [NSGraphicsContext currentContext];
-    [NSGraphicsContext setCurrentContext:graphicsContext];
-    block(context);
-    [NSGraphicsContext setCurrentContext:savedContext];
-    CGContextRelease(context);
-    return data;
 }
 
 + (NSData *)dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:(NSData *)input {
@@ -101,20 +89,20 @@
     
     assert(data.length == size.width * size.height * bitsPerSample * samplesPerPixel / 8);
     NSBitmapImageRep *bitmapImageRep =
-        [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us
-                                                 pixelsWide:size.width
-                                                 pixelsHigh:size.height
-                                              bitsPerSample:bitsPerSample
-                                            samplesPerPixel:samplesPerPixel
-                                                   hasAlpha:hasAlpha
-                                                   isPlanar:NO
-                                             colorSpaceName:colorSpaceName
-                                                bytesPerRow:bitsPerSample * samplesPerPixel * size.width / 8
-                                               bitsPerPixel:bitsPerSample * samplesPerPixel] autorelease];  // 0 means OS infers it
+        [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us
+                                                pixelsWide:size.width
+                                                pixelsHigh:size.height
+                                             bitsPerSample:bitsPerSample
+                                           samplesPerPixel:samplesPerPixel
+                                                  hasAlpha:hasAlpha
+                                                  isPlanar:NO
+                                            colorSpaceName:colorSpaceName
+                                               bytesPerRow:bitsPerSample * samplesPerPixel * size.width / 8
+                                              bitsPerPixel:bitsPerSample * samplesPerPixel];  // 0 means OS infers it
 
     memmove([bitmapImageRep bitmapData], data.bytes, data.length);
 
-    NSImage *theImage = [[[NSImage alloc] initWithSize:size] autorelease];
+    NSImage *theImage = [[NSImage alloc] initWithSize:size];
     [theImage addRepresentation:bitmapImageRep];
 
     return theImage;
@@ -202,33 +190,33 @@
 }
 
 - (NSImage *)imageWithColor:(NSColor *)color {
-  NSSize size = self.size;
-  NSRect rect = NSZeroRect;
-  rect.size = size;
+    NSSize size = self.size;
+    NSRect rect = NSZeroRect;
+    rect.size = size;
 
-  // Create a bitmap context.
-  NSMutableData *data = [NSMutableData data];
-  CGContextRef context = [self newBitmapContextWithStorage:data];
+    // Create a bitmap context.
+    NSMutableData *data = [NSMutableData data];
+    CGContextRef context = [self newBitmapContextWithStorage:data];
 
-  // Draw myself into that context.
-  CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
+    // Draw myself into that context.
+    CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
 
-  // Now draw over it with |color|.
-  CGContextSetFillColorWithColor(context, [color CGColor]);
-  CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
-  CGContextFillRect(context, rect);
+    // Now draw over it with |color|.
+    CGContextSetFillColorWithColor(context, [color CGColor]);
+    CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
+    CGContextFillRect(context, rect);
 
-  // Extract the resulting image into the graphics context.
-  CGImageRef image = CGBitmapContextCreateImage(context);
+    // Extract the resulting image into the graphics context.
+    CGImageRef image = CGBitmapContextCreateImage(context);
 
-  // Convert to NSImage
-  NSImage *coloredImage = [[[NSImage alloc] initWithCGImage:image size:size] autorelease];
+    // Convert to NSImage
+    NSImage *coloredImage = [[NSImage alloc] initWithCGImage:image size:size];
 
-  // Release memory.
-  CGContextRelease(context);
-  CGImageRelease(image);
+    // Release memory.
+    CGContextRelease(context);
+    CGImageRelease(image);
 
-  return coloredImage;
+    return coloredImage;
 }
 
 - (void)saveAsPNGTo:(NSString *)filename {
@@ -240,7 +228,7 @@
     CGImageRef cgImage = [self CGImageForProposedRect:NULL
                                               context:nil
                                                 hints:nil];
-    NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:cgImage] autorelease];
+    NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     [imageRep setSize:self.size];
     return [imageRep representationUsingType:fileType properties:@{}];
 }
@@ -283,7 +271,7 @@
     [ctx flushGraphics];
     [NSGraphicsContext restoreGraphicsState];
 
-    return [rep autorelease];
+    return rep;
 }
 
 - (NSImageRep *)bestRepresentationForScale:(CGFloat)desiredScale {
@@ -333,7 +321,7 @@
     NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
     [self drawAtPoint:corner fromRect:rect operation:NSCompositingOperationCopy fraction:1.0];
     [image unlockFocus];
-    return [image autorelease];
+    return image;
 }
 
 - (NSImage *)it_imageOfSize:(NSSize)newSize {
