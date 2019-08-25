@@ -192,13 +192,20 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+    DLog(@"Reporting number of rows: %@", @(self.rules.count));
+    DLog(@"%@", [NSThread callStackSymbols]);
     return self.rules.count;
 }
 
 - (id)tableView:(NSTableView *)aTableView
         objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
-    NSDictionary *rule = self.rules[rowIndex];
+    NSArray<NSDictionary *> *rules = self.rules;
+    if (rowIndex < 0 || rowIndex >= rules.count) {
+        DLog(@"Asked for row %@ out of %@", @(rowIndex), rules);
+        return @"BUG";
+    }
+    NSDictionary *rule = rules[rowIndex];
     if (aTableColumn == regexColumn_) {
         return rule[kRegexKey];
     } else if (aTableColumn == notesColumn_) {
