@@ -322,11 +322,13 @@
 
         // Grab lines from this block until we're done or reach the end of the block.
         BOOL stop = NO;
+        int line = remainder;
         do {
             int length, eol;
             screen_char_t continuation;
+            int temp = line;
             screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
-                                                              lineNum:&remainder
+                                                              lineNum:&temp
                                                            lineLength:&length
                                                     includesEndOfLine:&eol
                                                          continuation:&continuation];
@@ -339,8 +341,9 @@
                 return;
             }
             numberLeft--;
-            remainder++;
+            line++;
         } while (numberLeft > 0 && block_lines >= remainder);
+        remainder = line;
         if (numberLeft == 0) {
             break;
         }
