@@ -1979,9 +1979,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
-        if (!_selection.appending) {
-            [_selection clearSelection];
-        }
         if (willFollowLink) {
             [_urlActionHelper openTargetWithEvent:event inBackground:altPressed];
         } else {
