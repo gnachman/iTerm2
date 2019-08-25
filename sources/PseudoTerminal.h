@@ -368,7 +368,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
-- (PseudoTerminal *)moveTabToNewWindow:(PTYTab *)aTab;
+- (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;
 
 @end
 

@@ -51,7 +51,7 @@
                                             code:3
                                         userInfo:@{ NSLocalizedDescriptionKey: @"Window has only one tab" }]);
     }
-    PseudoTerminal *newWindowController = [term moveTabToNewWindow:tab];
+    PseudoTerminal *newWindowController = [term it_moveTabToNewWindow:tab];
     if (!newWindowController) {
         completion(nil, [NSError errorWithDomain:@"com.iterm2.move-tab-to-window"
                                             code:4

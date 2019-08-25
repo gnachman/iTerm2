@@ -9587,10 +9587,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
-    [self moveTabToNewWindow:aTab];
+    [self it_moveTabToNewWindow:aTab];
 }
 
-- (PseudoTerminal *)moveTabToNewWindow:(PTYTab *)aTab {
+- (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
     if (aTab == nil) {
         return nil;
     }
