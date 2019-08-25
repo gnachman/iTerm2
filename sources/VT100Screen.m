@@ -968,7 +968,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
     // Restore the screen contents that were pushed onto the linebuffer.
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
+                            maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
     DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     if (wasShowingAltScreen) {
