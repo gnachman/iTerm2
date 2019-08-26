@@ -4,9 +4,9 @@ import iterm2
 
 class EachSessionOnceMonitor:
     """
-    Returns each session, including those already in existence and any created in the future.
+    This is a convenient way to do something to all sessions exactly once, including those created in the future.
 
-    This is a convenient way to do something to all sessions exactly once.
+    You can use it as a context manager to get the session_id of each session, or you can use the static method `async_foreach_session_create_task` to have a task created for each session.
 
     :param connection: The :class:`~iterm2.connection.Connection` to use.
     :param app: An instance of :class:`~iterm2.app.App`.
