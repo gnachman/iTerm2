@@ -119,6 +119,7 @@ static BOOL gWaitingForFullScreen;
                 case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_BOTTOM:
                 case WINDOW_TYPE_BOTTOM_PARTIAL:
+                case WINDOW_TYPE_MAXIMIZED:
                     DLog(@"Canonicalizing window frame");
                     [term performSelector:@selector(canonicalizeWindowFrame)
                                withObject:nil

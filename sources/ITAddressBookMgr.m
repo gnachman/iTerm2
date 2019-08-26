@@ -77,6 +77,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             assert(false);
             return windowType;
 
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:

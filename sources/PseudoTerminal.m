@@ -468,6 +468,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_COMPACT:
             return YES;
 
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
@@ -518,6 +519,13 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskResizable);
 
+        case WINDOW_TYPE_MAXIMIZED:
+            return (mask |
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskTexturedBackground);
+ 
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
@@ -666,6 +674,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                                              windowType:windowType
                                                           defaultScreen:[[self window] screen]];
     switch (windowType) {
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM:
@@ -711,6 +720,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_RIGHT_PARTIAL:
             initialFrame = [screen visibleFrameIgnoringHiddenDock];
             break;
+
+        case WINDOW_TYPE_MAXIMIZED:
+            initialFrame = [screen visibleFrame];
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -957,6 +969,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             break;
         case WINDOW_TYPE_LION_FULL_SCREEN:
             style = @"native full screen";
+            break;
+        case WINDOW_TYPE_MAXIMIZED:
+            style = @"maximized";
             break;
         case WINDOW_TYPE_TOP:
             style = @"full-width top";
@@ -1324,6 +1339,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
@@ -1378,6 +1394,7 @@ ITERM_WEAKLY_REFERENCEABLE
             savedWindowType = newWindowType = WINDOW_TYPE_ACCESSORY;
             break;
 
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_NORMAL:
             savedWindowType = newWindowType = self.windowType;
     }
@@ -1406,6 +1423,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [term hideMenuBar];
             break;
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -1570,6 +1588,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_ACCESSORY:
                 DLog(@"Returning YES");
                 return YES;
+            case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_TOP:
             case WINDOW_TYPE_LEFT:
             case WINDOW_TYPE_RIGHT:
@@ -1687,6 +1706,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TOP_PARTIAL:
             return PTYWindowTitleBarFlavorZeroPoints;
 
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_BOTTOM:
@@ -2361,6 +2381,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
             rect = virtualScreenFrame;
             break;
 
@@ -2637,6 +2658,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     windowType = WINDOW_TYPE_RIGHT_PARTIAL;
                     break;
 
+                case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_NORMAL:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -3471,6 +3493,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
 
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -3720,6 +3743,9 @@ ITERM_WEAKLY_REFERENCEABLE
             return frame;
             break;
 
+        case WINDOW_TYPE_MAXIMIZED:
+            return [screen visibleFrame];
+ 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
@@ -3872,6 +3898,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
@@ -3891,6 +3918,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -4568,6 +4596,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
             return NO;
@@ -4915,6 +4944,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -5010,6 +5040,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
             return YES;
     }
 }
@@ -5733,6 +5764,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
             break;
     }
 
@@ -6099,6 +6131,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_TOP:
+                case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     break;
             }
@@ -6267,6 +6300,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [[term window] setFrameTopLeftPoint:point];
                     break;
 
+                case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6292,6 +6326,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         [[term window] setFrameTopLeftPoint:point];
                     }
                     break;
+                case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6322,6 +6357,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [[term window] setFrameTopLeftPoint:point];
                     break;
                 }
+                case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6550,6 +6586,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -6569,6 +6606,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         switch (iTermThemedWindowType(windowType)) {
             case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -6594,6 +6632,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_RIGHT:
             case WINDOW_TYPE_BOTTOM:
             case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_TOP_PARTIAL:
             case WINDOW_TYPE_LEFT_PARTIAL:
@@ -8492,6 +8531,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             return NO;
 
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
