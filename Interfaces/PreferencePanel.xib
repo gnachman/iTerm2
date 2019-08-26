@@ -2862,6 +2862,7 @@ DQ
                                     <items>
                                         <menuItem title="Normal" state="on" id="4945"/>
                                         <menuItem title="Full Screen" tag="1" id="4944"/>
+                                        <menuItem title="Maximized" tag="15" id="qHO-yY-EJE"/>
                                         <menuItem isSeparatorItem="YES" id="f9k-Lu-L4T"/>
                                         <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
                                         <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
