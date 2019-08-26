@@ -2,7 +2,7 @@ Troubleshooting
 ===============
 
 If anything goes wrong, remember to check the Script Console (**Scripts >
-Manager > Console**). Pick your script on the left to view its output. Some
+Manage > Console**). Pick your script on the left to view its output. Some
 errors are also logged to the *iTerm2 App* history in the script console if
 they cannot be tied to a running script.
 
