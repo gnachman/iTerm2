@@ -19,7 +19,7 @@ from iterm2.customcontrol import CustomControlSequenceMonitor
 
 from iterm2.focus import FocusMonitor, FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
 
-from iterm2.lifecycle import SessionTerminationMonitor, LayoutChangeMonitor, NewSessionMonitor
+from iterm2.lifecycle import EachSessionOnceMonitor, SessionTerminationMonitor, LayoutChangeMonitor, NewSessionMonitor
 
 from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException
 

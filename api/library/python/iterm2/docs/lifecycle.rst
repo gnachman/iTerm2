@@ -7,6 +7,8 @@ Life Cycle
    :members: async_get
 .. autoclass:: iterm2.NewSessionMonitor
    :members: async_get
+.. autoclass:: iterm2.EachSessionOnceMonitor
+   :members: async_foreach_session_create_task, async_get
 
 ----
 

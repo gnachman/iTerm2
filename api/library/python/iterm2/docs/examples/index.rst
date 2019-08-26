@@ -57,6 +57,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`tabtitle` - Demonstrates monitoring for the creation of a new tab. Also demonstrates prompting the user for a string and changing a tab title.
 
+:doc:`autoalert` - Demonstrates monitoring all sessions for long-running jobs. Also demonstrates posting notifications.
+
 ----
 
 **Profiles and Color Presets**
