@@ -207,6 +207,9 @@ static void HandleSigChld(int n) {
         // TODO: Don't want to do this when Sparkle is upgrading.
         killpg(_serverChildPid, SIGHUP);
     }
+    if (_tmuxClientProcessID) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
+    }
 
     [self closeFileDescriptor];
     [_logHandle closeFile];
@@ -217,8 +220,8 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, filedesc %d)",
-              _serverChildPid, _serverPid, fd];
+    return [NSString stringWithFormat:@"<%@: %p child pid=%d server-child pid=%d, filedesc=%d tmux pid=%@>",
+            NSStringFromClass([self class]), self, _serverChildPid, _serverPid, fd, _tmuxClientProcessID];
 }
 
 #pragma mark - APIs
@@ -370,9 +373,24 @@ static void HandleSigChld(int n) {
     }
 }
 
+- (void)setTmuxClientProcessID:(NSNumber *)tmuxClientProcessID {
+    if ([NSObject object:tmuxClientProcessID isEqualToObject:_tmuxClientProcessID]) {
+        return;
+    }
+    DLog(@"Set tmux client process ID for %@ to %@", self, tmuxClientProcessID);
+    if (_tmuxClientProcessID) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
+    }
+    if (tmuxClientProcessID) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:tmuxClientProcessID.intValue];
+    }
+    _tmuxClientProcessID = tmuxClientProcessID;
+}
+
 - (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion {
-    const pid_t pid = self.pid;
+    const pid_t pid = self.tmuxClientProcessID ? self.tmuxClientProcessID.intValue : self.pid;
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
+    DLog(@"%@ fetch process info for %@", self, @(pid));
     if (info.name) {
         DLog(@"Return name synchronously");
         completion(info);
@@ -388,7 +406,6 @@ static void HandleSigChld(int n) {
     if (_haveBumpedProcessCache) {
         DLog(@"Already bumped process cache");
         [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-        completion(nil);
         return;
     }
     _haveBumpedProcessCache = YES;
@@ -440,6 +457,9 @@ static void HandleSigChld(int n) {
     } else if (_childPid >= 0) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         kill(_childPid, signo);
+    }
+    if (_tmuxClientProcessID) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
 }
 

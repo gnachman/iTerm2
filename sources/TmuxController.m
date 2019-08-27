@@ -13,6 +13,7 @@
 #import "iTermController.h"
 #import "iTermInitialDirectory.h"
 #import "iTermInitialDirectory+Tmux.h"
+#import "iTermLSOF.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -835,6 +836,23 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          responseSelector:nil];
 }
 
+- (void)loadServerPID {
+    if (gateway_.minimumServerVersion.doubleValue < 2.1) {
+        return;
+    }
+    [gateway_ sendCommand:@"display-message -p \"#{pid}\""
+           responseTarget:self
+         responseSelector:@selector(didLoadServerPID:)];
+}
+
+- (void)didLoadServerPID:(NSString *)pidString {
+    pid_t pid = [pidString integerValue];
+    if (pid > 0) {
+        NSString *name = [iTermLSOF nameOfProcessWithPid:pid isForeground:NULL];
+        _serverIsLocal = [name isEqualToString:@"tmux"];
+    }
+}
+
 - (void)loadTitleFormat {
     [gateway_ sendCommandList:@[ [gateway_ dictionaryForCommand:@"show-options -v -g set-titles"
                                                  responseTarget:self
@@ -993,6 +1011,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     } else {
         [self decreaseMaximumServerVersionTo:@"1.8"];
     }
+
+    // This is the oldest version supported. By the time you get here you know the version.
+    [self loadServerPID];
 }
 
 - (BOOL)recyclingSupported {

@@ -55,6 +55,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 @property(nonatomic, readonly) BOOL variableWindowSize;
 @property(nonatomic, readonly) NSString *setTitlesString;
 @property(nonatomic, readonly) BOOL shouldSetTitles;
+@property(nonatomic, readonly) BOOL serverIsLocal;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
