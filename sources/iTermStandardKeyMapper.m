@@ -58,6 +58,21 @@
 
 // Called when control is pressed and command and option are not pressed. Shift may or may not be pressed.
 - (unichar)controlCodeForEvent:(NSEvent *)event {
+    const unsigned short keyCode = event.keyCode;
+    switch (keyCode) {
+        case kVK_ANSI_Slash:
+        case kVK_ANSI_Backslash: {
+            NSString *characters = event.characters;
+            if (characters.length == 1) {
+                const unichar code = [characters characterAtIndex:0];
+                if (code >= 0 && code < ' ') {
+                    return code;
+                }
+            }
+        }
+
+    }
+
     NSString *charactersIgnoringModifiers = [event charactersIgnoringModifiers];
     const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
 
