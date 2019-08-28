@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Converts a tab style if automatic.
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle;
++ (instancetype)it_appearanceForCurrentTheme;
++ (void)it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:(void (^)(void))block;
 
 @end
 

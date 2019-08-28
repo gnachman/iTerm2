@@ -6,6 +6,7 @@
 //
 //
 
+#import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 
@@ -54,7 +55,11 @@
         return;
     }
     [self lockFocus];
-    block();
+
+    [NSAppearance it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:^{
+        block();
+    }];
+
     [self unlockFocus];
 }
 
