@@ -256,6 +256,13 @@ typedef struct {
     [super mouseUp:event];
 }
 
+- (NSMenu *)menuForEvent:(NSEvent *)event {
+    if (_windowTitleLabel.hidden) {
+        return nil;
+    }
+    return [_tabBarControl menuForEvent:event];
+}
+
 - (BOOL)mouseDownCanMoveWindow {
     return YES;
 }
