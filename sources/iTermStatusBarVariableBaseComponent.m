@@ -173,7 +173,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     if (index == NSNotFound) {
         return nil;
     }
-    parts[index] = replacement;
+    parts[index] = replacement ?: @"";
     return [parts componentsJoinedByString:@"."];
 }
 
