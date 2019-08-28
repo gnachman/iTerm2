@@ -1257,14 +1257,23 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
     const NSUInteger kMaximumOversizeAmountWhenTruncatingHead = 1024 * 100;
     int width = [_dataSource width];
+    DLog(@"width=%@", @(width));
     __block BOOL lineContainsNonImage = NO;
     __block BOOL lineContainsImage = NO;
     __block BOOL copiedImage = NO;
+    DLog(@"contintInRange:%@ includeLastNewline:%@ trimTrailingWhitespace:%@",
+         VT100GridWindowedRangeDescription(windowedRange),
+         @(includeLastNewline),
+         @(trimSelectionTrailingSpaces));
+
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                          DLog(@"Got char at %@ with code=%@", VT100GridCoordDescription(coord), @(theChar.code));
                           if (theChar.image) {
+                              DLog(@"Is an image. Set lineContainsImage=YES");
                               lineContainsImage = YES;
                           } else {
+                              DLog(@"Set lineContainsNonImage=YES");
                               lineContainsNonImage = YES;
                           }
                           if (theChar.image) {
@@ -1272,6 +1281,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   iTermImageInfo *imageInfo = GetImageInfo(theChar.code);
                                   NSImage *image = imageInfo.image.images.firstObject;
                                   if (image) {
+                                      DLog(@"set copiedImage=YES");
                                       copiedImage = YES;
                                       NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
                                       textAttachment.image = imageInfo.image.images.firstObject;
@@ -1281,28 +1291,35 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   }
                               }
                           } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
+                              DLog(@"Is a tab filler");
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
                               if ([self tabFillerAtIndex:coord.x isOrphanInLine:currentLine]) {
+                                  DLog(@"Append space");
                                   appendString(@" ", theChar, coord);
                               }
                           } else if (theChar.code == 0 && !theChar.complexChar) {
                               // This is only reached for midline nulls; nulls at the end of the
                               // line end up in eolBlock.
+                              DLog(@"Midline null");
                               switch (nullPolicy) {
                                   case kiTermTextExtractorNullPolicyFromLastToEnd:
+                                      DLog(@"Erase result");
                                       [result deleteCharactersInRange:NSMakeRange(0, [result length])];
                                       [coords removeAllObjects];
                                       break;
                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
+                                      DLog(@"Stop");
                                       return YES;
                                   case kiTermTextExtractorNullPolicyTreatAsSpace:
                                   case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
+                                      DLog(@"Append string");
                                       appendString(@" ", theChar, coord);
                                       break;
                               }
                           } else if (theChar.code != DWC_RIGHT &&
                                      theChar.code != DWC_SKIP) {
+                              DLog(@"Normal character");
                               // Normal character. Add it unless it's a backslash at the right edge
                               // of a window.
                               if (continuationChars &&
@@ -1311,13 +1328,16 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   theChar.code == '\\' &&
                                   !theChar.complexChar) {
                                   // Is a backslash at the right edge of a window.
+                                  DLog(@"Backslash at right edge");
                                   [continuationChars addIndex:[self indexForCoord:coord width:width]];
                               } else {
+                                  DLog(@"Append as usual");
                                   // Normal character.
                                   appendString(ScreenCharToStr(&theChar) ?: @"", theChar, coord);
                               }
                           }
                           if (truncateTail) {
+                              DLog(@"Stopping if result is too long because truncateTail");
                               return [result length] >= maxBytes;
                           } else if ([result length] > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
                               // Truncate from head when significantly oversize.
@@ -1325,25 +1345,33 @@ const NSInteger kLongMaximumWordLength = 100000;
                               // Removing byte from the beginning of the string is slow. The only reason to do it is to save
                               // memory. Remove a big chunk periodically. After enumeration is done we'll cut it to the
                               // exact size it needs to be.
+                              DLog(@"Truncate from head");
                               [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
                           }
+                          DLog(@"Keep going");
                           return NO;
                       }
                        eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+                           DLog(@"EOL code=%@ nulls=%@ line=%@", @(code), @(numPrecedingNulls), @(line));
                            BOOL ignore = (!copiedImage && !lineContainsNonImage && lineContainsImage);
+                           DLog(@"ignore=%@", @(ignore));
                            copiedImage = lineContainsNonImage = lineContainsImage = NO;
                            if (ignore) {
+                               DLog(@"ignore");
                                return NO;
                            }
                            int right;
                            if (windowedRange.columnWindow.length) {
                                right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
+                               DLog(@"set right to location+length");
                            } else {
                                right = width;
+                               DLog(@"set right to width");
                            }
                            // If there is no text after this, insert a hard line break.
                            BOOL shouldAppendNewline = YES;
                            if (pad) {
+                               DLog(@"Adding padding spaces");
                                for (int i = 0; i < numPrecedingNulls; i++) {
                                    VT100GridCoord coord =
                                       VT100GridCoordMake(right - numPrecedingNulls + i, line);
@@ -1354,35 +1382,46 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
                                        [result deleteCharactersInRange:NSMakeRange(0, [result length])];
                                        [coords removeAllObjects];
+                                       DLog(@"*** removing trailing nulls and won't append newline");
                                        shouldAppendNewline = NO;
                                        break;
                                    case kiTermTextExtractorNullPolicyFromStartToFirst:
+                                       DLog(@"Stopping because null policy start-first");
                                        return YES;
                                    case kiTermTextExtractorNullPolicyTreatAsSpace:
+                                       DLog(@"Treating terminal nulls as space");
                                        appendString(@" ",
                                                     [self defaultChar],
                                                     VT100GridCoordMake(right - 1, line));
                                        break;
                                    case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
+                                       DLog(@"ignoring terminal nulls");
                                        break;
                                }
                            }
                            if (code == EOL_HARD &&
                                shouldAppendNewline &&
                                (includeLastNewline || line < windowedRange.coordRange.end.y)) {
+                               DLog(@"Hard newline on interior line");
                                if (trimSelectionTrailingSpaces) {
+                                   DLog(@"Trim trailing whitespace");
                                    NSInteger lengthBeforeTrimming = [result length];
                                    [result trimTrailingWhitespace];
                                    [coords removeObjectsInRange:NSMakeRange([result length],
                                                                             lengthBeforeTrimming - [result length])];
                                }
+                               DLog(@"Append newline");
                                appendString(@"\n",
                                             [self defaultChar],
                                             VT100GridCoordMake(right, line));
+                           } else {
+                               DLog(@"Not a hardnewline on interior line");
                            }
                            if (truncateTail) {
+                               DLog(@"Stop if truncateTail");
                                return [result length] >= maxBytes;
                            } else if ([result length] > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
+                               DLog(@"Truncate from head");
                                // Truncate from head when significantly oversize.
                                //
                                // Removing byte from the beginning of the string is slow. The only reason to do it is to save
@@ -1390,20 +1429,25 @@ const NSInteger kLongMaximumWordLength = 100000;
                                // exact size it needs to be.
                                [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
                            }
+                           DLog(@"Keep going");
                            return NO;
                        }];
+    DLog(@"After enumeration result is %@", result);
 
     if (!truncateTail && [result length] > maxBytes) {
         // Truncate the head to the exact size.
+        DLog(@"Truncate head to exact size");
         [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
     }
 
     if (trimSelectionTrailingSpaces) {
+        DLog(@"Trim trailing spaces");
         NSInteger lengthBeforeTrimming = [result length];
         [result trimTrailingWhitespace];
         [coords removeObjectsInRange:NSMakeRange([result length],
                                                  lengthBeforeTrimming - [result length])];
     }
+    DLog(@"Return %@", result);
     return result;
 }
 

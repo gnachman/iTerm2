@@ -207,6 +207,7 @@ void UnblockTaskNotifier(void) {
     if (![coprocess eof] && FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"Reading from coprocess");
         [coprocess read];
+        NSLog(@"Read from coprocess %@", coprocess.inputBuffer);
         [task writeTask:coprocess.inputBuffer];
         [coprocess.inputBuffer setLength:0];
     }

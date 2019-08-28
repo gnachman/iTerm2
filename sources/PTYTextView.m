@@ -2620,8 +2620,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         attributeProvider = nil;
     }
 
+    DLog(@"Enumerate selections");
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        DLog(@"Range is %@, eol is %@", VT100GridWindowedRangeDescription(range), @(eol));
         if (range.coordRange.end.y < minimumLineNumber) {
+            DLog(@"Return early");
             return;
         } else {
             range.coordRange.start.y = MAX(range.coordRange.start.y, minimumLineNumber);
@@ -2634,6 +2637,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 *stop = YES;
             }
         }
+        DLog(@"cap is %@", @(cap));
         if (cap != 0) {
             iTermTextExtractor *extractor =
             [iTermTextExtractor textExtractorWithDataSource:_dataSource];
@@ -2654,6 +2658,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             NSString *contentString = attributed ? [content string] : content;
             if (eol && ![contentString hasSuffix:@"\n"]) {
+                DLog(@"Tack on a newline");
                 if (attributed) {
                     [theSelectedText iterm_appendString:@"\n"];
                 } else {
@@ -2662,6 +2667,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
     }];
+    DLog(@"Finished with theSelectedText=%@", theSelectedText);
     return theSelectedText;
 }
 
@@ -2850,7 +2856,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     DLog(@"-[PTYTextView copy:] called");
     NSString *copyString = [self selectedText];
-
+    DLog(@"copyString=%@", copyString);
+    
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
         return;
