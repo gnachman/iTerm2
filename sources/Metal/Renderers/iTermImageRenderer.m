@@ -7,6 +7,7 @@
 
 #import "iTermImageRenderer.h"
 
+#import "DebugLogging.h"
 #import "iTermImageInfo.h"
 #import "iTermTexture.h"
 #import "NSArray+iTerm.h"
@@ -153,10 +154,14 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
                                                (chunkSize.width * run.length) / textureSize.width,
                                                (chunkSize.height) / textureSize.height);
 
-        id<MTLBuffer> vertexBuffer = [self->_cellRenderer newQuadWithFrame:CGRectMake(run.startingCoordOnScreen.x * cellSize.width + offset.x,
-                                                                                      height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
-                                                                                      run.length * cellSize.width,
-                                                                                      cellSize.height)
+        CGRect frame = CGRectMake(run.startingCoordOnScreen.x * cellSize.width + offset.x,
+                                  height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
+                                  run.length * cellSize.width,
+                                  cellSize.height);
+        DLog(@"Draw an image with y={%f - (%d * %f + %f + %f)} = %f",
+             height, run.startingCoordOnScreen.y, cellSize.height, offset.y, cellSize.height,
+             frame.origin.y);
+        id<MTLBuffer> vertexBuffer = [self->_cellRenderer newQuadWithFrame:frame
                                                               textureFrame:textureFrame
                                                                poolContext:self.poolContext];
 
