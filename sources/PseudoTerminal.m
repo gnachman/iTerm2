@@ -8364,7 +8364,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (NSColor *)windowDecorationColor {
     if (self.currentSession.tabColor &&
-        [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0) {
+        [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0 &&
+        [iTermAdvancedSettingsModel minimalTabStyleTreatLeftInsetAsPartOfFirstTab]) {
         // The window number will be displayed over the tab color.
         // Use text color of first tab when the first tab is selected.
         return [_contentView.tabBarControl.style textColorForCell:_contentView.tabBarControl.cells.firstObject];
