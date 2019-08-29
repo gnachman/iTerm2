@@ -1524,7 +1524,7 @@ ITERM_WEAKLY_REFERENCEABLE
          ^(NSString * _Nonnull filename) {
              if (filename) {
                  [aSession.shell startLoggingToFileWithPath:filename
-                                               shouldAppend:NO];
+                                               shouldAppend:[iTermAdvancedSettingsModel autologAppends]];
              }
              [aSession autorelease];
              runCommandBlock(finish);

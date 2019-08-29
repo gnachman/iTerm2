@@ -49,6 +49,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)appendToExistingDebugLog;
 + (int)autocompleteMaxOptions;
 + (NSString *)autoLogFormat;
++ (BOOL)autologAppends;
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;
 + (double)badgeMaxHeightFraction;

@@ -961,7 +961,7 @@ static void HandleSigChld(int n) {
     DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ width:%@ height:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
          progpath, args, env, @(width), @(height), @(isUTF8), autologPath, @(synchronous));
     if (autologPath) {
-        [self startLoggingToFileWithPath:autologPath shouldAppend:NO];
+        [self startLoggingToFileWithPath:autologPath shouldAppend:[iTermAdvancedSettingsModel autologAppends]];
     }
 
     iTermTTYState ttyState;
