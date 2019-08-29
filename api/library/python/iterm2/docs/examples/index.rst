@@ -32,6 +32,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`unread` - Demonstrates a status bar component with an icon and an "unread count".
 
+:doc:`weather` - Demonstrates fetching a web page periodically and showing its data in a custom status bar component. Also demonstrates providing an icon for a custom status bar component.
+
 ----
 
 **Tmux**
