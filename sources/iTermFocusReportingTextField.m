@@ -35,6 +35,12 @@
     return window.it_becomingKey;
 }
 
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
+    return [super performKeyEquivalent:theEvent];
+}
+- (void)doCommandBySelector:(SEL)selector {
+    [super doCommandBySelector:selector];
+}
 - (BOOL)becomeFirstResponder {
     BOOL result = [super becomeFirstResponder];
     if ([self enclosingTerminalWindowIsBecomingKey]) {

@@ -54,10 +54,6 @@ static NSString *gSearchString;
         kFindViewDelayStateActiveMedium,
         kFindViewDelayStateActiveLong,
     } _delayState;
-
-    BOOL _isAutocompleting;
-    NSString *_lastEntry;
-    BOOL _backspaceKey;
 }
 
 + (void)loadUserDefaults {
@@ -182,15 +178,6 @@ static NSString *gSearchString;
 
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor {
-    if (_isAutocompleting == NO  && !_backspaceKey) {
-        _isAutocompleting = YES;
-        _lastEntry = fieldEditor.string.copy;
-        [fieldEditor complete:nil];
-        _isAutocompleting = NO;
-    }
-
-    _backspaceKey = NO;
-
     // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
     // the search field has lost focus since the last char was entered).
     static const CGFloat kStaleTime = 3;
@@ -548,57 +535,20 @@ static NSString *gSearchString;
     }];
 }
 
-- (void)doCommandBySelector:(SEL)commandSelector {
-    if (commandSelector == @selector(capitalizeWord:) ||
-        commandSelector == @selector(changeCaseOfLetter:) ||
-        commandSelector == @selector(deleteBackward:) ||
-        commandSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
-        commandSelector == @selector(deleteForward:) ||
-        commandSelector == @selector(deleteToBeginningOfLine:) ||
-        commandSelector == @selector(deleteToBeginningOfParagraph:) ||
-        commandSelector == @selector(deleteToEndOfLine:) ||
-        commandSelector == @selector(deleteToEndOfParagraph:) ||
-        commandSelector == @selector(deleteToMark:) ||
-        commandSelector == @selector(deleteWordBackward:) ||
-        commandSelector == @selector(deleteWordForward:) ||
-        commandSelector == @selector(indent:) ||
-        commandSelector == @selector(insertBacktab:) ||
-        commandSelector == @selector(insertContainerBreak:) ||
-        commandSelector == @selector(insertDoubleQuoteIgnoringSubstitution:) ||
-        commandSelector == @selector(insertLineBreak:) ||
-        commandSelector == @selector(insertNewline:) ||
-        commandSelector == @selector(insertNewlineIgnoringFieldEditor:) ||
-        commandSelector == @selector(insertParagraphSeparator:) ||
-        commandSelector == @selector(insertSingleQuoteIgnoringSubstitution:) ||
-        commandSelector == @selector(insertTab:) ||
-        commandSelector == @selector(insertTabIgnoringFieldEditor:) ||
-        commandSelector == @selector(lowercaseWord:) ||
-        commandSelector == @selector(makeBaseWritingDirectionLeftToRight:) ||
-        commandSelector == @selector(makeBaseWritingDirectionNatural:) ||
-        commandSelector == @selector(makeBaseWritingDirectionRightToLeft:) ||
-        commandSelector == @selector(makeTextWritingDirectionLeftToRight:) ||
-        commandSelector == @selector(makeTextWritingDirectionNatural:) ||
-        commandSelector == @selector(makeTextWritingDirectionRightToLeft:) ||
-        commandSelector == @selector(transpose:) ||
-        commandSelector == @selector(transposeWords:) ||
-        commandSelector == @selector(uppercaseWord:) ||
-        commandSelector == @selector(yank:)) {
-        _backspaceKey = YES;
+- (void)doCommandBySelector:(SEL)selector {
+    if ([self respondsToSelector:selector]) {
+        [self it_performNonObjectReturningSelector:selector withObject:nil];
     }
 }
 
-- (void)searchFieldWillBecomeFirstResponder:(NSSearchField *)searchField {
-    NSTextView *fieldEditor = [NSTextView castFrom:[[searchField window] fieldEditor:YES
-                                                                           forObject:searchField]];
-    [[iTermSearchHistory sharedInstance] coalescingFence];
-    if (_isAutocompleting == NO  && !_backspaceKey) {
-        _isAutocompleting = YES;
-        _lastEntry = [[fieldEditor string] copy];
-        [fieldEditor complete:nil];
-        _isAutocompleting = NO;
-    }
+- (void)moveDown:(id)sender {
+    NSTextView *fieldEditor = [NSTextView castFrom:[_viewController.view.window fieldEditor:YES
+                                                                                  forObject:_viewController.view]];
+    [fieldEditor complete:nil];
+}
 
-    _backspaceKey = NO;
+- (void)searchFieldWillBecomeFirstResponder:(NSSearchField *)searchField {
+    [[iTermSearchHistory sharedInstance] coalescingFence];
 }
 
 - (void)eraseSearchHistory {
