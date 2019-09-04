@@ -117,16 +117,6 @@ MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void) {
 }
 
 
-@implementation NSOpenPanel (Utility)
-- (NSArray *)legacyFilenames {
-    NSMutableArray *filenames = [NSMutableArray array];
-    for (NSURL *url in self.URLs) {
-        [filenames addObject:url.path];
-    }
-    return filenames;
-}
-@end
-
 @implementation NSFont(Future)
 
 - (BOOL)futureShouldAntialias {

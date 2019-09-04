@@ -344,8 +344,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     if ([openPanel runModal] == NSModalResponseOK) {
         // Get an array containing the full filenames of all
         // files and directories selected.
-        for (NSString* filename in [openPanel legacyFilenames]) {
-            [iTermColorPresets importColorPresetFromFile:filename];
+        for (NSURL *url in openPanel.URLs) {
+            [iTermColorPresets importColorPresetFromFile:url.path];
         }
     }
 }
