@@ -3918,6 +3918,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionName] ?: [self.variablesScope valueForVariableName:iTermVariableKeySessionProfileName] ?: @"Untitled";
 }
 
+- (void)setIconName:(NSString *)theName {
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
+                                                    iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
+    [_tmuxTitleMonitor updateOnce];
+}
+
+- (void)setWindowTitle:(NSString *)title {
+    [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
+    [_tmuxTitleMonitor updateOnce];
+}
+
 - (BOOL)shouldShowTabGraphic {
     return [self shouldShowTabGraphicForProfile:self.profile];
 }
@@ -3970,8 +3981,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)popWindowTitle {
-    [self.variablesScope setValue:[_nameController popWindowTitle]
-                 forVariableNamed:iTermVariableKeySessionWindowName];
+    NSString *title = [_nameController popWindowTitle];
+    [self setWindowTitle:title];
 }
 
 - (void)pushIconTitle {
@@ -3979,8 +3990,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)popIconTitle {
-    [self.variablesScope setValue:[_nameController popIconTitle]
-                 forVariableNamed:iTermVariableKeySessionIconName];
+    NSString *theName = [_nameController popIconTitle];
+    [self setIconName:theName];
 }
 
 - (VT100Terminal *)terminal
@@ -8600,8 +8611,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // The window name doesn't normally serve as an interpolated string, but just to be extra safe
     // break up \(.
     title = [title stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
-    [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
-    [_tmuxTitleMonitor updateOnce];
+    [self setWindowTitle:title];
 }
 
 - (NSString *)screenWindowTitle {
@@ -8615,10 +8625,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenSetIconName:(NSString *)theName {
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
-                                                    iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
-    [_tmuxTitleMonitor updateOnce];
-    
+    [self setIconName:theName];
 }
 
 - (BOOL)screenWindowIsFullscreen {
