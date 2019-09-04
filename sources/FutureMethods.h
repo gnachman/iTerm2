@@ -66,10 +66,6 @@ NS_INLINE BOOL iTermTextIsMonochrome(void) {
     return NO;
 }
 
-@interface NSOpenPanel (Utility)
-- (NSArray *)legacyFilenames;
-@end
-
 @interface NSFont (Future)
 // Does this font look bad without anti-aliasing? Relies on a private method.
 - (BOOL)futureShouldAntialias;

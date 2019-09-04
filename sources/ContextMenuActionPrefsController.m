@@ -91,7 +91,7 @@ static NSString* kParameterKey = @"parameter";
             repl = [self parameterValue:[components objectAtIndex:i]
                        encodedForAction:action];
         }
-        parameter = [parameter stringByReplacingBackreference:i withString:repl];
+        parameter = [parameter stringByReplacingBackreference:i withString:repl ?: @""];
     }
 
     parameter = [parameter stringByReplacingEscapedChar:'d' withString:workingDirectory ?: @"."];

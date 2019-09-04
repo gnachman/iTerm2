@@ -112,6 +112,10 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 }
 
 - (void)tryCurrentPhase {
+    if (self.extractor.dataSource == nil) {
+        [self completeWithAction:nil];
+        return;
+    }
     switch (self.phase) {
         case iTermURLActionFactoryPhaseHypertextLink:
             [self tryHypertextLink];
@@ -273,6 +277,9 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 - (URLAction *)urlActionForFilename:(NSString *)filename
                         prefixChars:(int)prefixChars
                         suffixChars:(int)suffixChars {
+    if (self.extractor.dataSource == nil) {
+        return nil;
+    }
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
     if (filename.length == 0 ||

@@ -9666,6 +9666,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (range.end.y - range.start.y > kMaxLines) {
         range.end.y = range.start.y + kMaxLines;
     }
+    const int width = _screen.width;
+    range.end.x = MIN(range.end.x, width - 1);
+    range.start.x = MIN(range.start.x, width - 1);
+
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
 }

@@ -44,6 +44,7 @@ extern const NSInteger kLongMaximumWordLength;
 
 @property(nonatomic, assign) VT100GridRange logicalWindow;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
+@property(nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;

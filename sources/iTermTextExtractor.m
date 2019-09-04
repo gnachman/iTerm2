@@ -32,7 +32,6 @@ const NSInteger kReasonableMaximumWordLength = 1000;
 const NSInteger kLongMaximumWordLength = 100000;
 
 @implementation iTermTextExtractor {
-    id<iTermTextDataSource> _dataSource;
     VT100GridRange _logicalWindow;
 
     BOOL _shouldCacheLines;
