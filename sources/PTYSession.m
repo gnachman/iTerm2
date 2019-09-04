@@ -2745,6 +2745,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
+                                     roundUp:YES
                                        inset:zeroInset
                                        image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
                                         data:nil];
@@ -2758,6 +2759,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
+                                     roundUp:YES
                                        inset:zeroInset
                                        image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
                                         data:nil];

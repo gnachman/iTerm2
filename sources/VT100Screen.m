@@ -3772,6 +3772,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
+                            roundUp:(BOOL)roundUp
                               inset:(NSEdgeInsets)inset
                               image:(NSImage *)nativeImage
                                data:(NSData *)data {
@@ -3848,6 +3849,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
     }
 
+    BOOL fullAuto = (widthUnits == kVT100TerminalUnitsAuto &&
+                     heightUnits == kVT100TerminalUnitsAuto &&
+                     width >= 1 &&
+                     height >= 1);
+
     width = MAX(1, width);
     height = MAX(1, height);
 
@@ -3857,6 +3863,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         double scale = maxWidth / (double)width;
         width = self.width;
         height *= scale;
+        fullAuto = NO;
     }
 
     // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
@@ -3866,6 +3873,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         double scale = (double)height / maxHeight;
         height = maxHeight;
         width *= scale;
+        fullAuto = NO;
     }
 
     // Allocate cells for the image.
@@ -3878,6 +3886,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         .right = MAX(inset.right / cellSize.width, 0),
         .bottom = MAX(inset.bottom / cellSize.height, 0)
     };
+    if (!roundUp && fullAuto) {
+        // Pick an inset that preserves the exact dimensions of the original image.
+        fractionalInset = [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:scaledSize
+                                                                                    forImageSize:image.size
+                                                                                        cellSize:cellSize
+                                                                                   numberOfCells:NSMakeSize(width, height)];
+    }
     screen_char_t c = ImageCharForNewImage(name,
                                            width,
                                            height,
@@ -3937,6 +3952,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                height:0
                                 units:kVT100TerminalUnitsAuto
                   preserveAspectRatio:YES
+                              roundUp:NO
                                 inset:NSEdgeInsetsZero
                                 image:nil
                                  data:data];
@@ -3953,6 +3969,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                  roundUp:YES
                                     inset:[inlineFileInfo_[kInlineFileInset] futureEdgeInsetsValue]
                                     image:nil
                                      data:data];

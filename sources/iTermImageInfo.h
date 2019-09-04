@@ -17,6 +17,11 @@ extern NSString *const iTermImageDidLoad;
 // 1:1 with images.
 @interface iTermImageInfo : NSObject<NSPasteboardItemDataProvider>
 
++ (NSEdgeInsets)fractionalInsetsForPreservedAspectRatioWithDesiredSize:(NSSize)desiredSize
+                                                          forImageSize:(NSSize)imageSize
+                                                              cellSize:(NSSize)cellSize
+                                                         numberOfCells:(NSSize)numberOfCells;
+
 // A UUID, lazily allocated.
 @property(nonatomic, readonly) NSString *uniqueIdentifier;
 

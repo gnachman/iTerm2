@@ -250,6 +250,19 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     return (self.image || self.animatedImage);
 
 }
+static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize region,
+                                                                  NSSize imageSize) {
+    double imageAR = imageSize.width / imageSize.height;
+    double canvasAR = region.width / region.height;
+    if (imageAR > canvasAR) {
+        // Image is wider than canvas, add letterboxes on top and bottom.
+        return NSMakeSize(region.width, region.width / imageAR);
+    } else {
+        // Image is taller than canvas, add pillarboxes on sides.
+        return NSMakeSize(region.height * imageAR, region.height);
+    }
+}
+
 - (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
     if (!self.ready) {
         DLog(@"%@ not ready", self.uniqueIdentifier);
@@ -272,18 +285,10 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         } else {
             theImage = [self.image.images firstObject];
         }
-        if (!_preserveAspectRatio) {
-            size = region;
+        if (_preserveAspectRatio) {
+            size = iTermImageInfoGetSizeForRegionPreservingAspectRatio(region, theImage.size);
         } else {
-            double imageAR = theImage.size.width / theImage.size.height;
-            double canvasAR = region.width / region.height;
-            if (imageAR > canvasAR) {
-                // image is wider than canvas, add black bars on top and bottom
-                size = NSMakeSize(region.width, region.width / imageAR);
-            } else {
-                // image is taller than canvas, add black bars on sides
-                size = NSMakeSize(region.height * imageAR, region.height);
-            }
+            size = region;
         }
         [canvas setSize:region];
         [canvas lockFocus];
@@ -292,15 +297,45 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         inset.bottom *= cellSize.height;
         inset.left *= cellSize.width;
         inset.right *= cellSize.width;
-        [theImage drawInRect:NSMakeRect((region.width - size.width) / 2 + inset.left,
-                                        (region.height - size.height) / 2 + inset.bottom,
-                                        MAX(0, size.width - inset.left - inset.right),
-                                        MAX(0, size.height - inset.top - inset.bottom))];
+        const NSRect destinationRect = NSMakeRect((region.width - size.width) / 2 + inset.left,
+                                                  (region.height - size.height) / 2 + inset.bottom,
+                                                  MAX(0, size.width - inset.left - inset.right),
+                                                  MAX(0, size.height - inset.top - inset.bottom));
+        [theImage drawInRect:destinationRect];
         [canvas unlockFocus];
 
         self.embeddedImages[@(frame)] = canvas;
     }
     return _embeddedImages[@(frame)];
+}
+
++ (NSEdgeInsets)fractionalInsetsForPreservedAspectRatioWithDesiredSize:(NSSize)desiredSize
+                                                          forImageSize:(NSSize)imageSize
+                                                              cellSize:(NSSize)cellSize
+                                                         numberOfCells:(NSSize)numberOfCells {
+    const NSSize region = NSMakeSize(cellSize.width * numberOfCells.width,
+                                     cellSize.height * numberOfCells.height);
+    const NSSize size = iTermImageInfoGetSizeForRegionPreservingAspectRatio(region, imageSize);
+
+    // Given the following equalities, inferred from how the destinationRect is computed when
+    // creating the embedded image in -imageWithCellSize:timestamp: above:
+    //
+    // left = (region.width - size.width) / 2 + insets.left
+    // right = (region.height - size.height) / 2 + insets.bottom
+    // width = size.width - insets.left - insets.right
+    // height = size.height - insets.top - insets.bottom
+    //
+    // Set left=0, right=0, width=desiredSize.width, height=desiredSize.height.
+    // Solve for insets. Here's what you get:
+    const CGFloat left = (region.width - size.width) / -2.0;
+    const CGFloat bottom = (region.height - size.height) / -2.0;
+    const CGFloat right = size.width - left - desiredSize.width;
+    const CGFloat top = size.height - bottom - desiredSize.height;
+
+    return NSEdgeInsetsMake(top / cellSize.height,
+                            left / cellSize.width,
+                            bottom / cellSize.height,
+                            right / cellSize.width);
 }
 
 - (NSString *)nameForNewSavedTempFile {

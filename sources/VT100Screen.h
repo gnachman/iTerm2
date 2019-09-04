@@ -156,6 +156,7 @@ extern int kVT100ScreenMinRows;
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
+                            roundUp:(BOOL)roundUp
                               inset:(NSEdgeInsets)inset
                               image:(NSImage *)image
                                data:(NSData *)data;
