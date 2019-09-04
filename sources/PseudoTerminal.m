@@ -3755,9 +3755,11 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
     }
 
+    NSWindow *newKeyWindow = [NSApp keyWindow] ?: [[iTermApplication sharedApplication] it_windowBecomingKey];
+    DLog(@"Window %@ resiging key. New key window (or key-window-elect) is %@", self, newKeyWindow);
     if (shouldAutoHideHotkeyWindow) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
-        NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
+        NSWindowController *newKeyWindowController = [newKeyWindow windowController];
         if (![siblings containsObject:newKeyWindowController]) {
             [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
         }

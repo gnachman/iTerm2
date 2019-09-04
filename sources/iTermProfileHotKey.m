@@ -524,6 +524,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (void)rollOut {
     DLog(@"Roll out [hide] hotkey window");
+    DLog(@"\n%@", [NSThread callStackSymbols]);
     if (_rollingOut) {
         DLog(@"Already rolling out");
         return;
@@ -804,7 +805,9 @@ static NSString *const kArrangement = @"Arrangement";
 - (void)rollInFinished {
     DLog(@"Roll-in finished for %@", self);
     _rollingIn = NO;
-    [self.windowController.window makeKeyAndOrderFront:nil];
+    if (self.windowController.window) {
+        [[iTermApplication sharedApplication] it_makeWindowKey:self.windowController.window];
+    }
     [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
     [[self.windowController currentTab] recheckBlur];
     self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;

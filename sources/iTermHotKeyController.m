@@ -451,6 +451,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 #pragma mark - Private
 
 - (BOOL)shouldAutoHide {
+    DLog(@"shouldAutoHide called");
     if (_disableAutoHide) {
         DLog(@"Auto-hide temporarily disabled");
         return NO;
@@ -467,6 +468,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     }
 
     NSWindow *keyWindowElect = [[iTermApplication sharedApplication] it_windowBecomingKey];
+    DLog(@"keyWindowElect is %@", keyWindowElect);
     if ([keyWindowElect respondsToSelector:@selector(autoHidesHotKeyWindow)] &&
         ![keyWindowElect autoHidesHotKeyWindow]) {
         DLog(@"The key window-elect does not auto-hide the hotkey window: %@", keyWindowElect);
@@ -527,6 +529,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         return NO;
     }
 
+    DLog(@"YES - should auto hide");
     return YES;
 }
 
