@@ -5565,6 +5565,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // bounds and get clipped in the texture.
         asciiOffset.height = -floor(rect.origin.y * scale);
     }
+    if (iTermTextIsMonochrome() && rect.origin.x < 0) {
+        // AnonymousPro has a similar problem (issue 8185), e.g. with "W".
+        // There is a subtle difference, though! The monochrome code path assumes that glyphs are
+        // left-aligned in their glyphSize-sized chunk of the texture. Setting the asciiOffset here
+        // causes them to all be rendered a few pixels to the right so that this assumption will be
+        // true. The quad is then shifted left by a corresponding amount when rendering so it ends
+        // up drawn in the right place.
+        //
+        // When doing subpixel antialiasing, this is not an issue because it deals with multipart
+        // ASCII glyphs differently. It splits them into pieces and draws them as separate instances.
+        //
+        // Changing the assumption that glyphs are left-aligned would be very complex, and I can't
+        // afford to add more risk right now. This is less than beautiful, but it's quite safe.
+        asciiOffset.width = -floor(rect.origin.x * scale);
+    }
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         glyphSize.width = round(0.49 + MAX(cellSize.width, NSMaxX(rect)));

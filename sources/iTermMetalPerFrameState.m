@@ -1143,7 +1143,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSMutableDictionary<NSNumber *, iTermCharacterBitmap *> *result = [NSMutableDictionary dictionary];
     [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
         int part = partNumber.intValue;
-        if (isAscii && part != iTermImagePartFromDeltas(0, 0)) {
+        if (isAscii &&
+            part != iTermImagePartFromDeltas(0, 0) &&
+            part != iTermImagePartFromDeltas(-1, 0) &&
+            part != iTermImagePartFromDeltas(1, 0)) {
             return;
         }
         result[partNumber] = [characterSource bitmapForPart:part];

@@ -506,14 +506,14 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                                     iTermASCIITexture *texture,
                                                                     float cellWidth,
                                                                     int x,
-                                                                    float yOffset,
+                                                                    CGSize asciiOffset,
                                                                     iTermASCIITextureOffset offset,
                                                                     vector_float4 textColor,
                                                                     vector_float4 backgroundColor,
                                                                     iTermMetalGlyphAttributesUnderline underlineStyle,
                                                                     vector_float4 underlineColor) {
-    piu->offset = simd_make_float2(x * cellWidth,
-                                   yOffset);
+    piu->offset = simd_make_float2(x * cellWidth + asciiOffset.width,
+                                   asciiOffset.height);
     MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, iTermASCIITextureIndexOfCode(code, offset));
     piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
     piu->textColor = textColor;
@@ -531,7 +531,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
 
 - (void)addASCIICellToPIUsForCode:(char)code
                                 x:(int)x
-                          yOffset:(float)yOffset
+                           offset:(CGSize)asciiOffset
                                 w:(float)w
                                 h:(float)h
                         cellWidth:(float)cellWidth
@@ -572,7 +572,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                     texture,
                                                     cellWidth,
                                                     x,
-                                                    yOffset,
+                                                    asciiOffset,
                                                     iTermASCIITextureOffsetCenter,
                                                     textColor,
                                                     attributes[x].backgroundColor,
@@ -593,7 +593,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                               texture,
                                                               cellWidth,
                                                               x - 1,
-                                                              yOffset,
+                                                              asciiOffset,
                                                               iTermASCIITextureOffsetLeft,
                                                               textColor,
                                                               attributes[x - 1].backgroundColor,
@@ -608,7 +608,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                               texture,
                                                               cellWidth,
                                                               x - 1,
-                                                              yOffset,
+                                                              asciiOffset,
                                                               iTermASCIITextureOffsetLeft,
                                                               textColor,
                                                               _defaultBackgroundColor,
@@ -628,7 +628,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                       texture,
                                                       cellWidth,
                                                       x,
-                                                      yOffset,
+                                                      asciiOffset,
                                                       iTermASCIITextureOffsetCenter,
                                                       textColor,
                                                       attributes[x].backgroundColor,
@@ -650,7 +650,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                               texture,
                                                               cellWidth,
                                                               x + 1,
-                                                              yOffset,
+                                                              asciiOffset,
                                                               iTermASCIITextureOffsetRight,
                                                               attributes[x].foregroundColor,
                                                               attributes[x + 1].backgroundColor,
@@ -665,7 +665,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                               texture,
                                                               cellWidth,
                                                               x + 1,
-                                                              yOffset,
+                                                              asciiOffset,
                                                               iTermASCIITextureOffsetRight,
                                                               attributes[x].foregroundColor,
                                                               _defaultBackgroundColor,
@@ -705,6 +705,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
     const float asciiYOffset = -self.asciiOffset.height;
+    const float asciiXOffset = -self.asciiOffset.width;
 
     std::map<int, int> lastRelations;
     BOOL inMarkedRange = NO;
@@ -725,7 +726,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                                                                      glyphKeys[x].thinStrokes);
             [self addASCIICellToPIUsForCode:glyphKeys[x].code
                                           x:x
-                                    yOffset:yOffset + asciiYOffset
+                                     offset:CGSizeMake(asciiXOffset, yOffset + asciiYOffset)
                                           w:reciprocalAsciiAtlasSize.x
                                           h:reciprocalAsciiAtlasSize.y
                                   cellWidth:cellWidth
