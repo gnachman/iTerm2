@@ -1365,13 +1365,36 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (iTermTuple *)keyValuePair {
-    NSRange range = [self rangeOfString:@"="];
+    return [self it_stringBySplittingOnFirstSubstring:@"="];
+}
+
+- (iTermTuple<NSString *, NSString *> *)it_stringBySplittingOnFirstSubstring:(NSString *)substring {
+    NSRange range = [self rangeOfString:substring];
     if (range.location == NSNotFound) {
         return nil;
     } else {
         return [iTermTuple tupleWithObject:[self substringToIndex:range.location]
                                  andObject:[self substringFromIndex:range.location + 1]];
     }
+}
+
+- (NSRange)rangeOfCharacterFromSet:(NSCharacterSet *)searchSet fromIndex:(NSInteger)index {
+    if (index >= self.length) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    return [self rangeOfCharacterFromSet:searchSet options:0 range:NSMakeRange(index, self.length - index)];
+}
+
+- (NSIndexSet *)indicesOfCharactersInSet:(NSCharacterSet *)characterSet {
+    NSMutableIndexSet *result = [[NSMutableIndexSet alloc] init];
+    NSInteger start = 0;
+    NSRange range = [self rangeOfCharacterFromSet:characterSet fromIndex:start];
+    while (range.location != NSNotFound) {
+        [result addIndex:range.location];
+        start = range.location + 1;
+        range = [self rangeOfCharacterFromSet:characterSet fromIndex:start];
+    }
+    return result;
 }
 
 - (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions {

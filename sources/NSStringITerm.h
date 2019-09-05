@@ -181,6 +181,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
 
 - (iTermTuple *)keyValuePair;
+- (iTermTuple<NSString *, NSString *> *)it_stringBySplittingOnFirstSubstring:(NSString *)substring;
+
+- (NSIndexSet *)indicesOfCharactersInSet:(NSCharacterSet *)characterSet;
 
 - (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions;
 
