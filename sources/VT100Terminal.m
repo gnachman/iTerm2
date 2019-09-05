@@ -507,6 +507,9 @@ static const int kMaxScreenRows = 4096;
 
     for (int i = 0; i < token.csi->count; i++) {
         switch (token.csi->p[i]) {
+            case -1:
+                // This was removed by translating from screen -> xterm for tmux mode.
+                break;
             case 1:
                 self.cursorMode = mode;
                 break;
@@ -1128,7 +1131,7 @@ static const int kMaxScreenRows = 4096;
 // The main and alternate screens have different saved cursors. This returns the current one. In
 // tmux mode, only one is used to more closely approximate tmux's behavior.
 - (VT100SavedCursor *)savedCursor {
-    if ([delegate_ terminalInTmuxMode]) {
+    if (_tmuxMode) {
         return &mainSavedCursor_;
     }
     VT100SavedCursor *savedCursor;
@@ -1302,6 +1305,10 @@ static const int kMaxScreenRows = 4096;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
         [delegate_ terminalHandleTmuxInput:token];
         return;
+    }
+
+    if (_tmuxMode) {
+        [token translateFromScreenTerminal];
     }
 
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.

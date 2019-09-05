@@ -83,6 +83,7 @@
     NSArray *lines = [response componentsSeparatedByString:@"\n"];
     NSMutableArray *screenLines = [NSMutableArray array];
     VT100Terminal *terminal = [[[VT100Terminal alloc] init] autorelease];
+    terminal.tmuxMode = YES;
     [terminal setEncoding:NSUTF8StringEncoding];
     for (NSString *line in lines) {
         NSData *data = [self dataForHistoryLine:line

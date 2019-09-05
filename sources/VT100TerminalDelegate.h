@@ -241,9 +241,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Handles input during tmux mode. A single line of input will be in the token's string.
 - (void)terminalHandleTmuxInput:(VT100Token *)token;
 
-// Are we currently in tmux mode?
-- (BOOL)terminalInTmuxMode;
-
 // Returns the size of the terminal in cells.
 - (int)terminalWidth;
 - (int)terminalHeight;

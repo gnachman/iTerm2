@@ -97,6 +97,9 @@ typedef struct {
 @property(nonatomic, readonly) BOOL softAlternateScreenMode;
 @property(nonatomic) VT100GraphicRendition graphicRendition;
 
+// If YES, overrides the delegate's -terminalTmuxMode.
+@property(nonatomic) BOOL tmuxMode;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;

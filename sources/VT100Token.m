@@ -284,4 +284,45 @@
     _asciiData.screenChars = &_screenChars;
 }
 
+- (void)translateFromScreenTerminal {
+    switch (type) {
+        case VT100CSI_SGR:
+            if (self.csi) {
+                [self translateSGRFromScreenTerminal];
+            }
+            break;
+        case VT100CSI_DECSET:
+        case VT100CSI_DECRST: [self translateDECSETFromScreenTerminal];
+            break;
+        default:
+            break;
+    }
+}
+
+// There is a lot more that can be done to perform this translation but remapping italic->inverse
+// is particularly visible.
+- (void)translateSGRFromScreenTerminal {
+    for (int i = 0; i < self.csi->count; i++) {
+        switch (self.csi->p[i]) {
+            case 3:
+                self.csi->p[i] = 7;
+                break;
+            case 23:
+                self.csi->p[i] = 27;
+                break;
+        }
+    }
+}
+
+- (void)translateDECSETFromScreenTerminal {
+    for (int i = 0; i < self.csi->count; i++) {
+        switch (self.csi->p[i]) {
+            case 5:
+                // screen doesn't support reversing the whole screen.
+                self.csi->p[i] = -1;
+                break;
+        }
+    }
+}
+
 @end

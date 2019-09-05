@@ -3405,10 +3405,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenHandleTmuxInput:token];
 }
 
-- (BOOL)terminalInTmuxMode {
-    return [delegate_ screenInTmuxMode];
-}
-
 - (void)terminalSynchronizedUpdate:(BOOL)begin {
     if (begin) {
         [_temporaryDoubleBuffer startExplicitly];

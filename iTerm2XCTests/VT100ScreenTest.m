@@ -822,10 +822,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenPromptDidStartAtLine:(int)line {
 }
 
-- (BOOL)screenInTmuxMode {
-    return NO;
-}
-
 - (NSIndexSet *)selectionIndexesOnLine:(int)line
                    containingCharacter:(unichar)c
                                inRange:(NSRange)range {

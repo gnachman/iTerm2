@@ -5751,12 +5751,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         switch (tmuxMode) {
             case TMUX_NONE:
                 name = nil;
+                _terminal.tmuxMode = NO;
                 break;
             case TMUX_GATEWAY:
                 name = @"gateway";
+                _terminal.tmuxMode = NO;
                 break;
             case TMUX_CLIENT:
                 name = @"client";
+                _terminal.tmuxMode = YES;
                 [self loadTmuxProcessID];
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
@@ -8740,10 +8743,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenHandleTmuxInput:(VT100Token *)token {
     [_tmuxGateway executeToken:token];
-}
-
-- (BOOL)screenInTmuxMode {
-    return [self isTmuxClient];
 }
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {

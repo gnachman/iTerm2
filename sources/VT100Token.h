@@ -269,4 +269,6 @@ typedef struct {
 // Returns a string for |asciiData|, for convenience (this is slow).
 - (NSString *)stringForAsciiData;
 
+- (void)translateFromScreenTerminal;
+
 @end
