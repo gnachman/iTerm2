@@ -538,10 +538,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.enabled = NO;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
-    const iTermTitleComponents components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
-    const iTermTitleComponents mask = (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName | iTermTitleComponentsCustom);
-    const BOOL titleChangingAllowed = (components & mask) != 0;
-    _allowTitleSetting.enabled = titleChangingAllowed;
 }
 
 #pragma mark - Badge

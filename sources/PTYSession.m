@@ -8650,6 +8650,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setIconName:theName];
+    [self enableSessionNameTitleComponentIfPossible];
+}
+
+- (void)enableSessionNameTitleComponentIfPossible {
+    // Turn on the session name component so the icon name will be visible.
+    iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                                                           inProfile:self.profile];
+    if (components & iTermTitleComponentsCustom) {
+        return;
+    }
+    if (components & iTermTitleComponentsSessionName) {
+        return;
+    }
+    components |= iTermTitleComponentsSessionName;
+    [self setSessionSpecificProfileValues:@{ KEY_TITLE_COMPONENTS: @(components) }];
+
 }
 
 - (BOOL)screenWindowIsFullscreen {
