@@ -7913,31 +7913,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (IBAction)movePaneDividerRight:(id)sender
-{
-    int width = [[[self currentSession] textview] charWidth];
-    [[self currentTab] moveCurrentSessionDividerBy:width
+- (IBAction)movePaneDividerRight:(id)sender {
+    [[self currentTab] moveCurrentSessionDividerBy:1
                                       horizontally:YES];
 }
 
-- (IBAction)movePaneDividerLeft:(id)sender
-{
-    int width = [[[self currentSession] textview] charWidth];
-    [[self currentTab] moveCurrentSessionDividerBy:-width
+- (IBAction)movePaneDividerLeft:(id)sender {
+    [[self currentTab] moveCurrentSessionDividerBy:-1
                                       horizontally:YES];
 }
 
-- (IBAction)movePaneDividerDown:(id)sender
-{
-    int height = [[[self currentSession] textview] lineHeight];
-    [[self currentTab] moveCurrentSessionDividerBy:height
+- (IBAction)movePaneDividerDown:(id)sender {
+    [[self currentTab] moveCurrentSessionDividerBy:1
                                       horizontally:NO];
 }
 
-- (IBAction)movePaneDividerUp:(id)sender
-{
-    int height = [[[self currentSession] textview] lineHeight];
-    [[self currentTab] moveCurrentSessionDividerBy:-height
+- (IBAction)movePaneDividerUp:(id)sender {
+    [[self currentTab] moveCurrentSessionDividerBy:-1
                                       horizontally:NO];
 }
 
@@ -9345,20 +9337,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         return [[iTermShellHistoryController sharedInstance] haveDirectoriesForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
-        int height = [[[self currentSession] textview] lineHeight];
-        return [[self currentTab] canMoveCurrentSessionDividerBy:height
+        return [[self currentTab] canMoveCurrentSessionDividerBy:1
                                                     horizontally:NO];
     } else if ([item action] == @selector(movePaneDividerUp:)) {
-        int height = [[[self currentSession] textview] lineHeight];
-        return [[self currentTab] canMoveCurrentSessionDividerBy:-height
+        return [[self currentTab] canMoveCurrentSessionDividerBy:-1
                                                     horizontally:NO];
     } else if ([item action] == @selector(movePaneDividerRight:)) {
-        int width = [[[self currentSession] textview] charWidth];
-        return [[self currentTab] canMoveCurrentSessionDividerBy:width
+        return [[self currentTab] canMoveCurrentSessionDividerBy:1
                                                     horizontally:YES];
     } else if ([item action] == @selector(movePaneDividerLeft:)) {
-        int width = [[[self currentSession] textview] charWidth];
-        return [[self currentTab] canMoveCurrentSessionDividerBy:-width
+        return [[self currentTab] canMoveCurrentSessionDividerBy:-1
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];

@@ -4096,18 +4096,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return NULL;
     }
     NSArray *subviews = [split subviews];
-    int numSubviews = [subviews count];
-    int splitterIndex;
+    const NSInteger numSubviews = [subviews count];
+    NSInteger splitterIndex;
     if (subviewIndex + 1 == numSubviews) {
         splitterIndex = numSubviews - 2;
     } else {
         splitterIndex = subviewIndex;
     }
 
+    const CGFloat step = [self stepForMovementOfDividerIndex:splitterIndex ofSplitView:split];
+
     // Compute the new frames for the subview before and after the divider.
     // No other subviews are affected.
-    NSSize movement = NSMakeSize(horizontally ? direction : 0,
-                                 horizontally ? 0 : direction);
+    NSSize movement = NSMakeSize(horizontally ? direction * step : 0,
+                                 horizontally ? 0 : direction * step);
 
     NSView *before = subviews[splitterIndex];
     NSRect beforeFrame = before.frame;
@@ -4117,17 +4119,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // See if any constraint would be violated.
     const CGFloat proposed = horizontally ? NSMaxX(beforeFrame) : NSMaxY(beforeFrame);
 
-    CGFloat constraint = [self splitView:split
-                  constrainMinCoordinate:proposed
-                             ofSubviewAt:splitterIndex];
-    if (constraint > proposed) {
-        return NULL;
-    }
+    if (direction > 0) {
+        const CGFloat proposedMinusDivider = proposed - split.dividerThickness;
+        const CGFloat constraint = [self splitView:split
+                            constrainMaxCoordinate:proposedMinusDivider
+                                       ofSubviewAt:splitterIndex];
+        if (constraint < proposed) {
+            return NULL;
+        }
 
-    const CGFloat proposedMinusDivider = proposed - split.dividerThickness;
-    constraint = [self splitView:split constrainMaxCoordinate:proposedMinusDivider ofSubviewAt:splitterIndex];
-    if (constraint < proposed) {
-        return NULL;
+    } else {
+        const CGFloat constraint = [self splitView:split
+                            constrainMinCoordinate:proposed
+                                       ofSubviewAt:splitterIndex];
+        if (constraint > proposed) {
+            return NULL;
+        }
     }
 
     // It would be ok to move the divider. Return a block that updates views' frames.
@@ -5055,6 +5062,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (CGFloat)stepForMovementOfDividerIndex:(NSInteger)dividerIndex
+                             ofSplitView:(NSSplitView *)splitView {
+    NSArray<NSView *> *subviews = [splitView subviews];
+    NSView *childBefore = subviews[dividerIndex];
+    NSView *childAfter = subviews[dividerIndex + 1];
+    CGFloat beforeStep = [self _recursiveStepSize:childBefore wantWidth:[splitView isVertical]];
+    CGFloat afterStep = [self _recursiveStepSize:childAfter wantWidth:[splitView isVertical]];
+    CGFloat step = MAX(beforeStep, afterStep);
+    return step;
+}
+
 // Make splitters jump by char widths/line heights. If there is a difference,
 // pick the largest on either side of the divider.
 - (CGFloat)splitView:(NSSplitView *)splitView
@@ -5070,12 +5088,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Have %@ subviews. Aborting.", @(subviews.count));
         return proposedPosition;
     }
-    NSView *childBefore = subviews[dividerIndex];
-    NSView *childAfter = subviews[dividerIndex + 1];
-    CGFloat beforeStep = [self _recursiveStepSize:childBefore wantWidth:[splitView isVertical]];
-    CGFloat afterStep = [self _recursiveStepSize:childAfter wantWidth:[splitView isVertical]];
-    CGFloat step = MAX(beforeStep, afterStep);
 
+    const CGFloat step = [self stepForMovementOfDividerIndex:dividerIndex ofSplitView:splitView];
+    NSView *const childBefore = splitView.subviews[dividerIndex];
     NSRect beforeRect = [childBefore frame];
     CGFloat originalPosition;
     if ([splitView isVertical]) {
