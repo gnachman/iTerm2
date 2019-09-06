@@ -11,6 +11,7 @@
 #import "iTermAPIConnectionIdentifierController.h"
 #import "iTermAPIHelper.h"
 #import "iTermNotificationController.h"
+#import "iTermOpenDirectory.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptConsole.h"
@@ -183,10 +184,20 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
          withVirtualEnv:(NSString *)virtualenv
           pythonVersion:(NSString *)pythonVersion {
     NSTask *task = [[NSTask alloc] init];
-    task.launchPath = @"/bin/bash";
+
+    // Run through the user's shell so their PATH is set properly.
+    NSString *shell = [iTermOpenDirectory userShell];
+    // I've tested these shells and they all work when run as: $SHELL -c command arg arg
+    NSArray<NSString *> *const knownShells = @[ @"bash", @"tcsh", @"zsh", @"fish" ];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:shell] &&
+        [knownShells containsObject:[shell lastPathComponent]]) {
+        task.launchPath = shell;
+    } else {
+        task.launchPath = @"/bin/bash";
+    }
     task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
-    task.environment = [self environmentFromEnvironment:task.environment shell:[PTYTask userShell] cookie:cookie key:key];
+    task.environment = [self environmentFromEnvironment:task.environment shell:[iTermOpenDirectory userShell] cookie:cookie key:key];
 
     NSPipe *pipe = [[NSPipe alloc] init];
     [task setStandardOutput:pipe];

@@ -1336,6 +1336,8 @@
 		538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */; };
 		539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */; };
+		53A96ED02322040C00AEA8E0 /* iTermOpenDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = 53A96ECE2322040C00AEA8E0 /* iTermOpenDirectory.h */; };
+		53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 53A96ECF2322040C00AEA8E0 /* iTermOpenDirectory.m */; };
 		53A96EE722A48A1A001C2C6F /* iTermTmuxOptionMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 53A96EE522A48A1A001C2C6F /* iTermTmuxOptionMonitor.h */; };
 		53A96EE822A48A1A001C2C6F /* iTermTmuxOptionMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 53A96EE622A48A1A001C2C6F /* iTermTmuxOptionMonitor.m */; };
 		53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */; };
@@ -4379,6 +4381,8 @@
 		53850902212FA8910039AFC7 /* iTermMetaFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetaFrustrationDetector.m; sourceTree = "<group>"; };
 		539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreciseTimer.h; sourceTree = "<group>"; };
 		539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreciseTimer.m; sourceTree = "<group>"; };
+		53A96ECE2322040C00AEA8E0 /* iTermOpenDirectory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOpenDirectory.h; sourceTree = "<group>"; };
+		53A96ECF2322040C00AEA8E0 /* iTermOpenDirectory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOpenDirectory.m; sourceTree = "<group>"; };
 		53A96EE522A48A1A001C2C6F /* iTermTmuxOptionMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxOptionMonitor.h; sourceTree = "<group>"; };
 		53A96EE622A48A1A001C2C6F /* iTermTmuxOptionMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxOptionMonitor.m; sourceTree = "<group>"; };
 		53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLSOF.h; sourceTree = "<group>"; };
@@ -8557,6 +8561,8 @@
 				A648165E2290773A008E7E0C /* iTermReflection.m */,
 				53A96EE522A48A1A001C2C6F /* iTermTmuxOptionMonitor.h */,
 				53A96EE622A48A1A001C2C6F /* iTermTmuxOptionMonitor.m */,
+				53A96ECE2322040C00AEA8E0 /* iTermOpenDirectory.h */,
+				53A96ECF2322040C00AEA8E0 /* iTermOpenDirectory.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10008,6 +10014,7 @@
 				A66719211DCE36C3000CE608 /* iTermHTTPConnection.h in Headers */,
 				A6B147602133395500D0814F /* iTermStatusBarLayout+tmux.h in Headers */,
 				A66719221DCE36C3000CE608 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
+				53A96ED02322040C00AEA8E0 /* iTermOpenDirectory.h in Headers */,
 				A65FF3C120F18547008BD0AE /* iTermMiniSearchFieldViewController.h in Headers */,
 				A6614C74210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h in Headers */,
 				A631FC9820EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.h in Headers */,
@@ -12407,6 +12414,7 @@
 				A63011B220E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
 				53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */,
+				53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */,
 				A69C93452121140100531438 /* iTermStatusBarLargeComposerViewController.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
