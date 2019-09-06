@@ -1557,6 +1557,7 @@ static const int kDragThreshold = 3;
         DLog(@"Trying to steal key focus");
         if ([self stealKeyFocus]) {
             if (_keyFocusStolenCount == 0) {
+                [[self window] makeFirstResponder:self];
                 [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
             }
             ++_keyFocusStolenCount;
