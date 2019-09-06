@@ -3909,7 +3909,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                 toChar:c];
         }
     }
-    currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
+    currentGrid_.cursorX = currentGrid_.cursorX + width;
 
     // Add a mark after the image. When the mark gets freed, it will release the image's memory.
     SetDecodedImage(c.code, image, data);

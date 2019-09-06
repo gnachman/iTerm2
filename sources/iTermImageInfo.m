@@ -321,20 +321,21 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
     // creating the embedded image in -imageWithCellSize:timestamp: above:
     //
     // left = (region.width - size.width) / 2 + insets.left
-    // right = (region.height - size.height) / 2 + insets.bottom
+    // bottom = (region.height - size.height) / 2 + insets.bottom
     // width = size.width - insets.left - insets.right
     // height = size.height - insets.top - insets.bottom
     //
-    // Set left=0, right=0, width=desiredSize.width, height=desiredSize.height.
+    // Set left=0, bottom=0, width=desiredSize.width, height=desiredSize.height.
     // Solve for insets. Here's what you get:
     const CGFloat left = (region.width - size.width) / -2.0;
     const CGFloat bottom = (region.height - size.height) / -2.0;
     const CGFloat right = size.width - left - desiredSize.width;
     const CGFloat top = size.height - bottom - desiredSize.height;
 
-    return NSEdgeInsetsMake(top / cellSize.height,
+    // To top-align, swap the bottom and top insets.
+    return NSEdgeInsetsMake(bottom / cellSize.height,
                             left / cellSize.width,
-                            bottom / cellSize.height,
+                            top / cellSize.height,
                             right / cellSize.width);
 }
 
