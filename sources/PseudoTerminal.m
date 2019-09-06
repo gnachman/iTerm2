@@ -8270,6 +8270,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     for (PTYTab *aTab in [self tabs]) {
         for (PTYSession *aSession in [aTab sessions]) {
             [aTab fitSessionToCurrentViewSize:aSession];
+            // Theme change affects scrollbar color.
+            [aSession.textview updateScrollerForBackgroundColor];
         }
         // Theme change could affect tab icons
         [aTab updateIcon];

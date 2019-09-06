@@ -617,12 +617,22 @@ static const int kDragThreshold = 3;
     _markedTextAttributes = [attr retain];
 }
 
-- (void)updateScrollerForBackgroundColor
-{
+- (void)updateScrollerForBackgroundColor {
     PTYScroller *scroller = [_delegate textViewVerticalScroller];
     NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-    scroller.knobStyle =
-        [backgroundColor isDark] ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
+    const BOOL isDark = [backgroundColor isDark];
+    scroller.knobStyle = isDark ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
+
+    // The knob style is used only for overlay scrollers. In the minimal theme, the window decorations'
+    // colors are based on the terminal background color. That means the appearance must be changed to get
+    // legacy scrollbars to change color.
+    if (@available(macOS 10.14, *)) {
+        if ([self.delegate textViewTerminalBackgroundColorDeterminesWindowDecorationColor]) {
+            scroller.appearance = isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        } else {
+            scroller.appearance = nil;
+        }
+    }
 }
 
 - (NSFont *)font {

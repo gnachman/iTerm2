@@ -8248,6 +8248,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.variablesScope;
 }
 
+- (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor {
+    return self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle;
+}
+
 - (void)bury {
     if (self.isTmuxClient) {
         if (!self.delegate) {
