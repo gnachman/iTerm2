@@ -3763,13 +3763,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)appendImageAtCursorWithName:(NSString *)name
-                              width:(int)width
+                              width:(int)requestedWidth
                               units:(VT100TerminalUnits)widthUnits
-                             height:(int)height
+                             height:(int)requestedHeight
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
                             roundUp:(BOOL)roundUp
-                              inset:(NSEdgeInsets)inset
+                              inset:(NSEdgeInsets)requestedInset
                               image:(NSImage *)nativeImage
                                data:(NSData *)data {
     iTermImage *image;
@@ -3798,36 +3798,53 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     BOOL needsWidth = NO;
     NSSize cellSize = [delegate_ screenCellSize];
+    CGFloat requestedWidthInPoints = 0;
+    int width = requestedWidth;
     switch (widthUnits) {
         case kVT100TerminalUnitsPixels:
-            width = ceil((double)width / cellSize.width);
+            width = ceil((double)requestedWidth / cellSize.width);
+            requestedWidthInPoints = requestedWidth;
             break;
 
-        case kVT100TerminalUnitsPercentage:
-            width = ceil((double)[self width] * (double)MAX(MIN(100, width), 0) / 100.0);
+        case kVT100TerminalUnitsPercentage: {
+            const double fraction = (double)MAX(MIN(100, requestedWidth), 0) / 100.0;
+            width = ceil((double)[self width] * fraction);
+            requestedWidthInPoints = self.width * cellSize.width * fraction;
             break;
+        }
 
         case kVT100TerminalUnitsCells:
+            width = requestedWidth;
+            requestedWidthInPoints = width * cellSize.width;
             break;
 
         case kVT100TerminalUnitsAuto:
             if (heightUnits == kVT100TerminalUnitsAuto) {
                 width = ceil((double)scaledSize.width / cellSize.width);
+                requestedWidthInPoints = width * cellSize.width;
             } else {
                 needsWidth = YES;
             }
             break;
     }
+
+    int height = requestedHeight;
+    CGFloat requestedHeightInPoints = 0;
     switch (heightUnits) {
         case kVT100TerminalUnitsPixels:
-            height = ceil((double)height / cellSize.height);
+            height = ceil((double)requestedHeight / cellSize.height);
+            requestedHeightInPoints = requestedHeight;
             break;
 
-        case kVT100TerminalUnitsPercentage:
-            height = ceil((double)[self height] * (double)MAX(MIN(100, height), 0) / 100.0);
+        case kVT100TerminalUnitsPercentage: {
+            const double fraction = (double)MAX(MIN(100, requestedHeight), 0) / 100.0;
+            height = ceil((double)[self height] * fraction);
+            requestedHeightInPoints = self.height * cellSize.height * fraction;
             break;
-
+        }
         case kVT100TerminalUnitsCells:
+            height = requestedHeight;
+            requestedHeightInPoints = requestedHeightInPoints * cellSize.height;
             break;
 
         case kVT100TerminalUnitsAuto:
@@ -3837,12 +3854,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 double aspectRatio = scaledSize.width / scaledSize.height;
                 height = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
             }
+            requestedHeightInPoints = height * cellSize.height;
             break;
     }
 
     if (needsWidth) {
         double aspectRatio = scaledSize.width / scaledSize.height;
         width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
+        requestedWidthInPoints = width * cellSize.width;
     }
 
     BOOL fullAuto = (widthUnits == kVT100TerminalUnitsAuto &&
@@ -3860,6 +3879,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         width = self.width;
         height *= scale;
         fullAuto = NO;
+        requestedWidthInPoints = width * cellSize.width;
+        requestedHeightInPoints = height * cellSize.height;
     }
 
     // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
@@ -3870,12 +3891,23 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         height = maxHeight;
         width *= scale;
         fullAuto = NO;
+        requestedWidthInPoints = width * cellSize.width;
+        requestedHeightInPoints = height * cellSize.height;
     }
 
     // Allocate cells for the image.
     // TODO: Support scroll regions.
-    int xOffset = self.cursorX - 1;
-    int screenWidth = currentGrid_.size.width;
+
+    NSEdgeInsets inset = requestedInset;
+    {
+        // Tweak the insets to get the exact size the user requested.
+        if (requestedWidthInPoints < width * cellSize.width) {
+            inset.right += (width * cellSize.width - requestedWidthInPoints);
+        }
+        if (requestedHeightInPoints < height * cellSize.height) {
+            inset.bottom += (height * cellSize.height - requestedHeightInPoints);
+        }
+    }
     NSEdgeInsets fractionalInset = {
         .left = MAX(inset.left / cellSize.width, 0),
         .top = MAX(inset.top / cellSize.height, 0),
@@ -3897,6 +3929,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     iTermImageInfo *imageInfo = GetImageInfo(c.code);
     imageInfo.broken = isBroken;
     DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(c.image));
+    const int xOffset = self.cursorX - 1;
+    const int screenWidth = currentGrid_.size.width;
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];

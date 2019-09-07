@@ -2531,11 +2531,14 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         [_delegate drawingHelperDidFindRunOfAnimatedCellsStartingAt:origin ofLength:length];
         _animated = YES;
     }
-    [image drawInRect:NSMakeRect(0, 0, _cellSize.width * length, _cellSize.height)
-             fromRect:NSMakeRect(chunkSize.width * originInImage.x,
-                                 image.size.height - _cellSize.height - chunkSize.height * originInImage.y,
-                                 chunkSize.width * length,
-                                 chunkSize.height)
+    const NSRect destRect = NSMakeRect(0, 0, _cellSize.width * length, _cellSize.height);
+    const NSRect sourceRect = NSMakeRect(chunkSize.width * originInImage.x,
+                                         image.size.height - _cellSize.height - chunkSize.height * originInImage.y,
+                                         chunkSize.width * length,
+                                         chunkSize.height);
+    NSLog(@"Draw %@ -> %@ with source image of size %@", NSStringFromRect(sourceRect), NSStringFromRect(destRect), NSStringFromSize(image.size));
+    [image drawInRect:destRect
+             fromRect:sourceRect
             operation:NSCompositingOperationSourceOver
              fraction:1];
     [NSGraphicsContext restoreGraphicsState];
