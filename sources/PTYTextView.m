@@ -1956,6 +1956,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[self window] makeFirstResponder:self];
     }
 
+    const BOOL wasSelecting = _selection.live;
     [_selection endLiveSelection];
     if (isUnshiftedSingleClick) {
         // Just a click in the window.
@@ -2021,8 +2022,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_findOnPageHelper resetFindCursor];
     }
 
-    DLog(@"Has selection=%@, delegate=%@", @([_selection hasSelection]), _delegate);
-    if ([_selection hasSelection] && _delegate) {
+    DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([_selection hasSelection]), _delegate, @(wasSelecting));
+    if ([_selection hasSelection] && _delegate && wasSelecting) {
         // if we want to copy our selection, do so
         DLog(@"selection copies text=%@", @([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]));
         if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
@@ -2860,13 +2861,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self refresh];
 
     DLog(@"-[PTYTextView copy:] called");
+    DLog(@"%@", [NSThread callStackSymbols]);
+
     NSString *copyString = [self selectedText];
 
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
         return;
     }
-    DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
+    DLog(@"Have selected text: “%@”. selection=%@", copyString, _selection);
     if (copyString) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
