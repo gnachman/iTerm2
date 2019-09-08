@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames);
+NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace, NSString *name, NSArray<NSString *> *argumentNames);
 
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
@@ -26,7 +26,6 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 @property (nonatomic, readonly) NSDictionary<NSString *, Class> *argumentsAndTypes;
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *defaultValues;
 @property (nonatomic, readonly) iTermBuiltInFunctionsExecutionBlock block;
-@property (nonatomic, readonly) NSString *signature;
 
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
@@ -66,9 +65,11 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
                namespace:(nullable NSString *)namespace;
 
 - (BOOL)haveFunctionWithName:(NSString *)name
+                   namespace:(NSString *)namespace
                    arguments:(NSArray<NSString *> *)arguments;
 
 - (void)callFunctionWithName:(NSString *)name
+                   namespace:(NSString *)namespace
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
                   completion:(iTermBuiltInFunctionCompletionBlock)completion;

@@ -50,7 +50,7 @@ void iTermCallMethodOnObject(id<iTermObject> object,
                              NSString *name,
                              NSDictionary *args,
                              void (^completion)(id, NSError *)) {
-    NSString *const signature = iTermFunctionSignatureFromNameAndArguments(name, args.allKeys);
+    NSString *const signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(nil, name, args.allKeys);
     iTermBuiltInMethod *const method = [object.objectMethodRegistry methodWithSignature:signature];
     if (!method) {
         completion(nil,

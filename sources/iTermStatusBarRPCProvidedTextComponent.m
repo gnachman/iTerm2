@@ -178,8 +178,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     ITMRPCRegistrationRequest_RPCArgument *knobs = [[ITMRPCRegistrationRequest_RPCArgument alloc] init];
     knobs.name = @"knobs";
     knobs.path = @"__knobs";
-    return [iTermAPIHelper invocationWithName:_savedRegistrationRequest.latestStatusBarRequest.name
-                                     defaults:[defaults arrayByAddingObject:knobs]];
+    return [iTermAPIHelper invocationWithFullyQualifiedName:_savedRegistrationRequest.latestStatusBarRequest.it_fullyQualifiedName
+                                                   defaults:[defaults arrayByAddingObject:knobs]];
 }
 
 - (NSString *)statusBarComponentIdentifier {

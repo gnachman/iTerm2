@@ -28,6 +28,17 @@
 
 #import <CoreParse/CoreParse.h>
 
+void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **namespacePtr, NSString **relativeNamePtr) {
+    const NSRange range = [fqName rangeOfString:@"." options:NSBackwardsSearch];
+    if (range.location == NSNotFound) {
+        *namespacePtr = nil;
+        *relativeNamePtr = fqName;
+        return;
+    }
+    *namespacePtr = [fqName substringToIndex:range.location];
+    *relativeNamePtr = [fqName substringFromIndex:NSMaxRange(range)];
+}
+
 @implementation iTermScriptFunctionCall {
     // Maps an argument name to a parsed expression for its value.
     NSMutableDictionary<NSString *, iTermParsedExpression *> *_argToExpression;
@@ -44,17 +55,25 @@
     return self;
 }
 
+- (NSString *)fullyQualifiedName {
+    if (!self.namespace) {
+        return self.name;
+    }
+    return [NSString stringWithFormat:@"%@.%@", self.namespace, self.name];
+}
+
 - (NSString *)description {
     NSString *params = [[_argToExpression.allKeys mapWithBlock:^id(NSString *name) {
         return [NSString stringWithFormat:@"%@: %@", name, self->_argToExpression[name]];
     }] componentsJoinedByString:@", "];
-    NSString *value = [NSString stringWithFormat:@"%@(%@)", self.name, params];
+    NSString *value = [NSString stringWithFormat:@"%@(%@)", self.fullyQualifiedName, params];
     return [NSString stringWithFormat:@"<Func %@>", value];
 }
 
 - (NSString *)signature {
-    return iTermFunctionSignatureFromNameAndArguments(self.name,
-                                                      _argToExpression.allKeys);
+    return iTermFunctionSignatureFromNamespaceAndNameAndArguments(self.namespace,
+                                                                  self.name,
+                                                                  _argToExpression.allKeys);
 }
 
 - (BOOL)isEqual:(id)object {
@@ -62,7 +81,7 @@
     if (!other) {
         return NO;
     }
-    return ([NSObject object:self.name isEqualToObject:other.name] &&
+    return ([NSObject object:self.fullyQualifiedName isEqualToObject:other.fullyQualifiedName] &&
             [NSObject object:_argToExpression isEqualToObject:other->_argToExpression]);
 }
 
@@ -210,7 +229,7 @@
                          completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     NSString *reason;
     if (_remainingArgs.count) {
-         reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while evaluating the following arguments to %@: %@", @(timeout), invocation, self.name, [_remainingArgs.allObjects componentsJoinedByString:@", "]];
+         reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while evaluating the following arguments to %@: %@", @(timeout), invocation, self.fullyQualifiedName, [_remainingArgs.allObjects componentsJoinedByString:@", "]];
     } else {
         reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while waiting for %@ to return.",
                             @(timeout), invocation, self.name];
@@ -322,7 +341,7 @@
     }
     if (receiver) {
         iTermCallMethodByIdentifier(receiver,
-                                    _name,
+                                    self.fullyQualifiedName,
                                     parameterValues,
                                     ^(id object, NSError *error) {
                                         completion(object, error, nil);
@@ -356,11 +375,11 @@
         completion(nil, error, nil);
         return;
     }
-    self->_connectionKey = [[apiHelper connectionKeyForRPCWithName:self.name
+    self->_connectionKey = [[apiHelper connectionKeyForRPCWithName:self.fullyQualifiedName
                                                 explicitParameters:parameterValues
                                                              scope:scope
                                                     fullParameters:&fullParameters] copy];
-    [apiHelper dispatchRPCWithName:self.name
+    [apiHelper dispatchRPCWithName:self.fullyQualifiedName
                          arguments:fullParameters
                         completion:^(id apiResult, NSError *apiError) {
                             NSSet<NSString *> *missing = nil;
@@ -373,6 +392,7 @@
 
 - (BOOL)isBuiltinFunction {
     return [[iTermBuiltInFunctions sharedInstance] haveFunctionWithName:_name
+                                                              namespace:_namespace
                                                               arguments:_argToExpression.allKeys];
 }
 
@@ -381,6 +401,7 @@
                           completion:(void (^)(id, NSError *))completion {
     iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
     [bif callFunctionWithName:_name
+                    namespace:_namespace
                    parameters:parameterValues
                         scope:scope
                    completion:completion];

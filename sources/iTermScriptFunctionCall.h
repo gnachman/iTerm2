@@ -10,6 +10,9 @@
 @class iTermVariableScope;
 @class iTermParsedExpression;
 
+// foo.bar.baz -> (foo.bar, baz)
+void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **namespacePtr, NSString **relativeNamePtr);
+
 @interface iTermScriptFunctionCall : NSObject
 
 @property (nonatomic, readonly) NSString *signature;

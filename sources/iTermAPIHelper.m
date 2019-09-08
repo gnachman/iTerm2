@@ -90,8 +90,8 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 - (NSString *)invocationOfRegistrationRequest:(ITMRPCRegistrationRequest *)req {
-    return [iTermAPIHelper invocationWithName:req.name
-                                     defaults:req.defaultsArray];
+    return [iTermAPIHelper invocationWithFullyQualifiedName:req.it_fullyQualifiedName
+                                                   defaults:req.defaultsArray];
 }
 
 @end
@@ -150,11 +150,32 @@ static iTermAPIHelper *sAPIHelperInstance;
     return YES;
 }
 
+- (NSString *)it_namespace {
+    switch (self.roleSpecificAttributesOneOfCase) {
+        case ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_GPBUnsetOneOfCase:
+            return nil;
+            break;
+        case ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_SessionTitleAttributes:
+            return [NSString stringWithFormat:@"title.%@", [self.sessionTitleAttributes.uniqueIdentifier stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
+        case ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_StatusBarComponentAttributes:
+            return [NSString stringWithFormat:@"statusbar.%@", [self.statusBarComponentAttributes.uniqueIdentifier  stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
+    }
+}
+
 - (NSString *)it_stringRepresentation {
     NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
         return anObject.name;
     }];
-    return iTermFunctionSignatureFromNameAndArguments(self.name, argNames);
+    NSString *namespace = self.it_namespace;
+    return iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, self.name, argNames);
+}
+
+- (NSString *)it_fullyQualifiedName {
+    NSString *namespace = self.it_namespace;
+    if (!namespace) {
+        return self.name;
+    }
+    return [NSString stringWithFormat:@"%@.%@", namespace, self.name];
 }
 
 - (NSSet<NSString *> *)it_allArgumentNames {
@@ -216,16 +237,16 @@ static iTermAPIHelper *sAPIHelperInstance;
 @end
 
 @interface ITMServerOriginatedRPC(Extensions)
-@property (nonatomic, readonly) NSString *it_stringRepresentation;
+- (NSString *)it_stringRepresentationWithNamespace:(NSString *)namespace;
 @end
 
 @implementation ITMServerOriginatedRPC(Extensions)
 
-- (NSString *)it_stringRepresentation {
+- (NSString *)it_stringRepresentationWithNamespace:(NSString *)namespace {
     NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMServerOriginatedRPC_RPCArgument *anObject) {
         return anObject.name;
     }];
-    return iTermFunctionSignatureFromNameAndArguments(self.name, argNames);
+    return iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, self.name, argNames);
 }
 
 @end
@@ -374,7 +395,11 @@ static iTermAPIHelper *sAPIHelperInstance;
     warning.warningType = forced ? kiTermWarningTypePersistent : kiTermWarningTypePermanentlySilenceable;
     warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
     static BOOL showing;
-    assert(!showing);
+    if (showing) {
+        // This can happen because the call to -runModal below starts a runloop and a delayed perform can then call this.
+        DLog(@"Reentrancy detected\n%@", [NSThread callStackSymbols]);
+        return NO;
+    }
     showing = YES;
     const iTermWarningSelection selection = [warning runModal];
     showing = NO;
@@ -765,7 +790,7 @@ static iTermAPIHelper *sAPIHelperInstance;
     for (NSString *signature in self.serverOriginatedRPCSubscriptions) {
         iTermTuple<id, ITMNotificationRequest *> *tuple = self.serverOriginatedRPCSubscriptions[signature];
         ITMNotificationRequest *request = tuple.secondObject;
-        if (![request.rpcRegistrationRequest.name isEqualToString:name]) {
+        if (![request.rpcRegistrationRequest.it_fullyQualifiedName isEqualToString:name]) {
             continue;
         }
         if ([request.rpcRegistrationRequest it_satisfiesExplicitParameters:explicitParameters
@@ -777,12 +802,22 @@ static iTermAPIHelper *sAPIHelperInstance;
     return nil;
 }
 
-- (ITMServerOriginatedRPC *)serverOriginatedRPCWithName:(NSString *)name
+- (void)splitFullyQualifiedRPCName:(NSString *)fqName
+                         namespace:(out NSString **)namespacePtr
+                      relativeName:(out NSString **)relativeNamePtr {
+    iTermFunctionCallSplitFullyQualifiedName(fqName, namespacePtr, relativeNamePtr);
+}
+
+- (ITMServerOriginatedRPC *)serverOriginatedRPCWithName:(NSString *)fullyQualifiedName
                                               arguments:(NSDictionary *)arguments
                                                   error:(out NSError **)error {
 
     ITMServerOriginatedRPC *rpc = [[ITMServerOriginatedRPC alloc] init];
-    rpc.name = name;
+    NSString *namespace;
+    NSString *relativeName;
+    [self splitFullyQualifiedRPCName:fullyQualifiedName namespace:&namespace relativeName:&relativeName];
+
+    rpc.name = relativeName;
     for (NSString *argumentName in [arguments.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
         id argumentValue = arguments[argumentName];
         NSString *jsonValue;
@@ -792,8 +827,9 @@ static iTermAPIHelper *sAPIHelperInstance;
             jsonValue = [NSJSONSerialization it_jsonStringForObject:argumentValue];
             if (!jsonValue) {
                 NSString *reason = [NSString stringWithFormat:@"Could not JSON encode value “%@”", arguments[argumentName]];
-                NSString *signature = iTermFunctionSignatureFromNameAndArguments(name,
-                                                                                 arguments.allKeys);
+                NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace,
+                                                                                             relativeName,
+                                                                                             arguments.allKeys);
                 NSString *connectionKey = [self connectionKeyForRPCWithSignature:signature];
                 NSDictionary *userinfo = @{ NSLocalizedDescriptionKey: reason };
                 if (connectionKey) {
@@ -822,38 +858,53 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 // Build a proto buffer and dispatch it.
-- (void)dispatchRPCWithName:(NSString *)name
+- (void)dispatchRPCWithName:(NSString *)fullyQualifiedName
                   arguments:(NSDictionary *)arguments
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion {
     NSError *error = nil;
-    ITMServerOriginatedRPC *rpc = [self serverOriginatedRPCWithName:name arguments:arguments error:&error];
+    ITMServerOriginatedRPC *rpc = [self serverOriginatedRPCWithName:fullyQualifiedName arguments:arguments error:&error];
     if (error) {
         completion(nil, error);
     }
-    [self dispatchServerOriginatedRPC:rpc completion:completion];
+    NSString *namespace;
+    NSString *relativeName;
+    [self splitFullyQualifiedRPCName:fullyQualifiedName namespace:&namespace relativeName:&relativeName];
+    [self dispatchServerOriginatedRPC:rpc namespace:namespace completion:completion];
 }
 
-- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name {
+- (NSString *)fullyQualifiedNameFromRelativeName:(NSString *)relativeName
+                                       namespace:(NSString *)namespace {
+    if (!namespace) {
+        return relativeName;
+    }
+    return [NSString stringWithFormat:@"%@.%@", namespace, relativeName];
+}
+
+- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name
+                                             namespace:(NSString *)namespace {
+    NSString *fqName = [self fullyQualifiedNameFromRelativeName:name namespace:namespace];
     for (NSString *key in self.serverOriginatedRPCSubscriptions) {
         iTermTuple<id, ITMNotificationRequest *> *sub = self.serverOriginatedRPCSubscriptions[key];
         ITMNotificationRequest *request = sub.secondObject;
-        if ([request.rpcRegistrationRequest.name isEqual:name]) {
+        if ([request.rpcRegistrationRequest.it_fullyQualifiedName isEqual:fqName]) {
             return request.rpcRegistrationRequest.it_stringRepresentation;
         }
     }
-    return [iTermBuiltInFunctions.sharedInstance signatureOfAnyRegisteredFunctionWithName:name];
+    return [iTermBuiltInFunctions.sharedInstance signatureOfAnyRegisteredFunctionWithName:fqName];
 }
 
 // Dispatches a well-formed proto buffer or gives an error if not connected.
 - (void)dispatchServerOriginatedRPC:(ITMServerOriginatedRPC *)rpc
+                          namespace:(NSString *)namespace
                          completion:(iTermServerOriginatedRPCCompletionBlock)completion {
-    NSString *signature = rpc.it_stringRepresentation;
+    NSString *signature = [rpc it_stringRepresentationWithNamespace:namespace];
     iTermTuple<id, ITMNotificationRequest *> *sub = self.serverOriginatedRPCSubscriptions[signature];
 
     id connectionKey = sub.firstObject;
     if (!connectionKey) {
         NSString *reason = [NSString stringWithFormat:@"No function registered for invocation “%@”. Ensure the script is running and the function name and argument names are correct.", signature];
-        NSString *bestMatch = [self signatureOfAnyRegisteredFunctionWithName:rpc.name];
+        NSString *bestMatch = [self signatureOfAnyRegisteredFunctionWithName:rpc.name
+                                                                   namespace:namespace];
         if (bestMatch) {
             reason = [reason stringByAppendingFormat:@" There is a similarly named function available with a different signature: %@", bestMatch];
         }
@@ -943,7 +994,7 @@ static iTermAPIHelper *sAPIHelperInstance;
             continue;
         }
         ITMRPCRegistrationRequest *sig = req.rpcRegistrationRequest;
-        NSString *functionName = sig.name;
+        NSString *functionName = [sig it_fullyQualifiedName;
         NSArray<NSString *> *args = [sig.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
             return anObject.name;
         }];
@@ -952,8 +1003,8 @@ static iTermAPIHelper *sAPIHelperInstance;
     return result;
 }
 
-+ (NSString *)invocationWithName:(NSString *)name
-                        defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray {
++ (NSString *)invocationWithFullyQualifiedName:(NSString *)fullyQualifiedName
+                                      defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray {
     NSArray<ITMRPCRegistrationRequest_RPCArgument*> *sortedDefaults =
         [defaultsArray sortedArrayUsingComparator:^NSComparisonResult(ITMRPCRegistrationRequest_RPCArgument * _Nonnull obj1,
                                                                       ITMRPCRegistrationRequest_RPCArgument * _Nonnull obj2) {
@@ -963,7 +1014,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         return [NSString stringWithFormat:@"%@:%@", def.name, def.path];
     }];
     defaults = [defaults sortedArrayUsingSelector:@selector(compare:)];
-    return [NSString stringWithFormat:@"%@(%@)", name, [defaults componentsJoinedByString:@","]];
+    return [NSString stringWithFormat:@"%@(%@)", fullyQualifiedName, [defaults componentsJoinedByString:@","]];
 }
 
 + (NSString *)userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:(NSString *)uniqueID {
@@ -1004,8 +1055,9 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             namespace:(NSString *)namespace
                              arguments:(NSArray<NSString *> *)arguments {
-    NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
+    NSString *stringSignature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
     return [self haveRegisteredFunctionWithSignature:stringSignature];
 }
 
@@ -1543,37 +1595,6 @@ static iTermAPIHelper *sAPIHelperInstance;
     response.status = ITMNotificationResponse_Status_Ok;
     return response;
 }
-
-- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
-                                         arguments:(NSArray<NSString *> *)arguments
-                                           timeout:(NSTimeInterval)timeout
-                                             block:(void (^)(BOOL))block {
-    if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
-        block(NO);
-        return;
-    }
-
-    __block BOOL called = NO;
-    __block id observer =
-        [[NSNotificationCenter defaultCenter] addObserverForName:iTermAPIRegisteredFunctionsDidChangeNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-            if (called) {
-                return;
-            }
-            if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
-                called = YES;
-                [[NSNotificationCenter defaultCenter] removeObserver:observer];
-                block(NO);
-            }
-        }];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!called) {
-            called = YES;
-            [[NSNotificationCenter defaultCenter] removeObserver:observer];
-            block(YES);
-        }
-    });
-}
-
 
 - (NSArray<PTYSession *> *)allSessions {
     return [[[iTermController sharedInstance] terminals] flatMapWithBlock:^id(PseudoTerminal *windowController) {

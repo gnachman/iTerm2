@@ -56,8 +56,8 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (instancetype)sharedInstanceFromExplicitUserAction;
 + (instancetype)sharedInstanceIfEnabled;
 
-+ (NSString *)invocationWithName:(NSString *)name
-                        defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;
++ (NSString *)invocationWithFullyQualifiedName:(NSString *)fqname
+                                      defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;
 + (ITMRPCRegistrationRequest *)registrationRequestForStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueIdentifier;
 
 - (instancetype)init NS_UNAVAILABLE;
@@ -79,15 +79,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests;
 + (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
 
-// Performs block either when the function becomes registered, immediately if it's already
-// registered, or after timeout (with an argument of YES) if it does not become registered
-// soon enough.
-- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
-                                         arguments:(NSArray<NSString *> *)arguments
-                                           timeout:(NSTimeInterval)timeout
-                                             block:(void (^)(BOOL timedOut))block;
-
-// stringSignature is like func(arg1,arg2). Use iTermFunctionSignatureFromNameAndArguments to construct it safely.
+// stringSignature is like func(arg1,arg2) or title.com.example.foo::func(arg1,arg2). Use iTermFunctionSignatureFromNamespaceAndNameAndArguments to construct it safely.
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
 - (NSString *)connectionKeyForRPCWithName:(NSString *)name
@@ -108,4 +100,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // This gives the string signature.
 @property (nonatomic, readonly) NSString *it_stringRepresentation;
 - (BOOL)it_rpcRegistrationRequestValidWithError:(out NSError **)error;
+
+// returns namespace.name
+- (NSString *)it_fullyQualifiedName;
 @end

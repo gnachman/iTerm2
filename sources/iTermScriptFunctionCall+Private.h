@@ -11,6 +11,7 @@
 
 @interface iTermScriptFunctionCall()
 
+@property (nonatomic, copy) NSString *namespace;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) NSString *connectionKey;
 

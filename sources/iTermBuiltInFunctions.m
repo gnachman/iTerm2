@@ -17,11 +17,15 @@
 
 #import <objc/runtime.h>
 
-NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames) {
+NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString *namespace, NSString *name, NSArray<NSString *> *argumentNames) {
     NSString *combinedArguments = [[argumentNames sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
-    return [NSString stringWithFormat:@"%@(%@)",
-            name,
-            combinedArguments];
+    NSString *tail = [NSString stringWithFormat:@"%@(%@)",
+                      name,
+                      combinedArguments];
+    if (!namespace) {
+        return tail;
+    }
+    return [NSString stringWithFormat:@"%@.%@", namespace, tail];
 }
 
 NSString *iTermFunctionNameFromSignature(NSString *signature) {
@@ -58,11 +62,6 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
         }];
     }
     return self;
-}
-
-- (NSString *)signature {
-    return iTermFunctionSignatureFromNameAndArguments(_name,
-                                                      [self.argumentsAndTypes.allKeys sortedArrayUsingSelector:@selector(compare:)]);
 }
 
 #pragma mark - File Private
@@ -148,14 +147,15 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 }
 
 - (void)registerFunction:(iTermBuiltInFunction *)function namespace:(NSString *)namespace {
-    NSString *name = namespace ? [NSString stringWithFormat:@"%@.%@", namespace, function.name] : function.name;
-    NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, function.argumentsAndTypes.allKeys);
+    NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, function.name, function.argumentsAndTypes.allKeys);
     assert(!_functions[signature]);
     _functions[signature] = function;
 }
 
-- (BOOL)haveFunctionWithName:(NSString *)name arguments:(NSArray<NSString *> *)arguments {
-    NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
+- (BOOL)haveFunctionWithName:(NSString *)name
+                   namespace:(NSString *)namespace
+                   arguments:(NSArray<NSString *> *)arguments {
+    NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
     return _functions[signature] != nil;
 }
 
@@ -181,11 +181,12 @@ NSString *iTermFunctionNameFromSignature(NSString *signature) {
 }
 
 - (void)callFunctionWithName:(NSString *)name
+                   namespace:(NSString *)namespace
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
                   completion:(nonnull iTermBuiltInFunctionCompletionBlock)completion {
     NSArray<NSString *> *arguments = parameters.allKeys;
-    NSString *signature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
+    NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
     iTermBuiltInFunction *function = _functions[signature];
     if (!function) {
         NSError *error = [self undeclaredIdentifierError:signature];

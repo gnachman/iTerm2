@@ -192,11 +192,15 @@
     [_tokenizer addTokenRecogniser:left];
 }
 
-- (iTermParsedExpression *)parsedExpressionForFunctionCallWithName:(NSString *)name
-                                                           arglist:(NSArray<iTermFunctionArgument *> *)argsArray
-                                                             error:(out NSError **)error {
+- (iTermParsedExpression *)parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)fqName
+                                                                         arglist:(NSArray<iTermFunctionArgument *> *)argsArray
+                                                                           error:(out NSError **)error {
+    NSString *name;
+    NSString *namespace;
+    iTermFunctionCallSplitFullyQualifiedName(fqName, &namespace, &name);
     iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
     call.name = name;
+    call.namespace = namespace;
     for (iTermFunctionArgument *arg in argsArray) {
         if (arg.expression.expressionType == iTermParsedExpressionTypeError) {
             if (error) {
@@ -363,9 +367,9 @@
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                NSError *error = nil;
-                               iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithName:(NSString *)syntaxTree.children[0]
-                                                                                                         arglist:syntaxTree.children[1]
-                                                                                                           error:&error];
+                               iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
+                                                                                                                       arglist:syntaxTree.children[1]
+                                                                                                                         error:&error];
                                if (error) {
                                    return [[iTermParsedExpression alloc] initWithError:error];
                                }
