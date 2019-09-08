@@ -29,6 +29,10 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
 }
 
+- (BOOL)statusBarComponentIsInternal {
+    return YES;
+}
+
 - (nullable NSString *)stringValue {
     return @"Click here to configure status bar";
 }

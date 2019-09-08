@@ -226,16 +226,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)showContextMenuForEvent:(NSEvent *)event {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
-    if ([[_component statusBarComponentKnobs] count]) {
-        [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
-                        action:@selector(configureComponent:)
+    if (![_component statusBarComponentIsInternal]) {
+        if ([[_component statusBarComponentKnobs] count]) {
+            [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
+                            action:@selector(configureComponent:)
+                     keyEquivalent:@""];
+        }
+        [menu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", [self.component statusBarComponentShortDescription]]
+                        action:@selector(hideComponent:)
                  keyEquivalent:@""];
     }
-    [menu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", [self.component statusBarComponentShortDescription]]
-                    action:@selector(hideComponent:)
-             keyEquivalent:@""];
     [menu addItemWithTitle:@"Configure Status Bar"
                     action:@selector(configureStatusBar:)
+             keyEquivalent:@""];
+    [menu addItemWithTitle:@"Disable Status Bar"
+                    action:@selector(disableStatusBar:)
              keyEquivalent:@""];
     NSDictionary<NSString *, id> *values = [self.component statusBarComponentKnobValues];
     __block BOOL haveAddedSeparator = NO;
@@ -264,6 +269,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)configureStatusBar:(id)sender {
     [self.delegate statusBarContainerViewConfigureStatusBar:self];
+}
+
+- (void)disableStatusBar:(id)sender {
+    [self.delegate statusBarContainerViewDisableStatusBar:self];
 }
 
 - (void)toggleKnob:(NSMenuItem *)sender {

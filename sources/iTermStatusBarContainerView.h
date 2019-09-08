@@ -19,6 +19,7 @@ extern const CGFloat iTermStatusBarViewControllerIconWidth;
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender configureComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarContainerViewConfigureStatusBar:(iTermStatusBarContainerView *)sender;
+- (void)statusBarContainerViewDisableStatusBar:(iTermStatusBarContainerView *)sender;
 @end
 
 @interface iTermStatusBarContainerView : NSView

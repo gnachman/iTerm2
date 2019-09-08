@@ -11357,6 +11357,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [panel.window makeKeyAndOrderFront:nil];
 }
 
+- (void)statusBarDisable {
+    if (self.isDivorced) {
+        [self setSessionSpecificProfileValues:@{ KEY_SHOW_STATUS_BAR: @NO }];
+    } else {
+        [iTermProfilePreferences setBool:NO
+                                  forKey:KEY_SHOW_STATUS_BAR
+                               inProfile:self.profile
+                                   model:[ProfileModel sharedInstance]];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                        object:_profile[KEY_GUID]];
+}
 
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
     ProfileModel *model;

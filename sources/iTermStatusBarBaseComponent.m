@@ -115,6 +115,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
             NSStringFromClass([self class]), self, @(self.statusBarComponentPriority)];
 }
 
+- (BOOL)statusBarComponentIsInternal {
+    return NO;
+}
+
 - (NSString *)statusBarComponentIdentifier {
     return [NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)];
 }
