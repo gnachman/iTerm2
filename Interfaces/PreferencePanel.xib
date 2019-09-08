@@ -4498,11 +4498,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="8ns-Nz-VFk" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="262" y="275" width="259" height="193"/>
+                                        <rect key="frame" x="262" y="354" width="259" height="114"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button id="1950">
-                                                <rect key="frame" x="18" y="157" width="223" height="18"/>
+                                                <rect key="frame" x="18" y="78" width="223" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Quit when all windows are closed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1951">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4513,7 +4513,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="1996">
-                                                <rect key="frame" x="18" y="137" width="225" height="18"/>
+                                                <rect key="frame" x="18" y="58" width="225" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm closing multiple sessions" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1997">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4525,7 +4525,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4757">
-                                                <rect key="frame" x="18" y="117" width="225" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="225" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot;" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4537,7 +4537,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="7pa-hD-WIi">
-                                                <rect key="frame" x="28" y="97" width="196" height="18"/>
+                                                <rect key="frame" x="28" y="18" width="196" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Even if there are no windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="riN-eN-PZd">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
