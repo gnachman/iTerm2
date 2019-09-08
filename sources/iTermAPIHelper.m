@@ -994,7 +994,7 @@ static iTermAPIHelper *sAPIHelperInstance;
             continue;
         }
         ITMRPCRegistrationRequest *sig = req.rpcRegistrationRequest;
-        NSString *functionName = [sig it_fullyQualifiedName;
+        NSString *functionName = [sig it_fullyQualifiedName];
         NSArray<NSString *> *args = [sig.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
             return anObject.name;
         }];
