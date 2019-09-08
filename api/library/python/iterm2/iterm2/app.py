@@ -229,28 +229,31 @@ class App:
         for new_window in new_windows:
             for new_tab in new_window.tabs:
                 for new_session in new_tab.sessions:
+                    # Update existing sessions
                     old = self.get_session_by_id(new_session.session_id)
                     if old is not None:
                         # Upgrade the old session's state
                         old.update_from(new_session)
                         # Replace references to the new session in the new tab with the old session
                         new_tab.update_session(old)
-                    old_tab = self.get_tab_by_id(new_tab.tab_id)
-                    if old_tab is not None:
-                        # Upgrade the old tab's state. This copies the root over. The new tab
-                        # has references to old sessions, so it's ok. The only problem is that
-                        # splitters are left in the old state.
-                        old_tab.update_from(new_tab)
-                        # Replace the reference in the new window to the old tab.
-                        new_window.update_tab(old_tab)
-                    if new_window.window_id not in new_ids:
-                        new_ids.append(new_window.window_id)
-                        old_window = self.get_window_by_id(new_window.window_id)
-                        if old_window is not None:
-                            old_window.update_from(new_window)
-                            windows.append(old_window)
-                        else:
-                            windows.append(new_window)
+                # Update existing tabs
+                old_tab = self.get_tab_by_id(new_tab.tab_id)
+                if old_tab is not None:
+                    # Upgrade the old tab's state. This copies the root over. The new tab
+                    # has references to old sessions, so it's ok. The only problem is that
+                    # splitters are left in the old state.
+                    old_tab.update_from(new_tab)
+                    # Replace the reference in the new window to the old tab.
+                    new_window.update_tab(old_tab)
+            # Update existing windows.
+            if new_window.window_id not in new_ids:
+                new_ids.append(new_window.window_id)
+                old_window = self.get_window_by_id(new_window.window_id)
+                if old_window is not None:
+                    old_window.update_from(new_window)
+                    windows.append(old_window)
+                else:
+                    windows.append(new_window)
 
         new_sessions = list(all_sessions(self.terminal_windows))
 
