@@ -1226,6 +1226,7 @@ DQ
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
+                <outlet property="_evenIfThereAreNoWindows" destination="7pa-hD-WIi" id="laL-N3-lTV"/>
                 <outlet property="_gpuRendering" destination="YoO-mR-uX5" id="bAe-EI-JTs"/>
                 <outlet property="_irMemory" destination="5055" id="dYT-8S-UeF"/>
                 <outlet property="_irMemoryLabel" destination="5053" id="uKW-nY-Haw"/>
@@ -4497,11 +4498,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="8ns-Nz-VFk" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="262" y="374" width="259" height="94"/>
+                                        <rect key="frame" x="262" y="275" width="259" height="193"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button id="1950">
-                                                <rect key="frame" x="18" y="58" width="223" height="18"/>
+                                                <rect key="frame" x="18" y="157" width="223" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Quit when all windows are closed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1951">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4512,7 +4513,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="1996">
-                                                <rect key="frame" x="18" y="38" width="225" height="18"/>
+                                                <rect key="frame" x="18" y="137" width="225" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm closing multiple sessions" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1997">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4524,7 +4525,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4757">
-                                                <rect key="frame" x="18" y="18" width="293" height="18"/>
+                                                <rect key="frame" x="18" y="117" width="225" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot;" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4533,6 +4534,18 @@ DQ
                                                 <connections>
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="Erm-GG-ZnM"/>
                                                     <outlet property="nextKeyView" destination="4570" id="5184"/>
+                                                </connections>
+                                            </button>
+                                            <button id="7pa-hD-WIi">
+                                                <rect key="frame" x="28" y="97" width="196" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Even if there are no windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="riN-eN-PZd">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="xMa-eA-PJJ"/>
+                                                    <outlet property="nextKeyView" destination="4570" id="6Db-OO-nbg"/>
                                                 </connections>
                                             </button>
                                         </subviews>

@@ -724,7 +724,11 @@ static BOOL hasBecomeActive = NO;
     // Display prompt if we need to
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
         [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
+        if (terminals.count > 0) {
+            [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
+        } else if ([iTermPreferences boolForKey:kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows]) {
+            [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEvenIfThereAreNoWindowsEnabled]];
+        }
     }
     quittingBecauseLastWindowClosed_ = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {

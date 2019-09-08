@@ -18,6 +18,7 @@
 + (instancetype)profileAlwaysPrompts:(Profile *)profile;
 + (instancetype)profile:(Profile *)profile blockedByJobs:(NSArray<NSString *> *)jobs;
 + (instancetype)alwaysConfirmQuitPreferenceEnabled;
++ (instancetype)alwaysConfirmQuitPreferenceEvenIfThereAreNoWindowsEnabled;
 + (instancetype)closingMultipleSessionsPreferenceEnabled;
 + (instancetype)tmuxClientsAlwaysPromptBecauseJobsAreNotExposed;
 
