@@ -398,7 +398,7 @@ typedef enum {
 // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
 // in this bookmark may happen independently of the persistent bookmark.
 // You should usually not assign to this; instead use divorceAddressBookEntryFromPreferences.
-@property(nonatomic, assign) BOOL isDivorced;
+@property(nonatomic, assign, readonly) BOOL isDivorced;
 
 // Ignore resize notifications. This would be set because the session's size mustn't be changed
 // due to temporary changes in the window size, as code later on may need to know the session's
@@ -599,6 +599,8 @@ typedef enum {
 // shared profiles and merged, updating this object's addressBookEntry and
 // overriddenFields.
 - (BOOL)reloadProfile;
+
+- (void)setIsDivorced:(BOOL)isDivorced withDecree:(NSString *)decree;
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
