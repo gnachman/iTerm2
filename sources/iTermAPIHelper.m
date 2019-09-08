@@ -2071,7 +2071,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                                                                    withURL:nil
                                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                                    makeKey:YES
-                                                               canActivate:YES
+                                                               canActivate:NO
                                                         respectTabbingMode:NO
                                                                    command:nil
                                                                      block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
