@@ -340,7 +340,7 @@ class App:
         return domain_list
 
     @property
-    def current_terminal_window(self) -> typing.Union[iterm2.window.Window, None]:
+    def current_window(self) -> typing.Optional[iterm2.window.Window]:
         """Gets the topmost terminal window.
 
         The current terminal window is the window that receives keyboard input
@@ -349,6 +349,11 @@ class App:
         :returns: A :class:`Window` or `None`.
         """
         return self.get_window_by_id(self.current_terminal_window_id)
+
+    @property
+    def current_terminal_window(self) -> typing.Union[iterm2.window.Window, None]:
+        """Deprecated in favor of current_window."""
+        return self.current_window
 
     @property
     def windows(self) -> typing.List[iterm2.window.Window]:
