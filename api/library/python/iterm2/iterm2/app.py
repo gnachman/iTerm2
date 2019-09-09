@@ -56,6 +56,20 @@ class App:
         windows = App._windows_from_list_sessions_response(connection, list_sessions_response)
         buried_sessions = App._buried_sessions_from_list_sessions_response(connection, list_sessions_response)
         app = App(connection, windows, buried_sessions)
+
+        def get_tab_from_session(session):
+            w, t = app.get_window_and_tab_for_session(session)
+            return t
+        def get_window_from_session(session):
+            w, t = app.get_window_and_tab_for_session(session)
+            return w
+        def get_window_from_tab(tab):
+            return app.get_window_for_tab(tab.tab_id)
+
+        iterm2.Session.get_tab = get_tab_from_session
+        iterm2.Session.get_window = get_window_from_session
+        iterm2.Tab.get_window = get_window_from_tab
+
         await app._async_listen()
         await app.async_refresh_focus()
         await app.async_refresh_broadcast_domains()

@@ -235,6 +235,18 @@ class Session:
             iterm2.util.frame_str(self.frame))
 
     @property
+    def tab(self) -> 'iterm2.Tab':
+        """Returns the containing tab."""
+        # Note: App sets get_tab on Session when it's created.
+        return Session.get_tab(self)
+
+    @property
+    def window(self) -> 'iterm2.Window':
+        """Returns the containing terminal window."""
+        # Note: App sets get_window on Session when it's created.
+        return Session.get_window(self)
+
+    @property
     def preferred_size(self) -> iterm2.util.Size:
         """The size in cells to resize to when `Tab.async_update_layout()` is called."""
         return self.__preferred_size
