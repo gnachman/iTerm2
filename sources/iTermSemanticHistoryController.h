@@ -116,7 +116,10 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
                                                 suffix:(NSString *)afterStringIn
                                       workingDirectory:(NSString *)workingDirectory
                                         trimWhitespace:(BOOL)trimWhitespace
-                                            completion:(void (^)(NSString *path, int prefixChars, int suffixChars))completion;
+                                            completion:(void (^)(NSString *path,
+                                                                 int prefixChars,
+                                                                 int suffixChars,
+                                                                 BOOL workingDirectoryIsLocal))completion;
 
 #pragma mark - Testing
 

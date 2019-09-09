@@ -709,7 +709,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                                                 suffix:(NSString *)afterStringIn
                                       workingDirectory:(NSString *)workingDirectory
                                         trimWhitespace:(BOOL)trimWhitespace
-                                            completion:(void (^)(NSString *path, int prefixChars, int suffixChars))completion {
+                                            completion:(void (^)(NSString *path,
+                                                                 int prefixChars,
+                                                                 int suffixChars,
+                                                                 BOOL workingDirectoryIsLocal))completion {
     iTermPathFinder *pathfinder = [[iTermPathFinder alloc] initWithPrefix:beforeStringIn
                                                                    suffix:afterStringIn
                                                          workingDirectory:workingDirectory
@@ -721,7 +724,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         if (!strongPathfinder) {
             return;
         }
-        completion(strongPathfinder.path, strongPathfinder.prefixChars, strongPathfinder.suffixChars);
+        completion(strongPathfinder.path,
+                   strongPathfinder.prefixChars,
+                   strongPathfinder.suffixChars,
+                   pathfinder.workingDirectoryIsLocal);
     }];
     return pathfinder;
 }

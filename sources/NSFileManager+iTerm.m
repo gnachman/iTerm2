@@ -277,21 +277,29 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return NO;
 }
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+- (BOOL)fileIsLocal:(NSString *)filename
+additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }
 
-    BOOL ok;
     struct statfs buf;
-    int rc = statfs([filename UTF8String], &buf);
-    if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
-        ok = [self fileExistsAtPath:filename];
-    } else {
-        ok = NO;
+    const int rc = statfs([filename UTF8String], &buf);
+    if (rc != 0) {
+        return YES;
     }
-    return ok;
+    if (buf.f_flags & MNT_LOCAL) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    if (![self fileIsLocal:filename additionalNetworkPaths:additionalNetworkPaths]) {
+        return NO;
+    }
+    return [self fileExistsAtPath:filename];
 }
 
 - (BOOL)itemIsDirectory:(NSString *)path {

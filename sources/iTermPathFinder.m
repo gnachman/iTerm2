@@ -186,8 +186,12 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 #pragma mark Filesystem
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)path {
-    return [self.fileManager fileExistsAtPathLocally:path
-                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+    _workingDirectoryIsLocal = [self.fileManager fileIsLocal:path
+                                      additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+    if (!_workingDirectoryIsLocal) {
+        return NO;
+    }
+    return [self.fileManager fileExistsAtPath:path];
 }
 
 - (BOOL)fileHasForbiddenPrefix:(NSString *)path {

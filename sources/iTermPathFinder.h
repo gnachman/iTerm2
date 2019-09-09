@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) int suffixChars;
 @property (nullable, nonatomic, readonly) NSString *path;
 @property (nonatomic, strong) NSFileManager *fileManager;
+// Set by -searchSynchronously
+@property (nonatomic, readonly) BOOL workingDirectoryIsLocal;
 
 - (instancetype)initWithPrefix:(NSString *)beforeStringIn
                         suffix:(NSString *)afterStringIn

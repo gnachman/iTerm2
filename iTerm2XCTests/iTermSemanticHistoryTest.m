@@ -62,14 +62,21 @@
     return NO;
 }
 
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+- (BOOL)fileIsLocal:(NSString *)filename additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
     NSMutableArray *networkPaths = [[_networkMountPoints mutableCopy] autorelease];
     [networkPaths addObjectsFromArray:additionalNetworkPaths];
     for (NSString *networkPath in networkPaths) {
         if ([filename hasPrefix:networkPath]) {
             return NO;
         }
+    }
+    return YES;
+}
+
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    if (![self fileIsLocal:filename additionalNetworkPaths:additionalNetworkPaths]) {
+        return NO;
     }
 
     return [self fileExistsAtPath:filename];

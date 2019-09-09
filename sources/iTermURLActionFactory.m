@@ -48,6 +48,7 @@ typedef enum {
 @property (nonatomic, copy) SCPPath *(^pathFactory)(NSString *, int);
 @property (nonatomic, copy) void (^completion)(URLAction *);
 @property (nonatomic) iTermURLActionFactoryPhase phase;
+@property (nonatomic) BOOL workingDirectoryIsLocal;
 
 @property (nonatomic, strong) NSMutableIndexSet *continuationCharsCoords;
 @property (nonatomic, strong) NSMutableArray *prefixCoords;
@@ -171,7 +172,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                               convertNullsToSpace:NO
                                            coords:self.suffixCoords];
 
-    [self urlActionForExistingFileWithCompletion:^(URLAction *action) {
+    [self urlActionForExistingFileWithCompletion:^(URLAction *action, BOOL workingDirectoryIsLocal) {
+        self.workingDirectoryIsLocal = workingDirectoryIsLocal;
         if (action) {
             [self completeWithAction:action];
         } else {
@@ -247,7 +249,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 }
 
-- (void)urlActionForExistingFileWithCompletion:(void (^)(URLAction *))completion {
+- (void)urlActionForExistingFileWithCompletion:(void (^)(URLAction *, BOOL workingDirectoryIsLocal))completion {
     NSString *possibleFilePart1 =
         [self.prefix substringIncludingOffset:[self.prefix length] - 1
                         fromCharacterSet:[NSCharacterSet filenameCharacterSet]
@@ -266,11 +268,14 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                                                         suffix:possibleFilePart2
                                                               workingDirectory:self.workingDirectory
                                                                 trimWhitespace:NO
-                                                                    completion:^(NSString *filename, int prefixChars, int suffixChars) {
+                                                                    completion:^(NSString *filename,
+                                                                                 int prefixChars,
+                                                                                 int suffixChars,
+                                                                                 BOOL workingDirectoryIsLocal) {
                                                                         URLAction *action = [self urlActionForFilename:filename
                                                                                                            prefixChars:prefixChars
                                                                                                            suffixChars:suffixChars];
-                                                                        completion(action);
+                                                                        completion(action, workingDirectoryIsLocal);
                                                                     }];
 }
 
@@ -432,6 +437,10 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         looksLikeURL = [self stringLooksLikeURL:[possibleUrl substringWithRange:rangeWithoutNearbyPunctuation]];
 
         if (looksLikeURL) {
+            if (!self.workingDirectoryIsLocal && ![stringWithoutNearbyPunctuation containsString:@"/"]) {
+                DLog(@"The working directory is not local and there's no slash in the filename or colon for a scheme, so this might be a file on a remote filesystem. Don't treat it as a URL.");
+                return nil;
+            }
             DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
             NSString *defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@":"];
             stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
