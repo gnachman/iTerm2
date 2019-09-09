@@ -351,12 +351,17 @@ class App:
         return self.get_window_by_id(self.current_terminal_window_id)
 
     @property
-    def terminal_windows(self) -> typing.List[iterm2.window.Window]:
+    def windows(self) -> typing.List[iterm2.window.Window]:
         """Returns a list of all terminal windows.
 
         :returns: A list of :class:`Window`
         """
         return self.__terminal_windows
+
+    @property
+    def terminal_windows(self) -> typing.List[iterm2.window.Window]:
+        """Deprecated in favor of `windows`"""
+        return self.windows
 
     @property
     def buried_sessions(self) -> typing.List[iterm2.session.Session]:
