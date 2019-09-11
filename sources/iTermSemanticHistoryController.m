@@ -432,6 +432,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
                                 [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
                                     [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
+                                                                                           arguments:nil
                                                                                               inject:inject
                                                                                          environment:nil
                                                                                                  pwd:@"/"

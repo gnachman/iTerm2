@@ -277,10 +277,11 @@
     NSURL *container = [NSURL fileURLWithPath:_selectedScriptPath];
     NSString *pip3 = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]
                                                              pythonVersion:_pythonVersion];
-    NSArray *augmentedEscapedArgs = [[@[ pip3 ] arrayByAddingObjectsFromArray:arguments] mapWithBlock:^id(NSString *arg) {
-        return [arg stringWithEscapedShellCharactersIncludingNewlines:YES];
-    }];
-    NSString *command = [augmentedEscapedArgs componentsJoinedByString:@" "];
+    NSString *command =
+    [[pip3 stringWithEscapedShellCharactersIncludingNewlines:YES]
+     stringByAppendingFormat:@" %@", [[arguments mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }] componentsJoinedByString:@" "]];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:command
                                                                  actions:@[ @"OK", @"Cancel" ]
                                                                accessory:nil
@@ -291,9 +292,12 @@
     if (selection == kiTermWarningSelection1) {
         return;
     }
-    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:pip3
+                                                           arguments:arguments
                                                               inject:nil
                                                          environment:nil
+                                                                 pwd:nil
+                                                             options:0
                                                           completion:^{
                                                               completion();
                                                           }];

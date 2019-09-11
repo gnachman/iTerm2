@@ -1653,36 +1653,31 @@ static iTermController *gSharedInstance;
     }] count];
 }
 
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command {
-    return [self openSingleUseWindowWithCommand:command inject:nil environment:nil completion:nil];
+- (NSString *)shCommandLineWithCommand:(NSString *)command
+                             arguments:(NSArray<NSString *> *)arguments
+                       escapeArguments:(BOOL)escapeArguments {
+    NSArray<NSString *> *const escapedArguments = escapeArguments ? [arguments mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+    }] : arguments;
+    NSString *const escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
+    NSArray<NSString *> *const combinedArray = [@[escapedCommand] arrayByAddingObjectsFromArray:escapedArguments];
+    NSString *const commandLine = [combinedArray componentsJoinedByString:@" "];
+    return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];
 }
 
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
-                                        inject:(NSData *)injection
-                                   environment:(NSDictionary *)environment {
-    return [self openSingleUseWindowWithCommand:command inject:injection environment:environment completion:nil];
-}
-
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
-                                        inject:(NSData *)injection
-                                   environment:(NSDictionary *)environment
-                                    completion:(void (^)(void))completion {
-    return [self openSingleUseWindowWithCommand:command inject:injection environment:environment pwd:nil options:0 completion:completion];
-}
-
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)rawCommand
+                                     arguments:(NSArray<NSString *> *)arguments
                                         inject:(NSData *)injection
                                    environment:(NSDictionary *)environment
                                            pwd:(NSString *)initialPWD
                                        options:(iTermSingleUseWindowOptions)options
                                     completion:(void (^)(void))completion {
-    if ([command hasSuffix:@"&"] && command.length > 1) {
-        command = [command substringToIndex:command.length - 1];
-        system(command.UTF8String);
+    if (!arguments && [rawCommand hasSuffix:@"&"] && rawCommand.length > 1) {
+        rawCommand = [rawCommand substringToIndex:rawCommand.length - 1];
+        system(rawCommand.UTF8String);
         return nil;
     }
-    NSString *escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
-    command = [NSString stringWithFormat:@"sh -c \"%@\"", escapedCommand];
+
     MutableProfile *windowProfile = [[[self defaultBookmark] mutableCopy] autorelease];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
@@ -1704,6 +1699,10 @@ static iTermController *gSharedInstance;
                                                 profile:windowProfile] autorelease];
     [self addTerminalWindow:term];
 
+    NSString *const command = [self shCommandLineWithCommand:rawCommand
+                                                   arguments:arguments ?: @[]
+                                             escapeArguments:!(options & iTermSingleUseWindowOptionsDoNotEscapeArguments)];
+    DLog(@"Open single-use window with command: %@", command);
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) = ^PTYSession *(Profile *profile, PseudoTerminal *term)  {
         profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
         const BOOL closeSessionsOnEnd = !!(options & iTermSingleUseWindowOptionsCloseOnTermination);

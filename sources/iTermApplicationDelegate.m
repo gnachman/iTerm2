@@ -2050,14 +2050,17 @@ static BOOL hasBecomeActive = NO;
          if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
              return;
          }
-         NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
+         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
          NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+         NSString *bannerArg = [NSString stringWithFormat:@"--banner=\\\"`cat %@`\\\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
          NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
          NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
-         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+         [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
+                                                                arguments:@[ bannerArg ]
                                                                    inject:nil
                                                               environment:environment
+                                                                      pwd:nil
+                                                                  options:iTermSingleUseWindowOptionsDoNotEscapeArguments
                                                                completion:nil];
     }];
 }

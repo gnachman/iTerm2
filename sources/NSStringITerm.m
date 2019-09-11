@@ -247,6 +247,20 @@
             escape = NO;
             if (escapes[@(c)]) {
                 [currentValue appendString:escapes[@(c)]];
+            } else if (inDoubleQuotes) {
+                // Determined by testing with bash.
+                if (c == '"') {
+                    [currentValue appendString:@"\""];
+                } else {
+                    [currentValue appendFormat:@"\\%C", c];
+                }
+            } else if (inSingleQuotes) {
+                // Determined by testing with bash.
+                if (c == '\'') {
+                    [currentValue appendFormat:@"\\"];
+                } else {
+                    [currentValue appendFormat:@"\\%C", c];
+                }
             } else {
                 [currentValue appendFormat:@"%C", c];
             }

@@ -480,7 +480,13 @@ ITERM_IGNORE_PARTIAL_BEGIN
 - (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {
     NSString *command = sender.keyBindingAction[@"command"];
     if (command) {
-        [[iTermController sharedInstance] openSingleUseWindowWithCommand:command];
+        [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                               arguments:nil
+                                                                  inject:nil
+                                                             environment:nil
+                                                                     pwd:nil
+                                                                 options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                              completion:nil];
     }
 }
 

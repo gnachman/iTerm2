@@ -660,18 +660,15 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     
     _status = status;
     [self updateTextFieldIfNeeded];
-    NSArray<NSString *> *escaped = [args mapWithBlock:^id(NSString *arg) {
-        return [arg stringWithEscapedShellCharactersIncludingNewlines:YES];
-    }];
     NSString *gitWrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"iterm2_git_wrapper" ofType:@"sh"];
-    NSString *command = [NSString stringWithFormat:@"%@ %@", gitWrapper, [escaped componentsJoinedByString:@" "]];
     __weak __typeof(self) weakSelf = self;
     iTermSingleUseWindowOptions options = (iTermSingleUseWindowOptionsCloseOnTermination |
                                            iTermSingleUseWindowOptionsShortLived);
     if (bury) {
         options |= iTermSingleUseWindowOptionsInitiallyBuried;
     }
-    _session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+    _session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:gitWrapper
+                                                                      arguments:args
                                                                          inject:nil
                                                                     environment:nil
                                                                             pwd:pwd
