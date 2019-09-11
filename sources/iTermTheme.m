@@ -95,7 +95,7 @@
                                              dimOnlyText:dimOnlyText
                                    adjustedDimmingAmount:adjustedDimmingAmount];
     }
-    NSColor *undimmedColor;
+    NSColor *undimmedColor = tabColor;
 
     if (self.useMinimalStyle) {
         undimmedColor = sessionBackgroundColor;
