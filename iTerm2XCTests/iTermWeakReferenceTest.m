@@ -42,7 +42,7 @@ ITERM_WEAKLY_REFERENCEABLE
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
-    *_okPointer = (_reference && _reference.internal_unsafeObject == nil);
+    *_okPointer = (_reference && _reference.weaklyReferencedObject == nil);
     [super dealloc];
 }
 
@@ -52,12 +52,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)testSimpleCase {
     iTermWeaklyReferenceableObject *object = [[iTermWeaklyReferenceableObject alloc] init];
-    XCTAssert(object.retainCount == 1);
-    iTermWeaklyReferenceableObject *weakReference = [object weakSelf];
-    XCTAssert(object.retainCount == 1);
-    XCTAssert([(id)weakReference internal_unsafeObject] == object);
-    [object release];
-    XCTAssert([(id)weakReference internal_unsafeObject] == nil);
+    iTermWeaklyReferenceableObject *weakReference;
+    @autoreleasepool {
+        XCTAssert(object.retainCount == 1);
+        weakReference = [[object weakSelf] retain];
+        XCTAssert(object.retainCount == 1);
+        XCTAssert([(id)weakReference weaklyReferencedObject] == object);
+        [object release];
+    }
+    XCTAssert([(id)weakReference weaklyReferencedObject] == nil);
+    [weakReference release];
 }
 
 - (void)testWeaklyReferencedObjectMethodBeforeDealloc {
@@ -88,19 +92,21 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)testTwoWeakRefsToSameObject {
     iTermWeaklyReferenceableObject *object = [[iTermWeaklyReferenceableObject alloc] init];
-    XCTAssert(object.retainCount == 1);
-    iTermWeaklyReferenceableObject *weakReference1 = [object weakSelf];
-    XCTAssert(object.retainCount == 1);
-    iTermWeaklyReferenceableObject *weakReference2 = [object weakSelf];
-    XCTAssert(object.retainCount == 1);
+    iTermWeaklyReferenceableObject *weakReference1;
+    iTermWeaklyReferenceableObject *weakReference2;
+    @autoreleasepool {
+        weakReference1 = [[object weakSelf] retain];
+        weakReference2 = [[object weakSelf] retain];
 
-    XCTAssert([(id)weakReference1 internal_unsafeObject] == object);
-    XCTAssert([(id)weakReference2 internal_unsafeObject] == object);
-    XCTAssert(object.retainCount == 1);
+        XCTAssert([(id)weakReference1 weaklyReferencedObject] == object);
+        XCTAssert([(id)weakReference2 weaklyReferencedObject] == object);
 
-    [object release];
-    XCTAssert([(id)weakReference1 internal_unsafeObject] == nil);
-    XCTAssert([(id)weakReference2 internal_unsafeObject] == nil);
+        [object release];
+    }
+    XCTAssert([(id)weakReference1 weaklyReferencedObject] == nil);
+    XCTAssert([(id)weakReference2 weaklyReferencedObject] == nil);
+    [weakReference1 release];
+    [weakReference2 release];
 }
 
 - (void)testReleaseWeakReferenceBeforeObject {
@@ -128,7 +134,7 @@ ITERM_WEAKLY_REFERENCEABLE
     WRTObject *ref = [object weakSelf];
     object.reference = (iTermWeakReference *)ref;
     [object release];
-    XCTAssert(((iTermWeakReference *)ref).internal_unsafeObject == nil, @"Reference's object not nullified");
+    XCTAssert(((iTermWeakReference *)ref).weaklyReferencedObject == nil, @"Reference's object not nullified");
     XCTAssert(ok, @"Reference's object nullified after start of object's dealloc");
 }
 
@@ -219,59 +225,6 @@ ITERM_WEAKLY_REFERENCEABLE
     XCTAssertTrue([ref respondsToSelector:@selector(isEqual:)]);
     // Method that doesn't exist
     XCTAssertFalse([ref respondsToSelector:@selector(testRespondsToSelector)]);
-}
-
-// This is a regression test. There was a bug that the weak reference did not properly remove itself
-// from notification center. It was hard to see because it didn't happen in 10.11.
-- (void)testReferenceRemovedFromNotificationCenter {
-  iTerm2FakeObject *fakeObject = [[iTerm2FakeObject alloc] init];
-  iTermSelectorSwizzlerContext *context = [[[iTermSelectorSwizzlerContext alloc] init] autorelease];
-  __block BOOL observing = YES;
-
-  // Use an autorelease pool to make sure the weak reference gets released before the context is
-  // drained.
-  @autoreleasepool {
-    iTerm2FakeObject *weakRef = [fakeObject weakSelf];
-
-    // NSValue used to keep the block from
-    NSValue *weakRefValue = [NSValue valueWithNonretainedObject:weakRef];
-
-    // Proper function pointers let us call the impl without warnings.
-    typedef void RemoveObserverImp(id, SEL, id);
-    typedef void RemoveObserverNameObjectImp(id, SEL, id, id, id);
-
-    // These must be __block so the blocks don't capture the pre-assignment values.
-    __block RemoveObserverImp *removeObserver;
-    __block RemoveObserverNameObjectImp *removeObserverNameObject;
-
-    removeObserver = (RemoveObserverImp *)
-      [[NSNotificationCenter defaultCenter] swizzleInstanceMethodSelector:@selector(removeObserver:)
-                                                                withBlock:^(id target, id observer) {
-                                                                  if (observer == weakRefValue.nonretainedObjectValue) {
-                                                                    observing = NO;
-                                                                  }
-                                                                  removeObserver(target,
-                                                                                 @selector(removeObserver:),
-                                                                                 observer);
-                                                                }];
-    removeObserverNameObject = (RemoveObserverNameObjectImp *)
-      [[NSNotificationCenter defaultCenter] swizzleInstanceMethodSelector:@selector(removeObserver:name:object:)
-                                                                withBlock:^(id target, id observer, id name, id object) {
-                                                                  if (observer == weakRefValue.nonretainedObjectValue) {
-                                                                    observing = NO;
-                                                                  }
-                                                                  removeObserverNameObject(target,
-                                                                                           @selector(removeObserver:name:object:),
-                                                                                           observer,
-                                                                                           name,
-                                                                                           object);
-                                                                }];
-
-    [fakeObject release];
-  }
-  [context drain];
-
-  XCTAssertFalse(observing);
 }
 
 @end
