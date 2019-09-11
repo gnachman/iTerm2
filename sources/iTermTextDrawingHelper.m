@@ -2536,7 +2536,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                          image.size.height - _cellSize.height - chunkSize.height * originInImage.y,
                                          chunkSize.width * length,
                                          chunkSize.height);
-    NSLog(@"Draw %@ -> %@ with source image of size %@", NSStringFromRect(sourceRect), NSStringFromRect(destRect), NSStringFromSize(image.size));
+    DLog(@"Draw %@ -> %@ with source image of size %@", NSStringFromRect(sourceRect), NSStringFromRect(destRect), NSStringFromSize(image.size));
     [image drawInRect:destRect
              fromRect:sourceRect
             operation:NSCompositingOperationSourceOver
