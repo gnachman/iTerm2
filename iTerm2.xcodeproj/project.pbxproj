@@ -1658,6 +1658,7 @@
 		A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B3C1BD40DC900B5629D /* iTermCapturedOutputMark.h */; };
 		A62C3B3F1BD40DC900B5629D /* iTermCapturedOutputMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */; };
 		A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B401BD40E7C00B5629D /* iTermImageMark.h */; };
+		A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
 		A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
 		A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
@@ -2518,7 +2519,6 @@
 		A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */; };
-		A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
@@ -12685,6 +12685,7 @@
 				537BFDD22101AD9F0098C91F /* iTermCPUUtilization.m in Sources */,
 				A6F718CF2266E71E0053488E /* iTermUserDefaults.m in Sources */,
 				A6D8973B22154A8800325F6A /* AnnotateTrigger.m in Sources */,
+				A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
@@ -12876,7 +12877,6 @@
 				A6C7631B1B45C52B00E3C992 /* iTermRestorableSession.m in Sources */,
 				A6C762AF1B45C52B00E3C992 /* NSColor+iTerm.m in Sources */,
 				A6461D8A1E1B654D00FEDCD6 /* iTermShellPromptTrigger.m in Sources */,
-				A686F3631D32CD8100F08ED7 /* NSWindow+iTerm.m in Sources */,
 				A62C3B301BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.m in Sources */,
 				A6C762D51B45C52B00E3C992 /* LineBufferHelpers.m in Sources */,
 				A6FEA26D1CF2C86800376F28 /* iTermBaseHotKey.m in Sources */,

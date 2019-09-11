@@ -24,4 +24,5 @@ extern NSString *const iTermWindowAppearanceDidChange;
 // with the open quickly window.
 - (void)it_makeKeyAndOrderFront;
 
+- (NSView *)it_titlebarViewOfClassWithName:(NSString *)className;
 @end

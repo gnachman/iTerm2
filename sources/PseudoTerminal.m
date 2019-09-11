@@ -4613,6 +4613,18 @@ ITERM_WEAKLY_REFERENCEABLE
             [myWindow _setContentHasShadow:NO];
         }
     }
+
+#if BETA
+    if (@available(macOS 10.14, *)) {
+        if (@available(macOS 10.15, *)) {
+            // TODO
+        } else {
+            NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
+            [view setHidden:YES];
+        }
+    }
+#endif
+    
     [self updateVariables];
     return myWindow;
 }
