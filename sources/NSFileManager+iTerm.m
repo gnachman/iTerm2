@@ -279,6 +279,10 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (BOOL)fileIsLocal:(NSString *)filename
 additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+    if ([iTermAdvancedSettingsModel enableSemanticHistoryOnNetworkMounts]) {
+        DLog(@"** Skipping network-mount check because the advanced pref is on!!! **");
+        return YES;
+    }
     if ([self fileHasForbiddenPrefix:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }

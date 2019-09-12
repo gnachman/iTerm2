@@ -371,6 +371,7 @@ DEFINE_BOOL(conservativeURLGuessing, NO, SECTION_SEMANTIC_HISTORY @"URLs must co
 DEFINE_STRING(trailingPunctuationMarks, @"!?…)].\"';:,", SECTION_SEMANTIC_HISTORY @"Characters to ignore at the end of a URL");
 DEFINE_STRING(defaultURLScheme, @"https", SECTION_SEMANTIC_HISTORY @"Default URL scheme");
 DEFINE_BOOL(restrictSemanticHistoryPrefixAndSuffixToLogicalWindow, YES, SECTION_SEMANTIC_HISTORY @"Respect soft boundaries for computing the prefix and suffix text passed to semantic history commands?\nDue to a long-standing bug this did not used to be respected. Soft boundaries were always respected for deciding what text was clicked on, but the prefix and suffix did not. If you have a semantic history command that depends on the bug, you can switch this off to get the pre-3.1.2 behavior.");
+DEFINE_BOOL(enableSemanticHistoryOnNetworkMounts, NO, SECTION_SEMANTIC_HISTORY @"Enable semantic history for network-mounted filesystems?\nOnly enable this if you know your network-mounted filesystems are really fast and reliable. A slow filesystem may cause the entire iTerm2 app to hang.");
 
 #pragma mark - Debugging
 
