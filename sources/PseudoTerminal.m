@@ -4871,10 +4871,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateForTransparency:(NSWindow<PTYWindow> *)window {
+    BOOL shouldEnableShadow = NO;
     switch (self.windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            window.hasShadow = NO;
+            if (exitingLionFullscreen_) {
+                shouldEnableShadow = YES;
+            } else {
+                window.hasShadow = NO;
+            }
             return;
 
         case WINDOW_TYPE_TOP:
@@ -4889,6 +4894,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
+            shouldEnableShadow = YES;
             break;
     }
     if ([self anyPaneIsTransparent] != _anyPaneIsTransparent) {
@@ -4898,11 +4904,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
+            shouldEnableShadow = NO;
         }
     } else {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyPreMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
+            shouldEnableShadow = NO;
         }
+    }
+    if (shouldEnableShadow) {
+        window.hasShadow = YES;
     }
 }
 
