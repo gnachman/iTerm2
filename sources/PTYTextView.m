@@ -1467,6 +1467,7 @@ static const int kDragThreshold = 3;
                     [_delegate writeTask:stringToSend];
                 }
             }
+            [self deselect];
         }
     } else if (![self reportMouseEvent:event]) {
         [super scrollWheel:event];
