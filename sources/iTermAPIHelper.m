@@ -24,6 +24,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermSelection.h"
+#import "iTermSessionLauncher.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermVariableReference.h"
@@ -2066,27 +2067,27 @@ static iTermAPIHelper *sAPIHelperInstance;
         }
     }
 
-    PTYSession *session = [[iTermController sharedInstance] launchBookmark:profile
-                                                                inTerminal:term
-                                                                   withURL:nil
-                                                          hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                                   makeKey:YES
-                                                               canActivate:NO
-                                                        respectTabbingMode:NO
-                                                                   command:nil
-                                                                     block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-                                                                         profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
-                                                                         return [term createTabWithProfile:profile
-                                                                                               withCommand:nil
-                                                                                               environment:nil
-#warning TODO: This doesn't really need to block the main thread since this method is async.
-                                                                                               synchronous:YES
-                                                                                                completion:nil];
-                                                                     }
-#warning TODO: This doesn't really need to block the main thread since this method is async.
-                                                               synchronous:YES
-                                                                completion:nil];
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:profile windowController:term];
+    launcher.canActivate = NO;
+    launcher.makeSession = ^(NSDictionary * _Nonnull profile, PseudoTerminal * _Nonnull term, void (^ _Nonnull completion)(PTYSession * _Nullable)) {
+        profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
+        PTYSession *session = [term createTabWithProfile:profile
+                                             withCommand:nil
+                                             environment:nil
+                                             synchronous:NO
+                                              completion:nil];
+        completion(session);
+    };
+    __weak iTermSessionLauncher *weakLauncher = launcher;
+    __weak __typeof(self) weakSelf = self;
+    [launcher launchWithCompletion:^(BOOL ok) {
+        [weakSelf didCreateSession:weakLauncher.session forRequest:request handler:handler];
+    }];
+}
 
+- (void)didCreateSession:(PTYSession *)session
+              forRequest:(ITMCreateTabRequest *)request
+                 handler:(void (^)(ITMCreateTabResponse *))handler {
     if (!session) {
         ITMCreateTabResponse *response = [[ITMCreateTabResponse alloc] init];
         response.status = ITMCreateTabResponse_Status_MissingSubstitution;
@@ -2094,7 +2095,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         return;
     }
 
-    term = [[iTermController sharedInstance] terminalWithSession:session];
+    PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
     PTYTab *tab = [term tabForSession:session];
 
     ITMCreateTabResponse_Status status = ITMCreateTabResponse_Status_Ok;

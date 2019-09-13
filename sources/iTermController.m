@@ -35,6 +35,8 @@
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
 #import "iTermSessionFactory.h"
+#warning TODO: Remove this
+#import "iTermSessionLauncher.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -1043,135 +1045,6 @@ static iTermController *gSharedInstance;
                      completion:nil];
 }
 
-- (NSString *)validatedAndShellEscapedUsername:(NSString *)username {
-    NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
-    [legalCharacters addCharactersInString:@"_-+."];
-    NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
-    NSRange range = [username rangeOfCharacterFromSet:illegalCharacters];
-    if (range.location != NSNotFound) {
-        ELog(@"username %@ contains illegal character at position %@", username, @(range.location));
-        return nil;
-    }
-    return [username stringWithEscapedShellCharactersIncludingNewlines:YES];
-}
-
-- (NSString *)validatedAndShellEscapedHostname:(NSString *)hostname {
-    NSCharacterSet *legalCharacters = [NSCharacterSet characterSetWithCharactersInString:@":abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."];
-    NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
-    NSRange range = [hostname rangeOfCharacterFromSet:illegalCharacters];
-    if (range.location != NSNotFound) {
-        ELog(@"Hostname %@ contains illegal character at position %@", hostname, @(range.location));
-        return nil;
-    }
-    return [hostname stringWithEscapedShellCharactersIncludingNewlines:YES];
-}
-
-- (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
-    NSMutableString *tempString = [NSMutableString stringWithString:[iTermAdvancedSettingsModel sshSchemePath]];
-    NSCharacterSet *alphanumericSet = [NSMutableCharacterSet alphanumericCharacterSet];
-    if ([tempString rangeOfCharacterFromSet:alphanumericSet].location == NSNotFound) {
-        // if the setting is set to an empty string, we will default to "ssh" for safety reasons
-        tempString = [NSMutableString stringWithString:@"ssh"];
-    }
-    [tempString appendString:@" "];
-    NSString *username = url.user;
-    BOOL cd = ([iTermAdvancedSettingsModel sshURLsSupportPath] && url.path.length > 1);
-    if (username) {
-        NSString *part = [self validatedAndShellEscapedUsername:username];
-        if (!part) {
-            return nil;
-        }
-        [tempString appendFormat:@"-l %@ ", part];
-    }
-    if (url.port) {
-        [tempString appendFormat:@"-p %@ ", url.port];
-    }
-    if (cd) {
-        // Force a TTY since we're providing a command
-        [tempString appendString:@"-t "];
-    }
-    NSString *hostname = url.host;
-    if (hostname) {
-        NSString *part = [self validatedAndShellEscapedHostname:hostname];
-        if (!part) {
-            return nil;
-        }
-        [tempString appendString:part];
-    }
-    if (cd) {
-        NSString *path = url.path;
-        if ([path hasPrefix:@"/~"]) {
-            path = [path substringFromIndex:1];
-        }
-        NSCharacterSet *unsafeCharacters = [NSCharacterSet characterSetWithCharactersInString:@"\"'\\\r\n\0"];
-        if ([path rangeOfCharacterFromSet:unsafeCharacters].location == NSNotFound) {
-            [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
-        }
-    }
-    return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
-}
-
-- (Profile *)profileByModifyingProfile:(Profile *)prototype toFtpTo:(NSString *)url {
-    NSMutableString *tempString = [NSMutableString stringWithFormat:@"%@ %@", [iTermAdvancedSettingsModel pathToFTP], url];
-    return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
-}
-
-- (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toTelnetTo:(NSURL *)url {
-    NSMutableString *tempString = [NSMutableString stringWithFormat:@"%@ ", [iTermAdvancedSettingsModel pathToTelnet]];
-    if (url.user) {
-        NSString *part = [self validatedAndShellEscapedUsername:url.user];
-        if (!part) {
-            return nil;
-        }
-        [tempString appendFormat:@"-l %@ ", part];
-    }
-    if (url.host) {
-        NSString *part = [self validatedAndShellEscapedHostname:url.host];
-        if (!part) {
-            return nil;
-        }
-        [tempString appendString:part];
-    }
-    if (url.port) {
-        [tempString appendFormat:@" %@", url.port];
-    }
-    return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
-}
-
-- (NSDictionary *)profile:(NSDictionary *)aDict
-        modifiedToOpenURL:(NSString *)url
-            forObjectType:(iTermObjectType)objectType {
-    if (aDict == nil ||
-        [[ITAddressBookMgr bookmarkCommand:aDict
-                             forObjectType:objectType] isEqualToString:@"$$"] ||
-        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
-        Profile *prototype = aDict;
-        if (!prototype) {
-            prototype = [self defaultBookmark];
-        }
-
-        NSURL *urlRep = [NSURL URLWithString:url];
-        NSString *urlType = [urlRep scheme];
-
-        if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-            return [self profileByModifyingProfile:prototype toSshTo:urlRep];
-        } else if ([urlType compare:@"ftp" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-            return [self profileByModifyingProfile:prototype toFtpTo:url];
-        } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-            return [self profileByModifyingProfile:prototype toTelnetTo:urlRep];
-        } else if (!aDict) {
-            return [[prototype copy] autorelease];
-        } else {
-            return prototype;
-        }
-    } else {
-        return aDict;
-    }
-}
-
 - (PseudoTerminal *)windowControllerForNewTabWithProfile:(Profile *)profile
                                                candidate:(PseudoTerminal *)preferredWindowController
                                       respectTabbingMode:(BOOL)respectTabbingMode {
@@ -1236,160 +1109,31 @@ static iTermController *gSharedInstance;
                          block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
                    synchronous:(BOOL)synchronous
                     completion:(void (^ _Nullable)(BOOL))completion {
-    DLog(@"launchBookmark:inTerminal:withUrl:isHotkey:makeKey:canActivate:command:block:synchronous:completion:");
-    DLog(@"Profile:\n%@", bookmarkData);
-    DLog(@"URL: %@", url);
-    DLog(@"hotkey window type: %@", @(hotkeyWindowType));
-    DLog(@"makeKey: %@", @(makeKey));
-    DLog(@"canActivate: %@", @(canActivate));
-    DLog(@"command: %@", command);
-
-    PseudoTerminal *term;
-    NSDictionary *aDict;
-    const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
-    const BOOL isHotkey = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
-
-    aDict = bookmarkData;
-    if (aDict == nil) {
-        aDict = [self defaultBookmark];
-    }
-
-    if (url) {
-        DLog(@"Add URL to profile");
-        // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
-        aDict = [self profile:aDict modifiedToOpenURL:url forObjectType:objectType];
-        if (aDict == nil) {
-            // Bogus hostname detected
-            if (completion != nil) {
-                completion(NO);
-            }
-            return nil;
-        }
-    }
-    if (!bookmarkData) {
-        DLog(@"Using profile:\n%@", aDict);
-    }
-
-    theTerm = [self windowControllerForNewTabWithProfile:aDict candidate:theTerm respectTabbingMode:respectTabbingMode];
-
-    // Where do we execute this command?
-    BOOL toggle = NO;
-    if (theTerm == nil || ![theTerm windowInitialized]) {
-        [iTermController switchToSpaceInBookmark:aDict];
-        int windowType = [self windowTypeForBookmark:aDict];
-        if (isHotkey && windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
-            windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
-        }
-        if (theTerm) {
-            DLog(@"Finish initialization of an existing window controller");
-            term = theTerm;
-            [term finishInitializationWithSmartLayout:YES
-                                           windowType:windowType
-                                      savedWindowType:iTermWindowDefaultType()
-                                               screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                     hotkeyWindowType:hotkeyWindowType
-                                              profile:aDict];
-        } else {
-            DLog(@"Create a new window controller");
-            term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                     windowType:windowType
-                                                savedWindowType:windowType
-                                                         screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                               hotkeyWindowType:hotkeyWindowType
-                                                        profile:aDict] autorelease];
-        }
-        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-            [term hideAfterOpening];
-        }
-        [self addTerminalWindow:term];
-        if (isHotkey) {
-            // See comment above regarding hotkey windows.
-            toggle = NO;
-        } else {
-            toggle = ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
-        }
-    } else {
-        DLog(@"Use an existing window");
-        term = theTerm;
-    }
-
-    PTYSession* session = nil;
-
-    BOOL callCompletionBlock = (completion != nil);
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
+    launcher.url = url;
+    launcher.hotkeyWindowType = hotkeyWindowType;
+    launcher.makeKey = makeKey;
+    launcher.canActivate = canActivate;
+    launcher.respectTabbingMode = respectTabbingMode;
+    launcher.command = command;
     if (block) {
-        DLog(@"Create a session via callback");
-        session = block(aDict, term);
-    } else if (url) {
-        DLog(@"Creating a new session");
-        session = [[term.sessionFactory newSessionWithProfile:aDict] autorelease];
-        [term addSessionInNewTab:session];
-        callCompletionBlock = NO;
-        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
-                                                                  canPrompt:YES
-                                                                 objectType:objectType
-                                                           serverConnection:nil
-                                                                  urlString:url
-                                                               allowURLSubs:YES
-                                                                environment:@{}
-                                                                     oldCWD:nil
-                                                             forceUseOldCWD:NO
-                                                                    command:nil
-                                                                     isUTF8:nil
-                                                              substitutions:nil
-                                                           windowController:term
-                                                                synchronous:synchronous
-                                                                 completion:completion];
-        if (!ok) {
-            if (completion) {
-                completion(NO);
-            }
-            session = nil;
-        }
+        launcher.makeSession = ^(NSDictionary * _Nonnull profile,
+                                 PseudoTerminal * _Nonnull windowController,
+                                 void (^ _Nonnull completion)(PTYSession * _Nullable)) {
+            completion(block(profile, windowController));
+        };
+    }
+    __block PTYSession *session = nil;
+    launcher.didCreateSession = ^(PTYSession * _Nullable theSession) {
+        session = [[theSession retain] autorelease];
+    };
+    if (synchronous) {
+        launcher.completion = completion;
+        [launcher launchAndWait];
     } else {
-        callCompletionBlock = NO;
-        session = [term createTabWithProfile:aDict
-                                 withCommand:command
-                                 environment:nil
-                                 synchronous:synchronous
-                                  completion:completion];
+        [launcher launchWithCompletion:completion];
     }
-    if (!session && term.numberOfTabs == 0) {
-        [[term window] close];
-        if (callCompletionBlock) {
-            completion(NO);
-        }
-        return nil;
-    }
-
-    if (toggle) {
-        [term delayedEnterFullscreen];
-    }
-    if (makeKey && ![[term window] isKeyWindow]) {
-        // When this function is activated from the dock icon's context menu make sure
-        // that the new window is on top of all other apps' windows. For some reason,
-        // makeKeyAndOrderFront does nothing.
-        if ([term.window isKindOfClass:[iTermPanel class]]) {
-            canActivate = NO;
-        }
-        if (canActivate) {
-            // activateIgnoringApp: happens asynchronously which means doing makeKeyAndOrderFront:
-            // immediately after it won't do what you want. Issue 6397
-            NSWindow *termWindow = [[term window] retain];
-            [[iTermApplication sharedApplication] activateAppWithCompletion:^{
-                [termWindow makeKeyAndOrderFront:nil];
-                [termWindow release];
-            }];
-        } else {
-            [[term window] makeKeyAndOrderFront:nil];
-        }
-        if (canActivate) {
-            [NSApp arrangeInFront:self];
-        }
-    }
-
-    if (callCompletionBlock) {
-        completion(YES);
-    }
+    [launcher release];
     return session;
 }
 

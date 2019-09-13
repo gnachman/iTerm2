@@ -2626,6 +2626,8 @@
 		A69CCB19211BC296008ADA71 /* NSData+GZIP.m in Sources */ = {isa = PBXBuildFile; fileRef = A69CCB16211BC296008ADA71 /* NSData+GZIP.m */; };
 		A69CCB1C211BF4FF008ADA71 /* iTermRecordingCodec.h in Headers */ = {isa = PBXBuildFile; fileRef = A69CCB1A211BF4FF008ADA71 /* iTermRecordingCodec.h */; };
 		A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */ = {isa = PBXBuildFile; fileRef = A69CCB1B211BF4FF008ADA71 /* iTermRecordingCodec.m */; };
+		A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */ = {isa = PBXBuildFile; fileRef = A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */; };
+		A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */ = {isa = PBXBuildFile; fileRef = A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -5479,6 +5481,8 @@
 		A69CCB16211BC296008ADA71 /* NSData+GZIP.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+GZIP.m"; path = "GZIP/GZIP/NSData+GZIP.m"; sourceTree = "<group>"; };
 		A69CCB1A211BF4FF008ADA71 /* iTermRecordingCodec.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRecordingCodec.h; sourceTree = "<group>"; };
 		A69CCB1B211BF4FF008ADA71 /* iTermRecordingCodec.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRecordingCodec.m; sourceTree = "<group>"; };
+		A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionLauncher.h; sourceTree = "<group>"; };
+		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermColorMap.mm; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -7817,6 +7821,8 @@
 				A6F718D6226704920053488E /* PTYSession+ARC.m */,
 				A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */,
 				A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */,
+				A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */,
+				A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10097,6 +10103,7 @@
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
+				A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */,
 				A66719361DCE36C3000CE608 /* iTermHostRecordMO.h in Headers */,
 				535EA50020D0F15400FC81E0 /* iTermQuotedRecognizer.h in Headers */,
 				A60C034A20881D6000FE2F1F /* iTermWebSocketCookieJar.h in Headers */,
@@ -12529,6 +12536,7 @@
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
 				A61F457322FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m in Sources */,
 				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
+				A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
