@@ -507,6 +507,7 @@ typedef enum {
 @property(nonatomic) BOOL shortLivedSingleUse;
 @property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
 @property(nonatomic, readonly) NSString *sessionId;
+@property(nonatomic, retain) NSNumber *cursorTypeOverride;
 
 #pragma mark - methods
 

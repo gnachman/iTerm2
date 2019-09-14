@@ -228,6 +228,7 @@ static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDic
 static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
 static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Lived Single Use";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to Shell";  // NSString -> NSString (example: example.com -> fish)
+static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type Override";  // NSNumber wrapping ITermCursorType
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -534,6 +535,8 @@ static const NSUInteger kMaxHosts = 100;
 
     // To debug a problem where a session is divorced but its guid is not in the sessions instance profile model.
     NSString *_divorceDecree;
+
+    BOOL _cursorTypeOverrideChanged;
 }
 
 @synthesize isDivorced = _divorced;
@@ -870,6 +873,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_printGuard release];
     [_methods release];
     [_divorceDecree release];
+    [_cursorTypeOverride release];
 
     [super dealloc];
 }
@@ -1164,6 +1168,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
                                                          savedState:arrangement[SESSION_ARRANGEMENT_APS]];
     }
+    aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     if (didRestoreContents && attachedToServer) {
         Interval *interval = aSession.screen.lastPromptMark.entry.interval;
         if (interval) {
@@ -3645,7 +3650,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
-    [_textview setCursorType:[iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
+    [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
     PTYTab* currentTab = [[_delegate parentWindow] currentTab];
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
@@ -3771,6 +3776,20 @@ ITERM_WEAKLY_REFERENCEABLE
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+}
+
+- (void)setCursorTypeOverride:(NSNumber *)cursorTypeOverride {
+    [_cursorTypeOverride autorelease];
+    _cursorTypeOverride = [cursorTypeOverride retain];
+    _cursorTypeOverrideChanged = YES;
+    [self.textview setCursorType:self.cursorType];
+}
+
+- (ITermCursorType)cursorType {
+    if (_cursorTypeOverride) {
+        return _cursorTypeOverride.integerValue;
+    }
+    return [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:_profile];
 }
 
 - (void)invalidateStatusBar {
@@ -4347,6 +4366,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [NSDictionary dictionaryWithGridCoordRange:range];
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
+        result[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE] = self.cursorTypeOverride;
         if (self.lastDirectory) {
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] = @(self.lastDirectoryIsUnsuitableForOldPWD);
@@ -7138,25 +7158,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     _showingVisualIndicatorForEsc = YES;
     
-    NSNumber *savedCursorTypeSetting = [iTermProfilePreferences objectForKey:KEY_CURSOR_TYPE inProfile:self.profile];
-    NSDictionary *dict = @{ KEY_CURSOR_TYPE: savedCursorTypeSetting };
-    
+    NSNumber *savedCursorTypeOverride = _cursorTypeOverride;
+
     ITermCursorType temporaryType;
-    if (savedCursorTypeSetting.integerValue == CURSOR_BOX) {
+    if (self.cursorType == CURSOR_BOX) {
         temporaryType = CURSOR_UNDERLINE;
     } else {
         temporaryType = CURSOR_BOX;
     }
 
-    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TYPE: @(temporaryType) }];
+    self.cursorTypeOverride = @(temporaryType);
     [_textview setCursorNeedsDisplay];
-    
+    _cursorTypeOverrideChanged = NO;
+
     [self retain];
-    [dict retain];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 / 15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self setSessionSpecificProfileValues:dict];
+        if (!self->_cursorTypeOverrideChanged) {
+            self.cursorTypeOverride = savedCursorTypeOverride;
+        }
         self->_showingVisualIndicatorForEsc = NO;
-        [dict release];
         [self release];
     });
 }
@@ -8605,6 +8625,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];
+    self.cursorTypeOverride = nil;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
 }
@@ -8622,11 +8643,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenSetCursorType:(ITermCursorType)type {
+- (void)screenSetCursorType:(ITermCursorType)newType {
+    ITermCursorType type = newType;
     if (type == CURSOR_DEFAULT) {
-        type = [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:_profile];
+        self.cursorTypeOverride = nil;
+    } else {
+        self.cursorTypeOverride = [@(type) retain];
     }
-    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TYPE : @(type) }];
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {
