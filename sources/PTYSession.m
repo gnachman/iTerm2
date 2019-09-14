@@ -7642,9 +7642,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     if (_commandRange.start.x < 0) {
-        // Not at a command prompt; no restrictions.
-        *verticalOk = YES;
-        return YES;
+        if (_terminal.softAlternateScreenMode) {
+            // In an interactive app. No restrictions.
+            *verticalOk = YES;
+            return YES;
+        } else {
+            // Possibly at a command prompt without shell integration or in some other command line
+            // app that may be using readline. No vertical movement.
+            *verticalOk = NO;
+            return YES;
+        }
     } else {
         // At the command prompt. Ok to move to any char within current command, but no up or down
         // arrows please.
