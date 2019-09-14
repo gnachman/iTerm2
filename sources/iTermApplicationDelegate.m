@@ -1440,8 +1440,8 @@ static BOOL hasBecomeActive = NO;
     [closeWindow setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
 }
 
-- (void)updateAddressBookMenu:(NSNotification*)aNotification {
-    DLog(@"Updating address book menu"); // aka Profiles menu
+- (void)updateAddressBookMenu:(NSNotification *)aNotification {
+    DLog(@"Updating Profile menu");
     JournalParams params;
     if ([iTermAdvancedSettingsModel openProfilesInNewWindow]) {
         params.selector = @selector(newSessionInWindowAtIndex:);
