@@ -1443,7 +1443,7 @@ static BOOL hasBecomeActive = NO;
 - (void)updateAddressBookMenu:(NSNotification*)aNotification {
     DLog(@"Updating address book menu"); // aka Profiles menu
     JournalParams params;
-    if( [iTermAdvancedSettingsModel openProfilesInNewWindow] ) {
+    if ([iTermAdvancedSettingsModel openProfilesInNewWindow]) {
         params.selector = @selector(newSessionInWindowAtIndex:);
         params.alternateSelector = @selector(newSessionInTabAtIndex:);
         [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
