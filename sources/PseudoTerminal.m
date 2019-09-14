@@ -7651,7 +7651,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     NSString *oldCWD = nil;
     /* Get currently selected tabviewitem */
     if ([self currentSession]) {
-        oldCWD = [[[self currentSession] shell] getWorkingDirectory];
+        oldCWD = self.currentSession.currentLocalWorkingDirectoryOrInitialDirectory;
     }
 
     if ([[ProfileModel sessionsInstance] bookmarkWithGuid:theBookmark[KEY_GUID]]) {
@@ -9860,7 +9860,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if (currentSession) {
         DLog(@"Getting current local working directory");
-        previousDirectory = [currentSession currentLocalWorkingDirectory];
+        previousDirectory = currentSession.currentLocalWorkingDirectoryOrInitialDirectory;
     }
 
     iTermObjectType objectType;

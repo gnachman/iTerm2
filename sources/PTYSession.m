@@ -10111,6 +10111,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
+- (NSString *)currentLocalWorkingDirectoryOrInitialDirectory {
+    DLog(@"currentLocalWorkingDirectory=%@ environment[pwd]=%@", self.currentLocalWorkingDirectory, self.environment[@"PWD"]);
+    return self.currentLocalWorkingDirectory ?: self.environment[@"PWD"];
+}
+
 - (NSString *)currentLocalWorkingDirectory {
     if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
         DLog(@"Last directory is unsuitable or nil");
