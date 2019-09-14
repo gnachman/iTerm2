@@ -1771,6 +1771,10 @@ static const int kDragThreshold = 3;
         // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
         // because drags are ignored for those.
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+
+        if (event.clickCount == 1 && !cmdPressed && !shiftPressed) {
+            [_selection clearSelection];
+        }
     }
 
     [_mouseDownEvent autorelease];
