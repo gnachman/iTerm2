@@ -2106,6 +2106,33 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// For a million years macOS did not have tabs. So I made my own half-assed tabs.
+// Then they finally got around to adding tabs and, even though this app opts out of their
+// tabs (because they can't do half of what I need), they still add garbage disabled menu items to
+// the window menu that conflict with longstanding shortcuts.
+// I can't seem to prevent "Show Next/Previous Tab" from being added to the menu, and I already have
+// the previously-standard shortcuts to switch tabs in the menu (as cmd-shift [ and ]) which I cannot
+// change. So rather than have dead menu items I implement these methods to do what the default shortcut
+// has always done. Of course this is different than the standard for macOS apps but I can't very
+// well remove the existing menu items since people are used to their shortcuts; I don't want to
+// remove them from the menu because people may have "perform menu item" keyboard shortcuts; and
+// I certainly don't want dead menu items in my window menu. (╯°□°)╯︵ ┻━┻
+- (IBAction)selectNextTab:(nullable id)sender {
+    [[self tabView] cycleForwards:YES];
+}
+
+- (IBAction)selectPreviousTab:(nullable id)sender {
+    [[self tabView] cycleForwards:NO];
+}
+
+// More magic cocoa poop.
+- (IBAction)moveTabToNewWindow:(nullable id)sender {
+    PTYTab *tab = [self currentTab];
+    if (tab) {
+        [self it_moveTabToNewWindow:tab];
+    }
+}
+
 - (IBAction)previousTab:(id)sender {
     [_contentView.tabView previousTab:sender];
 }

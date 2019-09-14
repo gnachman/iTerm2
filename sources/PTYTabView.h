@@ -49,5 +49,6 @@
 // Handle cycle forwards/cycle backwards actions, often bound to ctrl-tab and ctrl-shift-tab.
 - (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards;
 - (void)cycleFlagsChanged:(NSUInteger)modifierFlags;
+- (void)cycleForwards:(BOOL)forwards;
 
 @end
