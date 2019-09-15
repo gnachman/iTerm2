@@ -5343,7 +5343,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
 
-    
     [self updateTmuxTitleMonitor];
 }
 

@@ -712,6 +712,13 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         return profile[key];
     }
 
+    // Default to showing session name in tmux profile for backward compatibility with 3.3.0-3.3.2 and
+    // earlier (issue 8255).
+    NSString *name = profile[KEY_NAME];
+    if ([name isEqualToString:@"tmux"]) {
+        return @(iTermTitleComponentsSessionName);
+    }
+
     // Respect any existing now-deprecated settings.
     NSNumber *stickyNumber = [[NSUserDefaults standardUserDefaults] objectForKey:KEY_SYNC_TITLE_DEPRECATED];
     NSNumber *showJobNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowJobName_Deprecated];
