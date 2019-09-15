@@ -281,6 +281,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useOpenDirectory;
 + (BOOL)useSystemCursorWhenPossible;
 + (BOOL)useUnevenTabs;
++ (BOOL)openProfilesInNewWindow;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
 + (CGFloat)verticalBarCursorWidth;

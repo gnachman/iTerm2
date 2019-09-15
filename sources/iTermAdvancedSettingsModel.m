@@ -179,6 +179,7 @@ DEFINE_BOILERPLATE(name, NSString *, kiTermAdvancedSettingTypeString, theDefault
 
 #define SECTION_TABS @"Tabs: "
 
+DEFINE_BOOL(openProfilesInNewWindow, NO, SECTION_TABS @"Choosing a profile from the “Profiles” menu opens a new window.\nYou must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(useUnevenTabs, NO, SECTION_TABS @"Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, SECTION_TABS @"Minimum tab width when using uneven tab widths.");
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS @"Minimum tab width when using uneven tab widths for compact tabs.");
