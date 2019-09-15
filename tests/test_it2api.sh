@@ -1,6 +1,6 @@
 #!/bin/bash
 PYTHON=python3.7
-PYTHONPATH=`pwd`../library/python/iterm2/iterm2
+PYTHONPATH=`pwd`../api/library/python/iterm2/iterm2
 APP=~/iterm2-website/source/utilities/it2api
 
 function expect_contains() {
