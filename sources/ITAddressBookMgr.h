@@ -304,7 +304,8 @@ typedef enum {
     WINDOW_TYPE_COMPACT = 13,  // May be converted to normal depending on theme
     WINDOW_TYPE_ACCESSORY = 14,
 
-    WINDOW_TYPE_MAXIMIZED = 15
+    WINDOW_TYPE_MAXIMIZED = 15,
+    WINDOW_TYPE_COMPACT_MAXIMIZED = 16
 } iTermWindowType;
 
 iTermWindowType iTermWindowDefaultType(void);

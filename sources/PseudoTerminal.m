@@ -180,6 +180,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     return frameToCenter;
 }
 
+static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
+    return windowType == WINDOW_TYPE_COMPACT || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED;
+}
+
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
     iTermObject,
@@ -466,6 +470,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             return NO;
 
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return YES;
 
         case WINDOW_TYPE_MAXIMIZED:
@@ -518,6 +523,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskResizable);
+
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return (mask |
+                    NSWindowStyleMaskFullSizeContentView |
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskTexturedBackground);
 
         case WINDOW_TYPE_MAXIMIZED:
             return (mask |
@@ -674,6 +687,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                                              windowType:windowType
                                                           defaultScreen:[[self window] screen]];
     switch (windowType) {
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
@@ -721,6 +735,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             initialFrame = [screen visibleFrameIgnoringHiddenDock];
             break;
 
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
             initialFrame = [screen visibleFrame];
 
@@ -970,6 +985,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LION_FULL_SCREEN:
             style = @"native full screen";
             break;
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            style = @"compact maximized";
+            break;
         case WINDOW_TYPE_MAXIMIZED:
             style = @"maximized";
             break;
@@ -1184,7 +1202,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.anyFullScreen) {
         return NO;
     }
-    if (self.windowType != WINDOW_TYPE_COMPACT) {
+    if (!iTermWindowTypeIsCompact(self.windowType)) {
         return NO;
     }
     if (self.tabBarShouldBeVisible) {
@@ -1340,6 +1358,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
@@ -1370,11 +1389,6 @@ ITERM_WEAKLY_REFERENCEABLE
             newWindowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
             break;
             
-        case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_COMPACT:
-            savedWindowType = newWindowType = self.windowType;
-            break;
-
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
@@ -1394,8 +1408,11 @@ ITERM_WEAKLY_REFERENCEABLE
             savedWindowType = newWindowType = WINDOW_TYPE_ACCESSORY;
             break;
 
-        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_NO_TITLE_BAR:
             savedWindowType = newWindowType = self.windowType;
     }
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
@@ -1424,6 +1441,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -1589,6 +1607,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 DLog(@"Returning YES");
                 return YES;
             case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_TOP:
             case WINDOW_TYPE_LEFT:
             case WINDOW_TYPE_RIGHT:
@@ -1707,6 +1726,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return PTYWindowTitleBarFlavorZeroPoints;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_BOTTOM:
@@ -1744,7 +1764,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setWindowType:(iTermWindowType)windowType {
     if (@available(macOS 10.14, *)) {
         _windowType = iTermThemedWindowType(windowType);
-    } else if (iTermThemedWindowType(windowType) == WINDOW_TYPE_COMPACT) {
+    } else if (iTermWindowTypeIsCompact(iTermThemedWindowType(windowType))) {
         // Requires layer support
         _windowType = WINDOW_TYPE_NO_TITLE_BAR;
     } else {
@@ -2381,6 +2401,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
             rect = virtualScreenFrame;
             break;
@@ -2659,6 +2680,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
 
                 case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_NORMAL:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -3494,6 +3516,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -3744,6 +3767,8 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            PtyLog(@"Window type = MAXIMIZED or COMPACT_MAXIMIZED");
             return [screen visibleFrame];
  
         case WINDOW_TYPE_NORMAL:
@@ -3899,6 +3924,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
@@ -3919,6 +3945,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -3932,7 +3959,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)enableStoplightHotbox {
-    if (self.windowType != WINDOW_TYPE_COMPACT) {
+    if (!iTermWindowTypeIsCompact(self.windowType)) {
         return NO;
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -3953,7 +3980,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (exitingLionFullscreen_) {
             effectiveWindowType = self.savedWindowType;
         }
-        if (effectiveWindowType != WINDOW_TYPE_COMPACT) {
+        if (!iTermWindowTypeIsCompact(effectiveWindowType)) {
             return NSEdgeInsetsZero;
         }
         if (!exitingLionFullscreen_) {
@@ -4607,11 +4634,12 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return YES;
             break;
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            return iTermThemedWindowType(savedWindowType) == WINDOW_TYPE_COMPACT;
+            return iTermWindowTypeIsCompact(iTermThemedWindowType(savedWindowType));
     }
     return NO;
 }
@@ -4918,8 +4946,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
     [self.window makeFirstResponder:[[self currentSession] textview]];
-    if (self.savedWindowType == WINDOW_TYPE_COMPACT ||
-        self.windowType == WINDOW_TYPE_COMPACT) {
+    if (iTermWindowTypeIsCompact(self.savedWindowType) ||
+        iTermWindowTypeIsCompact(self.windowType)) {
         [self didChangeCompactness];
     }
     [self refreshTools];
@@ -4949,6 +4977,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -5040,6 +5069,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
 
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return [self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
 
         case WINDOW_TYPE_ACCESSORY:
@@ -5762,6 +5792,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NO;
 
@@ -6136,6 +6167,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     break;
             }
@@ -6305,6 +6337,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
 
                 case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6331,6 +6364,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     }
                     break;
                 case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6362,6 +6396,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
                 }
                 case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_TOP:
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
@@ -6591,6 +6626,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -6626,6 +6662,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_BOTTOM:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 return YES;
         }
         return NO;
@@ -6648,6 +6685,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 return YES;
         }
         return NO;
@@ -8302,8 +8340,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (_updatingWindowType) {
         return;
     }
-    assert(_windowType == WINDOW_TYPE_NORMAL || _windowType == WINDOW_TYPE_COMPACT);
-    assert(self.windowType == WINDOW_TYPE_NORMAL || self.windowType == WINDOW_TYPE_COMPACT);
+    assert(_windowType == WINDOW_TYPE_NORMAL || _windowType == WINDOW_TYPE_COMPACT || _windowType == WINDOW_TYPE_MAXIMIZED || _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
+    assert(self.windowType == WINDOW_TYPE_NORMAL || self.windowType == WINDOW_TYPE_COMPACT || self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
 
     _updatingWindowType = YES;
     [self updateWindowForWindowType:self.windowType];
@@ -8437,7 +8475,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         return NO;
     }
-    if (effectiveWindowType == WINDOW_TYPE_COMPACT) {
+    if (iTermWindowTypeIsCompact(effectiveWindowType)) {
         return YES;
     }
 
@@ -8487,8 +8525,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
         return NO;
     }
-    if (self.windowType != WINDOW_TYPE_COMPACT &&
-        self.savedWindowType != WINDOW_TYPE_COMPACT) {
+    if (!iTermWindowTypeIsCompact(self.windowType) &&
+        !iTermWindowTypeIsCompact(self.savedWindowType)) {
         return NO;
     }
 
@@ -8532,6 +8570,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -8577,7 +8616,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.anyFullScreen) {
         return NO;
     }
-    return self.windowType == WINDOW_TYPE_COMPACT;
+    return iTermWindowTypeIsCompact(self.windowType);
 }
 
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController {
@@ -8817,7 +8856,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (!self.shouldShowBorder) {
         return NO;
     }
-    if (self.windowType == WINDOW_TYPE_COMPACT) {
+    if (iTermWindowTypeIsCompact(self.windowType)) {
         return YES;
     }
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
@@ -9910,7 +9949,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)iTermTabBarCanDragWindow {
-    return (self.windowType == WINDOW_TYPE_COMPACT);
+    return iTermWindowTypeIsCompact(self.windowType);
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {
