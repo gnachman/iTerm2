@@ -9,6 +9,9 @@
 #import "SplitPanel.h"
 #import "ProfileListView.h"
 
+@interface SplitPanel ()<ProfileListViewDelegate>
+@end
+
 @implementation SplitPanel
 
 @synthesize parent = parent_;
@@ -82,7 +85,7 @@
     [self _close];
 }
 
-#pragma mark BookmarkListView delegate methods
+#pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable
 {
@@ -95,6 +98,11 @@
 
 - (void)profileTableRowSelected:(id)profileTable
 {
+    NSString *guid = [bookmarks_ selectedGuid];
+    if (guid) {
+        self.guid = guid;
+        [self _close];
+    }
 }
 
 @end
