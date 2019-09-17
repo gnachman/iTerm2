@@ -135,6 +135,12 @@
     return @"\\ ()\"&'!$<>;|*?[]#`\t{}";
 }
 
+- (NSString *)stringWithBackslashEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {
+    NSMutableString *aMutableString = [[NSMutableString alloc] initWithString:self];
+    [aMutableString escapeShellCharactersWithBackslashIncludingNewlines:includingNewlines];
+    return [NSString stringWithString:aMutableString];
+}
+
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSMutableString *aMutableString = [[NSMutableString alloc] initWithString:self];
     [aMutableString escapeShellCharactersIncludingNewlines:includingNewlines];
@@ -2196,7 +2202,30 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
-    NSString* charsToEscape = [NSString shellEscapableCharacters];
+    if ([iTermAdvancedSettingsModel escapeWithQuotes]) {
+        [self escapeShellCharactersWithSingleQuotesIncludingNewlines:includingNewlines];
+    } else {
+        [self escapeShellCharactersWithBackslashIncludingNewlines:includingNewlines];
+    }
+}
+
+- (void)escapeShellCharactersWithSingleQuotesIncludingNewlines:(BOOL)includingNewlines {
+    // Only need to escape single quote and backslash in a single-quoted string
+    NSMutableString *charsToEscape = [@"\\'" mutableCopy];
+    NSMutableCharacterSet *charsToSearch = [NSMutableCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
+    if (includingNewlines) {
+        [charsToEscape appendString:@"\r\n"];
+        [charsToSearch addCharactersInString:@"\r\n"];
+    }
+    if ([self rangeOfCharacterFromSet:charsToSearch].location != NSNotFound) {
+        [self escapeCharacters:charsToEscape];
+        [self insertString:@"'" atIndex:0];
+        [self appendString:@"'"];
+    }
+}
+
+- (void)escapeShellCharactersWithBackslashIncludingNewlines:(BOOL)includingNewlines {
+    NSString *charsToEscape = [NSString shellEscapableCharacters];
     if (includingNewlines) {
         charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
     }
@@ -2205,8 +2234,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (void)escapeCharacters:(NSString *)charsToEscape {
     for (int i = 0; i < [charsToEscape length]; i++) {
-        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
-        NSString* after = [@"\\" stringByAppendingString:before];
+        NSString *before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
+        NSString *after = [@"\\" stringByAppendingString:before];
         [self replaceOccurrencesOfString:before
                               withString:after
                                  options:0

@@ -65,7 +65,7 @@ static NSString* kParameterKey = @"parameter";
         case kRunCommandContextMenuAction:
         case kRunCommandInWindowContextMenuAction:
         case kRunCoprocessContextMenuAction:
-            return [parameter stringWithEscapedShellCharactersIncludingNewlines:NO];
+            return [parameter stringWithBackslashEscapedShellCharactersIncludingNewlines:NO];
         case kOpenFileContextMenuAction:
             return parameter;
         case kOpenUrlContextMenuAction: {

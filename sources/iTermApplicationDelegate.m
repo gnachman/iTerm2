@@ -2059,9 +2059,9 @@ static BOOL hasBecomeActive = NO;
          if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
              return;
          }
-         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
+         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
          NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-         NSString *bannerArg = [NSString stringWithFormat:@"--banner=\\\"`cat %@`\\\"", [bannerURL.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+         NSString *bannerArg = [NSString stringWithFormat:@"--banner=\\\"`cat %@`\\\"", [bannerURL.path stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
          NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
          NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
          [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython

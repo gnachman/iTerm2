@@ -75,7 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
                 NSArray<NSString *> *moduleArgs = [_args subarrayFromIndex:i];
                 _module = [moduleArgs componentsJoinedByString:@" "];
                 _escapedModule = [[moduleArgs mapWithBlock:^id(NSString *anObject) {
-                    return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+                    return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
                 }] componentsJoinedByString:@" "];
                 return;
             }
@@ -114,15 +114,15 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)escapedScript {
-    return [_script stringWithEscapedShellCharactersIncludingNewlines:YES];
+    return [_script stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 
 - (NSString *)escapedStatement {
-    return [_statement stringWithEscapedShellCharactersIncludingNewlines:YES];
+    return [_statement stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 
 - (NSString *)escapedFullPythonPath {
-    return [_fullPythonPath stringWithEscapedShellCharactersIncludingNewlines:YES];
+    return [_fullPythonPath stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 
 @end

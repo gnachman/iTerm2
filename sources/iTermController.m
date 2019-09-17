@@ -1401,9 +1401,9 @@ static iTermController *gSharedInstance;
                              arguments:(NSArray<NSString *> *)arguments
                        escapeArguments:(BOOL)escapeArguments {
     NSArray<NSString *> *const escapedArguments = escapeArguments ? [arguments mapWithBlock:^id(NSString *anObject) {
-        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+        return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     }] : arguments;
-    NSString *const escapedCommand = [command stringWithEscapedShellCharactersIncludingNewlines:YES];
+    NSString *const escapedCommand = [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     NSArray<NSString *> *const combinedArray = [@[escapedCommand] arrayByAddingObjectsFromArray:escapedArguments];
     NSString *const commandLine = [combinedArray componentsJoinedByString:@" "];
     return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];

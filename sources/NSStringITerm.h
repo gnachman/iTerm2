@@ -75,7 +75,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Returns the number of lines in a string.
 - (NSUInteger)numberOfLines;
+// May use single quotes by user preference. Only safe to use with user's default shell.
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
+// Always uses backslash.
+- (NSString *)stringWithBackslashEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
 - (NSString *)stringWithEscapedShellCharactersExceptTabAndNewline;
 
 // Replaces tab with ^V + tab.
@@ -314,6 +317,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Puts backslashes before characters in shellEscapableCharacters.
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines;
+- (void)escapeShellCharactersWithBackslashIncludingNewlines:(BOOL)includingNewlines;
 - (void)escapeShellCharactersExceptTabAndNewline;
 
 // Convenience method to append a single character.

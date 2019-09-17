@@ -519,8 +519,8 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 + (NSString *)shellLauncherCommand {
     return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell",
             [self hushlogin] ? @"q" : @"",
-            [NSUserName() stringWithEscapedShellCharactersIncludingNewlines:YES],
-            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+            [[[NSBundle mainBundle] executablePath] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
 }
 
 + (NSString*)loginShellCommandForBookmark:(Profile*)profile
@@ -565,7 +565,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 
 + (NSString *)standardLoginCommand {
     return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",
-            [NSUserName() stringWithEscapedShellCharactersIncludingNewlines:YES]];
+            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark

@@ -261,7 +261,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     NSArray<NSString *> *fallbackParts = @[ emacs ];
     NSString *fallback = [[fallbackParts mapWithBlock:^id(NSString *anObject) {
-        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+        return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     }] componentsJoinedByString:@" "];
     
     // Run emacsclient -a "emacs <args>" <args>

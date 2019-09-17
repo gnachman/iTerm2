@@ -163,7 +163,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 
     if (flags & kPasteFlagsEscapeSpecialCharacters) {
-        // Put backslash before anything the shell might interpret.
+        // Escape/quote anything the shell might interpret..
         if (pasteEvent.tabTransform != kTabTransformEscapeWithCtrlV) {
             theString = [theString stringWithEscapedShellCharactersIncludingNewlines:NO];
         } else {

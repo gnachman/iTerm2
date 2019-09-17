@@ -278,9 +278,9 @@
     NSString *pip3 = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]
                                                              pythonVersion:_pythonVersion];
     NSString *command =
-    [[pip3 stringWithEscapedShellCharactersIncludingNewlines:YES]
+    [[pip3 stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
      stringByAppendingFormat:@" %@", [[arguments mapWithBlock:^id(NSString *anObject) {
-        return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+        return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     }] componentsJoinedByString:@" "]];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:command
                                                                  actions:@[ @"OK", @"Cancel" ]
