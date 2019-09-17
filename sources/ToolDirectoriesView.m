@@ -52,9 +52,7 @@ static const CGFloat kHelpMargin = 5;
         [searchField_ sizeToFit];
         searchField_.autoresizingMask = NSViewWidthSizable;
         searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
-        ITERM_IGNORE_PARTIAL_BEGIN
         [searchField_ setDelegate:self];
-        ITERM_IGNORE_PARTIAL_END
         [self addSubview:searchField_];
 
         help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
@@ -91,6 +89,7 @@ static const CGFloat kHelpMargin = 5;
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         NSTableColumn *col;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"directories"] autorelease];
+        [[col dataCell] setFont:[NSFont fontWithName:@"Menlo" size:11]];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [tableView_ setHeaderView:nil];

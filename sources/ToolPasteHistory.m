@@ -25,11 +25,16 @@ static const CGFloat kMargin = 4;
     PasteboardHistory *pasteHistory_;
     NSTimer *minuteRefreshTimer_;
     BOOL shutdown_;
+    NSMutableParagraphStyle *_paragraphStyle;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        _paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+        _paragraphStyle.allowsDefaultTighteningForTruncation = NO;
+
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [clear_ setButtonType:NSMomentaryPushInButton];
         [clear_ setTitle:@"Clear All"];
@@ -52,10 +57,10 @@ static const CGFloat kMargin = 4;
         }
         
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-        NSTableColumn *col;
-        col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
+        NSTableColumn *col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
+        [[col headerCell] setStringValue:@"Values"];
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
@@ -139,10 +144,16 @@ static const CGFloat kMargin = 4;
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
     }
 
-    NSString *value = [self stringForTableColumn:tableColumn row:row];
-    result.stringValue = value;
+    NSAttributedString *value = [self attributedStringForTableColumn:tableColumn row:row];
+    result.attributedStringValue = value;
 
     return result;
+}
+
+- (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
+    return [[NSAttributedString alloc] initWithString:[self stringForTableColumn:aTableColumn row:rowIndex]
+                                           attributes:@{NSFontAttributeName: [NSFont fontWithName:@"Menlo" size:11],
+                                                        NSParagraphStyleAttributeName: _paragraphStyle }];
 }
 
 - (NSString *)stringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {

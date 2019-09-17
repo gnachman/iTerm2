@@ -16,6 +16,7 @@
 #import "iTermToolbeltView.h"
 #import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "ToolCommandHistoryView.h"
@@ -96,7 +97,7 @@ static const CGFloat kButtonHeight = 23;
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Contents"];
-        NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        NSFont *theFont = [NSFont fontWithName:@"Menlo" size:11];
         [[col dataCell] setFont:theFont];
         tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
@@ -252,11 +253,20 @@ static const CGFloat kButtonHeight = 23;
     return filteredEntries_.count;
 }
 
-- (id)tableView:(NSTableView *)aTableView
-        objectValueForTableColumn:(NSTableColumn *)aTableColumn
-                              row:(NSInteger)rowIndex {
-    CapturedOutput *capturedOutput = filteredEntries_[rowIndex];
-    return [self labelForCapturedOutput:capturedOutput];
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    static NSString *const identifier = @"ToolCapturedOutputEntryIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.font = [NSFont fontWithName:@"Menlo" size:11];
+    }
+
+    CapturedOutput *capturedOutput = filteredEntries_[row];
+    NSString *value = [self labelForCapturedOutput:capturedOutput];
+    result.stringValue = value;
+    result.toolTip = value;
+
+    return result;
 }
 
 - (NSString *)labelForCapturedOutput:(CapturedOutput *)capturedOutput {

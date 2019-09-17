@@ -45,14 +45,13 @@ static const CGFloat kHelpMargin = 5;
     if (self) {
         _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         _paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+        _paragraphStyle.allowsDefaultTighteningForTruncation = NO;
 
         searchField_ = [[iTermSearchField alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, 1)];
         [searchField_ sizeToFit];
         searchField_.autoresizingMask = NSViewWidthSizable;
         searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
-        ITERM_IGNORE_PARTIAL_BEGIN
         [searchField_ setDelegate:self];
-        ITERM_IGNORE_PARTIAL_END
         [self addSubview:searchField_];
 
         help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
@@ -111,7 +110,7 @@ static const CGFloat kHelpMargin = 5;
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         // Save the bold version of the table's default font
-        boldFont_ = [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]];
+        boldFont_ = [NSFont fontWithName:@"Menlo Bold" size:11];
 
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -220,7 +219,8 @@ static const CGFloat kHelpMargin = 5;
                                                                  NSParagraphStyleAttributeName: _paragraphStyle }];
         } else {
             return [[NSAttributedString alloc] initWithString:value
-                                                   attributes:@{ NSParagraphStyleAttributeName: _paragraphStyle }];
+                                                   attributes:@{NSFontAttributeName: [NSFont fontWithName:@"Menlo" size:11],
+                                                                NSParagraphStyleAttributeName: _paragraphStyle }];
         }
     }
 }
