@@ -88,6 +88,9 @@
 static NSDictionary *globalKeyMap;
 static NSDictionary *globalTouchBarMap;
 static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
+NSString *const iTermKeyBindingDictionaryKeyAction = @"Action";
+NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
+NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
 
 @implementation iTermKeyBindingMgr
 
@@ -348,7 +351,7 @@ exit:
 }
 
 + (NSString *)touchBarLabelForBinding:(NSDictionary *)binding {
-    return binding[@"Label"] ?: @"?";
+    return binding[iTermKeyBindingDictionaryKeyLabel] ?: @"?";
 }
 
 + (NSString *)formatAction:(NSDictionary *)keyInfo
@@ -357,8 +360,8 @@ exit:
     int action;
     NSString *auxText;
 
-    action = [[keyInfo objectForKey: @"Action"] intValue];
-    auxText = [keyInfo objectForKey: @"Text"];
+    action = [[keyInfo objectForKey:iTermKeyBindingDictionaryKeyAction] intValue];
+    auxText = [keyInfo objectForKey:iTermKeyBindingDictionaryKeyParameter];
 
     switch (action) {
         case KEY_ACTION_MOVE_TAB_LEFT:
@@ -668,9 +671,9 @@ exit:
     }
 
     // parse the mapping
-    retCode = [[theKeyMapping objectForKey: @"Action"] intValue];
+    retCode = [[theKeyMapping objectForKey:iTermKeyBindingDictionaryKeyAction] intValue];
     if (text != nil) {
-        *text = [theKeyMapping objectForKey: @"Text"];
+        *text = [theKeyMapping objectForKey:iTermKeyBindingDictionaryKeyParameter];
     }
     return retCode;
 }
@@ -741,11 +744,11 @@ exit:
 }
 
 + (int)actionForTouchBarItemBinding:(NSDictionary *)binding {
-    return [binding[@"Action"] intValue];
+    return [binding[iTermKeyBindingDictionaryKeyAction] intValue];
 }
 
 + (NSString *)parameterForTouchBarItemBinding:(NSDictionary *)binding {
-    return binding[@"Text"];
+    return binding[iTermKeyBindingDictionaryKeyParameter];
 }
 
 + (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict {
@@ -852,8 +855,8 @@ exit:
     NSMutableDictionary* keyBinding =
         [[[NSMutableDictionary alloc] init] autorelease];
     [keyBinding setObject:[NSNumber numberWithInt:actionIndex]
-                   forKey:@"Action"];
-    [keyBinding setObject:[[valueToSend copy] autorelease] forKey:@"Text"];
+                   forKey:iTermKeyBindingDictionaryKeyAction];
+    [keyBinding setObject:[[valueToSend copy] autorelease] forKey:iTermKeyBindingDictionaryKeyParameter];
     if (origKeyCombo) {
         [km removeObjectForKey:origKeyCombo];
     }
@@ -901,11 +904,11 @@ exit:
                    value:(NSString *)parameter
                    label:(NSString *)label {
     NSMutableDictionary *binding = [NSMutableDictionary dictionary];
-    binding[@"Action"] = @(action);
+    binding[iTermKeyBindingDictionaryKeyAction] = @(action);
     if (parameter) {
-        binding[@"Text"] = parameter;
+        binding[iTermKeyBindingDictionaryKeyParameter] = parameter;
     }
-    binding[@"Label"] = label ?: @"?";
+    binding[iTermKeyBindingDictionaryKeyLabel] = label ?: @"?";
     dict[key] = binding;
 }
 
@@ -1238,13 +1241,13 @@ exit:
 
     // Search for a keymapping with an action that references a profile.
     [keyboardMap enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull keyMap, BOOL * _Nonnull stop) {
-        int action = [keyMap[@"Action"] intValue];
+        int action = [keyMap[iTermKeyBindingDictionaryKeyAction] intValue];
         if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
             action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
             action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
             action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
             action == KEY_ACTION_SET_PROFILE) {
-            NSString *referencedGuid = keyMap[@"Text"];
+            NSString *referencedGuid = keyMap[iTermKeyBindingDictionaryKeyParameter];
             if ([referencedGuid isEqualToString:guid]) {
                 theKey = [[key copy] autorelease];
                 *stop = YES;
@@ -1282,13 +1285,13 @@ exit:
             change = NO;
             for (int i = 0; i < [mutableGlobalKeyMap count]; i++) {
                 NSDictionary* keyMap = [iTermKeyBindingMgr globalMappingAtIndex:i];
-                int action = [[keyMap objectForKey:@"Action"] intValue];
+                int action = [[keyMap objectForKey:iTermKeyBindingDictionaryKeyAction] intValue];
                 if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
                     action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
                     action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
                     action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
                     action == KEY_ACTION_SET_PROFILE) {
-                    NSString* referencedGuid = [keyMap objectForKey:@"Text"];
+                    NSString* referencedGuid = [keyMap objectForKey:iTermKeyBindingDictionaryKeyParameter];
                     if ([referencedGuid isEqualToString:guid]) {
                         mutableGlobalKeyMap = [iTermKeyBindingMgr removeMappingAtIndex:i
                                                                           inDictionary:mutableGlobalKeyMap];

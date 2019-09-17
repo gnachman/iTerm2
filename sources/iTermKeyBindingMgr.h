@@ -28,59 +28,14 @@
 #import "iTermTuple.h"
 #import "ProfileModel.h"
 
-// Key Definitions
-#define KEY_CURSOR_DOWN                 0
-#define KEY_CURSOR_LEFT                 1
-#define KEY_CURSOR_RIGHT                2
-#define KEY_CURSOR_UP                   3
-#define KEY_DEL                         4
-#define KEY_DELETE                      5
-#define KEY_END                         6
-#define KEY_F1                          7
-#define KEY_F2                          8
-#define KEY_F3                          9
-#define KEY_F4                          10
-#define KEY_F5                          11
-#define KEY_F6                          12
-#define KEY_F7                          13
-#define KEY_F8                          14
-#define KEY_F9                          15
-#define KEY_F10                         16
-#define KEY_F11                         17
-#define KEY_F12                         18
-#define KEY_F13                         19
-#define KEY_F14                         20
-#define KEY_F15                         21
-#define KEY_F16                         22
-#define KEY_F17                         23
-#define KEY_F18                         24
-#define KEY_F19                         25
-#define KEY_F20                         26
-#define KEY_HELP                        27
-#define KEY_HEX_CODE                    28
-#define KEY_HOME                        29
-#define KEY_NUMERIC_0                   30
-#define KEY_NUMERIC_1                   31
-#define KEY_NUMERIC_2                   32
-#define KEY_NUMERIC_3                   33
-#define KEY_NUMERIC_4                   34
-#define KEY_NUMERIC_5                   35
-#define KEY_NUMERIC_6                   36
-#define KEY_NUMERIC_7                   37
-#define KEY_NUMERIC_8                   38
-#define KEY_NUMERIC_9                   39
-#define KEY_NUMERIC_ENTER               40
-#define KEY_NUMERIC_EQUAL               41
-#define KEY_NUMERIC_DIVIDE              42
-#define KEY_NUMERIC_MULTIPLY            43
-#define KEY_NUMERIC_MINUS               44
-#define KEY_NUMERIC_PLUS                45
-#define KEY_NUMERIC_PERIOD              46
-#define KEY_NUMLOCK                     47
-#define KEY_PAGE_DOWN                   48
-#define KEY_PAGE_UP                     49
-#define KEY_INS                         50
+// Dictionary key for key binding giving the action (NSNumber). See KEY_ACTION below.
+extern NSString *const iTermKeyBindingDictionaryKeyAction;
 
+// Dictionary key for key binding giving the parameter to the action (NSString).
+extern NSString *const iTermKeyBindingDictionaryKeyParameter;
+
+// Dictionary key for touch bar giving the label to show on the touch bar.
+extern NSString *const iTermKeyBindingDictionaryKeyLabel;
 
 // Actions for key bindings
 typedef NS_ENUM(int, KEY_ACTION) {

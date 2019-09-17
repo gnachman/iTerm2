@@ -383,11 +383,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (NSDictionary *)keyMappingTouchBarItems {
-    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
-    if (!profile) {
-        return nil;
-    }
-    return [iTermKeyBindingMgr touchBarItemsForProfile:profile];
+    return nil;
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
@@ -403,21 +399,20 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     NSMutableDictionary *dict = [profile mutableCopy];
 
     if (isTouchBarItem) {
-        [iTermKeyBindingMgr setTouchBarItemWithKey:keyCombo toAction:action value:parameter label:label inProfile:dict];
-    } else {
-        if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
-            if (![self warnAboutOverride]) {
-                return;
-            }
-        }
-
-        [iTermKeyBindingMgr setMappingAtIndex:index
-                                       forKey:keyCombo
-                                       action:action
-                                        value:parameter
-                                    createNew:addition
-                                   inBookmark:dict];
+        return;
     }
+    if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyCombo]) {
+        if (![self warnAboutOverride]) {
+            return;
+        }
+    }
+
+    [iTermKeyBindingMgr setMappingAtIndex:index
+                                   forKey:keyCombo
+                                   action:action
+                                    value:parameter
+                                createNew:addition
+                               inBookmark:dict];
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];

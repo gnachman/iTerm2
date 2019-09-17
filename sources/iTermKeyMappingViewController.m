@@ -7,13 +7,18 @@
 //
 
 #import "iTermKeyMappingViewController.h"
+#import "DebugLogging.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermEditKeyActionWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPreferencesBaseViewController.h"
+#import "NSArray+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
+static NSString *const INTERCHANGE_KEY_MAPPING_DICT = @"Key Mappings";
+static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 @implementation iTermKeyMappingViewController {
     IBOutlet NSButton *_addTouchBarItem;
@@ -28,6 +33,8 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     iTermEditKeyActionWindowController *_editActionWindowController;
     IBOutlet NSButton *_touchBarMitigationsButton;
     IBOutlet NSPanel *_touchBarMitigationsPanel;
+    NSOpenPanel *_openPanel;
+    NSSavePanel *_savePanel;
 }
 
 - (instancetype)init {
@@ -99,11 +106,21 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
     NSArray* presetArray = [_delegate keyMappingPresetNames:self];
     if (presetArray) {
         [_presetsPopup addItemsWithTitles:presetArray];
-    } else {
-        [_presetsPopup setEnabled:NO];
-        [_presetsPopup setFont:[NSFont boldSystemFontOfSize:12]];
-        [_presetsPopup setStringValue:@"Error"];
     }
+    if (_presetsPopup.menu.itemArray.count) {
+        [_presetsPopup.menu addItem:[NSMenuItem separatorItem]];
+    }
+    NSMenuItem *item;
+    item = [[NSMenuItem alloc] initWithTitle:@"Import…"
+                                      action:@selector(importMenuItem:)
+                               keyEquivalent:@""];
+    item.target = self;
+    [_presetsPopup.menu addItem:item];
+    item = [[NSMenuItem alloc] initWithTitle:@"Export…"
+                                      action:@selector(exportMenuItem:)
+                               keyEquivalent:@""];
+    item.target = self;
+    [_presetsPopup.menu addItem:item];
 }
 
 - (void)hideAddTouchBarItem {
@@ -306,6 +323,120 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (IBAction)dismissTouchBarMitigations:(id)sender {
     [self.view.window endSheet:_touchBarMitigationsPanel];
+}
+
+#pragma mark - Import/Export
+
+- (void)importMenuItem:(id)sender {
+    _openPanel = [[NSOpenPanel alloc] init];
+    _openPanel.canChooseFiles = YES;
+    _openPanel.canChooseDirectories = NO;
+    _openPanel.allowsMultipleSelection = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_openPanel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
+        if (result == NSModalResponseOK) {
+            [weakSelf importFromOpenPanel];
+        }
+    }];
+}
+
+- (void)importFromOpenPanel {
+    NSURL *url = _openPanel.URL;
+    _openPanel = nil;
+    NSError *error = nil;
+    NSString *const content = [NSString stringWithContentsOfURL:url
+                                                       encoding:NSUTF8StringEncoding
+                                                          error:&error];
+    if (!content) {
+        XLog(@"%@", error);
+        NSBeep();
+        return;
+    }
+
+    id decoded = [NSJSONSerialization it_objectForJsonString:content error:&error];
+    if (!decoded) {
+        XLog(@"%@", error);
+        NSBeep();
+        return;
+    }
+
+    NSDictionary *dict = [NSDictionary castFrom:decoded];
+    NSDictionary *keymappings = [NSDictionary castFrom:dict[INTERCHANGE_KEY_MAPPING_DICT]];
+    for (NSString *key in keymappings) {
+        if (![key isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        NSDictionary *entry = [NSDictionary castFrom:keymappings[key]];
+
+        NSNumber *action = [NSNumber castFrom:entry[iTermKeyBindingDictionaryKeyAction]];
+        if (!action) {
+            continue;
+        }
+        NSString *parameter = [NSString castFrom:entry[iTermKeyBindingDictionaryKeyParameter]];
+        [self.delegate keyMapping:self
+                     didChangeKey:key
+                   isTouchBarItem:NO
+                          atIndex:NSNotFound
+                         toAction:[action intValue]
+                        parameter:parameter
+                            label:nil
+                       isAddition:YES];
+    }
+
+    NSDictionary *touchbarItems = [NSDictionary castFrom:dict[INTERCHANGE_TOUCH_BAR_ITEMS]];
+    for (id key in touchbarItems) {
+        if (![key isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        NSDictionary *entry = [NSDictionary castFrom:touchbarItems[key]];
+        if (!entry) {
+            continue;
+        }
+        
+        NSNumber *action = [NSNumber castFrom:entry[iTermKeyBindingDictionaryKeyAction]];
+        if (!action) {
+            continue;
+        }
+        NSString *label = [NSString castFrom:entry[iTermKeyBindingDictionaryKeyLabel]];
+        NSString *parameter = [NSString castFrom:entry[iTermKeyBindingDictionaryKeyParameter]];
+        [self.delegate keyMapping:self
+                     didChangeKey:key
+                   isTouchBarItem:YES
+                          atIndex:NSNotFound
+                         toAction:[action intValue]
+                        parameter:parameter
+                            label:label
+                       isAddition:YES];
+    }
+}
+
+- (void)exportMenuItem:(id)sender {
+    _savePanel = [NSSavePanel savePanel];
+    [_savePanel setAllowedFileTypes:@[ @"itermkeymap" ]];
+    __weak __typeof(self) weakSelf = self;
+    [_savePanel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
+        if (result == NSModalResponseOK) {
+            [weakSelf exportFromSavePanel];
+        }
+    }];
+}
+
+- (void)exportFromSavePanel {
+    NSURL *url = _savePanel.URL;
+    _savePanel = nil;
+
+    NSDictionary *const keymappings = [self.delegate keyMappingDictionary:self];
+    NSDictionary *const touchbarItems = [self.delegate keyMappingTouchBarItems];
+    NSDictionary *const dict = @{ INTERCHANGE_KEY_MAPPING_DICT: keymappings ?: @{},
+                                  INTERCHANGE_TOUCH_BAR_ITEMS: touchbarItems ?: @[] };
+    NSString *json = [NSJSONSerialization it_jsonStringForObject:dict];
+    NSError *error;
+    [json writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        XLog(@"%@", error);
+        NSBeep();
+        return;
+    }
 }
 
 @end

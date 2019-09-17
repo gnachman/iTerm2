@@ -475,6 +475,10 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                                       userInfo:nil];
 }
 
+- (void)keyMapping:(iTermKeyMappingViewController *)viewController setDictionary:(NSDictionary *)dict forKey:(NSString *)key {
+
+}
+
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
          removeKey:(NSString *)key
     isTouchBarItem:(BOOL)isTouchBarItem {
