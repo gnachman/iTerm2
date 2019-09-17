@@ -534,6 +534,7 @@ DEFINE_BOOL(workAroundNumericKeypadBug, YES, SECTION_EXPERIMENTAL @"Treat the eq
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, NO, SECTION_EXPERIMENTAL @"Allow variable window sizes in tmux integration");
 DEFINE_BOOL(aggressiveBaseCharacterDetection, NO, SECTION_EXPERIMENTAL @"Detect base unicode characters with lookup table.\nApple's algorithm for segmenting composed characters makes bad choices, such as for Tamil. Enable this to reduce text overlapping.");
 DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2ul really fast.");
+DEFINE_BOOL(escapeWithQuotes, NO, SECTION_EXPERIMENTAL @"Escape dragged file paths with single quotes instead of backslashes.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

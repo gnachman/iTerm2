@@ -2196,11 +2196,34 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
-    NSString* charsToEscape = [NSString shellEscapableCharacters];
-    if (includingNewlines) {
-        charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
+    if ([iTermAdvancedSettingsModel escapeWithQuotes]) {
+        // Only need to escape single quote and backslash in a single-quoted string
+        NSString* charsToEscape = @"\\'";
+        NSString* charsToSearch = [NSString shellEscapableCharacters];
+        if (includingNewlines) {
+            charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
+            charsToSearch = [charsToSearch stringByAppendingString:@"\r\n"];
+        }
+        bool didEscape = false;
+        for (int i = 0; i < [charsToSearch length]; i ++) {
+            if ([self containsString:[charsToSearch substringWithRange:NSMakeRange(i, 1)]]) {
+                didEscape = true;
+                break;
+            }
+        }
+        if (didEscape) {
+            [self escapeCharacters:charsToEscape];
+            [self insertString:@"'" atIndex:0];
+            [self appendString:@"'"];
+        }
+    } else {
+        NSString* charsToEscape = [NSString shellEscapableCharacters];
+        if (includingNewlines) {
+            charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
+        }
+        [self escapeCharacters:charsToEscape];
     }
-    [self escapeCharacters:charsToEscape];
+
 }
 
 - (void)escapeCharacters:(NSString *)charsToEscape {

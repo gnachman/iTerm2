@@ -92,6 +92,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)echoProbeDuration;
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
++ (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;
 + (double)extraSpaceBeforeCompactTopTabBar;
