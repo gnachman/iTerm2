@@ -1479,13 +1479,14 @@ static const int kDragThreshold = 3;
 }
 
 // Reset underlined chars indicating cmd-clickable url.
-- (void)removeUnderline {
+- (BOOL)removeUnderline {
     if (![self hasUnderline]) {
-        return;
+        return NO;
     }
     _drawingHelper.underlinedRange =
         VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
+    return YES;
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {

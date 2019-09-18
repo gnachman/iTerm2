@@ -8142,8 +8142,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self bury];
 }
 
-- (void)textViewShowHoverURL:(NSString *)url {
-    [_view setHoverURL:url];
+- (BOOL)textViewShowHoverURL:(NSString *)url {
+    return [_view setHoverURL:url];
 }
 
 - (BOOL)textViewCopyMode {

@@ -59,7 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Mouse Cursor
 
-- (void)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
+// Returns whether any change was made.
+- (BOOL)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
 - (BOOL)setCursor:(NSCursor *)cursor;
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
 

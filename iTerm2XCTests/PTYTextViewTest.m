@@ -2695,7 +2695,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return YES;
 }
 
-- (void)textViewShowHoverURL:(NSString *)url {
+- (BOOL)textViewShowHoverURL:(NSString *)url {
+    return NO;
 }
 
 - (BOOL)textViewInInteractiveApplication {

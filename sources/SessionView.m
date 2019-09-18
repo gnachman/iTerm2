@@ -40,7 +40,14 @@ static NSDate* lastResizeDate_;
 
 NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewWasSelectedForInspectionNotification";
 
+@interface iTermMTKView : MTKView
+@end
+
+@implementation iTermMTKView
+@end
+
 @interface iTermHoverContainerView : NSView
+@property (nonatomic, copy) NSString *url;
 @end
 
 @implementation iTermHoverContainerView
@@ -98,7 +105,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     BOOL _showBottomStatusBar;
     SessionTitleView *_title;
 
-    NSView *_hoverURLView;
+    iTermHoverContainerView *_hoverURLView;
     NSTextField *_hoverURLTextField;
 
     BOOL _useMetal;
@@ -397,8 +404,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self removeMetalView];
     }
     // Allocate a new metal view
-    _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                         device:[self metalDevice]];
+    _metalView = [[iTermMTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                              device:[self metalDevice]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
@@ -963,12 +970,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _hoverURLView != nil;
 }
 
-- (void)setHoverURL:(NSString *)url {
+- (BOOL)setHoverURL:(NSString *)url {
+    if ([NSObject object:url isEqualToObject:_hoverURLView.url]) {
+        return NO;
+    }
     if (_hoverURLView == nil) {
-        if (url == nil) {
-            return;
-        }
         _hoverURLView = [[iTermHoverContainerView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        _hoverURLView.url = url;
         _hoverURLTextField = [[NSTextField alloc] initWithFrame:_hoverURLView.bounds];
         [_hoverURLTextField setDrawsBackground:NO];
         [_hoverURLTextField setBordered:NO];
@@ -990,10 +998,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [_delegate sessionViewDidChangeHoverURLVisible:NO];
     } else {
         // _hoverurlView != nil && url != nil
+        _hoverURLView.url = url;
         [_hoverURLTextField setStringValue:url];
     }
 
     [self updateLayout];
+    return YES;
 }
 
 - (void)viewDidMoveToWindow {

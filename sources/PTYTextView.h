@@ -193,7 +193,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 // Describes the current user, host, and path.
 - (NSURL *)textViewCurrentLocation;
 - (void)textViewBurySession;
-- (void)textViewShowHoverURL:(NSString *)url;
+- (BOOL)textViewShowHoverURL:(NSString *)url;
 
 - (BOOL)textViewCopyMode;
 - (BOOL)textViewCopyModeSelecting;
@@ -460,8 +460,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Update the scroller color for light or dark backgrounds.
 - (void)updateScrollerForBackgroundColor;
 
-// Remove underline indicating clickable URL.
-- (void)removeUnderline;
+// Remove underline indicating clickable URL. Returns if it changed.
+- (BOOL)removeUnderline;
 
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.

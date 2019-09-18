@@ -225,7 +225,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)createSplitSelectionView;
 - (SplitSessionHalf)removeSplitSelectionView;
 
-- (void)setHoverURL:(NSString *)url;
+- (BOOL)setHoverURL:(NSString *)url;
 - (BOOL)hasHoverURL;
 - (void)reallyUpdateMetalViewFrame;
 - (void)invalidateStatusBar;
