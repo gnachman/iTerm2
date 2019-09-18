@@ -32,9 +32,10 @@
 #import "NSDateFormatterExtras.h"
 #import "NSStringITerm.h"
 #import "PopupModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
-#import "iTermAdvancedSettingsModel.h"
+#import "iTermSecureKeyboardEntryController.h"
 
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
@@ -234,6 +235,13 @@
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
+}
+
+- (NSString *)footerString {
+    if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]) {
+        return @"⚠️ Secure keyboard entry disables paste history.";
+    }
+    return nil;
 }
 
 - (void)pasteboardHistoryDidChange:(id)sender

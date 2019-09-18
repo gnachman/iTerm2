@@ -9,6 +9,7 @@
 
 #import "iTermCompetentTableRowView.h"
 #import "iTermController.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
@@ -22,6 +23,7 @@ static const CGFloat kMargin = 4;
     NSScrollView *scrollView_;
     NSTableView *tableView_;
     NSButton *clear_;
+    NSTextField *_secureKeyboardEntryWarning;
     PasteboardHistory *pasteHistory_;
     NSTimer *minuteRefreshTimer_;
     BOOL shutdown_;
@@ -44,7 +46,15 @@ static const CGFloat kMargin = 4;
         [clear_ sizeToFit];
         [clear_ setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:clear_];
-        [clear_ release];
+
+        _secureKeyboardEntryWarning = [NSTextField newLabelStyledTextField];
+        _secureKeyboardEntryWarning.stringValue = @"⚠️ Secure keyboard entry disables paste history.";
+        _secureKeyboardEntryWarning.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        _secureKeyboardEntryWarning.cell.truncatesLastVisibleLine = YES;
+        _secureKeyboardEntryWarning.hidden = ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
+        [self addSubview:_secureKeyboardEntryWarning];
+        [_secureKeyboardEntryWarning sizeToFit];
+        _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
         [scrollView_ setHasVerticalScroller:YES];
@@ -57,7 +67,7 @@ static const CGFloat kMargin = 4;
         }
         
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-        NSTableColumn *col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
+        NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Values"];
@@ -82,6 +92,10 @@ static const CGFloat kMargin = 4;
                                                  selector:@selector(pasteboardHistoryDidChange:)
                                                      name:kPasteboardHistoryDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(secureKeyboardEntryDidChange:)
+                                                     name:iTermDidToggleSecureInputNotification
+                                                   object:nil];
         minuteRefreshTimer_ = [NSTimer scheduledTimerWithTimeInterval:61
                                                                target:self
                                                              selector:@selector(pasteboardHistoryDidChange:)
@@ -94,11 +108,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [minuteRefreshTimer_ invalidate];
-    [tableView_ release];
-    [scrollView_ release];
-    [super dealloc];
 }
 
 - (void)shutdown {
@@ -117,8 +127,15 @@ static const CGFloat kMargin = 4;
 
 - (void)relayout {
     NSRect frame = self.frame;
-    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-    [scrollView_ setFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
+    [clear_ sizeToFit];
+    [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
+
+    _secureKeyboardEntryWarning.hidden = ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
+    _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
+
+    const CGFloat offset = _secureKeyboardEntryWarning.isHidden ? 0 : _secureKeyboardEntryWarning.frame.size.height + 4;
+    [scrollView_ setFrame:NSMakeRect(0, offset, frame.size.width, frame.size.height - kButtonHeight - kMargin - offset)];
+
     NSSize contentSize = [self contentSize];
     [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
@@ -128,7 +145,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -173,6 +190,10 @@ static const CGFloat kMargin = 4;
             return value;
         }
     }
+}
+
+- (void)secureKeyboardEntryDidChange:(NSNotification *)notification {
+    [self relayout];
 }
 
 - (void)pasteboardHistoryDidChange:(id)sender {

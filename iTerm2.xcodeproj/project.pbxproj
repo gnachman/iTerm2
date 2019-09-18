@@ -2585,6 +2585,7 @@
 		A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
+		A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		A699507721E33827009916BC /* iTermRawKeyMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A699507521E33827009916BC /* iTermRawKeyMapper.h */; };
 		A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A699507621E33827009916BC /* iTermRawKeyMapper.m */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
@@ -3074,7 +3075,6 @@
 		A6C763A51B45C52B00E3C992 /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
-		A6C763A81B45C52B00E3C992 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
@@ -12555,6 +12555,7 @@
 				5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
+				A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */,
 				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
@@ -12903,7 +12904,6 @@
 				A6C763891B45C52B00E3C992 /* ProfileModel.m in Sources */,
 				A6C762F31B45C52B00E3C992 /* DVRIndexEntry.m in Sources */,
 				A6C763311B45C52B00E3C992 /* iTermAnnouncementViewController.m in Sources */,
-				A6C763A81B45C52B00E3C992 /* ToolPasteHistory.m in Sources */,
 				A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */,
 				A62C3B361BCC265F00B5629D /* iTermHostRecordMO+Additions.m in Sources */,
 				A6C762EE1B45C52B00E3C992 /* IntervalTree.m in Sources */,

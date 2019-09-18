@@ -3,11 +3,13 @@
 #import "iTermPopupWindowController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSTextField+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PopupEntry.h"
 #import "PopupModel.h"
 #import "PopupWindow.h"
 #import "PTYTextView.h"
+#import "SolidColorView.h"
 #import "VT100Screen.h"
 
 #import <QuartzCore/QuartzCore.h>
@@ -43,6 +45,9 @@
 
     // True while reloading data.
     BOOL reloading_;
+
+    NSString *footerString_;
+    NSTextField *footerView_;
 }
 
 - (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model {
@@ -70,7 +75,37 @@
     [substring_ release];
     [model_ release];
     [tableView_ release];
+    [footerString_ release];
+    [footerView_ release];
     [super dealloc];
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    footerString_ = [[self footerString] copy];
+    if (!footerString_) {
+        return;
+    }
+
+    footerView_ = [NSTextField newLabelStyledTextField];
+    [self updateBackgroundColor];
+    footerView_.stringValue = footerString_;
+    [self.window.contentView addSubview:footerView_];
+    [footerView_ sizeToFit];
+    const CGFloat footerHeight = footerView_.frame.size.height;
+    footerView_.frame = NSMakeRect(0, 0, self.window.contentView.frame.size.width - footerHeight, footerHeight);
+    footerView_.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
+
+    NSRect frame = [[tableView_ enclosingScrollView] frame];
+    frame.size.height = MAX(0, frame.size.height - footerHeight);
+    frame.origin.y += footerHeight;
+    [[tableView_ enclosingScrollView] setFrame:frame];
+}
+
+- (void)updateBackgroundColor {
+    if (footerString_) {
+        self.window.backgroundColor = [NSColor whiteColor];
+    }
 }
 
 - (void)shutdown
@@ -88,6 +123,7 @@
 - (void)setTableView:(NSTableView *)table {
     [tableView_ autorelease];
     tableView_ = [table retain];
+    [self updateBackgroundColor];
 }
 
 - (BOOL)disableFocusFollowsMouse
@@ -234,6 +270,14 @@
     timer_ = nil;
 }
 
+- (CGFloat)desiredHeight {
+    CGFloat height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    if (footerView_) {
+        height += footerView_.frame.size.height;
+    }
+    return height;
+}
+
 - (void)setPosition:(BOOL)canChangeSide
 {
     BOOL onTop = NO;
@@ -245,7 +289,7 @@
     PTYTextView* tv = [self.delegate popupVT100TextView];
     [tv scrollEnd];
     NSRect frame = [[self window] frame];
-    frame.size.height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    frame.size.height = self.desiredHeight;
 
     NSPoint p = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
@@ -276,6 +320,15 @@
 
     frame.origin = p;
     [[self window] setFrame:frame display:NO];
+
+    if (footerView_) {
+        NSRect frame = [self.window.contentView bounds];
+        const CGFloat footerHeight = footerView_.frame.size.height;
+        frame.size.height = MAX(0, frame.size.height - footerHeight);
+        frame.origin.y += footerHeight;
+        tableView_.enclosingScrollView.frame = frame;
+    }
+
     if (canChangeSide) {
         BOOL flip = (onTop != onTop_);
         [self setOnTop:onTop];
@@ -539,6 +592,10 @@
 
 - (void)refresh
 {
+}
+
+- (NSString *)footerString {
+    return NULL;
 }
 
 // DataSource methods
