@@ -369,27 +369,26 @@
     // Select first command
     [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0]
                               byExtendingSelection:NO];
-    NSString *object;
-    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
-                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
-                                                            row:0];
+    NSString *(^getObject)(int) = ^NSString *(int row) {
+        NSTextField *rowView = [NSTextField castFrom:[capturedOutputTool.tableView.delegate tableView:capturedOutputTool.tableView
+                                                                                   viewForTableColumn:capturedOutputTool.tableView.tableColumns[0]
+                                                                                                  row:0]];
+        return rowView.attributedStringValue.string;
+    };
+    NSString *object = getObject(0);
     XCTAssert([object containsString:@"error: 1"]);
 
     // Select second command
     [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:1]
                               byExtendingSelection:NO];
 
-    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
-                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
-                                                            row:0];
+    object = getObject(0);
     XCTAssert([object containsString:@"error: 2"]);
 
     // Select nothing
     [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSet]
                               byExtendingSelection:NO];
-    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
-                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
-                                                            row:0];
+    object = getObject(0);
     XCTAssert([object containsString:@"error: 2"]);
 }
 
