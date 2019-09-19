@@ -29,7 +29,7 @@ class GetPropertyException(Exception):
 class Window:
     """Represents a terminal window.
 
-    Do not create this yourself. Instead, use :class:`~iterm2.app.App`.
+    Do not create an instance of `Window` by calling the initializer yourself. To get a reference to an existing window, use :class:`~iterm2.app.App` and query its `windows` property. To create a new window, use :meth:`async_create`.
     """
     @staticmethod
     async def async_create(
