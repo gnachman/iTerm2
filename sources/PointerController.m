@@ -210,7 +210,9 @@
             if (action) {
                 [self performAction:action forEvent:event withArgument:argument];
                 return YES;
-            } else {
+            } else if ([[NSUserDefaults standardUserDefaults] integerForKey:@"com.apple.trackpad.forceClick"] == 1) {
+                // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
+                // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.
                 [self performAction:kQuickLookAction forEvent:event withArgument:nil];
             }
         }
