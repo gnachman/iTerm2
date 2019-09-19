@@ -100,6 +100,9 @@
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeyTabCurrentSession
                                     inContext:iTermVariablesSuggestionContextTab
                              leadingToContext:iTermVariablesSuggestionContextSession];
+    [self recordUseOfNonterminalVariableNamed:iTermVariableKeyTabTitle
+                                    inContext:iTermVariablesSuggestionContextTab
+                             leadingToContext:iTermVariablesSuggestionContextSession];
 
     // Window context
     [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverrideFormat

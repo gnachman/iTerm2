@@ -676,6 +676,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             value = newName ?: @"";
         }
     }
+    [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
     [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
