@@ -537,6 +537,9 @@ static const NSUInteger kMaxHosts = 100;
     NSString *_divorceDecree;
 
     BOOL _cursorTypeOverrideChanged;
+    BOOL _titleDirty;
+    // May be stale, but allows us to update titles fast after an OSC 0/1/2
+    iTermProcessInfo *_lastProcessInfo;
 }
 
 @synthesize isDivorced = _divorced;
@@ -874,6 +877,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_methods release];
     [_divorceDecree release];
     [_cursorTypeOverride release];
+    [_lastProcessInfo release];
 
     [super dealloc];
 }
@@ -3945,10 +3949,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
     [_tmuxTitleMonitor updateOnce];
+    _titleDirty = YES;
 }
 
 - (void)setWindowTitle:(NSString *)title {
     [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
+    _titleDirty = YES;
     [_tmuxTitleMonitor updateOnce];
 }
 
@@ -4465,6 +4471,31 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)shouldUpdateTitles:(NSTimeInterval)now {
+    // Update window info for the active tab.
+    if (!self.jobName) {
+        return YES;
+    }
+    static const NSTimeInterval dirtyTitlePeriod = 0.02;
+    static const NSTimeInterval pollingTitlePeriod = 0.7;
+    const NSTimeInterval elapsedTime = now - _lastUpdate;
+    const NSTimeInterval deadline = _titleDirty ? dirtyTitlePeriod : pollingTitlePeriod;
+    if (elapsedTime >= deadline) {
+        return YES;
+    }
+
+    return NO;
+}
+
+- (void)maybeUpdateTitles {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if ([self shouldUpdateTitles:now]) {
+        [self updateTitles];
+        _lastUpdate = now;
+        _titleDirty = NO;
+    }
+}
+
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     _updateCount++;
@@ -4481,17 +4512,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate updateLabelAttributes];
     }
 
-    static const NSTimeInterval kUpdateTitlePeriod = 0.7;
     if ([_delegate sessionIsActiveInTab:self]) {
-        // Update window info for the active tab.
-        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        if (!self.jobName ||
-            now >= (_lastUpdate + kUpdateTitlePeriod)) {
-            // It has been more than 700ms since the last time we were here or
-            // the job doesn't have a name.
-            [self updateTitles];
-            _lastUpdate = now;
-        }
+        [self maybeUpdateTitles];
     } else {
         [self setCurrentForegroundJobProcessInfo:[_shell cachedProcessInfoIfAvailable]];
         [self.view setTitle:_nameController.presentationSessionTitle];
@@ -4517,10 +4539,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Update the tab, session view, and window title.
 - (void)updateTitles {
+    DLog(@"updateTitles");
     iTermProcessInfo *processInfo = [_shell cachedProcessInfoIfAvailable];
-    if (processInfo) {
-        [self updateTitleWithProcessInfo:processInfo];
-        return;
+    iTermProcessInfo *effectiveProcessInfo = processInfo;
+    if (!processInfo && _titleDirty) {
+        // It's an emergency. Use whatever is lying around.
+        DLog(@"Performing emergency title update");
+        effectiveProcessInfo = _lastProcessInfo;
+    }
+    if (effectiveProcessInfo) {
+        [_lastProcessInfo autorelease];
+        _lastProcessInfo = [effectiveProcessInfo retain];
+        [self updateTitleWithProcessInfo:effectiveProcessInfo];
+
+        if (processInfo) {
+            return;
+        }
     }
     __weak __typeof(self) weakSelf = self;
     [_shell fetchProcessInfoForCurrentJobWithCompletion:^(iTermProcessInfo *processInfo) {

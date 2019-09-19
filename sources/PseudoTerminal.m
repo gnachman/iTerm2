@@ -2218,6 +2218,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setWindowTitle:(NSString *)title {
+    DLog(@"setWindowTitle:%@", title);
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
@@ -2280,7 +2281,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // terminal goes nuts and sends lots of title-change sequences.
     BOOL hadTimer = (self.desiredTitle != nil);
     self.desiredTitle = title;
-    DLog(@"setWindowTitle:%@", title);
+    DLog(@"After adjusting title, setWindowTitle:%@", title);
     if (!hadTimer) {
         if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
             // Unless the window was just created, set the title immediately. Issue 5876.
