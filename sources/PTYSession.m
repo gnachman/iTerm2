@@ -10978,7 +10978,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermUpdateCadenceState state;
     state.active = _active;
     state.idle = self.isIdle;
-    state.visible = [_delegate sessionBelongsToVisibleTab];
+    state.visible = [_delegate sessionBelongsToVisibleTab] && !self.view.window.isMiniaturized;
 
     if (self.useMetal) {
         if ([iTermPreferences maximizeMetalThroughput] &&
