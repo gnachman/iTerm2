@@ -5273,8 +5273,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateVariables];
 }
 
-- (void)windowWillExitFullScreen:(NSNotification *)notification
-{
+- (void)hideStandardWindowButtonsAndTitlebarAccessories {
+    [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
+    [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
+    [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+    while (self.window.titlebarAccessoryViewControllers.count) {
+        [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
+    }
+}
+
+- (void)windowWillExitFullScreen:(NSNotification *)notification {
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
 
@@ -5296,34 +5304,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateForTransparency:self.ptyWindow];
     self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     if (@available(macOS 10.14, *)) {
-        switch (self.savedWindowType) {
-            case WINDOW_TYPE_NORMAL:
-            case WINDOW_TYPE_ACCESSORY:
-                break;
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_BOTTOM:
-            case WINDOW_TYPE_COMPACT:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT_PARTIAL:
-            case WINDOW_TYPE_NO_TITLE_BAR:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
-            case WINDOW_TYPE_BOTTOM_PARTIAL:
-            case WINDOW_TYPE_LION_FULL_SCREEN:
-            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-                [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
-                [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
-                [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
-                break;
+        if (![self rootTerminalViewShouldRevealStandardWindowButtons]) {
+            [self hideStandardWindowButtonsAndTitlebarAccessories];
         }
         [_contentView didChangeCompactness];
         [self repositionWidgets];
     }
 }
 
-- (void)windowDidExitFullScreen:(NSNotification *)notification
-{
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
     DLog(@"Window did exit lion fullscreen");
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
@@ -5360,6 +5349,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView didChangeCompactness];
     [_contentView layoutSubviews];
     [self updateForTransparency:self.ptyWindow];
+    [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
 
@@ -8482,6 +8472,29 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return self.currentSession.shouldShowTabGraphic ? self.currentSession.tabGraphic : nil;
 }
 
+- (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {
+    const iTermWindowType windowType = exitingLionFullscreen_ ? _savedWindowType : _windowType;
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_COMPACT:
+            return NO;
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return YES;
+    }
+}
+
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons {
     if (self.enteringLionFullscreen) {
         return NO;
@@ -8490,14 +8503,28 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_LeftTab:
-                return YES;
+                switch (_savedWindowType) {
+                    case WINDOW_TYPE_TOP:
+                    case WINDOW_TYPE_LEFT:
+                    case WINDOW_TYPE_RIGHT:
+                    case WINDOW_TYPE_BOTTOM:
+                    case WINDOW_TYPE_TOP_PARTIAL:
+                    case WINDOW_TYPE_LEFT_PARTIAL:
+                    case WINDOW_TYPE_NO_TITLE_BAR:
+                    case WINDOW_TYPE_RIGHT_PARTIAL:
+                    case WINDOW_TYPE_BOTTOM_PARTIAL:
+                    case WINDOW_TYPE_LION_FULL_SCREEN:
+                    case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                    case WINDOW_TYPE_NORMAL:
+                    case WINDOW_TYPE_ACCESSORY:
+                        return NO;
+                    case WINDOW_TYPE_COMPACT:
+                        return YES;
+                }
             case PSMTab_BottomTab:
-                break;
+                return NO;
         }
         return NO;
-    }
-    if (exitingLionFullscreen_) {
-        return self.windowType == WINDOW_TYPE_COMPACT || self.savedWindowType == WINDOW_TYPE_COMPACT;
     }
     if (self.anyFullScreen) {
         return NO;

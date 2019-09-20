@@ -46,6 +46,7 @@
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
+- (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
 - (BOOL)rootTerminalViewWindowHasFullSizeContentView;
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop;
