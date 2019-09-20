@@ -122,7 +122,7 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
 @implementation iTermActionsDidChangeNotification
 
 + (instancetype)notificationWithMutationType:(iTermActionsDidChangeMutationType)mutationType index:(NSInteger)index {
-    iTermActionsDidChangeNotification *notif = [[self alloc] init];
+    iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = mutationType;
     notif->_index = index;
     return notif;
