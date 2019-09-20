@@ -258,6 +258,9 @@ static const CGFloat kButtonHeight = 23;
     NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
     if (result == nil) {
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.maximumNumberOfLines = 0;
+        result.lineBreakMode = NSLineBreakByCharWrapping;
+        result.usesSingleLineMode = NO;
         result.font = [NSFont fontWithName:@"Menlo" size:11];
     }
 
