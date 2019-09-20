@@ -3844,7 +3844,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         case kVT100TerminalUnitsCells:
             height = requestedHeight;
-            requestedHeightInPoints = requestedHeightInPoints * cellSize.height;
+            requestedHeightInPoints = requestedHeight * cellSize.height;
             break;
 
         case kVT100TerminalUnitsAuto:
