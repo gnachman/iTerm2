@@ -385,6 +385,7 @@ static const int kDragThreshold = 3;
     [_keyboardHandler release];
     _urlActionHelper.delegate = nil;
     [_urlActionHelper release];
+    [_imageBeingClickedOn release];
     [super dealloc];
 }
 
@@ -1768,12 +1769,15 @@ static const int kDragThreshold = 3;
         return NO;
     }
 
+    iTermImageInfo *const imageBeingClickedOn = [self imageInfoAtCoord:VT100GridCoordMake(x, y)];
+    const BOOL mouseDownOnSelection = [_selection containsCoord:VT100GridCoordMake(x, y)];
+
     if (!_mouseDownWasFirstMouse) {
         // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
         // because drags are ignored for those.
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-        if (event.clickCount == 1 && !cmdPressed && !shiftPressed) {
+        if (event.clickCount == 1 && !cmdPressed && !shiftPressed && !imageBeingClickedOn && !mouseDownOnSelection) {
             [_selection clearSelection];
         }
     }
@@ -1800,10 +1804,12 @@ static const int kDragThreshold = 3;
             mode = kiTermSelectionModeCharacter;
         }
 
-        if ((_imageBeingClickedOn = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+        if (imageBeingClickedOn) {
+            [_imageBeingClickedOn autorelease];
+            _imageBeingClickedOn = [imageBeingClickedOn retain];
             _mouseDownOnImage = YES;
             _selection.appending = NO;
-        } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
+        } else if (mouseDownOnSelection) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection, returning");
@@ -2029,6 +2035,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([_selection hasSelection]), _delegate, @(wasSelecting));
+    if ([_selection hasSelection] && event.clickCount == 1 && !wasSelecting) {
+        // Click on selection. When the mouse-down was on the selection we delay clearing it until
+        // mouse-up so you have the chance to drag it.
+        [_selection clearSelection];
+    }
     if ([_selection hasSelection] && _delegate && wasSelecting) {
         // if we want to copy our selection, do so
         DLog(@"selection copies text=%@", @([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]));
