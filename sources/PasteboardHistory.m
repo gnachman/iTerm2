@@ -166,7 +166,8 @@
 
 - (void)save:(NSString*)value
 {
-    if (IsSecureEventInputEnabled()) {
+    if (IsSecureEventInputEnabled() &&
+        ![iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled]) {
         DLog(@"Not saving paste history because secure keyboard entry is enabled");
         return;
     }
@@ -238,6 +239,9 @@
 }
 
 - (NSString *)footerString {
+    if ([iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled]) {
+        return nil;
+    }
     if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]) {
         return @"⚠️ Secure keyboard entry disables paste history.";
     }

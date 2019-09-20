@@ -202,6 +202,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)restoreWindowsWithinScreens;
 + (BOOL)retinaInlineImages;
 + (BOOL)runJobsInServers;
++ (BOOL)saveToPasteHistoryWhenSecureInputEnabled;
 + (NSString *)searchCommand;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;

@@ -481,6 +481,7 @@ DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPromp
 DEFINE_BOOL(excludeBackgroundColorsFromCopiedStyle, NO, SECTION_PASTEBOARD @"Exclude background colors when text is copied with color and font style?");
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, YES, SECTION_PASTEBOARD @"Include paste history in the advanced paste menu.");
 DEFINE_INT(alwaysWarnBeforePastingOverSize, -1, SECTION_PASTEBOARD @"When pasting more than this many characters, require confirmation.\nSet to -1 to disable warning.\nCharacters are counted in UTF-16.");
+DEFINE_BOOL(saveToPasteHistoryWhenSecureInputEnabled, NO, SECTION_PASTEBOARD @"Save to paste history when secure keyboard input is enabled?");
 
 #pragma mark - Tip of the day
 

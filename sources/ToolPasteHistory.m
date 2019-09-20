@@ -7,6 +7,7 @@
 
 #import "ToolPasteHistory.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermController.h"
 #import "iTermSecureKeyboardEntryController.h"
@@ -130,7 +131,7 @@ static const CGFloat kMargin = 4;
     [clear_ sizeToFit];
     [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
 
-    _secureKeyboardEntryWarning.hidden = ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
+    _secureKeyboardEntryWarning.hidden = [iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled] || ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
 
     const CGFloat offset = _secureKeyboardEntryWarning.isHidden ? 0 : _secureKeyboardEntryWarning.frame.size.height + 4;
