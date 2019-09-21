@@ -173,6 +173,7 @@ static NSString *gSearchString;
     _state.mode = mode;
     _state.string = string;
     _viewController.findString = string;
+    [self.delegate findViewControllerClearSearch];
     [self doSearch];
 }
 
