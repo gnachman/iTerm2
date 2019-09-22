@@ -370,9 +370,9 @@
     [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0]
                               byExtendingSelection:NO];
     NSString *(^getObject)(int) = ^NSString *(int row) {
-        NSTextField *rowView = [NSTextField castFrom:[capturedOutputTool.tableView.delegate tableView:capturedOutputTool.tableView
-                                                                                   viewForTableColumn:capturedOutputTool.tableView.tableColumns[0]
-                                                                                                  row:0]];
+        NSTextField *rowView = [[NSTableCellView castFrom:[capturedOutputTool.tableView.delegate tableView:capturedOutputTool.tableView
+                                                                                        viewForTableColumn:capturedOutputTool.tableView.tableColumns[0]
+                                                                                                       row:0]] textField];
         return rowView.attributedStringValue.string;
     };
     NSString *object = getObject(0);
