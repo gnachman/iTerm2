@@ -116,6 +116,8 @@
     alert.messageText = title;
     alert.informativeText = subtitle;
     alert.accessoryView = textField;
+    [alert layout];
+    [[alert window] makeFirstResponder:textField];
 
     NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
     if (window) {
