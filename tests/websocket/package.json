@@ -4,7 +4,7 @@
     "dependencies": {
         "protobufjs": "~5.0.1",
         "ws": ">=1.1.1",
-        "open": "0.0.3"
+        "open": ">=6.0.0"
     },
     "engines": {
         "node": ">=0.8"
