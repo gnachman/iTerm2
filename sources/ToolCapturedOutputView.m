@@ -23,6 +23,7 @@
 
 static const CGFloat kMargin = 4;
 static const CGFloat kButtonHeight = 23;
+static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCapturedOutputEntryIdentifier";
 
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
@@ -36,7 +37,7 @@ static const CGFloat kButtonHeight = 23;
     NSTableView *tableView_;
     BOOL shutdown_;
     NSArray *allCapturedOutput_;
-    NSCell *spareCell_;
+    NSTableCellView *_measuringCellView;
     VT100ScreenMark *mark_;  // Mark from which captured output came
     iTermSearchField *searchField_;
     NSButton *help_;
@@ -49,8 +50,6 @@ static const CGFloat kButtonHeight = 23;
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        spareCell_ = [[self cell] retain];
-
         help_ = [[NSButton alloc] initWithFrame:CGRectZero];
         [help_ setBezelStyle:NSHelpButtonBezelStyle];
         [help_ setButtonType:NSMomentaryPushInButton];
@@ -62,7 +61,7 @@ static const CGFloat kButtonHeight = 23;
         [help_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:help_];
 
-        _clearButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
+        _clearButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [_clearButton setButtonType:NSMomentaryPushInButton];
         [_clearButton setTitle:@"Clear"];
         [_clearButton setTarget:self];
@@ -93,7 +92,7 @@ static const CGFloat kButtonHeight = 23;
         
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
-        col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
+        col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Contents"];
@@ -110,7 +109,7 @@ static const CGFloat kButtonHeight = 23;
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
-        tableView_.menu = [[[NSMenu alloc] init] autorelease];
+        tableView_.menu = [[NSMenu alloc] init];
         tableView_.menu.delegate = self;
         NSMenuItem *item;
         item = [[NSMenuItem alloc] initWithTitle:@"Toggle Checkmark"
@@ -136,16 +135,7 @@ static const CGFloat kButtonHeight = 23;
     return self;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [tableView_ release];
-    [scrollView_ release];
-    [spareCell_ release];
-    [super dealloc];
-}
-
 - (void)removeSelection {
-    [mark_ autorelease];
     mark_ = nil;
     [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
     [self updateCapturedOutput];
@@ -165,15 +155,12 @@ static const CGFloat kButtonHeight = 23;
     theArray = mark.capturedOutput;
     if (mark != mark_) {
         [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
-        [mark_ autorelease];
-        mark_ = [mark retain];
+        mark_ = mark;
     }
 
-    [allCapturedOutput_ release];
     allCapturedOutput_ = [theArray copy];
 
     // Now update filtered entries based on search string.
-    [filteredEntries_ release];
     NSMutableArray *temp = [NSMutableArray array];
     for (CapturedOutput *capturedOutput in allCapturedOutput_) {
         if (!searchField_.stringValue.length ||
@@ -182,7 +169,7 @@ static const CGFloat kButtonHeight = 23;
             [temp addObject:capturedOutput];
         }
     }
-    filteredEntries_ = [temp retain];
+    filteredEntries_ = temp;
 
     [tableView_ reloadData];
 
@@ -236,10 +223,7 @@ static const CGFloat kButtonHeight = 23;
 }
 
 - (void)clear:(id)sender {
-    [allCapturedOutput_ release];
     allCapturedOutput_ = [[NSMutableArray alloc] init];
-
-    [filteredEntries_ release];
     filteredEntries_ = [[NSMutableArray alloc] init];
 
     [tableView_ reloadData];
@@ -253,21 +237,38 @@ static const CGFloat kButtonHeight = 23;
     return filteredEntries_.count;
 }
 
+- (NSTableCellView *)newTextField {
+    NSTableCellView *cellView = [[NSTableCellView alloc] initWithFrame:NSZeroRect];
+    NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:iTermCapturedOutputToolTableViewCellIdentifier];;
+    textField.maximumNumberOfLines = 0;
+    textField.lineBreakMode = NSLineBreakByCharWrapping;
+    textField.usesSingleLineMode = NO;
+    textField.font = [NSFont fontWithName:@"Menlo" size:11];
+    cellView.textField = textField;
+    [cellView addSubview:textField];
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    NSDictionary *views = NSDictionaryOfVariableBindings(textField);
+    [cellView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[textField]-0-|"
+                                                                     options:0
+                                                                     metrics:nil
+                                                                       views:views]];
+    [cellView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-0-[textField]-0-|"
+                                                                     options:0
+                                                                     metrics:nil
+                                                                       views:views]];
+    return cellView;
+}
+
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
-    static NSString *const identifier = @"ToolCapturedOutputEntryIdentifier";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    NSTableCellView *result = [tableView makeViewWithIdentifier:iTermCapturedOutputToolTableViewCellIdentifier owner:self];
     if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-        result.maximumNumberOfLines = 0;
-        result.lineBreakMode = NSLineBreakByCharWrapping;
-        result.usesSingleLineMode = NO;
-        result.font = [NSFont fontWithName:@"Menlo" size:11];
+        result = [self newTextField];
     }
 
     CapturedOutput *capturedOutput = filteredEntries_[row];
     NSString *value = [self labelForCapturedOutput:capturedOutput];
-    result.stringValue = value;
-    result.toolTip = value;
+    result.textField.stringValue = value;
+    result.textField.toolTip = value;
 
     return result;
 }
@@ -285,10 +286,16 @@ static const CGFloat kButtonHeight = 23;
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex {
     CapturedOutput *capturedOutput = filteredEntries_[rowIndex];
     NSString *label = [self labelForCapturedOutput:capturedOutput];
-    [spareCell_ setStringValue:label];
-    NSRect constrainedBounds = NSMakeRect(0, 0, tableView_.frame.size.width, CGFLOAT_MAX);
-    NSSize naturalSize = [spareCell_ cellSizeForBounds:constrainedBounds];
-    return naturalSize.height;
+    if (!_measuringCellView) {
+        _measuringCellView = [self newTextField];
+    }
+    // https://stackoverflow.com/a/42853810/321984
+    [_measuringCellView.textField setStringValue:label];
+    _measuringCellView.frame = NSMakeRect(0, 0, tableView_.frame.size.width, 0);
+    _measuringCellView.needsLayout = YES;
+    [_measuringCellView layoutSubtreeIfNeeded];
+    NSSize naturalSize = [_measuringCellView fittingSize];
+    return naturalSize.height > tableView_.rowHeight ? naturalSize.height : tableView_.rowHeight;
 }
 
 - (NSCell *)tableView:(NSTableView *)tableView
@@ -298,7 +305,7 @@ static const CGFloat kButtonHeight = 23;
 }
 
 - (NSCell *)cell {
-    NSCell *cell = [[[NSTextFieldCell alloc] init] autorelease];
+    NSCell *cell = [[NSTextFieldCell alloc] init];
     [cell setEditable:NO];
     [cell setLineBreakMode:NSLineBreakByWordWrapping];
     [cell setWraps:YES];
