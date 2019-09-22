@@ -25,7 +25,7 @@ class Splitter:
     """
     def __init__(self, vertical: bool=False):
         """
-        :param vertical: Bool. If true, the divider is vertical, else horizontal.
+        :param vertical: bool. If true, the divider is vertical, else horizontal.
         """
         self.__vertical = vertical
         # Elements are either Splitter or Session
@@ -710,6 +710,43 @@ class Session:
                     response.invoke_function_response.error.error_reason))
         return json.loads(response.invoke_function_response.success.json_result)
 
+    async def async_get_coprocess(self) -> typing.Optional[str]:
+        """
+        Returns the command line of the currently running coprocess, if any.
+
+        :returns: Whether there is a coprocess currently running.
+        """
+        iterm2.capabilities.check_supports_coprocesses(self.connection)
+        invocation = iterm2.util.invocation_string(
+                "iterm2.get_coprocess",
+                {})
+        return await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1)
+
+    async def async_stop_coprocess(self) -> bool:
+        """
+        Stops the currently running coprocess, if any.
+
+        :returns: True if a coprocess was stopped or False if non was running.
+        """
+        iterm2.capabilities.check_supports_coprocesses(self.connection)
+        invocation = iterm2.util.invocation_string(
+                "iterm2.stop_coprocess",
+                {})
+        return bool(await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1))
+
+    async def async_run_coprocess(self, command_line: str) -> bool:
+        """
+        Runs a coprocess, provided non is already running.
+
+        :param command_line: The command line for the new coprocess.
+
+        :returns: True if it was launched or False if one was already running.
+        """
+        iterm2.capabilities.check_supports_coprocesses(self.connection)
+        invocation = iterm2.util.invocation_string(
+                "iterm2.run_coprocess",
+                {"commandLine": command_line})
+        return bool(await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1))
 
 class InvalidSessionId(Exception):
     """The specified session ID is not allowed in this method."""

@@ -50,6 +50,8 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
                completion:(iTermBuiltInFunctionCompletionBlock)block;
 
+- (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace;
+
 @end
 
 @interface iTermBuiltInFunctions : NSObject

@@ -25,3 +25,11 @@ def supports_prompt_monitor_modes(connection):
 def supports_status_bar_unread_count(connection):
     min_ver = (1, 2)
     return ge(connection.iterm2_protocol_version, min_ver)
+
+def supports_coprocesses(connection):
+    min_ver = (1, 3)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_coprocesses(connection):
+    if not supports_coprocesses(connection):
+        raise AppVersionTooOld("This version of iTerm2 is too old to control coprocesses from a Python script. You should upgrade to run this script.")

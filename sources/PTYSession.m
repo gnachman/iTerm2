@@ -11709,8 +11709,61 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    target:self
                                                    action:@selector(setStatusBarComponentUnreadCountWithCompletion:identifier:count:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"stop_coprocess"
+                                            defaultValues:@{}
+                                                    types:@{}
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(stopCoprocessWithCompletion:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"get_coprocess"
+                                            defaultValues:@{}
+                                                    types:@{}
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(getCoprocessWithCompletion:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"run_coprocess"
+                                            defaultValues:@{}
+                                                    types:@{ @"commandLine": [NSString class],
+                                                             @"mute": [NSNumber class] }
+                                        optionalArguments:[NSSet setWithArray:@[ @"mute" ]]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(runCoprocessWithCompletion:commandLine:mute:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
+}
+
+- (void)stopCoprocessWithCompletion:(void (^)(id, NSError *))completion {
+    if (![self hasCoprocess]) {
+        completion(@NO, nil);
+        return;
+    }
+    [self stopCoprocess];
+    completion(@YES, nil);
+}
+
+- (void)getCoprocessWithCompletion:(void (^)(id, NSError *))completion {
+    completion(_shell.coprocess.command, nil);
+}
+
+- (void)runCoprocessWithCompletion:(void (^)(id, NSError *))completion
+                       commandLine:(NSString *)command
+                            mute:(NSNumber *)muteNumber {
+    const BOOL mute = muteNumber ? muteNumber.boolValue : NO;
+    if (self.hasCoprocess) {
+        completion(@NO, nil);
+        return;
+    }
+    [self launchCoprocessWithCommand:command mute:mute];
+    completion(@YES, nil);
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion
