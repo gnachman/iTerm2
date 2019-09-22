@@ -2430,6 +2430,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [tmuxCommand setEditable:YES];
         [tmuxCommand setSelectable:YES];
         [alert setAccessoryView:tmuxCommand];
+        [alert layout];
+        [[alert window] makeFirstResponder:tmuxCommand];
         if ([alert runModal] == NSAlertFirstButtonReturn && [[tmuxCommand stringValue] length]) {
             [self printTmuxMessage:[NSString stringWithFormat:@"Run command \"%@\"", [tmuxCommand stringValue]]];
             [_tmuxGateway sendCommand:[tmuxCommand stringValue]
