@@ -3264,6 +3264,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_shell hasCoprocess];
 }
 
+- (void)textViewStopCoprocess {
+    [_shell stopCoprocess];
+}
+
 - (BOOL)shouldPostUserNotification {
     if (!_screen.postUserNotifications) {
         return NO;

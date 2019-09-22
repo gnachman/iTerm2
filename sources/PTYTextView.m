@@ -4100,6 +4100,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
+    if ([_delegate textViewHasCoprocess]) {
+        [theMenu addItemWithTitle:@"Stop Coprocess"
+                           action:@selector(textViewStopCoprocess)
+                    keyEquivalent:@""];
+        [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self.delegate];
+    }
+
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
