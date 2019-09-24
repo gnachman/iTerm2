@@ -86,6 +86,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)doubleClickTabToEdit;
 + (BOOL)doubleReportScrollWheel;
 + (NSString *)downloadsDirectory;
++ (BOOL)drawBottomLineForHorizontalTabBar;
 + (BOOL)drawOutlineAroundCursor;
 + (BOOL)dwcLineCache;
 + (NSString *)dynamicProfilesPath;

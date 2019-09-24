@@ -6717,6 +6717,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel minimumTabLabelWidth]);
     } else if ([option isEqualToString:PSMTabBarControlOptionHighVisibility]) {
         return @([iTermAdvancedSettingsModel highVisibility]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar]) {
+        return @([iTermAdvancedSettingsModel drawBottomLineForHorizontalTabBar]);
     }
     return nil;
 }

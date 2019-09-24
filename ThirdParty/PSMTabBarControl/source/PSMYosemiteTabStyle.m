@@ -797,8 +797,11 @@
             }
         }
         // Bottom line
-        [[self bottomLineColorSelected:selected] set];
-        [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+        const BOOL drawBottomLine = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar] boolValue];
+        if (drawBottomLine) {
+            [[self bottomLineColorSelected:selected] set];
+            [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+        }
     } else {
         // Bottom line
         [[self verticalLineColorSelected:selected] set];
