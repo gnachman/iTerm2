@@ -213,7 +213,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
          @(_fullScreenFlashStartTime), @(_haveSetNeedsDisplay));
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
-        const CGFloat kMaxFullScreenFlashAlpha = 0.5;
+        const CGFloat kMaxFullScreenFlashAlpha = [iTermAdvancedSettingsModel indicatorFlashInitialAlpha];
         _fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
         DLog(@"Set fullScreenAlpha=%@", @(_fullScreenAlpha));
         if (!_haveSetNeedsDisplay) {

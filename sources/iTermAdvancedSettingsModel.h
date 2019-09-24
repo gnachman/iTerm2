@@ -120,6 +120,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)ignoreHardNewlinesInURLs;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)indicateBellsInDockBadgeLabel;
++ (double)indicatorFlashInitialAlpha;
 + (double)invalidateShadowTimesPerSecond;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;

@@ -245,6 +245,7 @@ DEFINE_FLOAT(fractionOfCharacterSelectingNextNeighbor, 0.35, SECTION_MOUSE @"Fra
 #define SECTION_TERMINAL @"Terminal: "
 
 DEFINE_BOOL(traditionalVisualBell, NO, SECTION_TERMINAL @"Visual bell flashes the whole screen, not just a bell icon.");
+DEFINE_FLOAT(indicatorFlashInitialAlpha, 0.5, SECTION_TERMINAL @"Initial alpha value when flashing the visual bell or search wraparound indicator");
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, SECTION_TERMINAL @"Cursor blink speed (seconds).");
 DEFINE_BOOL(doNotSetCtype, NO, SECTION_TERMINAL @"Never set the CTYPE environment variable.");
 // For these, 1 is more aggressive and 0 turns the feature off:
