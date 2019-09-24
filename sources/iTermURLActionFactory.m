@@ -29,6 +29,7 @@ static NSString *const iTermURLActionFactoryCancelPathfinders = @"iTermURLAction
 typedef enum {
     iTermURLActionFactoryPhaseHypertextLink,
     iTermURLActionFactoryPhaseExistingFile,
+    iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines,
     iTermURLActionFactoryPhaseSmartSelectionAction,
     iTermURLActionFactoryPhaseAnyStringSemanticHistory,
     iTermURLActionFactoryPhaseURLLike,
@@ -122,7 +123,10 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
             [self tryHypertextLink];
             break;
         case iTermURLActionFactoryPhaseExistingFile:
-            [self tryExistingFile];
+            [self tryExistingFileForceRespectingHardNewlines:NO];
+            break;
+        case iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines:
+            [self tryExistingFileForceRespectingHardNewlines:YES];
             break;
         case iTermURLActionFactoryPhaseSmartSelectionAction:
             [self trySmartSelectionAction];
@@ -152,12 +156,23 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 }
 
-- (void)tryExistingFile {
+- (void)tryExistingFileForceRespectingHardNewlines:(BOOL)forceRespect {
+    if (forceRespect && self.respectHardNewlines) {
+        // No need to force it
+        [self fail];
+        return;
+    }
+    NSString *savedPrefix = self.prefix;
+    NSString *savedSuffix = self.suffix;
+    NSMutableIndexSet *savedContinuationCharsCoords = [self.continuationCharsCoords mutableCopy];
+    NSMutableArray *savedPrefixCoords = [self.prefixCoords mutableCopy];
+    NSMutableArray *savedSuffixCoords = [self.suffixCoords mutableCopy];
+
     self.continuationCharsCoords = [NSMutableIndexSet indexSet];
     self.prefixCoords = [NSMutableArray array];
     self.prefix = [self.extractor wrappedStringAt:self.coord
                                           forward:NO
-                              respectHardNewlines:self.respectHardNewlines
+                              respectHardNewlines:forceRespect || self.respectHardNewlines
                                          maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                 continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
@@ -166,7 +181,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     self.suffixCoords = [NSMutableArray array];
     self.suffix = [self.extractor wrappedStringAt:self.coord
                                           forward:YES
-                              respectHardNewlines:self.respectHardNewlines
+                              respectHardNewlines:forceRespect || self.respectHardNewlines
                                          maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                 continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
@@ -177,6 +192,13 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         if (action) {
             [self completeWithAction:action];
         } else {
+            if (forceRespect) {
+                self.prefix = savedPrefix;
+                self.suffix = savedSuffix;
+                self.continuationCharsCoords = savedContinuationCharsCoords;
+                self.prefixCoords = savedPrefixCoords;
+                self.suffixCoords = savedSuffixCoords;
+            }
             [self fail];
         }
     }];
