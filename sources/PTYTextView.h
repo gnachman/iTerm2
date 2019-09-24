@@ -217,6 +217,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (CGFloat)textViewBadgeRightMargin;
 - (iTermVariableScope *)textViewVariablesScope;
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor;
+- (void)textViewDidUpdateDropTargetVisibility;
 @end
 
 @interface iTermHighlightedRow : NSObject

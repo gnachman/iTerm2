@@ -5354,6 +5354,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
+    if (_textview.drawingHelper.showDropTargets) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonDropTargetsVisible;
+        }
+        return NO;
+    }
     if ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow threshold:0.5]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonWindowObscured;
@@ -8331,6 +8337,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor {
     return self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle;
+}
+
+- (void)textViewDidUpdateDropTargetVisibility {
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (void)bury {

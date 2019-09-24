@@ -4175,6 +4175,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int numValid = -1;
     if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
         _drawingHelper.showDropTargets = YES;
+        [self.delegate textViewDidUpdateDropTargetVisibility];
     }
     NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
     if (numValid != sender.numberOfValidItemsForDrop) {
@@ -4186,6 +4187,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
     _drawingHelper.showDropTargets = NO;
+    [self.delegate textViewDidUpdateDropTargetVisibility];
     [self setNeedsDisplay:YES];
 }
 
@@ -4329,6 +4331,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     _drawingHelper.showDropTargets = NO;
+    [self.delegate textViewDidUpdateDropTargetVisibility];
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
     DLog(@"Perform drag operation");

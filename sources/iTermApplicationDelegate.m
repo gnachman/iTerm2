@@ -2196,6 +2196,8 @@ static BOOL hasBecomeActive = NO;
             return @"a tab is being dragged.";
         case iTermMetalUnavailableReasonSessionHasNoWindow:
             return @"the current session has no window (this shouldn't happen).";
+        case iTermMetalUnavailableReasonDropTargetsVisible:
+            return @"secure copy drop targets are visible.";
     }
 
     return @"of an internal error. Please file a bug report!";
