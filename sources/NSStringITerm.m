@@ -2198,28 +2198,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     if ([iTermAdvancedSettingsModel escapeWithQuotes]) {
         // Only need to escape single quote and backslash in a single-quoted string
-        NSString* charsToEscape = @"\\'";
-        NSString* charsToSearch = [NSString shellEscapableCharacters];
+        NSMutableString *charsToEscape = [@"\\'" mutableCopy];
+        NSMutableCharacterSet *charsToSearch = [NSMutableCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
         if (includingNewlines) {
-            charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
-            charsToSearch = [charsToSearch stringByAppendingString:@"\r\n"];
+            [charsToEscape appendString:@"\r\n"];
+            [charsToSearch addCharactersInString:@"\r\n"];
         }
-        bool didEscape = false;
-        for (int i = 0; i < [charsToSearch length]; i ++) {
-            if ([self containsString:[charsToSearch substringWithRange:NSMakeRange(i, 1)]]) {
-                didEscape = true;
-                break;
-            }
-        }
-        if (didEscape) {
+        if ([self rangeOfCharacterFromSet:charsToSearch].location != NSNotFound) {
             [self escapeCharacters:charsToEscape];
             [self insertString:@"'" atIndex:0];
             [self appendString:@"'"];
         }
     } else {
-        NSString* charsToEscape = [NSString shellEscapableCharacters];
+        NSMutableString *charsToEscape = [[NSString shellEscapableCharacters] mutableCopy];
         if (includingNewlines) {
-            charsToEscape = [charsToEscape stringByAppendingString:@"\r\n"];
+            [charsToEscape appendString:@"\r\n"];
         }
         [self escapeCharacters:charsToEscape];
     }
@@ -2228,8 +2221,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (void)escapeCharacters:(NSString *)charsToEscape {
     for (int i = 0; i < [charsToEscape length]; i++) {
-        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
-        NSString* after = [@"\\" stringByAppendingString:before];
+        NSString *before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
+        NSString *after = [@"\\" stringByAppendingString:before];
         [self replaceOccurrencesOfString:before
                               withString:after
                                  options:0
