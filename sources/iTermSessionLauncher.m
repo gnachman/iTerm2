@@ -221,7 +221,7 @@
     PTYSession *session = [windowController createTabWithProfile:profile
                                                      withCommand:_command
                                                      environment:nil
-                                                     synchronous:NO
+                                                     synchronous:_synchronous
                                                       completion:^(BOOL ok) {
                                                           [weakSelf setFinishedWithSuccess:ok];
                                                       }];
