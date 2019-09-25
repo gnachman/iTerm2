@@ -252,10 +252,6 @@ static const int kDragThreshold = 3;
                                                      name:kRefreshTerminalNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_pointerSettingsChanged:)
-                                                     name:kPointerPrefsChangedNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(imageDidLoad:)
                                                      name:iTermImageDidLoad
                                                    object:nil];
@@ -276,16 +272,13 @@ static const int kDragThreshold = 3;
         _primaryFont = [[PTYFontInfo alloc] init];
         _secondaryFont = [[PTYFontInfo alloc] init];
 
-        if ([pointer_ viewShouldTrackTouches]) {
-            DLog(@"Begin tracking touches in view %@", self);
-            [self setAcceptsTouchEvents:YES];
-            [self setWantsRestingTouches:YES];
-            if ([self useThreeFingerTapGestureRecognizer]) {
-                threeFingerTapGestureRecognizer_ =
-                    [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
-                                                                   selector:@selector(threeFingerTap:)];
-            }
-        }
+        DLog(@"Begin tracking touches in view %@", self);
+        [self setAcceptsTouchEvents:YES];
+        [self setWantsRestingTouches:YES];
+        threeFingerTapGestureRecognizer_ =
+            [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                           selector:@selector(threeFingerTap:)];
+
         [self viewDidChangeBackingProperties];
         _indicatorsHelper = [[iTermIndicatorsHelper alloc] init];
         _indicatorsHelper.delegate = self;
@@ -399,12 +392,6 @@ static const int kDragThreshold = 3;
             self.window];
 }
 
-- (BOOL)useThreeFingerTapGestureRecognizer {
-    // This used to be guarded by [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
-    // but I'm going to turn it on by default and see if anyone complains. 12/16/13
-    return YES;
-}
-
 - (void)viewDidChangeBackingProperties {
     CGFloat scale = [[[self window] screen] backingScaleFactor];
     BOOL isRetina = scale > 1;
@@ -454,8 +441,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)threeFingerTap:(NSEvent *)ev {
-    [self sendFakeThreeFingerClickDown:YES basedOnEvent:ev];
-    [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
+    if (![pointer_ threeFingerTap:ev]) {
+        [self sendFakeThreeFingerClickDown:YES basedOnEvent:ev];
+        [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
+    }
 }
 
 - (void)touchesBeganWithEvent:(NSEvent *)ev {
@@ -5611,22 +5600,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (BOOL)_wasAnyCharSelected
 {
     return [_oldSelection hasSelection];
-}
-
-- (void)_pointerSettingsChanged:(NSNotification *)notification {
-    BOOL track = [pointer_ viewShouldTrackTouches];
-    [self setAcceptsTouchEvents:track];
-    [self setWantsRestingTouches:track];
-    [threeFingerTapGestureRecognizer_ release];
-    threeFingerTapGestureRecognizer_ = nil;
-    if (track) {
-        if ([self useThreeFingerTapGestureRecognizer]) {
-            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
-                                                                                              selector:@selector(threeFingerTap:)];
-        }
-    } else {
-        _numTouches = 0;
-    }
 }
 
 - (void)_settingsChanged:(NSNotification *)notification
