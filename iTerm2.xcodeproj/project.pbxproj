@@ -1819,6 +1819,8 @@
 		A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */; };
 		A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A2183F3B78003A6A6D /* LineBlock.h */; };
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
+		A6435116233B195D00828AF6 /* iTermLaunchAPIScriptCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6435114233B195D00828AF6 /* iTermLaunchAPIScriptCommand.h */; };
+		A6435117233B195D00828AF6 /* iTermLaunchAPIScriptCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermLaunchAPIScriptCommand.m */; };
 		A6461D891E1B654D00FEDCD6 /* iTermShellPromptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */; };
 		A6461D8A1E1B654D00FEDCD6 /* iTermShellPromptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */; };
 		A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
@@ -4886,6 +4888,8 @@
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; tabWidth = 4; };
 		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
+		A6435114233B195D00828AF6 /* iTermLaunchAPIScriptCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLaunchAPIScriptCommand.h; sourceTree = "<group>"; };
+		A6435115233B195D00828AF6 /* iTermLaunchAPIScriptCommand.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLaunchAPIScriptCommand.m; sourceTree = "<group>"; };
 		A6460F40206F3ED1004CF71F /* iTermMetalConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalConfig.h; path = Metal/Infrastructure/iTermMetalConfig.h; sourceTree = "<group>"; };
 		A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShellPromptTrigger.h; sourceTree = "<group>"; };
 		A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellPromptTrigger.m; sourceTree = "<group>"; };
@@ -7007,6 +7011,8 @@
 				A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */,
 				1D5655C819AD2B1A001C460B /* PTYTab+Scripting.m */,
 				A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */,
+				A6435114233B195D00828AF6 /* iTermLaunchAPIScriptCommand.h */,
+				A6435115233B195D00828AF6 /* iTermLaunchAPIScriptCommand.m */,
 			);
 			name = Applescript;
 			sourceTree = "<group>";
@@ -10077,6 +10083,7 @@
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
 				535EA4FC20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.h in Headers */,
 				A62EEDA220E012DA00943DE3 /* iTermScriptExporter.h in Headers */,
+				A6435116233B195D00828AF6 /* iTermLaunchAPIScriptCommand.h in Headers */,
 				A66719301DCE36C3000CE608 /* SSKeychainQuery.h in Headers */,
 				A648164F228FD240008E7E0C /* iTermWeakProxy.h in Headers */,
 				53A96EE722A48A1A001C2C6F /* iTermTmuxOptionMonitor.h in Headers */,
@@ -12428,6 +12435,7 @@
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
 				A6A4867A20B67DFF00493302 /* ProfilesSessionPreferencesViewController.m in Sources */,
+				A6435117233B195D00828AF6 /* iTermLaunchAPIScriptCommand.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
