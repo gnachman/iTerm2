@@ -101,9 +101,18 @@
     [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
                                                     invocation:invocation
                                                          scope:[iTermVariableScope globalsScope]];
-
-    [evaluator evaluateWithTimeout:sync ? 0 : 30 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {}];
-    return [NSString stringWithFormat:@"%@", evaluator.value];
+    [self suspendExecution];
+    __weak __typeof(self) weakSelf = self;
+    [evaluator evaluateWithTimeout:sync ? 0 : 10 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        if (evaluator.error) {
+            [self setScriptErrorNumber:2];
+            [self setScriptErrorString:evaluator.error.localizedDescription];
+            [weakSelf resumeExecutionWithResult:nil];
+            return;
+        }
+        [weakSelf resumeExecutionWithResult:[NSString stringWithFormat:@"%@", evaluator.value]];
+    }];
+    return nil;
 }
 
 @end
