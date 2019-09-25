@@ -296,7 +296,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
-                    synchronous:(BOOL)synchronous;
+                    synchronous:(BOOL)synchronous
+                     completion:(void (^)(BOOL))completion;
 
 // Change visibility of menu bar (but only if it should be changed--may do
 // nothing if the menu bar is on a different screen, for example).

@@ -2163,22 +2163,28 @@ static iTermAPIHelper *sAPIHelperInstance;
 
     ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
     response.status = ITMSplitPaneResponse_Status_Ok;
+    dispatch_group_t group = dispatch_group_create();
     for (PTYSession *session in sessions) {
         PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
+        dispatch_group_enter(group);
         PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
                                                 before:request.before
                                                profile:profile
                                          targetSession:session
-#warning TODO: This doesn't really need to block the main thread since this method is async.
-                                           synchronous:YES];
-        if (newSession == nil && !session.isTmuxClient) {
-            response.status = ITMSplitPaneResponse_Status_CannotSplit;
-        } else if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
+                                           synchronous:NO
+                                            completion:^(BOOL ok){
+                                                dispatch_group_leave(group);
+                                            }];
+        if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
             [response.sessionIdArray addObject:newSession.guid];
+        } else if (newSession == nil && !session.isTmuxClient) {
+            response.status = ITMSplitPaneResponse_Status_CannotSplit;
         }
     }
 
-    handler(response);
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        handler(response);
+    });
 }
 
 - (Profile *)profileByCustomizing:(Profile *)profile withProperties:(NSArray<ITMProfileProperty*> *)customProfilePropertiesArray {
