@@ -173,9 +173,9 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 - (void)tableView:(NSTableView *)aTableView
    setObjectValue:(id)anObject
    forTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex
-{
-    [delegate_ renameWindowWithId:[[[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:1] intValue]
+              row:(NSInteger)rowIndex {
+    const int windowID = [[[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:1] intValue];
+    [delegate_ renameWindowWithId:windowID
                            toName:anObject];
 }
 
@@ -200,7 +200,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     NSArray* selectedItems = [[self filteredModel] objectsAtIndexes:rowIndexes];
     [pboard declareTypes:[NSArray arrayWithObject:kWindowPasteboardType] owner:self];
     [pboard setPropertyList:[NSArray arrayWithObjects:
-                             [delegate_ selectedSessionName],
+                             [delegate_ selectedSessionNumber],
                              selectedItems,
                              nil]
                     forType:kWindowPasteboardType];
@@ -219,14 +219,13 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 #pragma mark - Private
 
-- (NSArray *)selectedWindowIdsAsStrings
-{
-        NSArray *ids = [self selectedWindowIds];
+- (NSArray *)selectedWindowIdsAsStrings {
+    NSArray *ids = [self selectedWindowIds];
     NSMutableArray *result = [NSMutableArray array];
-        for (NSString *n in ids) {
-                [result addObject:n];
-        }
-        return result;
+    for (NSString *n in ids) {
+        [result addObject:n];
+    }
+    return result;
 }
 
 - (NSArray *)selectedWindowIds

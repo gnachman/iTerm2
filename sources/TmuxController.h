@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 #import "iTermInitialDirectory.h"
+#import "iTermTmuxSessionObject.h"
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 
@@ -33,7 +34,7 @@ extern NSString *const kTmuxControllerWindowDidClose;
 extern NSString *const kTmuxControllerAttachedSessionDidChange;
 // Posted when a session changes name
 extern NSString *const kTmuxControllerSessionWasRenamed;
-// Posted when set-titles-string option changes. Object is tmux controller.
+// Posted when set-titles option changes. Object is tmux controller.
 extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 
 @interface TmuxController : NSObject
@@ -41,7 +42,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 @property(nonatomic, readonly) TmuxGateway *gateway;
 @property(nonatomic, retain) NSMutableDictionary *windowPositions;
 @property(nonatomic, copy) NSString *sessionName;
-@property(nonatomic, retain) NSArray *sessions;
+@property(nonatomic, copy) NSArray<iTermTmuxSessionObject *> *sessionObjects;
 @property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 @property(nonatomic, assign) NSInteger unicodeVersion;
 @property(nonatomic, readonly) NSString *clientName;
@@ -53,7 +54,6 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 @property(nonatomic, readonly) NSDictionary *sharedFontOverrides;
 @property(nonatomic, readonly) NSString *sessionGuid;
 @property(nonatomic, readonly) BOOL variableWindowSize;
-@property(nonatomic, readonly) NSString *setTitlesString;
 @property(nonatomic, readonly) BOOL shouldSetTitles;
 @property(nonatomic, readonly) BOOL serverIsLocal;
 
@@ -120,9 +120,9 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
                   scope:(iTermVariableScope *)scope
        initialDirectory:(iTermInitialDirectory *)initialDirectory;
 
-- (void)newWindowInSession:(NSString *)targetSession
-                     scope:(iTermVariableScope *)scope
-          initialDirectory:(iTermInitialDirectory *)initialDirectory;
+- (void)newWindowInSessionNumber:(NSNumber *)sessionNumber
+                           scope:(iTermVariableScope *)scope
+                initialDirectory:(iTermInitialDirectory *)initialDirectory;
 
 - (void)selectPane:(int)windowPane;
 
@@ -150,9 +150,11 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
-- (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
+- (void)unlinkWindowWithId:(int)windowId;
 - (void)requestDetach;
-- (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
+- (void)renameWindowWithId:(int)windowId
+           inSessionNumber:(NSNumber *)sessionNumber
+                    toName:(NSString *)newName;
 - (BOOL)canRenamePane;
 - (void)renamePane:(int)windowPane toTitle:(NSString *)newTitle;
 - (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
@@ -162,21 +164,25 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (NSString *)tabColorStringForWindowPane:(int)windowPane;
 
 - (void)linkWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession;
-- (void)moveWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession;
+     inSessionNumber:(int)sessionNumber
+     toSessionNumber:(int)targetSession;
 
-- (void)renameSession:(NSString *)oldName to:(NSString *)newName;
-- (void)killSession:(NSString *)sessionName;
-- (void)attachToSession:(NSString *)sessionName;
+- (void)moveWindowId:(int)windowId
+     inSessionNumber:(int)sessionNumber
+     toSessionNumber:(int)targetSessionNumber;
+
+- (void)renameSessionNumber:(int)sessionNumber
+                         to:(NSString *)newName;
+
+- (void)killSessionNumber:(int)sessionNumber;
+- (void)attachToSessionWithNumber:(int)sessionNumber;
 - (void)addSessionWithName:(NSString *)sessionName;
-// NOTE: If the session name is bogus (or any other error occurs) the selector will not be called.
-- (void)listWindowsInSession:(NSString *)sessionName
-                      target:(id)target
-                    selector:(SEL)selector
-                      object:(id)object;
+// NOTE: If anything goes wrong the selector will not be called.
+- (void)listWindowsInSessionNumber:(int)sessionNumber
+                            target:(id)target
+                          selector:(SEL)selector
+                            object:(id)object;
+
 - (void)listSessions;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
@@ -200,7 +206,6 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession *> *)clientSessions;
 
-- (void)setSize:(NSSize)size windows:(NSArray<NSString *> *)windows;
 - (void)setSize:(NSSize)size window:(int)window;
 
 @end

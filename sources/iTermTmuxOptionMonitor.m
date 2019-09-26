@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermVariables.h"
 #import "iTermVariableScope+Session.h"
+#import "NSStringITerm.h"
 #import "NSTimer+iTerm.h"
 #import "TmuxGateway.h"
 
@@ -19,11 +20,13 @@
     BOOL _haveOutstandingRequest;
     NSString *_target;
     NSString *_variableName;
+    NSString *_fallbackVariableName;
     void (^_block)(NSString *);
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                           scope:(iTermVariableScope *)scope
+           fallbackVariableName:(NSString *)fallbackVariableName
                          format:(NSString *)format
                          target:(NSString *)target
                    variableName:(NSString *)variableName
@@ -36,6 +39,7 @@
         _target = [target copy];
         _variableName = [variableName copy];
         _block = [block copy];
+        _fallbackVariableName = [fallbackVariableName copy];
     }
     return self;
 }
@@ -64,13 +68,21 @@
     [self updateOnce];
 }
 
+- (NSString *)command {
+    return [NSString stringWithFormat:@"display-message -t '%@' -p '%@'", _target, self.escapedFormat];
+}
+
 - (void)updateOnce {
     if (_haveOutstandingRequest) {
         DLog(@"Not making a request because one is outstanding");
         return;
     }
+    if (_fallbackVariableName && self.gateway.minimumServerVersion.doubleValue <= 2.9) {
+        [self didFetch:[self.scope valueForVariableName:_fallbackVariableName]];
+        return;
+    }
     _haveOutstandingRequest = YES;
-    NSString *command = [NSString stringWithFormat:@"display-message -t '%@' -p '%@'", _target, self.escapedFormat];
+    NSString *command = [self command];
     DLog(@"Request option with command %@", command);
     [self.gateway sendCommand:command
                responseTarget:self
@@ -80,7 +92,7 @@
 }
 
 - (void)didFetch:(NSString *)value {
-    DLog(@"Did fetch %@", value);
+    DLog(@"%@ -> %@", self.command, value);
     if (!value) {
         // Probably the pane went away and we'll be dealloced soon.
         return;

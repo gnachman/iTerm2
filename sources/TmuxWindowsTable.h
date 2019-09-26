@@ -22,7 +22,7 @@ extern NSString *kWindowPasteboardType;
 - (BOOL)haveSelectedSession;
 - (BOOL)currentSessionSelected;
 - (BOOL)haveOpenWindowWithId:(int)windowId;
-- (NSString *)selectedSessionName;
+- (NSNumber *)selectedSessionNumber;
 - (void)tmuxWindowsTableDidSelectWindowWithId:(int)windowId;
 
 @end

@@ -4726,7 +4726,7 @@ ITERM_WEAKLY_REFERENCEABLE
         } else {
             // Legacy code path for pre tmux 2.6
             [_tmuxController renameWindowWithId:_delegate.tmuxWindow
-                                      inSession:nil
+                                inSessionNumber:nil
                                          toName:profile[KEY_NAME]];
         }
         _tmuxTitleOutOfSync = NO;
@@ -5910,14 +5910,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)installTmuxStatusBarMonitor {
     assert(!_tmuxStatusBarMonitor);
-    _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
-                                                                         scope:self.variablesScope];
-    _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
-    if ([iTermPreferences boolForKey:kPreferenceKeyUseTmuxStatusBar] ||
-        [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
-        [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
-                                                                                                                  scope:nil
-                                                                                                                 window:self.delegate.tmuxWindow] dictionaryValue] }];
+
+    if (_tmuxController.gateway.minimumServerVersion.doubleValue >= 2.9) {
+        // Just use the built-in status bar for older versions of tmux because they don't support ${T:xxx} or ${E:xxx}
+        _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                             scope:self.variablesScope];
+        _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
+        if ([iTermPreferences boolForKey:kPreferenceKeyUseTmuxStatusBar] ||
+            [iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
+            [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController
+                                                                                                                      scope:nil
+                                                                                                                     window:self.delegate.tmuxWindow] dictionaryValue] }];
+        }
     }
 }
 
@@ -5929,7 +5933,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     __weak __typeof(self) weakSelf = self;
     _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
-                                                                 scope:self.variablesScope
+                                                                  scope:self.variablesScope
+                                                   fallbackVariableName:nil
                                                                 format:@"#{pane_title}"
                                                                 target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
                                                           variableName:iTermVariableKeySessionTmuxPaneTitle
@@ -6308,8 +6313,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
-    [_tmuxController guessVersion];
-    [_tmuxController loadTitleFormat];
+    [_tmuxController guessVersion];  // NOTE: This kicks off more stuff that depends on knowing the version number.
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
