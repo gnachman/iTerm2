@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermVariableScope.h"
+#import "NSStringITerm.h"
 #import "NSTimer+iTerm.h"
 #import "TmuxGateway.h"
 #import "RegexKitLite.h"
@@ -49,13 +50,8 @@
 
 - (void)requestUpdates {
     _accelerated = NO;
-    [_gateway sendCommand:@"display-message -p \"#{status-left}\"" responseTarget:self responseSelector:@selector(handleStatusLeftResponse:)];
-    [_gateway sendCommand:@"display-message -p \"#{status-right}\"" responseTarget:self responseSelector:@selector(handleStatusRightResponse:)];
-}
-
-- (NSString *)escapedString:(NSString *)string {
-    return [[string stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
-                    stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    [_gateway sendCommand:@"display-message -p \"#{T:status-left}\"" responseTarget:self responseSelector:@selector(handleStatusLeftValueExpansionResponse:)];
+    [_gateway sendCommand:@"display-message -p \"#{T:status-right}\"" responseTarget:self responseSelector:@selector(handleStatusRightValueExpansionResponse:)];
 }
 
 - (void)handleStatusIntervalResponse:(NSString *)response {
@@ -66,28 +62,14 @@
     _timer = [NSTimer scheduledWeakTimerWithTimeInterval:interval target:self selector:@selector(timerDidFire:) userInfo:nil repeats:YES];
 }
 
-- (void)handleStatusLeftResponse:(NSString *)response {
-    if (!response) {
-        return;
-    }
-    NSString *command = [NSString stringWithFormat:@"display-message -p \"%@\"", [self escapedString:response]];
-    [_gateway sendCommand:command responseTarget:self responseSelector:@selector(handleStatusLeftValueExpansionResponse:)];
-}
-
-- (void)handleStatusRightResponse:(NSString *)response {
-    if (!response) {
-        return;
-    }
-    NSString *command = [NSString stringWithFormat:@"display-message -p \"%@\"", [self escapedString:response]];
-    [_gateway sendCommand:command responseTarget:self responseSelector:@selector(handleStatusRightValueExpansionResponse:)];
-}
-
 - (void)handleStatusLeftValueExpansionResponse:(NSString *)string {
+    DLog(@"Left status bar is: %@", string);
     [self.scope setValue:[self sanitizedString:string] ?: @"" forVariableNamed:iTermVariableKeySessionTmuxStatusLeft];
     [self accelerateUpdateIfStringContainsNotReady:string];
 }
 
 - (void)handleStatusRightValueExpansionResponse:(NSString *)string {
+    DLog(@"Right status bar is: %@", string);
     [self.scope setValue:[self sanitizedString:string] ?: @"" forVariableNamed:iTermVariableKeySessionTmuxStatusRight];
     [self accelerateUpdateIfStringContainsNotReady:string];
 }

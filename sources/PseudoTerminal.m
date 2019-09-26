@@ -3018,8 +3018,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
         NSString *savedGUID = [arrangement objectForKey:TERMINAL_GUID];
-        if ([[iTermController sharedInstance] terminalWithGuid:savedGUID]) {
-            // Refuse to create a window with an already-used guid.
+        if ([[iTermController sharedInstance] terminalWithGuid:savedGUID] || ![self stringIsValidTerminalGuid:savedGUID]) {
+            // Refuse to create a window with an already-used or invalid guid.
             self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
         } else {
             self.terminalGuid = savedGUID;
@@ -3037,6 +3037,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_contentView updateToolbeltForWindow:self.window];
     return YES;
+}
+
+- (BOOL)stringIsValidTerminalGuid:(NSString *)string {
+    NSCharacterSet *characterSet = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"];
+    return [string rangeOfCharacterFromSet:characterSet.invertedSet].location == NSNotFound;
 }
 
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions {

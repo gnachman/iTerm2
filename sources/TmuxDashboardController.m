@@ -49,7 +49,7 @@
     if (self) {
         [self window];
 
-        [sessionsTable_ selectSessionWithName:[[self tmuxController] sessionName]];
+        [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
         [self reloadWindows];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(tmuxControllerDetached:)
@@ -140,78 +140,79 @@
 
 #pragma mark TmuxSessionsTableProtocol
 
-- (void)renameSessionWithName:(NSString *)oldName toName:(NSString *)newName
-{
-    [[self tmuxController] renameSession:oldName to:newName];
+- (void)renameSessionWithNumber:(int)sessionNumber toName:(NSString *)newName {
+    [[self tmuxController] renameSessionNumber:sessionNumber
+                                            to:newName];
 }
 
-- (void)removeSessionWithName:(NSString *)sessionName
-{
-    [[self tmuxController] killSession:sessionName];
+- (void)removeSessionWithNumber:(int)sessionNumber {
+    [[self tmuxController] killSessionNumber:sessionNumber];
 }
 
-- (void)addSessionWithName:(NSString *)sessionName
-{
+- (void)addSessionWithName:(NSString *)sessionName {
     [[self tmuxController] addSessionWithName:sessionName];
 }
 
-- (void)attachToSessionWithName:(NSString *)sessionName
-{
-    [[self tmuxController] attachToSession:sessionName];
+- (void)attachToSessionWithNumber:(int)sessionNumber {
+    [[self tmuxController] attachToSessionWithNumber:sessionNumber];
 }
 
-- (void)detach
-{
+- (void)detach {
     [[self tmuxController] requestDetach];
 }
 
-- (NSString *)nameOfAttachedSession
-{
-    return [[self tmuxController] sessionName];
+- (NSNumber *)numberOfAttachedSession {
+    TmuxController *controller = [self tmuxController];
+    if (!controller) {
+        return nil;
+    }
+    return @([controller sessionId]);
 }
 
-- (NSArray *)sessions
-{
-    return [[self tmuxController] sessions];
+- (NSArray<iTermTmuxSessionObject *> *)sessionsTableModelValues:(id)sender {
+    return [self.tmuxController sessionObjects];
 }
 
-- (void)selectedSessionChangedTo:(NSString *)newSessionName
-{
+- (NSArray<iTermTmuxSessionObject *> *)sessionsTableObjects:(TmuxSessionsTable *)sender {
+    return [[self tmuxController] sessionObjects];
+}
+
+- (void)selectedSessionDidChange {
     [windowsTable_ setWindows:[NSArray array]];
     [self reloadWindows];
 }
 
 - (void)linkWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession
-{
+     inSessionNumber:(int)sourceSessionNumber
+     toSessionNumber:(int)targetSessionNumber {
     [[self tmuxController] linkWindowId:windowId
-                              inSession:sessionName
-                              toSession:targetSession];
+                        inSessionNumber:sourceSessionNumber
+                        toSessionNumber:targetSessionNumber];
 }
 
 - (void)moveWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession
-{
+     inSessionNumber:(int)sessionNumber
+     toSessionNumber:(int)targetSessionNumber {
     [[self tmuxController] moveWindowId:windowId
-                              inSession:sessionName
-                              toSession:targetSession];
+                        inSessionNumber:sessionNumber
+                        toSessionNumber:targetSessionNumber];
 }
 
 #pragma mark TmuxWindowsTableProtocol
 
-- (void)reloadWindows
-{
-    [[self tmuxController] listWindowsInSession:[sessionsTable_ selectedSessionName]
-                                         target:self
-                                       selector:@selector(setWindows:forSession:)
-                                         object:[sessionsTable_ selectedSessionName]];
+- (void)reloadWindows {
+    NSNumber *sessionNumber = [sessionsTable_ selectedSessionNumber];
+    if (!sessionNumber) {
+        return;
+    }
+    [[self tmuxController] listWindowsInSessionNumber:sessionNumber.intValue
+                                               target:self
+                                             selector:@selector(setWindows:forSession:)
+                                               object:[sessionsTable_ selectedSessionNumber]];
 }
 
-- (void)setWindows:(TSVDocument *)doc forSession:(NSString *)sessionName
-{
-    if ([sessionName isEqualToString:[sessionsTable_ selectedSessionName]]) {
+- (void)setWindows:(TSVDocument *)doc forSession:(NSNumber *)sessionNumber {
+    if ([sessionNumber isEqual:[sessionsTable_ selectedSessionNumber]]) {
         NSMutableArray *windows = [NSMutableArray array];
         for (NSArray *record in doc.records) {
             [windows addObject:[NSMutableArray arrayWithObjects:
@@ -223,18 +224,19 @@
     }
 }
 
-- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName
-{
+- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName {
+    NSNumber *sessionNumber = [sessionsTable_ selectedSessionNumber];
+    if (!sessionNumber) {
+        return;
+    }
     [[self tmuxController] renameWindowWithId:windowId
-                                    inSession:[sessionsTable_ selectedSessionName]
+                              inSessionNumber:sessionNumber
                                        toName:newName];
     [self reloadWindows];
 }
 
-- (void)unlinkWindowWithId:(int)windowId
-{
-    [[self tmuxController] unlinkWindowWithId:windowId
-                                    inSession:[sessionsTable_ selectedSessionName]];
+- (void)unlinkWindowWithId:(int)windowId {
+    [[self tmuxController] unlinkWindowWithId:windowId];
     [self reloadWindows];
 }
 
@@ -242,15 +244,14 @@
     NSString *lastName = [[windowsTable_ names] lastObject];
     if (lastName) {
         TmuxController *tmuxController = self.tmuxController;
-        [tmuxController newWindowInSession:[sessionsTable_ selectedSessionName]
-                                     scope:[iTermVariableScope globalsScope]
-                          initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:tmuxController.sharedProfile
-                                                                                   objectType:iTermWindowObject]];
+        [tmuxController newWindowInSessionNumber:[sessionsTable_ selectedSessionNumber]
+                                           scope:[iTermVariableScope globalsScope]
+                                initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:tmuxController.sharedProfile
+                                                                                         objectType:iTermWindowObject]];
     }
 }
 
-- (void)showWindowsWithIds:(NSArray *)windowIds inTabs:(BOOL)inTabs
-{
+- (void)showWindowsWithIds:(NSArray *)windowIds inTabs:(BOOL)inTabs {
     if (inTabs) {
         for (NSNumber *wid in windowIds) {
             [[self tmuxController] openWindowWithId:[wid intValue]
@@ -265,27 +266,24 @@
                                             profile:self.tmuxController.sharedProfile];
         }
     }
-	[[self tmuxController] saveHiddenWindows];
+    [[self tmuxController] saveHiddenWindows];
 }
 
 - (void)hideWindowWithId:(int)windowId
 {
-	[[self tmuxController] hideWindow:windowId];
+    [[self tmuxController] hideWindow:windowId];
     [windowsTable_ updateEnabledStateOfButtons];
 }
 
-- (BOOL)haveSelectedSession
-{
-    return [sessionsTable_ selectedSessionName] != nil;
+- (BOOL)haveSelectedSession {
+    return [sessionsTable_ selectedSessionNumber] != nil;
 }
 
-- (BOOL)currentSessionSelected
-{
-    return [[sessionsTable_ selectedSessionName] isEqualToString:[[self tmuxController] sessionName]];
+- (BOOL)currentSessionSelected {
+    return [[sessionsTable_ selectedSessionNumber] isEqual:@([[self tmuxController] sessionId])];
 }
 
-- (BOOL)haveOpenWindowWithId:(int)windowId
-{
+- (BOOL)haveOpenWindowWithId:(int)windowId {
     return [[self tmuxController] window:windowId] != nil;
 }
 
@@ -294,48 +292,41 @@
     [tab.activeSession reveal];
 }
 
-- (NSString *)selectedSessionName
-{
-    return [sessionsTable_ selectedSessionName];
+- (NSNumber *)selectedSessionNumber {
+    return [sessionsTable_ selectedSessionNumber];
 }
 
 #pragma mark - Private
 
-- (void)tmuxControllerDetached:(NSNotification *)notification
-{
-    [sessionsTable_ setSessions:[NSArray array]];
+- (void)tmuxControllerDetached:(NSNotification *)notification {
+    [sessionsTable_ setSessionObjects:@[]];
 }
 
-- (void)tmuxControllerSessionsDidChange:(NSNotification *)notification
-{
-    [sessionsTable_ setSessions:[[self tmuxController] sessions]];
+- (void)tmuxControllerSessionsDidChange:(NSNotification *)notification {
+    [sessionsTable_ setSessionObjects:[[self tmuxController] sessionObjects]];
 }
 
-- (void)tmuxControllerWindowsDidChange:(NSNotification *)notification
-{
+- (void)tmuxControllerWindowsDidChange:(NSNotification *)notification {
     if ([[self window] isVisible]) {
         [self reloadWindows];
     }
 }
 
-- (void)tmuxControllerAttachedSessionChanged:(NSNotification *)notification
-{
+- (void)tmuxControllerAttachedSessionChanged:(NSNotification *)notification {
     if ([[self window] isVisible]) {
-        [sessionsTable_ selectSessionWithName:[[self tmuxController] sessionName]];
+        [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
         [windowsTable_ updateEnabledStateOfButtons];
     }
 }
 
-- (void)tmuxControllerWindowOpenedOrClosed:(NSNotification *)notification
-{
+- (void)tmuxControllerWindowOpenedOrClosed:(NSNotification *)notification {
     if ([[self window] isVisible]) {
         [windowsTable_ updateEnabledStateOfButtons];
         [windowsTable_ reloadData];
     }
 }
 
-- (void)tmuxControllerWindowWasRenamed:(NSNotification *)notification
-{
+- (void)tmuxControllerWindowWasRenamed:(NSNotification *)notification {
     if ([[self window] isVisible]) {
         NSArray *objects = [notification object];
         int wid = [[objects objectAtIndex:0] intValue];
@@ -344,8 +335,7 @@
     }
 }
 
-- (void)tmuxControllerSessionWasRenamed:(NSNotification *)notification
-{
+- (void)tmuxControllerSessionWasRenamed:(NSNotification *)notification {
     // This is a bit of extra work but the sessions table wasn't built knowing about session IDs.
     [[self tmuxController] listSessions];
 }
@@ -364,8 +354,7 @@
     [self connectionSelectionDidChange:nil];
 }
 
-- (TmuxController *)tmuxController
-{
+- (TmuxController *)tmuxController {
     return [[TmuxControllerRegistry sharedInstance] controllerForClient:[self currentClient]];  // TODO: track the current client when multiples are supported
 }
 
@@ -375,7 +364,7 @@
 
 
 - (IBAction)connectionSelectionDidChange:(id)sender {
-    [sessionsTable_ setSessions:[[self tmuxController] sessions]];
+    [sessionsTable_ setSessionObjects:[[self tmuxController] sessionObjects]];
     [self reloadWindows];
 }
 

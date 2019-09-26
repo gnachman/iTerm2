@@ -9,21 +9,25 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
+@class TmuxSessionsTable;
+@class iTermTmuxSessionObject;
+
 @protocol TmuxSessionsTableProtocol <NSObject>
 
-- (NSArray *)sessions;
-- (void)renameSessionWithName:(NSString *)oldName toName:(NSString *)newName;
-- (void)removeSessionWithName:(NSString *)sessionName;
+- (NSArray<iTermTmuxSessionObject *> *)sessionsTableObjects:(TmuxSessionsTable *)sender;
+- (void)renameSessionWithNumber:(int)sessionNumber
+                         toName:(NSString *)newName;
+- (void)removeSessionWithNumber:(int)sessionNumber;
 - (void)addSessionWithName:(NSString *)sessionName;
-- (void)attachToSessionWithName:(NSString *)sessionName;
-- (NSString *)nameOfAttachedSession;
-- (void)selectedSessionChangedTo:(NSString *)newName;
+- (void)attachToSessionWithNumber:(int)sessionNumber;
+- (NSNumber *)numberOfAttachedSession;
+- (void)selectedSessionDidChange;
 - (void)linkWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession;
+     inSessionNumber:(int)sourceSessionNumber
+     toSessionNumber:(int)targetSessionNumber;
 - (void)moveWindowId:(int)windowId
-           inSession:(NSString *)sessionName
-           toSession:(NSString *)targetSession;
+     inSessionNumber:(int)sessionNumber
+     toSessionNumber:(int)targetSessionNumber;
 - (void)detach;
 
 @end
@@ -31,9 +35,9 @@
 @interface TmuxSessionsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource>
 
 @property(nonatomic, assign) id<TmuxSessionsTableProtocol> delegate;
-@property(nonatomic, readonly) NSString *selectedSessionName;
+@property(nonatomic, readonly) NSNumber *selectedSessionNumber;
 
-- (void)setSessions:(NSArray *)names;
-- (void)selectSessionWithName:(NSString *)name;
+- (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)names;
+- (void)selectSessionNumber:(int)number;
 
 @end
