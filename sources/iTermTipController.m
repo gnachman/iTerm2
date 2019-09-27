@@ -189,13 +189,15 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     if (!respectUnshowable) {
         unshowableTips = @[];
     }
-    BOOL okToReturn = (prev == nil);
     for (NSString *tipKey in [[_tips allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
-        if (okToReturn && ![unshowableTips containsObject:tipKey]) {
+        if ([unshowableTips containsObject:tipKey]) {
+            continue;
+        }
+        if (!prev) {
             return tipKey;
         }
-        if (!okToReturn) {
-            okToReturn = [tipKey isEqualToString:prev];
+        if ([tipKey compare:prev] == NSOrderedDescending) {
+            return tipKey;
         }
     }
     return nil;

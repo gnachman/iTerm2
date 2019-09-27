@@ -272,10 +272,7 @@
                         kTipUrlKey: @"https://iterm2.com/3.3/documentation-status-bar.html" },
 
             @"0074": @{ kTipTitleKey: @"Minimal Theme",
-                        kTipBodyKey: @"Try the “Minimal” theme to reduce visual clutter. You can set it in “Prefs > Appearance > General.”" },
-
-            @"0075": @{ kTipTitleKey: @"Compact Windows",
-                        kTipBodyKey: @"Try the “Compact” window style to save space by removing the window's title bar. You can configure it in “Prefs > Profiles > Window > Style.”" },
+                        kTipBodyKey: @"Try the “Minimal” and “Compact” themes to reduce visual clutter. You can set it in “Prefs > Appearance > General.”" },
 
             @"0076": @{ kTipTitleKey: @"Session Titles",
                         kTipBodyKey: @"You can configure which elements are present in session titles in “Prefs > Profiles > General > Title.”" },
