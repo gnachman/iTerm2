@@ -235,6 +235,9 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     if (!unshowableTips) {
         unshowableTips = @[];
     }
+    // Remove duplicates
+    unshowableTips = [[NSSet setWithArray:unshowableTips] allObjects];
+    // And append the last one because we use it to decide which tip to show next.
     unshowableTips = [unshowableTips arrayByAddingObject:_currentTipName];
     [[NSUserDefaults standardUserDefaults] setObject:unshowableTips forKey:kUnshowableTipsKey];
 }
