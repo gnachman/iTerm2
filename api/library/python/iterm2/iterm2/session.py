@@ -248,12 +248,12 @@ class Session:
 
     @property
     def preferred_size(self) -> iterm2.util.Size:
-        """The size in cells to resize to when `Tab.async_update_layout()` is called."""
+        """The size in cells to resize to when `Tab.async_update_layout()` is called. The size is a :class:`iterm2.util.Size`."""
         return self.__preferred_size
 
     @preferred_size.setter
     def preferred_size(self, value: iterm2.util.Size):
-        """Sets the size in cells to resize to when `Tab.async_update_layout()` is called."""
+        """Sets the size in cells to resize to when `Tab.async_update_layout()` is called. The size is a :class:`iterm2.util.Size`."""
         self.__preferred_size = value
 
     @property
