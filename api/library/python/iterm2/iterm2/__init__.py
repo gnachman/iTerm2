@@ -29,7 +29,7 @@ from iterm2.preferences import PreferenceKey, async_get_preference
 
 from iterm2.profile import Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile, BackgroundImageMode, CursorType, ThinStrokes, UnicodeNormalization, CharacterEncoding, OptionKeySends, InitialWorkingDirectory, IconMode, TitleComponents
 
-from iterm2.prompt import PromptMonitor, async_get_last_prompt
+from iterm2.prompt import Prompt, PromptMonitor, async_get_last_prompt
 
 from iterm2.registration import RPC, TitleProviderRPC, StatusBarRPC, Reference
 
