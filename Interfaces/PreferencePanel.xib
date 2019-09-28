@@ -536,16 +536,16 @@ Gw
                                                             </connections>
                                                         </menuItem>
                                                         <menuItem isSeparatorItem="YES" id="Lfh-66-x8L"/>
-                                                        <menuItem title="Copy Profile as JSON" id="dEP-Mo-LZj">
+                                                        <menuItem title="Save Profile as JSON…" id="dEP-Mo-LZj">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
-                                                                <action selector="copyProfileJson:" target="HVI-63-mNz" id="tgE-zF-x6e"/>
+                                                                <action selector="saveProfileAsJSON:" target="HVI-63-mNz" id="SH9-II-jIc"/>
                                                             </connections>
                                                         </menuItem>
-                                                        <menuItem title="Copy All Profiles as JSON" id="Eqf-iD-X9H">
+                                                        <menuItem title="Save All Profiles as JSON…" id="Eqf-iD-X9H">
                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                             <connections>
-                                                                <action selector="copyAllProfilesJson:" target="HVI-63-mNz" id="meW-Qu-sxh"/>
+                                                                <action selector="saveAllProfilesAsJSON:" target="HVI-63-mNz" id="zgy-n0-AwE"/>
                                                             </connections>
                                                         </menuItem>
                                                         <menuItem isSeparatorItem="YES" id="ZaV-Qb-4Dj"/>
@@ -693,7 +693,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
