@@ -77,6 +77,27 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             assert(false);
             return windowType;
 
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_MAXIMIZED:
+            if (@available(macOS 10.14, *)) {} else {
+                // 10.13 and earlier do not support compact
+                return WINDOW_TYPE_MAXIMIZED;
+            }
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_COMPACT:
+                case TAB_STYLE_MINIMAL:
+                    return WINDOW_TYPE_COMPACT_MAXIMIZED;
+
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    return WINDOW_TYPE_MAXIMIZED;
+            }
+            assert(false);
+            return windowType;
+
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:

@@ -281,6 +281,8 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return [windowController canonicalFrameForScreen:screen];
 
         case WINDOW_TYPE_NORMAL:
@@ -330,6 +332,10 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
             return [self frameByMovingFrame:rect fromScreen:self.windowController.window.screen toScreen:screen].origin;
+
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return screen.visibleFrame.origin;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
             return screen.frame.origin;
@@ -453,6 +459,8 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
@@ -506,6 +514,8 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
             case WINDOW_TYPE_ACCESSORY:
                 [self moveToPreferredScreen];
@@ -557,6 +567,8 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
             case WINDOW_TYPE_ACCESSORY:
                 [self fadeOut];
