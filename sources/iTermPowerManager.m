@@ -72,6 +72,11 @@ static void iTermPowerManagerSourceDidChange(void *context) {
         if (_runLoop && _runLoopSource){
             CFRunLoopAddSource(_runLoop, _runLoopSource, kCFRunLoopDefaultMode);
         }
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(didWakeFromSleep:)
+                                                                   name:NSWorkspaceDidWakeNotification
+                                                                 object:nil];
+
         _publisher = [[iTermPublisher alloc] initWithCapacity:120];
         _publisher.delegate = self;
         [self metalAllowed];
@@ -229,6 +234,12 @@ static void iTermPowerManagerSourceDidChange(void *context) {
                                                 userInfo:nil
                                                  repeats:YES];
     }
+}
+
+#pragma mark - Notifications
+
+- (void)didWakeFromSleep:(NSNotification *)notification {
+    [self setConnected:iTermPowerManagerIsConnectedToPower()];
 }
 
 @end
