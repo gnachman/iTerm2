@@ -4999,11 +4999,11 @@ DQ
             <point key="canvasLocation" x="2057" y="-22.5"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="623" height="237"/>
+            <rect key="frame" x="0.0" y="0.0" width="623" height="256"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView id="W2g-ef-8zn">
-                    <rect key="frame" x="0.0" y="10" width="610" height="233"/>
+                    <rect key="frame" x="0.0" y="10" width="610" height="252"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
@@ -5041,7 +5041,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="ThU-HR-f8F">
-                                                <rect key="frame" x="18" y="118" width="122" height="17"/>
+                                                <rect key="frame" x="18" y="119" width="122" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Theme:" id="uhj-9S-l8R">
                                                     <font key="font" metaFont="system"/>
@@ -5141,11 +5141,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="qVl-YI-RPa" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="99" y="58" width="391" height="126"/>
+                                        <rect key="frame" x="99" y="50" width="391" height="134"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button id="5144">
-                                                <rect key="frame" x="18" y="92" width="195" height="18"/>
+                                                <rect key="frame" x="18" y="98" width="195" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show border around window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5145">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5156,7 +5156,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="5753">
-                                                <rect key="frame" x="18" y="55" width="354" height="18"/>
+                                                <rect key="frame" x="18" y="58" width="354" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Disable transparency for fullscreen windows by default" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5754">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5168,7 +5168,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4529">
-                                                <rect key="frame" x="19" y="110" width="219" height="18"/>
+                                                <rect key="frame" x="18" y="118" width="219" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show window number in title bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4536">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5179,7 +5179,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4561">
-                                                <rect key="frame" x="18" y="73" width="113" height="18"/>
+                                                <rect key="frame" x="18" y="78" width="113" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Hide scrollbars" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4564">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5191,7 +5191,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="tyx-QN-l9J">
-                                                <rect key="frame" x="18" y="36" width="354" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="354" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show line under title bar when the tab bar is not visible" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="fyA-Fd-O2Q">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5221,15 +5221,15 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Tabs" identifier="2" id="med-Jd-f8A">
                             <view key="view" id="z6P-Vz-VbA">
-                                <rect key="frame" x="10" y="33" width="590" height="187"/>
+                                <rect key="frame" x="10" y="33" width="590" height="206"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="ksv-Y5-pY9" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="112" y="-2" width="366" height="186"/>
+                                        <rect key="frame" x="112" y="9" width="366" height="194"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button id="Q0o-aJ-Wec">
-                                                <rect key="frame" x="18" y="72" width="186" height="18"/>
+                                                <rect key="frame" x="18" y="78" width="186" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show new-output indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="P1b-LJ-ARG">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5241,7 +5241,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4446">
-                                                <rect key="frame" x="18" y="132" width="263" height="18"/>
+                                                <rect key="frame" x="18" y="138" width="263" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5253,7 +5253,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="5374">
-                                                <rect key="frame" x="18" y="92" width="160" height="18"/>
+                                                <rect key="frame" x="18" y="98" width="160" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5265,7 +5265,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="4462">
-                                                <rect key="frame" x="18" y="170" width="298" height="18"/>
+                                                <rect key="frame" x="18" y="178" width="298" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5276,7 +5276,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="vJk-74-qzt">
-                                                <rect key="frame" x="18" y="152" width="330" height="18"/>
+                                                <rect key="frame" x="18" y="158" width="330" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Preserve window size when tab bar shows or hides" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ky-UU-jS2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5287,7 +5287,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="1dE-aB-uR8">
-                                                <rect key="frame" x="18" y="112" width="263" height="18"/>
+                                                <rect key="frame" x="18" y="118" width="263" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Tabs have close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5299,7 +5299,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="Esq-U7-Af7">
-                                                <rect key="frame" x="18" y="52" width="306" height="18"/>
+                                                <rect key="frame" x="18" y="58" width="306" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Flash tab bar when switching tabs in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Eu-ti-9Nf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5311,7 +5311,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="e4x-7h-mzh">
-                                                <rect key="frame" x="18" y="32" width="186" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="186" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5323,7 +5323,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="q7y-hG-x0m" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="18" y="12" width="160" height="18"/>
+                                                <rect key="frame" x="18" y="18" width="160" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Stretch tabs to fill bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="X12-cb-Cnf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
