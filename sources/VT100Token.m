@@ -7,7 +7,10 @@
 //
 
 #import "VT100Token.h"
+
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
+
 #include <stdlib.h>
 
 @interface VT100Token ()
@@ -246,7 +249,7 @@
 
     _asciiData.length = length;
     if (length > sizeof(_asciiData.staticBuffer)) {
-        _asciiData.buffer = malloc(length);
+        _asciiData.buffer = iTermMalloc(length);
     } else {
         _asciiData.buffer = _asciiData.staticBuffer;
     }

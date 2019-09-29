@@ -9,6 +9,7 @@
 #import "iTermLSOF.h"
 
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 #import "iTermSocketAddress.h"
 #import "NSStringITerm.h"
 #include <arpa/inet.h>
@@ -26,7 +27,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     });
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block int rc;
-    char *temp = malloc(MAX(1, buffersize));
+    char *temp = iTermMalloc(MAX(1, buffersize));
     dispatch_async(queue, ^{
         rc = proc_pidinfo(pid, flavor, arg, temp, buffersize);
         dispatch_semaphore_signal(sema);
@@ -294,7 +295,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     if (maxSize == 0) {
         return NULL;
     }
-    struct proc_fdinfo *fds = malloc(maxSize);
+    struct proc_fdinfo *fds = iTermMalloc(maxSize);
     int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFDS, 0, fds, maxSize);
     if (numBytes <= 0) {
         free(fds);
@@ -310,7 +311,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     if (size <= 0) {
         return NULL;
     }
-    struct proc_fileportinfo *filePortInfoArray = malloc(size);
+    struct proc_fileportinfo *filePortInfoArray = iTermMalloc(size);
     int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFILEPORTS, 0, filePortInfoArray, size);
     if (numBytes <= 0) {
         free(filePortInfoArray);
@@ -412,7 +413,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     }
 
     // Put all the pids of running jobs in the pids array.
-    int *pids = (int *)malloc(bufferSize);
+    int *pids = (int *)iTermMalloc(bufferSize);
     const int bytesReturned = proc_listpids(PROC_ALL_PIDS, 0, pids, bufferSize);
     if (bytesReturned <= 0) {
         free(pids);
@@ -489,7 +490,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
         return -1;
     }
 
-    int* pids = (int*) malloc(numBytes + sizeof(int));
+    int* pids = (int*) iTermMalloc(numBytes + sizeof(int));
     // Save a magic int at the end to be sure that the buffer isn't overrun.
     const int PID_MAGIC = 0xdeadbeef;
     int magicIndex = numBytes/sizeof(int);

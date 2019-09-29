@@ -17,6 +17,7 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -294,7 +295,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 
 - (void)attachToOwner:(NSObject *)owner failure:(void (^)(void))failure {
     assert(!_associatedObjectKey);
-    _associatedObjectKey = malloc(1);
+    _associatedObjectKey = iTermMalloc(1);
     [owner it_setAssociatedObject:self forKey:_associatedObjectKey];
     _failure = [failure copy];
 }

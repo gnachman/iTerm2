@@ -2,6 +2,7 @@
 
 #import "Coprocess.h"
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 #import "iTermNotificationController.h"
 #import "iTermProcessCache.h"
 #import "NSWorkspace+iTerm.h"
@@ -709,7 +710,7 @@ static void HandleSigChld(int n) {
     for (NSString *k in env) {
         environmentDict[k] = env[k];
     }
-    char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
+    char **environment = iTermMalloc(sizeof(char*) * (environmentDict.count + 1));
     int i = 0;
     for (NSString *k in environmentDict) {
         NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];

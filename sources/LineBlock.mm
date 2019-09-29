@@ -11,6 +11,7 @@ extern "C" {
 
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "iTermMalloc.h"
 #import "LineBufferHelpers.h"
 #import "NSBundle+iTerm.h"
 #import "RegexKitLite.h"
@@ -129,12 +130,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 {
     self = [super init];
     if (self) {
-        raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * size);
+        raw_buffer = (screen_char_t*)iTermMalloc(sizeof(screen_char_t) * size);
         buffer_start = raw_buffer;
         buffer_size = size;
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
-        cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        cumulative_line_lengths = (int*)iTermMalloc(sizeof(int) * cll_capacity);
         [self commonInit];
     }
     return self;
@@ -179,7 +180,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
         NSData *data = dictionary[kLineBlockRawBufferKey];
         buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
-        raw_buffer = (screen_char_t *)malloc(buffer_size * sizeof(screen_char_t));
+        raw_buffer = (screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t));
         memmove(raw_buffer, data.bytes, data.length);
         buffer_start = raw_buffer + [dictionary[kLineBlockBufferStartOffsetKey] intValue];
         start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
@@ -187,7 +188,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
         cll_capacity = [cllArray count];
-        cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        cumulative_line_lengths = (int*)iTermMalloc(sizeof(int) * cll_capacity);
         [self commonInit];
 
         NSArray *metadataArray = dictionary[kLineBlockMetadataKey];
@@ -237,7 +238,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 
 - (LineBlock *)copyWithZone:(NSZone *)zone {
     LineBlock *theCopy = [[LineBlock alloc] init];
-    theCopy->raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * buffer_size);
+    theCopy->raw_buffer = (screen_char_t*)iTermMalloc(sizeof(screen_char_t) * buffer_size);
     memmove(theCopy->raw_buffer, raw_buffer, sizeof(screen_char_t) * buffer_size);
     size_t bufferStartOffset = (buffer_start - raw_buffer);
     theCopy->buffer_start = theCopy->raw_buffer + bufferStartOffset;
@@ -245,9 +246,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->first_entry = first_entry;
     theCopy->buffer_size = buffer_size;
     size_t cll_size = sizeof(int) * cll_capacity;
-    theCopy->cumulative_line_lengths = (int*) malloc(cll_size);
+    theCopy->cumulative_line_lengths = (int*)iTermMalloc(cll_size);
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
-    theCopy->metadata_ = (LineBlockMetadata *) malloc(sizeof(LineBlockMetadata) * cll_capacity);
+    theCopy->metadata_ = (LineBlockMetadata *)iTermMalloc(sizeof(LineBlockMetadata) * cll_capacity);
     memmove(theCopy->metadata_, metadata_, sizeof(LineBlockMetadata) * cll_capacity);
     for (int i = 0; i < cll_capacity; i++) {
         theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;

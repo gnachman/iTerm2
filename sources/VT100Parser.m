@@ -7,7 +7,9 @@
 //
 
 #import "VT100Parser.h"
+
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
 
@@ -28,7 +30,7 @@
     self = [super init];
     if (self) {
         _totalStreamLength = kDefaultStreamSize;
-        _stream = malloc(_totalStreamLength);
+        _stream = iTermMalloc(_totalStreamLength);
         _savedStateForPartialParse = [[NSMutableDictionary alloc] init];
         _controlParser = [[VT100ControlParser alloc] init];
     }
@@ -72,7 +74,7 @@
             // to avoid allowing this to grow too big.
             free(_stream);
             _totalStreamLength = kDefaultStreamSize;
-            _stream = malloc(_totalStreamLength);
+            _stream = iTermMalloc(_totalStreamLength);
         }
     } else {
         int rmlen = 0;

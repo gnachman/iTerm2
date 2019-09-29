@@ -27,8 +27,10 @@
  */
 
 #import "DVRDecoder.h"
+
 #import "DebugLogging.h"
 #import "DVRIndexEntry.h"
+#import "iTermMalloc.h"
 #import "LineBuffer.h"
 
 @interface DVRDecoder ()
@@ -229,7 +231,7 @@
     }
     length_ = entry->frameLength;
     if (!frame_) {
-        frame_ = malloc(length_);
+        frame_ = iTermMalloc(length_);
     }
     char* data = [buffer_ blockForKey:key];
     info_ = entry->info;

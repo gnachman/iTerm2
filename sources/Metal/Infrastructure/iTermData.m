@@ -6,7 +6,9 @@
 //
 
 #import "iTermData.h"
+
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 
 static const unsigned char iTermDataGuardRegionValue[64] = {
     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
@@ -25,7 +27,7 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 - (instancetype)initWithLength:(NSUInteger)length {
     self = [super init];
     if (self) {
-        unsigned char *buffer = malloc(length + sizeof(iTermDataGuardRegionValue));
+        unsigned char *buffer = iTermMalloc(length + sizeof(iTermDataGuardRegionValue));
         memmove(buffer + length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
 
         _mutableBytes = buffer;

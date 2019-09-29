@@ -8,6 +8,8 @@
 
 #import "NSMutableData+iTerm.h"
 
+#import "iTermMalloc.h"
+
 @implementation NSMutableData (iTerm)
 
 + (instancetype)uninitializedDataWithLength:(NSUInteger)length {
@@ -15,7 +17,7 @@
 }
 
 - (instancetype)initWithUninitializedLength:(NSUInteger)length {
-    return [self initWithBytesNoCopy:malloc(length) length:length freeWhenDone:YES];
+    return [self initWithBytesNoCopy:iTermMalloc(length) length:length freeWhenDone:YES];
 }
 
 - (void)appendBytes:(unsigned char *)bytes length:(int)length excludingCharacter:(char)exclude {

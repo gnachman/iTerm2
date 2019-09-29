@@ -7,7 +7,9 @@
 //
 
 #import "NSWorkspace+iTerm.h"
+
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 
 @implementation NSWorkspace (iTerm)
 
@@ -17,7 +19,7 @@
         [NSTemporaryDirectory() stringByAppendingPathComponent:template];
     const char *tempFileTemplateCString =
         [tempFileTemplate fileSystemRepresentation];
-    char *tempFileNameCString = (char *)malloc(strlen(tempFileTemplateCString) + 1);
+    char *tempFileNameCString = (char *)iTermMalloc(strlen(tempFileTemplateCString) + 1);
     strcpy(tempFileNameCString, tempFileTemplateCString);
     int fileDescriptor = mkstemps(tempFileNameCString, suffix.length);
 

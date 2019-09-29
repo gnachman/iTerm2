@@ -27,6 +27,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermMalloc.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
@@ -1161,7 +1162,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
     size_t in_len = sizeof(unichar) * [self length];
     size_t out_len;
-    unichar *in = malloc(in_len);
+    unichar *in = iTermMalloc(in_len);
     if (!in) {
         return self;
     }
@@ -1173,7 +1174,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     if (!precompose) {
         out_len *= 2;
     }
-    out = malloc(sizeof(unichar) * out_len);
+    out = iTermMalloc(sizeof(unichar) * out_len);
     if (!out) {
         free(in);
         return self;

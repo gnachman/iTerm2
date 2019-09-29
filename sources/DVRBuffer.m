@@ -27,6 +27,8 @@
  */
 
 #import "DVRBuffer.h"
+
+#import "iTermMalloc.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
@@ -67,7 +69,7 @@
     self = [super init];
     if (self) {
         capacity_ = maxsize;
-        store_ = malloc(maxsize);
+        store_ = iTermMalloc(maxsize);
         index_ = [[NSMutableDictionary alloc] init];
         firstKey_ = 0;
         nextKey_ = 0;

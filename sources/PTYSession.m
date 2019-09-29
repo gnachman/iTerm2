@@ -39,6 +39,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
@@ -11046,7 +11047,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSString *)stringForLine:(screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
-    unichar *characters = malloc(sizeof(unichar) * length * kMaxParts + 1);
+    unichar *characters = iTermMalloc(sizeof(unichar) * length * kMaxParts + 1);
     ITMCodePointsPerCell *cpps = [[[ITMCodePointsPerCell alloc] init] autorelease];
     cpps.numCodePoints = 1;
     cpps.repeats = 0;

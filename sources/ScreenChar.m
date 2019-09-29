@@ -29,10 +29,12 @@
  */
 
 #import "ScreenChar.h"
+
 #import "DebugLogging.h"
 #import "charmaps.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
+#import "iTermMalloc.h"
 #import "NSCharacterSet+iTerm.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
@@ -447,9 +449,9 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
                                   unichar** backingStorePtr,
                                   int** deltasPtr) {
     const int lineLength = end - start;
-    unichar* charHaystack = malloc(sizeof(unichar) * lineLength * kMaxParts + 1);
+    unichar* charHaystack = iTermMalloc(sizeof(unichar) * lineLength * kMaxParts + 1);
     *backingStorePtr = charHaystack;
-    int* deltas = malloc(sizeof(int) * (lineLength * kMaxParts + 1));
+    int* deltas = iTermMalloc(sizeof(int) * (lineLength * kMaxParts + 1));
     *deltasPtr = deltas;
     // The 'deltas' array gives the difference in position between the screenChars
     // and the charHaystack. The formula to convert an index in the charHaystack

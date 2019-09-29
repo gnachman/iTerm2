@@ -1,4 +1,6 @@
 #import <Foundation/Foundation.h>
+
+#import "iTermMalloc.h"
 #import "iTermParser.h"
 #import "ScreenChar.h"
 

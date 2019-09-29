@@ -3411,6 +3411,8 @@
 		A6ECA5931D7535E700D19511 /* image_decoder.sb in Resources */ = {isa = PBXBuildFile; fileRef = A6ECA5921D7535E700D19511 /* image_decoder.sb */; };
 		A6ECA59A1D76907400D19511 /* iTermImageDecoderDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */; };
 		A6ECA59B1D76907400D19511 /* iTermImageDecoderDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */; };
+		A6EE7F33234082BE00D0F724 /* iTermMalloc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE7F31234082BE00D0F724 /* iTermMalloc.h */; };
+		A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EE7F32234082BE00D0F724 /* iTermMalloc.m */; };
 		A6EEA6681C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */; };
 		A6EF57D121994DDC00C76698 /* iTermUserDefaultsObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */; };
 		A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
@@ -5848,6 +5850,8 @@
 		A6ECA5921D7535E700D19511 /* image_decoder.sb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = image_decoder.sb; path = OtherResources/image_decoder.sb; sourceTree = "<group>"; };
 		A6ECA5981D76907400D19511 /* iTermImageDecoderDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageDecoderDriver.h; sourceTree = "<group>"; };
 		A6ECA5991D76907400D19511 /* iTermImageDecoderDriver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageDecoderDriver.m; sourceTree = "<group>"; };
+		A6EE7F31234082BE00D0F724 /* iTermMalloc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMalloc.h; sourceTree = "<group>"; };
+		A6EE7F32234082BE00D0F724 /* iTermMalloc.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMalloc.m; sourceTree = "<group>"; };
 		A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutomaticProfileSwitcher.h; sourceTree = "<group>"; };
 		A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutomaticProfileSwitcher.m; sourceTree = "<group>"; };
 		A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutomaticProfileSwitcherTest.m; sourceTree = "<group>"; };
@@ -7829,6 +7833,8 @@
 				A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */,
 				A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */,
 				A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */,
+				A6EE7F31234082BE00D0F724 /* iTermMalloc.h */,
+				A6EE7F32234082BE00D0F724 /* iTermMalloc.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10124,6 +10130,7 @@
 				53D68F802283EE7C0018710D /* iTermTmuxLayoutBuilder.h in Headers */,
 				A667193A1DCE36C3000CE608 /* iTermProfileHotKey.h in Headers */,
 				A667193B1DCE36C3000CE608 /* iTermIPV4Address.h in Headers */,
+				A6EE7F33234082BE00D0F724 /* iTermMalloc.h in Headers */,
 				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
@@ -12450,6 +12457,7 @@
 				A6A4867F20B6812A00493302 /* TriggerController.m in Sources */,
 				530AB7B920A6242C00D2AA08 /* iTermAPIAuthorizationController.m in Sources */,
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
+				A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				53850904212FA8910039AFC7 /* iTermMetaFrustrationDetector.m in Sources */,
 				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,

@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermMalloc.h"
+
 // A vector of pointers that is fast and simple.
 typedef struct {
     int capacity;
@@ -17,7 +19,7 @@ typedef struct {
 
 NS_INLINE void CVectorCreate(CVector *vector, int capacity) {
     vector->capacity = capacity;
-    vector->elements = (void **)malloc(vector->capacity * sizeof(void *));
+    vector->elements = (void **)iTermMalloc(vector->capacity * sizeof(void *));
     vector->count = 0;
 }
 
@@ -93,7 +95,7 @@ do { \
   __typeof(__vector) __v = __vector; \
   \
   __v->capacity = __capacity; \
-  __v->elements = (__typeof(__v->elements))malloc(__v->capacity * sizeof(*__v->elements)); \
+  __v->elements = (__typeof(__v->elements))iTermMalloc(__v->capacity * sizeof(*__v->elements)); \
   __v->count = 0; \
 } while(0)
 

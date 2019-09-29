@@ -33,6 +33,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLineBlockArray.h"
+#import "iTermMalloc.h"
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
@@ -339,7 +340,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                    timestamp:&prefixTimestamp
                                 continuation:NULL];
             assert(ok);
-            prefix = (screen_char_t*) malloc(MAX(1, prefix_len) * sizeof(screen_char_t));
+            prefix = (screen_char_t*)iTermMalloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
             NSAssert(ok, @"hasPartial but pop failed.");
         }

@@ -9,6 +9,7 @@
 #import <XCTest/XCTest.h>
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFakeUserDefaults.h"
+#import "iTermMalloc.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermTextExtractor.h"
@@ -596,7 +597,7 @@ static const NSInteger kUnicodeVersion = 9;
     if (_buffer) {
         free(_buffer);
     }
-    _buffer = malloc(sizeof(screen_char_t) * (self.width + 1));
+    _buffer = iTermMalloc(sizeof(screen_char_t) * (self.width + 1));
     if ([_lines[0] isKindOfClass:[NSData class]]) {
         NSData *data = _lines[theIndex];
         memmove(_buffer, data.bytes, sizeof(screen_char_t) * (self.width + 1));
