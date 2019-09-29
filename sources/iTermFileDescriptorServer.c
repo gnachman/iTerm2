@@ -1,4 +1,5 @@
 #include "iTermFileDescriptorServer.h"
+#include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -176,6 +177,7 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
+    assert(strlen(path) + 1 < sizeof(local.sun_path));
     strcpy(local.sun_path, path);
     unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
