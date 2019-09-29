@@ -205,7 +205,7 @@
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;
 
-- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size preconfirmed:(BOOL)preconfirmed;
+- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed;
 - (void)screenDidFinishReceivingFile;
 - (void)screenDidFinishReceivingInlineFile;
 - (void)screenDidReceiveBase64FileData:(NSString *)data;

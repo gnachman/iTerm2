@@ -9230,7 +9230,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_pbtext appendData:data];
 }
 
-- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size preconfirmed:(BOOL)preconfirmed {
+- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed {
     [self.download stop];
     [self.download endOfData];
     self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size] autorelease];

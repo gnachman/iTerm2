@@ -2236,7 +2236,7 @@ static const int kMaxScreenRows = 4096;
         };
         const BOOL ok =
         [delegate_ terminalWillReceiveInlineFileNamed:name
-                                               ofSize:[dict[@"size"] intValue]
+                                               ofSize:[dict[@"size"] integerValue]
                                                 width:width
                                                 units:widthUnits
                                                height:height
@@ -2247,7 +2247,7 @@ static const int kMaxScreenRows = 4096;
             return;
         }
     } else {
-        if (![delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]]) {
+        if (![delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] integerValue]]) {
             return;
         }
     }

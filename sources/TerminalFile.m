@@ -23,7 +23,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 @implementation TerminalFileDownload
 
-- (instancetype)initWithName:(NSString *)name size:(int)size {
+- (instancetype)initWithName:(NSString *)name size:(NSInteger)size {
     self = [super initWithName:name size:size];
     if (self) {
         [TransferrableFile lockFileName:self.localPath];
@@ -35,7 +35,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 @implementation TerminalFile
 
-- (instancetype)initWithName:(NSString *)name size:(int)size {
+- (instancetype)initWithName:(NSString *)name size:(NSInteger)size {
     self = [super init];
     if (self) {
         if (!name) {
@@ -130,8 +130,9 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         data = [data stringByReplacingOccurrencesOfRegex:@"[\r\n]" withString:@""];
 
         [self.data appendString:data];
-        // TODO: This is O(n^2)
-        self.bytesTransferred = apr_base64_decode_len([self.data UTF8String]);
+        double approximateSize = self.data.length;
+        approximateSize *= 4.0 / 3.0;
+        self.bytesTransferred = floor(approximateSize);
         if (self.fileSize >= 0) {
             self.bytesTransferred = MIN(self.fileSize, self.bytesTransferred);
         }

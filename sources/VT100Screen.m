@@ -3749,7 +3749,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self.delegate screenConfirmDownloadCanExceedSize:VT100ScreenBigFileDownloadThreshold];
 }
 
-- (BOOL)terminalWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
+- (BOOL)terminalWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size {
     if (![self preconfirmDownloadOfSize:size]) {
         return NO;
     }
@@ -3758,7 +3758,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalWillReceiveInlineFileNamed:(NSString *)name
-                                    ofSize:(int)size
+                                    ofSize:(NSInteger)size
                                      width:(int)width
                                      units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
