@@ -307,15 +307,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
       continuation:(screen_char_t)continuation
 {
 #ifdef LOG_MUTATIONS
-    {
-        char a[1000];
-        int i;
-        for (i = 0; i < length; i++) {
-            a[i] = (buffer[i].code && !buffer[i].complex) ? buffer[i].code : '.';
-        }
-        a[i] = '\0';
-        NSLog(@"Append: %s\n", a);
-    }
+    NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
 #endif
     if (_lineBlocks.count == 0) {
         [self _addBlockOfSize:block_size];
@@ -591,15 +583,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 
 #ifdef LOG_MUTATIONS
-    {
-        char a[1000];
-        int i;
-        for (i = 0; i < width; i++) {
-            a[i] = (ptr[i].code && !ptr[i].complexChar) ? ptr[i].code : '.';
-        }
-        a[i] = '\0';
-        NSLog(@"Pop: %s\n", a);
-    }
+    NSLog(@"Pop: %@\n", ScreenCharArrayToStringDebug(ptr, width));
 #endif
     return YES;
 }
