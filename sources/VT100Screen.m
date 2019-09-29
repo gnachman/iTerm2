@@ -1774,7 +1774,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         historyLines = @[];
     }
 
-    return [gridLines arrayByAddingObjectsFromArray:historyLines];
+    return [historyLines arrayByAddingObjectsFromArray:gridLines];
 }
 
 - (int)numberOfScrollbackLines

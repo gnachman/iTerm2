@@ -5848,7 +5848,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         lines = [_dataSource linesInRange:NSMakeRange(lineStart, lineEnd - lineStart)];
     }
     const NSInteger numLines = lines.count;
-
+    DLog(@"Visible lines are [%d,%d)", lineStart, lineEnd);
     for (int y = lineStart, i = 0; y < lineEnd; y++, i++) {
         if (_blinkAllowed && i < numLines) {
             // First, mark blinking chars as dirty.
@@ -5864,7 +5864,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     if (gDebugLogging) {
                         DLog(@"Found blinking char on line %d", y);
                     }
-                    [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
+                    const NSRect rect = [self rectWithHalo:dirtyRect];
+                    DLog(@"Redraw rect for line y=%d i=%d blink: %@", y, i, NSStringFromRect(rect));
+                    [self setNeedsDisplayInRect:rect];
                     break;
                 }
             }
