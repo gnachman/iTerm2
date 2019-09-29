@@ -1,6 +1,7 @@
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorSocketPath.h"
 #include "iTermFileDescriptorServer.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -104,6 +105,7 @@ int iTermFileDescriptorClientConnect(const char *path) {
 
         struct sockaddr_un remote;
         remote.sun_family = AF_UNIX;
+        assert(strlen(path + 1) < sizeof(remote.sun_path));
         strcpy(remote.sun_path, path);
         int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
         FDLog(LOG_DEBUG, "Calling fcntl() 1");
