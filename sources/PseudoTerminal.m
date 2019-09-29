@@ -3517,8 +3517,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            [self window].movable = NO;
-            // fall thru
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -4332,9 +4330,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowDidMove:(NSNotification *)notification {
     DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
-    if( self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ) {
-        [self canonicalizeWindowFrame];
-    }
     [self saveTmuxWindowOrigins];
     if (_windowIsMoving && _isAnchoredToScreen) {
         NSInteger screenIndex = [[NSScreen screens] indexOfObject:self.window.screen];
