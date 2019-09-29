@@ -23,7 +23,8 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic, readonly) BOOL isRunning;
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *identifier;
-@property (nonatomic) int pid;
+@property (nonatomic, copy) NSArray<NSNumber *> *pids;
+@property (nonatomic, readonly) pid_t onlyPid;  // Returns the pid if there's only one, otherwise 0
 @property (nonatomic, readonly) NSArray<NSString *> *logLines;
 @property (nonatomic, readonly) NSArray<NSString *> *callEntries;
 @property (nonatomic, weak) iTermWebSocketConnection *websocketConnection;

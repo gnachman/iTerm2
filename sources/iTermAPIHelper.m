@@ -1205,11 +1205,18 @@ static iTermAPIHelper *sAPIHelperInstance;
     return (response == NSAlertSecondButtonReturn);
 }
 
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
-                              preauthorized:(BOOL)preauthorized
-                                     reason:(out NSString *__autoreleasing *)reason
-                                displayName:(out NSString *__autoreleasing *)displayName {
-    iTermAPIAuthorizationController *controller = [[iTermAPIAuthorizationController alloc] initWithProcessID:pid];
+- (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {
+    if (pids.count == 1) {
+        return [NSString stringWithFormat:@"PID %@", pids[0]];
+    }
+    return [NSString stringWithFormat:@"one of these PIDs: %@", [pids componentsJoinedByString:@", "]];
+}
+
+- (NSDictionary *)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
+                                preauthorized:(BOOL)preauthorized
+                                       reason:(out NSString *__autoreleasing *)reason
+                                  displayName:(out NSString *__autoreleasing *)displayName {
+    iTermAPIAuthorizationController *controller = [[iTermAPIAuthorizationController alloc] initWithProcessIDs:pids];
     *reason = [controller identificationFailureReason];
     if (*reason) {
         return nil;
@@ -1232,8 +1239,8 @@ static iTermAPIHelper *sAPIHelperInstance;
 
         case iTermAPIAuthorizationSettingRecentConsent:
             // No need to reauth, allow it.
-            *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.",
-                       pid, controller.humanReadableName, controller.fullCommandOrBundleID];
+            *reason = [NSString stringWithFormat:@"Allowing continued API access to %@, name %@, bundle ID %@. User gave consent recently.",
+                       [self formatPIDs:pids], controller.humanReadableName, controller.fullCommandOrBundleID];
             return controller.identity;
 
         case iTermAPIAuthorizationSettingExpiredConsent:

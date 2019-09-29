@@ -140,6 +140,29 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     return [argv componentsJoinedByString:@" "];
 }
 
++ (NSArray<NSNumber *> *)processIDsWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
+    NSMutableArray<NSNumber *> *results = [NSMutableArray array];
+
+    [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
+        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
+            int family = [self addressFamilyForFDInfo:fdInfo];
+            if (family != AF_INET && family != AF_INET6) {
+                return;
+            }
+            struct sockaddr_storage local = [self localSocketAddressInFDInfo:fdInfo];
+            if (![socketAddress isEqualToSockAddr:(struct sockaddr *)&local]) {
+                return;
+            }
+            struct sockaddr_storage foreign = [self foreignSocketAddressInFDInfo:fdInfo];
+            if (![iTermSocketAddress socketAddressIsLoopback:(struct sockaddr *)&foreign]) {
+                return;
+            }
+            [results addObject:@(pid)];
+        }];
+    }];
+    return results;
+}
+
 + (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
     __block pid_t result = -1;
     [self enumerateProcesses:^(pid_t pid, BOOL *stop) {

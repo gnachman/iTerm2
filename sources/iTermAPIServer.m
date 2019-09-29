@@ -222,8 +222,8 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     dispatch_async(queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
         [self->_pendingConnections addObject:connection];
-        pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
-        if (pid == -1) {
+        NSArray<NSNumber *> *pids = [iTermLSOF processIDsWithConnectionFromAddress:address];
+        if (!pids) {
             XLog(@"Reject connection from unidentifiable process with address %@", address);
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
@@ -236,10 +236,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             return;
         }
 
-        [self startRequestOnConnection:connection pid:pid completion:^(BOOL ok, NSString *reason) {
+        [self startRequestOnConnection:connection pids:pids completion:^(BOOL ok, NSString *reason) {
             [self->_pendingConnections removeObject:connection];
             if (!ok) {
-                XLog(@"Reject unauthenticated process (pid %d): %@", pid, reason);
+                XLog(@"Reject unauthenticated process (pids %@): %@", pids, reason);
                 dispatch_async(connection.queue, ^{
                     [connection unauthorized];
                 });
@@ -249,11 +249,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 }
 
 // _queue
-- (void)startRequestOnConnection:(iTermHTTPConnection *)connection pid:(int)pid completion:(void (^)(BOOL, NSString *))completion {
+- (void)startRequestOnConnection:(iTermHTTPConnection *)connection pids:(NSArray<NSNumber *> *)pids completion:(void (^)(BOOL, NSString *))completion {
     dispatch_async(connection.queue, ^{
         NSURLRequest *request = [connection readRequest];
         dispatch_async(self->_queue, ^{
-            [self reallyStartRequestOnConnection:connection pid:pid request:request completion:completion];
+            [self reallyStartRequestOnConnection:connection pids:pids request:request completion:completion];
         });
     });
 }
@@ -261,7 +261,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // queue
 // completion called on queue
 - (void)reallyStartRequestOnConnection:(iTermHTTPConnection *)connection
-                                   pid:(int)pid
+                                  pids:(NSArray<NSNumber *> *)pids
                                request:(NSURLRequest *)request
                             completion:(void (^)(BOOL, NSString *))completion {
     if (!request) {
@@ -272,7 +272,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
                                                                 object:nil
                                                               userInfo:@{ @"reason": @"Failed to read request from connection",
-                                                                          @"pid": @(pid) }];
+                                                                          @"pids": pids }];
         });
         completion(NO, @"Failed to read request from HTTP connection");
         return;
@@ -285,7 +285,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
                                                                 object:nil
                                                               userInfo:@{ @"reason": [NSString stringWithFormat:@"Bad request. URL path was %@, but should be /", request.URL.path],
-                                                                          @"pid": @(pid) }];
+                                                                          @"pids": pids }];
         });
         completion(NO, [NSString stringWithFormat:@"Path %@ not known", request.URL.path]);
         return;
@@ -298,16 +298,16 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         dispatch_async(dispatch_get_main_queue(), ^{
             NSString *reason = nil;
             NSString *displayName = nil;
-            NSDictionary *identity = [self.delegate apiServerAuthorizeProcess:pid
-                                                                preauthorized:webSocketConnection.preauthorized
-                                                                       reason:&reason
-                                                                  displayName:&displayName];
+            NSDictionary *identity = [self.delegate apiServerAuthorizeProcesses:pids
+                                                                  preauthorized:webSocketConnection.preauthorized
+                                                                         reason:&reason
+                                                                    displayName:&displayName];
             if (identity) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
                                                                     object:webSocketConnection.key
                                                                   userInfo:@{ @"reason": reason ?: [NSNull null],
                                                                               @"job": displayName ?: [NSNull null],
-                                                                              @"pid": @(pid),
+                                                                              @"pids": pids,
                                                                               @"websocket": webSocketConnection }];
                 dispatch_async(self->_queue, ^{
                     DLog(@"Upgrading request to websocket");
@@ -327,7 +327,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                                     object:request.allHTTPHeaderFields[@"x-iterm2-key"]
                                                                   userInfo:@{ @"reason": reason ?: @"Unknown reason",
                                                                               @"job": displayName ?: [NSNull null],
-                                                                              @"pid": @(pid) }];
+                                                                              @"pids": pids }];
                 dispatch_async(connection.queue, ^{
                     [connection unauthorized];
                 });
@@ -341,7 +341,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
                                                                 object:request.allHTTPHeaderFields[@"x-iterm2-key"]
                                                               userInfo:@{ @"reason": authReason ?: @"Unknown reason",
-                                                                          @"pid": @(pid) }];
+                                                                          @"pids": pids }];
         });
         dispatch_async(connection.queue, ^{
             if ([authReason hasPrefix:iTermWebSocketConnectionLibraryVersionTooOldString]) {

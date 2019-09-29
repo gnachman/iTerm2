@@ -14,7 +14,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 @interface iTermLSOF : NSObject
 
-+ (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress;
++ (NSArray<NSNumber *> *)processIDsWithConnectionFromAddress:(iTermSocketAddress *)socketAddress;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSNumber *> *)allPids;
 + (pid_t)ppidForPid:(pid_t)childPid;

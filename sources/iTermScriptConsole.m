@@ -177,7 +177,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (iTermScriptHistoryEntry *)terminateScriptOnRow:(NSInteger)row {
     iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
-    if (entry.isRunning && entry.pid) {
+    if (entry.isRunning && entry.onlyPid) {
         [entry kill];
     }
     return entry;
@@ -284,7 +284,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         [self scrollCallsToBottomIfNeeded];
         NSInteger row = _tableView.selectedRow;
         iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
-        _terminateButton.enabled = entry.isRunning && (entry.pid != 0);
+        _terminateButton.enabled = entry.isRunning && (entry.onlyPid != 0);
         _startButton.enabled = entry.relaunch != nil;
         _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
         _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
@@ -403,6 +403,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
 }
 
+- (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {
+    if (pids.count == 1) {
+        return [NSString stringWithFormat:@"PID %@", pids[0]];
+    }
+    return [NSString stringWithFormat:@"PIDs %@", [pids componentsJoinedByString:@", "]];
+}
+
 - (void)connectionRejected:(NSNotification *)notification {
     NSString *key = notification.object;
     iTermScriptHistoryEntry *entry = nil;
@@ -414,7 +421,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!entry) {
         NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
         if (!name) {
-            name = [NSString stringWithFormat:@"pid %@", notification.userInfo[@"pid"]];
+            name = [self formatPIDs:notification.userInfo[@"pids"]];
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
@@ -425,7 +432,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                                                    identifier:key
                                                      relaunch:nil];
     }
-    entry.pid = [notification.userInfo[@"pid"] intValue];
+    entry.pids = notification.userInfo[@"pids"];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     [entry addOutput:notification.userInfo[@"reason"]];
     [entry stopRunning];
@@ -442,7 +449,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!entry) {
         NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
         if (!name) {
-            name = [NSString stringWithFormat:@"pid %@", notification.userInfo[@"pid"]];
+            name = [self formatPIDs:notification.userInfo[@"pids"]];
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
@@ -452,7 +459,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                                                      fullPath:nil
                                                    identifier:key
                                                      relaunch:nil];
-        entry.pid = [notification.userInfo[@"pid"] intValue];
+        entry.pids = notification.userInfo[@"pids"];
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     }
     entry.websocketConnection = notification.userInfo[@"websocket"];

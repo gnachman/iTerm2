@@ -36,7 +36,7 @@ typedef NS_ENUM(NSUInteger, iTermAPIAuthorizationSetting) {
 
 + (void)resetPermissions;
 
-- (instancetype)initWithProcessID:(pid_t)pid NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithProcessIDs:(NSArray<NSNumber *> *)pids NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 // If identified is false, this gives the reason why.

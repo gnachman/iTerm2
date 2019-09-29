@@ -142,33 +142,36 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
                                                                   iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldRPCValue }];
 }
 
+- (pid_t)onlyPid {
+    if (self.pids.count != 1) {
+        return 0;
+    }
+    return self.pids.firstObject.intValue;
+}
+
 - (void)apiDidStop:(NSNotification *)notification {
     self.terminatedByUser = YES;
-    if (self.pid > 0) {
+    if (self.onlyPid > 0) {
         [self kill:9];
     }
     [self stopRunning];
 }
 
-- (void)setPid:(int)pid {
-    _pid = pid;
-}
-
 - (void)kill {
     [self addOutput:@"\n*Terminate button pressed*\n"];
     self.terminatedByUser = YES;
-    if (self.pid > 0) {
+    if (self.onlyPid > 0) {
         [self kill:1];
     }
     [self.websocketConnection abortWithCompletion:nil];
 }
 
 - (void)kill:(int)signal {
-    pid_t pid = self.pid;
+    const pid_t pid = self.onlyPid;
     if (pid <= 0) {
         return;
     }
-    pid_t pgid = getpgid(self.pid);
+    pid_t pgid = getpgid(pid);
     if (pgid <= 0) {
         DLog(@"Failed to get the process group id %@", @(errno));
         kill(pid, signal);

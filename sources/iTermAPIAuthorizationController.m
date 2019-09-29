@@ -7,6 +7,7 @@
 
 #import "iTermAPIAuthorizationController.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermNotificationCenter+Protected.h"
@@ -33,6 +34,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 @property (nonatomic, readonly) NSString *reason;
 @property (nonatomic, readonly) BOOL identified;
 @property (nonatomic, readonly) id identity;
+@property (nonatomic, readonly) pid_t pid;
 
 - (instancetype)initWithProcessID:(pid_t)pid NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -110,6 +112,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 - (instancetype)initWithProcessID:(pid_t)pid {
     self = [super init];
     if (self) {
+        _pid = pid;
         _analyzer = [iTermPythonProcessAnalyzer forProcessID:pid];
         assert(_analyzer);
         _identified = (_analyzer.result != iTermPythonProcessAnalyzerResultUnidentifiable);
@@ -234,7 +237,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 
 
 @implementation iTermAPIAuthorizationController {
-    iTermAPIAuthRequest *_request;
+    NSArray<iTermAPIAuthRequest *> *_requests;
 }
 
 + (void)resetPermissions {
@@ -250,10 +253,12 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
     }
 }
 
-- (instancetype)initWithProcessID:(pid_t)pid {
+- (instancetype)initWithProcessIDs:(NSArray<NSNumber *> *)pids {
     self = [super init];
     if (self) {
-        _request = [[iTermAPIAuthRequest alloc] initWithProcessID:pid];
+        _requests = [pids mapWithBlock:^id(NSNumber *anObject) {
+            return [[iTermAPIAuthRequest alloc] initWithProcessID:(pid_t)anObject.integerValue];
+        }];
     }
     return self;
 }
@@ -279,11 +284,25 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
     [[iTermAPIAuthorizationDidChange notification] post];
 }
 
+- (iTermAPIAuthRequest *)onlyRequest {
+    ITAssertWithMessage(_requests.count == 1, @"Wrong # reqs %@", _requests);
+    return _requests.firstObject;
+}
+
 - (NSString *)identificationFailureReason {
-    if (_request.identified) {
+    if (_requests.count > 1) {
+        NSString *pidList = [[_requests mapWithBlock:^id(iTermAPIAuthRequest *request) {
+            return [@(request.pid) stringValue];
+        }] componentsJoinedWithOxfordComma];
+        return [NSString stringWithFormat:@"Multiple processes share the socket file descriptor. The process IDs are %@.",
+                pidList];
+    } else if (_requests.count == 0) {
+        return @"No processes found.";
+    }
+    if (self.onlyRequest.identified) {
         return nil;
     } else {
-        return _request.reason;
+        return self.onlyRequest.reason;
     }
 }
 
@@ -292,26 +311,26 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 }
 
 - (NSString *)key {
-    return [NSString stringWithFormat:@"api_key=%@", _request.keyForAuth];
+    return [NSString stringWithFormat:@"api_key=%@", self.onlyRequest.keyForAuth];
 }
 
 - (id)identity {
-    assert(_request.identified);
-    return _request.identity;
+    assert(self.onlyRequest.identified);
+    return self.onlyRequest.identity;
 }
 
 - (BOOL)identified {
-    return _request.identified;
+    return self.onlyRequest.identified;
 }
 
 - (NSDictionary *)savedState {
-    assert(_request.identified);
+    assert(self.onlyRequest.identified);
     NSDictionary *savedSettings = [self savedSettings];
     return savedSettings[self.key];
 }
 
 - (iTermAPIAuthorizationSetting)setting {
-    assert(_request.identified);
+    assert(self.onlyRequest.identified);
     NSDictionary *savedState = self.savedState;
     if (!savedState) {
         return iTermAPIAuthorizationSettingUnknown;
@@ -322,7 +341,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
     }
 
     NSString *name = savedState[kAPIAccessLocalizedName];
-    if ([_request.humanReadableName isEqualToString:name]) {
+    if ([self.onlyRequest.humanReadableName isEqualToString:name]) {
         // Access is permanently allowed and the display name is unchanged. Do we need to reauth?
 
         NSDate *confirm = savedState[kAPINextConfirmationDate];
@@ -337,19 +356,19 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 }
 
 - (void)setAllowed:(BOOL)allow {
-    assert(_request.identified);
+    assert(self.onlyRequest.identified);
     NSMutableDictionary *settings = [[self savedSettings] mutableCopy];
     static const NSTimeInterval oneMonthInSeconds = 30 * 24 * 60 * 60;
     settings[self.key] = @{ kAPIAccessAllowed: @(allow),
                             kAPIAccessDate: [NSDate date],
                             kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:oneMonthInSeconds],
-                            kAPIAccessLocalizedName: _request.humanReadableName };
+                            kAPIAccessLocalizedName: self.onlyRequest.humanReadableName };
     [[NSUserDefaults standardUserDefaults] setObject:settings forKey:iTermAPIAuthorizationControllerSavedAccessSettings];
     [[iTermAPIAuthorizationDidChange notification] post];
 }
 
 - (void)removeSetting {
-    assert(_request.identified);
+    assert(self.onlyRequest.identified);
     NSMutableDictionary *settings = [[self savedSettings] mutableCopy];
     [settings removeObjectForKey:self.key];
     [[NSUserDefaults standardUserDefaults] setObject:settings forKey:iTermAPIAuthorizationControllerSavedAccessSettings];
@@ -357,13 +376,13 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
 }
 
 - (NSString *)humanReadableName {
-    assert(_request.identified);
-    return _request.humanReadableName;
+    assert(self.onlyRequest.identified);
+    return self.onlyRequest.humanReadableName;
 }
 
 - (NSString *)fullCommandOrBundleID {
-    assert(_request.identified);
-    return _request.fullCommandOrBundleID;
+    assert(self.onlyRequest.identified);
+    return self.onlyRequest.fullCommandOrBundleID;
 }
 
 @end

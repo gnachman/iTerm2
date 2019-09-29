@@ -205,7 +205,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
     [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]];
     [task launch];   // This can throw
-    entry.pid = task.processIdentifier;
+    entry.pids = @[ @(task.processIdentifier) ];
     [self waitForTask:task readFromPipe:pipe historyEntry:entry];
 }
 
