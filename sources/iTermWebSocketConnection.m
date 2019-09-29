@@ -117,22 +117,30 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         }
     }
 
-    NSString *libver = headers[@"x-iterm2-library-version"];
-    if (libver) {
+    {
+        NSString *libver = headers[@"x-iterm2-library-version"];
+        if (!libver) {
+            *reason = @"The “x-iterm2-library-version” header was not set. You may need to update your Python runtime to a newer version.";
+            return nil;
+        }
         NSArray<NSString *> *parts = [libver componentsSeparatedByString:@" "];
-        if (parts.count == 2) {
-            NSDictionary *minimums = @{ @"python": [NSDecimalNumber decimalNumberWithString:iTermWebSocketConnectionMinimumPythonLibraryVersion] };
-            NSString *name = parts[0];
-            NSDecimalNumber *min = minimums[name];
-            NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:parts[1]];
-            NSComparisonResult result = [min compare:version];
-            if (result == NSOrderedDescending) {
-                *reason = [NSString stringWithFormat:@"%@. %@ library version reported as %@. Minimum supported by this version of iTerm2 is %@",
-                           iTermWebSocketConnectionLibraryVersionTooOldString, name, version, min];
-                return nil;
-            }
+        if (parts.count != 2) {
+            *reason = [NSString stringWithFormat:@"The “x-iterm2-library-version” header was malformed: ”%@”", libver];
+            return nil;
+        }
+
+        NSDictionary *minimums = @{ @"python": [NSDecimalNumber decimalNumberWithString:iTermWebSocketConnectionMinimumPythonLibraryVersion] };
+        NSString *name = parts[0];
+        NSDecimalNumber *min = minimums[name];
+        NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:parts[1]];
+        NSComparisonResult result = [min compare:version];
+        if (result == NSOrderedDescending) {
+            *reason = [NSString stringWithFormat:@"%@. %@ library version reported as %@. Minimum supported by this version of iTerm2 is %@",
+                       iTermWebSocketConnectionLibraryVersionTooOldString, name, version, min];
+            return nil;
         }
     }
+    
     DLog(@"Request validates as websocket upgrade request");
     iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
     if (conn) {
