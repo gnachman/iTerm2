@@ -4017,10 +4017,6 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Accepting proposal");
         return proposedFrameSize;
     }
-    if( self.windowType == WINDOW_TYPE_MAXIMIZED ) {
-        DLog( @"Blocking resize" );
-        return self.window.screen.visibleFrame.size;
-    }
     NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
