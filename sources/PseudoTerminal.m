@@ -6147,10 +6147,21 @@ ITERM_WEAKLY_REFERENCEABLE
             [_contentView willShowTabBar];
         }
         if (_windowNeedsInitialSize || ![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+            const BOOL neededInitialSize = _windowNeedsInitialSize;
+            const NSRect frameBefore = self.window.frame;
             if (_windowNeedsInitialSize) {
                 DLog(@"Perform initial fitWindowToTabs");
             }
             [self fitWindowToTabs];
+            const NSRect frameAfter = self.window.frame;
+            if (NSEqualRects(frameBefore, frameAfter) && neededInitialSize) {
+                // If the initial window frame happened to exactly equal the fitWindowToTabs size
+                // the session will remain at its initial size specified by its profile. It's
+                // necessary to call fitTabsToWindow once during window creation, and this is where
+                // it happens. This is easy to reproduce with the maximized window style in the
+                // Minimal theme.
+                [self fitTabsToWindow];
+            }
         }
         [self repositionWidgets];
         if (wasDraggedFromAnotherWindow_) {
@@ -7976,7 +7987,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     DLog(@"Set window frame to %@", NSStringFromRect(frame));
-    
+
     self.contentView.autoresizesSubviews = NO;
     _windowDidResize = NO;
     DLog(@"Call self.window.setFrame:%@", NSStringFromRect(frame));
