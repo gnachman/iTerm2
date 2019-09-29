@@ -9230,10 +9230,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_pbtext appendData:data];
 }
 
-- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size {
+- (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size preconfirmed:(BOOL)preconfirmed {
     [self.download stop];
     [self.download endOfData];
     self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size] autorelease];
+    self.download.preconfirmed = preconfirmed;
     [self.download download];
 }
 
@@ -9247,7 +9248,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidReceiveBase64FileData:(NSString *)data {
+    const NSInteger lengthBefore = self.download.length;
     [self.download appendData:data];
+    const NSInteger lengthAfter = self.download.length;
+    if (!self.download.preconfirmed) {
+        [_screen confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter];
+    }
 }
 
 - (void)screenFileReceiptEndedUnexpectedly {
@@ -10492,6 +10498,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)popupWindowIsInFloatingHotkeyWindow {
     return _delegate.realParentWindow.isFloatingHotKeyWindow;
+}
+
+- (BOOL)screenConfirmDownloadCanExceedSize:(NSInteger)limit {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The current download is larger than %@. Continue?", [NSString it_formatBytes:limit]]
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncAllowBigDownload"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Allow Large File Download?"
+                                window:_view.window];
+    return selection == kiTermWarningSelection0;
 }
 
 - (VT100Screen *)popupVT100Screen {

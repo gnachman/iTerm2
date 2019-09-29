@@ -211,6 +211,9 @@ extern int kVT100ScreenMinRows;
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 
+- (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
+                               afterSize:(NSInteger)afterSize;
+
 @end
 
 @interface VT100Screen (Testing)

@@ -130,12 +130,17 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         data = [data stringByReplacingOccurrencesOfRegex:@"[\r\n]" withString:@""];
 
         [self.data appendString:data];
+        // TODO: This is O(n^2)
         self.bytesTransferred = apr_base64_decode_len([self.data UTF8String]);
         if (self.fileSize >= 0) {
             self.bytesTransferred = MIN(self.fileSize, self.bytesTransferred);
         }
         [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
     }
+}
+
+- (NSInteger)length {
+    return self.data.length;
 }
 
 - (void)endOfData {

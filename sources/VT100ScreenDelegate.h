@@ -205,7 +205,7 @@
 - (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData *)data;
 
-- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size;
+- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size preconfirmed:(BOOL)preconfirmed;
 - (void)screenDidFinishReceivingFile;
 - (void)screenDidFinishReceivingInlineFile;
 - (void)screenDidReceiveBase64FileData:(NSString *)data;
@@ -262,5 +262,6 @@
 - (void)screenDidReceiveLineFeed;
 - (void)screenSoftAlternateScreenModeDidChange;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
+- (BOOL)screenConfirmDownloadCanExceedSize:(NSInteger)limit;
 
 @end

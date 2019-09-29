@@ -15,6 +15,7 @@ extern NSString *const kTerminalFileShouldStopNotification;
 @interface TerminalFile : TransferrableFile
 
 @property(nonatomic, copy) NSString *localPath;
+@property(nonatomic, readonly) NSInteger length;
 
 // You must call -download after initWithName:size: to enter starting status.
 // A nil name opens a save panel.
@@ -31,6 +32,7 @@ extern NSString *const kTerminalFileShouldStopNotification;
 @end
 
 @interface TerminalFileDownload : TerminalFile
+@property (nonatomic) BOOL preconfirmed;
 @end
 
 @interface TerminalFileUpload : TerminalFile
