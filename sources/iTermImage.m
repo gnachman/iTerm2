@@ -103,8 +103,8 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
         }
 
         _images = [NSMutableArray array];
-        sixel_decoder_unref(decoder);
         NSImage *image = [self decodeImageData:sixel withDecoder:decoder];
+        sixel_decoder_unref(decoder);
         if (!image) {
             return nil;
         }
