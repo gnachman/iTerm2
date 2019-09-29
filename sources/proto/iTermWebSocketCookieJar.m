@@ -29,11 +29,13 @@
 }
 
 - (BOOL)consumeCookie:(NSString *)cookie {
-    if ([_cookies containsObject:cookie]) {
-        [_cookies removeObject:cookie];
-        return YES;
-    } else {
-        return NO;
+    @synchronized( _cookies) {
+        if ([_cookies containsObject:cookie]) {
+            [_cookies removeObject:cookie];
+            return YES;
+        } else {
+            return NO;
+        }
     }
 }
 
@@ -56,7 +58,9 @@
     }
     fclose(fp);
 
-    [_cookies addObject:cookie];
+    @synchronized(_cookies) {
+        [_cookies addObject:cookie];
+    }
     return cookie;
 }
 
