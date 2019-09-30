@@ -345,6 +345,10 @@ typedef struct {
 }
 
 - (NSRect)frameForWindowTitleLabel {
+    return [self frameForWindowTitleLabelGetLeftAligned:nil];
+}
+
+- (NSRect)frameForWindowTitleLabelGetLeftAligned:(BOOL *)leftAlignedPtr {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
     }
@@ -353,10 +357,27 @@ typedef struct {
     const CGFloat capHeight = _windowTitleLabel.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
     const NSEdgeInsets insets = [self.delegate tabBarInsets];
-    const CGFloat sideInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
-    NSRect rect = NSMakeRect([self retinaRound:sideInset],
+
+    // Prefer to center it, using the same inset on both sides. There's no need
+    // to have an inset on the right otherwise so if the title doesn't fit then
+    // left-align it and make it as wide as the available space.
+    // This mirros what NSWindow's title does.
+    const CGFloat mostGenerousInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
+    const CGFloat containerWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
+    const CGFloat desiredWidth = [_windowTitleLabel fittingSize].width;
+    CGFloat leftInset = mostGenerousInset;
+    CGFloat rightInset = mostGenerousInset;
+    CGFloat proposedWidth = containerWidth - leftInset - rightInset;
+    const CGFloat overage = desiredWidth - proposedWidth;
+    if (overage > 0) {
+        rightInset = MAX(4, rightInset - overage);
+        if (leftAlignedPtr) {
+            *leftAlignedPtr = YES;
+        }
+    }
+    NSRect rect = NSMakeRect([self retinaRound:leftInset],
                              [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset],
-                             ceil(MAX(0, self.frame.size.width - sideInset * 2)),
+                             ceil(MAX(0, containerWidth - leftInset - rightInset)),
                              ceil(_windowTitleLabel.frame.size.height));
     return [self retinaRoundRect:rect];
 }
@@ -519,18 +540,24 @@ typedef struct {
     _windowTitle = [title copy];
 
     [self setWindowTitleLabelToString:_windowTitle icon:[self.delegate rootTerminalViewCurrentTabIcon]];
+    if (!_windowTitleLabel.hidden) {
+        [self layoutWindowPaneDecorations];
+    }
 }
 
 - (void)setWindowTitleLabelToString:(NSString *)title icon:(NSImage *)icon {
-    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    paragraphStyle.alignment = NSTextAlignmentCenter;
-    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
-    NSDictionary *attributes = @{ NSFontAttributeName: _windowTitleLabel.font,
-                                  NSForegroundColorAttributeName: _windowTitleLabel.textColor,
-                                  NSParagraphStyleAttributeName: paragraphStyle };
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title ?: @""
-                                                                           attributes:attributes];
+    BOOL leftAligned = NO;
+    [self frameForWindowTitleLabelGetLeftAligned:&leftAligned];
+    const NSTextAlignment textAlignment = leftAligned ? NSTextAlignmentLeft : NSTextAlignmentCenter;
     if (icon) {
+        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.alignment = textAlignment;
+        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+        NSDictionary *attributes = @{ NSFontAttributeName: _windowTitleLabel.font,
+                                      NSForegroundColorAttributeName: _windowTitleLabel.textColor,
+                                      NSParagraphStyleAttributeName: paragraphStyle };
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title ?: @""
+                                                                               attributes:attributes];
         NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
         textAttachment.image = icon;
         NSFont *font = _windowTitleLabel.font;
@@ -546,9 +573,14 @@ typedef struct {
         _windowTitleLabel.attributedStringValue = iconAttributedString;
     } else {
         _windowTitleLabel.stringValue = title ?: @"";
+        _windowTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     }
     _windowTitleLabel.windowTitle = title;
     _windowTitleLabel.windowIcon = icon;
+    _windowTitleLabel.maximumNumberOfLines = 1;
+    _windowTitleLabel.usesSingleLineMode = YES;
+    _windowTitleLabel.alignment = textAlignment;
+    _windowTitleLabel.allowsDefaultTighteningForTruncation = YES;
 }
 
 - (void)setWindowTitleIcon:(NSImage *)icon {
