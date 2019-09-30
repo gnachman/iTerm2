@@ -268,6 +268,7 @@ class Session:
         Returns the contents of the mutable area of the screen.
 
         :returns: A :class:`iterm2.screen.ScreenContents`, containing the screen contents.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_get_screen_contents(
             self.connection,
@@ -276,6 +277,50 @@ class Session:
             return iterm2.screen.ScreenContents(result.get_buffer_response)
         else:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status))
+
+    async def async_get_contents(self, first_line: int, number_of_lines: int) -> [iterm2.screen.LineContents]:
+        """
+        Returns the contents of the session within a given range of lines.
+
+        Use `async_get_line_info` to determine the available line numbers.
+
+        `first_lines` should be at least as large as `(await async_get_line_info()).overflow`.
+        If it is less, then you won't get as many lines as you asked for.
+
+        To use this reliably, you must call async_get_line_info() and this method in a :class:`~iterm2.transaction.Transaction` to ensure the session doesn't change between calls. See the example below.
+
+        :param first_line: The first line number to fetch.
+        :param number_of_lines: The number of lines to fetch.
+        :returns: A list of :class:`iterm2.screen.LineContents`. If some were unavailable then a subset is returned.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+
+        :Example:
+
+          # Prints the first ten lines of session.
+          async with iterm2.Transaction(connection):
+              li = await session.async_get_line_info()
+              lines = await session.async_get_contents(li.overflow, 10)
+          print(list(map(lambda line: line.string, lines)))
+
+        """
+        coord_range = iterm2.util.WindowedCoordRange(
+                iterm2.util.CoordRange(
+                    iterm2.util.Point(0, first_line),
+                    iterm2.util.Point(0, first_line + number_of_lines)))
+
+        response = await iterm2.rpc.async_get_screen_contents(
+                self.connection,
+                self.session_id,
+                coord_range)
+        if response.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
+            contents = iterm2.screen.ScreenContents(response.get_buffer_response)
+            result = []
+            for i in range(contents.number_of_lines):
+                result.append(contents.line(i))
+            return result
+        else:
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(response.get_buffer_response.status))
 
     def get_screen_streamer(self, want_contents: bool=True) -> iterm2.screen.ScreenStreamer:
         """
