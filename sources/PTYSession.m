@@ -6726,6 +6726,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)applyAction:(iTermAction *)action {
+    [self.textview.window makeFirstResponder:self.textview];
     [self performKeyBindingAction:action.action parameter:action.parameter event:nil];
 }
 
