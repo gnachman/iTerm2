@@ -1690,18 +1690,30 @@ static const int kDragThreshold = 3;
         return NO;
     }
     if (_numTouches == 3) {
+        // NOTE! If you turn on the following setting:
+        //   System Preferences > Accessibility > Mouse & Trackpad > Trackpad Options... > Enable dragging > three finger drag
+        // Then a three-finger drag gets translated into mouseDown:…mouseDragged:…mouseUp:.
+        // Prior to commit 96323ddf8 we didn't track touch-up/touch-down unless necessary, so that
+        // feature worked unless you had a mouse gesture that caused touch tracking to be enabled.
+        // In issue 8321 it was revealed that touch tracking breaks three-finger drag. The solution
+        // is to not return early if we detect a three-finger down but don't have a pointer action
+        // for it. Then it proceeds to behave like before commit 96323ddf8. Otherwise, it'll just
+        // watch for the actions that three-finger touches can cause.
+        BOOL shouldReturnEarly = YES;
         if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any
-            [pointer_ mouseDown:event
-                    withTouches:_numTouches
-                   ignoreOption:[self terminalWantsMouseReports]];
+            shouldReturnEarly = [pointer_ mouseDown:event
+                                        withTouches:_numTouches
+                                       ignoreOption:[self terminalWantsMouseReports]];
             DLog(@"Set mouseDown=YES because of 3 finger mouseDown (not emulating middle)");
             _mouseDown = YES;
         }
         DLog(@"Returning because of 3-finger click.");
-        return NO;
+        if (shouldReturnEarly) {
+            return NO;
+        }
     }
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseDown:event
