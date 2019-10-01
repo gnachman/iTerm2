@@ -3897,6 +3897,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         double scale = maxWidth / (double)width;
         width = self.width;
         height *= scale;
+        height = MAX(1, height);
         fullAuto = NO;
         requestedWidthInPoints = width * cellSize.width;
         requestedHeightInPoints = height * cellSize.height;
@@ -3909,6 +3910,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         double scale = (double)height / maxHeight;
         height = maxHeight;
         width *= scale;
+        width = MAX(1, width);
         fullAuto = NO;
         requestedWidthInPoints = width * cellSize.width;
         requestedHeightInPoints = height * cellSize.height;
