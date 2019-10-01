@@ -81,7 +81,7 @@
 + (void)writeMetadataTo:(NSURL *)destinationURL
               sourceURL:(NSURL *)sourceURL {
     NSString *autoLaunchPath = [[NSFileManager defaultManager] autolaunchScriptPath];
-    NSDictionary *metadata = @{ @"AutoLaunch": @([sourceURL.path hasPrefix:autoLaunchPath]) };
+    NSDictionary *metadata = @{ @"AutoLaunch": @([sourceURL.path.stringByResolvingSymlinksInPath hasPrefix:autoLaunchPath.stringByResolvingSymlinksInPath]) };
     [[NSJSONSerialization it_jsonStringForObject:metadata] writeToURL:[destinationURL URLByAppendingPathComponent:@"metadata.json"]
                                                            atomically:NO
                                                              encoding:NSUTF8StringEncoding
