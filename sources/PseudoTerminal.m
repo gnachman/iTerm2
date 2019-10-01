@@ -3608,7 +3608,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     BOOL otherScreenHasLionFullscreenTerminalWindow = NO;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if (term.lionFullScreen) {
+        if (term.lionFullScreen && term.window.isOnActiveSpace) {
             if (term.window.screen == screen) {
                 return screen.frame;
             } else {
