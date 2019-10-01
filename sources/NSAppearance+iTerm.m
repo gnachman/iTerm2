@@ -12,6 +12,19 @@
 @implementation NSAppearance (iTerm)
 
 - (BOOL)it_isDark {
+    if (@available(macOS 10.14, *)) {
+        NSAppearanceName bestMatch = [self bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                                NSAppearanceNameVibrantDark,
+                                                                                NSAppearanceNameAqua,
+                                                                                NSAppearanceNameVibrantLight ]];
+        if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
+            return YES;
+        }
+        return NO;
+    }
+
+    // 10.13 or older
     return [self.name isEqualToString:NSAppearanceNameVibrantDark];
 }
 

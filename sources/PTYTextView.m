@@ -41,6 +41,7 @@
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -611,7 +612,22 @@ static const int kDragThreshold = 3;
     PTYScroller *scroller = [_delegate textViewVerticalScroller];
     NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
     const BOOL isDark = [backgroundColor isDark];
-    scroller.knobStyle = isDark ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
+
+    if (isDark) {
+        // Dark background, any theme, any OS version
+        scroller.knobStyle = NSScrollerKnobStyleLight;
+    } else if (@available(macOS 10.14, *)) {
+        if (self.effectiveAppearance.it_isDark) {
+            // Light background, dark theme — issue 8322
+            scroller.knobStyle = NSScrollerKnobStyleDark;
+        } else {
+            // Light background, light theme
+            scroller.knobStyle = NSScrollerKnobStyleDefault;
+        }
+    } else {
+        // Pre-10.4, light background
+        scroller.knobStyle = NSScrollerKnobStyleDefault;
+    }
 
     // The knob style is used only for overlay scrollers. In the minimal theme, the window decorations'
     // colors are based on the terminal background color. That means the appearance must be changed to get

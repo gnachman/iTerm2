@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSAppearance (iTerm)
 
+@property (nonatomic, readonly) BOOL it_isDark;
+
 // Converts a tab style if automatic.
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle;
 + (instancetype)it_appearanceForCurrentTheme;
