@@ -201,7 +201,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         return;
     }
 
-    [self checkForNewerVersionThan:MAX(minimumEnvironmentVersion, [self installedVersionWithPythonVersion:pythonVersion])
+    [self checkForNewerVersionThan:MAX(MAX(0, minimumEnvironmentVersion - 1), [self installedVersionWithPythonVersion:pythonVersion])
                           silently:YES
                            confirm:confirm
                 requiredToContinue:requiredToContinue
