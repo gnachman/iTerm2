@@ -213,6 +213,16 @@ typedef struct iTermTextColorContext {
     [super dealloc];
 }
 
+#pragma mark - Accessors
+
+- (void)setUnderlinedRange:(VT100GridAbsWindowedRange)underlinedRange {
+    if (VT100GridAbsWindowedRangeEquals(underlinedRange, _underlinedRange)) {
+        return;
+    }
+    DLog(@"Update underlined range of %@ to %@", self.delegate, VT100GridAbsWindowedRangeDescription(underlinedRange));
+    _underlinedRange = underlinedRange;
+}
+
 #pragma mark - Drawing: General
 
 - (void)drawTextViewContentInRect:(NSRect)rect

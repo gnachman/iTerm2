@@ -211,6 +211,18 @@ NS_INLINE BOOL VT100GridWindowsRangeEqualsWindowedRange(VT100GridWindowedRange a
                                                 b.coordRange));
 }
 
+NS_INLINE BOOL VT100GridAbsCoordRangeEquals(VT100GridAbsCoordRange a, VT100GridAbsCoordRange b) {
+    return (VT100GridAbsCoordEquals(a.start, b.start) &&
+            VT100GridAbsCoordEquals(a.end, b.end));
+}
+
+NS_INLINE BOOL VT100GridAbsWindowedRangeEquals(VT100GridAbsWindowedRange a, VT100GridAbsWindowedRange b) {
+    return (VT100GridAbsCoordRangeEquals(a.coordRange, b.coordRange) &&
+            VT100GridRangeEqualsRange(a.columnWindow, b.columnWindow));
+}
+
+NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range);
+
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedRange range) {
     VT100GridAbsCoord coord = range.coordRange.start;
     if (range.columnWindow.length) {

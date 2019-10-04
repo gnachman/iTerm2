@@ -94,8 +94,8 @@
             actionType = @"SecureCopyFile";
             break;
     }
-    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@>",
-            [self class], self, actionType, self.string, self.rule];
+    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@ range=%@>",
+            [self class], self, actionType, self.string, self.rule, VT100GridWindowedRangeDescription(_range)];
 }
 
 @end

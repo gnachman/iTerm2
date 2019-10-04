@@ -45,6 +45,11 @@ NSString *VT100GridSizeDescription(VT100GridSize size) {
     return [NSString stringWithFormat:@"%d x %d", size.width, size.height];
 }
 
+NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range) {
+    return [NSString stringWithFormat:@"<%@ restricted to cols %@>",
+            VT100GridAbsCoordRangeDescription(range.coordRange),
+            VT100GridRangeDescription(range.columnWindow)];
+}
 
 @implementation NSValue (VT100Grid)
 
