@@ -1,4 +1,6 @@
 #import "CPKColorComponentSliderView.h"
+
+#import "CPKColor.h"
 #import "NSColor+CPK.h"
 #import "NSObject+CPK.h"
 
@@ -8,7 +10,7 @@
 
 @implementation CPKColorComponentSliderView
 
-+ (CGFloat)valueForColor:(NSColor *)color type:(CPKColorComponentSliderType)type {
++ (CGFloat)valueForColor:(CPKColor *)color type:(CPKColorComponentSliderType)type {
     switch (type) {
         case kCPKColorComponentSliderTypeHue:
             return color.hueComponent;
@@ -27,7 +29,7 @@
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
-                        color:(NSColor *)color
+                        color:(CPKColor *)color
                          type:(CPKColorComponentSliderType)type
                         block:(void (^)(CGFloat))block {
     self = [super initWithFrame:frame
@@ -41,12 +43,12 @@
     return self;
 }
 
-- (void)setColor:(NSColor *)color {
+- (void)setColor:(CPKColor *)color {
     self.selectedValue = [CPKColorComponentSliderView valueForColor:color type:self.type];
     [self setGradientColor:color];
 }
 
-- (void)setGradientColor:(NSColor *)color {
+- (void)setGradientColor:(CPKColor *)color {
     _color = color;
     [self updateGradient];
     [self setNeedsDisplay:YES];

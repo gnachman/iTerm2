@@ -1,4 +1,6 @@
 #import "CPKAlphaSliderView.h"
+
+#import "CPKColor.h"
 #import "NSObject+CPK.h"
 
 @interface CPKAlphaSliderView ()
@@ -9,7 +11,7 @@
 
 - (instancetype)initWithFrame:(NSRect)frame
                         alpha:(CGFloat)alpha
-                        color:(NSColor *)color
+                        color:(CPKColor *)color
                         block:(void (^)(CGFloat))block {
     self = [super initWithFrame:frame value:alpha block:block];
     if (self) {
@@ -29,10 +31,10 @@
 
     // I don't know why NSGradient is misbehaving here. If I have it go from clearColor to
     // [self.color colorWithAlphaComponent:1] it looks all wrong.
-    NSMutableArray *colors = [NSMutableArray array];
+    NSMutableArray<NSColor *> *colors = [NSMutableArray array];
     int parts = 20;
     for (int i = 0; i <= parts; i++) {
-        [colors addObject:[self.color colorWithAlphaComponent:i / (double)parts]];
+        [colors addObject:[self.color.color colorWithAlphaComponent:i / (double)parts]];
     }
     NSGradient *gradient = [[NSGradient alloc] initWithColors:colors];
     [gradient drawInBezierPath:path angle:0];

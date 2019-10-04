@@ -1,4 +1,6 @@
 #import "CPKMainViewController.h"
+
+#import "CPKColor.h"
 #import "CPKColorNamer.h"
 #import "CPKControlsView.h"
 #import "CPKEyedropperWindow.h"
@@ -73,10 +75,10 @@ static const CGFloat kBottomMargin = 8;
 
     __weak __typeof(self) weakSelf = self;
     self.selectionView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
-                                                           block: ^(NSColor *color) {
-                                                               [weakSelf selectColor:color];
+                                                           block: ^(CPKColor *color) {
+                                                               [weakSelf selectColor:color.color];
                                                            }
-                                                           color:_selectedColor
+                                                           color:[[CPKColor alloc] initWithColor:_selectedColor]
                                                     alphaAllowed:self.alphaAllowed];
     self.selectionView.delegate = self;
     [self.selectionView sizeToFit];
@@ -116,7 +118,7 @@ static const CGFloat kBottomMargin = 8;
     self.controlsView.startPickingBlock = ^() {
         [CPKEyedropperWindow pickColorWithCompletion:^(NSColor *color) {
             if (color) {
-                weakSelf.selectionView.selectedColor = color;
+                weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:color];
             }
         }];
     };
@@ -132,7 +134,7 @@ static const CGFloat kBottomMargin = 8;
                                                            [self favoritesViewHeight])];
     self.favoritesView.selectionDidChangeBlock = ^(NSColor *newColor) {
         if (newColor) {
-            weakSelf.selectionView.selectedColor = newColor;
+            weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:newColor];
             weakSelf.controlsView.removeEnabled = YES;
         } else {
             weakSelf.controlsView.removeEnabled = NO;

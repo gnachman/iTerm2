@@ -11,6 +11,8 @@
 		1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */; };
 		1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */; };
 		1D33688C1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */; };
+		539804D42346F345009165A8 /* CPKColor.h in Headers */ = {isa = PBXBuildFile; fileRef = 539804D22346F345009165A8 /* CPKColor.h */; };
+		539804D52346F345009165A8 /* CPKColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 539804D32346F345009165A8 /* CPKColor.m */; };
 		A6184EAE1BA874020088EF3C /* ColorPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EAD1BA874020088EF3C /* ColorPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EB41BA874020088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
 		A6184EBB1BA874020088EF3C /* ColorPickerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EBA1BA874020088EF3C /* ColorPickerTests.m */; };
@@ -123,6 +125,8 @@
 		1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "EscapeHatch@2x.png"; path = "Images.xcassets/EscapeHatch/EscapeHatch@2x.png"; sourceTree = "<group>"; };
 		1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ActiveEscapeHatch.png; path = Images.xcassets/ActiveEscapeHatch/ActiveEscapeHatch.png; sourceTree = "<group>"; };
 		1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ActiveEscapeHatch@2x.png"; path = "Images.xcassets/ActiveEscapeHatch/ActiveEscapeHatch@2x.png"; sourceTree = "<group>"; };
+		539804D22346F345009165A8 /* CPKColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CPKColor.h; sourceTree = "<group>"; };
+		539804D32346F345009165A8 /* CPKColor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CPKColor.m; sourceTree = "<group>"; };
 		A6184EA81BA874020088EF3C /* ColorPicker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ColorPicker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6184EAC1BA874020088EF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6184EAD1BA874020088EF3C /* ColorPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorPicker.h; sourceTree = "<group>"; };
@@ -318,6 +322,8 @@
 				A6184EAB1BA874020088EF3C /* Supporting Files */,
 				A6E1748C206DD85F00E70F8D /* CPKScreenshot.h */,
 				A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */,
+				539804D22346F345009165A8 /* CPKColor.h */,
+				539804D32346F345009165A8 /* CPKColor.m */,
 			);
 			path = ColorPicker;
 			sourceTree = "<group>";
@@ -511,6 +517,7 @@
 				A6184F641BAA12890088EF3C /* CPKAlphaSliderView.h in Headers */,
 				A6184F4F1BA9EA410088EF3C /* CPKKDTreeNode.h in Headers */,
 				A6184F121BA8D65B0088EF3C /* CPKFlippedView.h in Headers */,
+				539804D42346F345009165A8 /* CPKColor.h in Headers */,
 				A6184EF61BA87A770088EF3C /* CPKPopover.h in Headers */,
 				A6184F531BA9EA7D0088EF3C /* CPKKDTree.h in Headers */,
 				A6184F4B1BA9D7740088EF3C /* CPKColorNamer.h in Headers */,
@@ -600,6 +607,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -676,6 +684,7 @@
 				A6184F131BA8D65B0088EF3C /* CPKFlippedView.m in Sources */,
 				A6184EF71BA87A770088EF3C /* CPKPopover.m in Sources */,
 				A6184F021BA883A70088EF3C /* CPKColorComponentSliderView.m in Sources */,
+				539804D52346F345009165A8 /* CPKColor.m in Sources */,
 				A6184EEF1BA876390088EF3C /* CPKMainViewController.m in Sources */,
 				A6184F501BA9EA410088EF3C /* CPKKDTreeNode.m in Sources */,
 				A6184F611BAA0BC30088EF3C /* NSObject+CPK.m in Sources */,
