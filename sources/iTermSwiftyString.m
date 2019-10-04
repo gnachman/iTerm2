@@ -78,6 +78,7 @@
 }
 
 - (void)sourceDidChange {
+    DLog(@"%@->%@ sourceDidChange to %@", _sourceRef.path, _destinationPath, _sourceRef.value);
     self.swiftyString = [NSString castFrom:_sourceRef.value] ?: @"";
 }
 
@@ -140,15 +141,19 @@
 - (void)evaluateSynchronously:(BOOL)synchronously {
     __weak __typeof(self) weakSelf = self;
     NSInteger count = ++_count;
+    DLog(@"%p: %@->%@ evaluate %@", self, _sourceRef.path, _destinationPath, _swiftyString);
     [self evaluateSynchronously:synchronously completion:^(NSString *result, NSError *error) {
+        DLog(@"%p: result=%@ error=%@", weakSelf, result, error);
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {
             if (strongSelf.appliedCount > count) {
                 // A later async evaluation has already completed. Don't overwrite it.
+                DLog(@"obsoleted");
                 return;
             }
             strongSelf.appliedCount = count;
             if (error == nil && [NSObject object:strongSelf.evaluatedString isEqualToObject:result]) {
+                DLog(@"unchanged");
                 return;
             }
             [strongSelf setEvaluatedString:result error:error];

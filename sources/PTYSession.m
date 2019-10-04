@@ -1894,14 +1894,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)profileNameDidChangeTo:(NSString *)name {
-    NSString *autoName = [self.variablesScope valueForVariableName:iTermVariableKeySessionAutoName] ?: name;
+    NSString *autoNameFormat = [self.variablesScope valueForVariableName:iTermVariableKeySessionAutoNameFormat] ?: name;
     const BOOL isChangeToLocalName = (self.isDivorced &&
                                       [_overriddenFields containsObject:KEY_NAME]);
-    const BOOL haveAutoNameOverride = ([self.variablesScope valueForVariableName:iTermVariableKeySessionIconName] != nil ||
-                                       [self.variablesScope valueForVariableName:iTermVariableKeySessionTriggerName] != nil);
-    if (isChangeToLocalName || !haveAutoNameOverride) {
+    const BOOL haveAutoNameFormatOverride = ([self.variablesScope valueForVariableName:iTermVariableKeySessionIconName] != nil ||
+                                             [self.variablesScope valueForVariableName:iTermVariableKeySessionTriggerName] != nil);
+    if (isChangeToLocalName || !haveAutoNameFormatOverride) {
         // Profile name changed, local name not overridden, and no icon/trigger name to take precedence.
-        autoName = name;
+        autoNameFormat = name;
     }
 
     NSString *profileName = nil;
@@ -1914,7 +1914,7 @@ ITERM_WEAKLY_REFERENCEABLE
             profileName = [self.variablesScope valueForVariableName:iTermVariableKeySessionProfileName];
         }
     }
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: autoName ?: [NSNull null],
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: autoNameFormat ?: [NSNull null],
                                                     iTermVariableKeySessionProfileName: profileName ?: [NSNull null] }];
 }
 
@@ -3958,6 +3958,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setIconName:(NSString *)theName {
+    DLog(@"Assign to autoNameFormat <- %@", theName);
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
     [_tmuxTitleMonitor updateOnce];
@@ -8750,6 +8751,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetIconName:(NSString *)theName {
+    DLog(@"screenSetIconName:%@", theName);
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setIconName:theName];
