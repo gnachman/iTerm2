@@ -212,6 +212,7 @@ static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED = @"Working Directory Poller Disabled";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
@@ -417,6 +418,9 @@ static const NSUInteger kMaxHosts = 100;
     // Has a shell integration code ever been seen? A rough guess as to whether we can assume
     // shell integration is currently being used.
     BOOL _shellIntegrationEverUsed;
+
+    // Disable the working directory poller?
+    BOOL _workingDirectoryPollerDisabled;
 
     // Has the user or an escape code change the cursor guide setting?
     // If so, then the profile setting will be disregarded.
@@ -1146,6 +1150,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
         aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
     }
+    aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shellIntegrationEverUsed;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
         [aSession trimCommandsIfNeeded];
@@ -4415,6 +4420,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
+    result[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] = @(_workingDirectoryPollerDisabled);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
@@ -9758,6 +9764,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_automaticProfileSwitcher setHostname:hostname username:username path:path job:job];
 }
 
+// This is called when we get a high-confidence working directory (e.g., CurrentDir=).
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
@@ -9768,6 +9775,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                       path:newPath
                                        job:self.variablesScope.jobName];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
+    _workingDirectoryPollerDisabled = YES;
 }
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
@@ -11584,6 +11592,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermWorkingDirectoryPollerDelegate
 
 - (BOOL)workingDirectoryPollerShouldPoll {
+    if (_workingDirectoryPollerDisabled) {
+        DLog(@"Working directory poller disabled");
+        return NO;
+    }
     if (_shellIntegrationEverUsed && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
         DLog(@"Should not poll for working directory: shell integration used");
         return NO;
