@@ -15,7 +15,6 @@
 #import "NSDictionary+Profile.h"
 #import "NSFileManager+iTerm.h"
 #import "NSMutableDictionary+Profile.h"
-#import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "SCEvents.h"
 

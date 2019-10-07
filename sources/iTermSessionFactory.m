@@ -9,7 +9,6 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermExpressionEvaluator.h"
 #import "iTermInitialDirectory.h"
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
