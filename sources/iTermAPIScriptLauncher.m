@@ -25,8 +25,6 @@
 #import "NSWorkspace+iTerm.h"
 #import "PTYTask.h"
 
-@import Sparkle;
-
 static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification = @"iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification";
 
 @implementation iTermAPIScriptLauncher
