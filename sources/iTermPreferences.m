@@ -17,6 +17,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
 #import "WindowArrangements.h"
+#import "PSMTabBarControl.h"
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
