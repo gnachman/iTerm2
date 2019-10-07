@@ -16,6 +16,9 @@ test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid 
 echo Enter the EdDSA private key
 read -s EDPRIVKEY
 
+echo Enter the notarization password
+read -s NOTPASS
+
 # Usage: SparkleSign final.xml final_template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
@@ -74,22 +77,22 @@ function Build {
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
 
-  zip -ry iTerm2-${NAME}.zip iTerm.app
- 
-  # This is so far from working it's ridiculous. Wait to hear back on my radar.
-
-# # This command came from where all good Apple documentation comes from, which is Twitter.
-# # From https://twitter.com/rosyna/status/1004418504408252416?lang=en
-# xcrun altool --eval-app --primary-bundle-id com.googlecode.iterm2 -u apple@georgester.com -f $ZIPNAME
-# echo Now wait a long time. Paste the UUID into the command below to get progress.
-# echo xcrun altool --eval-info UUID -u apple@georgester.com
-# echo "Press return when it's good"
-# read xxx
-
-# xcrun stapler staple iTerm.app || die "Stapling failed"
-# rm $ZIPNAME
-# zip -ry $ZIPNAME iTerm.app
-
+  # Zip it, notarize it, staple it, and re-zip it.
+  PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
+  zip -ry $PRENOTARIZED_ZIP iTerm.app
+  xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1
+  UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
+  echo "uuid is $UUID"
+  xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
+  sleep 1
+  while xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS" 2>&1 | egrep -i "in progress|Could not find the RequestUUID":
+  do
+      echo "Trying again"
+      sleep 1
+  done
+  NOTARIZED_ZIP=iTerm2-${NAME}.zip
+  xcrun stapler staple iTerm.app
+  zip -ry $NOTARIZED_ZIP iTerm.app
 
   # Update the list of changes
   vi $SVNDIR/source/appcasts/full_changes.txt
