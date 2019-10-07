@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import "PreferenceInfo.h"
-#import "PSMTabBarControl.h"
 
 extern NSString *const iTermMetalSettingsDidChangeNotification;
 
