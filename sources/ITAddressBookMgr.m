@@ -29,7 +29,6 @@
 
 #import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
-#import "iTermExpressionEvaluator.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermHotKeyMigrationHelper.h"
