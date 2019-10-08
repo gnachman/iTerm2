@@ -73,6 +73,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     pipe(outputPipe);
     pipe(errorPipe);
     signal(SIGPIPE, SIG_IGN);
+    const int maxfd = getdtablesize();
     pid_t pid = fork();
     if (pid == 0) {
         signal(SIGCHLD, SIG_DFL);
@@ -90,7 +91,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         close(errorPipe[0]);
         close(errorPipe[1]);
 
-        for (int i = 3; i < 256; i++) {
+        for (int i = 3; i < maxfd; i++) {
             if (i != outputPipe[1] && i != inputPipe[0]) {
                 close(i);
             }
