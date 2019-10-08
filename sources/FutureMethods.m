@@ -7,7 +7,6 @@
 //
 
 #import "FutureMethods.h"
-#import "NSSavePanel+iTerm.h"
 
 static NSString *const kApplicationServicesFramework = @"/System/Library/Frameworks/ApplicationServices.framework";
 static NSString *const kMultitouchSupportFramework =  @"/System/Library/PrivateFrameworks/MultitouchSupport.framework";
