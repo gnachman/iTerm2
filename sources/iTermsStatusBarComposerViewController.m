@@ -97,6 +97,11 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     [_comboBox addItemsWithObjectValues:[self.delegate statusBarComposerSuggestions:self] ?: @[]];
 }
 
+- (void)sendCommand {
+    [self.delegate statusBarComposer:self sendCommand:_comboBox.stringValue];
+    _comboBox.stringValue = @"";
+}
+
 #pragma mark - NSComboBoxDelegate
 
 - (void)comboBoxWillPopUp:(NSNotification *)notification {
@@ -125,7 +130,7 @@ doCommandBySelector:(SEL)commandSelector {
     }
 
     if (commandSelector == @selector(insertNewline:)) {
-        [self.delegate statusBarComposer:self sendCommand:_comboBox.stringValue];
+        [self sendCommand];
         return YES;
     } else {
         return NO;
