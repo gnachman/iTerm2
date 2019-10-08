@@ -130,7 +130,9 @@ doCommandBySelector:(SEL)commandSelector {
     }
 
     if (commandSelector == @selector(insertNewline:)) {
-        [self sendCommand];
+        if (!_open) {
+            [self sendCommand];
+        }
         return YES;
     } else {
         return NO;
