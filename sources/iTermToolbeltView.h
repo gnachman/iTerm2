@@ -58,6 +58,8 @@ extern NSString *const kToolbeltShouldHide;
 - (BOOL)showingToolWithName:(NSString *)theName;
 
 - (void)relayoutAllTools;
+- (void)restoreFromState:(NSDictionary *)state;
+- (NSDictionary *)restorableState;
 
 #pragma mark - Testing
 

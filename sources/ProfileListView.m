@@ -47,6 +47,8 @@
 // NSForegroundColorAttributeName's value when the background style changes.
 static NSString *const iTermSelectedActiveForegroundColor = @"iTermSelectedActiveForegroundColor";
 static NSString *const iTermRegularForegroundColor = @"iTermRegularForegroundColor";
+static NSString *const iTermProfileListViewRestorableStateTagsVisible = @"iTermProfileListViewRestorableStateTagsVisible";
+static NSString *const iTermProfileListViewRestorableStateTagsFraction = @"iTermProfileListViewRestorableStateTagsFraction";
 
 // This is a text field that updates its text colors depending on the current background style.
 @interface iTermProfileListViewTextField : NSTextField
@@ -1197,6 +1199,39 @@ const CGFloat kDefaultTagsWidth = 80;
     return tagsView_.frame.size.width > 0;
 }
 
+- (CGFloat)tagsFraction {
+    return tagsView_.frame.size.width / splitView_.frame.size.width;
+}
+
+- (void)setTagsFraction:(CGFloat)tagsFraction {
+    NSRect rect = tagsView_.frame;
+    rect.size.width = tagsFraction * splitView_.frame.size.width;
+    tagsView_.frame = rect;
+
+    rect = scrollView_.frame;
+    rect.origin.x = NSMaxX(tagsView_.frame) + splitView_.dividerThickness;
+    rect.size.width = NSWidth(splitView_.frame) - NSMinX(rect);
+    scrollView_.frame = rect;
+    
+    [splitView_ adjustSubviews];
+}
+
+- (NSDictionary *)restorableState {
+    return @{ iTermProfileListViewRestorableStateTagsVisible: @(self.tagsVisible),
+              iTermProfileListViewRestorableStateTagsFraction: @(self.tagsFraction) };
+}
+
+- (void)restoreFromState:(NSDictionary *)state {
+    if (!state) {
+        return;
+    }
+    const CGFloat fraction = [NSNumber castFrom:state[iTermProfileListViewRestorableStateTagsFraction]].doubleValue;
+    if ([state[iTermProfileListViewRestorableStateTagsVisible] boolValue] && fraction > 0 & fraction <= 1) {
+        [self setTagsOpen:YES animated:NO];
+        self.tagsFraction = fraction;
+    }
+}
+
 #pragma mark - ProfileTagsViewDelegate
 
 - (void)profileTagsViewSelectionDidChange:(ProfileTagsView *)profileTagsView {
@@ -1212,5 +1247,7 @@ const CGFloat kDefaultTagsWidth = 80;
         [self.delegate profileTableTagsVisibilityDidChange:self];
     }
     tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
+    [self.window invalidateRestorableState];
 }
+
 @end

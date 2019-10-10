@@ -1812,6 +1812,7 @@
 		A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6393598210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m */; };
 		A639E1A02112CA33001696DE /* iTermEchoProbe.h in Headers */ = {isa = PBXBuildFile; fileRef = A639E19E2112CA32001696DE /* iTermEchoProbe.h */; };
 		A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */ = {isa = PBXBuildFile; fileRef = A639E19F2112CA33001696DE /* iTermEchoProbe.m */; };
+		A63B9D5B234EE4ED002EEF30 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
 		A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */; };
@@ -3079,7 +3080,6 @@
 		A6C763A51B45C52B00E3C992 /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
-		A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
 		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
@@ -12400,6 +12400,7 @@
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */,
 				A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */,
+				A63B9D5B234EE4ED002EEF30 /* ToolProfiles.m in Sources */,
 				530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */,
 				5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */,
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
@@ -12831,7 +12832,6 @@
 				A6C762B11B45C52B00E3C992 /* NSData+iTerm.m in Sources */,
 				A6C7635C1B45C52B00E3C992 /* CommandHistoryPopup.m in Sources */,
 				A6CEC0811DCE80C9009F4FD2 /* Type.pbobjc.m in Sources */,
-				A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */,
 				A6C763C31B45C52B00E3C992 /* VT100OtherParser.m in Sources */,
 				A6C762A91B45C52B00E3C992 /* PTYTab+Scripting.m in Sources */,
 				A62C3A921BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m in Sources */,

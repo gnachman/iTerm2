@@ -163,6 +163,7 @@ static NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW
 static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
 static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
+static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
 
 static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
@@ -2988,6 +2989,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     [_contentView constrainToolbeltWidth];
     [_contentView setToolbeltProportions:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS]];
+    [_contentView.toolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
 
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
@@ -3110,6 +3112,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (proportions) {
         result[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS] = proportions;
     }
+    result[TERMINAL_ARRANGEMENT_TOOLBELT] = _contentView.toolbelt.restorableState;
+    
     if (self.scope.windowTitleOverrideFormat) {
         result[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE] = self.scope.windowTitleOverrideFormat;
     }
