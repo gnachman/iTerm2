@@ -426,6 +426,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 }
 
 - (void)hook {
+#if 0
     if ([self compactSequence] == MAKE_COMPACT_SEQUENCE(0, 0, 'p') &&
         [[self parameters] isEqual:@[ @"1000" ]]) {
         VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
@@ -440,6 +441,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         _hook = [[VT100TmuxParser alloc] init];
         _hookFinished = NO;
     }
+#endif
 }
 
 - (void)unhook {
