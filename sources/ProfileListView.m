@@ -1235,7 +1235,10 @@ const CGFloat kDefaultTagsWidth = 80;
 #pragma mark - ProfileTagsViewDelegate
 
 - (void)profileTagsViewSelectionDidChange:(ProfileTagsView *)profileTagsView {
-    searchField_.stringValue = [profileTagsView.selectedTags componentsJoinedByString:@" "];
+    searchField_.stringValue =
+        [[profileTagsView.selectedTags mapWithBlock:^id(NSString *tag) {
+            return [@"tag:" stringByAppendingString:tag];
+        }] componentsJoinedByString:@" "];
     [self updateResultsForSearch];
 }
 
