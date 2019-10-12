@@ -2551,22 +2551,15 @@ static iTermAPIHelper *sAPIHelperInstance;
         windowController = [PseudoTerminal castFrom:tab.realParentWindow];
     }
 
-    if (request.selectSession) {
-        if (!session) {
-            response.status = ITMActivateResponse_Status_InvalidOption;
-            handler(response);
-            return;
+    if (request.hasActivateApp) {
+        NSApplicationActivationOptions options = 0;
+        if (request.activateApp.raiseAllWindows) {
+            options |= NSApplicationActivateAllWindows;
         }
-        [tab setActiveSession:session];
-    }
-
-    if (request.selectTab) {
-        if (!tab) {
-            response.status = ITMActivateResponse_Status_InvalidOption;
-            handler(response);
-            return;
+        if (request.activateApp.ignoringOtherApps) {
+            options |= NSApplicationActivateIgnoringOtherApps;
         }
-        [windowController.tabView selectTabViewItemWithIdentifier:tab];
+        [[NSRunningApplication currentApplication] activateWithOptions:options];
     }
 
     if (request.orderWindowFront) {
@@ -2578,15 +2571,22 @@ static iTermAPIHelper *sAPIHelperInstance;
         [windowController.window makeKeyAndOrderFront:nil];
     }
 
-    if (request.hasActivateApp) {
-        NSApplicationActivationOptions options = 0;
-        if (request.activateApp.raiseAllWindows) {
-            options |= NSApplicationActivateAllWindows;
+    if (request.selectTab) {
+        if (!tab) {
+            response.status = ITMActivateResponse_Status_InvalidOption;
+            handler(response);
+            return;
         }
-        if (request.activateApp.ignoringOtherApps) {
-            options |= NSApplicationActivateIgnoringOtherApps;
+        [windowController.tabView selectTabViewItemWithIdentifier:tab];
+    }
+
+    if (request.selectSession) {
+        if (!session) {
+            response.status = ITMActivateResponse_Status_InvalidOption;
+            handler(response);
+            return;
         }
-        [[NSRunningApplication currentApplication] activateWithOptions:options];
+        [tab setActiveSession:session];
     }
 
     response.status = ITMActivateResponse_Status_Ok;
