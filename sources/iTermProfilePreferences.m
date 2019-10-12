@@ -13,7 +13,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCursor.h"
 #import "iTermPreferences.h"
-#import "iTermStatusBarLayout.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
