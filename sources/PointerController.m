@@ -164,7 +164,8 @@
     if ([self actionForEvent:event clicks:1 withTouches:3]) {
         return NO;
     }
-    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"com.apple.trackpad.forceClick"] == 0) {
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.forceClick"];
+    if (number && number.boolValue) {
         // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
         // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.
         [self performAction:kQuickLookAction forEvent:event withArgument:nil];
@@ -208,7 +209,6 @@
 }
 
 - (BOOL)pressureChangeWithEvent:(NSEvent *)event {
-    ITERM_IGNORE_PARTIAL_BEGIN
     if ([event respondsToSelector:@selector(stage)]) {
         NSInteger previousStage = _previousStage;
         _previousStage = event.stage;
@@ -220,14 +220,16 @@
             if (action) {
                 [self performAction:action forEvent:event withArgument:argument];
                 return YES;
-            } else if ([[NSUserDefaults standardUserDefaults] integerForKey:@"com.apple.trackpad.forceClick"] == 1) {
-                // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
-                // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.
-                [self performAction:kQuickLookAction forEvent:event withArgument:nil];
+            } else {
+                NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.forceClick"];
+                if (number && number.boolValue) {
+                    // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
+                    // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.
+                    [self performAction:kQuickLookAction forEvent:event withArgument:nil];
+                }
             }
         }
     }
-    ITERM_IGNORE_PARTIAL_END
     return NO;
 }
 
