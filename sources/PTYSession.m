@@ -2742,7 +2742,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)appendBrokenPipeMessage:(NSString *)message {
+- (void)appendBrokenPipeMessage:(NSString *)unpaddedMessage {
+    NSString *const message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
     if (_screen.cursorX != 1) {
         [_screen crlf];
     }
@@ -2770,7 +2771,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                         data:nil];
     }
     [_screen appendStringAtCursor:message];
-    [_screen appendStringAtCursor:@" "];
     if (width > 0) {
         [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
                                        width:(_screen.width - _screen.cursorX + 1)
