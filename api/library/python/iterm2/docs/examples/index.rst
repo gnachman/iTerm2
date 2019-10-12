@@ -61,6 +61,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`autoalert` - Demonstrates monitoring all sessions for long-running jobs. Also demonstrates posting notifications.
 
+:doc:`stty` - Demonstrates watching for a variable to change in all sessions and sending text in response.
+
 ----
 
 **Profiles and Color Presets**

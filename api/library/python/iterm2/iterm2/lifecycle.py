@@ -30,13 +30,14 @@ class EachSessionOnceMonitor:
 
           .. code-block:: python
 
+            app = await iterm2.async_get_app(connection)
             # Print a message to stdout when there's a new prompt in any session
             async def my_task(session_id):
                 async with iterm2.PromptMonitor(connection, session_id) as mon:
                     await mon.async_get()
                     print("Prompt detected")
 
-            await EachSessionOnceMonitor.async_foreach_session_create_task(my_task)
+            await iterm2.EachSessionOnceMonitor.async_foreach_session_create_task(app, my_task)
         """
         tasks = {}
         async def eachMon():
