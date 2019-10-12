@@ -2512,9 +2512,10 @@ DQ
                         <outlet property="nextKeyView" destination="5148" id="ZO3-2W-BpX"/>
                     </connections>
                 </button>
-                <button toolTip="Brightens text for &quot;normal&quot; ANSI colors. Does not affect 24-bit color or the default foreground color." id="KWy-PJ-O0E">
+                <button id="KWy-PJ-O0E">
                     <rect key="frame" x="10" y="150" width="131" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Brightens text for "normal" ANSI colors. Does not affect "bright" ANSI colors, 8-bit colors, 24-bit colors, or the default foreground color.</string>
                     <buttonCell key="cell" type="check" title="Brighten bold text" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="2NE-9l-ZRK">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
