@@ -29,12 +29,6 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     // Focus follows mouse.
     IBOutlet NSButton *_focusFollowsMouse;
-
-    // Triple click selects full, wrapped lines.
-    IBOutlet NSButton *_tripleClickSelectsFullLines;
-
-    // Double click perform smart selection
-    IBOutlet NSButton *_doubleClickPerformsSmartSelection;
 }
 
 - (void)awakeFromNib {
@@ -73,15 +67,6 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     [self defineControl:_focusFollowsMouse
                     key:kPreferenceKeyFocusFollowsMouse
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-
-    [self defineControl:_tripleClickSelectsFullLines
-                    key:kPreferenceKeyTripleClickSelectsFullWrappedLines
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_doubleClickPerformsSmartSelection
-                    key:kPreferenceKeyDoubleClickPerformsSmartSelection
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 }

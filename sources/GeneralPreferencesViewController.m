@@ -87,6 +87,12 @@ enum {
     // Copy includes trailing newline
     IBOutlet NSButton *_copyLastNewline;
 
+    // Triple click selects full, wrapped lines.
+    IBOutlet NSButton *_tripleClickSelectsFullLines;
+
+    // Double click perform smart selection
+    IBOutlet NSButton *_doubleClickPerformsSmartSelection;
+
     // Allow clipboard access by terminal applications
     IBOutlet NSButton *_allowClipboardAccessFromTerminal;
 
@@ -395,6 +401,15 @@ enum {
                     key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
             relatedView:_wordCharsLabel
                    type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_tripleClickSelectsFullLines
+                    key:kPreferenceKeyTripleClickSelectsFullWrappedLines
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_doubleClickPerformsSmartSelection
+                    key:kPreferenceKeyDoubleClickPerformsSmartSelection
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement

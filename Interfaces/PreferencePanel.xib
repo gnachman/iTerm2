@@ -1224,6 +1224,7 @@ DQ
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
+                <outlet property="_doubleClickPerformsSmartSelection" destination="wgv-Ah-fFr" id="OZU-W2-nQN"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
                 <outlet property="_evenIfThereAreNoWindows" destination="7pa-hD-WIi" id="laL-N3-lTV"/>
@@ -1249,6 +1250,7 @@ DQ
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_tabView" destination="CuK-St-ACL" id="BwT-A2-44D"/>
+                <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_useTmuxStatusBar" destination="oHn-bB-rYM" id="GMi-WL-nVq"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
@@ -1327,12 +1329,10 @@ DQ
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
-                <outlet property="_doubleClickPerformsSmartSelection" destination="yP8-R7-nbQ" id="2EU-IR-9z1"/>
                 <outlet property="_focusFollowsMouse" destination="6062" id="wHi-NP-8ue"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_tabView" destination="kxy-pe-gzv" id="iKb-9p-k0h"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
-                <outlet property="_tripleClickSelectsFullLines" destination="6260" id="nhb-Ac-ST0"/>
                 <outlet property="view" destination="qwf-ly-A8K" id="myg-rZ-Ivy"/>
             </connections>
         </customObject>
@@ -4713,20 +4713,77 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="rkL-re-0L0" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="56" y="344" width="642" height="124"/>
+                                        <rect key="frame" x="89" y="304" width="581" height="164"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2095">
-                                                <rect key="frame" x="18" y="82" width="319" height="20"/>
+                                                <rect key="frame" x="142" y="20" width="238" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Characters considered part of word for selection:" id="2098">
+                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Characters considered part of a word:" id="2098">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
+                                            <button id="1988">
+                                                <rect key="frame" x="143" y="128" width="226" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Copy to pasteboard on selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1989">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="t0W-Hn-05Q"/>
+                                                    <outlet property="nextKeyView" destination="5747" id="5752"/>
+                                                </connections>
+                                            </button>
+                                            <button id="5747">
+                                                <rect key="frame" x="143" y="108" width="253" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Copied text includes trailing newline" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5748">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="GEe-gf-ALm"/>
+                                                </connections>
+                                            </button>
+                                            <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." id="6383">
+                                                <rect key="frame" x="142" y="88" width="299" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="JJB-g8-hTr"/>
+                                                </connections>
+                                            </button>
+                                            <button id="wgv-Ah-fFr">
+                                                <rect key="frame" x="143" y="68" width="264" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">When this option is off, double click selects a word as defined by “characters considered part of word for selection” in the General tab. When this option is on, double click uses smart selection to select file names, URLs, etc., using regular expressions defined in Profiles&gt;Advanced&gt;Smart Selection.</string>
+                                                <buttonCell key="cell" type="check" title="Double-click performs smart selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="7XC-p9-8hX">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="3lZ-gw-9k9"/>
+                                                </connections>
+                                            </button>
+                                            <button toolTip="If disabled, then triple click selects one line as it appears onscreen." id="GD3-XJ-mYL">
+                                                <rect key="frame" x="143" y="48" width="274" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Triple-click selects entire wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="XH1-2y-ipC">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="fMw-UA-Ylc"/>
+                                                </connections>
+                                            </button>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2096">
-                                                <rect key="frame" x="327" y="82" width="295" height="22"/>
+                                                <rect key="frame" x="382" y="20" width="96" height="22"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2097">
                                                     <font key="font" metaFont="system"/>
@@ -4739,40 +4796,6 @@ DQ
                                                     <outlet property="nextKeyView" destination="5051" id="5195"/>
                                                 </connections>
                                             </textField>
-                                            <button id="1988">
-                                                <rect key="frame" x="325" y="58" width="226" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Copy to pasteboard on selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1989">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="t0W-Hn-05Q"/>
-                                                    <outlet property="nextKeyView" destination="5747" id="5752"/>
-                                                </connections>
-                                            </button>
-                                            <button id="5747">
-                                                <rect key="frame" x="325" y="38" width="253" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Copied text includes trailing newline" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5748">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="GEe-gf-ALm"/>
-                                                </connections>
-                                            </button>
-                                            <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." id="6383">
-                                                <rect key="frame" x="325" y="18" width="299" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="JJB-g8-hTr"/>
-                                                </connections>
-                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -5010,11 +5033,11 @@ DQ
                     <tabViewItems>
                         <tabViewItem label="General" identifier="" id="wt3-Hu-DaR">
                             <view key="view" id="7fG-Sy-1hE">
-                                <rect key="frame" x="10" y="33" width="590" height="187"/>
+                                <rect key="frame" x="10" y="33" width="590" height="206"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="Wsp-9H-Fsm" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="47" y="46" width="496" height="138"/>
+                                        <rect key="frame" x="47" y="65" width="496" height="138"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button id="awA-hH-ziY">
@@ -6041,23 +6064,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="T59-Vc-DXx" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="253" y="188" width="352" height="180"/>
+                                        <rect key="frame" x="253" y="248" width="352" height="120"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <button id="yP8-R7-nbQ">
-                                                <rect key="frame" x="18" y="88" width="264" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">When this option is off, double click selects a word as defined by “characters considered part of word for selection” in the General tab. When this option is on, double click uses smart selection to select file names, URLs, etc., using regular expressions defined in Profiles&gt;Advanced&gt;Smart Selection.</string>
-                                                <buttonCell key="cell" type="check" title="Double-click performs smart selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="TVI-Sd-JFA">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="gGk-pS-ZtM"/>
-                                                </connections>
-                                            </button>
                                             <button id="6407">
-                                                <rect key="frame" x="18" y="118" width="163" height="18"/>
+                                                <rect key="frame" x="18" y="58" width="163" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
                                                 <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
@@ -6068,19 +6079,8 @@ DQ
                                                     <action selector="settingChanged:" target="pwh-OY-l3e" id="gqB-43-NCa"/>
                                                 </connections>
                                             </button>
-                                            <button toolTip="If disabled, then triple click selects one line as it appears onscreen." id="6260">
-                                                <rect key="frame" x="18" y="68" width="274" height="18"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Triple-click selects entire wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="GLn-uu-nCe"/>
-                                                </connections>
-                                            </button>
                                             <button id="6227">
-                                                <rect key="frame" x="18" y="48" width="274" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="274" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Three-finger tap emulates middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6091,7 +6091,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="6107">
-                                                <rect key="frame" x="18" y="158" width="316" height="18"/>
+                                                <rect key="frame" x="18" y="98" width="316" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="⌘-Click opens filename/URL (semantic history)" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6102,7 +6102,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="6111">
-                                                <rect key="frame" x="18" y="138" width="316" height="18"/>
+                                                <rect key="frame" x="18" y="78" width="316" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
                                                 <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
@@ -6256,7 +6256,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
