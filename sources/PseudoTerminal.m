@@ -8950,7 +8950,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                     // Initial setup. Do this so we can get the initial session's desired number of columns. Issue 8365.
                     decorationSize.width += _contentView.leftTabBarPreferredWidth;
                 } else {
-                    decorationSize.width += [self tabviewWidth];
+                    decorationSize.width += _contentView.leftTabBarWidth;
                 }
                 break;
         }

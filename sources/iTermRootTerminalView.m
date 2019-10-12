@@ -836,11 +836,8 @@ typedef struct {
 }
 
 - (CGFloat)tabviewWidth {
-#warning omg this is left tab *bar* width!
-    if ([self tabBarShouldBeVisible] &&
-        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
-        return _leftTabBarWidth;
-    }
+    assert([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_LeftTab ||
+           ![self tabBarShouldBeVisible]);
 
     CGFloat width;
     if (self.shouldShowToolbelt && !_delegate.exitingLionFullscreen) {
@@ -1115,7 +1112,7 @@ typedef struct {
     }
     NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                     decorationHeights.bottom,
-                                    [self tabviewWidth],
+                                    _leftTabBarWidth,
                                     [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
     self.tabBarControl.insets = [self.delegate tabBarInsets];
     [self setTabBarFrame:tabBarFrame];
