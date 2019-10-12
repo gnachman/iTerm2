@@ -8771,7 +8771,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (components & iTermTitleComponentsCustom) {
         return;
     }
-    if (components & iTermTitleComponentsSessionName) {
+    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName)) {
         return;
     }
     components |= iTermTitleComponentsSessionName;
