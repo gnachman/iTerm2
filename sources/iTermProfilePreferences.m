@@ -201,6 +201,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_SMART_CURSOR_COLOR, KEY_MINIMUM_CONTRAST, KEY_CURSOR_BOOST,
                              KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
                              KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_USE_BOLD_COLOR,
+                             KEY_BRIGHTEN_BOLD_TEXT,
                              KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
                              KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
                              KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_INITIAL_USE_TRANSPARENCY,
@@ -350,6 +351,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ASCII_LIGATURES: @NO,
                   KEY_NON_ASCII_LIGATURES: @NO,
                   KEY_USE_BOLD_COLOR: @YES,
+                  KEY_BRIGHTEN_BOLD_TEXT: @YES,
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
@@ -540,7 +542,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BADGE_MAX_WIDTH: PROFILE_BLOCK(badgeMaxWidth),
                   KEY_BADGE_MAX_HEIGHT: PROFILE_BLOCK(badgeMaxHeight),
                   KEY_BADGE_FONT: PROFILE_BLOCK(badgeFont),
-                  KEY_WINDOW_TYPE: PROFILE_BLOCK(windowType)
+                  KEY_WINDOW_TYPE: PROFILE_BLOCK(windowType),
+                  KEY_BRIGHTEN_BOLD_TEXT: PROFILE_BLOCK(brightenBoldText)
                 };
     }
     return dict;
@@ -684,6 +687,16 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         return nil;
     }
     return @(iTermThemedWindowType(number.intValue));
+}
+
++ (id)brightenBoldText:(Profile *)profile {
+    NSNumber *number = profile[KEY_BRIGHTEN_BOLD_TEXT];
+    if (number) {
+        return number;
+    }
+    // Migration path. This used to be one and the same as "use bold color". If you've never tweaked
+    // this setting directly, fall back to the "use bold color" setting.
+    return [self objectForKey:KEY_USE_BOLD_COLOR inProfile:profile];
 }
 
 + (id)badgeFont:(Profile *)profile {

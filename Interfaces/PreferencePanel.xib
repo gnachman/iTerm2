@@ -1444,6 +1444,7 @@ DQ
                 <outlet property="_badgeColor" destination="A9a-sA-67D" id="djP-Vq-hVi"/>
                 <outlet property="_badgeColorLabel" destination="Pyw-da-Q1y" id="x9b-id-c1o"/>
                 <outlet property="_boldColor" destination="2272" id="zhk-0J-m9y"/>
+                <outlet property="_brightenBoldText" destination="KWy-PJ-O0E" id="6nZ-Xi-WKv"/>
                 <outlet property="_bwWarning1" destination="CJu-FZ-K1D" id="gy1-mn-JYT"/>
                 <outlet property="_bwWarning2" destination="eve-jv-6xP" id="jYs-b3-a3w"/>
                 <outlet property="_cursorBoost" destination="evF-qt-9wo" id="zxW-aa-c8U"/>
@@ -2072,7 +2073,7 @@ DQ
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView id="2285" customClass="CPKColorWell">
-                    <rect key="frame" x="102" y="228" width="32" height="21"/>
+                    <rect key="frame" x="107" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <customView id="2277" customClass="CPKColorWell">
@@ -2089,11 +2090,11 @@ DQ
                     </textFieldCell>
                 </textField>
                 <customView id="2272" customClass="CPKColorWell">
-                    <rect key="frame" x="102" y="202" width="32" height="21"/>
+                    <rect key="frame" x="107" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="inA-QL-S7K">
-                    <rect key="frame" x="8" y="178" width="84" height="17"/>
+                    <rect key="frame" x="13" y="178" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Links" id="Tt3-3r-Gt8">
                         <font key="font" metaFont="system"/>
@@ -2102,7 +2103,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <customView id="O31-5M-Une" customClass="CPKColorWell">
-                    <rect key="frame" x="102" y="176" width="32" height="21"/>
+                    <rect key="frame" x="107" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="Pyw-da-Q1y">
@@ -2122,7 +2123,7 @@ DQ
                     </userDefinedRuntimeAttributes>
                 </customView>
                 <customView id="2273" customClass="CPKColorWell">
-                    <rect key="frame" x="102" y="254" width="32" height="21"/>
+                    <rect key="frame" x="107" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2274">
@@ -2139,7 +2140,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2281">
-                    <rect key="frame" x="8" y="230" width="84" height="17"/>
+                    <rect key="frame" x="13" y="230" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Background" id="2318">
                         <font key="font" metaFont="system"/>
@@ -2445,7 +2446,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2276">
-                    <rect key="frame" x="8" y="256" width="84" height="17"/>
+                    <rect key="frame" x="13" y="256" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Foreground" id="2320">
                         <font key="font" metaFont="system"/>
@@ -2499,7 +2500,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="X0w-pC-g9j">
-                    <rect key="frame" x="36" y="203" width="56" height="18"/>
+                    <rect key="frame" x="41" y="203" width="56" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Enables the specified color for bold text. Also has the side-effect of using the bright version of ANSI colors for bold text in a ”normal“ ANSI color.</string>
                     <buttonCell key="cell" type="check" title="Bold" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="KKT-Zg-ilT">
@@ -2509,6 +2510,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="p8i-eM-oBc" id="hje-KN-lBJ"/>
                         <outlet property="nextKeyView" destination="5148" id="ZO3-2W-BpX"/>
+                    </connections>
+                </button>
+                <button toolTip="Brightens text for &quot;normal&quot; ANSI colors. Does not affect 24-bit color or the default foreground color." id="KWy-PJ-O0E">
+                    <rect key="frame" x="10" y="150" width="131" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Brighten bold text" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="2NE-9l-ZRK">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="p8i-eM-oBc" id="hlD-DT-ool"/>
+                        <outlet property="nextKeyView" destination="5148" id="dQL-dM-WhZ"/>
                     </connections>
                 </button>
             </subviews>

@@ -39,6 +39,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_foregroundColor;
     IBOutlet CPKColorWell *_backgroundColor;
     IBOutlet NSButton *_useBrightBold;  // Respect bold
+    IBOutlet NSButton *_brightenBoldText;
     IBOutlet CPKColorWell *_boldColor;
     IBOutlet CPKColorWell *_linkColor;
     IBOutlet CPKColorWell *_selectionColor;
@@ -206,6 +207,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     info = [self defineControl:_useBrightBold
                            key:KEY_USE_BOLD_COLOR
                    displayName:@"Custom color for bold text"
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
+
+    info = [self defineControl:_brightenBoldText
+                           key:KEY_BRIGHTEN_BOLD_TEXT
+                   displayName:@"Brighten bold text"
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
 

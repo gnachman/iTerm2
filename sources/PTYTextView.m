@@ -577,9 +577,10 @@ static const int kDragThreshold = 3;
 }
 
 
-- (void)setUseBoldColor:(BOOL)flag {
-    _useBoldColor = flag;
-    _drawingHelper.useBoldColor = flag;
+- (void)setUseBoldColor:(BOOL)flag brighten:(BOOL)brighten {
+    _useCustomBoldColor = flag;
+    _brightenBold = brighten;
+    _drawingHelper.useCustomBoldColor = flag;
     [self setNeedsDisplay:YES];
 }
 
@@ -6216,7 +6217,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && self.useBoldColor) {
+                        if (isBold && self.useCustomBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -6231,7 +6232,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                self.useBoldColor &&
+                self.brightenBold &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.

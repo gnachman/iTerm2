@@ -49,7 +49,8 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _useBoldFont;
     BOOL _useItalicFont;
     BOOL _reverseVideo;
-    BOOL _useBoldColor;
+    BOOL _useCustomBoldColor;
+    BOOL _brightenBold;
     BOOL _useNativePowerlineGlyphs;
 
     // Focus

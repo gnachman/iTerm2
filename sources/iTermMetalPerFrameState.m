@@ -1052,7 +1052,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && _configuration->_useBoldColor) {
+                        if (isBold && _configuration->_useCustomBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -1067,7 +1067,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                _configuration->_useBoldColor &&
+                _configuration->_brightenBold &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.

@@ -267,8 +267,11 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @property(nonatomic, assign) BOOL asciiLigatures;
 @property(nonatomic, assign) BOOL nonAsciiLigatures;
 
-// Use a bright version of the text color for bold text, and use specified bold color?
-@property(nonatomic, assign) BOOL useBoldColor;
+// Use the custom bold color
+@property(nonatomic, readonly) BOOL useCustomBoldColor;
+
+// Brighten bold text?
+@property(nonatomic, assign) BOOL brightenBold;
 
 // Ok to render italic text as italics?
 @property(nonatomic, assign) BOOL useItalicFont;
@@ -630,6 +633,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block;
 
 - (id)contentWithAttributes:(BOOL)attributes;
+- (void)setUseBoldColor:(BOOL)flag brighten:(BOOL)brighten;
 
 #pragma mark - Testing only
 

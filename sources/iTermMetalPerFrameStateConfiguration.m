@@ -34,7 +34,8 @@ static vector_float4 VectorForColor(NSColor *color) {
     _useItalicFont = textView.useItalicFont;
     _useNonAsciiFont = textView.useNonAsciiFont;
     _reverseVideo = textView.dataSource.terminal.reverseVideo;
-    _useBoldColor = textView.useBoldColor;
+    _useCustomBoldColor = textView.useCustomBoldColor;
+    _brightenBold = textView.brightenBold;
     _thinStrokes = textView.thinStrokes;
     _isRetina = drawingHelper.isRetina;
     _isInKeyWindow = [textView isInKeyWindow];
