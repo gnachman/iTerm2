@@ -206,6 +206,7 @@ DEFINE_BOOL(disregardDockSettingToOpenTabsInsteadOfWindows, YES, SECTION_TABS @"
 DEFINE_BOOL(convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme, YES, SECTION_TABS @"In the Minimal and Compact themes when there is a single tab and the tab bar is visible, should dragging the tab bar move the window?");
 DEFINE_BOOL(highVisibility, YES, SECTION_TABS @"High Contrast modes maximize visibility.\nWhen enabled, the dark high-contrast theme emphasizes visibility over beauty.");
 DEFINE_BOOL(drawBottomLineForHorizontalTabBar, YES, SECTION_TABS @"Draw bottom line for horizontal tabbar in Regular, Dark and Light theme?");
+DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?");
 
 #pragma mark Mouse
 

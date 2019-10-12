@@ -6508,6 +6508,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
+    if ([iTermAdvancedSettingsModel disableTabBarTooltips]) {
+        return nil;
+    }
     PTYSession *session = [[aTabViewItem identifier] activeSession];
     return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
             aTabViewItem.label,
