@@ -177,9 +177,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
     NSSize savedSize_;  // pre-maximize active session size.
 
-    // If true, report that the tab's ideal size is its currentSize.
-    BOOL reportIdeal_;
-
     // If positive, then a tmux-originated resize is in progress and splitter
     // delegates won't interfere.
     int tmuxOriginatedResizeInProgress_;
@@ -2102,12 +2099,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setReportIdealSizeAsCurrent:(BOOL)v {
     DLog(@"set reportIdealSizeAsCurrent=%@ for tab %@", @(v), self);
-    reportIdeal_ = v;
+    _reportIdeal = v;
 }
 
 // This returns the current size
 - (NSSize)currentSize {
-    if (reportIdeal_) {
+    if (_reportIdeal) {
         DLog(@"Reporting ideal size for tab %@", self);
         return [self size];
     } else {

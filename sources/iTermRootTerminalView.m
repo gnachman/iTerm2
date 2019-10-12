@@ -836,6 +836,7 @@ typedef struct {
 }
 
 - (CGFloat)tabviewWidth {
+#warning omg this is left tab *bar* width!
     if ([self tabBarShouldBeVisible] &&
         [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
         return _leftTabBarWidth;
@@ -1267,7 +1268,7 @@ typedef struct {
 
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
     const CGFloat minimumWidth = [self minimumTabBarWidth];
-    const CGFloat maximumWidth = round(contentWidth / 3);
+    const CGFloat maximumWidth = MAX(1, contentWidth - [iTermAdvancedSettingsModel terminalMargin] * 2 - 10);
     return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
 }
 
@@ -1280,16 +1281,8 @@ typedef struct {
 }
 
 - (void)willShowTabBar {
-    const CGFloat minimumWidth = 50;
-    // Given that the New window width (N) = Tab bar width (T) + Content Size (C)
-    // Given that T < N/3 (by leftTabBarWidthForPreferredWidth):
-    // T <= N / 3
-    // T <= 1/3(T+C)
-    // T <= T/3 + C/3
-    // 2/3T <= C/3
-    // T <= C/2
-    const CGFloat maximumWidth = round(self.bounds.size.width / 2);
-    _leftTabBarWidth = MAX(MIN(maximumWidth, _leftTabBarPreferredWidth), minimumWidth);
+    _leftTabBarWidth = [self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth
+                                                 contentWidth:self.bounds.size.width];
 }
 
 #pragma mark - Status Bar Layout

@@ -135,5 +135,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)invalidateAutomaticTabBarBackingHiding;
 - (void)setShowsWindowSize:(BOOL)showsWindowSize NS_AVAILABLE_MAC(10_14);
 - (void)windowDidResize;
+- (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth;
 
 @end
