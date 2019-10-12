@@ -584,8 +584,20 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 }
 
 + (NSString *)standardLoginCommand {
+    NSString *userName = NSUserName();
+    // Active directory users have backslash in their user name (issue 6999)
+    // Somehow, users can have spaces in their user name (issue 8360)
+    //
+    // Avoid using standard escaping which is wrong for a quoted string. I don't know why
+    // this is in quotes, but I'm afraid to change it because it's been that way for so
+    // long and the original commit message was lost.
+    //
+    // The returned value gets parsed into an argument array using -componentsInShellCommand
+    // by computeArgvForCommand:substitutions:synchronous:completion:.
+    userName = [userName stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    userName = [userName stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
     return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",
-            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+            userName];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark

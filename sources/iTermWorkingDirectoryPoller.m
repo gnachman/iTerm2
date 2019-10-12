@@ -37,6 +37,7 @@
         __weak __typeof(self) weakSelf = self;
         _tmuxOptionMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:gateway
                                                                        scope:scope
+                                                        fallbackVariableName:nil
                                                                       format:@"#{pane_current_path}"
                                                                       target:[NSString stringWithFormat:@"%%%@", @(windowPane)]
                                                                 variableName:nil

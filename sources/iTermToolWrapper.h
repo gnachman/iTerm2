@@ -50,6 +50,8 @@
 - (CGFloat)minimumHeight;
 
 @optional
+- (NSDictionary *)restorableState;
+- (void)restoreFromState:(NSDictionary *)state;
 - (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url identifier:(NSString *)identifier;
 - (void)relayout;
 - (void)shutdown;

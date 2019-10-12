@@ -11,14 +11,14 @@
 
 @implementation iTermInitialDirectory(Tmux)
 
-- (void)tmuxNewWindowCommandInSession:(NSString *)session
-                   recyclingSupported:(BOOL)recyclingSupported
-                                scope:(iTermVariableScope *)scope
-                           completion:(void (^)(NSString *))completion {
+- (void)tmuxNewWindowCommandInSessionNumber:(nullable NSNumber *)sessionNumber
+                         recyclingSupported:(BOOL)recyclingSupported
+                                      scope:(iTermVariableScope *)scope
+                                 completion:(void (^)(NSString *))completion {
     NSArray *args = @[ @"new-window", @"-PF '#{window_id}'" ];
 
-    if (session) {
-        NSString *targetSessionArg = [NSString stringWithFormat:@"\"%@:+\"", [session stringByEscapingQuotes]];
+    if (sessionNumber) {
+        NSString *targetSessionArg = [NSString stringWithFormat:@"\"$%d:+\"", sessionNumber.intValue];
         NSArray *insertionArguments = @[ @"-a",
                                          @"-t",
                                          targetSessionArg ];
@@ -33,10 +33,10 @@
 - (void)tmuxNewWindowCommandRecyclingSupported:(BOOL)recyclingSupported
                                          scope:(iTermVariableScope *)scope
                                     completion:(void (^)(NSString *))completion {
-    [self tmuxNewWindowCommandInSession:nil
-                     recyclingSupported:recyclingSupported
-                                  scope:scope
-                             completion:completion];
+    [self tmuxNewWindowCommandInSessionNumber:nil
+                           recyclingSupported:recyclingSupported
+                                        scope:scope
+                                   completion:completion];
 }
 
 - (void)tmuxSplitWindowCommand:(int)wp

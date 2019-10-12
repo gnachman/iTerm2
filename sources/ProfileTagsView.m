@@ -48,7 +48,9 @@ static const CGFloat kRowHeight = 21;
         _tableView.allowsEmptySelection = YES;
         _tableView.allowsMultipleSelection = YES;
         _tableView.allowsTypeSelect = YES;
-        if (@available(macOS 10.14, *)) { } else {
+        if (@available(macOS 10.14, *)) {
+            _tableView.backgroundColor = [NSColor controlBackgroundColor];
+        } else {
             _tableView.backgroundColor = [NSColor whiteColor];
         }
 

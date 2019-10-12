@@ -177,9 +177,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
     NSSize savedSize_;  // pre-maximize active session size.
 
-    // If true, report that the tab's ideal size is its currentSize.
-    BOOL reportIdeal_;
-
     // If positive, then a tmux-originated resize is in progress and splitter
     // delegates won't interfere.
     int tmuxOriginatedResizeInProgress_;
@@ -2102,12 +2099,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setReportIdealSizeAsCurrent:(BOOL)v {
     DLog(@"set reportIdealSizeAsCurrent=%@ for tab %@", @(v), self);
-    reportIdeal_ = v;
+    _reportIdeal = v;
 }
 
 // This returns the current size
 - (NSSize)currentSize {
-    if (reportIdeal_) {
+    if (_reportIdeal) {
         DLog(@"Reporting ideal size for tab %@", self);
         return [self size];
     } else {
@@ -3690,11 +3687,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:tmuxController_.gateway
-                                                                 scope:self.variablesScope
-                                                                format:tmuxController_.setTitlesString
-                                                                target:[NSString stringWithFormat:@"@%@", @(self.tmuxWindow)]
-                                                          variableName:iTermVariableKeyTabTmuxWindowTitle
-                                                                 block:nil];
+                                                                  scope:self.variablesScope
+                                                   fallbackVariableName:iTermVariableKeySessionWindowName
+                                                                 format:@"#{T:set-titles-string}"
+                                                                 target:[NSString stringWithFormat:@"@%@", @(self.tmuxWindow)]
+                                                           variableName:iTermVariableKeyTabTmuxWindowTitle
+                                                                  block:nil];
     [_tmuxTitleMonitor updateOnce];
     if (self.titleOverride.length == 0) {
         // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
@@ -4312,7 +4310,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (self.tmuxTab) {
         if (titleOverride) {
             [self.tmuxController renameWindowWithId:self.tmuxWindow
-                                          inSession:nil
+                                    inSessionNumber:nil
                                              toName:titleOverride];
         }
         return;

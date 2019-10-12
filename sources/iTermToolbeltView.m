@@ -475,6 +475,34 @@ static NSString *const kDynamicToolURL = @"URL";
     }
 }
 
+- (NSDictionary *)restorableState {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (iTermToolWrapper *wrapper in [_splitter subviews]) {
+        if (![wrapper.tool respondsToSelector:@selector(restorableState)]) {
+            continue;
+        }
+        NSDictionary *state = wrapper.tool.restorableState;
+        if (!state) {
+            continue;
+        }
+        result[wrapper.name] = state;
+    }
+    return result;
+}
+
+- (void)restoreFromState:(NSDictionary *)dict {
+    for (iTermToolWrapper *wrapper in [_splitter subviews]) {
+        if (![wrapper.tool respondsToSelector:@selector(restoreFromState:)]) {
+            continue;
+        }
+        NSDictionary *state = dict[wrapper.name];
+        if (!state) {
+            continue;
+        }
+        [wrapper.tool restoreFromState:state];
+    }
+}
+
 #pragma mark - ToolWrapperDelegate
 
 - (BOOL)haveOnlyOneTool {

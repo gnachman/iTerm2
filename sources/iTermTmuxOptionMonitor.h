@@ -18,8 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) iTermVariableScope *scope;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+// If `fallbackVariableName` is nonnil, the value of the variable named
+// `fallbackVariableName` will be used for tmux 2.8 and earlier.
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                           scope:(iTermVariableScope *)scope
+           fallbackVariableName:(nullable NSString *)fallbackVariableName
                          format:(NSString *)format
                          target:(NSString *)tmuxTarget
                    variableName:(nullable NSString *)variableName

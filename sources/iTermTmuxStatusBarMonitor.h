@@ -14,6 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// NOTE: Requires tmux 2.9
 @interface iTermTmuxStatusBarMonitor : NSObject
 
 @property (nonatomic) BOOL active;

@@ -163,6 +163,7 @@ static NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW
 static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
 static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
+static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
 
 static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
@@ -2988,6 +2989,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     [_contentView constrainToolbeltWidth];
     [_contentView setToolbeltProportions:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS]];
+    [_contentView.toolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
 
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
@@ -3018,8 +3020,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
         NSString *savedGUID = [arrangement objectForKey:TERMINAL_GUID];
-        if ([[iTermController sharedInstance] terminalWithGuid:savedGUID]) {
-            // Refuse to create a window with an already-used guid.
+        if ([[iTermController sharedInstance] terminalWithGuid:savedGUID] || ![self stringIsValidTerminalGuid:savedGUID]) {
+            // Refuse to create a window with an already-used or invalid guid.
             self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
         } else {
             self.terminalGuid = savedGUID;
@@ -3037,6 +3039,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_contentView updateToolbeltForWindow:self.window];
     return YES;
+}
+
+- (BOOL)stringIsValidTerminalGuid:(NSString *)string {
+    NSCharacterSet *characterSet = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"];
+    return [string rangeOfCharacterFromSet:characterSet.invertedSet].location == NSNotFound;
 }
 
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions {
@@ -3105,6 +3112,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (proportions) {
         result[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS] = proportions;
     }
+    result[TERMINAL_ARRANGEMENT_TOOLBELT] = _contentView.toolbelt.restorableState;
+    
     if (self.scope.windowTitleOverrideFormat) {
         result[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE] = self.scope.windowTitleOverrideFormat;
     }
@@ -6499,6 +6508,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
+    if ([iTermAdvancedSettingsModel disableTabBarTooltips]) {
+        return nil;
+    }
     PTYSession *session = [[aTabViewItem identifier] activeSession];
     return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
             aTabViewItem.label,
@@ -8937,7 +8949,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                 decorationSize.height += _contentView.tabBarControl.height;
                 break;
             case PSMTab_LeftTab:
-                decorationSize.width += [self tabviewWidth];
+                if (self.tabs.count == 1 && self.tabs.firstObject.reportIdeal) {
+                    // Initial setup. Do this so we can get the initial session's desired number of columns. Issue 8365.
+                    decorationSize.width += _contentView.leftTabBarPreferredWidth;
+                } else {
+                    decorationSize.width += _contentView.leftTabBarWidth;
+                }
                 break;
         }
     } else if ([self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {

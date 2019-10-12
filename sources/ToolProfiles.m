@@ -8,16 +8,18 @@
 
 #import "ToolProfiles.h"
 
+#import "DebugLogging.h"
 #import "NSEvent+iTerm.h"
-#import "iTermController.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
+#import "iTermController.h"
 
 static const int kVerticalMargin = 5;
 static const int kMargin = 0;
 static const int kPopupHeight = 26;
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kInnerMargin = 5;
+static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfilesProfileListViewState";
 
 @implementation ToolProfiles {
     ProfileListView *listView_;
@@ -41,9 +43,8 @@ static const CGFloat kInnerMargin = 5;
         }
 
         [self addSubview:listView_];
-        [listView_ release];
 
-        _openButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)] autorelease];
+        _openButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [_openButton setButtonType:NSMomentaryPushInButton];
         [_openButton setTitle:@"Open"];
         [_openButton setTarget:self];
@@ -54,7 +55,7 @@ static const CGFloat kInnerMargin = 5;
         [self addSubview:_openButton];
         [_openButton bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
 
-        popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)] autorelease];
+        popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)];
         [[popup_ cell] setControlSize:NSControlSizeSmall];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
@@ -89,7 +90,6 @@ static const CGFloat kInnerMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [popup_ unbind:@"enabled"];
     [_openButton unbind:@"enabled"];
-    [super dealloc];
 }
 
 - (void)refreshTerminal:(NSNotification *)notification {
@@ -180,7 +180,16 @@ static const CGFloat kInnerMargin = 5;
 }
 
 - (void)open:(id)sender {
-    [self performSelector:[[popup_ selectedItem] action]];
+    [self it_performNonObjectReturningSelector:[[popup_ selectedItem] action]
+                                    withObject:nil];
+}
+
+- (NSDictionary *)restorableState {
+    return @{ iTermToolProfilesProfileListViewState: listView_.restorableState };
+}
+
+- (void)restoreFromState:(NSDictionary *)state {
+    [listView_ restoreFromState:state[iTermToolProfilesProfileListViewState]];
 }
 
 @end

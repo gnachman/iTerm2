@@ -78,6 +78,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
 @property(nonatomic) BOOL deferFontChanges;
 
+// If true, report that the tab's ideal size is its currentSize.
+@property(nonatomic) BOOL reportIdeal;
+
 + (NSSize)sizeForTmuxWindowWithAffinity:(NSString *)affinity
                              controller:(TmuxController *)controller;
 

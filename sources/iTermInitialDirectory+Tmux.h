@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermInitialDirectory (Tmux)
 
-- (void)tmuxNewWindowCommandInSession:(nullable NSString *)session
+- (void)tmuxNewWindowCommandInSessionNumber:(nullable NSNumber *)sessionNumber
                    recyclingSupported:(BOOL)recyclingSupported
                                 scope:(iTermVariableScope *)scope
                            completion:(void (^)(NSString *))completion;
