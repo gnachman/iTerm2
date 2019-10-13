@@ -24,7 +24,6 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
-#import "PTYTextView.h"
 #import "PTYWindow.h"
 #import "SessionTitleView.h"
 #import "SplitSelectionView.h"
