@@ -3,7 +3,10 @@
 #import "DVR.h"
 #import "iTermAPIHelper.h"
 #import "iTermEchoProbe.h"
+#import "iTermFindDriver.h"
+#import "iTermFileDescriptorClient.h"
 #import "iTermMetalUnavailableReason.h"
+#import "iTermWeakReference.h"
 #import "iTermPopupWindowController.h"
 #import "iTermSessionNameController.h"
 
