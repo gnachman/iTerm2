@@ -40,6 +40,10 @@ Deployment:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
+Nix:
+	xcodebuild -parallelizeTargets -target iTerm2 -scheme iTerm2 -configuration Deployment -derivedDataPath . CODE_SIGN_IDENTITY= DEVELOPMENT_TEAM= && \
+	chmod -R go+rX Build/Products/Deployment
+
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
 	# xcodebuild -parallelizeTargets -target iTerm2 -configuration Nightly CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && git checkout -- plists/iTerm2.plist
