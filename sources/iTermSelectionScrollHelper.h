@@ -24,5 +24,6 @@
 
 - (void)mouseUp;
 - (void)mouseDraggedTo:(NSPoint)locationInTextView coord:(VT100GridCoord)coord;
+- (void)disableUntilMouseUp;
 
 @end

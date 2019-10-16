@@ -1768,7 +1768,10 @@ static const int kDragThreshold = 3;
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
     int y = clickPoint.y;
-
+    if ([self coordinateIsInMutableArea:VT100GridCoordMake(x, y)] &&
+        [self reportMouseDrags]) {
+        [_selectionScrollHelper disableUntilMouseUp];
+    }
     if (_numTouches <= 1) {
         for (NSView *view in [self subviews]) {
             if ([view isKindOfClass:[PTYNoteView class]]) {
@@ -2172,6 +2175,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
         _committedToDrag = YES;
     }
+}
+
+- (BOOL)coordinateIsInMutableArea:(VT100GridCoord)coord {
+    return coord.y >= self.dataSource.numberOfScrollbackLines;
+}
+
+- (BOOL)reportMouseDrags {
+    switch (_dataSource.terminal.mouseMode) {
+        case MOUSE_REPORTING_NORMAL:
+        case MOUSE_REPORTING_BUTTON_MOTION:
+        case MOUSE_REPORTING_ALL_MOTION:
+            return YES;
+
+        case MOUSE_REPORTING_NONE:
+        case MOUSE_REPORTING_HIGHLIGHT:
+            break;
+    }
+    return NO;
 }
 
 #pragma mark PointerControllerDelegate

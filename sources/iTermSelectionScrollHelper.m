@@ -7,6 +7,8 @@
 //
 
 #import "iTermSelectionScrollHelper.h"
+
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "DebugLogging.h"
 #import "PTYTextView.h"
@@ -30,6 +32,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
     double _prevScrollDelay;
     VT100GridCoord _scrollingCoord;
     NSPoint _scrollingLocation;
+    BOOL _disabled;
 }
 
 - (void)scheduleSelectionScroll {
@@ -91,9 +94,14 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
 
 - (void)mouseUp {
     _selectionScrollDirection = 0;
+    _disabled = NO;
 }
 
 - (void)mouseDraggedTo:(NSPoint)locationInTextView coord:(VT100GridCoord)coord {
+    if (_disabled) {
+        DLog(@"Ignore: disabled until mouse up");
+        return;
+    }
     iTermSelectionScrollDirection previousDirection = _selectionScrollDirection;
     NSRect visibleRect = [_delegate visibleRect];
     if (locationInTextView.y <= visibleRect.origin.y) {
@@ -117,5 +125,9 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
     }
 }
 
+- (void)disableUntilMouseUp {
+    DLog(@"Disable selection scroll until mouse-up");
+    _disabled = YES;
+}
 
 @end
