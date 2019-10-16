@@ -63,6 +63,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`stty` - Demonstrates watching for a variable to change in all sessions and sending text in response.
 
+:doc:`app_tab_color` - Demonstrates watching for changes in the current foreground job. Updates the tab color as a function of the current command.
+
 ----
 
 **Profiles and Color Presets**
