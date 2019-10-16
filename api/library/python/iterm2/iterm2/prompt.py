@@ -11,7 +11,7 @@ import typing
 class Prompt:
     """Describes a command prompt.
 
-    Shell Integration must be installed for this to work properly.
+    Shell Integration must be installed for this to work properly.  Do not construct this object yourself. Use :func:`~async_get_last_prompt` to get an instance.
     """
     def __init__(self, proto):
         self.__proto = proto
