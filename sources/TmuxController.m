@@ -304,8 +304,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                         object:nil];
 }
 
-- (void)sessionsChanged
-{
+- (void)sessionsChanged {
     if (detached_) {
         // Shouldn't happen, but better safe than sorry.
         return;
@@ -1737,7 +1736,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 {
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
-    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     [gateway_ sendCommand:listSessionsCommand
            responseTarget:self
          responseSelector:@selector(listSessionsResponse:)];
@@ -2031,6 +2030,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)listSessionsResponse:(NSString *)result
 {
+    NSLog(@"%@ got list-session response:\n%@", self, result);
     self.sessionObjects = [[result componentsSeparatedByRegex:@"\n"] mapWithBlock:^iTermTmuxSessionObject *(NSString *line) {
         const NSInteger space = [line rangeOfString:@" "].location;
         if (space == NSNotFound) {
