@@ -8595,6 +8595,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {
+    if (self.enteringLionFullscreen) {
+        return YES;
+    }
     const iTermWindowType windowType = exitingLionFullscreen_ ? _savedWindowType : _windowType;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
