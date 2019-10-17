@@ -38,10 +38,15 @@
 
 NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
+static NSSize PTYTaskClampViewSize(NSSize viewSize) {
+    return NSMakeSize(MAX(0, MIN(viewSize.width, USHRT_MAX)),
+                      MAX(0, MIN(viewSize.height, USHRT_MAX)));
+}
+
 static void
 setup_tty_param(iTermTTYState *ttyState,
-                int width,
-                int height,
+                VT100GridSize gridSize,
+                NSSize viewSize,
                 BOOL isUTF8) {
     struct termios *term = &ttyState->term;
     struct winsize *win = &ttyState->win;
@@ -77,10 +82,11 @@ setup_tty_param(iTermTTYState *ttyState,
     term->c_ispeed = B38400;
     term->c_ospeed = B38400;
 
-    win->ws_row = height;
-    win->ws_col = width;
-    win->ws_xpixel = 0;
-    win->ws_ypixel = 0;
+    NSSize safeViewSize = PTYTaskClampViewSize(viewSize);
+    win->ws_row = gridSize.height;
+    win->ws_col = gridSize.width;
+    win->ws_xpixel = safeViewSize.width;
+    win->ws_ypixel = safeViewSize.height;
 }
 
 static void HandleSigChld(int n) {
@@ -103,6 +109,11 @@ static void HandleSigChld(int n) {
 @property(atomic, retain) NSFileHandle *logHandle;
 @property(nonatomic, copy) NSString *logPath;
 @end
+
+typedef struct {
+    VT100GridSize gridSize;
+    NSSize viewSize;
+} PTYTaskSize;
 
 @implementation PTYTask {
     NSString *_tty;
@@ -128,7 +139,7 @@ static void HandleSigChld(int n) {
 
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
-    VT100GridSize _desiredSize;
+    PTYTaskSize _desiredSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
@@ -292,14 +303,14 @@ static void HandleSigChld(int n) {
 - (void)launchWithPath:(NSString *)progpath
              arguments:(NSArray *)args
            environment:(NSDictionary *)env
-                 width:(int)width
-                height:(int)height
+              gridSize:(VT100GridSize)gridSize
+              viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
            autologPath:(NSString *)autologPath
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion {
-    DLog(@"launchWithPath:%@ args:%@ env:%@ width:%@ height:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
-         progpath, args, env, @(width), @(height), @(isUTF8), autologPath, @(synchronous));
+    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
+         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8), autologPath, @(synchronous));
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // We want to run
@@ -311,8 +322,8 @@ static void HandleSigChld(int n) {
         [self reallyLaunchWithPath:[[NSBundle mainBundle] executablePath]
                          arguments:updatedArgs
                        environment:env
-                             width:width
-                            height:height
+                          gridSize:gridSize
+                          viewSize:viewSize
                             isUTF8:isUTF8
                        autologPath:autologPath
                        synchronous:synchronous
@@ -321,8 +332,8 @@ static void HandleSigChld(int n) {
         [self reallyLaunchWithPath:progpath
                          arguments:args
                        environment:env
-                             width:width
-                            height:height
+                          gridSize:gridSize
+                          viewSize:viewSize
                             isUTF8:isUTF8
                        autologPath:autologPath
                        synchronous:synchronous
@@ -420,13 +431,16 @@ static void HandleSigChld(int n) {
     }
 }
 
-- (void)setSize:(VT100GridSize)size {
+- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize {
     DLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
     if (self.fd == -1) {
         return;
     }
 
-    _desiredSize = size;
+    NSSize safeViewSize = PTYTaskClampViewSize(viewSize);
+    _desiredSize.gridSize = size;
+    _desiredSize.viewSize = safeViewSize;
+
     [self rateLimitedSetSizeToDesiredSize];
 }
 
@@ -909,20 +923,20 @@ static void HandleSigChld(int n) {
 - (void)reallyLaunchWithPath:(NSString *)progpath
                    arguments:(NSArray *)args
                  environment:(NSDictionary *)env
-                       width:(int)width
-                      height:(int)height
+                    gridSize:(VT100GridSize)gridSize
+                    viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
                  autologPath:(NSString *)autologPath
                  synchronous:(BOOL)synchronous
                   completion:(void (^)(void))completion {
-    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ width:%@ height:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
-         progpath, args, env, @(width), @(height), @(isUTF8), autologPath, @(synchronous));
+    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
+         progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8), autologPath, @(synchronous));
     if (autologPath) {
         [self startLoggingToFileWithPath:autologPath shouldAppend:[iTermAdvancedSettingsModel autologAppends]];
     }
 
     iTermTTYState ttyState;
-    setup_tty_param(&ttyState, width, height, isUTF8);
+    setup_tty_param(&ttyState, gridSize, viewSize, isUTF8);
 
     [self setCommand:progpath];
     env = [self environmentBySettingShell:env];
@@ -1084,15 +1098,20 @@ static void HandleSigChld(int n) {
 }
 
 - (void)setTerminalSizeToDesiredSize {
-    DLog(@"Set size of %@ to %@", _delegate, VT100GridSizeDescription(_desiredSize));
+    DLog(@"Set size of %@ to %@ cells, %@ px", _delegate, VT100GridSizeDescription(_desiredSize.gridSize), NSStringFromSize(_desiredSize.viewSize));
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
 
     struct winsize winsize;
     ioctl(fd, TIOCGWINSZ, &winsize);
-    if (winsize.ws_col != _desiredSize.width || winsize.ws_row != _desiredSize.height) {
+    if (winsize.ws_col != _desiredSize.gridSize.width ||
+        winsize.ws_row != _desiredSize.gridSize.height ||
+        winsize.ws_xpixel != _desiredSize.viewSize.width ||
+        winsize.ws_ypixel != _desiredSize.viewSize.height) {
         DLog(@"Actually setting the size");
-        winsize.ws_col = _desiredSize.width;
-        winsize.ws_row = _desiredSize.height;
+        winsize.ws_col = _desiredSize.gridSize.width;
+        winsize.ws_row = _desiredSize.gridSize.height;
+        winsize.ws_xpixel = _desiredSize.viewSize.width;
+        winsize.ws_ypixel = _desiredSize.viewSize.height;
         ioctl(fd, TIOCSWINSZ, &winsize);
     }
 }

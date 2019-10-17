@@ -65,6 +65,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
 @property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 @property(nonatomic, readonly) int lineNumberOfCursor;
+@property(nonatomic, readonly) NSSize viewSize;
 
 // Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.

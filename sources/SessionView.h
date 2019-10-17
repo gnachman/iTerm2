@@ -114,6 +114,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 // Returns the accepted size.
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize;
+- (void)sessionViewScrollViewDidResize;
 
 // User double clicked on title view.
 - (void)sessionViewDoubleClickOnTitleBar;

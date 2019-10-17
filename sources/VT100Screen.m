@@ -447,6 +447,12 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     return currentGrid_.size;
 }
 
+- (NSSize)viewSize {
+    NSSize cellSize = [delegate_ screenCellSize];
+    VT100GridSize gridSize = currentGrid_.size;
+    return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
+}
+
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size {
     [self.temporaryDoubleBuffer reset];
 

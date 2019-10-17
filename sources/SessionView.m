@@ -1315,6 +1315,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    [_delegate sessionViewScrollViewDidResize];
 }
 
 - (void)setTitle:(NSString *)title {

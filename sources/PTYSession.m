@@ -1688,7 +1688,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection];
-        [_shell setSize:_screen.size];
+        [_shell setSize:_screen.size viewSize:_screen.viewSize];
         @synchronized(self) {
             _registered = YES;
         }
@@ -1710,7 +1710,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Set session %@ to %@", self, VT100GridSizeDescription(size));
     [_screen setSize:size];
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
-        [_shell setSize:size];
+        [_shell setSize:size viewSize:_screen.viewSize];
     }
     [_textview clearHighlights:NO];
     [[_delegate realParentWindow] invalidateRestorableState];
@@ -2033,8 +2033,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
-                                 width:[_screen width]
-                                height:[_screen height]
+                              gridSize:_screen.size
+                              viewSize:_screen.viewSize
                                 isUTF8:isUTF8
                            autologPath:autoLogFilename
                            synchronous:synchronous
@@ -2941,7 +2941,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell release];
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
-    [_shell setSize:_screen.size];
+    [_shell setSize:_screen.size viewSize:_screen.viewSize];
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
@@ -4266,8 +4266,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
         VT100GridSize size = _screen.size;
         size.width++;
-        _shell.size = size;
-        _shell.size = _screen.size;
+        [_shell setSize:size viewSize:_screen.viewSize];
+        [_shell setSize:_screen.size viewSize:_screen.viewSize];
     }
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
@@ -10821,6 +10821,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         return proposedSize;
     }
+}
+
+- (void)sessionViewScrollViewDidResize {
+    [_shell setSize:_screen.size viewSize:_screen.viewSize];
 }
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController {

@@ -22,7 +22,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)taskWasDeregistered;
 - (void)writeForCoprocessOnlyTask:(NSData *)data;
 
-// Called on main thread from within launchWithPath:arguments:environment:width:height:isUTF8:.
+// Called on main thread from within launchWithPath:arguments:environment:gridSize:viewSize:isUTF8:.
 - (void)taskDiedImmediately;
 
 // Main thread
@@ -72,8 +72,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
-                 width:(int)width
-                height:(int)height
+              gridSize:(VT100GridSize)gridSize
+              viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
            autologPath:(NSString *)autologPath
            synchronous:(BOOL)synchronous
@@ -88,7 +88,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
 // tty's current window size then no action is taken.
-- (void)setSize:(VT100GridSize)size;
+- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize;
 
 - (void)stop;
 
