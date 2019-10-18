@@ -207,6 +207,9 @@ static const int kDragThreshold = 3;
 
     BOOL _haveSeenScrollWheelEvent;
     iTermRateLimitedUpdate *_shadowRateLimit;
+
+    // Work around an embarassing macOS bug. Issue 8350.
+    BOOL _makingThreeFingerSelection;
 }
 
 
@@ -1698,6 +1701,10 @@ static const int kDragThreshold = 3;
         DLog(@"returning because this was a first-mouse event.");
         return NO;
     }
+    if (_numTouches == 3 && _makingThreeFingerSelection) {
+        DLog(@"Ignore mouse down because you're making a three finger selection");
+        return NO;
+    }
     [pointer_ notifyLeftMouseDown];
     _mouseDownIsThreeFingerClick = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
@@ -1899,13 +1906,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
+    _makingThreeFingerSelection = NO;
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
         return;
     }
     int numTouches = _numTouches;
     _numTouches = 0;
-    DLog(@"Mouse Up on %@ with event %@, numTouches=%d. Resetting _numTouches to 0.", self, event, numTouches);
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
@@ -2081,8 +2089,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    DLog(@"mouseDragged");
+    _makingThreeFingerSelection = (_numTouches == 3);
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
         return;
@@ -5942,6 +5951,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
+    DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
