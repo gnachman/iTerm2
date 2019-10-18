@@ -621,6 +621,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                     window:self.view.window] == kiTermWarningSelection1) {
         return;
     }
+    if (destination.profileIsDynamic) {
+        [self showDynamicProfileWarning];
+    }
 
     NSMutableDictionary* copyOfSource = [sourceProfile mutableCopy];
     [copyOfSource setObject:profileGuid forKey:KEY_GUID];
@@ -971,6 +974,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     _needsWarning = YES;
     __weak __typeof(self) weakSelf = self;
+    if (viewController.delegate.profilePreferencesCurrentModel == [ProfileModel sessionsInstance]) {
+        return;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf showWarningIfNeeded];
     });
@@ -981,7 +987,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
     _needsWarning = NO;
-    
+    [self showDynamicProfileWarning];
+}
+
+- (void)showDynamicProfileWarning {
     Profile *profile = [self selectedProfile];
     NSString *guid = [NSString castFrom:[profile objectForKey:KEY_GUID]];
     if (!guid) {
