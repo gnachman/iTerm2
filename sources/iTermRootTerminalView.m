@@ -447,6 +447,32 @@ typedef struct {
 
         [_standardWindowButtonsView addSubview:button];
         _standardButtons[@(self.windowButtonTypes[i])] = button;
+        if (self.windowButtonTypes[i] == NSWindowZoomButton) {
+            // 😠
+            // In issue 8401 a user reported that option-clicking the zoom button doesn't work after
+            // exiting full screen.
+            //
+            // A disassembly of -[NSWindow _setNeedsZoom:] shows that option-clicking only works if
+            // -[NSWindow _lastLeftHit] == -[NSWindow standardWindowButton:2]. So for some reason,
+            // Apple intended option+zoom to only work with their own zoom button.
+            //
+            // Chrome ran into the same thing here:
+            // https://bugs.chromium.org/p/chromium/issues/detail?id=393808
+            //
+            // Worth reading for the mention of _evilHackToClearlastLeftHitInWindow.
+            //
+            // Their analysis is different than mine. I see that _lastLeftHit is actually MY button,
+            // which is not what they saw. I suspect a different etiology.
+            //
+            // I don't recall why I implemented zoomButtonEvent: in the first place; I suspect it
+            // was a less well-informed attempt to work around this issue when I added compact
+            // windows originally. Since I can't use the "real" button for this window, this seems
+            // like the only reasonable fix.
+            //
+            // Apologies to my future self for whatever bugs this introduces.
+            button.target = _standardWindowButtonsView;
+            button.action = @selector(zoomButtonEvent);
+        }
         x += stride;
         dispatch_async(dispatch_get_main_queue(), ^{
             [button setNeedsDisplay];
