@@ -8,6 +8,9 @@
   (regex "^/Library/Fonts/")
   (regex "^/System/Library/Fonts$")
   (regex "^/System/Library/Fonts/")
+  (regex "^/System/Library/Extensions/")
+  (regex "^/Library/GPUBundles")
+  (regex "^/System/Library/CoreServices")
   (regex "^@HOME_DIRECTORY@/Library/Fonts$")
   (regex "^@HOME_DIRECTORY@/Library/Fonts/")
   (regex "^/usr/share/zoneinfo/")
@@ -16,9 +19,13 @@
   (literal "/dev/random")
   (literal "@PATH_TO_EXECUTABLE@")
   (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@")
+  (regex "^/Library/Preferences/")
   (regex "^/private/var")
   (regex "^/System/Library/CoreServices/SystemAppearance.bundle")
-  (regex "^/usr/lib"))
+  (regex "^/usr/lib")
+  (regex "^/etc"))
+  
+(allow ipc-posix-shm-read-data)
 
 (allow file-read-metadata
   (regex "^/System$")
