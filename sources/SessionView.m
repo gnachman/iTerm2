@@ -176,8 +176,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
 #endif
         if (@available(macOS 10.14, *)) {
-            [self addSubviewBelowFindView:_scrollview.verticalScroller];
-            _scrollview.verticalScroller.frame = [self frameForScroller];
+            if (PTYScrollView.shouldDismember) {
+                [self addSubviewBelowFindView:_scrollview.verticalScroller];
+                _scrollview.verticalScroller.frame = [self frameForScroller];
+            }
         }
     }
     return self;
@@ -537,7 +539,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             frame.origin.y = maxY;
             _scrollview.frame = frame;
             if (@available(macOS 10.14, *)) {
-                _scrollview.verticalScroller.frame = [self frameForScroller];
+                if (PTYScrollView.shouldDismember) {
+                    _scrollview.verticalScroller.frame = [self frameForScroller];
+                }
             }
         }
         if (_showBottomStatusBar) {
@@ -1103,7 +1107,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (adjustScrollView) {
         [scrollView setFrame:frame];
         if (@available(macOS 10.14, *)) {
-            _scrollview.verticalScroller.frame = [self frameForScroller];
+            if (PTYScrollView.shouldDismember) {
+                _scrollview.verticalScroller.frame = [self frameForScroller];
+            }
         }
     } else {
         [self updateTitleFrame];
@@ -1306,7 +1312,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
     if (@available(macOS 10.14, *)) {
-        _scrollview.verticalScroller.frame = [self frameForScroller];
+        if (PTYScrollView.shouldDismember) {
+            _scrollview.verticalScroller.frame = [self frameForScroller];
+        }
     }
     rect.origin = NSZeroPoint;
     rect.size.width = _scrollview.contentSize.width;

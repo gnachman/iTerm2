@@ -5613,7 +5613,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
     if (@available(macOS 10.14, *)) {
-        _view.scrollview.alphaValue = 0;
+        if (PTYScrollView.shouldDismember) {
+            _view.scrollview.alphaValue = 0;
+        }
     }
     _view.metalView.alphaValue = 1;
 }
@@ -5623,7 +5625,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!useMetal) {
         _textview.suppressDrawing = NO;
         if (@available(macOS 10.14, *)) {
-            _view.scrollview.alphaValue = 1;
+            if (PTYScrollView.shouldDismember) {
+                _view.scrollview.alphaValue = 1;
+            }
         }
     }
 }
@@ -10874,7 +10878,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
     if (@available(macOS 10.14, *)) {
-        _view.scrollview.alphaValue = 1;
+        if (PTYScrollView.shouldDismember) {
+            _view.scrollview.alphaValue = 1;
+        }
     }
     _view.metalView.alphaValue = 0;
     id token = @(_nextMetalDisabledToken++);

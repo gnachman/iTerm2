@@ -43,6 +43,8 @@
 
 @interface PTYScrollView : NSScrollView
 
++ (BOOL)shouldDismember NS_AVAILABLE_MAC(10_14);
+
 // More specific type for the base class's method.
 - (PTYScroller *)ptyVerticalScroller;
 

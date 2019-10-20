@@ -52,41 +52,49 @@
 }
 
 // rdar://45295749/
-- (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
-    if (@available(macOS 10.14, *)) {
-        NSView *reparent = nil;
-        NSInteger index = NSNotFound;
+- (void)dismemberForScrollerStyle:(NSScrollerStyle)scrollerStyle NS_AVAILABLE_MAC(10_14) {
+    NSView *reparent = nil;
+    NSInteger index = NSNotFound;
 
-        // To work around awful performance issues introduced in Mojave caused
-        // by putting a scrollview over the MTKView making the window server do
-        // an offscreen render (in iOS parlance) we reparent the scroller to be
-        // a subview of SessionView. That fixes the performance problem, but
-        // introduces a new issue: when the scroller style changes from legacy
-        // to overlay, it becomes invisible. Why? Because I'm doing things I
-        // shouldn't be doing. But we can fool NSScrollView by briefly
-        // reparenting it during setScrollerStyle:.
-        if (self.scrollerStyle != scrollerStyle && scrollerStyle == NSScrollerStyleOverlay) {
-            NSView *preferredSuperview = [self superview];
-            if (preferredSuperview) {
-                index = [preferredSuperview.subviews indexOfObject:self];
-                NSScrollView *scrollview = [self.ptyScrollerDelegate ptyScrollerScrollView];
-                if (preferredSuperview != scrollview && scrollview != nil) {
-                    DLog(@"Scroller style changing to overlay. Remove self from %@, add to %@", preferredSuperview, scrollview);
-                    reparent = preferredSuperview;
-                    [scrollview addSubview:self];
-                }
+    // To work around awful performance issues introduced in Mojave caused
+    // by putting a scrollview over the MTKView making the window server do
+    // an offscreen render (in iOS parlance) we reparent the scroller to be
+    // a subview of SessionView. That fixes the performance problem, but
+    // introduces a new issue: when the scroller style changes from legacy
+    // to overlay, it becomes invisible. Why? Because I'm doing things I
+    // shouldn't be doing. But we can fool NSScrollView by briefly
+    // reparenting it during setScrollerStyle:.
+    // See note in PTYTextView.m for a perhaps better fix.
+    if (self.scrollerStyle != scrollerStyle && scrollerStyle == NSScrollerStyleOverlay) {
+        DLog(@"PERFORMING DISMEMBERMENT");
+        NSView *preferredSuperview = [self superview];
+        if (preferredSuperview) {
+            index = [preferredSuperview.subviews indexOfObject:self];
+            NSScrollView *scrollview = [self.ptyScrollerDelegate ptyScrollerScrollView];
+            if (preferredSuperview != scrollview && scrollview != nil) {
+                DLog(@"Scroller style changing to overlay. Remove self from %@, add to %@", preferredSuperview, scrollview);
+                reparent = preferredSuperview;
+                [scrollview addSubview:self];
             }
         }
-
-        [super setScrollerStyle:scrollerStyle];
-
-        if (reparent && index != NSNotFound) {
-            DLog(@"Return to being child of %@", reparent);
-            [reparent insertSubview:self atIndex:index];
-        }
-    } else {
-        [super setScrollerStyle:scrollerStyle];
     }
+
+    [super setScrollerStyle:scrollerStyle];
+
+    if (reparent && index != NSNotFound) {
+        DLog(@"Return to being child of %@", reparent);
+        [reparent insertSubview:self atIndex:index];
+    }
+}
+
+- (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
+    if (@available(macOS 10.14, *)) {
+        if (PTYScrollView.shouldDismember) {
+            [self dismemberForScrollerStyle:scrollerStyle];
+            return;
+        }
+    }
+    [super setScrollerStyle:scrollerStyle];
 }
 
 - (iTermScrollAccumulator *)accumulator {
@@ -146,6 +154,13 @@
 @implementation PTYScrollView {
     // Sadly the superclass's -scroller property may return a dealloc'ed instance.
     NSScroller *_scroller;
+}
+
++ (BOOL)shouldDismember NS_AVAILABLE_MAC(10_14) {
+    if (@available(macOS 10.15, *)) {
+        return [iTermAdvancedSettingsModel dismemberScrollView];
+    }
+    return YES;
 }
 
 + (BOOL)isCompatibleWithResponsiveScrolling {
