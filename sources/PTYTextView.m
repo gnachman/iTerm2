@@ -5990,6 +5990,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return anyBlinkers;
 }
 
+- (void)viewDidMoveToWindow {
+    DLog(@"View %@ did move to window %@\n%@", self, self.window, [NSThread callStackSymbols]);
+    // If you change tabs while dragging you never get a mouseUp. Issue 8350.
+    [_selection endLiveSelection];
+    [super viewDidMoveToWindow];
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
