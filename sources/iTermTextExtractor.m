@@ -1696,8 +1696,8 @@ const NSInteger kLongMaximumWordLength = 100000;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
         if (y == range.coordRange.end.y) {
             // Reduce endx for last line.
-            endx = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x
-                                             : range.coordRange.end.x;
+            const int reducedEndX = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x : range.coordRange.end.x;
+            endx = MAX(0, MIN(endx, reducedEndX));
         }
         screen_char_t *theLine = [_dataSource getLineAtIndex:y];
 
