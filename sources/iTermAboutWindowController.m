@@ -169,6 +169,18 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     NSAttributedString *patreonLink = [self attributedStringWithLinkToURL:@"https://patreon.com/gnachman"
                                                                     title:@"Patreon"];
     [attributedString appendAttributedString:patreonLink];
+
+    NSAttributedString *andAttributedString =
+        [[[NSAttributedString alloc] initWithString:@" and "
+                                         attributes:attributes] autorelease];
+
+    [attributedString appendAttributedString:andAttributedString];
+
+    NSAttributedString *gitHubSponsorsLink = [self attributedStringWithLinkToURL:@"https://github.com/sponsors/gnachman"
+                                                                    title:@"GitHub Sponsors"];
+    [attributedString appendAttributedString:gitHubSponsorsLink];
+
+
     NSAttributedString *period = [[[NSAttributedString alloc] initWithString:@"."] autorelease];
     [attributedString appendAttributedString:period];
 
