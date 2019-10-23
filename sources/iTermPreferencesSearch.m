@@ -201,6 +201,16 @@
     _docs[document.docid] = document;
 }
 
+- (iTermPreferencesSearchDocument *)documentWithKey:(NSString *)key {
+    for (NSNumber *docid in _docs) {
+        iTermPreferencesSearchDocument *doc = _docs[docid];
+        if ([doc.identifier isEqual:key]) {
+            return doc;
+        }
+    }
+    return nil;
+}
+
 - (NSArray<iTermPreferencesSearchDocument *> *)documentsMatchingQuery:(NSString *)query {
     NSString *trimmedQuery = [query stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray<NSString *> *tokens = [trimmedQuery it_normalizedTokens];

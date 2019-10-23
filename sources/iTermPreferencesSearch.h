@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermPreferencesSearchEngine : NSObject
 - (void)addDocumentToIndex:(iTermPreferencesSearchDocument *)document;
 - (NSArray<iTermPreferencesSearchDocument *> *)documentsMatchingQuery:(NSString *)query;
+- (nullable iTermPreferencesSearchDocument *)documentWithKey:(NSString *)key;
 @end
 
 NS_ASSUME_NONNULL_END

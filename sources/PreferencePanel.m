@@ -490,6 +490,30 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                              scope:scope];
 }
 
+- (void)openToPreferenceWithKey:(NSString *)key {
+    [self window];
+    [self buildSearchEngineIfNeeded];
+    iTermPreferencesSearchDocument *document = [gSearchEngine documentWithKey:key];
+    if (!document) {
+        return;
+    }
+    [self run];
+    // Let it become first responder. Then show the scrim. Becoming first responder hides the scrim.
+    [self performSelector:@selector(revalDocument:) withObject:document afterDelay:0];
+}
+
+- (void)revalDocument:(iTermPreferencesSearchDocument *)document {
+    [self showScrimIfNeeded];
+    [self.window makeKeyAndOrderFront:nil];
+    BOOL switchingTabs = NO;
+    BOOL switchingInnerTabs = NO;
+    [self revealDocument:document
+           switchingTabs:&switchingTabs
+      switchingInnerTabs:&switchingInnerTabs];
+    [self fadeOutScrimAfterDelay:[self delayToWaitForTabToSwitch:switchingTabs
+                                         waitForInnerTabToSwitch:switchingInnerTabs]];
+}
+
 - (NSWindow *)window {
     BOOL shouldPostWindowLoadNotification = !self.windowLoaded;
     NSWindow *window = [super window];
@@ -981,11 +1005,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return [_profilesViewController viewControllerWithOwnerIdentifier:ownerIdentifier];
 }
 
-- (void)preferencesSearchEngineResultsDidSelectDocument:(iTermPreferencesSearchDocument *)document {
+- (BOOL)revealDocument:(iTermPreferencesSearchDocument *)document
+         switchingTabs:(out BOOL *)switchingTabsOut
+    switchingInnerTabs:(out BOOL *)switchingInnerTabsOut {
     _scrim.cutoutView = nil;
     id<iTermSearchableViewController> viewController = [self viewControllerForDocumentOwnerIdentifier:document.ownerIdentifier];
     if (!viewController) {
-        return;
+        return NO;
     }
     NSTabViewItem *tabViewItemBefore = _tabView.selectedTabViewItem;
     [self selectTabForViewController:viewController];
@@ -995,30 +1021,55 @@ andEditComponentWithIdentifier:(NSString *)identifier
     _scrim.cutoutView = [viewController searchableViewControllerRevealItemForDocument:document
                                                                              forQuery:searchField.stringValue
                                                                         willChangeTab:&waitForInnerTabToSwitch];
-    CGFloat delay = 1;
-    if (waitForTabToSwitch || (!waitForTabToSwitch && waitForInnerTabToSwitch)) {
-        delay = 2;
+    if (switchingTabsOut) {
+        *switchingTabsOut = waitForTabToSwitch;
     }
-    _delay = delay;
+    if (switchingInnerTabsOut) {
+        *switchingInnerTabsOut = waitForInnerTabToSwitch;
+    }
+    return YES;
+}
+
+- (NSTimeInterval)delayToWaitForTabToSwitch:(BOOL)waitForTabToSwitch
+                    waitForInnerTabToSwitch:(BOOL)waitForInnerTabToSwitch {
+    if (waitForTabToSwitch || (!waitForTabToSwitch && waitForInnerTabToSwitch)) {
+        return 2;
+    }
+    return 1;
+}
+
+- (void)preferencesSearchEngineResultsDidSelectDocument:(iTermPreferencesSearchDocument *)document {
+    BOOL waitForTabToSwitch = NO;
+    BOOL waitForInnerTabToSwitch = NO;
+    if (![self revealDocument:document
+                switchingTabs:&waitForTabToSwitch
+           switchingInnerTabs:&waitForInnerTabToSwitch]) {
+        return;
+    }
+    _delay = [self delayToWaitForTabToSwitch:waitForTabToSwitch
+                     waitForInnerTabToSwitch:waitForInnerTabToSwitch];
 }
 
 - (NSTabViewItem *)innerTabViewItem {
     return [self viewControllerForTabViewItem:_tabView.selectedTabViewItem].tabView.selectedTabViewItem;
 }
 
-- (void)preferencesSearchEngineResultsDidActivateDocument:(iTermPreferencesSearchDocument *)document {
+- (void)fadeOutScrimAfterDelay:(NSTimeInterval)delay {
     NSView *scrim = _scrim;
     self->_scrim = nil;
     [self.window makeFirstResponder:nil];
     [NSView animateWithDuration:0.5
-                          delay:_delay
+                          delay:delay
                      animations:^{
                          scrim.animator.alphaValue = 0;
                      }
                      completion:^(BOOL finished) {
                          [scrim removeFromSuperview];
                      }];
-    return;
+}
+
+- (void)preferencesSearchEngineResultsDidActivateDocument:(iTermPreferencesSearchDocument *)document {
+    [self fadeOutScrimAfterDelay:_delay];
 }
 
 #pragma mark - Scrim

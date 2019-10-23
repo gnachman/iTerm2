@@ -9,6 +9,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
+#import "PreferencePanel.h"
 
 @interface iTermRemotePreferences ()
 @property(nonatomic, copy) NSDictionary *savedRemotePrefs;
@@ -117,7 +118,12 @@
             alert.messageText = @"Failed to load preferences from URL. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
                                      [error localizedDescription] ?: @"unknown error"];
-            [alert runModal];
+            [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:@"Reveal Setting in Preferences"];
+            const NSModalResponse response = [alert runModal];
+            if (response == NSAlertSecondButtonReturn) {
+                [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+            }
             return nil;
         }
 
@@ -141,6 +147,13 @@
         [fileManager removeItemAtPath:tempDir error:nil];
     } else {
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
+    }
+    if (!remotePrefs.count) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
+        alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
+                                 [self customFolderOrURL]];
+        [alert runModal];
     }
     return remotePrefs;
 }
@@ -232,29 +245,23 @@
     NSDictionary *remotePrefs = [self freshCopyOfRemotePreferences];
     self.savedRemotePrefs = remotePrefs;
 
-    if (remotePrefs && [remotePrefs count]) {
-        NSString *theFilename = [self localPrefsFilename];
-        NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:theFilename];
-        // Empty out the current prefs
-        for (NSString *key in localPrefs) {
-            if ([self preferenceKeyIsSyncable:key]) {
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-            }
-        }
-
-        for (NSString *key in remotePrefs) {
-            if ([self preferenceKeyIsSyncable:key]) {
-                [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
-                                                          forKey:key];
-            }
-        }
+    if (![remotePrefs count]) {
         return;
-    } else {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
-        alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
-                                 [self customFolderOrURL]];
-        [alert runModal];
+    }
+    NSString *theFilename = [self localPrefsFilename];
+    NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:theFilename];
+    // Empty out the current prefs
+    for (NSString *key in localPrefs) {
+        if ([self preferenceKeyIsSyncable:key]) {
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+        }
+    }
+
+    for (NSString *key in remotePrefs) {
+        if ([self preferenceKeyIsSyncable:key]) {
+            [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
+                                                      forKey:key];
+        }
     }
     return;
 }
