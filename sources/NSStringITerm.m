@@ -258,6 +258,8 @@
                 // Determined by testing with bash.
                 if (c == '"') {
                     [currentValue appendString:@"\""];
+                } else if (c == '\\') {
+                    [currentValue appendString:@"\\"];
                 } else {
                     [currentValue appendFormat:@"\\%C", c];
                 }

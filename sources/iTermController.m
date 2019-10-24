@@ -1400,13 +1400,36 @@ static iTermController *gSharedInstance;
 - (NSString *)shCommandLineWithCommand:(NSString *)command
                              arguments:(NSArray<NSString *> *)arguments
                        escapeArguments:(BOOL)escapeArguments {
-    NSArray<NSString *> *const escapedArguments = escapeArguments ? [arguments mapWithBlock:^id(NSString *anObject) {
-        return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-    }] : arguments;
-    NSString *const escapedCommand = [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+    NSArray<NSString *> *const escapedArguments = [arguments mapWithBlock:^id(NSString *anObject) {
+        if (escapeArguments) {
+            return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+        } else {
+            return anObject;
+        }
+    }];
+    NSString *const escapedCommand = escapeArguments ? [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES] : command;
     NSArray<NSString *> *const combinedArray = [@[escapedCommand] arrayByAddingObjectsFromArray:escapedArguments];
     NSString *const commandLine = [combinedArray componentsJoinedByString:@" "];
     return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];
+}
+
+// This is meant for standalone command lines when used with DoNotEscape, like: man date || sleep 3
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)rawCommand
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment
+                                           pwd:(NSString *)initialPWD
+                                       options:(iTermSingleUseWindowOptions)options
+                                    completion:(void (^)(void))completion {
+    NSMutableString *temp = [[rawCommand mutableCopy] autorelease];
+    [temp escapeCharacters:@"\\\""];
+
+    return [self openSingleUseWindowWithCommand:temp
+                                      arguments:nil
+                                         inject:injection
+                                    environment:environment
+                                            pwd:initialPWD
+                                        options:options
+                                     completion:completion];
 }
 
 - (PTYSession *)openSingleUseWindowWithCommand:(NSString *)rawCommand

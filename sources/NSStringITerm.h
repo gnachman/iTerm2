@@ -322,5 +322,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Convenience method to append a single character.
 - (void)appendCharacter:(unichar)c;
+- (void)escapeCharacters:(NSString *)charsToEscape;
 
 @end

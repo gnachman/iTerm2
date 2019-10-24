@@ -481,7 +481,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
     NSString *command = sender.keyBindingAction[@"command"];
     if (command) {
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                               arguments:nil
                                                                   inject:nil
                                                              environment:nil
                                                                      pwd:nil

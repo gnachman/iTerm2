@@ -201,5 +201,12 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                                            pwd:(NSString *)initialPWD
                                options:(iTermSingleUseWindowOptions)options
                                     completion:(void (^)(void))completion;
+
+- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)rawCommand
+                                        inject:(NSData *)injection
+                                   environment:(NSDictionary *)environment
+                                           pwd:(NSString *)initialPWD
+                                       options:(iTermSingleUseWindowOptions)options
+                                    completion:(void (^)(void))completion;
 @end
 
