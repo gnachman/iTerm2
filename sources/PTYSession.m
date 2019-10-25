@@ -9787,6 +9787,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                       path:newPath
                                        job:self.variablesScope.jobName];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
+    [_pwdPoller invalidateOutstandingRequests];
     _workingDirectoryPollerDisabled = YES;
 }
 
