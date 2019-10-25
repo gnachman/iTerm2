@@ -276,6 +276,7 @@ DEFINE_BOOL(detectPasswordInput, YES, SECTION_TERMINAL @"Show key at cursor at p
 DEFINE_BOOL(tabsWrapAround, NO, SECTION_TERMINAL @"Tabs wrap around to the next line.\nThis is useful for preserving tabs for later copying to the pasteboard. It breaks backward compatibility and may cause layout problems with programs that don’t expect this behavior.");
 DEFINE_STRING(sshSchemePath, @"ssh", SECTION_TERMINAL @"Command to run when handling an ssh:// URL.");
 DEFINE_INT(defaultTabStopWidth, 8, SECTION_TERMINAL @"Default tab stop width for new sessions.");
+DEFINE_BOOL(convertItalicsToReverseVideoForTmux, YES, SECTION_TERMINAL @"Convert italics to reverse video in tmux integration?");
 
 #pragma mark Hotkey
 

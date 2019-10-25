@@ -9,6 +9,7 @@
 #import "VT100Token.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
 
 #include <stdlib.h>
@@ -308,10 +309,14 @@
     for (int i = 0; i < self.csi->count; i++) {
         switch (self.csi->p[i]) {
             case 3:
-                self.csi->p[i] = 7;
+                if ([iTermAdvancedSettingsModel convertItalicsToReverseVideoForTmux]) {
+                    self.csi->p[i] = 7;
+                }
                 break;
             case 23:
-                self.csi->p[i] = 27;
+                if ([iTermAdvancedSettingsModel convertItalicsToReverseVideoForTmux]) {
+                    self.csi->p[i] = 27;
+                }
                 break;
         }
     }
