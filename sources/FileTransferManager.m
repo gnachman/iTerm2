@@ -431,6 +431,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     _passwordManagerWindowController = nil;
 }
 
+- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
+    assert(false);
+}
+
+- (BOOL)iTermPasswordManagerCanEnterUserName {
+    return NO;
+}
+
 - (BOOL)iTermPasswordManagerCanBroadcast {
     return NO;
 }

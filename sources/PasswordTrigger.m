@@ -9,6 +9,7 @@
 #import "PasswordTrigger.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPasswordManagerWindowController.h"
+#import "NSArray+iTerm.h"
 #import "PTYSession.h"
 
 @interface PasswordTrigger ()
@@ -30,9 +31,11 @@
 }
 
 - (void)reloadData {
-    _accountNames = [[iTermPasswordManagerWindowController accountNamesWithFilter:nil] copy];
+    _accountNames = [[iTermPasswordManagerWindowController entriesWithFilter:nil] mapWithBlock:^id(iTermPasswordEntry *entry) {
+        return entry.combinedAccountNameUserName;
+    }];
     if (!_accountNames.count) {
-        _accountNames = [@[ @"" ] copy];
+        _accountNames = @[ @"" ];
     }
 }
 

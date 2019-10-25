@@ -2370,6 +2370,14 @@ static BOOL hasBecomeActive = NO;
   [[[[iTermController sharedInstance] currentTerminal] currentSession] enterPassword:password];
 }
 
+- (BOOL)iTermPasswordManagerCanEnterUserName {
+    return YES;
+}
+
+- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
+    [[[[iTermController sharedInstance] currentTerminal] currentSession] writeTask:[username stringByAppendingString:@"\n"]];
+}
+
 - (BOOL)iTermPasswordManagerCanEnterPassword {
   PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
   return session && ![session exited];

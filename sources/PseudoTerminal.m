@@ -10310,6 +10310,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (BOOL)iTermPasswordManagerCanEnterUserName {
+    return YES;
+}
+
+- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
+    [[self currentSession] writeTask:[username stringByAppendingString:@"\n"]];
+}
+
+
 #pragma mark - PTYTabDelegate
 
 - (void)tab:(PTYTab *)tab didChangeProcessingStatus:(BOOL)isProcessing {
