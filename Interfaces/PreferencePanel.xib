@@ -4958,11 +4958,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView id="keM-ww-m44" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="80" y="345" width="612" height="123"/>
+                                        <rect key="frame" x="80" y="332" width="612" height="136"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" id="6337">
-                                                <rect key="frame" x="170" y="79" width="281" height="26"/>
+                                                <rect key="frame" x="170" y="92" width="281" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
@@ -4981,7 +4981,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="rci-Sr-fks">
-                                                <rect key="frame" x="18" y="85" width="148" height="18"/>
+                                                <rect key="frame" x="18" y="98" width="148" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open tmux windows as:" id="OHo-9E-q2w">
                                                     <font key="font" metaFont="system"/>
@@ -4990,7 +4990,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <button id="gLU-0J-chc">
-                                                <rect key="frame" x="170" y="38" width="407" height="18"/>
+                                                <rect key="frame" x="170" y="51" width="407" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of the connecting session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5001,7 +5001,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="6366">
-                                                <rect key="frame" x="170" y="58" width="381" height="18"/>
+                                                <rect key="frame" x="170" y="71" width="381" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5012,7 +5012,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button id="oHn-bB-rYM">
-                                                <rect key="frame" x="170" y="18" width="424" height="18"/>
+                                                <rect key="frame" x="170" y="31" width="424" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Status bar shows tmux status bar content, not native components." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ioA-Y9-Zb4">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5022,6 +5022,15 @@ DQ
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="RpF-CK-AVo"/>
                                                 </connections>
                                             </button>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="H2C-B7-a4o">
+                                                <rect key="frame" x="188" y="18" width="120" height="11"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Requires tmux 2.9 or later." id="fKK-ZX-n3u">
+                                                    <font key="font" metaFont="miniSystem"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
