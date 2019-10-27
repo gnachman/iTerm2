@@ -378,6 +378,22 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [self sendWillClose];
 }
 
+- (IBAction)editAccountName:(id)sender {
+    const NSInteger row = _tableView.selectedRow;
+    if (row < 0) {
+        return;
+    }
+    [_tableView editColumn:0 row:row withEvent:nil select:YES];
+}
+
+- (IBAction)editUserName:(id)sender {
+    const NSInteger row = _tableView.selectedRow;
+    if (row < 0) {
+        return;
+    }
+    [_tableView editColumn:1 row:row withEvent:nil select:YES];
+}
+
 - (IBAction)revealPassword:(id)sender {
     const NSInteger row = _tableView.selectedRow;
     if (row >= 0) {
