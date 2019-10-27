@@ -200,8 +200,9 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 while (iTermParserTryPeek(context, &c) && isdigit(c)) {
                     if (n > (INT_MAX - 10) / 10) {
                         *unrecognized = YES;
+                    } else {
+                        n = n * 10 + (c - '0');
                     }
-                    n = n * 10 + (c - '0');
                     if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                         return NO;
                     }

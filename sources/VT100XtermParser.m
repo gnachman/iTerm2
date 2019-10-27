@@ -59,7 +59,11 @@ typedef enum {
 
 // Read either an integer followed by a semicolon or letter "P".
 + (iTermXtermParserState)parseModeFromContext:(iTermParserContext *)context mode:(int *)mode {
-    if (iTermParserConsumeInteger(context, mode)) {
+    BOOL overflow = NO;
+    if (iTermParserConsumeInteger(context, mode, &overflow)) {
+        if (overflow) {
+            return kXtermParserFailingState;
+        }
         // Read an integer. Either out of data or a semicolon should follow; anything else is
         // a malformed input.
         if (iTermParserCanAdvance(context)) {

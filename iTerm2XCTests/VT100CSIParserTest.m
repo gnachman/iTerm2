@@ -376,4 +376,9 @@
     }
 }
 
+- (void)testParameterOverflow {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[9999999999m", VT100CC_ESC];
+    XCTAssert(token->type == VT100_UNKNOWNCHAR);
+}
+
 @end

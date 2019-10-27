@@ -330,4 +330,9 @@
     XCTAssert([token.string isEqualToString:@"Foo"]);
 }
 
+- (void)testOverflow {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]9999999999;foo%c", VT100CC_ESC, VT100CC_BEL];
+    XCTAssertEqual(VT100_NOTSUPPORT, token->type);
+}
+
 @end
