@@ -919,7 +919,12 @@ static VT100GridWindowedRange VT100GridWindowedRangeClampedToWidth(const VT100Gr
 }
 
 - (NSIndexSet *)selectedIndexesOnLine:(int)line {
-    if (!_live && _subSelections.count == 1) {
+    const NSInteger numberOfSubSelections = _subSelections.count;
+    if (!_live && numberOfSubSelections == 0) {
+        // Fast path
+        return [NSIndexSet indexSet];
+    }
+    if (!_live && numberOfSubSelections == 1) {
         // Fast path
         iTermSubSelection *sub = _subSelections[0];
         NSRange theRange = [self rangeOfIndexesInRange:sub.range
@@ -927,7 +932,7 @@ static VT100GridWindowedRange VT100GridWindowedRangeClampedToWidth(const VT100Gr
                                                   mode:sub.selectionMode];
         return [NSIndexSet indexSetWithIndexesInRange:theRange];
     }
-    if (_live && _subSelections.count == 0) {
+    if (_live && numberOfSubSelections == 0) {
         // Fast path
         NSRange theRange = [self rangeOfIndexesInRange:[self unflippedLiveRange]
                                                 onLine:line
