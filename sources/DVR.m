@@ -63,7 +63,10 @@
     [super dealloc];
 }
 
-- (void)appendFrame:(NSArray*)frameLines length:(int)length info:(DVRFrameInfo*)info
+- (void)appendFrame:(NSArray<NSData *> *)frameLines
+             length:(int)length
+         cleanLines:(NSIndexSet *)cleanLines
+               info:(DVRFrameInfo*)info
 {
     if (readOnly_) {
         return;
@@ -83,7 +86,10 @@
             }
         }
     }
-    [encoder_ appendFrame:frameLines length:length info:info];
+    [encoder_ appendFrame:frameLines
+                   length:length
+               cleanLines:cleanLines
+                     info:info];
 }
 
 - (DVRDecoder*)getDecoder
@@ -191,7 +197,10 @@
                 [lines addObject:data];
                 offset += lineLength;
             }
-            [theCopy appendFrame:lines length:[decoder length] info:&info];
+            [theCopy appendFrame:lines
+                          length:[decoder length]
+                      cleanLines:nil
+                            info:&info];
             if (![decoder next]) {
                 break;
             }

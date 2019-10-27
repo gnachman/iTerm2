@@ -43,24 +43,6 @@ static long long now()
     return result;
 }
 
-@interface DVREncoder ()
-// Save a key frame into DVRBuffer.
-- (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info;
-
-// Save a diff frame into DVRBuffer.
-- (void)_appendDiffFrame:(NSArray *)frameLine length:(int)length info:(DVRFrameInfo*)info;
-
-// Save a frame into DVRBuffer.
-- (void)_appendFrameImpl:(char *)buffer length:(int)length type:(DVRFrameType)type info:(DVRFrameInfo*)info;
-
-// Calculate the diff between buffer,length and the previous frame. Saves results into
-// scratch. Won't use more than maxSize bytes in scratch. Returns number of bytes used or
-// -1 if the diff was larger than maxSize.
-- (int)_computeDiff:(NSArray *)frameLines length:(int)length dest:(char*)scratch maxSize:(int)maxSize;
-
-@end
-
-
 @implementation DVREncoder {
     // Underlying buffer to write to. Not owned by us.
     DVRBuffer* buffer_;
@@ -115,10 +97,13 @@ static long long now()
     return s;
 }
 
-- (void)appendFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
-{
+- (void)appendFrame:(NSArray *)frameLines
+             length:(int)length
+         cleanLines:(NSIndexSet *)cleanLines
+               info:(DVRFrameInfo*)info {
     BOOL eligibleForDiff;
-    if (lastFrame_ &&
+    if (cleanLines.count > info->height * 0.8 &&
+        lastFrame_ &&
         length == [lastFrame_ length] &&
         info->width == lastInfo_.width &&
         info->height == lastInfo_.height &&
@@ -133,7 +118,7 @@ static long long now()
     if (!eligibleForDiff || count_++ % kKeyFrameFrequency == 0) {
         [self _appendKeyFrame:frameLines length:length info:info];
     } else {
-        [self _appendDiffFrame:frameLines length:length info:info];
+        [self _appendDiffFrame:frameLines length:length cleanLines:cleanLines info:info];
     }
 }
 
@@ -159,7 +144,7 @@ static long long now()
 
 #pragma mark - Private
 
-- (void)debug:(NSString*)prefix buffer:(char*)buffer length:(int)length
+- (void)debug:(NSString*)prefix buffer:(const char *)buffer length:(int)length
 {
 #ifdef DVRDEBUG
     char d[30000];
@@ -185,6 +170,7 @@ static long long now()
     return data;
 }
 
+// Save a key frame into DVRBuffer.
 - (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
     [lastFrame_ release];
@@ -196,11 +182,15 @@ static long long now()
     bytesSinceLastKeyFrame_ = 0;
 }
 
-- (void)_appendDiffFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
-{
+// Save a diff frame into DVRBuffer.
+- (void)_appendDiffFrame:(NSArray *)frameLines
+                  length:(int)length
+              cleanLines:(NSIndexSet *)cleanLines
+                    info:(DVRFrameInfo *)info {
     char* scratch = [buffer_ scratch];
     int diffBytes = [self _computeDiff:frameLines
                                 length:length
+                            cleanLines:cleanLines
                                   dest:scratch
                                maxSize:reservation_];
     if (diffBytes < 0) {
@@ -220,6 +210,7 @@ static long long now()
     bytesSinceLastKeyFrame_ += diffBytes;
 }
 
+// Save a frame into DVRBuffer.
 - (void)_appendFrameImpl:(char*)dest length:(int)length type:(DVRFrameType)type info:(DVRFrameInfo*)info
 {
     assert(haveReservation_);
@@ -239,87 +230,44 @@ static long long now()
     DLog(@"Append frame with key %lld, size %dx%d", key, info->width, info->height);
 }
 
-- (int)_computeDiff:(NSArray *)frameLines length:(int)length dest:(char*)scratch maxSize:(int)maxBytes
-{
+// Calculate the diff between buffer,length and the previous frame. Saves results into
+// scratch. Won't use more than maxSize bytes in scratch. Returns number of bytes used or
+// -1 if the diff was larger than maxSize.
+- (int)_computeDiff:(NSArray<NSData *> *)frameLines
+             length:(int)length
+         cleanLines:(NSIndexSet *)cleanLines
+               dest:(char *)scratch
+            maxSize:(int)maxBytes {
     assert(length == [lastFrame_ length]);
-    char* other = [lastFrame_ mutableBytes];
-    assert(other);
 
     int o = 0;
-    int sameCount = 0;
-    int diffCount = 0;
-    char* startDiff = 0;
 
-    // TODO(georgen): Implement a better diff
-    int numLines = [frameLines count];
-    int i = 0;
+    const int numLines = [frameLines count];
+    const int numChars = numLines > 0 ? frameLines[0].length : 0;
     for (int y = 0; y < numLines; y++) {
-        NSMutableData *lineData = [frameLines objectAtIndex:y];
-        char *frameLine = [lineData mutableBytes];
-        const int numChars = lineData.length;
-        for (int x = 0; x < numChars; x++, i++) {
-            // TODO: This should be a screen_char_t-wise comparison, not bytewise
-            if (frameLine[x] == other[i]) {
-                if (diffCount > 0) {
-                    if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
-                        // Diff is too big.
-                        return -1;
-                    }
-                    scratch[o++] = kDiffSequence;
-                    memcpy(scratch + o, &diffCount, sizeof(diffCount));
-                    o += sizeof(diffCount);
-                    memcpy(scratch + o, startDiff, diffCount);
-                    o += diffCount;
-                    [self debug:@"diff " buffer:startDiff length:diffCount];
-                    diffCount = 0;
-                }
-                ++sameCount;
-            } else {
-                if (sameCount > 0) {
-                    if (o + 1 + sizeof(sameCount) > maxBytes) {
-                        // Diff is too big.
-                        return -1;
-                    }
-                    scratch[o++] = kSameSequence;
-                    memcpy(scratch + o, &sameCount, sizeof(sameCount));
-                    o += sizeof(sameCount);
-    #ifdef DVRDEBUG
-                    NSLog(@"%d the same", sameCount);
-    #endif
-                    sameCount = 0;
-                }
-                if (!diffCount) {
-                    startDiff = frameLine + x;
-                }
-                other[i] = frameLine[x];
-                ++diffCount;
-            }
-        }
-        if (diffCount > 0) {
-            if (o + 1 + sizeof(diffCount) + diffCount > maxBytes) {
-                // Diff is too big.
-                return -1;
-            }
-            scratch[o++] = kDiffSequence;
-            memcpy(scratch + o, &diffCount, sizeof(diffCount));
-            o += sizeof(diffCount);
-            memcpy(scratch + o, startDiff, diffCount);
-            o += diffCount;
-            [self debug:@"diff " buffer:startDiff length:diffCount];
-            diffCount = 0;
-        }
-        if (sameCount > 0) {
-            if (o + 1 + sizeof(sameCount) > maxBytes) {
+        if ([cleanLines containsIndex:y]) {
+            if (o + 1 + sizeof(numChars) > maxBytes) {
                 // Diff is too big.
                 return -1;
             }
             scratch[o++] = kSameSequence;
-            memcpy(scratch + o, &sameCount, sizeof(sameCount));
-            o += sizeof(sameCount);
+            memcpy(scratch + o, &numChars, sizeof(numChars));
+            o += sizeof(numChars);
+        } else {
+            if (o + 1 + sizeof(numChars) + numChars > maxBytes) {
+                // Diff is too big.
+                return -1;
+            }
+            scratch[o++] = kDiffSequence;
+            memcpy(scratch + o, &numChars, sizeof(numChars));
+            o += sizeof(numChars);
+            NSData *lineData = frameLines[y];
+            const char *frameLine = [lineData bytes];
+            memcpy(scratch + o, frameLine, numChars);
+            o += numChars;
 #ifdef DVRDEBUG
-            NSLog(@"%d the same", sameCount);
+            [self debug:@"diff " buffer:frameLine length:numChars];
 #endif
-            sameCount = 0;
         }
     }
     return o;

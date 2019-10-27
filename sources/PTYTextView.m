@@ -5806,6 +5806,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     // Remove results from dirty lines and mark parts of the view as needing display.
+    NSMutableIndexSet *cleanLines = [NSMutableIndexSet indexSet];
     if (allDirty) {
         foundDirty = YES;
         [_findOnPageHelper removeHighlightsInRange:NSMakeRange(lineStart + totalScrollbackOverflow,
@@ -5819,6 +5820,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
+            } else {
+                [cleanLines addIndex:y - lineStart];
             }
         }
     }
@@ -5841,7 +5844,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_dataSource resetDirty];
 
     if (foundDirty) {
-        [_dataSource saveToDvr];
+        [_dataSource saveToDvr:cleanLines];
         [_delegate textViewInvalidateRestorableState];
         [_delegate textViewDidFindDirtyRects];
     }

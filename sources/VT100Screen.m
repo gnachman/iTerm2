@@ -2026,8 +2026,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [currentGrid_ markAllCharsDirty:NO];
 }
 
-- (void)saveToDvr
-{
+- (void)saveToDvr:(NSIndexSet *)cleanLines {
     if (!dvr_) {
         return;
     }
@@ -2040,6 +2039,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     [dvr_ appendFrame:[currentGrid_ orderedLines]
                length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
+           cleanLines:cleanLines
                  info:&info];
 }
 

@@ -89,7 +89,7 @@
 - (void)resetDirty;
 
 // Save the current state to a new frame in the dvr.
-- (void)saveToDvr;
+- (void)saveToDvr:(NSIndexSet *)cleanLines;
 
 // If this returns true then the textview will broadcast iTermTabContentsChanged
 // when a dirty char is found.

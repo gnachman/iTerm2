@@ -36,8 +36,12 @@
 // Encoded a frame into the DVRBuffer. Call -[reserve:] first.
 //   frameLines: An array of screen lines
 //   length: number of bytes (not elements) in buffer.
+//   cleanLines: The line numbers that are unchanged from the last frame.
 //   info: screen state.
-- (void)appendFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo *)info;
+- (void)appendFrame:(NSArray *)frameLines
+             length:(int)length
+         cleanLines:(NSIndexSet *)cleanLines
+               info:(DVRFrameInfo *)info;
 
 // Allocate some number of bytes for an upcoming appendFrame call.
 // Returns true if some frames were freed to make room. The caller should
