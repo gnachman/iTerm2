@@ -5739,6 +5739,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self showOrHideInstantReplayBar];
     [self refreshTools];
     [self updateTabColors];
+    [self updateToolbeltAppearance];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
@@ -6203,6 +6204,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self updateTabColors];
+    [self updateToolbeltAppearance];
     [self _updateTabObjectCounts];
     [self updateTouchBarIfNeeded:NO];
 
@@ -7841,6 +7843,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
+    [self updateToolbeltAppearance];
 }
 
 - (void)fitWindowToTabs {
@@ -8736,6 +8739,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
 
     [self updateTabColors];
+    [self updateToolbeltAppearance];
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
         self.tabBarControl.insets = [self tabBarInsets];
@@ -10369,6 +10373,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self.contentView setNeedsDisplay:YES];
         [_contentView.tabBarControl backgroundColorWillChange];
     }
+    [self updateToolbeltAppearance];
     [self updateForTransparency:self.ptyWindow];
 }
 
@@ -10430,6 +10435,29 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 #pragma mark - Toolbelt
+
+- (void)updateToolbeltAppearance {
+    if (@available(macOS 10.14, *)) {
+        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_MINIMAL:
+                if (self.minimalTabStyleBackgroundColor.isDark) {
+                    _contentView.toolbelt.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+                } else {
+                    _contentView.toolbelt.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+                }
+                break;
+
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_COMPACT:
+                _contentView.toolbelt.appearance = nil;
+                break;
+        }
+    }
+}
 
 - (void)toolbeltUpdateMouseCursor {
     [[[self currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
