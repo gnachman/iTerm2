@@ -514,7 +514,8 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                                     vector_float4 underlineColor) {
     piu->offset = simd_make_float2(x * cellWidth + asciiOffset.width,
                                    asciiOffset.height);
-    MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, iTermASCIITextureIndexOfCode(code, offset));
+    const int index = iTermASCIITextureIndexOfCode(code, offset);
+    MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, index);
     piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
     piu->textColor = textColor;
     piu->backgroundColor = backgroundColor;
@@ -538,7 +539,10 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                        asciiAttrs:(iTermASCIITextureAttributes)asciiAttrs
                        attributes:(const iTermMetalGlyphAttributes *)attributes
                     inMarkedRange:(BOOL)inMarkedRange {
-    iTermASCIITexture *texture = _asciiTextureGroup->_textures[asciiAttrs];
+    // When profiling, objc_retain and objc_release took 20% of the time in this function, which
+    // is called super frequently. It should be safe not to retain the texture because the texture
+    // group retains it. Once a texture is set in the group it won't be removed or replaced.
+    __unsafe_unretained iTermASCIITexture *texture = _asciiTextureGroup->_textures[asciiAttrs];
     if (!texture) {
         texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
     }

@@ -758,6 +758,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                                    _configuration->_blinkAllowed);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             !line[x].complexChar &&
+                                            line[x].code > 127 &&
                                             [boxCharacterSet characterIsMember:line[x].code]);
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color

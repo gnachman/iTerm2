@@ -281,7 +281,8 @@
         _screenChars.buffer = _screenChars.staticBuffer;
         memset(_screenChars.buffer, 0, _asciiData.length * sizeof(screen_char_t));
     }
-    for (int i = 0; i < _asciiData.length; i++) {
+    const NSInteger length = _asciiData.length;
+    for (NSInteger i = 0; i < length; i++) {
         _screenChars.buffer[i].code = _asciiData.buffer[i];
     }
     _screenChars.length = _asciiData.length;
