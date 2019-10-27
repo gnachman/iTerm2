@@ -1520,7 +1520,6 @@
 		A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A611272721D1B1E300E8C228 /* iTermCPUProfilerUI.h in Headers */ = {isa = PBXBuildFile; fileRef = A611272521D1B1E300E8C228 /* iTermCPUProfilerUI.h */; };
 		A611272821D1B1E300E8C228 /* iTermCPUProfilerUI.m in Sources */ = {isa = PBXBuildFile; fileRef = A611272621D1B1E300E8C228 /* iTermCPUProfilerUI.m */; };
-		A612FA6223656F13001F8857 /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */; };
 		A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */; };
 		A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */; };
@@ -3034,6 +3033,7 @@
 		A6C7634C1B45C52B00E3C992 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
 		A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
 		A6C7634E1B45C52B00E3C992 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
+		A6C763501B45C52B00E3C992 /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		A6C763511B45C52B00E3C992 /* SplitSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732A14082A52004C5DBE /* SplitSelectionView.m */; };
 		A6C763521B45C52B00E3C992 /* iTermOpenQuicklyItem.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */; };
 		A6C763541B45C52B00E3C992 /* iTermOpenQuicklyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4599197319CA00F5444D /* iTermOpenQuicklyTableCellView.m */; };
@@ -12583,7 +12583,6 @@
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
-				A612FA6223656F13001F8857 /* SolidColorView.m in Sources */,
 				A6C4352421D1C98900346910 /* iTermWebViewWrapperViewController.m in Sources */,
 				A639358C21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m in Sources */,
 				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
@@ -13037,6 +13036,7 @@
 				A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */,
 				A6C763BF1B45C52B00E3C992 /* VT100AnsiParser.m in Sources */,
 				A6C762F21B45C52B00E3C992 /* DVREncoder.m in Sources */,
+				A6C763501B45C52B00E3C992 /* SolidColorView.m in Sources */,
 				A66E5E541E6268F700E8FE35 /* iTermServiceProvider.m in Sources */,
 				A6C7635D1B45C52B00E3C992 /* DirectoriesPopup.m in Sources */,
 				A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */,

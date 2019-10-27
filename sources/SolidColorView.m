@@ -6,44 +6,24 @@
 //
 
 #import "SolidColorView.h"
-#import <objc/runtime.h>
 
-@implementation iTermBaseSolidColorView {
+@implementation SolidColorView {
     BOOL _isFlipped;
 }
 
 @synthesize color = _color;
 
-- (instancetype)initWithFrame:(NSRect)frame color:(NSColor *)color {
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color {
     self = [super initWithFrame:frame];
     if (self) {
-        _color = color;
-        if (self.solidColorViewUsesLayer) {
-            self.wantsLayer = YES;
-            self.layer.backgroundColor = [color CGColor];
-        }
+        _color = [color retain];
     }
     return self;
 }
 
-- (instancetype)initWithFrame:(NSRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
-        if (self.solidColorViewUsesLayer) {
-            self.wantsLayer = YES;
-        }
-    }
-    return self;
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        if (self.solidColorViewUsesLayer) {
-            self.wantsLayer = YES;
-        }
-    }
-    return self;
+- (void)dealloc {
+    [_color release];
+    [super dealloc];
 }
 
 - (NSString *)description {
@@ -52,21 +32,15 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (self.solidColorViewUsesLayer) {
-        return;
-    }
-    [self.color setFill];
+    [_color setFill];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }
 
-- (void)setColor:(NSColor *)color {
-    _color = color;
-    if (self.solidColorViewUsesLayer) {
-        self.layer.backgroundColor = [color CGColor];
-    } else {
-        [self setNeedsDisplay:YES];
-    }
+- (void)setColor:(NSColor*)color {
+    [_color autorelease];
+    _color = [color retain];
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)isFlipped {
@@ -77,35 +51,60 @@
     _isFlipped = value;
 }
 
-- (BOOL)solidColorViewUsesLayer {
-    return NO;
-}
-
 @end
 
-@implementation iTermLegacySolidColorView
-
-- (BOOL)solidColorViewUsesLayer {
-    return NO;
+@implementation iTermLayerBackedSolidColorView {
+    BOOL _isFlipped;
 }
 
-@end
+@synthesize color = _color;
 
-@implementation SolidColorView
-
-- (BOOL)solidColorViewUsesLayer {
-    if (@available(macOS 10.14, *)) {
-        return YES;
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor *)color {
+    self = [self initWithFrame:frame];
+    if (self) {
+        _color = [color retain];
     }
-    return NO;
+    return self;
 }
 
-@end
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.wantsLayer = YES;
+    }
+    return self;
+}
 
-@implementation iTermLayerBackedSolidColorView
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        self.wantsLayer = YES;
+    }
+    return self;
+}
 
-- (BOOL)solidColorViewUsesLayer {
-    return YES;
+- (void)dealloc {
+    [_color release];
+    [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ isHidden=%@ alphaValue=%@>",
+            [self class], self, NSStringFromRect(self.frame), @(self.isHidden), @(self.alphaValue)];
+}
+
+- (void)setColor:(NSColor *)color {
+    [_color autorelease];
+    _color = [color retain];
+    self.layer.backgroundColor = [color CGColor];
+}
+
+- (BOOL)isFlipped {
+    return _isFlipped;
+}
+
+- (void)setFlipped:(BOOL)value {
+    _isFlipped = value;
 }
 
 @end

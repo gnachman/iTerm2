@@ -73,7 +73,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // Gray line dividing tab/title bar from content. Will be nil if a division
 // view isn't needed such as for fullscreen windows or windows without a
 // title bar (e.g., top-of-screen).
-@property(nonatomic, readonly) iTermBaseSolidColorView *divisionView;
+@property(nonatomic, readonly) NSView<iTermSolidColorView> *divisionView;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;
