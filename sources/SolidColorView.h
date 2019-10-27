@@ -7,16 +7,22 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol iTermSolidColorView<NSObject>
-@property(nonatomic, retain) NSColor *color;
+@interface iTermBaseSolidColorView : NSView
+@property (nonatomic, strong) NSColor *color;
 
 - (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color;
 - (void)setFlipped:(BOOL)value;
 @end
 
-@interface SolidColorView : NSView<iTermSolidColorView>
+// Users a layer on 10.14+
+@interface SolidColorView : iTermBaseSolidColorView
 @end
 
-@interface iTermLayerBackedSolidColorView : NSView<iTermSolidColorView>
+// Never uses a layer
+@interface iTermLegacySolidColorView: iTermBaseSolidColorView
+@end
+
+// Always uses a layer
+@interface iTermLayerBackedSolidColorView : iTermBaseSolidColorView
 @end
 
