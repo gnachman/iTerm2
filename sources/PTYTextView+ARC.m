@@ -282,11 +282,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     NSString *command = [sender representedObject];
     DLog(@"Run command in window: %@", command);
     [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                           arguments:nil
                                                               inject:nil
                                                          environment:nil
                                                                  pwd:nil
-                                                             options:0
+                                                             options:iTermSingleUseWindowOptionsDoNotEscapeArguments
                                                           completion:nil];
 }
 
