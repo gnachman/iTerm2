@@ -39,7 +39,7 @@
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *currentDirectory) {
                                              if (currentDirectory.length) {
-                                                 [aSession didUseShellIntegration];
+                                                 [aSession didUpdateCurrentDirectory];
                                                  [aSession.screen terminalCurrentDirectoryDidChangeTo:currentDirectory];
                                              }
                                          }];

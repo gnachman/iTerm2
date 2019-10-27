@@ -211,7 +211,11 @@ static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID f
 static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
-static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
+// Deprecated in favor of SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS and SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES
+static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED = @"Shell Integration Ever Used";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS = @"Should Expect Prompt Marks";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES = @"Should Expect Current Dir Updates";  // BOOL
+
 static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED = @"Working Directory Poller Disabled";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
@@ -415,9 +419,11 @@ static const NSUInteger kMaxHosts = 100;
     VT100GridCoord _lastReportedCoord;
     BOOL _reportingMouseDown;
 
-    // Has a shell integration code ever been seen? A rough guess as to whether we can assume
-    // shell integration is currently being used.
-    BOOL _shellIntegrationEverUsed;
+    // Did we get FinalTerm codes that report info about prompt?
+    BOOL _shouldExpectPromptMarks;
+
+    // Did we get CurrentDir code?
+    BOOL _shouldExpectCurrentDirUpdates;
 
     // Disable the working directory poller?
     BOOL _workingDirectoryPollerDisabled;
@@ -1147,10 +1153,17 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
-    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
-        aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
+
+    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED]) {
+        // Legacy migration path
+        const BOOL shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED] boolValue];
+        aSession->_shouldExpectPromptMarks = shellIntegrationEverUsed;
+        aSession->_shouldExpectCurrentDirUpdates = shellIntegrationEverUsed;
+    } else {
+        aSession->_shouldExpectPromptMarks = [arrangement[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] boolValue];
+        aSession->_shouldExpectCurrentDirUpdates = [arrangement[SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES] boolValue];
     }
-    aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shellIntegrationEverUsed;
+    aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shouldExpectCurrentDirUpdates;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
         [aSession trimCommandsIfNeeded];
@@ -4422,7 +4435,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
+    result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_shouldExpectPromptMarks);
+    result[SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES] = @(_shouldExpectCurrentDirUpdates);
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] = @(_workingDirectoryPollerDisabled);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
@@ -9068,6 +9082,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, _lastPromptLine, 0, _lastPromptLine);
     [_pasteHelper unblock];
+    [self didUpdatePromptLocation];
 }
 
 
@@ -9778,6 +9793,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // This is called when we get a high-confidence working directory (e.g., CurrentDir=).
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+    DLog(@"%@\n%@", newPath, [NSThread callStackSymbols]);
+    [self didUpdateCurrentDirectory];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
@@ -9889,7 +9906,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
-    [self didUseShellIntegration];
+    [self didUpdatePromptLocation];
     BOOL hadCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
@@ -9922,7 +9939,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    [self didUseShellIntegration];
+    [self didUpdatePromptLocation];
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
@@ -10273,8 +10290,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)didUseShellIntegration {
-    _shellIntegrationEverUsed = YES;
+- (void)didUpdatePromptLocation {
+    _shouldExpectPromptMarks = YES;
+}
+
+- (void)didUpdateCurrentDirectory {
+    _shouldExpectCurrentDirUpdates = YES;
 }
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
@@ -10614,7 +10635,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperShouldWaitForPrompt {
-    if (!_shellIntegrationEverUsed) {
+    if (!_shouldExpectPromptMarks) {
         return NO;
     }
 
@@ -10626,7 +10647,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperCanWaitForPrompt {
-    return _shellIntegrationEverUsed;
+    return _shouldExpectPromptMarks;
 }
 
 - (void)pasteHelperPasteViewVisibilityDidChange {
@@ -11615,7 +11636,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Working directory poller disabled");
         return NO;
     }
-    if (_shellIntegrationEverUsed && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
+    if (_shouldExpectCurrentDirUpdates && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
         DLog(@"Should not poll for working directory: shell integration used");
         return NO;
     }
@@ -11631,7 +11652,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
-    if (_shellIntegrationEverUsed && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
+    if (_shouldExpectCurrentDirUpdates && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
         return;
     }
     if (invalidated) {

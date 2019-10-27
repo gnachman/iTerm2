@@ -39,7 +39,6 @@
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *remoteHost) {
                                              if (remoteHost.length) {
-                                                 [aSession didUseShellIntegration];
                                                  [aSession.screen terminalSetRemoteHost:remoteHost];
                                              }
                                          }];

@@ -818,7 +818,8 @@ typedef enum {
 - (void)updateStatusBarStyle;
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
-- (void)didUseShellIntegration;
+- (void)didUpdateCurrentDirectory;
+- (void)didUpdatePromptLocation;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 
