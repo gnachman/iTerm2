@@ -43,6 +43,7 @@
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "iTermTmuxOptionMonitor.h"
+#import "VT100GridTypes.h"
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
@@ -2971,52 +2972,79 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-+ (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
+typedef struct {
+    NSSize minimumSize;
+    NSSize maximumSize;
+} iTermSizeRange;
+
++ (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                         showBottomStatusBar:(BOOL)showBottomStatusBar
                                    bookmark:(Profile *)profile
                                  inTerminal:(NSWindowController<iTermWindowController> *)term {
-    double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
-    NSSize totalSize = NSZeroSize;
-    NSSize size;
+    CGFloat splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
+    iTermSizeRange totalSize = { NSZeroSize, NSZeroSize };
 
     DLog(@"recursiveSetSizesInTmuxParseTree for node:\n%@", parseTree);
 
     BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
-        case kLeafLayoutNode:
+        case kLeafLayoutNode: {
             DLog(@"Leaf node. Compute size of session");
-            size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:profile]
-                                         dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
-                                                               [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
-                                         showTitles:showTitles
-                                showBottomStatusBar:showBottomStatusBar
-                                         inTerminal:term];
-            [parseTree setObject:[NSNumber numberWithInt:size.width] forKey:kLayoutDictPixelWidthKey];
-            [parseTree setObject:[NSNumber numberWithInt:size.height] forKey:kLayoutDictPixelHeightKey];
-            return size;
+            const NSSize cellSize = [self cellSizeForBookmark:profile];
+            const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
+                                                      dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
+                                                                            [parseTree[kLayoutDictHeightKey] intValue])
+                                                      showTitles:showTitles
+                                             showBottomStatusBar:showBottomStatusBar
+                                                      inTerminal:term];
+            parseTree[kLayoutDictPixelWidthKey] = @(size.width);
+            parseTree[kLayoutDictPixelHeightKey] = @(size.height);
 
+            const NSSize maximumSize = NSMakeSize(size.width + cellSize.width - 1,
+                                                  size.height + cellSize.height - 1);
+            parseTree[kLayoutDictMaximumPixelWidthKey] = @(maximumSize.width);
+            parseTree[kLayoutDictMaximumPixelHeightKey] = @(maximumSize.height);
+            return (iTermSizeRange){ size, maximumSize };
+        }
         case kVSplitLayoutNode:
             isVertical = YES;
         case kHSplitLayoutNode: {
             BOOL isFirst = YES;
-            for (NSMutableDictionary *node in [parseTree objectForKey:kLayoutDictChildrenKey]) {
-                size = [self _recursiveSetSizesInTmuxParseTree:node
-                                                    showTitles:showTitles
-                                           showBottomStatusBar:showBottomStatusBar
-                                                      bookmark:profile
-                                                    inTerminal:term];
+            for (NSMutableDictionary *node in parseTree[kLayoutDictChildrenKey]) {
+                const iTermSizeRange sizeRange =
+                    [self _recursiveSetSizesInTmuxParseTree:node
+                                                 showTitles:showTitles
+                                        showBottomStatusBar:showBottomStatusBar
+                                                   bookmark:profile
+                                                 inTerminal:term];
 
-                double splitter = isFirst ? 0 : splitterSize;
-                SetWithGrainDim(isVertical, &totalSize,
-                                WithGrainDim(isVertical, totalSize) + WithGrainDim(isVertical, size) + splitter);
-                SetAgainstGrainDim(isVertical, &totalSize,
-                                   MAX(AgainstGrainDim(isVertical, totalSize),
-                                       AgainstGrainDim(isVertical, size)));
+                const CGFloat splitter = isFirst ? 0 : splitterSize;
+                SetWithGrainDim(isVertical,
+                                &totalSize.minimumSize,
+                                (WithGrainDim(isVertical, totalSize.minimumSize) +
+                                 WithGrainDim(isVertical, sizeRange.minimumSize) +
+                                 splitter));
+                SetAgainstGrainDim(isVertical,
+                                   &totalSize.minimumSize,
+                                   MAX(AgainstGrainDim(isVertical, totalSize.minimumSize),
+                                       AgainstGrainDim(isVertical, sizeRange.minimumSize)));
+                SetWithGrainDim(isVertical,
+                                &totalSize.maximumSize,
+                                (WithGrainDim(isVertical, totalSize.maximumSize) +
+                                 WithGrainDim(isVertical, sizeRange.maximumSize) +
+                                 splitter));
+                SetAgainstGrainDim(isVertical,
+                                   &totalSize.maximumSize,
+                                   MAX(AgainstGrainDim(isVertical, totalSize.maximumSize),
+                                       AgainstGrainDim(isVertical, sizeRange.maximumSize)));
                 isFirst = NO;
             }
-            [parseTree setObject:[NSNumber numberWithInt:totalSize.width] forKey:kLayoutDictPixelWidthKey];
-            [parseTree setObject:[NSNumber numberWithInt:totalSize.height] forKey:kLayoutDictPixelHeightKey];
+            parseTree[kLayoutDictPixelWidthKey] = @(totalSize.minimumSize.width);
+            parseTree[kLayoutDictPixelHeightKey] = @(totalSize.minimumSize.height);
+
+            parseTree[kLayoutDictMaximumPixelWidthKey] = @(totalSize.maximumSize.width);
+            parseTree[kLayoutDictMaximumPixelHeightKey] = @(totalSize.maximumSize.height);
             break;
         }
     }
@@ -3362,11 +3390,143 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [[sortedValues lastObject] intValue];
 }
 
+// This is for tmux tabs. The decoration size is the total amount of space used
+// within a split view or session view.
+typedef struct {
+    // Number of points consumed by title bar, status bar, scrollbars, and
+    // margins. Anything that isn't cells.
+    NSSize points;
+
+    // Number of cells used as dividers between split panes.
+    VT100GridSize cells;
+} PTYTabDecorationSize;
+
+// This is only used for tmux tabs.
+// Measure the decoration size of a view. The view is either a split view or a session view.
+//
+// For a vertical split view:
+//  points.width = (number of dividers) * (divider thickness) + Σ(child decoration point width)
+//  points.height = max(child decoration point height)
+//  cells.width = Σ(child decoration cell width) + (number of dividers)
+//  cells.height = max(child decoration cell height)
+//
+// For a horizontal split view:
+//  points.width = max(child decoration point width)
+//  points.height = (number of dividers) * (divider thickness) + Σ(child decoration point height)
+//  cells.width = max(child decoration cell width)
+//  cells.height = Σ(child decoration cell height) + (number of dividers)
+//
+// For a session view:
+//   points.width = margins' widths + legacy scroll bar width
+//   points.height = margins' heights + title bar height + status bar height
+//   cells.width = 0
+//   cells.height = 0
++ (PTYTabDecorationSize)_recursiveDecorationSize:(__kindof NSView *)view {
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        NSSplitView *splitView = view;
+        if (splitView.vertical) {
+            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
+            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
+            PTYTabDecorationSize result = {
+                .points = NSMakeSize(dividerPoints, 0),
+                .cells = VT100GridSizeMake(numberOfDividers, 0)
+            };
+            for (NSView *childView in splitView.subviews) {
+                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
+                result.points.width += childSize.points.width;
+                result.cells.width += childSize.cells.width;
+                result.points.height = MAX(result.points.height, childSize.points.height);
+                result.cells.height = MAX(result.cells.height, childSize.cells.height);
+            }
+            return result;
+        } else {
+            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
+            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
+            PTYTabDecorationSize result = {
+                .points = NSMakeSize(0, dividerPoints),
+                .cells = VT100GridSizeMake(0, numberOfDividers)
+            };
+            for (NSView *childView in splitView.subviews) {
+                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
+                result.points.width = MAX(result.points.width, childSize.points.width);
+                result.cells.width = MAX(result.cells.width, childSize.cells.width);
+                result.points.height += childSize.points.height;
+                result.cells.height += childSize.cells.height;
+            }
+            return result;
+        }
+    } else {
+        SessionView *sessionView = view;
+        const NSSize scrollViewDecorationSize = [NSScrollView frameSizeForContentSize:NSMakeSize(0, 0)
+                                                              horizontalScrollerClass:nil
+                                                                verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
+                                                                           borderType:sessionView.scrollview.borderType
+                                                                          controlSize:NSControlSizeRegular
+                                                                        scrollerStyle:sessionView.scrollview.scrollerStyle];
+        const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
+        // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
+        // change, this line of code might prevent a bug.
+        const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermStatusBarHeight : 0;
+        const CGSize margins = NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2,
+                                          [iTermAdvancedSettingsModel terminalVMargin] * 2);
+        return (PTYTabDecorationSize) {
+            .points = NSMakeSize(scrollViewDecorationSize.width + margins.width,
+                                 titleBarHeight + statusBarHeight + margins.height),
+            .cells = VT100GridSizeMake(0, 0)
+        };
+    }
+}
+
+- (NSSize)tmuxSize {
+    if (self.tmuxController.variableWindowSize) {
+        return [self variableTmuxSize];
+    } else {
+        return [self fixedTmuxSize];
+    }
+}
+
+// Returns the size in characters of the window size that fits this tab's contents.
+- (NSSize)variableTmuxSize {
+    // The size in points we need to get it to (at most). Only the current tab will have the proper
+    // frame, but during window creation there might not be a current tab.
+    PTYTab *currentTab = [realParentWindow_ currentTab];
+    if (!currentTab) {
+        currentTab = self;
+    }
+
+    // Available size in points.
+    const NSSize targetSizePoints = [currentTab->tabView_ frame].size;
+
+    // The size of a cell.
+    NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+
+    // Amount of decoration space to reserve.
+    const PTYTabDecorationSize decorationSize = [PTYTab _recursiveDecorationSize:root_];
+
+    // The most conservative possible estimate of the cell space. This is equal to the number of cells in the
+    // row or column with the smallest number of cells that could possibly fit, ignoring dividers.
+    const NSSize contentSize = NSMakeSize((targetSizePoints.width - decorationSize.points.width) / cellSize.width,
+                                          (targetSizePoints.height - decorationSize.points.height) / cellSize.height);
+
+    // Augment cell space by decoration space (in cells) to get the window size that we know will fit in this tab view.
+    const NSSize result = NSMakeSize(contentSize.width + decorationSize.cells.width,
+                                     contentSize.height + decorationSize.cells.height);
+
+    DLog(@"targetSize=%@ cellSize=%@ decorationSize.points=%@ decorationSize.cells=%@ contentSize=%@ result=%@",
+         NSStringFromSize(targetSizePoints),
+         NSStringFromSize(cellSize),
+         NSStringFromSize(decorationSize.points),
+         VT100GridSizeDescription(decorationSize.cells),
+         NSStringFromSize(contentSize),
+         NSStringFromSize(result));
+    return result;
+}
+
 // Returns the size (in characters) of the window size that fits this tab's
 // contents, while going over as little as possible.  It picks the smallest
 // height that can contain every column and every row (counting characters and
 // dividers as 1).
-- (NSSize)tmuxSize {
+- (NSSize)fixedTmuxSize {
     DLog(@"Compute size in characters of the window that fits this tab's contents");
 
     // The current size of the sessions in this tab in characters
@@ -3652,7 +3812,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
-    [realParentWindow_ tmuxTabLayoutDidChange:NO];
+    [realParentWindow_ tmuxTabLayoutDidChange:NO tab:nil variableWindowSize:tmuxController_.variableWindowSize];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
     [root_ setNeedsDisplay:YES];
@@ -3707,12 +3867,99 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tmuxTitleMonitor = nil;
 }
 
+- (NSSize)rootViewSize {
+    if (flexibleView_) {
+        return flexibleView_.frame.size;
+    }
+    return root_.frame.size;
+}
+
+// Adjust the parse tree to minimize "holes" by allowing sessions to grow by just under one cell in size.
++ (NSMutableDictionary *)tweakedParseTree:(NSDictionary *)parseTree
+                        fillingRootOfSize:(NSSize)desiredSize {
+    NSMutableDictionary *dict = [parseTree mutableCopy];
+
+    const NSSize actualSize = NSMakeSize([parseTree[kLayoutDictPixelWidthKey] intValue],
+                                         [parseTree[kLayoutDictPixelHeightKey] intValue]);
+
+    BOOL isVertical = NO;
+    switch ((LayoutNodeType)[parseTree[kLayoutDictNodeType] intValue]) {
+        case kLeafLayoutNode: {
+            const NSSize maximumSize = NSMakeSize([parseTree[kLayoutDictMaximumPixelWidthKey] intValue],
+                                                  [parseTree[kLayoutDictMaximumPixelHeightKey] intValue]);
+            NSSize tweakedSize = actualSize;
+
+            if (actualSize.width < desiredSize.width) {
+                tweakedSize.width = MIN(desiredSize.width, maximumSize.width);
+            }
+            if (actualSize.height < desiredSize.height) {
+                tweakedSize.height = MIN(desiredSize.height, maximumSize.height);
+            }
+            dict[kLayoutDictPixelWidthKey] = @(tweakedSize.width);
+            dict[kLayoutDictPixelHeightKey] = @(tweakedSize.height);
+            break;
+        }
+
+        case kVSplitLayoutNode:
+            isVertical = YES;
+        case kHSplitLayoutNode: {
+            NSMutableArray *replacementChildren = [NSMutableArray array];
+            NSSize desiredGrowth = NSMakeSize(desiredSize.width - actualSize.width,
+                                              desiredSize.height - actualSize.height);
+            NSSize tweakedSize = actualSize;
+            for (NSMutableDictionary *node in parseTree[kLayoutDictChildrenKey]) {
+                // Figure out how much this node would need to grow by and set `exaggeratedSize` to that size.
+                const NSSize originalSize = NSMakeSize([node[kLayoutDictPixelWidthKey] intValue],
+                                                       [node[kLayoutDictPixelHeightKey] intValue]);
+                NSSize exaggeratedSize = originalSize;
+                if (desiredGrowth.width > 0) {
+                    exaggeratedSize.width += desiredGrowth.width;
+                }
+                if (desiredGrowth.height > 0) {
+                    exaggeratedSize.height += desiredGrowth.height;
+                }
+
+                // Create an updated node that is hopefully larger.
+                NSMutableDictionary *replacement = [self tweakedParseTree:node
+                                                        fillingRootOfSize:exaggeratedSize];
+
+                // Deduct its actual growth from the desired growth. It may take many siblings’
+                // growth to satisfy all of the desired growth.
+                const NSSize updatedSize = NSMakeSize([replacement[kLayoutDictPixelWidthKey] intValue],
+                                                      [replacement[kLayoutDictPixelHeightKey] intValue]);
+                const NSSize growth = NSMakeSize(updatedSize.width - originalSize.width,
+                                                 updatedSize.height - originalSize.height);
+                if (isVertical) {
+                    desiredGrowth.width -= growth.width;
+                    tweakedSize.width += growth.width;
+                    tweakedSize.height = MAX(tweakedSize.height, updatedSize.height);
+                } else {
+                    desiredGrowth.height -= growth.height;
+                    tweakedSize.height += growth.height;
+                    tweakedSize.width = MAX(tweakedSize.width, updatedSize.width);
+                }
+
+                [replacementChildren addObject:replacement];
+            }
+            dict[kLayoutDictChildrenKey] = replacementChildren;
+            dict[kLayoutDictPixelWidthKey] = @(tweakedSize.width);
+            dict[kLayoutDictPixelHeightKey] = @(tweakedSize.height);
+            break;
+        }
+    }
+    return dict;
+}
+
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
 
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
+    if (tmuxController.variableWindowSize) {
+        parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:self.rootViewSize];
+        DLog(@"Tweaked parse tree:\n%@", parseTree);
+    }
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
                                                                            origin:NSZeroPoint
@@ -3792,11 +4039,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self fitSubviewsToRoot];
     [self numberOfSessionsDidChange];
     ++tmuxOriginatedResizeInProgress_;
-    [realParentWindow_ beginTmuxOriginatedResize];
-    [realParentWindow_ tmuxTabLayoutDidChange:YES];
-    [realParentWindow_ endTmuxOriginatedResize];
+
+    if (tmuxController.variableWindowSize) {
+        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self variableWindowSize:tmuxController_.variableWindowSize];
+    } else {
+        [realParentWindow_ beginTmuxOriginatedResize];
+        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self variableWindowSize:tmuxController_.variableWindowSize];
+        [realParentWindow_ endTmuxOriginatedResize];
+    }
     --tmuxOriginatedResizeInProgress_;
-        [realParentWindow_ setDimmingForSessions];
+    [realParentWindow_ setDimmingForSessions];
 }
 
 - (void)maximizeAfterApplyingTmuxParseTree:(NSMutableDictionary *)parseTree tmuxController:(TmuxController *)tmuxController {
@@ -3849,6 +4101,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
+        if (tmuxController.variableWindowSize) {
+            parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
+            DLog(@"Tweaked parse tree:\n%@", parseTree);
+        }
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {

@@ -333,7 +333,11 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     int tmuxOriginatedResizeInProgress_;
 
     BOOL liveResize_;
-    BOOL postponedTmuxTabLayoutChange_;
+    enum {
+        iTermPostponeTmuxTabLayoutChangeStateNone = 0,
+        iTermPostponeTmuxTabLayoutChangeStateFixedSizeWindow = 1,
+        iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow = 2
+    } postponedTmuxTabLayoutChange_;
 
     // Recalls if this was a hide-after-opening window.
     BOOL hideAfterOpening_;
@@ -4220,10 +4224,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
-{
+                           tab:(PTYTab *)tab
+            variableWindowSize:(BOOL)variableWindowSize {
     if (liveResize_) {
         if (nontrivialChange) {
-            postponedTmuxTabLayoutChange_ = YES;
+            postponedTmuxTabLayoutChange_ = variableWindowSize ? iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow : iTermPostponeTmuxTabLayoutChangeStateFixedSizeWindow;
         }
         return;
     }
@@ -4233,9 +4238,17 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [self beginTmuxOriginatedResize];
-    [self fitWindowToTabs];
-    [self endTmuxOriginatedResize];
+    if (variableWindowSize) {
+        if (tab) {
+            [self fitWindowToTab:tab];
+        } else {
+            [self fitWindowToTabs];
+        }
+    } else {
+        [self beginTmuxOriginatedResize];
+        [self fitWindowToTabs];
+        [self endTmuxOriginatedResize];
+    }
 }
 
 - (void)saveTmuxWindowOrigins
@@ -5178,8 +5191,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:nil]];
     }
     if (postponedTmuxTabLayoutChange_) {
-        [self tmuxTabLayoutDidChange:YES];
-        postponedTmuxTabLayoutChange_ = NO;
+        [self tmuxTabLayoutDidChange:YES
+                                 tab:nil
+                  variableWindowSize:(postponedTmuxTabLayoutChange_ == iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow)];
+        postponedTmuxTabLayoutChange_ = iTermPostponeTmuxTabLayoutChangeStateNone;
     }
     [self updateUseMetalInAllTabs];
 }
