@@ -4220,7 +4220,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
-{
+                           tab:(PTYTab *)tab
+                    controller:(TmuxController *)tmuxController {
     if (liveResize_) {
         if (nontrivialChange) {
             postponedTmuxTabLayoutChange_ = YES;
@@ -4233,9 +4234,18 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [self beginTmuxOriginatedResize];
-    [self fitWindowToTabs];
-    [self endTmuxOriginatedResize];
+    // asdf
+    if (tmuxController.variableWindowSize) {
+        if (tab) {
+            [self fitWindowToTab:tab];
+        } else {
+            [self fitWindowToTabs];
+        }
+    } else {
+        [self beginTmuxOriginatedResize];
+        [self fitWindowToTabs];
+        [self endTmuxOriginatedResize];
+    }
 }
 
 - (void)saveTmuxWindowOrigins
@@ -5178,7 +5188,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:nil]];
     }
     if (postponedTmuxTabLayoutChange_) {
-        [self tmuxTabLayoutDidChange:YES];
+        [self tmuxTabLayoutDidChange:YES tab:nil];
         postponedTmuxTabLayoutChange_ = NO;
     }
     [self updateUseMetalInAllTabs];

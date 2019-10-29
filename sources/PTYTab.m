@@ -2971,52 +2971,83 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-+ (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
+typedef struct {
+    NSSize minimumSize;
+    NSSize maximumSize;
+} iTermSizeRange;
+
++ (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                         showBottomStatusBar:(BOOL)showBottomStatusBar
                                    bookmark:(Profile *)profile
                                  inTerminal:(NSWindowController<iTermWindowController> *)term {
-    double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
-    NSSize totalSize = NSZeroSize;
-    NSSize size;
+    CGFloat splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
+    iTermSizeRange totalSize = { NSZeroSize, NSZeroSize };
 
     DLog(@"recursiveSetSizesInTmuxParseTree for node:\n%@", parseTree);
 
     BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
-        case kLeafLayoutNode:
+        case kLeafLayoutNode: {
             DLog(@"Leaf node. Compute size of session");
-            size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:profile]
-                                         dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
-                                                               [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
-                                         showTitles:showTitles
-                                showBottomStatusBar:showBottomStatusBar
-                                         inTerminal:term];
-            [parseTree setObject:[NSNumber numberWithInt:size.width] forKey:kLayoutDictPixelWidthKey];
-            [parseTree setObject:[NSNumber numberWithInt:size.height] forKey:kLayoutDictPixelHeightKey];
-            return size;
+            const NSSize cellSize = [self cellSizeForBookmark:profile];
+            const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
+                                                      dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
+                                                                            [parseTree[kLayoutDictHeightKey] intValue])
+                                                      showTitles:showTitles
+                                             showBottomStatusBar:showBottomStatusBar
+                                                      inTerminal:term];
+            parseTree[kLayoutDictPixelWidthKey] = @(size.width);
+            parseTree[kLayoutDictPixelHeightKey] = @(size.height);
 
+            const NSSize maximumSize = NSMakeSize(size.width + cellSize.width - 1,
+                                                  size.height + cellSize.height - 1);
+            parseTree[kLayoutDictMaximumPixelWidthKey] = @(maximumSize.width);
+            parseTree[kLayoutDictMaximumPixelHeightKey] = @(maximumSize.height);
+            return (iTermSizeRange){ size, maximumSize };
+        }
         case kVSplitLayoutNode:
             isVertical = YES;
         case kHSplitLayoutNode: {
             BOOL isFirst = YES;
-            for (NSMutableDictionary *node in [parseTree objectForKey:kLayoutDictChildrenKey]) {
-                size = [self _recursiveSetSizesInTmuxParseTree:node
-                                                    showTitles:showTitles
-                                           showBottomStatusBar:showBottomStatusBar
-                                                      bookmark:profile
-                                                    inTerminal:term];
+            for (NSMutableDictionary *node in parseTree[kLayoutDictChildrenKey]) {
+                const iTermSizeRange sizeRange =
+                    [self _recursiveSetSizesInTmuxParseTree:node
+                                                 showTitles:showTitles
+                                        showBottomStatusBar:showBottomStatusBar
+                                                   bookmark:profile
+                                                 inTerminal:term];
 
-                double splitter = isFirst ? 0 : splitterSize;
-                SetWithGrainDim(isVertical, &totalSize,
-                                WithGrainDim(isVertical, totalSize) + WithGrainDim(isVertical, size) + splitter);
-                SetAgainstGrainDim(isVertical, &totalSize,
-                                   MAX(AgainstGrainDim(isVertical, totalSize),
-                                       AgainstGrainDim(isVertical, size)));
+                const CGFloat splitter = isFirst ? 0 : splitterSize;
+                SetWithGrainDim(isVertical,
+                                &totalSize.minimumSize,
+                                (WithGrainDim(isVertical,
+                                              totalSize.minimumSize) +
+                                 WithGrainDim(isVertical,
+                                              sizeRange.minimumSize) +
+                                 splitter));
+                SetAgainstGrainDim(isVertical,
+                                   &totalSize.minimumSize,
+                                   MAX(AgainstGrainDim(isVertical, totalSize.minimumSize),
+                                       AgainstGrainDim(isVertical, sizeRange.minimumSize)));
+                SetWithGrainDim(isVertical,
+                                &totalSize.maximumSize,
+                                (WithGrainDim(isVertical,
+                                              totalSize.maximumSize) +
+                                 WithGrainDim(isVertical,
+                                              sizeRange.maximumSize) +
+                                 splitter));
+                SetAgainstGrainDim(isVertical,
+                                   &totalSize.maximumSize,
+                                   MAX(AgainstGrainDim(isVertical, totalSize.maximumSize),
+                                       AgainstGrainDim(isVertical, sizeRange.maximumSize)));
                 isFirst = NO;
             }
-            [parseTree setObject:[NSNumber numberWithInt:totalSize.width] forKey:kLayoutDictPixelWidthKey];
-            [parseTree setObject:[NSNumber numberWithInt:totalSize.height] forKey:kLayoutDictPixelHeightKey];
+            parseTree[kLayoutDictPixelWidthKey] = @(totalSize.minimumSize.width);
+            parseTree[kLayoutDictPixelHeightKey] = @(totalSize.minimumSize.height);
+
+            parseTree[kLayoutDictMaximumPixelWidthKey] = @(totalSize.maximumSize.width);
+            parseTree[kLayoutDictMaximumPixelHeightKey] = @(totalSize.maximumSize.height);
             break;
         }
     }
@@ -3175,7 +3206,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                    inTerminal:term];
 }
 
-+ (NSMutableDictionary *)parseTreeWithInjectedRootSplit:(NSMutableDictionary *)parseTree
++ (NSDictionary *)parseTreeWithInjectedRootSplit:(NSDictionary *)parseTree
 {
     if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
         // Inject a splitter at the root to follow our convention even if there is only one session.
@@ -3652,7 +3683,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
-    [realParentWindow_ tmuxTabLayoutDidChange:NO];
+    [realParentWindow_ tmuxTabLayoutDidChange:NO tab:nil controller:tmuxController_];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
     [root_ setNeedsDisplay:YES];
@@ -3707,12 +3738,99 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tmuxTitleMonitor = nil;
 }
 
-- (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
+- (NSSize)rootViewSize {
+    if (flexibleView_) {
+        return flexibleView_.frame.size;
+    }
+    return root_.frame.size;
+}
+
++ (NSMutableDictionary *)tweakedParseTree:(NSDictionary *)parseTree
+                        fillingRootOfSize:(NSSize)desiredSize {
+    NSMutableDictionary *dict = [parseTree mutableCopy];
+
+    // Grow size up to maximum.
+    const NSSize actualSize = NSMakeSize([parseTree[kLayoutDictPixelWidthKey] intValue],
+                                         [parseTree[kLayoutDictPixelHeightKey] intValue]);
+
+    BOOL isVertical = NO;
+    switch ((LayoutNodeType)[parseTree[kLayoutDictNodeType] intValue]) {
+        case kLeafLayoutNode: {
+            const NSSize maximumSize = NSMakeSize([parseTree[kLayoutDictMaximumPixelWidthKey] intValue],
+                                                  [parseTree[kLayoutDictMaximumPixelHeightKey] intValue]);
+            NSSize tweakedSize = actualSize;
+
+            if (actualSize.width < desiredSize.width) {
+                tweakedSize.width = MIN(desiredSize.width, maximumSize.width);
+            }
+            if (actualSize.height < desiredSize.height) {
+                tweakedSize.height = MIN(desiredSize.height, maximumSize.height);
+            }
+            dict[kLayoutDictPixelWidthKey] = @(tweakedSize.width);
+            dict[kLayoutDictPixelHeightKey] = @(tweakedSize.height);
+            break;
+        }
+
+        case kVSplitLayoutNode:
+            isVertical = YES;
+        case kHSplitLayoutNode: {
+            NSMutableArray *replacementChildren = [NSMutableArray array];
+            NSSize desiredGrowth = NSMakeSize(desiredSize.width - actualSize.width,
+                                              desiredSize.height - actualSize.height);
+            NSSize tweakedSize = actualSize;
+            for (NSMutableDictionary *node in parseTree[kLayoutDictChildrenKey]) {
+                // Figure out how much this node would need to grow by and set `exaggeratedSize` to that size.
+                const NSSize originalSize = NSMakeSize([node[kLayoutDictPixelWidthKey] intValue],
+                                                       [node[kLayoutDictPixelHeightKey] intValue]);
+                NSSize exaggeratedSize = originalSize;
+                if (desiredGrowth.width > 0) {
+                    exaggeratedSize.width += desiredGrowth.width;
+                }
+                if (desiredGrowth.height > 0) {
+                    exaggeratedSize.height += desiredGrowth.height;
+                }
+
+                // Create an updated node that is hopefully larger.
+                NSMutableDictionary *replacement = [self tweakedParseTree:node
+                                                        fillingRootOfSize:exaggeratedSize];
+
+                // Deduct its actual growth from the desired growth. It may take many siblings’
+                // growth to satisfy all of the desired growth.
+                const NSSize updatedSize = NSMakeSize([replacement[kLayoutDictPixelWidthKey] intValue],
+                                                      [replacement[kLayoutDictPixelHeightKey] intValue]);
+                const NSSize growth = NSMakeSize(updatedSize.width - originalSize.width,
+                                                 updatedSize.height - originalSize.height);
+                if (isVertical) {
+                    desiredGrowth.width -= growth.width;
+                    tweakedSize.width += growth.width;
+                    tweakedSize.height = MAX(tweakedSize.height, updatedSize.height);
+                } else {
+                    desiredGrowth.height -= growth.height;
+                    tweakedSize.height += growth.height;
+                    tweakedSize.width = MAX(tweakedSize.width, updatedSize.width);
+                }
+
+                [replacementChildren addObject:replacement];
+            }
+            dict[kLayoutDictChildrenKey] = replacementChildren;
+            dict[kLayoutDictPixelWidthKey] = @(tweakedSize.width);
+            dict[kLayoutDictPixelHeightKey] = @(tweakedSize.height);
+            break;
+        }
+    }
+    return dict;
+}
+
+- (void)replaceViewHierarchyWithParseTree:(NSDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
 
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
+    NSLog(@"Root view size is %@", NSStringFromSize(self.rootViewSize));
+    NSLog(@"Before:\n%@", parseTree);
+    parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:self.rootViewSize];
+    NSLog(@"After:\n%@", parseTree);
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
                                                                            origin:NSZeroPoint
@@ -3792,11 +3910,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self fitSubviewsToRoot];
     [self numberOfSessionsDidChange];
     ++tmuxOriginatedResizeInProgress_;
-    [realParentWindow_ beginTmuxOriginatedResize];
-    [realParentWindow_ tmuxTabLayoutDidChange:YES];
-    [realParentWindow_ endTmuxOriginatedResize];
+
+    if (tmuxController.variableWindowSize) {
+        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self controller:tmuxController_];
+    } else {
+        [realParentWindow_ beginTmuxOriginatedResize];
+        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self controller:tmuxController_];
+        [realParentWindow_ endTmuxOriginatedResize];
+    }
     --tmuxOriginatedResizeInProgress_;
-        [realParentWindow_ setDimmingForSessions];
+    [realParentWindow_ setDimmingForSessions];
 }
 
 - (void)maximizeAfterApplyingTmuxParseTree:(NSMutableDictionary *)parseTree tmuxController:(TmuxController *)tmuxController {
@@ -3849,6 +3972,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
+        NSLog(@"Root view size is %@", NSStringFromSize(self.rootViewSize));
+        NSLog(@"Before:\n%@", parseTree);
+        parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
+        NSLog(@"After:\n%@", parseTree);
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {

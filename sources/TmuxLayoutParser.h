@@ -24,6 +24,8 @@ extern NSString *kLayoutDictWindowPaneKey;  // window pane number (leaf nodes on
 // These values are filled in by other classes:
 extern NSString *kLayoutDictPixelWidthKey;
 extern NSString *kLayoutDictPixelHeightKey;
+extern NSString *kLayoutDictMaximumPixelWidthKey;  // Largest size with same number of cells
+extern NSString *kLayoutDictMaximumPixelHeightKey;  // Largest size with same number of cells
 extern NSString *kLayoutDictHistoryKey;       // Array of screen_char_t-filled NSData
 extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
 extern NSString *kLayoutDictStateKey;         // see TmuxStateParser

@@ -342,7 +342,9 @@
 
 // Fit the window to the tabs after a tmux layout change. A change is trivial
 // if views are resized but the view hierarchy is not changed.
-- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange;
+- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
+                           tab:(PTYTab *)tab
+                    controller:(TmuxController *)tmuxController;
 
 // Returns an array of unique tmux controllers present in this window.
 - (NSArray *)uniqueTmuxControllers;
