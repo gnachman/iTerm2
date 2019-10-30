@@ -5813,6 +5813,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                lineEnd - lineStart)];
         [self setNeedsDisplayInRect:[self gridRect]];
     } else {
+        const BOOL hasScrolled = [self.dataSource textViewGetAndResetHasScrolled];
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
             if (range.length > 0) {
@@ -5820,7 +5821,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
-            } else {
+            } else if (!hasScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
         }

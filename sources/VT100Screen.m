@@ -2053,6 +2053,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [currentGrid_ dirtyRangeForLine:y];
 }
 
+- (BOOL)textViewGetAndResetHasScrolled {
+    const BOOL result = currentGrid_.haveScrolled;
+    currentGrid_.haveScrolled = NO;
+    return result;
+}
+
 - (NSDate *)timestampForLine:(int)y {
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     NSTimeInterval interval;

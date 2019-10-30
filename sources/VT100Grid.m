@@ -346,7 +346,7 @@ static NSString *const kGridSizeKey = @"Size";
 
     // Increment screenTop_, effectively scrolling the lines & dirty up by one line.
     screenTop_ = (screenTop_ + 1) % size_.height;
-
+    _haveScrolled = YES;
     // Empty contents of last line on screen.
     NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
     if (lastLineData) {  // This if statement is just to quiet the analyzer.

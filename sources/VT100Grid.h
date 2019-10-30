@@ -42,6 +42,9 @@
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
 @property(nonatomic, assign) VT100GridCoord preferredCursorPosition;
 
+// Did the whole screen scroll up? Won't be reflected in dirty bits.
+@property(nonatomic, assign) BOOL haveScrolled;
+
 // Serialized state, but excludes screen contents.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
