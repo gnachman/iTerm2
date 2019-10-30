@@ -43,6 +43,7 @@
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "iTermTmuxOptionMonitor.h"
+#import "VT100GridTypes.h"
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
@@ -3393,11 +3394,132 @@ typedef struct {
     return [[sortedValues lastObject] intValue];
 }
 
+// This is for tmux tabs. The decoration size is the total amount of space used
+// within a split view or session view.
+typedef struct {
+    // Number of points consumed by title bar, status bar, scrollbars, and
+    // margins. Anything that isn't cells.
+    NSSize points;
+
+    // Number of cells used as dividers between split panes.
+    VT100GridSize cells;
+} PTYTabDecorationSize;
+
+// Measure the decoration size of a view. The view is either a split view or a session view.
+//
+// For a vertical split view:
+//  points.width = (number of dividers) * (divider thickness) + Σ(child decoration point width)
+//  points.height = max(child decoration point height)
+//  cells.width = Σ(child decoration cell width) + (number of dividers)
+//  cells.height = max(child decoration cell height)
+//
+// For a horizontal split view:
+//  points.width = max(child decoration point width)
+//  points.height = (number of dividers) * (divider thickness) + Σ(child decoration point height)
+//  cells.width = max(child decoration cell width)
+//  cells.height = Σ(child decoration cell height) + (number of dividers)
+//
+// For a session view:
+//   points.width = margins' widths + legacy scroll bar width
+//   points.height = margins' heights + title bar height + status bar height
+//   cells.width = 0
+//   cells.height = 0
++ (PTYTabDecorationSize)_recursiveDecorationSize:(__kindof NSView *)view {
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        NSSplitView *splitView = view;
+        if (splitView.vertical) {
+            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
+            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
+            PTYTabDecorationSize result = {
+                .points = NSMakeSize(dividerPoints, 0),
+                .cells = VT100GridSizeMake(numberOfDividers, 0)
+            };
+            for (NSView *childView in splitView.subviews) {
+                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
+                result.points.width += childSize.points.width;
+                result.cells.width += childSize.cells.width;
+                result.points.height = MAX(result.points.height, childSize.points.height);
+                result.cells.height = MAX(result.cells.height, childSize.cells.height);
+            }
+            return result;
+        } else {
+            const NSInteger numberOfDividers = MAX(1, splitView.subviews.count) - 1;
+            const CGFloat dividerPoints = numberOfDividers * splitView.dividerThickness;
+            PTYTabDecorationSize result = {
+                .points = NSMakeSize(0, dividerPoints),
+                .cells = VT100GridSizeMake(0, numberOfDividers)
+            };
+            for (NSView *childView in splitView.subviews) {
+                const PTYTabDecorationSize childSize = [self _recursiveDecorationSize:childView];
+                result.points.width = MAX(result.points.width, childSize.points.width);
+                result.cells.width = MAX(result.cells.width, childSize.cells.width);
+                result.points.height += childSize.points.height;
+                result.cells.height += childSize.cells.height;
+            }
+            return result;
+        }
+    } else {
+        SessionView *sessionView = view;
+        const NSSize scrollViewDecorationSize = [NSScrollView frameSizeForContentSize:NSMakeSize(0, 0)
+                                                              horizontalScrollerClass:nil
+                                                                verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
+                                                                           borderType:sessionView.scrollview.borderType
+                                                                          controlSize:NSControlSizeRegular
+                                                                        scrollerStyle:sessionView.scrollview.scrollerStyle];
+        const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
+        const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermStatusBarHeight : 0;
+        const CGSize margins = NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2,
+                                          [iTermAdvancedSettingsModel terminalVMargin] * 2);
+        return (PTYTabDecorationSize) {
+            .points = NSMakeSize(scrollViewDecorationSize.width + margins.width,
+                                 titleBarHeight + statusBarHeight + margins.height),
+            .cells = VT100GridSizeMake(0, 0)
+        };
+    }
+}
+
+#warning TODO: Only call this one if window size is variable
+// Returns the size in characters of the window size that fits this tab's contents.
+- (NSSize)tmuxSize {
+    // The size in points we need to get it to (at most). Only the current tab will have the proper
+    // frame, but during window creation there might not be a current tab.
+    PTYTab *currentTab = [realParentWindow_ currentTab];
+    if (!currentTab) {
+        currentTab = self;
+    }
+
+    // Available size in points.
+    const NSSize targetSizePoints = [currentTab->tabView_ frame].size;
+
+    // The size of a cell.
+    NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+
+    // Amount of decoration space to reserve.
+    const PTYTabDecorationSize decorationSize = [PTYTab _recursiveDecorationSize:root_];
+
+    // The most conservative possible estimate of the cell space.
+    const NSSize contentSize = NSMakeSize((targetSizePoints.width - decorationSize.points.width) / cellSize.width,
+                                          (targetSizePoints.height - decorationSize.points.height) / cellSize.height);
+
+    // Augment cell space by decoration space (in cells) to get the window size that we know will fit in this tab view.
+    const NSSize result = NSMakeSize(contentSize.width + decorationSize.cells.width,
+                                     contentSize.height + decorationSize.cells.height);
+
+    DLog(@"targetSize=%@ cellSize=%@ decorationSize.points=%@ decorationSize.cells=%@ contentSize=%@ result=%@",
+         NSStringFromSize(targetSizePoints),
+         NSStringFromSize(cellSize),
+         NSStringFromSize(decorationSize.points),
+         VT100GridSizeDescription(decorationSize.cells),
+         NSStringFromSize(contentSize),
+         NSStringFromSize(result));
+    return result;
+}
+
 // Returns the size (in characters) of the window size that fits this tab's
 // contents, while going over as little as possible.  It picks the smallest
 // height that can contain every column and every row (counting characters and
 // dividers as 1).
-- (NSSize)tmuxSize {
+- (NSSize)legacyTmuxSize {
     DLog(@"Compute size in characters of the window that fits this tab's contents");
 
     // The current size of the sessions in this tab in characters
