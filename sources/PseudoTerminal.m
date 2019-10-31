@@ -4234,7 +4234,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    // asdf
     if (tmuxController.variableWindowSize) {
         if (tab) {
             [self fitWindowToTab:tab];

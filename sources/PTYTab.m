@@ -3022,10 +3022,8 @@ typedef struct {
                 const CGFloat splitter = isFirst ? 0 : splitterSize;
                 SetWithGrainDim(isVertical,
                                 &totalSize.minimumSize,
-                                (WithGrainDim(isVertical,
-                                              totalSize.minimumSize) +
-                                 WithGrainDim(isVertical,
-                                              sizeRange.minimumSize) +
+                                (WithGrainDim(isVertical, totalSize.minimumSize) +
+                                 WithGrainDim(isVertical, sizeRange.minimumSize) +
                                  splitter));
                 SetAgainstGrainDim(isVertical,
                                    &totalSize.minimumSize,
@@ -3033,10 +3031,8 @@ typedef struct {
                                        AgainstGrainDim(isVertical, sizeRange.minimumSize)));
                 SetWithGrainDim(isVertical,
                                 &totalSize.maximumSize,
-                                (WithGrainDim(isVertical,
-                                              totalSize.maximumSize) +
-                                 WithGrainDim(isVertical,
-                                              sizeRange.maximumSize) +
+                                (WithGrainDim(isVertical, totalSize.maximumSize) +
+                                 WithGrainDim(isVertical, sizeRange.maximumSize) +
                                  splitter));
                 SetAgainstGrainDim(isVertical,
                                    &totalSize.maximumSize,
@@ -3478,9 +3474,16 @@ typedef struct {
     }
 }
 
-#warning TODO: Only call this one if window size is variable
-// Returns the size in characters of the window size that fits this tab's contents.
 - (NSSize)tmuxSize {
+    if (self.tmuxController.variableWindowSize) {
+        return [self variableTmuxSize];
+    } else {
+        return [self fixedTmuxSize];
+    }
+}
+
+// Returns the size in characters of the window size that fits this tab's contents.
+- (NSSize)variableTmuxSize {
     // The size in points we need to get it to (at most). Only the current tab will have the proper
     // frame, but during window creation there might not be a current tab.
     PTYTab *currentTab = [realParentWindow_ currentTab];
@@ -3497,7 +3500,8 @@ typedef struct {
     // Amount of decoration space to reserve.
     const PTYTabDecorationSize decorationSize = [PTYTab _recursiveDecorationSize:root_];
 
-    // The most conservative possible estimate of the cell space.
+    // The most conservative possible estimate of the cell space. This is equal to the number of cells in the
+    // row or column with the smallest number of cells that could possibly fit, ignoring dividers.
     const NSSize contentSize = NSMakeSize((targetSizePoints.width - decorationSize.points.width) / cellSize.width,
                                           (targetSizePoints.height - decorationSize.points.height) / cellSize.height);
 
@@ -3519,7 +3523,7 @@ typedef struct {
 // contents, while going over as little as possible.  It picks the smallest
 // height that can contain every column and every row (counting characters and
 // dividers as 1).
-- (NSSize)legacyTmuxSize {
+- (NSSize)fixedTmuxSize {
     DLog(@"Compute size in characters of the window that fits this tab's contents");
 
     // The current size of the sessions in this tab in characters
@@ -3867,11 +3871,11 @@ typedef struct {
     return root_.frame.size;
 }
 
+// Adjust the parse tree to minimize "holes" by allowing sessions to grow by just under one cell in size.
 + (NSMutableDictionary *)tweakedParseTree:(NSDictionary *)parseTree
                         fillingRootOfSize:(NSSize)desiredSize {
     NSMutableDictionary *dict = [parseTree mutableCopy];
 
-    // Grow size up to maximum.
     const NSSize actualSize = NSMakeSize([parseTree[kLayoutDictPixelWidthKey] intValue],
                                          [parseTree[kLayoutDictPixelHeightKey] intValue]);
 
@@ -3949,10 +3953,10 @@ typedef struct {
 
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
-    NSLog(@"Root view size is %@", NSStringFromSize(self.rootViewSize));
-    NSLog(@"Before:\n%@", parseTree);
-    parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:self.rootViewSize];
-    NSLog(@"After:\n%@", parseTree);
+    if (tmuxController.variableWindowSize) {
+        parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:self.rootViewSize];
+        DLog(@"Tweaked parse tree:\n%@", parseTree);
+    }
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
                                                                            origin:NSZeroPoint
@@ -4094,10 +4098,10 @@ typedef struct {
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
-        NSLog(@"Root view size is %@", NSStringFromSize(self.rootViewSize));
-        NSLog(@"Before:\n%@", parseTree);
-        parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
-        NSLog(@"After:\n%@", parseTree);
+        if (tmuxController.variableWindowSize) {
+            parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
+            DLog(@"Tweaked parse tree:\n%@", parseTree);
+        }
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {
