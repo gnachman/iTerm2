@@ -1184,15 +1184,17 @@ static const int kDragThreshold = 3;
     }
     _suppressDrawing = suppressDrawing;
     if (PTYTextView.useLayerForBetterPerformance) {
-        // Using a layer in a view inside a scrollview is a disaster, per macOS
-        // tradition (insane drawing artifacts, especially when scrolling). But
-        // not using a layer makes it godawful slow (see note about
-        // rdar://45295749). So use a layer when the view is hidden, and
-        // remove it when visible.
-        if (suppressDrawing) {
-            self.layer = [[[CALayer alloc] init] autorelease];
-        } else {
-            self.layer = nil;
+        if (@available(macOS 10.15, *)) {} {
+            // Using a layer in a view inside a scrollview is a disaster, per macOS
+            // tradition (insane drawing artifacts, especially when scrolling). But
+            // not using a layer makes it godawful slow (see note about
+            // rdar://45295749). So use a layer when the view is hidden, and
+            // remove it when visible.
+            if (suppressDrawing) {
+                self.layer = [[[CALayer alloc] init] autorelease];
+            } else {
+                self.layer = nil;
+            }
         }
         // This is necessary to avoid drawing artifacts when Metal is enabled.
         self.alphaValue = suppressDrawing ? 0 : 1;

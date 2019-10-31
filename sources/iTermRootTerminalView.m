@@ -548,12 +548,14 @@ typedef struct {
     _useMetal = useMetal;
     if (@available(macOS 10.14, *)) {
         self.tabView.drawsBackground = NO;
-        if (useMetal) {
-            self.wantsLayer = YES;
-            self.layer = [[CALayer alloc] init];
-        } else {
-            self.wantsLayer = NO;
-            self.layer = nil;
+        if (@available(macOS 10.15, *)) { } else {
+            if (useMetal) {
+                self.wantsLayer = YES;
+                self.layer = [[CALayer alloc] init];
+            } else {
+                self.wantsLayer = NO;
+                self.layer = nil;
+            }
         }
     } else {
         self.tabView.drawsBackground = !_useMetal;
