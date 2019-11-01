@@ -6,10 +6,19 @@
 //
 
 #import "iTermStatusBarTextComponent.h"
+#import "iTermStatusBarGraphicComponent.h"
 
 @class ITMRPCRegistrationRequest;
 
 @interface iTermStatusBarRPCProvidedTextComponent : iTermStatusBarTextComponent
+
+- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
+                                      scope:(iTermVariableScope *)scope
+                                      knobs:(NSDictionary *)knobs;
+
+@end
+
+@interface iTermStatusBarRPCProvidedLineGraphComponent : iTermStatusBarSparklinesComponent
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
                                       scope:(iTermVariableScope *)scope

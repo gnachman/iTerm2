@@ -1,4 +1,5 @@
 import enum
+import iterm2.api_pb2
 
 class ColorSpace(enum.Enum):
     """Describes the color space of a :ref:`iterm2.Color`."""
@@ -91,6 +92,14 @@ class Color:
             "Alpha Component": self.alpha / 255.0,
             "Color Space": self.color_space.value
             }
+    def get_proto(self):
+        proto = iterm2.api_pb2.Color()
+        proto.red = self.red / 255.0
+        proto.green = self.green / 255.0
+        proto.blue = self.blue / 255.0
+        proto.alpha = self.alpha / 255.0
+        proto.color_space = self.color_space.value
+        return proto
 
     def from_dict(self, input_dict):
         """Updates the color from the dictionary's contents."""

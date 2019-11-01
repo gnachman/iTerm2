@@ -208,7 +208,8 @@ def StatusBarRPC(func):
                   session_id_status_bar_coro,
                   onclick=my_status_bar_click_handler)
     """
-    async def async_register(connection, component, timeout=None):
+    async def async_register(connection, component, timeout=None, result_transformer=None):
+        """This is only called internally."""
         signature = inspect.signature(func)
         defaults = {}
         for k, v in signature.parameters.items():
@@ -221,7 +222,10 @@ def StatusBarRPC(func):
             if "knobs" in kwargs:
                 knobs_json = kwargs["knobs"]
                 kwargs["knobs"] = json.loads(knobs_json)
-            return await func(**kwargs)
+            result = await func(**kwargs)
+            if result_transformer:
+                return result_transformer(result)
+            return result
 
         async def handle_rpc(connection, notif):
             """This gets run first."""

@@ -7216,16 +7216,20 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
 @dynamic hasUpdateCadence, updateCadence;
 @dynamic hasUniqueIdentifier, uniqueIdentifier;
 @dynamic iconsArray, iconsArray_Count;
+@dynamic hasType, type;
+@dynamic hasLineGraphSetting, lineGraphSetting;
 
 typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ {
   uint32_t _has_storage_[1];
   float updateCadence;
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type type;
   NSString *shortDescription;
   NSString *detailedDescription;
   NSMutableArray *knobsArray;
   NSString *exemplar;
   NSString *uniqueIdentifier;
   NSMutableArray *iconsArray;
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting *lineGraphSetting;
 } ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_;
 
 // This method is threadsafe because it is initially called
@@ -7297,6 +7301,24 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "type",
+        .dataTypeSpecific.enumDescFunc = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_EnumDescriptor,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Type,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, type),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "lineGraphSetting",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting),
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_LineGraphSetting,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, lineGraphSetting),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes class]
@@ -7314,6 +7336,40 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
 }
 
 @end
+
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Text\000LineGraph\000";
+    static const int32_t values[] = {
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_Text,
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_LineGraph,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_Text:
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_LineGraph:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob
 
@@ -7496,6 +7552,214 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
                                    storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting
+
+@implementation ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting
+
+@dynamic lineConfigsArray, lineConfigsArray_Count;
+@dynamic hasCeiling, ceiling;
+@dynamic hasMaximumNumberOfValues, maximumNumberOfValues;
+@dynamic hasNumberOfSeries, numberOfSeries;
+
+typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_ {
+  uint32_t _has_storage_[1];
+  float ceiling;
+  int32_t maximumNumberOfValues;
+  int32_t numberOfSeries;
+  NSMutableArray *lineConfigsArray;
+} ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "lineConfigsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config),
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_LineConfigsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_, lineConfigsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "ceiling",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_Ceiling,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_, ceiling),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "maximumNumberOfValues",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_MaximumNumberOfValues,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_, maximumNumberOfValues),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "numberOfSeries",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_NumberOfSeries,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_, numberOfSeries),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config
+
+@implementation ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config
+
+@dynamic hasColor, color;
+
+typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config__storage_ {
+  uint32_t _has_storage_[1];
+  ITMColor *color;
+} ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "color",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColor),
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config_FieldNumber_Color,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config__storage_, color),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMColor
+
+@implementation ITMColor
+
+@dynamic hasRed, red;
+@dynamic hasGreen, green;
+@dynamic hasBlue, blue;
+@dynamic hasAlpha, alpha;
+@dynamic hasColorSpace, colorSpace;
+
+typedef struct ITMColor__storage_ {
+  uint32_t _has_storage_[1];
+  float red;
+  float green;
+  float blue;
+  float alpha;
+  NSString *colorSpace;
+} ITMColor__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "red",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColor_FieldNumber_Red,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMColor__storage_, red),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "green",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColor_FieldNumber_Green,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMColor__storage_, green),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "blue",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColor_FieldNumber_Blue,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMColor__storage_, blue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "alpha",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColor_FieldNumber_Alpha,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMColor__storage_, alpha),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "colorSpace",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColor_FieldNumber_ColorSpace,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMColor__storage_, colorSpace),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColor class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColor__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

@@ -807,6 +807,22 @@ message RPCRegistrationRequest {
       optional float scale = 2;
     }
     repeated Icon icons = 7;
+
+    enum Type {
+      TEXT = 0;
+      LINE_GRAPH = 1;
+    }
+    optional Type type = 8;
+    message LineGraphSetting {
+      message Config {
+        optional Color color = 1;
+      }
+      repeated Config line_configs = 1;
+      optional float ceiling = 2;
+      optional int32 maximum_number_of_values = 3;
+      optional int32 number_of_series = 4;
+    }
+    optional LineGraphSetting line_graph_setting = 9;  // Only valid if type is LINE_GRAPH
   }
 
   oneof RoleSpecificAttributes {
@@ -815,6 +831,16 @@ message RPCRegistrationRequest {
   }
 
   optional string display_name = 6 [deprecated=true];
+}
+
+message Color {
+  // Values are in [0,1]
+  optional float red = 1;
+  optional float green = 2;
+  optional float blue = 3;
+  optional float alpha = 4;
+  // "sRGB" or "Calibrated"
+  optional string color_space = 5;
 }
 
 message RegisterToolResponse {

@@ -283,7 +283,16 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     NSRectFillUsingOperation(baselineRect, NSCompositingOperationSourceOver);
 
     if (self.numberOfTimeSeries == 1) {
-        NSBezierPath *path = [self bezierPathWithValues:[self.values it_arrayByKeepingLastN:self.maximumNumberOfValues]
+        NSArray<NSNumber *> *numbers = [[self.values it_arrayByKeepingLastN:self.maximumNumberOfValues] mapWithBlock:^id(id anObject) {
+            if ([anObject isKindOfClass:[NSNumber class]]) {
+                return anObject;
+            }
+            if ([anObject isKindOfClass:[NSArray class]]) {
+                return [anObject objectAtIndex:0];
+            }
+            return nil;
+        }];
+        NSBezierPath *path = [self bezierPathWithValues:numbers
                                                  inRect:rect];
         [self drawBezierPath:path forTimeSeries:0];
     } else {
@@ -298,18 +307,13 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     }
 }
 
+- (NSColor *)colorForLineNumber:(NSInteger)i {
+    return [self.lineColors uncheckedObjectAtIndex:i] ?: [self statusBarTextColor];
+}
+
 - (void)drawBezierPath:(NSBezierPath *)bezierPath forTimeSeries:(NSInteger)timeSeriesIndex {
-    if (self.numberOfTimeSeries == 1) {
-        [[self statusBarTextColor] set];
-        [bezierPath stroke];
-    } else if (self.numberOfTimeSeries == 2) {
-        if (timeSeriesIndex == 0) {
-            [[[NSColor blueColor] colorWithAlphaComponent:1] set];
-        } else {
-            [[[NSColor redColor] colorWithAlphaComponent:1] set];
-        }
-        [bezierPath stroke];
-    }
+    [[[self colorForLineNumber:timeSeriesIndex] colorWithAlphaComponent:1] set];
+    [bezierPath stroke];
 }
 
 - (NSBezierPath *)bezierPathWithValues:(NSArray<NSNumber *> *)values

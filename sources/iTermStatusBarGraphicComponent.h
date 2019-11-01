@@ -28,8 +28,10 @@
 
 @interface iTermStatusBarSparklinesComponent : iTermStatusBarGraphicComponent
 
+// This is an array of NSNumbers if there is one time series, or an array of array of NSNumber if multiple.
+// An array of arrays is also accepted if there is one time series.
 @property (nonatomic, readonly) NSArray *values;
-@property (nonatomic, readonly) NSColor *lineColor;
+@property (nonatomic, readonly) NSArray<NSColor *> *lineColors;
 @property (nonatomic, readonly) NSInteger numberOfTimeSeries;
 @property (nonatomic, readonly) double ceiling;
 @property (nonatomic, readonly) NSInteger maximumNumberOfValues;

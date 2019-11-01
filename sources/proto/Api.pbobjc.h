@@ -38,6 +38,7 @@ CF_EXTERN_C_BEGIN
 @class ITMCloseRequest_CloseWindows;
 @class ITMCloseResponse;
 @class ITMCodePointsPerCell;
+@class ITMColor;
 @class ITMColorPresetRequest;
 @class ITMColorPresetRequest_GetPreset;
 @class ITMColorPresetRequest_ListPresets;
@@ -124,6 +125,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRPCRegistrationRequest_StatusBarComponentAttributes;
 @class ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon;
 @class ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob;
+@class ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting;
+@class ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config;
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
@@ -688,6 +691,21 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_Text = 0,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_LineGraph = 1,
+};
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type
 
@@ -3258,6 +3276,8 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence = 5,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UniqueIdentifier = 6,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_IconsArray = 7,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Type = 8,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_LineGraphSetting = 9,
 };
 
 @interface ITMRPCRegistrationRequest_StatusBarComponentAttributes : GPBMessage
@@ -3293,6 +3313,14 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon*> *iconsArray;
 /** The number of items in @c iconsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger iconsArray_Count;
+
+@property(nonatomic, readwrite) ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type type;
+
+@property(nonatomic, readwrite) BOOL hasType;
+/** Only valid if type is LINE_GRAPH */
+@property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting *lineGraphSetting;
+/** Test to see if @c lineGraphSetting has been set. */
+@property(nonatomic, readwrite) BOOL hasLineGraphSetting;
 
 @end
 
@@ -3345,6 +3373,78 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_Fie
 @property(nonatomic, readwrite) float scale;
 
 @property(nonatomic, readwrite) BOOL hasScale;
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_LineConfigsArray = 1,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_Ceiling = 2,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_MaximumNumberOfValues = 3,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_FieldNumber_NumberOfSeries = 4,
+};
+
+@interface ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config*> *lineConfigsArray;
+/** The number of items in @c lineConfigsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger lineConfigsArray_Count;
+
+@property(nonatomic, readwrite) float ceiling;
+
+@property(nonatomic, readwrite) BOOL hasCeiling;
+@property(nonatomic, readwrite) int32_t maximumNumberOfValues;
+
+@property(nonatomic, readwrite) BOOL hasMaximumNumberOfValues;
+@property(nonatomic, readwrite) int32_t numberOfSeries;
+
+@property(nonatomic, readwrite) BOOL hasNumberOfSeries;
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config_FieldNumber) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config_FieldNumber_Color = 1,
+};
+
+@interface ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMColor *color;
+/** Test to see if @c color has been set. */
+@property(nonatomic, readwrite) BOOL hasColor;
+
+@end
+
+#pragma mark - ITMColor
+
+typedef GPB_ENUM(ITMColor_FieldNumber) {
+  ITMColor_FieldNumber_Red = 1,
+  ITMColor_FieldNumber_Green = 2,
+  ITMColor_FieldNumber_Blue = 3,
+  ITMColor_FieldNumber_Alpha = 4,
+  ITMColor_FieldNumber_ColorSpace = 5,
+};
+
+@interface ITMColor : GPBMessage
+
+/** Values are in [0,1] */
+@property(nonatomic, readwrite) float red;
+
+@property(nonatomic, readwrite) BOOL hasRed;
+@property(nonatomic, readwrite) float green;
+
+@property(nonatomic, readwrite) BOOL hasGreen;
+@property(nonatomic, readwrite) float blue;
+
+@property(nonatomic, readwrite) BOOL hasBlue;
+@property(nonatomic, readwrite) float alpha;
+
+@property(nonatomic, readwrite) BOOL hasAlpha;
+/** "sRGB" or "Calibrated" */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *colorSpace;
+/** Test to see if @c colorSpace has been set. */
+@property(nonatomic, readwrite) BOOL hasColorSpace;
+
 @end
 
 #pragma mark - ITMRegisterToolResponse

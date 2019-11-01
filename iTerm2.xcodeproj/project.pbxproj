@@ -3385,6 +3385,8 @@
 		A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
 		A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
 		A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
+		A6E84787231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E84785231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.h */; };
+		A6E84788231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E84786231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.m */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
@@ -5818,6 +5820,8 @@
 		A6E7AEA0214394F600DE9F3B /* graphic_ethereum@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_ethereum@2x.png"; path = "hyper-tab-icons-plus/png/graphic_ethereum@2x.png"; sourceTree = "<group>"; };
 		A6E7AEA1214394F600DE9F3B /* graphic_database@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_database@2x.png"; path = "hyper-tab-icons-plus/png/graphic_database@2x.png"; sourceTree = "<group>"; };
 		A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_ethereum.png; path = "hyper-tab-icons-plus/png/graphic_ethereum.png"; sourceTree = "<group>"; };
+		A6E84785231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarRPCProvidedComponentHelper.h; sourceTree = "<group>"; };
+		A6E84786231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarRPCProvidedComponentHelper.m; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -7695,6 +7699,8 @@
 				5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */,
 				A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */,
 				A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */,
+				A6E84785231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.h */,
+				A6E84786231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -9931,6 +9937,7 @@
 				A66719101DCE36C3000CE608 /* iTermCapturedOutputMark.h in Headers */,
 				A630118320E6A613008114B7 /* iTermStatusBarSetupViewController.h in Headers */,
 				A62DBBA720F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h in Headers */,
+				A6E84787231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.h in Headers */,
 				A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */,
 				A618FFBD22409DF900B8FD88 /* iTermTheme.h in Headers */,
 				A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */,
@@ -12610,6 +12617,7 @@
 				53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */,
 				531E71F52229A54500915960 /* iTermParsedExpression.m in Sources */,
 				A69C9338212108E900531438 /* iTermsStatusBarComposerViewController.m in Sources */,
+				A6E84788231EE05C003CF1C6 /* iTermStatusBarRPCProvidedComponentHelper.m in Sources */,
 				A61F457722FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m in Sources */,
 				A67960D61F81FCBB008A42BC /* iTermMarkRenderer.m in Sources */,
 				A6D4C26D21E19155009CF11B /* iTermSessionTabWindowOutlineDelegate.m in Sources */,

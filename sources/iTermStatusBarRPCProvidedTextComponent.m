@@ -18,34 +18,19 @@
 #import "iTermScriptHistory.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermStatusBarComponentKnob.h"
+#import "iTermStatusBarRPCProvidedComponentHelper.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableReference.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration request";
-
-@interface ITMRPCRegistrationRequest(StatusBar)
-@property (nonatomic, readonly) NSDictionary *statusBarConfiguration;
-- (instancetype)latestStatusBarRequest;
-@end
-
-@implementation ITMRPCRegistrationRequest(StatusBar)
-
-- (NSDictionary *)statusBarConfiguration {
-    return @{ iTermStatusBarRPCRegistrationRequestKey: self.data,
-              iTermStatusBarComponentConfigurationKeyKnobValues: @{} };
-}
-
-- (instancetype)latestStatusBarRequest {
-    return [iTermAPIHelper registrationRequestForStatusBarComponentWithUniqueIdentifier:self.statusBarComponentAttributes.uniqueIdentifier] ?: self;
-}
-
-@end
+static const CGFloat iTermStatusBarRPCProvidedLineGraphComponentMinimumWidth = 120;
 
 @implementation iTermStatusBarRPCComponentFactory {
     ITMRPCRegistrationRequest *_savedRegistrationRequest;
@@ -101,70 +86,70 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
                                      layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
                                                scope:(iTermVariableScope *)scope {
-    return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_savedRegistrationRequest.latestStatusBarRequest
-                                                                                 scope:scope
-                                                                                 knobs:knobs];
+    Class theClass = nil;
+    switch (_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.type) {
+        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_LineGraph:
+            theClass = [iTermStatusBarRPCProvidedLineGraphComponent class];
+            break;
+        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Type_Text:
+            theClass = [iTermStatusBarRPCProvidedTextComponent class];
+            break;
+    }
+    return [[theClass alloc] initWithRegistrationRequest:_savedRegistrationRequest.latestStatusBarRequest
+                                                   scope:scope
+                                                   knobs:knobs];
 }
 
 @end
 
-@interface iTermStatusBarRPCProvidedTextComponent()<iTermObject>
-@end
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
-    ITMRPCRegistrationRequest *_savedRegistrationRequest;
     NSArray<NSString *> *_variants;
-    NSArray<iTermVariableReference *> *_dependencies;
-    NSMutableSet<NSString *> *_missingFunctions;
-    NSString *_errorMessage;  // Nil if the last evaluation was successful.
-    NSDate *_dateOfLaunchToFix;
-    NSString *_fullPath;
-    BOOL _computedIcon;
-    NSImage *_icon;
+    iTermStatusBarRPCProvidedComponentHelper *_helper;
 }
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
                                       scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs {
-    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
-                                          iTermStatusBarComponentConfigurationKeyKnobValues: knobs }
-                                 scope:scope];
+    NSDictionary *configuration = @{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+                                     iTermStatusBarComponentConfigurationKeyKnobValues: knobs };
+    return [self initWithConfiguration:configuration scope:scope];
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
-                                scope:(nullable iTermVariableScope *)realScope {
-    NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey];;
+                                scope:(nullable iTermVariableScope *)scope {
+    NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey];
     ITMRPCRegistrationRequest *registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data
                                                                                                error:nil];
     if (!registrationRequest) {
         return nil;
     }
-    self = [super initWithConfiguration:configuration scope:realScope];
+    __weak __typeof(self) weakSelf = self;
+    iTermStatusBarRPCProvidedComponentHelper *helper =
+    [[iTermStatusBarRPCProvidedComponentHelper alloc] initWithConfiguration:configuration
+                                                                      scope:scope
+                                                                updateBlock:^{
+                                                                    [weakSelf rpcUpdate];
+                                                                }
+                                                                reloadBlock:^{
+                                                                    [weakSelf statusBarComponentUpdate];
+                                                                }
+                                                                  evalBlock:^(id _Nullable value,
+                                                                              NSError * _Nullable error,
+                                                                              NSSet<NSString *> * _Nullable missingFunctions) {
+                                                                      [weakSelf didEvaluate:value
+                                                                                      error:error
+                                                                           missingFunctions:missingFunctions];
+                                                                  }
+                                                             windowProvider:^NSWindow * _Nonnull {
+                                                                 return weakSelf.textField.window;
+                                                             }];
+    if (!helper) {
+        return nil;
+    }
+    self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
-        _savedRegistrationRequest = registrationRequest;
-        iTermVariableRecordingScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:self.scope];
-        scope.neverReturnNil = YES;
-        [iTermScriptFunctionCall callFunction:self.invocation
-                                      timeout:0
-                                        scope:scope
-                                   retainSelf:YES
-                                   completion:^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {}];
-        _dependencies = [scope recordedReferences];
-        __weak __typeof(self) weakSelf = self;
-        [_dependencies enumerateObjectsUsingBlock:^(iTermVariableReference * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            obj.onChangeBlock = ^{
-                [weakSelf updateWithKnobValues:weakSelf.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
-            };
-        }];
-        [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(registeredFunctionsDidChange:)
-                                                     name:iTermAPIRegisteredFunctionsDidChangeNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(didRegisterStatusBarComponent:)
-                                                     name:iTermAPIDidRegisterStatusBarComponentNotification
-                                                   object:nil];
+        _helper = helper;
     }
     return self;
 }
@@ -173,18 +158,13 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (NSString *)invocation {
-    NSArray<ITMRPCRegistrationRequest_RPCArgument *> *defaults = _savedRegistrationRequest.latestStatusBarRequest.defaultsArray ?: @[];
-    ITMRPCRegistrationRequest_RPCArgument *knobs = [[ITMRPCRegistrationRequest_RPCArgument alloc] init];
-    knobs.name = @"knobs";
-    knobs.path = @"__knobs";
-    return [iTermAPIHelper invocationWithName:_savedRegistrationRequest.latestStatusBarRequest.name
-                                     defaults:[defaults arrayByAddingObject:knobs]];
+- (void)rpcUpdate {
+    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
 }
 
 - (NSString *)statusBarComponentIdentifier {
     // Old (prerelease) ones did not have a unique identifier so assign one to prevent disaster.
-    return _savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier ?: [[NSUUID UUID] UUIDString];
+    return _helper.identifier;
 }
 
 - (NSTextField *)newTextField {
@@ -199,15 +179,15 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
-    return [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:_savedRegistrationRequest.latestStatusBarRequest];
+    return _helper.factory;
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription;
+    return _helper.shortDescription;
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.detailedDescription;
+    return _helper.detailedDescriptor;
 }
 
 - (void)statusBarComponentUpdate {
@@ -215,69 +195,21 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (nullable NSImage *)statusBarComponentIcon {
-    if (_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.iconsArray.count == 0) {
-        return nil;
-    }
-    if (_computedIcon) {
-        return _icon;
-    }
-    _computedIcon = YES;
-    __block NSSize sizeInPoints = NSZeroSize;
-    NSArray<NSBitmapImageRep *> *reps = [_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.iconsArray mapWithBlock:^id(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon *proto) {
-        NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:proto.data_p];
-        if (!rep) {
-            return nil;
-        }
-        if (proto.scale <= 0) {
-            return nil;
-        }
-        if (NSEqualSizes(NSZeroSize, sizeInPoints)) {
-            sizeInPoints = rep.size;
-            sizeInPoints.width = round(sizeInPoints.width / proto.scale);
-            sizeInPoints.height = round(sizeInPoints.height / proto.scale);
-        }
-        return rep;
-    }];
-    if (sizeInPoints.width <= 0 || sizeInPoints.height <= 0) {
-        return nil;
-    }
-    NSImage *image = [[NSImage alloc] initWithSize:sizeInPoints];
-    for (NSBitmapImageRep *rep in reps) {
-        [image addRepresentation:rep];
-    }
-    _icon = image;
-    return _icon;
+    return _helper.icon;
 }
 
 - (iTermStatusBarComponentKnobType)knobTypeFromDescriptorType:(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type)type {
-    switch (type) {
-        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Color:
-            return iTermStatusBarComponentKnobTypeColor;
-        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_String:
-            return iTermStatusBarComponentKnobTypeText;
-        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Checkbox:
-            return iTermStatusBarComponentKnobTypeCheckbox;
-        case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_PositiveFloatingPoint:
-            return iTermStatusBarComponentKnobTypeDouble;
-    }
-    return iTermStatusBarComponentKnobTypeText;
+    return [_helper knobTypeFromDescriptorType:type];
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    NSArray<iTermStatusBarComponentKnob *> *knobs;
-    knobs = [_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.knobsArray mapWithBlock:^id(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob *descriptor) {
-        return [[iTermStatusBarComponentKnob alloc] initWithLabelText:descriptor.name
-                                                                 type:[self knobTypeFromDescriptorType:descriptor.type]
-                                                          placeholder:descriptor.hasPlaceholder ? descriptor.placeholder : nil
-                                                         defaultValue:descriptor.hasJsonDefaultValue ? [NSJSONSerialization it_objectForJsonString:descriptor.jsonDefaultValue] : nil
-                                                                  key:descriptor.key];
-    }] ?: @[];
-    return [knobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    return [_helper knobsWith:[super statusBarComponentKnobs]];
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.exemplar ?: @"";
+    return [_helper exemplarWithBackgroundColor:backgroundColor
+                                      textColor:textColor];
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -289,66 +221,25 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
-    __weak __typeof(self) weakSelf = self;
-    iTermVariableScope *scope = [self.scope copy];
-    if (!scope) {
-        // This happens in the setup UI because the component is not attached to a real session. To
-        // avoid spurious errors, do not actually evaluate the invocation.
-        return;
-    }
-    // Create a temporary frame to shadow __knobs in the scope. This avoids mutating a scope we don't own.
-    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
-                                                                  owner:self];
-    [scope addVariables:variables toScopeNamed:nil];
-    NSDictionary *knobsDict = weakSelf.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{};
-    NSString *jsonKnobs = [NSJSONSerialization it_jsonStringForObject:knobsDict];
-    [scope setValue:jsonKnobs forVariableNamed:@"__knobs"];
-    [iTermScriptFunctionCall callFunction:self.invocation
-                                  timeout:_savedRegistrationRequest.latestStatusBarRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
-                                    scope:scope
-                               retainSelf:YES
-                               completion:
-     ^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {
-         DLog(@"evaluation of %@ completed with value %@ error %@", self.invocation, value, error);
-         if (error) {
-             [weakSelf handleEvaluationError:error missingFunctions:missingFunctions];
-             return;
-         }
-         [weakSelf handleSuccessfulEvaluationWithValue:value];
-     }];
+    [_helper updateWithKnobValues:knobValues];
 }
 
-- (void)maybeOfferToMoveScriptToAutoLaunch {
-    if (-[_dateOfLaunchToFix timeIntervalSinceNow] >= 1) {
+- (void)didEvaluate:(id)value
+              error:(NSError *)error
+   missingFunctions:(NSSet<NSString *> *)missingFunctions {
+    if (value) {
+        [self handleSuccessfulEvaluation:value];
         return;
     }
-    iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
-    if ([menuController scriptShouldAutoLaunchWithFullPath:_fullPath]) {
-        return;
-    }
-    if (![menuController couldMoveScriptToAutoLaunch:_fullPath]) {
-        return;
-    }
-
-    if ([iTermWarning showWarningWithTitle:@"This will move the script into the AutoLaunch folder."
-                                   actions:@[ @"OK", @"Cancel" ]
-                                 accessory:nil
-                                identifier:[NSString stringWithFormat:@"NoSyncAutoLaunchScript_%@", _fullPath]
-                               silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Always launch this script when iTerm2 starts?"
-                                    window:self.textField.window] == kiTermWarningSelection0) {
-        [menuController moveScriptToAutoLaunch:_fullPath];
+    if (error) {
+        [self handleEvaluationError:error missingFunctions:missingFunctions];
     }
 }
 
-- (void)handleSuccessfulEvaluationWithValue:(id)value {
-    // Dispatch async so the user can see that it fixed it.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self maybeOfferToMoveScriptToAutoLaunch];
-    });
+- (void)handleSuccessfulEvaluation:(id)value {
     NSString *stringValue = [NSString castFrom:value];
     NSArray *arrayValue = [NSArray castFrom:value];
-    _errorMessage = nil;
+    _helper.errorMessage = nil;
     if (stringValue) {
         _variants = @[ stringValue ];
     } else if ([arrayValue allWithBlock:^BOOL(id anObject) {
@@ -356,9 +247,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }]) {
         _variants = arrayValue;
     } else {
-        _errorMessage = [NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", self.invocation, value];
-        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
-                                                                              string:_errorMessage];
+        [_helper logInvalidValue:[NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", _helper.invocation, value]];
         _variants = @[ @"🐞" ];
     }
     [self updateTextFieldIfNeeded];
@@ -366,16 +255,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (void)handleEvaluationError:(NSError *)error
              missingFunctions:(NSSet<NSString *> *)missingFunctions {
-    _errorMessage = [NSString stringWithFormat:@"Status bar component “%@” (%@) failed.\n\nThis function call had an error:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
-                     _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription,
-                     _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier,
-                     self.invocation,
-                     error.localizedDescription,
-                     error.localizedFailureReason ? [@"\n\n" stringByAppendingString:error.localizedFailureReason] : @""];
-    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
-                                                                          string:_errorMessage];
     _variants = @[ @"🐞" ];
-    _missingFunctions = [missingFunctions mutableCopy];
     [self updateTextFieldIfNeeded];
 }
 
@@ -384,152 +264,297 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [super statusBarComponentSetKnobValues:knobValues];
 }
 
-- (void)didRegisterStatusBarComponent:(NSNotification *)notification {
-    if (![notification.object isEqual:_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier]) {
-        return;
-    }
-    [_missingFunctions removeAllObjects];
-    [self statusBarComponentUpdate];
-}
-
-- (void)registeredFunctionsDidChange:(NSNotification *)notification {
-    NSArray<NSString *> *registered = [_missingFunctions.allObjects filteredArrayUsingBlock:^BOOL(NSString *signature) {
-        return [[iTermAPIHelper sharedInstance] haveRegisteredFunctionWithSignature:signature];
-    }];
-    if (!registered.count) {
-        return;
-    }
-    [_missingFunctions minusSet:[NSSet setWithArray:registered]];
-    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
-}
-
 - (NSTimeInterval)statusBarComponentUpdateCadence {
-    if (_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.hasUpdateCadence) {
-        return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.updateCadence;
-    } else {
-        return INFINITY;
-    }
-}
-
-- (BOOL)scriptIsRunning:(NSString *)fullPath {
-    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithFullPath:fullPath];
-    if (!entry) {
-        return NO;
-    }
-    return entry.isRunning;
-}
-
-- (BOOL)scriptIsNotRunningButCouldBeLaunched {
-    NSString *fullPath = [self fullPathOfScript];
-    if (!fullPath) {
-        return NO;
-    }
-    if ([self scriptIsRunning:fullPath]) {
-        return NO;
-    }
-    return [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] couldLaunchScriptWithAbsolutePath:fullPath];
+    return _helper.cadence;
 }
 
 - (nullable NSString *)fullPathOfScript {
-    if (!_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier) {
-        return nil;
-    }
-    return [iTermAPIHelper nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier];
-}
-
-- (void)launchScript {
-    if (!_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
-        return;
-    }
-    NSString *fullPath = [self fullPathOfScript];
-    if (!fullPath) {
-        return;
-    }
-    iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
-    [menuController launchScriptWithAbsolutePath:fullPath explicitUserAction:YES];
-    _dateOfLaunchToFix = [NSDate date];
-    _fullPath = [fullPath copy];
-}
-
-- (void)revealInFinder {
-    NSString *fullPath = [self fullPathOfScript];
-    if (!fullPath) {
-        return;
-    }
-    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
+    return _helper.fullPathOfScript;
 }
 
 - (void)onClick:(id)sender {
-    if (_errorMessage) {
-        iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = _errorMessage;
-        warning.heading = @"Status Bar Component Problem";
-        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
-        if ([self scriptIsNotRunningButCouldBeLaunched]) {
-            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:@"Launch Script" block:^(iTermWarningSelection selection) {
-                [self launchScript];
-            }];
-            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:@"Reveal in Finder" block:^(iTermWarningSelection selection) {
-                [self revealInFinder];
-            }];
-            actions = [actions arrayByAddingObjectsFromArray:@[ launch, reveal ]];
+    [_helper onClick:sender];
+}
 
-            warning.title = [NSString stringWithFormat:@"%@It looks like the script is not running. Launching it might fix the problem.", _errorMessage];
-        }
-        warning.warningActions = actions;
-        warning.warningType = kiTermWarningTypePersistent;
-        warning.heading = @"Status Bar Script Error";
-        warning.window = self.textField.window;
-        [warning runModal];
+@end
+
+@implementation iTermStatusBarRPCProvidedLineGraphComponent {
+    NSArray *_values;
+    iTermStatusBarRPCProvidedComponentHelper *_helper;
+    NSString *_leftText;
+    NSString *_rightText;
+    NSString *_longestLeftText;
+
+    NSInteger _maximumNumberOfValues;
+    NSInteger _numberOfTimeSeries;
+    NSArray<NSColor *> *_lineColors;
+
+}
+
+- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
+                                      scope:(iTermVariableScope *)scope
+                                      knobs:(NSDictionary *)knobs {
+    NSDictionary *configuration = @{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+                                     iTermStatusBarComponentConfigurationKeyKnobValues: knobs };
+    return [self initWithConfiguration:configuration scope:scope];
+}
+
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey];
+    ITMRPCRegistrationRequest *registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data
+                                                                                               error:nil];
+    if (!registrationRequest) {
+        return nil;
+    }
+    __weak __typeof(self) weakSelf = self;
+    iTermStatusBarRPCProvidedComponentHelper *helper =
+    [[iTermStatusBarRPCProvidedComponentHelper alloc] initWithConfiguration:configuration
+                                                                      scope:scope
+                                                                updateBlock:^{
+                                                                    [weakSelf rpcUpdate];
+                                                                }
+                                                                reloadBlock:^{
+                                                                    [weakSelf statusBarComponentUpdate];
+                                                                }
+                                                                  evalBlock:^(id _Nullable value,
+                                                                              NSError * _Nullable error,
+                                                                              NSSet<NSString *> * _Nullable missingFunctions) {
+                                                                      [weakSelf didEvaluate:value
+                                                                                      error:error
+                                                                           missingFunctions:missingFunctions];
+                                                                  }
+                                                             windowProvider:^NSWindow * _Nonnull {
+                                                                 return weakSelf.view.window;
+                                                             }];
+    if (!helper) {
+        return nil;
+    }
+    self = [super initWithConfiguration:configuration scope:scope];
+    if (self) {
+        _helper = helper;
+        _maximumNumberOfValues = registrationRequest.statusBarComponentAttributes.lineGraphSetting.maximumNumberOfValues;
+        _numberOfTimeSeries = registrationRequest.statusBarComponentAttributes.lineGraphSetting.numberOfSeries;
+        _lineColors = [registrationRequest.statusBarComponentAttributes.lineGraphSetting.lineConfigsArray mapWithBlock:^id(ITMRPCRegistrationRequest_StatusBarComponentAttributes_LineGraphSetting_Config *anObject) {
+            NSColorSpace *colorSpace = nil;
+            if ([anObject.color.colorSpace isEqualToString:@"sRGB"]) {
+                colorSpace = [NSColorSpace sRGBColorSpace];
+            } else if ([anObject.color.colorSpace isEqualToString:@"Calibrated"]) {
+                colorSpace = [NSColorSpace deviceRGBColorSpace];
+            }
+            if (colorSpace) {
+                CGFloat components[] = {
+                    anObject.color.red,
+                    anObject.color.green,
+                    anObject.color.blue,
+                    anObject.color.alpha
+                };
+                return [NSColor colorWithColorSpace:colorSpace components:components count:sizeof(components) / sizeof(*components)];
+            } else {
+                return nil;
+            }
+        }];
+    }
+    return self;
+}
+
+- (NSInteger)maximumNumberOfValues {
+    return _maximumNumberOfValues;
+}
+
+- (NSInteger)numberOfTimeSeries {
+    return _numberOfTimeSeries;
+}
+
+- (NSArray<NSColor *> *)lineColors {
+    return _lineColors;
+}
+
+- (void)rpcUpdate {
+    [_helper updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+}
+
+- (void)didEvaluate:(id)value
+              error:(NSError *)error
+   missingFunctions:(NSSet<NSString *> *)missingFunctions {
+    if (value) {
+        [self handleSuccessfulEvaluation:value];
         return;
     }
-    NSString *sessionId = [self.scope valueForVariableName:iTermVariableKeySessionID];
-    NSString *identifier = [[self.statusBarComponentIdentifier stringByReplacingOccurrencesOfString:@"." withString:@"_"] stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
-    NSString *func = [NSString stringWithFormat:@"__%@__on_click(session_id: \"%@\")", identifier, sessionId];
-    [iTermScriptFunctionCall callFunction:func
-                                  timeout:30
-                                    scope:self.scope
-                               retainSelf:YES
-                               completion:^(id result, NSError *error, NSSet<NSString *> *mutations) {
-                                   if (error) {
-                                       NSString *message = [NSString stringWithFormat:@"Error in onclick handler: %@\n%@", error.localizedDescription, error.localizedFailureReason];
-                                       [[iTermScriptHistoryEntry globalEntry] addOutput:message];
-                                   }
-                               }];
-}
-
-- (void)itermWebViewJavascriptError:(NSString *)errorText {
-    NSError *error = nil;
-    NSString *signature = [iTermExpressionParser signatureForFunctionCallInvocation:self.invocation
-                                                                              error:&error];
-    if (!signature && error) {
-        signature = error.localizedDescription;
+    if (error) {
+        [self handleEvaluationError:error missingFunctions:missingFunctions];
     }
-    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
-                                                                          string:errorText];
-    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
-                                                                          string:@"Right-click in the webview and choose Inspect Element to open the Web Inspector."];
 }
 
-- (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
-    NSError *error = nil;
-    NSString *signature = [iTermExpressionParser signatureForFunctionCallInvocation:self.invocation
-                                                                              error:&error];
-    if (!signature && error) {
-        signature = error.localizedDescription;
+- (void)handleSuccessfulEvaluation:(id)value {
+    NSDictionary *dictionaryValue = [NSDictionary castFrom:value];
+    _helper.errorMessage = nil;
+    if (dictionaryValue) {
+        NSArray<NSArray<NSNumber *> *> *values = dictionaryValue[@"values"];
+        _leftText = [dictionaryValue[@"leftText"] nilIfNull];
+        _longestLeftText = [dictionaryValue[@"longestLeftText"] nilIfNull];
+        _rightText = [dictionaryValue[@"rightText"] nilIfNull];
+        const NSInteger numberOfSeries = self.numberOfTimeSeries;
+        _values = [values filteredArrayUsingBlock:^BOOL(NSArray<NSNumber *> *tuple) {
+            if (tuple.count != numberOfSeries) {
+                return NO;
+            }
+            return [tuple allWithBlock:^BOOL(NSNumber *value) {
+                return [value isKindOfClass:[NSNumber class]];
+            }];
+        }];
+    } else {
+        [_helper logInvalidValue:[NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a dictionary.\n\nInstead, it returned:\n\n%@", _helper.invocation, value]];
+        _values = nil;
     }
-    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
-                                                                          string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
+    [self invalidate];
 }
 
-#pragma mark - iTermObject
-
-- (nullable iTermBuiltInFunctions *)objectMethodRegistry {
-    return nil;
+- (void)handleEvaluationError:(NSError *)error
+             missingFunctions:(NSSet<NSString *> *)missingFunctions {
+    _values = nil;
 }
 
-- (nullable iTermVariableScope *)objectScope {
-    return nil;
+- (NSImage *)statusBarComponentIcon {
+    return _helper.icon;
+}
+
+- (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
+    return _helper.factory;
+}
+
+- (NSString *)statusBarComponentShortDescription {
+    return _helper.shortDescription;
+}
+
+- (NSString *)statusBarComponentDetailedDescription {
+    return _helper.detailedDescriptor;
+}
+
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
+    return [_helper exemplarWithBackgroundColor:backgroundColor
+                                      textColor:textColor];
+}
+
+- (BOOL)statusBarComponentCanStretch {
+    return NO;
+}
+
+- (void)statusBarComponentUpdate {
+    [_helper updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+}
+
+- (NSTimeInterval)statusBarComponentUpdateCadence {
+    return _helper.cadence;
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    return iTermStatusBarRPCProvidedLineGraphComponentMinimumWidth;
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return iTermStatusBarRPCProvidedLineGraphComponentMinimumWidth;
+}
+
+- (NSArray<NSArray<NSNumber *> *> *)values {
+    return _values;
+}
+
+- (void)drawTextWithRect:(NSRect)rect
+                    left:(NSString *)left
+                   right:(NSString *)right
+               rightSize:(CGSize)rightSize {
+    NSRect textRect = rect;
+    textRect.size.height = rightSize.height;
+    textRect.origin.y = [self textOffset];
+    [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
+    [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
+}
+
+- (NSRect)graphRectForRect:(NSRect)rect
+                  leftSize:(CGSize)leftSize
+                 rightSize:(CGSize)rightSize {
+    NSRect graphRect = rect;
+    const CGFloat margin = 4;
+    CGFloat rightWidth = rightSize.width + margin;
+    CGFloat leftWidth = leftSize.width + margin;
+    graphRect.origin.x += leftWidth;
+    graphRect.size.width -= (leftWidth + rightWidth);
+    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender] + self.statusBarComponentVerticalOffset);
+
+    return graphRect;
+}
+
+- (NSFont *)font {
+    return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+}
+
+- (NSDictionary *)leftAttributes {
+    NSMutableParagraphStyle *leftAlignStyle =
+    [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    [leftAlignStyle setAlignment:NSTextAlignmentLeft];
+    [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+
+    return @{ NSParagraphStyleAttributeName: leftAlignStyle,
+              NSFontAttributeName: self.font,
+              NSForegroundColorAttributeName: self.textColor };
+}
+
+- (NSDictionary *)rightAttributes {
+    NSMutableParagraphStyle *rightAlignStyle =
+    [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    [rightAlignStyle setAlignment:NSTextAlignmentRight];
+    [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+    return @{ NSParagraphStyleAttributeName: rightAlignStyle,
+              NSFontAttributeName: self.font,
+              NSForegroundColorAttributeName: self.textColor };
+}
+
+- (CGFloat)textOffset {
+    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    const CGFloat containerHeight = self.view.superview.bounds.size.height;
+    const CGFloat capHeight = font.capHeight;
+    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
+    const CGFloat frameY = (containerHeight - self.view.frame.size.height) / 2;
+    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
+    return origin;
+}
+
+- (NSSize)leftSize {
+    NSString *longestPercentage = _longestLeftText;
+    return [longestPercentage sizeWithAttributes:self.leftAttributes];
+}
+
+- (CGSize)rightSize {
+    return [_rightText sizeWithAttributes:self.rightAttributes];
+}
+
+- (NSString *)leftText {
+    return _leftText;
+}
+
+- (NSString *)rightText {
+    return _rightText;
+}
+
+- (void)drawRect:(NSRect)rect {
+    CGSize rightSize = self.rightSize;
+
+    [self drawTextWithRect:rect
+                      left:self.leftText
+                     right:self.rightText
+                 rightSize:rightSize];
+
+    NSRect graphRect = [self graphRectForRect:rect leftSize:self.leftSize rightSize:rightSize];
+
+    [super drawRect:graphRect];
+}
+
+#pragma mark - Private
+
+- (void)update:(double)value {
+    [self invalidate];
 }
 
 @end

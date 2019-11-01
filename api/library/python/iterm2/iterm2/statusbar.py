@@ -1,6 +1,7 @@
 """Status bar customization interfaces."""
 
 import base64
+import enum
 import json
 import iterm2.api_pb2
 import iterm2.capabilities
@@ -118,6 +119,56 @@ class StatusBarComponent:
         * Example ":ref:`mousemode_example`"
         * Example ":ref:`statusbar_example`"
     """
+    class TextType:
+        """Text-only status bar component type."""
+        def populate_proto(self, proto):
+            proto.type = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Type.TEXT
+
+        def result_transformer(self):
+            def f(value):
+                return value
+            return f
+
+    class LineGraphType:
+        """Line graph status bar component type.
+
+        Configuration settings for line graph components go here.
+
+        When implementing this type of status bar component, your coroutine should return a value of type LineGraphUpdate.
+
+        :param ceiling: The largest displayable value. Sets the vertical scale of the graph.
+        :param maximum_number_of_values: The largest number of values that can be shown. Sets the horizontal scale of the graph.
+        :param number_of_series: The number of lines to graph.
+        :param colors: Colors to assign to each series. The number of elements should not exceed `number_of_time_series`. If fewer colors are given than time series then the componnet's text color will be used.
+        """
+        def __init__(
+                self,
+                ceiling: float,
+                maximum_number_of_values: int,
+                number_of_series: int,
+                colors: typing.List[iterm2.color.Color]=[]):
+            self.__ceiling = ceiling
+            self.__maximum_number_of_values = maximum_number_of_values
+            self.__number_of_series = number_of_series
+            self.__colors = list(colors)
+
+        def populate_proto(self, proto):
+            proto.type = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Type.LINE_GRAPH
+            proto.line_graph_setting.ceiling = self.__ceiling
+            proto.line_graph_setting.maximum_number_of_values = self.__maximum_number_of_values
+            proto.line_graph_setting.number_of_series = self.__number_of_series
+            def makeConfig(color):
+                config = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.LineGraphSetting.Config()
+                config.color.MergeFrom(color.get_proto())
+                return config
+            configs = list(map(makeConfig, self.__colors))
+            proto.line_graph_setting.line_configs.extend(configs)
+
+        def result_transformer(self):
+            def f(value):
+                return value.toDict()
+            return f
+
     class Icon:
         """Contains a status bar icon.
 
@@ -139,6 +190,33 @@ class StatusBarComponent:
             proto.scale = self.__scale
             return proto
 
+    class LineGraphUpdate:
+        """
+        Data to display in a line graph status bar component.
+
+        :param values: A list of lists of numbers. The inner list should have as many numbers as the graph has series.
+        :param leftText: Optional text to show on the left side of the graph.
+        :param rightText: Optional text to show on the right side of the graph.
+        :param longestLeftText: Longest string that will ever occur on the left side of the graph. Used to reserve space.
+        """
+        def __init__(
+                self,
+                values: [[float]],
+                leftText: typing.Optional[str] = None,
+                rightText: typing.Optional[str] = None,
+                longestLeftText: typing.Optional[str] = None):
+            self.__values = values
+            self.__leftText = leftText
+            self.__rightText = rightText
+            self.__longestLeftText = longestLeftText
+
+        def toDict(self):
+            return {"values": self.__values,
+                    "leftText": self.__leftText,
+                    "rightText": self.__rightText,
+                    "longestLeftText": self.__longestLeftText}
+
+    # StatusBarComponent
     def __init__(self,
             short_description: str,
             detailed_description: str,
@@ -146,7 +224,8 @@ class StatusBarComponent:
             exemplar: str,
             update_cadence: typing.Union[float, None],
             identifier: str,
-            icons: typing.List[Icon]=[]):
+            icons: typing.List[Icon]=[],
+            type: typing.Union['TextType','LineGraphType'] = TextType()):
         """Initializes a status bar component.
         """
         self.__short_description = short_description
@@ -156,6 +235,7 @@ class StatusBarComponent:
         self.__update_cadence = update_cadence
         self.__identifier = identifier
         self.__icons = icons
+        self.__type = type
 
     def set_fields_in_proto(self, proto):
         proto.short_description = self.__short_description
@@ -166,6 +246,7 @@ class StatusBarComponent:
         proto.unique_identifier = self.__identifier
         icons = list(map(lambda x: x.to_status_bar_icon(), self.__icons))
         proto.icons.extend(icons)
+        self.__type.populate_proto(proto)
         if self.__update_cadence is not None:
             proto.update_cadence = self.__update_cadence
 
@@ -255,7 +336,11 @@ class StatusBarComponent:
                       onclick=my_status_bar_click_handler)
         """
         self.__connection = connection
-        await coro.async_register(connection, self)
+        await coro.async_register(
+                connection=connection,
+                component=self,
+                timeout=None,
+                result_transformer=self.__type.result_transformer())
         if onclick:
             magic_name = "__" + self.__identifier.replace(".", "_").replace("-", "_") + "__on_click"
             async def handle_rpc(session_id):
