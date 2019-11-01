@@ -349,11 +349,7 @@ static NSError *SCPFileError(NSString *description) {
                 }
             } else if ([authType isEqualToString:@"keyboard-interactive"]) {
                 [self.session authenticateByKeyboardInteractiveUsingBlock:^NSString *(NSString *request) {
-                    __block NSString *response;
-                    dispatch_sync(dispatch_get_main_queue(), ^() {
-                        response = [self keyboardInteractiveRequest:request];
-                    });
-                    return response;
+                    return [self keyboardInteractiveRequest:request];
                 }];
                 if (self.stopped || self.session.isAuthorized) {
                     break;
@@ -378,14 +374,11 @@ static NSError *SCPFileError(NSString *description) {
                         XLog(@"No key file at %@", keyPath);
                         continue;
                     }
-                    __block NSString *password = nil;
+                    NSString *password = nil;
                     if ([self privateKeyIsEncrypted:keyPath]) {
-                        dispatch_sync(dispatch_get_main_queue(), ^() {
-                            NSString *prompt =
-                                [NSString stringWithFormat:@"passphrase for private key “%@”:",
-                                    keyPath];
-                            password = [self keyboardInteractiveRequest:prompt];
-                        });
+                        NSString *prompt = [NSString stringWithFormat:@"passphrase for private key “%@”:",
+                                            keyPath];
+                        password = [self keyboardInteractiveRequest:prompt];
                     }
                     XLog(@"Attempting to authenticate with key %@", keyPath);
                     NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
