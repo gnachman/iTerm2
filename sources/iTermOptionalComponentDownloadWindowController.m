@@ -129,6 +129,27 @@ didCompleteWithError:(nullable NSError *)error {
 
 @end
 
+@implementation iTermDownloadableComponentInfo
+
+- (instancetype)initWithURL:(NSURL *)url
+                       size:(NSInteger)size
+                  signature:(NSString *)signature
+         isSitePackagesOnly:(BOOL)isSitePackagesOnly {
+    if (!url || size == 0 || signature.length == 0) {
+        return nil;
+    }
+    self = [super init];
+    if (self) {
+        _URL = url;
+        _size = size;
+        _signature = [signature copy];
+        _isSitePackagesOnly = isSitePackagesOnly;
+    }
+    return self;
+}
+
+@end
+
 @implementation iTermManifestDownloadPhase
 
 - (instancetype)initWithURL:(NSURL *)url
@@ -230,8 +251,24 @@ didCompleteWithError:(nullable NSError *)error {
             if (version < iTermMinimumPythonEnvironmentVersion) {
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:3 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ No usable version found." }];
             } else if (dict) {
-                self->_nextURL = [NSURL URLWithString:dict[@"url"]];
-                self->_signature = dict[@"signature"];
+                self->_fullComponent =
+                [[iTermDownloadableComponentInfo alloc] initWithURL:[NSURL URLWithString:dict[@"url"]]
+                                                               size:dict[@"size"] ? [dict[@"size"] integerValue] : 30 * 1000 * 1000
+                                                          signature:dict[@"signature"]
+                                                 isSitePackagesOnly:NO];
+                self->_sitePackagesComponent =
+                [[iTermDownloadableComponentInfo alloc] initWithURL:[NSURL URLWithString:dict[@"site-packages-url"]]
+                                                               size:[dict[@"site-packages-size"] integerValue]
+                                                          signature:dict[@"site-packages-signature"]
+                                                 isSitePackagesOnly:YES];
+                const NSInteger fullMin = [dict[@"site-packages-full-min"] integerValue];
+                const NSInteger fullMax = [dict[@"site-packages-full-max"] integerValue];
+                if (fullMin && fullMax && fullMax >= fullMin) {
+                    self->_sitePackagesDependencies = NSMakeRange(fullMin, fullMax - fullMin);
+                } else {
+                    self->_sitePackagesDependencies = NSMakeRange(NSNotFound, 0);
+                }
+                
                 self->_version = version;
                 self->_pythonVersionsInArchive = [dict[@"python_versions"] copy];
             } else {
