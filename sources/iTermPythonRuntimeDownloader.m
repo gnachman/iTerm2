@@ -167,7 +167,12 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         return;
     }
 
-    [self checkForNewerVersionThan:installedVersion silently:YES confirm:YES requiredToContinue:NO pythonVersion:nil];
+    [self checkForNewerVersionThan:installedVersion
+                          silently:YES
+                           confirm:YES
+                requiredToContinue:NO
+                     pythonVersion:nil
+               latestFullComponent:@(installedVersion)];
 }
 
 - (void)performPeriodicUpgradeCheck {
@@ -182,11 +187,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (void)userRequestedCheckForUpdate {
-    [self checkForNewerVersionThan:[self installedVersionWithPythonVersion:nil]
+    const int installedVersion = [self installedVersionWithPythonVersion:nil];
+    [self checkForNewerVersionThan:installedVersion
                           silently:NO
                            confirm:YES
                 requiredToContinue:NO
-                     pythonVersion:nil];
+                     pythonVersion:nil
+               latestFullComponent:@(installedVersion)];
 }
 
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm
@@ -201,11 +208,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         return;
     }
 
-    [self checkForNewerVersionThan:MAX(MAX(0, minimumEnvironmentVersion - 1), [self installedVersionWithPythonVersion:pythonVersion])
+    const int installedVersion = [self installedVersionWithPythonVersion:pythonVersion];
+    [self checkForNewerVersionThan:MAX(minimumEnvironmentVersion - 1, installedVersion)
                           silently:YES
                            confirm:confirm
                 requiredToContinue:requiredToContinue
-                     pythonVersion:pythonVersion];
+                     pythonVersion:pythonVersion
+               latestFullComponent:installedVersion ? @(installedVersion) : nil];
     dispatch_group_notify(self->_downloadGroup, dispatch_get_main_queue(), ^{
         completion(self->_status);
     });
@@ -231,7 +240,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                         silently:(BOOL)silent
                          confirm:(BOOL)confirm
               requiredToContinue:(BOOL)requiredToContinue
-                   pythonVersion:(NSString *)pythonVersion {
+                   pythonVersion:(NSString *)pythonVersion
+             latestFullComponent:(NSNumber *)latestFullComponent {
     if (_status == iTermPythonRuntimeDownloaderStatusWorking) {
         // Already existed and had a current phase.
         [[_downloadController window] makeKeyAndOrderFront:nil];
@@ -251,9 +261,11 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     NSURL *url = [NSURL URLWithString:[iTermAdvancedSettingsModel pythonRuntimeDownloadURL]];
     __weak __typeof(self) weakSelf = self;
     __block BOOL stillNeedsConfirmation = confirm;
-    iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url
-                                                                         requestedPythonVersion:pythonVersion
-                                                                               nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
+    iTermManifestDownloadPhase *manifestPhase =
+    [[iTermManifestDownloadPhase alloc] initWithURL:url
+                             requestedPythonVersion:pythonVersion
+                                   nextPhaseFactory:
+     ^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
         iTermPythonRuntimeDownloader *strongSelf = weakSelf;
         if (!strongSelf) {
             return nil;
@@ -264,13 +276,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             dispatch_group_leave(group);
             return nil;
         }
+        iTermDownloadableComponentInfo *const info = [mphase infoGivenExistingFullComponent:latestFullComponent];
         if (stillNeedsConfirmation) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Download Python Runtime?";
             if (requiredToContinue) {
-                alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 30 MB. OK to download it now?";
+                alert.informativeText = [NSString stringWithFormat:@"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
             } else {
-                alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 30 MB. OK to download it now?";
+                alert.informativeText = [NSString stringWithFormat:@"The Python Runtime is used by Python scripts that work with iTerm2. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
             }
             [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
             [alert addButtonWithTitle:@"Cancel"];
@@ -286,18 +299,20 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
             raiseOnCompletion = YES;
         }
-        return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
+        return [[iTermPayloadDownloadPhase alloc] initWithURL:info.URL
                                                       version:mphase.version
-                                            expectedSignature:mphase.signature
+                                            expectedSignature:info.signature
                                        requestedPythonVersion:mphase.requestedPythonVersion
                                              expectedVersions:mphase.pythonVersionsInArchive
                                              nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *completedPhase) {
-                                                 const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase];
-                                                 if (!shouldContinue) {
-                                                     return nil;
-                                                 }
-                                                 return [[iTermInstallingPhase alloc] initWithURL:nil title:@"Download Finished" nextPhaseFactory:nil];
-                                             }];
+            const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase
+                                                                 sitePackagesOnly:info.isSitePackagesOnly
+                                                              latestFullComponent:latestFullComponent];
+            if (!shouldContinue) {
+                return nil;
+            }
+            return [[iTermInstallingPhase alloc] initWithURL:nil title:@"Download Finished" nextPhaseFactory:nil];
+        }];
     }];
     _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
         if (lastPhase.error) {
@@ -367,7 +382,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     return NO;
 }
 
-- (BOOL)payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)payloadPhase {
+- (BOOL)payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)payloadPhase
+                       sitePackagesOnly:(BOOL)sitePackagesOnly
+                    latestFullComponent:(NSNumber *)latestFullComponent {
     if (!payloadPhase || payloadPhase.error) {
         [_downloadController.window makeKeyAndOrderFront:nil];
         [[iTermNotificationController sharedInstance] notify:@"Download failed ☹️"];
@@ -398,27 +415,35 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         _status = iTermPythonRuntimeDownloaderStatusError;
         dispatch_group_leave(self->_downloadGroup);
     } else {
-        [self installPythonEnvironmentFromZip:tempfile
-                               runtimeVersion:payloadPhase.version
-                               pythonVersions:payloadPhase.expectedVersions
-                                   completion:
-         ^(BOOL ok) {
-             if (ok) {
-                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
-                 [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
-                 [self->_downloadController.window close];
-                 self->_downloadController = nil;
-                 self->_status = ok ? iTermPythonRuntimeDownloaderStatusDownloaded : iTermPythonRuntimeDownloaderStatusError;
-                 dispatch_group_leave(self->_downloadGroup);
-                 return;
-             }
-             NSAlert *alert = [[NSAlert alloc] init];
-             alert.messageText = @"Error unzipping python environment";
-             alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
-             [alert runModal];
-             self->_status = iTermPythonRuntimeDownloaderStatusError;
-             dispatch_group_leave(self->_downloadGroup);
-         }];
+        void (^completion)(BOOL) = ^(BOOL ok){
+            if (ok) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
+                [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
+                [self->_downloadController.window close];
+                self->_downloadController = nil;
+                self->_status = ok ? iTermPythonRuntimeDownloaderStatusDownloaded : iTermPythonRuntimeDownloaderStatusError;
+                dispatch_group_leave(self->_downloadGroup);
+                return;
+            }
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Error unzipping python environment";
+            alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
+            [alert runModal];
+            self->_status = iTermPythonRuntimeDownloaderStatusError;
+            dispatch_group_leave(self->_downloadGroup);
+        };
+        if (sitePackagesOnly) {
+            [self installSitePackagesFromZip:tempfile
+                              runtimeVersion:payloadPhase.version
+                              pythonVersions:payloadPhase.expectedVersions
+                         latestFullComponent:latestFullComponent.integerValue
+                                  completion:completion];
+        } else {
+            [self installPythonEnvironmentFromZip:tempfile
+                                   runtimeVersion:payloadPhase.version
+                                   pythonVersions:payloadPhase.expectedVersions
+                                       completion:completion];
+        }
     }
     return YES;
 }
@@ -461,6 +486,75 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     return [self bestPythonVersionAt:path];
 }
 
+- (NSSet<NSString *> *)twoPartPythonVersionsInRuntimeVersion:(NSInteger)pythonVersion {
+    NSString *const path = [self pathToStandardPyenvWithVersion:[@(pythonVersion) stringValue]
+                                        creatingSymlinkIfNeeded:NO];
+    NSString *versionsPath = [path stringByAppendingPathComponent:@"versions"];
+    NSArray<NSString *> *versions = [iTermPythonRuntimeDownloader pythonVersionsAt:versionsPath];
+    NSArray<NSString *> *twoPartVersions = iTermConvertThreePartVersionNumbersToTwoPart(versions);
+    return [NSSet setWithArray:twoPartVersions];
+}
+
+- (void)installSitePackagesFromZip:(NSString *)zip
+                    runtimeVersion:(int)runtimeVersion
+                    pythonVersions:(NSArray<NSString *> *)pythonVersions
+               latestFullComponent:(NSInteger)latestFullComponent
+                        completion:(void (^)(BOOL))completion {
+    NSURL *const finalDestination =
+    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
+                                        creatingSymlinkIfNeeded:YES]];
+    NSURL *const tempDestination =
+    [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+
+    NSURL *const sourceURL =
+    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(latestFullComponent) stringValue]
+                                        creatingSymlinkIfNeeded:NO]];
+    [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
+    NSURL *overwritableURL = [tempDestination URLByAppendingPathComponent:@"iterm2env"];
+    NSError *error = nil;
+    [[NSFileManager defaultManager] createDirectoryAtPath:tempDestination.path withIntermediateDirectories:YES attributes:nil error:&error];
+    if (error) {
+        DLog(@"Failed to create %@: %@", tempDestination, error);
+        completion(NO);
+        return;
+    }
+    [self copyFullEnvironmentFrom:sourceURL
+                               to:overwritableURL
+                       completion:^(BOOL ok) {
+        if (!ok) {
+            completion(NO);
+            return;
+        }
+        NSDictionary<NSString *, NSString *> *subs = @{ sourceURL.path: finalDestination.path };
+        [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
+        [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL ok) {
+            if (!ok) {
+                completion(NO);
+                return;
+            }
+            [self finishInstallingRuntimeVersion:runtimeVersion
+                                  pythonVersions:pythonVersions
+                                 tempDestination:tempDestination
+                                finalDestination:finalDestination
+                                      completion:completion];
+        }];
+    }];
+}
+
+- (void)copyFullEnvironmentFrom:(NSURL *)source
+                             to:(NSURL *)destination
+                     completion:(void (^)(BOOL))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSError *error = nil;
+        [[NSFileManager defaultManager] copyItemAtURL:source
+                                                toURL:destination
+                                                error:&error];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(error == nil);
+        });
+    });
+}
+
 - (void)installPythonEnvironmentFromZip:(NSString *)zip
                          runtimeVersion:(int)runtimeVersion
                          pythonVersions:(NSArray<NSString *> *)pythonVersions
@@ -475,40 +569,63 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             NSDictionary<NSString *, NSString *> *subs = @{ @"__ITERM2_ENV__": finalDestination.path,
                                                             @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] };
             [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSArray<NSString *> *twoPartVersions = [pythonVersions mapWithBlock:^id(NSString *possibleThreePart) {
-                    NSArray<NSString *> *parts = [possibleThreePart componentsSeparatedByString:@"."];
-                    if (parts.count == 3) {
-                        return [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
-                    } else {
-                        return nil;
-                    }
-                }];
-                NSArray<NSString *> *extendedPythonVersions = [NSSet setWithArray:[pythonVersions arrayByAddingObjectsFromArray:twoPartVersions]].allObjects;
-                [self createDeepLinksTo:[tempDestination.path stringByAppendingPathComponent:@"iterm2env"]
-                         runtimeVersion:runtimeVersion
-                            forVersions:extendedPythonVersions];
-                [self createDeepLinkTo:[tempDestination.path stringByAppendingPathComponent:@"iterm2env"]
-                         pythonVersion:nil
-                        runtimeVersion:runtimeVersion];
-                [[NSFileManager defaultManager] moveItemAtURL:[tempDestination URLByAppendingPathComponent:@"iterm2env"]
-                                                        toURL:finalDestination
-                                                        error:nil];
-                // Delete older versions
-                for (int i = 1; i < runtimeVersion; i++) {
-                    [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]
-                                                                                  creatingSymlinkIfNeeded:NO]
-                                                               error:nil];
-                }
-                [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:nil];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    completion(YES);
-                });
-            });
+            [self finishInstallingRuntimeVersion:runtimeVersion
+                                  pythonVersions:pythonVersions
+                                 tempDestination:tempDestination
+                                finalDestination:finalDestination
+                                      completion:completion];
         } else {
             completion(NO);
         }
     }];
+}
+
+static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray<NSString *> *pythonVersions) {
+    return [pythonVersions mapWithBlock:^id(NSString *possibleThreePart) {
+        NSArray<NSString *> *parts = [possibleThreePart componentsSeparatedByString:@"."];
+        if (parts.count == 3) {
+            return [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
+        } else {
+            return nil;
+        }
+    }];
+}
+
+- (void)finishInstallingRuntimeVersion:(int)runtimeVersion
+                        pythonVersions:(NSArray<NSString *> *)pythonVersions
+                       tempDestination:(NSURL *)tempDestination
+                      finalDestination:(NSURL *)finalDestination
+                            completion:(void (^)(BOOL))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSArray<NSString *> *twoPartVersions = iTermConvertThreePartVersionNumbersToTwoPart(pythonVersions);
+        NSArray<NSString *> *extendedPythonVersions = [NSSet setWithArray:[pythonVersions arrayByAddingObjectsFromArray:twoPartVersions]].allObjects;
+        [self createDeepLinksTo:[tempDestination.path stringByAppendingPathComponent:@"iterm2env"]
+                 runtimeVersion:runtimeVersion
+                    forVersions:extendedPythonVersions];
+        [self createDeepLinkTo:[tempDestination.path stringByAppendingPathComponent:@"iterm2env"]
+                 pythonVersion:nil
+                runtimeVersion:runtimeVersion];
+        [[NSFileManager defaultManager] moveItemAtURL:[tempDestination URLByAppendingPathComponent:@"iterm2env"]
+                                                toURL:finalDestination
+                                                error:nil];
+        // Delete older versions that have the same Python versions.
+        NSSet<NSString *> *versionsToRemove = [NSSet setWithArray:twoPartVersions];
+        for (int i = 1; i < runtimeVersion; i++) {
+            NSSet<NSString *> *pythonVersionsInOldRuntime = [self twoPartPythonVersionsInRuntimeVersion:i];
+            if (![pythonVersionsInOldRuntime isSubsetOfSet:versionsToRemove]) {
+                // There’s at least one python version in the old runtime that isn’t in the new one
+                // so keep it around.
+                continue;
+            }
+            [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]
+                                                                          creatingSymlinkIfNeeded:NO]
+                                                       error:nil];
+        }
+        [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:nil];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(YES);
+        });
+    });
 }
 
 - (void)createDeepLinkTo:(NSString *)container pythonVersion:(NSString *)pythonVersion runtimeVersion:(int)runtimeVersion {
