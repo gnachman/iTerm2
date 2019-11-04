@@ -413,6 +413,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         alert.informativeText = [NSString stringWithFormat:@"The Python runtime's signature failed validation: %@", verifyError.localizedDescription];
         [alert runModal];
         _status = iTermPythonRuntimeDownloaderStatusError;
+        [self->_downloadController.window close];
+        self->_downloadController = nil;
         dispatch_group_leave(self->_downloadGroup);
     } else {
         void (^completion)(BOOL) = ^(BOOL ok){
@@ -425,6 +427,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 dispatch_group_leave(self->_downloadGroup);
                 return;
             }
+            [self->_downloadController.window close];
+            self->_downloadController = nil;
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Error unzipping python environment";
             alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
