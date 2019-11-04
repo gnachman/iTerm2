@@ -142,7 +142,7 @@ class Connection:
                     self.__tasks.append(asyncio.ensure_future(self._async_dispatch_to_helper(message)))
                 else:
                     self.set_message_in_future(loop, message, future)
-        except concurrent.futures._base.CancelledError:
+        except asyncio.CancelledError:
             # Presumably a run_until_complete script
             pass
         except:
