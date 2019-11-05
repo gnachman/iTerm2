@@ -19,21 +19,30 @@ public class FontFamilyMemberPickerView: NSPopUpButton {
     @objc public weak var delegate: FontFamilyMemberPickerViewDelegate?
 
     struct Member {
-        var postscriptName: String
-        var displayName: String
+        let postscriptName: String
+        let displayName: String
+        let weight: Int
+        let traits: Int
+        let tag: Int
     }
-    var selectedFontName: String? {
+
+    private var selectedMember: Member? {
         let tag = selectedTag()
         if tag < 0 || tag >= members.count {
             return nil
         }
-        let member = members[tag]
-        return member.postscriptName
+        return members[tag]
+    }
+
+    var selectedFontName: String? {
+        return selectedMember?.postscriptName
     }
 
     var members: [Member] = []
     var familyName: String? {
         didSet {
+            let oldMember = selectedMember
+
             menu?.removeAllItems()
             guard let familyName = familyName else {
                 return
@@ -41,16 +50,42 @@ public class FontFamilyMemberPickerView: NSPopUpButton {
             guard let arrayOfArrays = NSFontManager.shared.availableMembers(ofFontFamily: familyName) else {
                 return
             }
-            members = arrayOfArrays.map { (array: [Any]) -> Member in
-                let first = array[0]
-                let second = array[1]
-                return Member(postscriptName: first as! String,
-                              displayName: second as! String)
+            members = arrayOfArrays.enumerated().compactMap { (index: Int, array: [Any]) -> Member? in
+                guard array.count >= 4 else {
+                    return nil
+                }
+                guard let postscriptName = array[0] as? String else {
+                    return nil
+                }
+                guard let displayName = array[1] as? String else {
+                    return nil
+                }
+                guard let weight = array[2] as? NSNumber else {
+                    return nil
+                }
+                guard let traits = array[3] as? NSNumber else {
+                    return nil
+                }
+                return Member(postscriptName: postscriptName,
+                              displayName: displayName,
+                              weight: weight.intValue,
+                              traits: traits.intValue,
+                              tag: index)
             }
-            for (i, member) in members.enumerated() {
+            for member in members {
                 let menuItem = NSMenuItem(title: member.displayName, action: nil, keyEquivalent: "")
-                menuItem.tag = i
+                menuItem.tag = member.tag
                 menu?.addItem(menuItem)
+            }
+            if let oldWeight = oldMember?.weight, let oldTraits = oldMember?.traits {
+                let candidates = members.filter({ $0.traits == oldTraits })
+                if let memberWithClosestWeight = candidates.min(by: { (m1, m2) -> Bool in
+                    let loss1 = abs(m1.weight - oldWeight)
+                    let loss2 = abs(m2.weight - oldWeight)
+                    return loss1 < loss2
+                }) {
+                    selectItem(withTag: memberWithClosestWeight.tag)
+                }
             }
         }
     }
