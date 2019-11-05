@@ -15,6 +15,7 @@
 #import "iTermSystemVersion.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <SSKeychain.h>
 #import <Security/Security.h>
@@ -100,8 +101,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     IBOutlet NSButton *_enterUserNameButton;
     IBOutlet iTermSearchField *_searchField;
     IBOutlet NSButton *_broadcastButton;
+    IBOutlet NSTextField *_twoFactorCode;
     NSArray<iTermPasswordEntry *> *_entries;
     NSString *_accountNameToSelectAfterAuthentication;
+    id _eventMonitor;
 }
 
 + (NSArray<iTermPasswordEntry *> *)entriesWithFilter:(NSString *)maybeEmptyFilter {
@@ -228,6 +231,59 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         self.window.contentView.layer.cornerRadius = 4;
     }
     [_searchField setArrowHandler:_tableView];
+    __weak __typeof(self) weakSelf = self;
+
+    // Only create event monitor once. This is out of paranioa because there are weird cases where
+    // awakeFromNib is called more than once.
+    if (!_eventMonitor) {
+        _eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull event) {
+            return [weakSelf caughtKeyDownEvent:event];
+        }];
+    }
+}
+
+- (void)dealloc {
+    if (_eventMonitor) {
+        [NSEvent removeMonitor:_eventMonitor];
+    }
+}
+
+- (BOOL)tabShouldSelectTwoFactorField {
+    if (!self.isWindowLoaded) {
+        return NO;
+    }
+    if (NSApp.keyWindow != self.window) {
+        return NO;
+    }
+    if (NSApp.keyWindow.firstResponder == _tableView) {
+        return YES;
+    }
+    if ([_searchField textFieldIsFirstResponder]) {
+        return _entries.count == 1;
+    }
+    return NO;
+}
+
+- (BOOL)eventIsTab:(NSEvent *)event {
+    if (![event.characters isEqualToString:@"\t"]) {
+        return NO;
+    }
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    return (event.modifierFlags & mask) == 0;
+}
+
+// Make tab jump to 2-factor field from search field when there is exactly one search result or from table view.
+- (NSEvent *)caughtKeyDownEvent:(NSEvent *)event {
+    if ([self eventIsTab:event] &&
+        [self tabShouldSelectTwoFactorField] &&
+        [_twoFactorCode acceptsFirstResponder]) {
+        [NSApp.keyWindow makeFirstResponder:_twoFactorCode];
+        return nil;
+    }
+    return event;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
@@ -351,7 +407,8 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     NSString *password = [self selectedPassword];
     if (password) {
         DLog(@"enterPassword: giving password to delegate");
-        [_delegate iTermPasswordManagerEnterPassword:password
+        NSString *twoFactorCode = [_twoFactorCode.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        [_delegate iTermPasswordManagerEnterPassword:[password stringByAppendingString:twoFactorCode]
                                            broadcast:_broadcastButton.state == NSOnState];
         DLog(@"enterPassword: closing sheet");
         [self closeOrEndSheet];
@@ -713,6 +770,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
+    _twoFactorCode.stringValue = @"";
     [_tableView reloadData];
     [self sendWillClose];
 }
