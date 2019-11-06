@@ -5863,6 +5863,10 @@ typedef struct {
     [_tmuxTitleMonitor updateOnce];
 }
 
+- (void)sessionDidSetWindowTitle:(NSString *)title {
+    [self.delegate tabDidSetWindowTitle:self to:title];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

@@ -109,6 +109,8 @@ enum {
     // Zoom vertically only
     IBOutlet NSButton *_maxVertically;
 
+    IBOutlet NSButton *_separateWindowTitlePerTab;
+
     // Lion-style fullscreen
     IBOutlet NSButton *_lionStyleFullscreen;
 
@@ -428,6 +430,11 @@ enum {
 
     [self defineControl:_lionStyleFullscreen
                     key:kPreferenceKeyLionStyleFullscreen
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_separateWindowTitlePerTab
+                    key:kPreferenceKeySeparateWindowTitlePerTab
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

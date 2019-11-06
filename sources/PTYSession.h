@@ -241,6 +241,7 @@ typedef enum {
 - (iTermVariableScope *)sessionTabScope;
 - (void)sessionDidReportSelectedTmuxPane:(PTYSession *)session;
 - (void)sessionDidUpdatePaneTitle:(PTYSession *)session;
+- (void)sessionDidSetWindowTitle:(NSString *)title;
 
 @end
 
@@ -303,7 +304,7 @@ typedef enum {
 
 // The window title that should be used when this session is current. Otherwise defaultName
 // should be used.
-@property(nonatomic, readonly) NSString *windowTitle;
+@property(nonatomic, copy) NSString *windowTitle;
 
 // The path to the proxy icon that should be used when this session is current. If is nil the current directory icon
 // is shown.

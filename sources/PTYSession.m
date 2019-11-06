@@ -8764,6 +8764,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // break up \(.
     title = [title stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setWindowTitle:title];
+    [self.delegate sessionDidSetWindowTitle:title];
 }
 
 - (NSString *)screenWindowTitle {

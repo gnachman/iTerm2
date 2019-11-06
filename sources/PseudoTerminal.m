@@ -10449,6 +10449,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return self.variables;
 }
 
+- (void)tabDidSetWindowTitle:(PTYTab *)tab to:(NSString *)title {
+    if (![iTermPreferences boolForKey:kPreferenceKeySeparateWindowTitlePerTab]) {
+        for (PTYSession *session in self.allSessions) {
+            [session setWindowTitle:title];
+        }
+    }
+}
+
 #pragma mark - Toolbelt
 
 - (void)updateToolbeltAppearance {
