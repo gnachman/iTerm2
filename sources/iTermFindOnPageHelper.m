@@ -298,7 +298,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     int i = start;
     for (int j = 0; !found && j < [_searchResults count]; j++) {
         SearchResult* r = _searchResults[i];
-        if (r.absEndY <= overflowAdjustment) {
+        if (r.absEndY < overflowAdjustment) {
             continue;
         }
         NSInteger pos = r.startX + (long long)r.absStartY * width;
