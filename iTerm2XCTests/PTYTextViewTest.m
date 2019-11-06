@@ -2756,6 +2756,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor {
+    return NO;
 }
 
 - (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {

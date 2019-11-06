@@ -9,6 +9,7 @@
 #import "iTermASCIITexture.h"
 
 #import "DebugLogging.h"
+#import "iTermCache.h"
 #import "iTermCharacterSource.h"
 
 const unsigned char iTermASCIITextureMinimumCharacter = 32; // space
@@ -16,7 +17,7 @@ const unsigned char iTermASCIITextureMaximumCharacter = 126; // ~
 
 static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount * (iTermASCIITextureMaximumCharacter - iTermASCIITextureMinimumCharacter + 1);
 
-@interface iTermASCIITextureCache : NSObject<NSCacheDelegate>
+@interface iTermASCIITextureCache : NSObject
 
 + (instancetype)sharedInstance;
 - (iTermASCIITexture *)asciiTextureWithAttributes:(iTermASCIITextureAttributes)attributes
@@ -31,7 +32,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 @end
 
 @implementation iTermASCIITextureCache {
-    NSCache *_sharedCache;
+    iTermCache<NSDictionary *, iTermASCIITexture *> *_cache;
 }
 
 + (instancetype)sharedInstance {
@@ -46,9 +47,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _sharedCache = [[NSCache alloc] init];
-        _sharedCache.countLimit = 256;
-        _sharedCache.delegate = self;
+        _cache = [[iTermCache alloc] initWithCapacity:256];
     }
     return self;
 }
@@ -59,8 +58,8 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                                          creation:(iTermASCIITexture *(^)(void))creation {
     id key = [self keyForAttributes:attributes descriptor:descriptor device:device];
     iTermASCIITexture *texture;
-    @synchronized(_sharedCache) {
-        texture = [_sharedCache objectForKey:key];
+    @synchronized(_cache) {
+        texture = _cache[key];
         if (!texture) {
             texture = creation();
             [self addAsciiTexture:texture withAttributes:attributes descriptor:descriptor device:device];
@@ -77,7 +76,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                  device:(id<MTLDevice>)device {
     id key = [self keyForAttributes:attributes descriptor:descriptor device:device];
     DLog(@"Add texture %@ for key %@", texture, key);
-    [_sharedCache setObject:texture forKey:key];
+    _cache[key] = texture;
 }
 
 - (id)keyForAttributes:(iTermASCIITextureAttributes)attributes
@@ -86,10 +85,6 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
     return @{ @"attributes": @(attributes),
               @"descriptor": descriptor.dictionaryValue,
               @"device": [NSValue valueWithPointer:(__bridge const void * _Nullable)(device)] };
-}
-
-- (void)cache:(NSCache *)cache willEvictObject:(id)obj {
-    DLog(@"Will evict object %@", obj);
 }
 
 @end
