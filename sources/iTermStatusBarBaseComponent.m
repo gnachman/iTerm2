@@ -322,7 +322,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
                                                                                         backupURL:nil];
     popover.contentViewController = viewController;
-    popover.contentSize = viewController.view.frame.size;
+    popover.contentSize = size;
     NSView *view = self.statusBarComponentView;
     popover.behavior = NSPopoverBehaviorSemitransient;
     popover.delegate = self;
