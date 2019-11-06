@@ -191,12 +191,10 @@ static NSString *const iTermSessionTitleSession = @"session";
         } else {
             effectiveSessionName = tmuxPaneVariable;
         }
+    } else if (isWindowTitle && windowName) {
+        return windowName;
     } else {
-        if (isWindowTitle) {
-            effectiveSessionName = windowName ?: sessionName;
-        } else {
-            effectiveSessionName = sessionName;
-        }
+        effectiveSessionName = sessionName;
     }
     if (titleComponents == 0) {
         if (isWindowTitle) {
