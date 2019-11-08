@@ -50,4 +50,5 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabDidInvalidateStatusBar:(PTYTab *)tab;
 - (iTermVariables *)tabWindowVariables:(PTYTab *)tab;
 - (void)tabDidSetWindowTitle:(PTYTab *)tab to:(NSString *)title;
+- (void)tabHasNontrivialJobDidChange:(PTYTab *)tab;
 @end

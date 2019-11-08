@@ -157,6 +157,24 @@
     }];
 }
 
+- (BOOL)enumerateTree:(void (^)(iTermProcessInfo *info, BOOL *stop))block {
+    BOOL stop = NO;
+    block(self, &stop);
+    if (stop) {
+        return YES;
+    }
+    for (iTermProcessInfo *child in _children) {
+        block(child, &stop);
+        if (stop) {
+            return YES;
+        }
+        if ([child enumerateTree:block]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)shouldInitialize {
     @synchronized ([iTermProcessInfoLock class]) {
         BOOL value = _initialized;

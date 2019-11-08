@@ -242,6 +242,7 @@ typedef enum {
 - (void)sessionDidReportSelectedTmuxPane:(PTYSession *)session;
 - (void)sessionDidUpdatePaneTitle:(PTYSession *)session;
 - (void)sessionDidSetWindowTitle:(NSString *)title;
+- (void)sessionJobDidChange:(PTYSession *)session;
 
 @end
 
@@ -512,6 +513,7 @@ typedef enum {
 @property(nonatomic, readonly) NSString *sessionId;
 @property(nonatomic, retain) NSNumber *cursorTypeOverride;
 @property(nonatomic, readonly) NSDictionary *environment;
+@property(nonatomic, readonly) BOOL hasNontrivialJob;
 
 #pragma mark - methods
 

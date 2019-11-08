@@ -5785,6 +5785,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateForTransparency:self.ptyWindow];
+    [self updateDocumentEdited];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -10455,6 +10456,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [session setWindowTitle:title];
         }
     }
+}
+
+- (void)tabHasNontrivialJobDidChange:(PTYTab *)tab {
+    if (tab == self.currentTab) {
+        [self updateDocumentEdited];
+    }
+}
+
+- (void)updateDocumentEdited {
+    self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.hasNontrivialJob;
+    }];
 }
 
 #pragma mark - Toolbelt

@@ -35,6 +35,7 @@
 
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
+extern NSString *const iTermWindowDocumentedEditedDidChange;
 
 // Rate limit title changes since they force a redraw.
 extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;

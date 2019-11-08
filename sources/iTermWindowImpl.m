@@ -61,6 +61,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
+- (void)setDocumentEdited:(BOOL)documentEdited {
+    [super setDocumentEdited:documentEdited];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowDocumentedEditedDidChange object:self];
+}
+
 - (BOOL)titleChangedRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     return (now > _timeOfLastWindowTitleChange && now - _timeOfLastWindowTitleChange < iTermWindowTitleChangeMinimumInterval);

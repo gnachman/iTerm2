@@ -29,6 +29,9 @@
 
 - (NSArray<iTermProcessInfo *> *)descendantsSkippingLevels:(NSInteger)levels;
 
+// Pre-order traversal starting with self. Set *stop=YES to abort. Returns whether stopped early.
+- (BOOL)enumerateTree:(void (^)(iTermProcessInfo *info, BOOL *stop))block;
+
 @end
 
 @interface iTermProcessCollection : NSObject

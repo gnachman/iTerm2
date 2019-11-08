@@ -5867,6 +5867,10 @@ typedef struct {
     [self.delegate tabDidSetWindowTitle:self to:title];
 }
 
+- (void)sessionJobDidChange:(PTYSession *)session {
+    [self.delegate tabHasNontrivialJobDidChange:self];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

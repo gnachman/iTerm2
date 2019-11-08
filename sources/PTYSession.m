@@ -1880,6 +1880,29 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
+- (BOOL)hasNontrivialJob {
+    DLog(@"Checking for a nontrivial job...");
+    pid_t thePid = [_shell pid];
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
+    if (!info) {
+        return NO;
+    }
+    NSSet<NSString *> *ignoredNames = [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObject:@"login"]];
+    __block BOOL result = NO;
+    [info enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
+        if ([ignoredNames containsObject:info.name]) {
+            return;
+        }
+        if ([info.commandLine hasPrefix:@"-"]) {
+            return;
+        }
+        result = YES;
+        *stop = YES;
+    }];
+    DLog(@"Result is %@", @(result));
+    return result;
+}
+
 - (BOOL)shouldSetCtype {
     return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
@@ -11373,6 +11396,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
         [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
     }
+    [self.delegate sessionJobDidChange:self];
 }
 
 #pragma mark - iTermEchoProbeDelegate

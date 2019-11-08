@@ -6,6 +6,11 @@
 //
 
 #import "iTermStandardWindowButtonsView.h"
+#import "PTYWindow.h"
+
+@interface NSButton (ZoomButton)
+- (void)setDocumentEdited:(BOOL)setDocumentEdited;
+@end
 
 @implementation iTermStandardWindowButtonsView {
     BOOL _mouseInGroup;
@@ -32,6 +37,10 @@
                                                  selector:@selector(redraw)
                                                      name:NSWindowDidResignKeyNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(documentEditedDidChange:)
+                                                     name:iTermWindowDocumentedEditedDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -40,6 +49,22 @@
     for (NSView *subview in self.subviews) {
         [subview setNeedsDisplay:YES];
     }
+}
+
+- (NSButton *)closeButton {
+    for (NSView *view in self.subviews) {
+        if ([view respondsToSelector:@selector(setDocumentEdited:)]) {
+            return (NSButton *)view;
+        }
+    }
+    return nil;
+}
+
+- (void)documentEditedDidChange:(NSNotification *)notification {
+    if (notification.object != self.window) {
+        return;
+    }
+    [self.closeButton setDocumentEdited:self.window.documentEdited];
 }
 
 - (NSView *)hitTest:(NSPoint)point {
