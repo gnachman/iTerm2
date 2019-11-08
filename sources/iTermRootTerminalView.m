@@ -98,6 +98,12 @@ typedef struct {
     iTermGenericStatusBarContainer *_statusBarContainer;
     NSDictionary *_desiredToolbeltProportions;
     iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
+
+    iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_topBorderView NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_rightBorderView NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_leftBorderView NS_AVAILABLE_MAC(10_14);
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -491,17 +497,21 @@ typedef struct {
     [super flagsChanged:event];
 }
 
+- (NSRect)frameForTitleBackgroundView {
+    const CGFloat height = [_delegate rootTerminalViewHeightOfTabBar:self];
+    return NSMakeRect(0,
+                      self.frame.size.height - height,
+                      self.frame.size.width,
+                      height);
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     if (@available(macOS 10.14, *)) {
         if ([_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
             // Draw background color for fake title bar.
             NSColor *const backgroundColor = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
-            const CGFloat height = [_delegate rootTerminalViewHeightOfTabBar:self];
             [backgroundColor set];
-            NSRectFill(NSMakeRect(0,
-                                  self.frame.size.height - height,
-                                  self.frame.size.width,
-                                  height));
+            NSRectFill(self.frameForTitleBackgroundView);
         }
 
         NSBezierPath *path = [NSBezierPath bezierPath];
@@ -537,10 +547,109 @@ typedef struct {
 
         return;
     }
+
+    // 10.12 and 10.13 code path
     if (_useMetal) {
         return;
     } else {
         [super drawRect:dirtyRect];
+    }
+}
+
+- (NSRect)frameForLeftBorderView {
+    return NSMakeRect(0, 0, 1, self.bounds.size.height);
+}
+
+- (NSRect)frameForRightBorderView {
+    return NSMakeRect(self.bounds.size.width - 1, 0, 1, self.bounds.size.height);
+}
+
+- (NSRect)frameForTopBorderView {
+    return NSMakeRect(0, self.bounds.size.height - 1, self.bounds.size.width, 1);
+}
+
+- (NSRect)frameForBottomBorderView {
+    return NSMakeRect(0, 0, self.bounds.size.width, 1);
+}
+
+- (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14) {
+#warning TODO: Test on 10.15
+    const BOOL haveLayer = _useMetal;
+    const BOOL wantsTitleBackgroundView = haveLayer && [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
+    if (wantsTitleBackgroundView) {
+        if (!_titleBackgroundView) {
+            _titleBackgroundView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:self.frameForTitleBackgroundView];
+            _titleBackgroundView.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+        }
+        _titleBackgroundView.color = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
+        _titleBackgroundView.frame = self.frameForTitleBackgroundView;
+        if (_titleBackgroundView.superview != self) {
+            [self insertSubview:_titleBackgroundView atIndex:0];
+        }
+    } else {
+        [_titleBackgroundView removeFromSuperview];
+    }
+
+    const BOOL wantsLeftBorder = haveLayer && self.delegate.haveLeftBorder;
+    const BOOL wantsTopBorder = haveLayer && self.delegate.haveTopBorder;
+    const BOOL wantsRightBorder = haveLayer && self.delegate.haveRightBorderRegardlessOfScrollBar;
+    const BOOL wantsBottomBorder = haveLayer && self.delegate.haveBottomBorder;
+
+    if (wantsLeftBorder) {
+        const NSRect frame = [self frameForLeftBorderView];
+        if (!_leftBorderView) {
+            _leftBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
+            _leftBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
+            _leftBorderView.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
+        }
+        _leftBorderView.frame = frame;
+        if (_leftBorderView.superview != self) {
+            [self addSubview:_leftBorderView];
+        }
+    } else {
+        [_leftBorderView removeFromSuperview];
+    }
+    if (wantsTopBorder) {
+        const NSRect frame = [self frameForTopBorderView];
+        if (!_topBorderView) {
+            _topBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
+            _topBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
+            _topBorderView.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+        }
+        _topBorderView.frame = frame;
+        if (_topBorderView.superview != self) {
+            [self addSubview:_topBorderView];
+        }
+    } else {
+        [_topBorderView removeFromSuperview];
+    }
+    if (wantsRightBorder) {
+        const NSRect frame = [self frameForRightBorderView];
+        if (!_rightBorderView) {
+            _rightBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
+            _rightBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
+            _rightBorderView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
+        }
+        _rightBorderView.frame = frame;
+        if (_rightBorderView.superview != self) {
+            [self addSubview:_rightBorderView];
+        }
+    } else {
+        [_rightBorderView removeFromSuperview];
+    }
+    if (wantsBottomBorder) {
+        const NSRect frame = [self frameForBottomBorderView];
+        if (!_bottomBorderView) {
+            _bottomBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
+            _bottomBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
+            _bottomBorderView.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
+        }
+        _bottomBorderView.frame = frame;
+        if (_bottomBorderView.superview != self) {
+            [self addSubview:_bottomBorderView];
+        }
+    } else {
+        [_bottomBorderView removeFromSuperview];
     }
 }
 
@@ -557,6 +666,7 @@ typedef struct {
                 self.layer = nil;
             }
         }
+        [self updateTitleAndBorderViews];
     } else {
         self.tabView.drawsBackground = !_useMetal;
     }
@@ -1230,6 +1340,9 @@ typedef struct {
     self.window.movableByWindowBackground = !hideWindowTitleLabel;
     _windowNumberLabel.hidden = ![self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible];
     _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
+    if (@available(macOS 10.14, *)) {
+        [self updateTitleAndBorderViews];
+    }
 }
 
 - (void)layoutSubviews {
