@@ -20,6 +20,7 @@
 #import "iTermRootTerminalView.h"
 #import "iTermSystemVersion.h"
 #import "iTermTouchBarButton.h"
+#import "iTermVariableScope+Tab.h"
 #import "PTYTab.h"
 
 static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
@@ -579,7 +580,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
 - (NSString *)scrubber:(NSScrubber *)scrubber labelAtIndex:(NSInteger)index {
     NSArray<PTYTab *> *tabs = self.tabs;
-    return index < tabs.count ?  self.tabs[index].activeSession.name : @"";
+    PTYTab *tab = index < tabs.count ? self.tabs[index] : nil;
+    return tab.variablesScope.title ?: @"";
 }
 
 - (__kindof NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)index {
