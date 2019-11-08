@@ -634,6 +634,14 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     while ([self indexOfAccountName:name] != NSNotFound) {
         ++number;
         name = [NSString stringWithFormat:@"%@ %d", kNewAccountName, number];
+        if (number == 10) {
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"MM-dd-yyyy HH:mm:ss"
+                                                                       options:0
+                                                                        locale:[NSLocale currentLocale]];
+            NSString *formattedDate = [dateFormatter stringFromDate:[NSDate date]];
+            return [NSString stringWithFormat:@"New Account %@", formattedDate];
+        }
     }
     return name;
 }
