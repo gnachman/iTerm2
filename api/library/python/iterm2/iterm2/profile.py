@@ -1,5 +1,6 @@
 """Provides classes for representing, querying, and modifying iTerm2 profiles."""
 import asyncio
+import iterm2.capabilities
 import iterm2.color
 import iterm2.colorpresets
 import enum
@@ -1819,6 +1820,14 @@ class Profile(WriteOnlyProfile):
             profiles.append(profile)
         return profiles
 
+    @staticmethod
+    async def async_get_default(connection) -> 'Profile':
+        """Returns the default profile."""
+        iterm2.capabilities.check_supports_get_default_profile(connection)
+        result = await iterm2.rpc.async_get_default_profile(connection)
+        guid = result.preferences_response.results[0].get_default_profile_result.guid
+        profiles = await Profile.async_get(connection, [guid])
+        return profiles[0]
 
     def __init__(self, session_id, connection, profile_property_list):
         props = {}
@@ -2871,6 +2880,17 @@ class PartialProfile(Profile):
             profile = PartialProfile(None, connection, responseProfile.properties)
             profiles.append(profile)
         return profiles
+
+    @staticmethod
+    async def async_get_default(
+            connection: iterm2.connection.Connection,
+            properties: typing.List[str]=["Guid", "Name"]) -> 'PartialProfile':
+        """Returns the default profile."""
+        iterm2.capabilities.check_supports_get_default_profile(connection)
+        result = await iterm2.rpc.async_get_default_profile(connection)
+        guid = result.preferences_response.results[0].get_default_profile_result.guid
+        profiles = await PartialProfile.async_query(connection, [guid], properties)
+        return profiles[0]
 
     def __init__(self, session_id, connection, profile_property_list):
         """Initializes a PartialProfile from a profile_property_list protobuf."""

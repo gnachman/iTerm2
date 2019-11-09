@@ -100,11 +100,13 @@ CF_EXTERN_C_BEGIN
 @class ITMPoint;
 @class ITMPreferencesRequest;
 @class ITMPreferencesRequest_Request;
+@class ITMPreferencesRequest_Request_GetDefaultProfile;
 @class ITMPreferencesRequest_Request_GetPreference;
 @class ITMPreferencesRequest_Request_SetDefaultProfile;
 @class ITMPreferencesRequest_Request_SetPreference;
 @class ITMPreferencesResponse;
 @class ITMPreferencesResponse_Result;
+@class ITMPreferencesResponse_Result_GetDefaultProfileResult;
 @class ITMPreferencesResponse_Result_GetPreferenceResult;
 @class ITMPreferencesResponse_Result_SetDefaultProfileResult;
 @class ITMPreferencesResponse_Result_SetPreferenceResult;
@@ -1982,6 +1984,7 @@ typedef GPB_ENUM(ITMPreferencesRequest_Request_FieldNumber) {
   ITMPreferencesRequest_Request_FieldNumber_SetPreferenceRequest = 1,
   ITMPreferencesRequest_Request_FieldNumber_GetPreferenceRequest = 2,
   ITMPreferencesRequest_Request_FieldNumber_SetDefaultProfileRequest = 3,
+  ITMPreferencesRequest_Request_FieldNumber_GetDefaultProfileRequest = 4,
 };
 
 typedef GPB_ENUM(ITMPreferencesRequest_Request_Request_OneOfCase) {
@@ -1989,6 +1992,7 @@ typedef GPB_ENUM(ITMPreferencesRequest_Request_Request_OneOfCase) {
   ITMPreferencesRequest_Request_Request_OneOfCase_SetPreferenceRequest = 1,
   ITMPreferencesRequest_Request_Request_OneOfCase_GetPreferenceRequest = 2,
   ITMPreferencesRequest_Request_Request_OneOfCase_SetDefaultProfileRequest = 3,
+  ITMPreferencesRequest_Request_Request_OneOfCase_GetDefaultProfileRequest = 4,
 };
 
 @interface ITMPreferencesRequest_Request : GPBMessage
@@ -2000,6 +2004,8 @@ typedef GPB_ENUM(ITMPreferencesRequest_Request_Request_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesRequest_Request_GetPreference *getPreferenceRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesRequest_Request_SetDefaultProfile *setDefaultProfileRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesRequest_Request_GetDefaultProfile *getDefaultProfileRequest;
 
 @end
 
@@ -2055,6 +2061,12 @@ typedef GPB_ENUM(ITMPreferencesRequest_Request_SetDefaultProfile_FieldNumber) {
 
 @end
 
+#pragma mark - ITMPreferencesRequest_Request_GetDefaultProfile
+
+@interface ITMPreferencesRequest_Request_GetDefaultProfile : GPBMessage
+
+@end
+
 #pragma mark - ITMPreferencesResponse
 
 typedef GPB_ENUM(ITMPreferencesResponse_FieldNumber) {
@@ -2076,6 +2088,7 @@ typedef GPB_ENUM(ITMPreferencesResponse_Result_FieldNumber) {
   ITMPreferencesResponse_Result_FieldNumber_SetPreferenceResult = 2,
   ITMPreferencesResponse_Result_FieldNumber_GetPreferenceResult = 3,
   ITMPreferencesResponse_Result_FieldNumber_SetDefaultProfileResult = 4,
+  ITMPreferencesResponse_Result_FieldNumber_GetDefaultProfileResult = 5,
 };
 
 typedef GPB_ENUM(ITMPreferencesResponse_Result_Result_OneOfCase) {
@@ -2084,6 +2097,7 @@ typedef GPB_ENUM(ITMPreferencesResponse_Result_Result_OneOfCase) {
   ITMPreferencesResponse_Result_Result_OneOfCase_SetPreferenceResult = 2,
   ITMPreferencesResponse_Result_Result_OneOfCase_GetPreferenceResult = 3,
   ITMPreferencesResponse_Result_Result_OneOfCase_SetDefaultProfileResult = 4,
+  ITMPreferencesResponse_Result_Result_OneOfCase_GetDefaultProfileResult = 5,
 };
 
 @interface ITMPreferencesResponse_Result : GPBMessage
@@ -2097,6 +2111,8 @@ typedef GPB_ENUM(ITMPreferencesResponse_Result_Result_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesResponse_Result_GetPreferenceResult *getPreferenceResult;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesResponse_Result_SetDefaultProfileResult *setDefaultProfileResult;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesResponse_Result_GetDefaultProfileResult *getDefaultProfileResult;
 
 @end
 
@@ -2149,6 +2165,20 @@ typedef GPB_ENUM(ITMPreferencesResponse_Result_SetDefaultProfileResult_FieldNumb
 #pragma mark - ITMPreferencesResponse_Result_UnrecognizedResult
 
 @interface ITMPreferencesResponse_Result_UnrecognizedResult : GPBMessage
+
+@end
+
+#pragma mark - ITMPreferencesResponse_Result_GetDefaultProfileResult
+
+typedef GPB_ENUM(ITMPreferencesResponse_Result_GetDefaultProfileResult_FieldNumber) {
+  ITMPreferencesResponse_Result_GetDefaultProfileResult_FieldNumber_Guid = 1,
+};
+
+@interface ITMPreferencesResponse_Result_GetDefaultProfileResult : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *guid;
+/** Test to see if @c guid has been set. */
+@property(nonatomic, readwrite) BOOL hasGuid;
 
 @end
 

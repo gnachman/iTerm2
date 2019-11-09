@@ -3291,6 +3291,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         case ITMPreferencesRequest_Request_Request_OneOfCase_SetDefaultProfileRequest:
             result.setDefaultProfileResult = [self handleSetDefaultProfileWithGUID:request.setDefaultProfileRequest.guid];
             break;
+        case ITMPreferencesRequest_Request_Request_OneOfCase_GetDefaultProfileRequest:
+            result.getDefaultProfileResult = [self handleGetDefaultProfile];
+            break;
     }
     return result;
 }
@@ -3323,6 +3326,12 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_Ok;
 
+    return result;
+}
+
+- (ITMPreferencesResponse_Result_GetDefaultProfileResult *)handleGetDefaultProfile {
+    ITMPreferencesResponse_Result_GetDefaultProfileResult *result = [[ITMPreferencesResponse_Result_GetDefaultProfileResult alloc] init];
+    result.guid = [[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID];
     return result;
 }
 

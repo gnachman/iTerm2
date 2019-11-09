@@ -319,10 +319,13 @@ message PreferencesRequest {
     message SetDefaultProfile {
       optional string guid = 1;
     }
+    message GetDefaultProfile {
+    }
     oneof request {
       SetPreference set_preference_request = 1;
       GetPreference get_preference_request = 2;
       SetDefaultProfile set_default_profile_request = 3;
+      GetDefaultProfile get_default_profile_request = 4;
     }
   }
   repeated Request requests = 1;
@@ -350,11 +353,15 @@ message PreferencesResponse {
     }
     message UnrecognizedResult {
     }
+    message GetDefaultProfileResult {
+      optional string guid = 1;
+    }
     oneof result {
       UnrecognizedResult unrecognized_request = 1;
       SetPreferenceResult set_preference_result = 2;
       GetPreferenceResult get_preference_result = 3;
       SetDefaultProfileResult set_default_profile_result = 4;
+      GetDefaultProfileResult get_default_profile_result = 5;
     }
   }
   repeated Result results = 1;

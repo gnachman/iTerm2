@@ -3313,12 +3313,14 @@ typedef struct ITMPreferencesRequest__storage_ {
 @dynamic setPreferenceRequest;
 @dynamic getPreferenceRequest;
 @dynamic setDefaultProfileRequest;
+@dynamic getDefaultProfileRequest;
 
 typedef struct ITMPreferencesRequest_Request__storage_ {
   uint32_t _has_storage_[2];
   ITMPreferencesRequest_Request_SetPreference *setPreferenceRequest;
   ITMPreferencesRequest_Request_GetPreference *getPreferenceRequest;
   ITMPreferencesRequest_Request_SetDefaultProfile *setDefaultProfileRequest;
+  ITMPreferencesRequest_Request_GetDefaultProfile *getDefaultProfileRequest;
 } ITMPreferencesRequest_Request__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3351,6 +3353,15 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
         .number = ITMPreferencesRequest_Request_FieldNumber_SetDefaultProfileRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, setDefaultProfileRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getDefaultProfileRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request_GetDefaultProfile),
+        .number = ITMPreferencesRequest_Request_FieldNumber_GetDefaultProfileRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, getDefaultProfileRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -3526,6 +3537,37 @@ typedef struct ITMPreferencesRequest_Request_SetDefaultProfile__storage_ {
 
 @end
 
+#pragma mark - ITMPreferencesRequest_Request_GetDefaultProfile
+
+@implementation ITMPreferencesRequest_Request_GetDefaultProfile
+
+
+typedef struct ITMPreferencesRequest_Request_GetDefaultProfile__storage_ {
+  uint32_t _has_storage_[1];
+} ITMPreferencesRequest_Request_GetDefaultProfile__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMPreferencesRequest_Request_GetDefaultProfile class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMPreferencesRequest_Request_GetDefaultProfile__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest_Request)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMPreferencesResponse
 
 @implementation ITMPreferencesResponse
@@ -3578,6 +3620,7 @@ typedef struct ITMPreferencesResponse__storage_ {
 @dynamic setPreferenceResult;
 @dynamic getPreferenceResult;
 @dynamic setDefaultProfileResult;
+@dynamic getDefaultProfileResult;
 
 typedef struct ITMPreferencesResponse_Result__storage_ {
   uint32_t _has_storage_[2];
@@ -3585,6 +3628,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
   ITMPreferencesResponse_Result_SetPreferenceResult *setPreferenceResult;
   ITMPreferencesResponse_Result_GetPreferenceResult *getPreferenceResult;
   ITMPreferencesResponse_Result_SetDefaultProfileResult *setDefaultProfileResult;
+  ITMPreferencesResponse_Result_GetDefaultProfileResult *getDefaultProfileResult;
 } ITMPreferencesResponse_Result__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3626,6 +3670,15 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
         .number = ITMPreferencesResponse_Result_FieldNumber_SetDefaultProfileResult,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, setDefaultProfileResult),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getDefaultProfileResult",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_GetDefaultProfileResult),
+        .number = ITMPreferencesResponse_Result_FieldNumber_GetDefaultProfileResult,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, getDefaultProfileResult),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -3881,6 +3934,50 @@ typedef struct ITMPreferencesResponse_Result_UnrecognizedResult__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMPreferencesResponse_Result_UnrecognizedResult__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMPreferencesResponse_Result_GetDefaultProfileResult
+
+@implementation ITMPreferencesResponse_Result_GetDefaultProfileResult
+
+@dynamic hasGuid, guid;
+
+typedef struct ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *guid;
+} ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "guid",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMPreferencesResponse_Result_GetDefaultProfileResult_FieldNumber_Guid,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_, guid),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMPreferencesResponse_Result_GetDefaultProfileResult class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
     NSAssert(descriptor == nil, @"Startup recursed!");

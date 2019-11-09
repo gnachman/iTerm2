@@ -33,3 +33,11 @@ def supports_coprocesses(connection):
 def check_supports_coprocesses(connection):
     if not supports_coprocesses(connection):
         raise AppVersionTooOld("This version of iTerm2 is too old to control coprocesses from a Python script. You should upgrade to run this script.")
+
+def supports_get_default_profile(connection):
+    min_ver = (1, 4)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_get_default_profile(connection):
+    if not supports_get_default_profile(connection):
+        raise AppVersionTooOld("This version of iTerm2 is too old to get the default profile from a Python script. You should upgrade to run this script.")
