@@ -1888,6 +1888,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     NSSet<NSString *> *ignoredNames = [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObject:@"login"]];
+    DLog(@"Ignoring %@", ignoredNames);
     __block BOOL result = NO;
     [info enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
         if ([ignoredNames containsObject:info.name]) {
@@ -1896,6 +1897,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([info.commandLine hasPrefix:@"-"]) {
             return;
         }
+        DLog(@"Process with name %@ and command line %@ is nontrivial", info.name, info.commandLine);
         result = YES;
         *stop = YES;
     }];
