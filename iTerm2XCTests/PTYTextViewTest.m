@@ -2472,6 +2472,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return @[];
 }
 
+- (BOOL)textViewGetAndResetHasScrolled {
+    return NO;
+}
+
+
 
 - (int)numberOfLines {
     return 4;
