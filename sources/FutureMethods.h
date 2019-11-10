@@ -10,7 +10,7 @@
 #import <CGSInternal/CGSInternal.h>
 #import "iTermCPS.h"
 
-typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
+typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur, float opacity);
 CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction(void);
 
 // Fills in its argument with the current process's serial number.

@@ -59,7 +59,7 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
     static CGSSetWindowBackgroundBlurRadiusFunction *function = NULL;
     if (!tried) {
         function  = GetFunctionByName(kApplicationServicesFramework,
-                                      "CGSSetWindowBackgroundBlurRadius");
+                                      "CGSSetWindowBackgroundBlurRadiusWithOpacityHint");
         tried = YES;
     }
     return function;

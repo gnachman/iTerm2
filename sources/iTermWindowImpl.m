@@ -134,7 +134,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restoreState_ = [restoreState retain];
 }
 
-- (void)enableBlur:(double)radius {
+- (void)enableBlur:(double)radius opacity:(float)opacity {
     const double kEpsilon = 0.001;
     if (blurFilter && fabs(blurRadius_ - radius) < kEpsilon) {
         return;
@@ -146,7 +146,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
     if (function) {
-        function(con, [self windowNumber], (int)radius);
+        function(con, [self windowNumber], (int)radius, opacity);
     } else {
         NSLog(@"Couldn't get blur function");
     }
@@ -161,7 +161,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
     if (function) {
-        function(con, [self windowNumber], 0);
+        function(con, [self windowNumber], 0, 0);
     } else if (blurFilter) {
         CGSRemoveWindowFilter(con, (CGSWindowID)[self windowNumber], blurFilter);
         CGSReleaseCIFilter(CGSMainConnectionID(), blurFilter);

@@ -5686,12 +5686,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)enableBlur:(double)radius
-{
+- (void)enableBlur:(double)radius {
     id window = [self window];
     if (nil != window &&
-        [window respondsToSelector:@selector(enableBlur:)]) {
-        [window enableBlur:radius];
+        [window respondsToSelector:@selector(enableBlur:opacity:)]) {
+        [window enableBlur:radius opacity:self.currentTab.minimumOpacity];
     }
 }
 

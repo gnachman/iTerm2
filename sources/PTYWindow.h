@@ -88,7 +88,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 - (void)smartLayout;
 - (void)setLayoutDone;
 
-- (void)enableBlur:(double)radius;
+- (void)enableBlur:(double)radius opacity:(float)opacity;
 - (void)disableBlur;
 
 - (void)setRestoreState:(NSObject *)restoreState;

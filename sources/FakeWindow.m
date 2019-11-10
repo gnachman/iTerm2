@@ -150,8 +150,7 @@
 {
 }
 
-- (void)enableBlur:(double)radius
-{
+- (void)enableBlur:(double)radius {
     hasPendingBlurChange = YES;
     pendingBlurRadius = radius;
     pendingBlur = YES;

@@ -80,6 +80,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 
 // If true, report that the tab's ideal size is its currentSize.
 @property(nonatomic) BOOL reportIdeal;
+@property(nonatomic, readonly) CGFloat minimumOpacity;
 
 + (NSSize)sizeForTmuxWindowWithAffinity:(NSString *)affinity
                              controller:(TmuxController *)controller;

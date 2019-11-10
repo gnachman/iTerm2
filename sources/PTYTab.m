@@ -507,6 +507,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                              weak:YES];
 }
 
+- (CGFloat)minimumOpacity {
+    PTYSession *session = [[self.sessions minimumsWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+        return [@(a.textview.transparencyAlpha) compare:@(b.textview.transparencyAlpha)];
+    }] firstObject];
+    return session.textview.transparencyAlpha;
+}
+
 - (BOOL)useSeparateStatusbarsPerPane {
     if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
         return NO;
