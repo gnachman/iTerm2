@@ -1887,7 +1887,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!info) {
         return NO;
     }
-    NSSet<NSString *> *ignoredNames = [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObject:@"login"]];
+    // iTerm2 --launch_shell could be a child job temporarily.
+    NSArray<NSString *> *builtInJobsToIgnore = @[ @"login", @"iTerm2" ];
+    NSSet<NSString *> *ignoredNames = [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObjectsFromArray:builtInJobsToIgnore]];
     DLog(@"Ignoring %@", ignoredNames);
     __block BOOL result = NO;
     [info enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
