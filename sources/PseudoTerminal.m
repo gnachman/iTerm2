@@ -4613,9 +4613,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSUInteger)styleMask {
-    return [PseudoTerminal styleMaskForWindowType:self.windowType
-                                  savedWindowType:self.savedWindowType
-                                 hotkeyWindowType:_hotkeyWindowType];
+    NSUInteger styleMask = [PseudoTerminal styleMaskForWindowType:self.windowType
+                                                  savedWindowType:self.savedWindowType
+                                                 hotkeyWindowType:_hotkeyWindowType];
+    if (self.lionFullScreen) {
+        styleMask |= NSWindowStyleMaskFullScreen;
+    }
+    DLog(@"Returning style mask of %@", @(styleMask));
+    return styleMask;
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
@@ -5261,15 +5266,22 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
     if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
+        NSRect frame = _lionFullScreenTabBarViewController.view.superview.bounds;
+        if (index != NSNotFound) {
+            DLog(@"Removing title bar accessory view for tabbar. Will re-add it shortly");
+            [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
+        }
         NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
-        if ([self shouldShowPermanentFullScreenTabBar]) {
-            [viewController setFullScreenMinHeight:_contentView.tabBarControl.frame.size.height];
-        } else {
-            [viewController setFullScreenMinHeight:0];
+        const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
+        viewController.fullScreenMinHeight = tabBarHeight;
+
+        if (index != NSNotFound) {
+            frame.size.height = tabBarHeight;
+            DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
+            viewController.view.frame = frame;
         }
-        if (index == NSNotFound) {
-            [self.window addTitlebarAccessoryViewController:viewController];
-        }
+        DLog(@"Adding title bar accessory view for %@", self);
+        [self.window addTitlebarAccessoryViewController:viewController];
     } else if (_contentView.tabBarControlOnLoan) {
         assert(index != NSNotFound);
         [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
@@ -8429,6 +8441,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
+    self.window.styleMask = self.styleMask;
     [self updateTabBarStyle];
     [self updateProxyIcon];
 
@@ -8593,12 +8606,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return YES;
 }
 
-- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+- (CGFloat)desiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
         return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
+}
+
+- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+    return [self desiredTabBarHeight];
 }
 
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender {
@@ -8753,6 +8770,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                           effectiveAppearance:self.window.effectiveAppearance];
     [_contentView.tabBarControl setStyle:style];
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
+    _contentView.tabBarControl.height = [self desiredTabBarHeight];
 
     [self updateTabColors];
     [self updateToolbeltAppearance];
