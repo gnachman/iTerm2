@@ -17,6 +17,7 @@
 #import "PTYWindow.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDragHandleView.h"
+#import "iTermFakeWindowTitleLabel.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermPreferences.h"
 #import "iTermWindowSizeView.h"
@@ -74,14 +75,6 @@ typedef struct {
     }
 }
 
-@end
-
-@interface iTermFakeWindowTitleLabel : NSTextField
-@property (nonatomic, copy) NSString *windowTitle;
-@property (nonatomic, strong) NSImage *windowIcon;
-@end
-
-@implementation iTermFakeWindowTitleLabel
 @end
 
 @implementation iTermRootTerminalView {
@@ -351,26 +344,28 @@ typedef struct {
 }
 
 - (NSRect)frameForWindowTitleLabel {
-    return [self frameForWindowTitleLabelGetLeftAligned:nil];
+    return [self frameForWindowTitleLabel:_windowTitleLabel
+                           getLeftAligned:nil];
 }
 
-- (NSRect)frameForWindowTitleLabelGetLeftAligned:(BOOL *)leftAlignedPtr {
+- (NSRect)frameForWindowTitleLabel:(NSTextField *)textField
+                    getLeftAligned:(BOOL *)leftAlignedPtr {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
     }
     const CGFloat tabBarHeight = _tabBarControl.height;
-    const CGFloat baselineOffset = -_windowTitleLabel.font.descender;
-    const CGFloat capHeight = _windowTitleLabel.font.capHeight;
+    const CGFloat baselineOffset = -textField.font.descender;
+    const CGFloat capHeight = textField.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
     const NSEdgeInsets insets = [self.delegate tabBarInsets];
 
     // Prefer to center it, using the same inset on both sides. There's no need
     // to have an inset on the right otherwise so if the title doesn't fit then
     // left-align it and make it as wide as the available space.
-    // This mirros what NSWindow's title does.
+    // This mirrors what NSWindow's title does.
     const CGFloat mostGenerousInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
     const CGFloat containerWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
-    const CGFloat desiredWidth = [_windowTitleLabel fittingSize].width;
+    const CGFloat desiredWidth = [textField fittingSize].width;
     CGFloat leftInset = mostGenerousInset;
     CGFloat rightInset = mostGenerousInset;
     CGFloat proposedWidth = containerWidth - leftInset - rightInset;
@@ -378,13 +373,15 @@ typedef struct {
     if (overage > 0) {
         rightInset = MAX(4, rightInset - overage);
         if (leftAlignedPtr) {
+            DLog(@"Use left alignment with text “%@” desiredWidth %@, proposedWidth %@, containerWidth %@",
+                 textField.stringValue, @(desiredWidth), @(proposedWidth), @(containerWidth));
             *leftAlignedPtr = YES;
         }
     }
     NSRect rect = NSMakeRect([self retinaRound:leftInset],
                              [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset],
                              ceil(MAX(0, containerWidth - leftInset - rightInset)),
-                             ceil(_windowTitleLabel.frame.size.height));
+                             ceil(textField.frame.size.height));
     return [self retinaRoundRect:rect];
 }
 
@@ -691,41 +688,14 @@ typedef struct {
 }
 
 - (void)setWindowTitleLabelToString:(NSString *)title icon:(NSImage *)icon {
-    BOOL leftAligned = NO;
-    [self frameForWindowTitleLabelGetLeftAligned:&leftAligned];
-    const NSTextAlignment textAlignment = leftAligned ? NSTextAlignmentLeft : NSTextAlignmentCenter;
-    if (icon) {
-        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.alignment = textAlignment;
-        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
-        NSDictionary *attributes = @{ NSFontAttributeName: _windowTitleLabel.font,
-                                      NSForegroundColorAttributeName: _windowTitleLabel.textColor,
-                                      NSParagraphStyleAttributeName: paragraphStyle };
-        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title ?: @""
-                                                                               attributes:attributes];
-        NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-        textAttachment.image = icon;
-        NSFont *font = _windowTitleLabel.font;
-        const CGFloat lineHeight = ceilf(font.capHeight);
-        textAttachment.bounds = NSMakeRect(0,
-                                           - (icon.size.height - lineHeight) / 2.0,
-                                           icon.size.width,
-                                           icon.size.height);
-        NSMutableAttributedString *iconAttributedString = [[NSAttributedString attributedStringWithAttachment:textAttachment] mutableCopy];
-        [iconAttributedString addAttribute:NSParagraphStyleAttributeName value:paragraphStyle range:NSMakeRange(0, iconAttributedString.length)];
-        [iconAttributedString appendAttributedString:[[NSAttributedString alloc] initWithString:@" " attributes:attributes]];
-        [iconAttributedString appendAttributedString:attributedString];
-        _windowTitleLabel.attributedStringValue = iconAttributedString;
-    } else {
-        _windowTitleLabel.stringValue = title ?: @"";
-        _windowTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-    }
-    _windowTitleLabel.windowTitle = title;
-    _windowTitleLabel.windowIcon = icon;
-    _windowTitleLabel.maximumNumberOfLines = 1;
-    _windowTitleLabel.usesSingleLineMode = YES;
-    _windowTitleLabel.alignment = textAlignment;
-    _windowTitleLabel.allowsDefaultTighteningForTruncation = YES;
+    [_windowTitleLabel setTitle:title icon:icon alignmentProvider:
+     ^NSTextAlignment(NSTextField * _Nonnull scratch) {
+         BOOL leftAligned = NO;
+         [self frameForWindowTitleLabel:scratch
+                         getLeftAligned:&leftAligned];
+
+         return leftAligned ? NSTextAlignmentLeft : NSTextAlignmentCenter;
+    }];
 }
 
 - (void)setWindowTitleIcon:(NSImage *)icon {
