@@ -1844,6 +1844,10 @@
 		A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
+		A64DE9AF237BD854002E390C /* iTermLegacyPTY.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9AD237BD854002E390C /* iTermLegacyPTY.h */; };
+		A64DE9B0237BD854002E390C /* iTermLegacyPTY.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9AE237BD854002E390C /* iTermLegacyPTY.m */; };
+		A64DE9B3237BD8EE002E390C /* iTermMonoServerPTY.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9B1237BD8EE002E390C /* iTermMonoServerPTY.h */; };
+		A64DE9B4237BD8EE002E390C /* iTermMonoServerPTY.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9B2237BD8EE002E390C /* iTermMonoServerPTY.m */; };
 		A653B6CE20AD3C4100B481F1 /* iTermSessionNameController.h in Headers */ = {isa = PBXBuildFile; fileRef = A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */; };
 		A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */ = {isa = PBXBuildFile; fileRef = A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */; };
 		A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
@@ -4940,6 +4944,11 @@
 		A64AE5162084128500D02F06 /* NSThread+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSThread+iTerm.m"; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
+		A64DE9AC237BBDD7002E390C /* iTermPTY.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPTY.h; sourceTree = "<group>"; };
+		A64DE9AD237BD854002E390C /* iTermLegacyPTY.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLegacyPTY.h; sourceTree = "<group>"; };
+		A64DE9AE237BD854002E390C /* iTermLegacyPTY.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLegacyPTY.m; sourceTree = "<group>"; };
+		A64DE9B1237BD8EE002E390C /* iTermMonoServerPTY.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMonoServerPTY.h; sourceTree = "<group>"; };
+		A64DE9B2237BD8EE002E390C /* iTermMonoServerPTY.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMonoServerPTY.m; sourceTree = "<group>"; };
 		A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionNameController.h; sourceTree = "<group>"; };
 		A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionNameController.m; sourceTree = "<group>"; };
 		A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ScriptIcon.png; path = images/ScriptIcon.png; sourceTree = "<group>"; };
@@ -7866,6 +7875,11 @@
 				A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */,
 				A6EE7F31234082BE00D0F724 /* iTermMalloc.h */,
 				A6EE7F32234082BE00D0F724 /* iTermMalloc.m */,
+				A64DE9AC237BBDD7002E390C /* iTermPTY.h */,
+				A64DE9AD237BD854002E390C /* iTermLegacyPTY.h */,
+				A64DE9AE237BD854002E390C /* iTermLegacyPTY.m */,
+				A64DE9B1237BD8EE002E390C /* iTermMonoServerPTY.h */,
+				A64DE9B2237BD8EE002E390C /* iTermMonoServerPTY.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10122,6 +10136,7 @@
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
 				53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */,
 				537C4FD8227BE18B00B292E2 /* iTermSecureKeyboardEntryController.h in Headers */,
+				A64DE9AF237BD854002E390C /* iTermLegacyPTY.h in Headers */,
 				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				5308BF8922828268004BECAC /* iTermStatusBarBatteryComponent.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
@@ -10261,6 +10276,7 @@
 				A65660D42372A4A600DC6744 /* iTermCache.h in Headers */,
 				5365207121433ED2003C58FD /* iTermGitState.h in Headers */,
 				A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */,
+				A64DE9B3237BD8EE002E390C /* iTermMonoServerPTY.h in Headers */,
 				A63011B120E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.h in Headers */,
 				53197E7E220528E40000D95D /* iTermNotificationCenter.h in Headers */,
 				A667194F1DCE36C3000CE608 /* NSWindow+iTerm.h in Headers */,
@@ -12507,6 +12523,7 @@
 				A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				53850904212FA8910039AFC7 /* iTermMetaFrustrationDetector.m in Sources */,
+				A64DE9B4237BD8EE002E390C /* iTermMonoServerPTY.m in Sources */,
 				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,
 				5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
@@ -12521,6 +12538,7 @@
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				53A96EE822A48A1A001C2C6F /* iTermTmuxOptionMonitor.m in Sources */,
 				A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */,
+				A64DE9B0237BD854002E390C /* iTermLegacyPTY.m in Sources */,
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
