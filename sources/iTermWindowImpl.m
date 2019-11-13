@@ -453,6 +453,16 @@ ITERM_WEAKLY_REFERENCEABLE
 + (Class)frameViewClassForStyleMask:(NSUInteger)windowStyle {
     return [iTermThemeFrame class] ?: [super frameViewClassForStyleMask:windowStyle];
 }
+
+// https://chromium.googlesource.com/chromium/src/+/refs/tags/73.0.3683.86/ui/views_bridge_mac/native_widget_mac_nswindow.mm#169
+// The base implementation returns YES if the window's frame view is a custom
+// class, which causes undesirable changes in behavior. AppKit NSWindow
+// subclasses are known to override it and return NO.
+//
+// In particular, this fixes issue 8478 (traffic light buttons vertically off-center in native full screen).
+- (BOOL)_usesCustomDrawing {
+    return NO;
+}
 #else
 - (BOOL)isCompact {
     return NO;
