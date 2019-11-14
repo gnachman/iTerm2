@@ -6164,6 +6164,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
             return NO;
         }
+        if (event.buttonNumber == 0 && _numTouches > 1) {
+            // When three-finger tap emulates middle click then buttonNumber will be 2. Middle clicks are reportable.
+            DLog(@"Num touches is %@ so not reporting it", @(_numTouches));
+            return NO;
+        }
     }
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
         return NO;
