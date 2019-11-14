@@ -20,6 +20,7 @@
 - (BOOL)supportsOpenArrangement;
 - (BOOL)supportsScript;
 - (BOOL)supportsColorPreset;
+- (BOOL)supportsAction;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
@@ -46,3 +47,7 @@
 
 @interface iTermOpenQuicklyColorPresetCommand : iTermOpenQuicklyCommand
 @end
+
+@interface iTermOpenQuicklyActionCommand : iTermOpenQuicklyCommand
+@end
+

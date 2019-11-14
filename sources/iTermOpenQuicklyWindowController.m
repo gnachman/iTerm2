@@ -242,6 +242,11 @@
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
             PTYSession *session = term.currentSession;
             [session setColorsFromPresetNamed:item.presetName];
+        } else if ([object isKindOfClass:[iTermOpenQuicklyActionItem class]]) {
+            iTermOpenQuicklyActionItem *item = [iTermOpenQuicklyActionItem castFrom:object];
+            PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+            PTYSession *session = term.currentSession;
+            [session applyAction:item.action];
         }
     }
 

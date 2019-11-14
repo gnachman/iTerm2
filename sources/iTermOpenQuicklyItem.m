@@ -98,3 +98,11 @@
 
 @end
 
+@implementation iTermOpenQuicklyActionItem : iTermOpenQuicklyItem
+
+- (NSImage *)icon {
+#warning TODO: Needs an icon
+    return [NSImage it_imageNamed:@"Info" forClass:self.class];
+}
+
+@end

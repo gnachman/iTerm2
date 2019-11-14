@@ -1,5 +1,6 @@
 #import "iTermOpenQuicklyModel.h"
 
+#import "iTermActionsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorPresets.h"
@@ -21,23 +22,26 @@
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.
-static const double kSessionNameMultiplier = 2;
 static const double kSessionBadgeMultiplier = 3;
-static const double kCommandMultiplier = 0.8;
-static const double kDirectoryMultiplier = 0.9;
+static const double kSessionNameMultiplier = 2;
 static const double kHostnameMultiplier = 1.2;
-static const double kUsernameMultiplier = 0.5;
-static const double kProfileNameMultiplier = 1;
+static const double kProfileNameMultiplier = 1.01;
 static const double kUserDefinedVariableMultiplier = 1;
+static const double kDirectoryMultiplier = 0.9;
+static const double kCommandMultiplier = 0.8;
+static const double kUsernameMultiplier = 0.5;
 
-// Multiplier for color preset name. Rank between scripts and profiles.
-static const double kProfileNameMultiplierForColorPresetItem = 0.095;
+// Action items (e.g., as defined in Actions tool)
+static const double kActionMultiplier = 0.4;
+
+// Multipliers for arrangement items. Arrangements rank just above profiles
+static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 // Multipliers for profile items
 static const double kProfileNameMultiplierForProfileItem = 0.1;
 
-// Multipliers for arrangement items. Arrangements rank just above profiles
-static const double kProfileNameMultiplierForArrangementItem = 0.11;
+// Multiplier for color preset name. Rank between scripts and profiles.
+static const double kProfileNameMultiplierForColorPresetItem = 0.095;
 
 // Multipliers for script items. Ranks below profiles.
 static const double kProfileNameMultiplierForScriptItem = 0.09;
@@ -55,7 +59,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                       [iTermOpenQuicklySwitchProfileCommand class],
                       [iTermOpenQuicklyCreateTabCommand class],
                       [iTermOpenQuicklyColorPresetCommand class],
-                      [iTermOpenQuicklyScriptCommand class] ];
+                      [iTermOpenQuicklyScriptCommand class],
+                      [iTermOpenQuicklyActionCommand class]];
     });
     return commands;
 }
@@ -235,6 +240,34 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     }
 }
 
+- (void)addActionsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+              withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    [[[iTermActionsModel sharedInstance] actions] enumerateObjectsUsingBlock:^(iTermAction * _Nonnull action, NSUInteger idx, BOOL * _Nonnull stop) {
+        iTermOpenQuicklyActionItem *actionItem = [self actionItemForAction:action
+                                                                   matcher:matcher];
+        if (actionItem) {
+            [items addObject:actionItem];
+        }
+    }];
+}
+
+- (iTermOpenQuicklyActionItem *)actionItemForAction:(iTermAction *)action
+                                            matcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    iTermOpenQuicklyActionItem *actionItem = [[iTermOpenQuicklyActionItem alloc] init];
+    actionItem.action = action;
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    actionItem.score = [self scoreForAction:action matcher:matcher attributedName:attributedName];
+    if (actionItem.score <= 0) {
+        return nil;
+    }
+    actionItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                          value:@"Perform action"
+                                                             highlightedIndexes:nil];
+    actionItem.title = attributedName;
+    actionItem.identifier = [@(action.identifier) stringValue];
+    return actionItem;
+}
+
 - (iTermOpenQuicklyArrangementItem *)arrangementItemWithName:(NSString *)arrangementName
                                                      matcher:(iTermMinimumSubsequenceMatcher *)matcher
                                                       inTabs:(BOOL)inTabs {
@@ -342,6 +375,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     if ([command supportsColorPreset] && haveCurrentWindow) {
         [self addChangeColorPresetToItems:items withMatcher:matcher];
     }
+    if ([command supportsAction] && haveCurrentWindow) {
+        [self addActionsToItems:items withMatcher:matcher];
+    }
 
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
@@ -378,6 +414,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     } else if ([item isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyColorPresetItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyActionItem class]]) {
         return item;
     }
     return nil;
@@ -416,6 +454,22 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kProfileNameMultiplierForScriptItem];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForAction:(iTermAction *)action
+                 matcher:(iTermMinimumSubsequenceMatcher *)matcher
+          attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ action.title ?: @"" ]
+                                multiplier:kActionMultiplier
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kActionMultiplier];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

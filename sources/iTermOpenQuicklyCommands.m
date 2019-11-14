@@ -57,6 +57,10 @@
     return NO;
 }
 
+- (BOOL)supportsAction {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyWindowArrangementCommand
@@ -178,6 +182,26 @@
 }
 
 - (BOOL)supportsColorPreset {
+    return YES;
+}
+
+- (BOOL)supportsAction {
+    return YES;
+}
+
+@end
+
+@implementation iTermOpenQuicklyActionCommand
+
++ (NSString *)restrictionDescription {
+    return @"perform action";
+}
+
++ (NSString *)command {
+    return @"/";
+}
+
+- (BOOL)supportsAction {
     return YES;
 }
 
