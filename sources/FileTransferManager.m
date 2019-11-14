@@ -88,46 +88,50 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
             intoMenu:(AXUIElementRef)menuElement
            fromPoint:(NSPoint)point
             onScreen:(NSScreen *)screen {
-    if (menuElement) {
-        CFTypeRef temp;
-        AXUIElementCopyAttributeValue(menuElement, kAXPositionAttribute, (CFTypeRef *)&temp);
-
-        CGPoint position;
-        AXValueGetValue(temp, kAXValueCGPointType, &position);
-        CFRelease(temp);
-        CFRelease(menuElement);
-
-        NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(point.x,
-                                                                            point.y,
-                                                                            image.size.width,
-                                                                            image.size.height)
-                                                       styleMask:NSWindowStyleMaskBorderless
-                                                         backing:NSBackingStoreBuffered
-                                                           defer:NO];
-        NSImageView  *imageView =
-            [[[NSImageView alloc] initWithFrame:NSMakeRect(0,
-                                                           0,
-                                                           image.size.width,
-                                                           image.size.height)] autorelease];
-        imageView.image = image;
-        window.contentView = imageView;
-        [window makeKeyAndOrderFront:nil];
-        [window setLevel:NSMainMenuWindowLevel];
-
-        // Todo: deal with multiple screens, mavericks
-        const CGFloat menuBarHeight =
-            [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
-        position.y = screen.frame.size.height - position.y - menuBarHeight;
-
-        [window.animator setFrame:NSMakeRect(position.x,
-                                             position.y,
-                                             window.frame.size.width,
-                                             window.frame.size.height)
-                          display:YES];
-        [self performSelector:@selector(fadeWindowOut:)
-                   withObject:window
-                   afterDelay:[[NSAnimationContext currentContext] duration]];
+    if (!menuElement) {
+        return;
     }
+    CFTypeRef temp = NULL;
+    AXUIElementCopyAttributeValue(menuElement, kAXPositionAttribute, (CFTypeRef *)&temp);
+    if (!temp) {
+        return;
+    }
+
+    CGPoint position;
+    AXValueGetValue(temp, kAXValueCGPointType, &position);
+    CFRelease(temp);
+    CFRelease(menuElement);
+
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(point.x,
+                                                                        point.y,
+                                                                        image.size.width,
+                                                                        image.size.height)
+                                                   styleMask:NSWindowStyleMaskBorderless
+                                                     backing:NSBackingStoreBuffered
+                                                       defer:NO];
+    NSImageView  *imageView =
+        [[[NSImageView alloc] initWithFrame:NSMakeRect(0,
+                                                       0,
+                                                       image.size.width,
+                                                       image.size.height)] autorelease];
+    imageView.image = image;
+    window.contentView = imageView;
+    [window makeKeyAndOrderFront:nil];
+    [window setLevel:NSMainMenuWindowLevel];
+
+    // Todo: deal with multiple screens, mavericks
+    const CGFloat menuBarHeight =
+        [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+    position.y = screen.frame.size.height - position.y - menuBarHeight;
+
+    [window.animator setFrame:NSMakeRect(position.x,
+                                         position.y,
+                                         window.frame.size.width,
+                                         window.frame.size.height)
+                      display:YES];
+    [self performSelector:@selector(fadeWindowOut:)
+               withObject:window
+               afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
 - (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen {
