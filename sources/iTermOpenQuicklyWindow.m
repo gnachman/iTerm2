@@ -15,7 +15,7 @@
 }
 
 - (NSTimeInterval)animationResizeTime:(NSRect)newWindowFrame {
-    return 0.15;
+    return 0.05;
 }
 
 - (BOOL)autoHidesHotKeyWindow {
