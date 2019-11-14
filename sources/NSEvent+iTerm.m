@@ -50,7 +50,16 @@
 }
 
 - (NSEvent *)eventWithButtonNumber:(NSInteger)buttonNumber {
-    CGEventRef cgEvent = [self CGEvent];
+    NSEvent *original = [NSEvent mouseEventWithType:NSEventTypeOtherMouseDown
+                                           location:self.locationInWindow
+                                      modifierFlags:self.modifierFlags
+                                          timestamp:self.timestamp
+                                       windowNumber:self.windowNumber
+                                            context:[NSGraphicsContext currentContext]
+                                        eventNumber:self.eventNumber
+                                         clickCount:self.clickCount
+                                           pressure:self.pressure];
+    CGEventRef cgEvent = [original CGEvent];
     CGEventRef modifiedCGEvent = CGEventCreateCopy(cgEvent);
     CGEventSetIntegerValueField(modifiedCGEvent, kCGMouseEventButtonNumber, buttonNumber);
     NSEvent *fakeEvent = [NSEvent eventWithCGEvent:modifiedCGEvent];
