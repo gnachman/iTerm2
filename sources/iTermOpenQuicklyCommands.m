@@ -198,7 +198,7 @@
 }
 
 + (NSString *)command {
-    return @"/";
+    return @":";
 }
 
 - (BOOL)supportsAction {
