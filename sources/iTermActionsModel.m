@@ -8,6 +8,7 @@
 #import "iTermActionsModel.h"
 #import "iTermNotificationCenter+Protected.h"
 #import "NSArray+iTerm.h"
+#import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static NSString *const iTermActionsUserDefaultsKey = @"Actions";
@@ -22,6 +23,8 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
         _action = action;
         _title = [title copy];
         _parameter = [parameter copy];
+        static NSInteger nextIdentifier;
+        _identifier = nextIdentifier++;
     }
     return self;
 }
@@ -84,14 +87,11 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
     [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeInsertion index:_actions.count - 1] post];
 }
 
-- (void)removeAction:(iTermAction *)action {
-    NSInteger index = [_actions indexOfObject:action];
-    if (index == NSNotFound) {
-        return;
-    }
-    [_actions removeObject:action];
+- (void)removeActions:(NSArray<iTermAction *> *)actions {
+    NSIndexSet *indexes = [_actions it_indexSetWithIndexesOfObjects:actions];
+    [_actions removeObjectsAtIndexes:indexes];
     [self save];
-    [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeDeletion index:index] post];
+    [[iTermActionsDidChangeNotification removalNotificationWithIndexes:indexes] post];
 }
 
 - (void)replaceAction:(iTermAction *)actionToReplace withAction:(iTermAction *)replacement {
@@ -102,6 +102,44 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
     _actions[index] = replacement;
     [self save];
     [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeEdit index:index] post];
+}
+
+- (NSInteger)indexOfActionWithIdentifier:(NSInteger)identifier {
+    return [_actions indexOfObjectPassingTest:^BOOL(iTermAction * _Nonnull action, NSUInteger idx, BOOL * _Nonnull stop) {
+        return action.identifier == identifier;
+    }];
+}
+
+- (void)moveActionsWithIdentifiers:(NSArray<NSNumber *> *)identifiers
+                           toIndex:(NSInteger)row {
+    NSArray<iTermAction *> *actions = [_actions filteredArrayUsingBlock:^BOOL(iTermAction *action) {
+        return [identifiers containsObject:@(action.identifier)];
+    }];
+    NSInteger countBeforeRow = [[actions filteredArrayUsingBlock:^BOOL(iTermAction *action) {
+        return [self indexOfActionWithIdentifier:action.identifier] < row;
+    }] count];
+    NSMutableArray<iTermAction *> *updatedActions = [_actions mutableCopy];
+    NSMutableIndexSet *removals = [NSMutableIndexSet indexSet];
+    for (iTermAction *action in actions) {
+        const NSInteger i = [_actions indexOfObject:action];
+        assert(i != NSNotFound);
+        [removals addIndex:i];
+        [updatedActions removeObject:action];
+    }
+    NSInteger insertionIndex = row - countBeforeRow;
+    for (iTermAction *action in actions) {
+        [updatedActions insertObject:action atIndex:insertionIndex++];
+    }
+    _actions = updatedActions;
+    [self save];
+    [[iTermActionsDidChangeNotification moveNotificationWithRemovals:removals
+                                                    destinationIndex:row - countBeforeRow] post];
+}
+
+- (void)setActions:(NSArray<iTermAction *> *)actions {
+    _actions = [actions mutableCopy];
+    [self save];
+    [[iTermActionsDidChangeNotification fullReplacementNotification] post];
 }
 
 #pragma mark - Private
@@ -125,6 +163,28 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
     iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = mutationType;
     notif->_index = index;
+    return notif;
+}
+
++ (instancetype)moveNotificationWithRemovals:(NSIndexSet *)removals
+                            destinationIndex:(NSInteger)destinationIndex {
+    iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
+    notif->_mutationType = iTermActionsDidChangeMutationTypeMove;
+    notif->_indexSet = removals;
+    notif->_index = destinationIndex;
+    return notif;
+}
+
++ (instancetype)fullReplacementNotification {
+    iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
+    notif->_mutationType = iTermActionsDidChangeMutationTypeFullReplacement;
+    return notif;
+}
+
++ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes {
+    iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
+    notif->_mutationType = iTermActionsDidChangeMutationTypeDeletion;
+    notif->_indexSet = indexes;
     return notif;
 }
 

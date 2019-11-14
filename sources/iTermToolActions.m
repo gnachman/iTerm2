@@ -7,14 +7,20 @@
 
 #import "iTermToolActions.h"
 
+#import "DebugLogging.h"
 #import "iTermActionsModel.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermEditKeyActionWindowController.h"
 
+#import "NSArray+iTerm.h"
+#import "NSIndexSet+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
+static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteboardType";
+
 
 @interface iTermToolActions() <NSTableViewDataSource, NSTableViewDelegate>
 @end
@@ -81,6 +87,8 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         _tableView.delegate = self;
         _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
         _tableView.rowHeight = 15;
+        _tableView.allowsMultipleSelection = YES;
+        [_tableView registerForDraggedTypes:@[ iTermToolActionsPasteboardType ]];
 
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
         [_tableView setAutoresizingMask:NSViewWidthSizable];
@@ -146,11 +154,11 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 #pragma mark - Actions
 
 - (void)doubleClickOnTableView:(id)sender {
-    [self applySelectedAction];
+    [self applySelectedActions];
 }
 
 - (void)apply:(id)sender {
-    [self applySelectedAction];
+    [self applySelectedActions];
 }
 
 - (void)add:(id)sender {
@@ -158,54 +166,83 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 }
 
 - (void)remove:(id)sender {
-    iTermAction *action = [self selectedAction];
-    if (action) {
-        [[iTermActionsModel sharedInstance] removeAction:action];
-    }
+    NSArray<iTermAction *> *actions = [self selectedActions];
+    [self pushUndo];
+    [[iTermActionsModel sharedInstance] removeActions:actions];
 }
 
 - (void)edit:(id)sender {
-    iTermAction *action = [self selectedAction];
+    iTermAction *action = [[self selectedActions] firstObject];
     if (action) {
         _editActionWindowController = [self newEditKeyActionWindowControllerForAction:action];
     }
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    if (event.keyCode == kVK_Delete) {
+        [self remove:nil];
+        return YES;
+    }
+    return [super performKeyEquivalent:event];
 }
 
 #pragma mark - Private
 
 - (void)actionsDidChange:(iTermActionsDidChangeNotification *)notif {
     _actions = [[[iTermActionsModel sharedInstance] actions] copy];
-    [_tableView beginUpdates];
     switch (notif.mutationType) {
-        case iTermActionsDidChangeMutationTypeEdit:
-            [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                  columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+        case iTermActionsDidChangeMutationTypeEdit: {
+            [_tableView it_performUpdateBlock:^{
+                [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
+                                      columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+            }];
             break;
-        case iTermActionsDidChangeMutationTypeDeletion:
-            [_tableView removeRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                              withAnimation:YES];
+        }
+        case iTermActionsDidChangeMutationTypeDeletion: {
+            [_tableView it_performUpdateBlock:^{
+                [_tableView removeRowsAtIndexes:notif.indexSet
+                                  withAnimation:YES];
+            }];
             break;
-        case iTermActionsDidChangeMutationTypeInsertion:
-            [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                              withAnimation:YES];
+        }
+        case iTermActionsDidChangeMutationTypeInsertion: {
+            [_tableView it_performUpdateBlock:^{
+                [_tableView insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:notif.index]
+                                  withAnimation:YES];
+            }];
+            break;
+        }
+        case iTermActionsDidChangeMutationTypeMove: {
+            [_tableView it_performUpdateBlock:^{
+                [_tableView removeRowsAtIndexes:notif.indexSet
+                                  withAnimation:YES];
+                NSMutableIndexSet *insertionIndexes = [NSMutableIndexSet indexSet];
+                for (NSInteger i = 0; i < notif.indexSet.count; i++) {
+                    [insertionIndexes addIndex:notif.index + i];
+                }
+                [_tableView insertRowsAtIndexes:insertionIndexes
+                                  withAnimation:YES];
+            }];
+            break;
+        }
+        case iTermActionsDidChangeMutationTypeFullReplacement:
+            [_tableView reloadData];
+            break;
     }
-    [_tableView endUpdates];
 }
 
-- (void)applySelectedAction {
-    iTermAction *action = [self selectedAction];
-    if (action) {
+- (void)applySelectedActions {
+    for (iTermAction *action in [self selectedActions]) {
         iTermToolWrapper *wrapper = self.toolWrapper;
         [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
     }
 }
 
-- (iTermAction *)selectedAction {
-    if (_tableView.selectedRow < 0) {
-        return nil;
-    }
-    iTermAction *action = [[[iTermActionsModel sharedInstance] actions] objectAtIndex:_tableView.selectedRow];
-    return action;
+- (NSArray<iTermAction *> *)selectedActions {
+    NSArray<iTermAction *> *actions = [[iTermActionsModel sharedInstance] actions];
+    return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
+        return actions[indexNumber.integerValue];
+    }];
 }
 
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
@@ -227,6 +264,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
 - (void)editActionDidComplete:(iTermAction *)original {
     if (_editActionWindowController.ok) {
+        [self pushUndo];
         if (original) {
             [[iTermActionsModel sharedInstance] replaceAction:original
                                                    withAction:_editActionWindowController.unboundAction];
@@ -269,10 +307,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 }
 
 - (void)updateEnabled {
-    const BOOL haveSelection = [self selectedAction] != nil;
-    _applyButton.enabled = haveSelection;
-    _removeButton.enabled = haveSelection;
-    _editButton.enabled = haveSelection;
+    const NSInteger numberOfRows = [[self selectedActions] count];
+    _applyButton.enabled = numberOfRows > 0;
+    _removeButton.enabled = numberOfRows > 0;
+    _editButton.enabled = numberOfRows == 1;
 }
 
 #pragma mark - NSTableViewDelegate
@@ -307,5 +345,64 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     return _actions.count;
 }
 
+#pragma mark Drag-Drop
+
+- (BOOL)tableView:(NSTableView *)tableView
+writeRowsWithIndexes:(NSIndexSet *)rowIndexes
+     toPasteboard:(NSPasteboard*)pboard {
+    [pboard declareTypes:@[ iTermToolActionsPasteboardType ]
+                   owner:self];
+
+    NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
+        return @(_actions[anObject.integerValue].identifier);
+    }];
+    [pboard setPropertyList:plist
+                    forType:iTermToolActionsPasteboardType];
+    return YES;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)aTableView
+                validateDrop:(id<NSDraggingInfo>)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)operation {
+    if ([info draggingSource] != aTableView) {
+        return NSDragOperationNone;
+    }
+
+    // Add code here to validate the drop
+    switch (operation) {
+        case NSTableViewDropOn:
+            return NSDragOperationNone;
+
+        case NSTableViewDropAbove:
+            return NSDragOperationMove;
+
+        default:
+            return NSDragOperationNone;
+    }
+}
+
+- (BOOL)tableView:(NSTableView *)aTableView
+       acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)operation {
+    [self pushUndo];
+    NSPasteboard *pboard = [info draggingPasteboard];
+    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermToolActionsPasteboardType];
+    [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:identifiers
+                                                           toIndex:row];
+    return YES;
+}
+
+- (void)setActions:(NSArray<iTermAction *> *)actions {
+    [self pushUndo];
+    [[iTermActionsModel sharedInstance] setActions:actions];
+}
+
+- (void)pushUndo {
+    [[self undoManager] registerUndoWithTarget:self
+                                      selector:@selector(setActions:)
+                                        object:_actions];
+}
 
 @end

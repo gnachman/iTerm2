@@ -15,12 +15,30 @@
 
 @implementation NSArray (iTerm)
 
+- (NSIndexSet *)it_indexSetWithIndexesOfObjects:(NSArray *)objects {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    for (id object in objects) {
+        const NSInteger index = [self indexOfObject:object];
+        if (index == NSNotFound) {
+            continue;
+        }
+        [indexes addIndex:index];
+    }
+    return indexes;
+}
+
 + (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range {
     NSMutableArray<NSNumber *> *temp = [NSMutableArray array];
     for (NSUInteger i = 0; i < range.length; i++) {
         [temp addObject:@(i + range.location)];
     }
     return temp;
+}
+
+- (NSArray *)it_arrayByRemovingObjectsAtIndexes:(NSIndexSet *)indexes {
+    NSMutableArray *result = [self mutableCopy];
+    [result removeObjectsAtIndexes:indexes];
+    return result;
 }
 
 - (NSArray *)objectsOfClasses:(NSArray *)classes {
@@ -47,7 +65,7 @@
     return result;
 }
 
-- (NSArray *)mapWithBlock:(id (^)(id anObject))block {
+- (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(id anObject))block {
     NSMutableArray *temp = [NSMutableArray array];
     for (id anObject in self) {
         id mappedObject = block(anObject);

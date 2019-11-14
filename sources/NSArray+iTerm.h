@@ -13,12 +13,15 @@
 @interface NSArray<ObjectType> (iTerm)
 
 + (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range;
+- (NSIndexSet *)it_indexSetWithIndexesOfObjects:(NSArray *)objects;
+
+- (NSArray<ObjectType> *)it_arrayByRemovingObjectsAtIndexes:(NSIndexSet *)indexes;
 
 - (NSArray *)objectsOfClasses:(NSArray<Class> *)classes;
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
 // Returns an array where each object in self is replaced with block(object).
-- (NSArray *)mapWithBlock:(id (^)(ObjectType anObject))block;
+- (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(ObjectType anObject))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
 - (NSArray<ObjectType> *)flattenedArray;

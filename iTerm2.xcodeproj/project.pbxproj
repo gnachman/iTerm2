@@ -1370,6 +1370,10 @@
 		53C5650921B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */; };
 		53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */; };
 		53C5650D21B8CF65002B3167 /* PowerlineLineRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */; };
+		53D0FD4D237DC30F00DAFA8A /* NSIndexSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53D0FD4B237DC30E00DAFA8A /* NSIndexSet+iTerm.h */; };
+		53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D0FD4C237DC30F00DAFA8A /* NSIndexSet+iTerm.m */; };
+		53D0FD51237DCB5A00DAFA8A /* NSTableView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53D0FD4F237DCB5A00DAFA8A /* NSTableView+iTerm.h */; };
+		53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */; };
 		53D68F802283EE7C0018710D /* iTermTmuxLayoutBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */; };
 		53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */; };
 		53D68F842283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 53D68F822283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m */; };
@@ -4432,6 +4436,10 @@
 		53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineSolidRightArrow.pdf; path = images/PowerlineSolidRightArrow.pdf; sourceTree = "<group>"; };
 		53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineLeftArrow.pdf; path = images/PowerlineLineLeftArrow.pdf; sourceTree = "<group>"; };
 		53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineRightArrow.pdf; path = images/PowerlineLineRightArrow.pdf; sourceTree = "<group>"; };
+		53D0FD4B237DC30E00DAFA8A /* NSIndexSet+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSIndexSet+iTerm.h"; sourceTree = "<group>"; };
+		53D0FD4C237DC30F00DAFA8A /* NSIndexSet+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSIndexSet+iTerm.m"; sourceTree = "<group>"; };
+		53D0FD4F237DCB5A00DAFA8A /* NSTableView+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSTableView+iTerm.h"; sourceTree = "<group>"; };
+		53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSTableView+iTerm.m"; sourceTree = "<group>"; };
 		53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxLayoutBuilder.h; sourceTree = "<group>"; };
 		53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxLayoutBuilder.m; sourceTree = "<group>"; };
 		53D68F822283FA4B0018710D /* iTermTmuxLayoutBuilderTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxLayoutBuilderTest.m; sourceTree = "<group>"; };
@@ -7237,6 +7245,10 @@
 				A6566752219EA582005FE60E /* NSNull+iTerm.m */,
 				A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */,
 				A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */,
+				53D0FD4B237DC30E00DAFA8A /* NSIndexSet+iTerm.h */,
+				53D0FD4C237DC30F00DAFA8A /* NSIndexSet+iTerm.m */,
+				53D0FD4F237DCB5A00DAFA8A /* NSTableView+iTerm.h */,
+				53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -9970,6 +9982,7 @@
 				A6BC9B1E214A2AE900F50C09 /* iTermVariableReference.h in Headers */,
 				530AB8AB20B2013000D2AA08 /* iTermExpressionParser.h in Headers */,
 				A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */,
+				53D0FD51237DCB5A00DAFA8A /* NSTableView+iTerm.h in Headers */,
 				531E71F022290BA000915960 /* iTermExpressionEvaluator.h in Headers */,
 				A6153D5421F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.h in Headers */,
 				A65D3AE221D16FE200384015 /* iTermBacktraceFrame.h in Headers */,
@@ -10062,6 +10075,7 @@
 				A69C9337212108E900531438 /* iTermsStatusBarComposerViewController.h in Headers */,
 				530AB89620AFDF5000D2AA08 /* iTermScriptFunctionCall.h in Headers */,
 				A6FE8D12209528F400B5C648 /* iTermPythonRuntimeDownloader.h in Headers */,
+				53D0FD4D237DC30F00DAFA8A /* NSIndexSet+iTerm.h in Headers */,
 				A6B540FA224838A100D3AD14 /* NSColor+PSM.h in Headers */,
 				A66719201DCE36C3000CE608 /* iTermImageMark.h in Headers */,
 				A631749F21214698004F0142 /* iTermGenericStatusBarContainer.h in Headers */,
@@ -12376,6 +12390,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
@@ -12603,6 +12618,7 @@
 				A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
+				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
