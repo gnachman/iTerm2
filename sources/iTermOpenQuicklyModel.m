@@ -75,17 +75,14 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 }
 
 - (id<iTermOpenQuicklyCommand>)commandForQuery:(NSString *)queryString {
-    if ([queryString hasPrefix:@"/"]) {
-        NSRange rangeOfSpace = [queryString rangeOfString:@" "];
-        if (rangeOfSpace.location != NSNotFound) {
-            NSString *command = [[queryString substringToIndex:rangeOfSpace.location] substringFromIndex:1];
-            NSString *text = [queryString substringFromIndex:rangeOfSpace.location + 1];
-            Class commandClass = [self commandTypeWithAbbreviation:command];
-            if (commandClass) {
-                id<iTermOpenQuicklyCommand> theCommand= [[commandClass alloc] init];
-                theCommand.text = text;
-                return theCommand;
-            }
+    if ([queryString hasPrefix:@"/"] && queryString.length > 1) {
+        NSString *command = [queryString substringWithRange:NSMakeRange(1, 1)];
+        NSString *text = [[queryString substringFromIndex:2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        Class commandClass = [self commandTypeWithAbbreviation:command];
+        if (commandClass) {
+            id<iTermOpenQuicklyCommand> theCommand= [[commandClass alloc] init];
+            theCommand.text = text;
+            return theCommand;
         }
     }
     id<iTermOpenQuicklyCommand> theCommand = [[iTermOpenQuicklyNoCommand alloc] init];
