@@ -121,14 +121,22 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
     }
 
+    private func imageViewForImage(withName name: String) -> NSImageView {
+        let bundle = Bundle(for: FontPickerCompositeView.self)
+        if let image = bundle.image(forResource: NSImage.Name(name)) {
+            return NSImageView(image: image)
+        } else {
+            return NSImageView(image: NSImage(size: NSSize(width: 1, height: 1)))
+        }
+    }
+
     @objc(addHorizontalSpacingAccessoryWithInitialValue:)
     public func addHorizontalSpacingAccessory(_ initialValue: Double) -> SizePickerView {
         let view = SizePickerView()
         view.clamp(min: 1, max: 200)
         horizontalSpacing = view
         view.size = initialValue
-        let bundle = Bundle(for: FontPickerCompositeView.self)
-        let imageView = NSImageView(image: bundle.image(forResource: NSImage.Name("HorizontalSpacingIcon"))!)
+        let imageView = imageViewForImage(withName: "HorizontalSpacingIcon")
         if #available(macOS 10.14, *) {
             imageView.image?.isTemplate = true
             imageView.contentTintColor = NSColor.labelColor
@@ -144,8 +152,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         view.clamp(min: 1, max: 200)
         verticalSpacing = view
         view.size = initialValue
-        let bundle = Bundle(for: FontPickerCompositeView.self)
-        let imageView = NSImageView(image: bundle.image(forResource: NSImage.Name("VerticalSpacingIcon"))!)
+        let imageView = imageViewForImage(withName: "VerticalSpacingIcon")
         if #available(macOS 10.14, *) {
             imageView.image?.isTemplate = true
             imageView.contentTintColor = NSColor.labelColor
