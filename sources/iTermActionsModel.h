@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *title;
 @property (nonatomic, readonly) NSString *parameter;
 @property (nonatomic, readonly) NSInteger identifier;
+@property (nonatomic, readonly) NSString *displayString;
 
 - (instancetype)initWithTitle:(NSString *)title
                        action:(KEY_ACTION)action

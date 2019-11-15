@@ -258,7 +258,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         return nil;
     }
     actionItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                          value:@"Perform action"
+                                                                          value:action.displayString
                                                              highlightedIndexes:nil];
     actionItem.title = attributedName;
     actionItem.identifier = [@(action.identifier) stringValue];
