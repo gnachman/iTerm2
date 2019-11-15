@@ -825,7 +825,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
         [self incrementOverflowBy:linesDropped];
     }
     int lines __attribute__((unused)) = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    NSAssert(lines >= 0, @"Negative lines");
+    ITUpgradedNSAssert(lines >= 0, @"Negative lines");
 
     [selection clearSelection];
     // An immediate refresh is needed so that the size of textview can be
@@ -5254,7 +5254,7 @@ static void SwapInt(int *a, int *b) {
                               includesEndOfLine:&cont
                                       timestamp:NULL
                                    continuation:NULL];
-        NSAssert(isOk, @"Pop shouldn't fail");
+        ITUpgradedNSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
 }

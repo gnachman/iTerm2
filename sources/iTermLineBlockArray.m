@@ -335,7 +335,7 @@
             if (chars == NULL) {
                 return;
             }
-            NSAssert(length <= width, @"Length too long");
+            ITUpgradedNSAssert(length <= width, @"Length too long");
             callback(chars, length, eol, continuation, &stop);
             if (stop) {
                 return;

@@ -7,6 +7,8 @@
 
 #import "iTermStatusBarKnobCheckboxViewController.h"
 
+#import "DebugLogging.h"
+
 @interface iTermStatusBarKnobCheckboxViewController ()
 
 @end
@@ -42,7 +44,7 @@
 }
 
 - (void)setHelpURL:(NSURL *)url {
-    NSAssert(NO, @"Not supported");
+    ITUpgradedNSAssert(NO, @"Not supported");
 }
 
 @end

@@ -4,6 +4,8 @@
 
 #import "AATree.h"
 
+#import "DebugLogging.h"
+
 @interface AATree() // private methods.
 
 @property(retain) AATreeNode *root;
@@ -231,7 +233,7 @@
 
 	NSParameterAssert(anObject);
 	NSParameterAssert(aKey);
-	NSAssert([aKey conformsToProtocol:@protocol(NSCopying)], @"The supplied key does not conform to the NSCopying protocol.");
+	ITUpgradedNSAssert([aKey conformsToProtocol:@protocol(NSCopying)], @"The supplied key does not conform to the NSCopying protocol.");
 
 	[self __lockForWriting];
     changedNodes = [[NSMutableSet alloc] init];

@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarKnobColorViewController.h"
 
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -61,7 +62,7 @@
 }
 
 - (void)setHelpURL:(NSURL *)url {
-    NSAssert(NO, @"Not supported");
+    ITUpgradedNSAssert(NO, @"Not supported");
 }
 
 @end

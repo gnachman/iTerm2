@@ -131,6 +131,29 @@ extern BOOL gDebugLogging;
 #define IT_STRINGIFY(x) #x
 
 #if BETA
+#define ITBetaAssertSampled(percentage, condition, args...) \
+  do { \
+    if (!(condition) && arc4random_uniform(100) < percentage) { \
+      DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
+      assert(NO); \
+    } \
+  } while (0)
+#else  // BETA
+#define ITBetaAssertSampled(percentage, condition, args...) \
+  do { \
+    if (!(condition) && arc4random_uniform(100) < percentage) { \
+      ELog(@"BETA ASSERT: Failed beta assert because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
+    } \
+  } while (0)
+#endif
+
+// I shouldn't use NSAssert because it is compiled out. But turning them all on at once is scary.
+// I will gradually ramp this up and see what catches on fire.
+#define ITUpgradedNSAssert(condition, args...) ITBetaAssertSampled(1, condition, args)
+
+#if BETA
 #define ITBetaAssert(condition, args...) \
   do { \
     if (!(condition)) { \

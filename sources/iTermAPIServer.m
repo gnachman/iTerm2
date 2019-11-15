@@ -370,7 +370,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // Runs on execution queue
 - (void)dispatchRequestWhileNotInTransaction:(ITMClientOriginatedMessage *)request
                                   connection:(iTermWebSocketConnection *)webSocketConnection {
-    NSAssert(!self.transaction, @"Already in a transaction");
+    ITUpgradedNSAssert(!self.transaction, @"Already in a transaction");
 
     __weak __typeof(self) weakSelf = self;
     if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest) {

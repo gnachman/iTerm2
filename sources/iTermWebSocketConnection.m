@@ -175,7 +175,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 // queue
 - (void)reallyHandleRequest:(NSURLRequest *)request completion:(void (^)(void))completion {
     DLog(@"Handling websocket request %@", request);
-    NSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
+    ITUpgradedNSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
 
     [self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]
                              version:[request.allHTTPHeaderFields[@"sec-websocket-version"] integerValue]

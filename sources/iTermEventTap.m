@@ -264,7 +264,7 @@ error:
 @implementation iTermFlagsChangedEventTap
 
 + (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded {
-    NSAssert([NSThread isMainThread], @"Don't call this off the main thread because it's not thread-safe");
+    ITUpgradedNSAssert([NSThread isMainThread], @"Don't call this off the main thread because it's not thread-safe");
     static dispatch_once_t onceToken;
     static id instance;
     if (!createIfNeeded) {

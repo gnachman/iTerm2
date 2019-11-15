@@ -197,7 +197,7 @@ static iTermController *gSharedInstance;
         while ([_terminalWindows count] > 0) {
             [[_terminalWindows objectAtIndex:0] close];
         }
-        NSAssert([_terminalWindows count] == 0, @"Expected terminals to be gone");
+        ITUpgradedNSAssert([_terminalWindows count] == 0, @"Expected terminals to be gone");
         [_terminalWindows release];
     }
 

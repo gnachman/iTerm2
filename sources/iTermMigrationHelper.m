@@ -7,6 +7,7 @@
 
 #import "iTermMigrationHelper.h"
 
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermDisclosableView.h"
 #import "iTermProfilePreferences.h"
@@ -156,7 +157,7 @@
         } else if ([prefix isEqualToString:@"KeyBindings"]) {
             parent = [keybindingProfiles objectForKey:[dict objectForKey:KEY_KEYBOARD_PROFILE]];
         } else {
-            NSAssert(0, @"Bad prefix");
+            ITUpgradedNSAssert(0, @"Bad prefix");
         }
         id value = nil;
         if (parent) {

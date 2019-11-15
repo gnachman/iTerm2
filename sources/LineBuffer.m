@@ -192,7 +192,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
             int block_lines = [block getNumLinesWithWrapWidth: width];
 #if ITERM_DEBUG
-            NSAssert(block_lines > 0, @"Empty leading block");
+            ITUpgradedNSAssert(block_lines > 0, @"Empty leading block");
 #endif
             int toDrop = block_lines;
             if (toDrop > extra_lines) {
@@ -342,7 +342,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             assert(ok);
             prefix = (screen_char_t*)iTermMalloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
-            NSAssert(ok, @"hasPartial but pop failed.");
+            ITUpgradedNSAssert(ok, @"hasPartial but pop failed.");
         }
         if ([block isEmpty]) {
             // The buffer is empty but it's not large enough to hold a whole line. It must be grown.
@@ -377,7 +377,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                             width:width
                         timestamp:prefixTimestamp
                      continuation:continuation];
-            NSAssert(ok, @"append can't fail here");
+            ITUpgradedNSAssert(ok, @"append can't fail here");
             free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
@@ -389,7 +389,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                         width:width
                     timestamp:timestamp
                  continuation:continuation];
-        NSAssert(ok, @"append can't fail here");
+        ITUpgradedNSAssert(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
         // wrapped lines cache.
@@ -430,7 +430,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     ITBetaAssert(remainder >= 0, @"Negative lineNum BEFORE consuming block_lines");
     if (!block) {
         NSLog(@"Couldn't find line %d", lineNum);
-        NSAssert(NO, @"Tried to get non-existent line");
+        ITUpgradedNSAssert(NO, @"Tried to get non-existent line");
         return NO;
     }
 
@@ -451,7 +451,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
-    NSAssert(length <= width, @"Length too long");
+    ITUpgradedNSAssert(length <= width, @"Length too long");
     memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
     [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
 
@@ -503,12 +503,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (result.line) {
         result.length = length;
         result.eol = eol;
-        NSAssert(result.length <= width, @"Length too long");
+        ITUpgradedNSAssert(result.length <= width, @"Length too long");
         return result;
     }
 
     NSLog(@"Couldn't find line %d", lineNum);
-    NSAssert(NO, @"Tried to get non-existent line");
+    ITUpgradedNSAssert(NO, @"Tried to get non-existent line");
     return nil;
 }
 
@@ -569,9 +569,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
-    NSAssert(ok, @"Unexpected empty block");
-    NSAssert(length <= width, @"Length too large");
-    NSAssert(length >= 0, @"Negative length");
+    ITUpgradedNSAssert(ok, @"Unexpected empty block");
+    ITUpgradedNSAssert(length <= width, @"Length too large");
+    ITUpgradedNSAssert(length >= 0, @"Negative length");
 
     // Copy into the provided buffer.
     memcpy(ptr, temp, sizeof(screen_char_t) * length);

@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarKnobNumericViewController.h"
 
+#import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -87,7 +88,7 @@
 }
 
 - (void)setHelpURL:(NSURL *)url {
-    NSAssert(NO, @"Not supported");
+    ITUpgradedNSAssert(NO, @"Not supported");
 }
 
 @end

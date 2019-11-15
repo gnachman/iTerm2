@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarKnobActionViewController.h"
 
+#import "DebugLogging.h"
 #import "iTermActionsModel.h"
 #import "iTermEditKeyActionWindowController.h"
 
@@ -85,7 +86,7 @@
 }
 
 - (void)setHelpURL:(NSURL *)url {
-    NSAssert(NO, @"Not supported");
+    ITUpgradedNSAssert(NO, @"Not supported");
 }
 
 @end

@@ -1078,7 +1078,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         case ColorModeInvalid:
             return kColorMapInvalid;
     }
-    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
+    ITUpgradedNSAssert(ok, @"Bogus color mode %d", (int)theMode);
     return kColorMapInvalid;
 }
 
