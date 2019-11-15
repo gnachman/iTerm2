@@ -105,7 +105,10 @@ int iTermFileDescriptorClientConnect(const char *path) {
 
         struct sockaddr_un remote;
         remote.sun_family = AF_UNIX;
-        assert(strlen(path + 1) < sizeof(remote.sun_path));
+        if (strlen(path) + 1 >= sizeof(remote.sun_path)) {
+            assert(0);
+            exit(1);
+        }
         strcpy(remote.sun_path, path);
         int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
         FDLog(LOG_DEBUG, "Calling fcntl() 1");
