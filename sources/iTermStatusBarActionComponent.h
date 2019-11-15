@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermStatusBarActionComponent : iTermStatusBarBaseComponent
+@interface iTermStatusBarActionComponent : iTermStatusBarTextComponent
 @end
 
 @interface iTermStatusBarActionMenuComponent : iTermStatusBarTextComponent

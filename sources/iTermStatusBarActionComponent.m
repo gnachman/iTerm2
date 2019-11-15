@@ -11,12 +11,36 @@
 #import "iTermSwiftyString.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "RegexKitLite.h"
 
 static NSString *const iTermStatusBarActionKey = @"action";
 
 @implementation iTermStatusBarActionComponent {
-    NSButton *_button;
+    NSString *_value;
     iTermSwiftyString *_swiftyString;
+}
+
+- (nullable NSArray<NSString *> *)stringVariants {
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    [_value enumerateStringsSeparatedByRegex:@"\\h+"
+                                     options:RKLNoOptions
+                                     inRange:NSMakeRange(0, _value.length)
+                                       error:nil
+                          enumerationOptions:RKLRegexEnumerationNoOptions
+                                  usingBlock:
+     ^(NSInteger captureCount,
+       NSString *const __unsafe_unretained *capturedStrings,
+       const NSRange *capturedRanges,
+       volatile BOOL *const stop) {
+
+        [result addObject:[self->_value substringToIndex:NSMaxRange(capturedRanges[0])]];
+    }];
+    return result;
+}
+
+- (void)setStringValue:(NSString *)value {
+    _value = [value copy];
+    [self updateTextFieldIfNeeded];
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
@@ -26,19 +50,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarActionKey];
-    iTermStatusBarComponentKnob *backgroundColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color:"
-                                                      type:iTermStatusBarComponentKnobTypeColor
-                                               placeholder:nil
-                                              defaultValue:nil
-                                                       key:iTermStatusBarSharedBackgroundColorKey];
-    iTermStatusBarComponentKnob *textColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color:"
-                                                      type:iTermStatusBarComponentKnobTypeColor
-                                               placeholder:nil
-                                              defaultValue:nil
-                                                       key:iTermStatusBarSharedTextColorKey];
-    return [@[ actionKnob, textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[self minMaxWidthKnobs]];
+    return [@[ actionKnob ] arrayByAddingObjectsFromArray:[self minMaxWidthKnobs]];
 }
 
 - (NSDictionary *)actionDictionary {
@@ -47,15 +59,6 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 - (iTermAction *)action {
     return [[iTermAction alloc] initWithDictionary:self.actionDictionary];
-}
-
-- (void)statusBarDefaultTextColorDidChange {
-    [self swiftyStringDidChangeTo:_button.title];
-}
-
-- (void)statusBarTerminalBackgroundColorDidChange {
-    NSColor *color = self.backgroundColor;
-    _button.bezelColor = color;
 }
 
 - (void)updateTitleInButton {
@@ -68,96 +71,15 @@ static NSString *const iTermStatusBarActionKey = @"action";
     _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                         scope:self.scope
                                                      observer:^(NSString * _Nonnull newValue, NSError *error) {
-                                                         if (error != nil) {
-                                                             [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]];
-                                                             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
-                                                         }
-                                                         [weakSelf swiftyStringDidChangeTo:newValue];
-                                                         return newValue;
-                                                     }];
+        if (error != nil) {
+            [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]];
+            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+        }
+        [weakSelf setStringValue:newValue];
+        return newValue;
+    }];
 }
 
-- (void)swiftyStringDidChangeTo:(NSString *)title {
-    NSColor *textColor = self.textColor;
-    if (textColor) {
-        NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        [style setAlignment:NSTextAlignmentLeft];
-        style.lineBreakMode = NSLineBreakByTruncatingTail;
-        NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
-                                      NSParagraphStyleAttributeName: style };
-        NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:title
-                                                                        attributes:attributes];
-        [_button setAttributedTitle:attrString];
-    } else {
-        _button.title = title;
-    }
-    [self.delegate statusBarComponentPreferredSizeDidChange:self];
-}
-
-- (NSButton *)newButton {
-    NSButton *button = [[NSButton alloc] initWithFrame:NSZeroRect];
-    button.controlSize = NSControlSizeRegular;
-
-    NSColor *color = self.backgroundColor;
-    button.bezelColor = color;
-    button.bordered = NO;
-    [button setButtonType:NSButtonTypeMomentaryLight];
-    button.bezelStyle = NSBezelStyleRounded;
-    button.target = self;
-    button.action = @selector(buttonPushed:);
-
-    [button sizeToFit];
-    return button;
-}
-
-- (NSColor *)backgroundColor {
-    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
-}
-
-- (NSColor *)textColor {
-    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
-}
-
-- (NSColor *)statusBarTextColor {
-    return [self textColor];
-}
-
-- (NSColor *)statusBarBackgroundColor {
-    return [self backgroundColor];
-}
-
-- (NSButton *)button {
-    if (!_button) {
-        _button = [self newButton];
-        [self updateTitleInButton];
-    }
-    return _button;
-}
-
-- (CGFloat)statusBarComponentPreferredWidth {
-    return [self clampedWidth:_button.fittingSize.width];
-}
-
-- (CGFloat)defaultMinimumWidth {
-    return 30;
-}
-
-- (CGFloat)statusBarComponentMinimumWidth {
-    return [self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarMinimumWidthKey] doubleValue];
-}
-
-- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
-    const CGFloat preferredWidth = self.button.fittingSize.width;
-    if (preferredWidth <= width) {
-        [self.button sizeToFit];
-        return;
-    }
-    NSRect frame = self.button.frame;
-    frame.size.width = width;
-    self.button.frame = frame;
-}
 - (NSString *)statusBarComponentShortDescription {
     return @"Custom Action";
 }
@@ -193,15 +115,11 @@ static NSString *const iTermStatusBarActionKey = @"action";
     return [NSImage it_imageNamed:@"StatusBarIconAction" forClass:[self class]];
 }
 
-- (NSView *)statusBarComponentView {
-    NSButton *button = self.button;
-    [self updateTitleInButton];
-    return button;
+- (BOOL)statusBarComponentHandlesClicks {
+    return YES;
 }
 
-#pragma mark - Actions
-
-- (void)buttonPushed:(id)sender {
+- (void)statusBarComponentDidClickWithView:(NSView *)view {
     if (self.actionDictionary) {
         [self.delegate statusBarComponentPerformAction:self.action];
     }
