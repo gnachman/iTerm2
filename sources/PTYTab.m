@@ -5871,6 +5871,10 @@ typedef struct {
     [self.delegate tabHasNontrivialJobDidChange:self];
 }
 
+- (void)sessionRevealActionsTool {
+    [self.delegate tabRevealActionsTool:self];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

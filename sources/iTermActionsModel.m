@@ -117,6 +117,14 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
     }];
 }
 
+- (iTermAction *)actionWithIdentifier:(NSInteger)identifier {
+    const NSInteger i = [self indexOfActionWithIdentifier:identifier];
+    if (i == NSNotFound) {
+        return nil;
+    }
+    return _actions[i];
+}
+
 - (void)moveActionsWithIdentifiers:(NSArray<NSNumber *> *)identifiers
                            toIndex:(NSInteger)row {
     NSArray<iTermAction *> *actions = [_actions filteredArrayUsingBlock:^BOOL(iTermAction *action) {

@@ -346,6 +346,10 @@ const CGFloat iTermStatusBarHeight = 21;
     [self.delegate statusBarPerformAction:action];
 }
 
+- (void)statusBarComponentRevealActionsTool:(id<iTermStatusBarComponent>)component {
+    [self.delegate statusBarRevealActionsTool];
+}
+
 #pragma mark - iTermStatusBarContainerViewDelegate
 
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component {

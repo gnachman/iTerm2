@@ -371,6 +371,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         [self bump];
     }
 }
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }
@@ -389,6 +390,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
     [self openMenuWithView:view];
+}
+
+- (BOOL)statusBarComponentHandlesMouseDown {
+    return YES;
 }
 
 - (void)openMenuWithView:(NSView *)view {

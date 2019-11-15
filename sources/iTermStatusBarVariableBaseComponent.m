@@ -291,6 +291,10 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     [self openMenuWithView:view];
 }
 
+- (BOOL)statusBarComponentHandlesMouseDown:(NSView *)view {
+    return YES;
+}
+
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
     [self openMenuWithView:view];
 }

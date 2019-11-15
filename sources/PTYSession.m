@@ -11584,6 +11584,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self applyAction:action];
 }
 
+- (void)statusBarRevealActionsTool {
+    [self.delegate sessionRevealActionsTool];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

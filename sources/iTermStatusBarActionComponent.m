@@ -208,3 +208,92 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 @end
+
+@implementation iTermStatusBarActionMenuComponent
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconAction" forClass:[self class]];
+}
+
+- (NSString *)statusBarComponentShortDescription {
+    return @"Actions Menu";
+}
+
+- (NSString *)statusBarComponentDetailedDescription {
+    return @"When clicked, opens a menu of actions. Actions are like custom key bindings, but without a keystroke attached.";
+}
+
+- (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
+                                          textColor:(NSColor *)textColor {
+    return @"Action…";
+}
+
+- (BOOL)statusBarComponentCanStretch {
+    return YES;
+}
+
+- (nullable NSString *)stringValue {
+    return @"Perform Action…";
+}
+
+- (nullable NSString *)stringValueForCurrentWidth {
+    return self.stringValue;
+}
+
+- (nullable NSArray<NSString *> *)stringVariants {
+    return @[ self.stringValue ];
+}
+
+- (BOOL)statusBarComponentHandlesClicks {
+    return YES;
+}
+
+- (void)statusBarComponentDidClickWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (void)statusBarComponentMouseDownWithView:(NSView *)view {
+    [self openMenuWithView:view];
+}
+
+- (BOOL)statusBarComponentHandlesMouseDown {
+    return YES;
+}
+
+- (void)openMenuWithView:(NSView *)view {
+    NSView *containingView = view.superview;
+
+    NSMenu *menu = [[NSMenu alloc] init];
+    for (iTermAction *action in [[iTermActionsModel sharedInstance] actions]) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:action.title action:@selector(performAction:) keyEquivalent:@""];
+        item.identifier = [@(action.identifier) stringValue];
+        item.target = self;
+        [menu addItem:item];
+    }
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Reveal Actions Tool…" action:@selector(editActions:) keyEquivalent:@""];
+    item.target = self;
+    [menu addItem:item];
+
+    [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
+}
+
+- (void)performAction:(id)sender {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:sender];
+    if (!menuItem) {
+        return;
+    }
+    iTermAction *action = [[iTermActionsModel sharedInstance] actionWithIdentifier:[menuItem.identifier integerValue]];
+    if (!action) {
+        return;
+    }
+    [self.delegate statusBarComponentPerformAction:action];
+}
+
+- (void)editActions:(id)sender {
+    [self.delegate statusBarComponentRevealActionsTool:self];
+}
+
+@end

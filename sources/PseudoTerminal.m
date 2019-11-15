@@ -10583,6 +10583,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (void)tabRevealActionsTool:(PTYTab *)tab {
+    if (!self.shouldShowToolbelt) {
+        [self toggleToolbeltVisibility:nil];
+    }
+    if (![iTermToolbeltView shouldShowTool:kActionsToolName]) {
+        [iTermToolbeltView toggleShouldShowTool:kActionsToolName];
+    }
+}
+
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {

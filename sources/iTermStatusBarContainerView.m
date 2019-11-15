@@ -53,6 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
 
         if ([component statusBarComponentHandlesClicks]) {
             NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(clickRecognized:)];
+            if ([component statusBarComponentHandlesMouseDown]) {
+                recognizer.delaysPrimaryMouseButtonEvents = NO;
+            }
             [_view addGestureRecognizer:recognizer];
         }
         [self updateIconIfNeeded];
@@ -206,6 +209,18 @@ NS_ASSUME_NONNULL_BEGIN
         }
     }
     return [super hitTest:point];
+}
+
+- (BOOL)mouseDownCanMoveWindow {
+    return NO;
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    if ([_component statusBarComponentHandlesMouseDown]) {
+        [_component statusBarComponentMouseDownWithView:_view];
+    } else {
+        [super mouseDown:event];
+    }
 }
 
 - (void)mouseUp:(NSEvent *)event {

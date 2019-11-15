@@ -345,14 +345,15 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 }
 
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
-    // You should have overridden this.
-    assert(NO);
 }
 
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
-    // You should have overridden this.
-    assert(NO);
 }
+
+- (BOOL)statusBarComponentHandlesMouseDown {
+    return NO;
+}
+
 - (void)statusBarComponentDidMoveToWindow {
 }
 

@@ -243,6 +243,7 @@ typedef enum {
 - (void)sessionDidUpdatePaneTitle:(PTYSession *)session;
 - (void)sessionDidSetWindowTitle:(NSString *)title;
 - (void)sessionJobDidChange:(PTYSession *)session;
+- (void)sessionRevealActionsTool;
 
 @end
 

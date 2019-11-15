@@ -51,4 +51,5 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (iTermVariables *)tabWindowVariables:(PTYTab *)tab;
 - (void)tabDidSetWindowTitle:(PTYTab *)tab to:(NSString *)title;
 - (void)tabHasNontrivialJobDidChange:(PTYTab *)tab;
+- (void)tabRevealActionsTool:(PTYTab *)tab;
 @end

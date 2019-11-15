@@ -31,6 +31,7 @@ extern const CGFloat iTermStatusBarHeight;
 - (void)statusBarOpenPreferencesToComponent:(nullable id<iTermStatusBarComponent>)component;
 - (void)statusBarDisable;
 - (void)statusBarPerformAction:(iTermAction *)action;
+- (void)statusBarRevealActionsTool;
 @end
 
 @protocol iTermStatusBarContainer<NSObject>
