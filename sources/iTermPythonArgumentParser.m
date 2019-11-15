@@ -63,26 +63,13 @@ NS_ASSUME_NONNULL_BEGIN
                 break;
 
             case iTermPythonArgumentParserFoundModule: {
-                // If a module is specified that changes how Python parses its command line so we
-                // cannot go on.
-                if ([self argsLookLikeRepl:[_args subarrayFromIndex:i]]) {
-                    // Except for when it's aioconsole with known arguments. That's just the REPL.
-                    _repl = YES;
-                    return;
-                }
-                // Just glom everything after -m into the module argument because we can't
-                // parse it.
-                NSArray<NSString *> *moduleArgs = [_args subarrayFromIndex:i];
-                _module = [moduleArgs componentsJoinedByString:@" "];
-                _escapedModule = [[moduleArgs mapWithBlock:^id(NSString *anObject) {
-                    return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-                }] componentsJoinedByString:@" "];
+                [self handleModule:[_args subarrayFromIndex:i]];
                 return;
             }
 
             case iTermPythonArgumentParserFoundStatement:
                 // arg follows -c
-                _statement = arg;
+                [self handleStatement:arg];
                 return;
 
             case iTermPythonArgumentParserFoundArgument:
@@ -97,11 +84,18 @@ NS_ASSUME_NONNULL_BEGIN
 
         if ([arg isEqualToString:@"-m"]) {
             found = iTermPythonArgumentParserFoundModule;
+        } else if ([arg hasPrefix:@"-m"]) {
+            NSArray *moduleArgs = [ @[ [arg substringFromIndex:2] ] arrayByAddingObjectsFromArray:[_args subarrayFromIndex:i + 1]];
+            [self handleModule:moduleArgs];
+            return;
         } else if ([arg isEqualToString:@"-Q"] ||
                    [arg isEqualToString:@"-W"]) {
             found = iTermPythonArgumentParserFoundArgument;
         } else if ([arg isEqualToString:@"-c"]) {
             found = iTermPythonArgumentParserFoundStatement;
+        } else if ([arg hasPrefix:@"-c"]) {
+            [self handleStatement:[arg substringFromIndex:2]];
+            return;
         } else if ([arg isEqualToString:@"-"]) {
             return;
         } else if ([arg hasPrefix:@"-"]) {
@@ -111,6 +105,27 @@ NS_ASSUME_NONNULL_BEGIN
             return;
         }
     }
+}
+
+- (void)handleModule:(NSArray *)args {
+    // If a module is specified that changes how Python parses its command line so we
+    // cannot go on.
+    if ([self argsLookLikeRepl:args]) {
+        // Except for when it's aioconsole with known arguments. That's just the REPL.
+        _repl = YES;
+        return;
+    }
+    // Just glom everything after -m into the module argument because we can't
+    // parse it.
+    NSArray<NSString *> *moduleArgs = args;
+    _module = [moduleArgs componentsJoinedByString:@" "];
+    _escapedModule = [[moduleArgs mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+    }] componentsJoinedByString:@" "];
+}
+
+- (void)handleStatement:(NSString *)arg {
+    _statement = arg;
 }
 
 - (NSString *)escapedScript {
