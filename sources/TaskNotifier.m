@@ -105,13 +105,9 @@ static int unblockPipeW;
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
-    pid_t pid = task.pid;
-    if (pid != -1 && task.pidIsChild) {
-        // Not a task running in a server.
-        [deadpool addObject:@([task pid])];
-    } else if (task.serverPid != -1 && !task.pidIsChild) {
-        // Prevent server from becoming a zombie.
-        [deadpool addObject:@(task.serverPid)];
+    pid_t pidToWaitOn = task.pidToWaitOn;
+    if (pidToWaitOn > 0) {
+        [deadpool addObject:@(pidToWaitOn)];
     }
     if ([task hasCoprocess]) {
         [deadpool addObject:@([[task coprocess] pid])];

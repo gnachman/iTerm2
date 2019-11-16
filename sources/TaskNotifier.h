@@ -14,8 +14,7 @@ extern NSString *const kCoprocessStatusChangeNotification;
 @property (nonatomic, readonly) int fd;
 
 @property (nonatomic, readonly) pid_t pid;
-@property (nonatomic, readonly) BOOL pidIsChild;
-@property (nonatomic, readonly) pid_t serverPid;
+@property (nonatomic, readonly) pid_t pidToWaitOn;
 
 @property (nonatomic, readonly) BOOL isCoprocessOnly;
 @property (nonatomic, readonly) BOOL hasCoprocess;

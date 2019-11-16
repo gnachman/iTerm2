@@ -206,6 +206,19 @@ typedef struct {
     [[TaskNotifier sharedInstance] unblock];
 }
 
+- (pid_t)pidToWaitOn {
+    pid_t pid = self.pid;
+    if (pid != -1 && self.pidIsChild) {
+        // Not a task running in a server.
+        return self.pid;
+    }
+    if (self.serverPid != -1 && !self.pidIsChild) {
+        // Prevent server from becoming a zombie.
+        return self.serverPid;
+    }
+    return -1;
+}
+
 - (BOOL)pidIsChild {
     return _serverChildPid == -1 && _childPid != -1;
 }
