@@ -2171,7 +2171,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [self replaceTerminatedShellWithNewInstance];
     } else {
         _shouldRestart = YES;
-        [_shell sendSignal:SIGKILL toServer:NO];
+        // We don't use a regular (SIGHUP) kill here because we must ensure
+        // servers get killed on user-initiated quit. If we just HUP the shell
+        // then the server won't notice until it becomes attached as an orphan
+        // on the next launch. See issue 6369.
+        [_shell killWithMode:iTermJobManagerKillingModeForce];
     }
 }
 
@@ -2866,7 +2870,8 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"  brokenPipe: Already exited");
         return;
     }
-    [_shell killServerIfRunning];
+    // Ensure we don't leak the unix domain socket file descriptor.
+    [_shell killWithMode:iTermJobManagerKillingModeBrokenPipe];
     if ([self shouldPostUserNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermNotificationController sharedInstance] notify:@"Session Ended"

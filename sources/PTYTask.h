@@ -44,6 +44,14 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
     iTermJobManagerForkAndExecStatusTaskDiedImmediately
 };
 
+typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
+    iTermJobManagerKillingModeRegular,            // SIGHUP, child only
+    iTermJobManagerKillingModeForce,              // SIGKILL, child only
+    iTermJobManagerKillingModeForceUnrestorable,  // SIGKILL to server if available. SIGHUP to child always.
+    iTermJobManagerKillingModeProcessGroup,       // SIGHUP to process group
+    iTermJobManagerKillingModeBrokenPipe,         // Removes unix domain socket and file descriptor for it. Ensures server is waitpid()ed on. This does not directly kill the child process.
+};
+
 @protocol iTermJobManager<NSObject>
 
 @property (nonatomic) int fd;
@@ -71,7 +79,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 
 - (void)closeSocketFd;
 
-- (void)killProcessGroup;
+- (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
 @end
 
@@ -92,7 +100,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 
 @property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
-@property(atomic, readonly) int status;
 // Externally, only PTYSession should assign to this when reattaching to a server.
 @property(atomic, copy) NSString *tty;
 @property(atomic, readonly) NSString *path;
@@ -130,8 +137,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 
 - (void)writeTask:(NSData*)data;
 
-- (void)sendSignal:(int)signo toServer:(BOOL)toServer;
-
 // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
 // tty's current window size then no action is taken.
 - (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize;
@@ -158,8 +163,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 // [iTermAdvancedSettingsModel runJobsInServers].
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
 
-// Clients should call this from tha main thread on a broken pipe.
-- (void)killServerIfRunning;
+- (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
 - (void)registerAsCoprocessOnlyTask;
 - (void)writeToCoprocessOnlyTask:(NSData *)data;

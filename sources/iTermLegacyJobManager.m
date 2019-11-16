@@ -96,11 +96,38 @@
     assert(NO);
 }
 
-- (void)killProcessGroup {
-    if (_childPid > 0) {
-        // Terminate an owned child.
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
-        killpg(_childPid, SIGHUP);
+- (void)sendSignal:(int)signo toProcessGroup:(BOOL)toProcessGroup {
+    if (_childPid <= 0) {
+        return;
+    }
+    [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
+    if (toProcessGroup) {
+        killpg(_childPid, signo);
+    } else {
+        kill(_childPid, signo);
+    }
+}
+
+- (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    switch (mode) {
+        case iTermJobManagerKillingModeRegular:
+            [self sendSignal:SIGHUP toProcessGroup:NO];
+            break;
+
+        case iTermJobManagerKillingModeForce:
+            [self sendSignal:SIGKILL toProcessGroup:NO];
+            break;
+
+        case iTermJobManagerKillingModeForceUnrestorable:
+            // TODO: Shouldn't this be sigkill?
+            [self sendSignal:SIGHUP toProcessGroup:NO];
+            break;
+
+        case iTermJobManagerKillingModeProcessGroup:
+            [self sendSignal:SIGHUP toProcessGroup:YES];
+            break;
+        case iTermJobManagerKillingModeBrokenPipe:
+            break;
     }
 }
 

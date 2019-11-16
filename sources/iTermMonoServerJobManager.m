@@ -211,12 +211,69 @@
     _socketFd = -1;
 }
 
-- (void)killProcessGroup {
-    if (_serverChildPid > 0) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
-        // Kill a server-owned child.
-        // TODO: Don't want to do this when Sparkle is upgrading.
-        killpg(_serverChildPid, SIGHUP);
+- (void)sendSignal:(int)signo toServer:(BOOL)toServer {
+    if (toServer) {
+        if (_serverPid < 0) {
+            return;
+        }
+        DLog(@"Sending signal to server %@", @(_serverPid));
+        kill(_serverPid, signo);
+        return;
+    }
+    if (_serverChildPid < 0) {
+        return;
+    }
+    [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
+    kill(_serverChildPid, signo);
+}
+
+// Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
+- (void)killServerIfRunning {
+    if (_serverPid < 0) {
+        return;
+    }
+    // This makes the server unlink its socket and exit immediately.
+    kill(_serverPid, SIGUSR1);
+
+    // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
+    // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
+    // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
+    // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
+    // and that it's rare enough that the zombies don't pile up. Not much else I can do.
+    [[TaskNotifier sharedInstance] waitForPid:_serverPid];
+
+    // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
+    // the server is dead it's not needed any more.
+    [self closeSocketFd];
+}
+
+- (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    switch (mode) {
+        case iTermJobManagerKillingModeRegular:
+            [self sendSignal:SIGHUP toServer:NO];
+            break;
+
+        case iTermJobManagerKillingModeForce:
+            [self sendSignal:SIGKILL toServer:NO];
+            break;
+
+        case iTermJobManagerKillingModeForceUnrestorable:
+            [self sendSignal:SIGKILL toServer:YES];
+            [self sendSignal:SIGHUP toServer:NO];
+            break;
+
+        case iTermJobManagerKillingModeProcessGroup:
+            if (_serverChildPid > 0) {
+                [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
+                // Kill a server-owned child.
+                // TODO: Don't want to do this when Sparkle is upgrading.
+                killpg(_serverChildPid, SIGHUP);
+            }
+            break;
+
+        case iTermJobManagerKillingModeBrokenPipe:
+            [self killServerIfRunning];
+            break;
     }
 }
 

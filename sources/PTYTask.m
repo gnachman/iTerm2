@@ -160,8 +160,9 @@ typedef struct {
 
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
-    // leaders?
-    [_jobManager killProcessGroup];
+    // leaders? It is not clear from git history why killpg is used here and
+    // not in other places. I suspect it's what we ought to use everywhere.
+    [_jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -412,17 +413,8 @@ typedef struct {
     }
 }
 
-- (void)sendSignal:(int)signo toServer:(BOOL)toServer {
-    if (toServer && _jobManager.serverPid != -1) {
-        DLog(@"Sending signal to server %@", @(_jobManager.serverPid));
-        kill(_jobManager.serverPid, signo);
-    } else if (_jobManager.serverChildPid != -1) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
-        kill(_jobManager.serverChildPid, signo);
-    } else if (_jobManager.childPid >= 0) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.childPid];
-        kill(_jobManager.childPid, signo);
-    }
+- (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    [_jobManager killWithMode:mode];
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -444,8 +436,11 @@ typedef struct {
 - (void)stop {
     self.paused = NO;
     [self stopLogging];
-    [self sendSignal:SIGHUP toServer:NO];
-    [self killServerIfRunning];
+    [self killWithMode:iTermJobManagerKillingModeRegular];
+
+    // Ensure the server is broken out of accept()ing for future connections
+    // in case the child doesn't die right away.
+    [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
 
     if (self.fd >= 0) {
         [self closeFileDescriptor];
@@ -628,26 +623,6 @@ typedef struct {
         DLog(@"Succeeded.");
         [_jobManager attachToServer:serverConnection withProcessID:@(thePid) task:self];
         return YES;
-    }
-}
-
-// Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
-- (void)killServerIfRunning {
-    if (_jobManager.serverPid >= 0) {
-        // This makes the server unlink its socket and exit immediately.
-        kill(_jobManager.serverPid, SIGUSR1);
-
-        // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
-        // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
-        // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
-        // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
-        // and that it's rare enough that the zombies don't pile up. Not much else I can do.
-        [[TaskNotifier sharedInstance] waitForPid:_jobManager.serverPid];
-
-        // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
-        // the server is dead it's not needed any more.
-        [_jobManager closeSocketFd];
-        NSLog(@"File descriptor server exited with status %d", status);
     }
 }
 
