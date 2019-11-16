@@ -47,7 +47,8 @@ typedef struct {
 typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
     iTermJobManagerForkAndExecStatusSuccess,
     iTermJobManagerForkAndExecStatusTempFileError,
-    iTermJobManagerForkAndExecStatusFailedToFork
+    iTermJobManagerForkAndExecStatusFailedToFork,
+    iTermJobManagerForkAndExecStatusTaskDiedImmediately
 };
 
 @protocol iTermJobManager<NSObject>
@@ -59,18 +60,15 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 @property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
 @property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
-- (void)didForkParent:(const iTermForkState *)forkState
-             ttyState:(iTermTTYState *)ttyState
-          synchronous:(BOOL)synchronous
-                 task:(id<iTermTask>)task
-           completion:(void (^)(BOOL taskDiedImmediately))completion;
-
-- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                                                    ttyState:(iTermTTYState *)ttyStatePtr
-                                                     argpath:(const char *)argpath
-                                                        argv:(const char **)argv
-                                                  initialPwd:(const char *)initialPwd
-                                                  newEnviron:(char **)newEnviron;
+- (void)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                        ttyState:(iTermTTYState *)ttyStatePtr
+                         argpath:(const char *)argpath
+                            argv:(const char **)argv
+                      initialPwd:(const char *)initialPwd
+                      newEnviron:(char **)newEnviron
+                     synchronous:(BOOL)synchronous
+                            task:(id<iTermTask>)task
+                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid

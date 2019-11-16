@@ -794,29 +794,6 @@ typedef struct {
     }
 }
 
-- (void)didForkParent:(const iTermForkState *)forkState
-           newEnviron:(char **)newEnviron
-             ttyState:(iTermTTYState *)ttyState
-          synchronous:(BOOL)synchronous
-           completion:(void (^)(void))completion {
-    // Make sure the master side of the pty is closed on future exec() calls.
-    DLog(@"fcntl");
-    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
-
-    [_jobManager didForkParent:forkState
-                      ttyState:ttyState
-                   synchronous:synchronous
-                          task:self
-                    completion:^(BOOL taskDiedImmediately) {
-                        if (taskDiedImmediately) {
-                            [self->_delegate taskDiedImmediately];
-                        }
-                        if (completion) {
-                            completion();
-                        }
-                    }];
-}
-
 - (void)reallyLaunchWithPath:(NSString *)progpath
                    arguments:(NSArray *)args
                  environment:(NSDictionary *)env
@@ -870,43 +847,42 @@ typedef struct {
         .deadMansPipe = { 0, 0 },
     };
 
-    const iTermJobManagerForkAndExecStatus status =
-        [_jobManager forkAndExecWithForkState:&forkState
-                                     ttyState:&ttyState
-                                      argpath:argpath
-                                         argv:argv
-                                   initialPwd:initialPwd
-                                   newEnviron:newEnviron];
-    [self freeEnvironment:newEnviron];
+    [_jobManager forkAndExecWithForkState:&forkState
+                                 ttyState:&ttyState
+                                  argpath:argpath
+                                     argv:argv
+                               initialPwd:initialPwd
+                               newEnviron:newEnviron
+                              synchronous:synchronous
+                                     task:self
+                               completion:
+     ^(iTermJobManagerForkAndExecStatus status) {
+         [self freeEnvironment:newEnviron];
+         switch (status) {
+             case iTermJobManagerForkAndExecStatusSuccess:
+                 // Parent
+                 DLog(@"finished succesfully");
+                 break;
 
-    switch (status) {
-        case iTermJobManagerForkAndExecStatusSuccess:
-            // Parent
-            DLog(@"done forking");
-            DLog(@"free environment");
-            [self didForkParent:&forkState
-                     newEnviron:newEnviron
-                       ttyState:&ttyState
-                    synchronous:synchronous
-                     completion:completion];
-            break;
+             case iTermJobManagerForkAndExecStatusTempFileError:
+                 [self showFailedToCreateTempSocketError];
+                 break;
 
-        case iTermJobManagerForkAndExecStatusTempFileError:
-            [self showFailedToCreateTempSocketError];
-            if (completion != nil) {
-                completion();
-            }
-            break;
+             case iTermJobManagerForkAndExecStatusFailedToFork:
+                 DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
+                 [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
+                                                      withDescription:@"You may have too many processes already running."];
+                 break;
 
-        case iTermJobManagerForkAndExecStatusFailedToFork:
-            DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
-            [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
-                                                 withDescription:@"You may have too many processes already running."];
-            if (completion != nil) {
-                completion();
-            }
-            break;
-    }
+             case iTermJobManagerForkAndExecStatusTaskDiedImmediately:
+                 [self->_delegate taskDiedImmediately];
+                 break;
+         }
+         if (completion != nil) {
+             completion();
+         }
+     }];
+
 }
 
 - (void)showFailedToCreateTempSocketError {

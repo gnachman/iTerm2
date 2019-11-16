@@ -52,18 +52,22 @@
     return tempPath;
 }
 
-- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                                                    ttyState:(iTermTTYState *)ttyStatePtr
-                                                     argpath:(const char *)argpath
-                                                        argv:(const char **)argv
-                                                  initialPwd:(const char *)initialPwd
-                                                  newEnviron:(char **)newEnviron {
+- (void)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                        ttyState:(iTermTTYState *)ttyStatePtr
+                         argpath:(const char *)argpath
+                            argv:(const char **)argv
+                      initialPwd:(const char *)initialPwd
+                      newEnviron:(char **)newEnviron
+                     synchronous:(BOOL)synchronous
+                            task:(id<iTermTask>)task
+                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     DLog(@"get path to UDS");
     NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
     DLog(@"done");
     if (unixDomainSocketPath == nil) {
-        return iTermJobManagerForkAndExecStatusTempFileError;
+        completion(iTermJobManagerForkAndExecStatusTempFileError);
+        return;
     }
 
     // Begin listening on that path as a unix domain socket.
@@ -81,16 +85,26 @@
     self.serverPid = forkStatePtr->pid;
 
     if (forkStatePtr->pid < (pid_t)0) {
-        return iTermJobManagerForkAndExecStatusFailedToFork;
+        completion(iTermJobManagerForkAndExecStatusFailedToFork);
+        return;
     }
-    return iTermJobManagerForkAndExecStatusSuccess;
+
+    [self didForkParent:forkStatePtr
+               ttyState:ttyStatePtr
+            synchronous:synchronous
+                   task:task
+             completion:completion];
 }
 
 - (void)didForkParent:(const iTermForkState *)forkStatePtr
              ttyState:(iTermTTYState *)ttyStatePtr
           synchronous:(BOOL)synchronous
                  task:(id<iTermTask>)task
-           completion:(void (^)(BOOL))completion {
+           completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+    // Make sure the master side of the pty is closed on future exec() calls.
+    DLog(@"fcntl");
+    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
+
     // The client and server connected to each other before forking. The server
     // will send us the child pid now. We don't really need the rest of the
     // stuff in serverConnection since we already know it, but that's ok.
@@ -127,10 +141,9 @@
                                  ttyState:(const iTermTTYState)ttyState
                          serverConnection:(iTermFileDescriptorServerConnection)serverConnection
                                      task:(id<iTermTask>)task
-                               completion:(void (^)(BOOL taskDiedImmediately))completion {
+                               completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     DLog(@"Handshake complete");
     close(state.deadMansPipe[0]);
-    BOOL taskDiedImmediately = NO;
     if (serverConnection.ok) {
         // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
         // lets the server know it should call accept(). We now have two copies of the master PTY
@@ -150,14 +163,13 @@
         DLog(@"attached. Set nonblocking");
         self.tty = [NSString stringWithUTF8String:ttyState.tty];
         fcntl(_fd, F_SETFL, O_NONBLOCK);
+        DLog(@"fini");
+        completion(iTermJobManagerForkAndExecStatusSuccess);
     } else {
         close(_fd);
         DLog(@"Server died immediately!");
-        taskDiedImmediately = YES;
-    }
-    DLog(@"fini");
-    if (completion) {
-        completion(taskDiedImmediately);
+        DLog(@"fini");
+        completion(iTermJobManagerForkAndExecStatusTaskDiedImmediately);
     }
 }
 

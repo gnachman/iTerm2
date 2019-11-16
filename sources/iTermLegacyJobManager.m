@@ -7,6 +7,7 @@
 
 #import "iTermLegacyJobManager.h"
 
+#import "DebugLogging.h"
 #import "iTermProcessCache.h"
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
@@ -46,12 +47,15 @@
     assert(NO);
 }
 
-- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+- (void)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
                         ttyState:(iTermTTYState *)ttyStatePtr
                          argpath:(const char *)argpath
                             argv:(const char **)argv
                       initialPwd:(const char *)initialPwd
-                      newEnviron:(char **)newEnviron {
+                      newEnviron:(char **)newEnviron
+                     synchronous:(BOOL)synchronous
+                            task:(id<iTermTask>)task
+                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     self.fd = iTermForkAndExecToRunJobDirectly(forkStatePtr,
                                                ttyStatePtr,
                                                argpath,
@@ -65,23 +69,19 @@
         [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
     }
     if (forkStatePtr->pid < (pid_t)0) {
-        return iTermJobManagerForkAndExecStatusFailedToFork;
+        completion(iTermJobManagerForkAndExecStatusFailedToFork);
+        return;
     }
-    return iTermJobManagerForkAndExecStatusSuccess;
-}
 
-- (void)didForkParent:(const iTermForkState *)forkState
-             ttyState:(iTermTTYState *)ttyState
-          synchronous:(BOOL)synchronous
-                 task:(id<iTermTask>)task
-           completion:(void (^)(BOOL))completion {
-    self.tty = [NSString stringWithUTF8String:ttyState->tty];
+    // Make sure the master side of the pty is closed on future exec() calls.
+    DLog(@"fcntl");
+    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
+
+    self.tty = [NSString stringWithUTF8String:ttyStatePtr->tty];
     fcntl(self.fd, F_SETFL, O_NONBLOCK);
     [[TaskNotifier sharedInstance] registerTask:task];
-
-    completion(NO);
+    completion(iTermJobManagerForkAndExecStatusSuccess);
 }
-
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
