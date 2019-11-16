@@ -9,12 +9,13 @@
 #import "TaskNotifier.h"
 #import "Coprocess.h"
 #import "DebugLogging.h"
-#import "PTYTask.h"
 
 #include <sys/time.h>
 #include <sys/select.h>
 
 #define PtyTaskDebugLog(args...)
+
+NSString *const kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
 NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 static int unblockPipeR;
@@ -22,12 +23,12 @@ static int unblockPipeW;
 
 @implementation TaskNotifier
 {
-    NSMutableArray *_tasks;
-    NSMutableArray *_coprocessOnlyTasks;
+    NSMutableArray<id<iTermTask>> *_tasks;
+    NSMutableArray<id<iTermTask>> *_coprocessOnlyTasks;
     // Set to true when an element of '_tasks' was modified
     BOOL tasksChanged;
     // Protects '_tasks', '_coprocessOnlyTasks', and 'tasksChanged'.
-    NSRecursiveLock* tasksLock;
+    NSRecursiveLock *tasksLock;
 
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
     NSMutableSet* deadpool;
@@ -73,8 +74,7 @@ static int unblockPipeW;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [_tasks release];
     [_coprocessOnlyTasks release];
     [tasksLock release];
@@ -84,7 +84,7 @@ static int unblockPipeW;
     [super dealloc];
 }
 
-- (void)registerTask:(PTYTask*)task {
+- (void)registerTask:(id<iTermTask>)task {
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Add task at %p\n", (void*)task);
@@ -100,7 +100,7 @@ static int unblockPipeW;
     [self unblock];
 }
 
-- (void)deregisterTask:(PTYTask *)task {
+- (void)deregisterTask:(id<iTermTask>)task {
     PtyTaskDebugLog(@"deregisterTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
@@ -120,7 +120,7 @@ static int unblockPipeW;
     [_coprocessOnlyTasks removeObject:task];
     tasksChanged = YES;
     PtyTaskDebugLog(@"End remove task %p. There are now %lu tasks and %ld coprocess-only tasks.\n",
-                    (void*)task,
+                    (void *)task,
                     (unsigned long)[_tasks count],
                     (unsigned long)_coprocessOnlyTasks.count);
     PtyTaskDebugLog(@"deregisterTask: unlock\n");
@@ -136,8 +136,7 @@ static int unblockPipeW;
     [self unblock];
 }
 
-- (void)unblock
-{
+- (void)unblock {
     UnblockTaskNotifier();
 }
 
@@ -148,7 +147,7 @@ void UnblockTaskNotifier(void) {
     write(unblockPipeW, &dummy, 1);
 }
 
-- (BOOL)handleReadOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+- (BOOL)handleReadOnFileDescriptor:(int)fd task:(id<iTermTask>)task fdSet:(fd_set *)fdSet {
     if (FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"run/processRead: unlock");
         [tasksLock unlock];
@@ -164,7 +163,7 @@ void UnblockTaskNotifier(void) {
     return NO;
 }
 
-- (BOOL)handleWriteOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+- (BOOL)handleWriteOnFileDescriptor:(int)fd task:(id<iTermTask>)task fdSet:(fd_set *)fdSet {
     if (FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"run/processWrite: unlock");
         [tasksLock unlock];
@@ -182,7 +181,7 @@ void UnblockTaskNotifier(void) {
     return NO;
 }
 
-- (BOOL)handleErrorOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+- (BOOL)handleErrorOnFileDescriptor:(int)fd task:(id<iTermTask>)task fdSet:(fd_set *)fdSet {
     if (FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"run/brokenPipe: unlock");
         [tasksLock unlock];
@@ -201,7 +200,7 @@ void UnblockTaskNotifier(void) {
 }
 
 - (void)handleReadOnFileDescriptor:(int)fd
-                              task:(PTYTask *)task
+                              task:(id<iTermTask>)task
                      withCoprocess:(Coprocess *)coprocess
                              fdSet:(fd_set *)fdSet {
     if (![coprocess eof] && FD_ISSET(fd, fdSet)) {
@@ -232,14 +231,13 @@ void UnblockTaskNotifier(void) {
     }
 }
 
-- (void)run
-{
+- (void)run {
     fd_set rfds;
     fd_set wfds;
     fd_set efds;
     int highfd;
-    NSEnumerator* iter;
-    NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
+    NSEnumerator *iter;
+    NSAutoreleasePool *autoreleasePool = [[NSAutoreleasePool alloc] init];
 
     // FIXME: replace this with something better...
     for(;;) {
@@ -251,13 +249,13 @@ void UnblockTaskNotifier(void) {
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
-        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:256];
+        NSMutableSet *handledFds = [[NSMutableSet alloc] initWithCapacity:256];
 
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
         PtyTaskDebugLog(@"Begin cleaning out dead tasks");
-        for (PTYTask *theTask in _tasks) {
+        for (id<iTermTask> theTask in _tasks) {
             if ([theTask fd] < 0) {
                 PtyTaskDebugLog(@"Deregister dead task %@\n", theTask);
                 [self deregisterTask:theTask];
@@ -265,7 +263,7 @@ void UnblockTaskNotifier(void) {
         }
         // Make a copy because -deregisterTask modifies _coprocessOnlyTasks
         NSArray *coprocessOnlyTasks = [_coprocessOnlyTasks copy];
-        for (PTYTask *theTask in coprocessOnlyTasks) {
+        for (id<iTermTask> theTask in coprocessOnlyTasks) {
             if ([theTask coprocessOnlyTaskIsDead]) {
                 [self deregisterTask:theTask];
             }
@@ -301,7 +299,7 @@ void UnblockTaskNotifier(void) {
         // Figure out the file descriptors to select on.
         PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[_tasks count]);
         for (NSArray *taskArray in @[ _tasks, _coprocessOnlyTasks ]) {
-            for (PTYTask *task in taskArray) {
+            for (id<iTermTask> task in taskArray) {
                 PtyTaskDebugLog(@"Got task %@\n", task);
                 int fd = [task fd];
                 if (fd < 0) {
@@ -382,7 +380,7 @@ void UnblockTaskNotifier(void) {
         iter = [_tasks objectEnumerator];
         BOOL notifyOfCoprocessChange = NO;
 
-        PTYTask *task;
+        id<iTermTask> task;
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %@\n", task);
             int fd = [task fd];
@@ -447,7 +445,7 @@ void UnblockTaskNotifier(void) {
 
         // Handle coprocess reads, writes, and deaths for coprocess-only tasks.
           PtyTaskDebugLog(@"Iterating over %lu coprocess-only tasks\n", (unsigned long)_coprocessOnlyTasks.count);
-          for (PTYTask *coprocessOnlyTask in _coprocessOnlyTasks) {
+          for (id<iTermTask> coprocessOnlyTask in _coprocessOnlyTasks) {
             @synchronized (coprocessOnlyTask) {
                 PtyTaskDebugLog(@"Checking coprocess olnly task %@", coprocessOnlyTask);
                 Coprocess *coprocess = [coprocessOnlyTask coprocess];
@@ -498,8 +496,7 @@ void UnblockTaskNotifier(void) {
 }
 
 // This is run in the main thread.
-- (void)notifyCoprocessChange
-{
+- (void)notifyCoprocessChange {
     [[NSNotificationCenter defaultCenter] postNotificationName:kCoprocessStatusChangeNotification
                                                         object:nil];
 }

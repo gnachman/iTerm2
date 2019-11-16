@@ -4,8 +4,6 @@
 #import "iTermFileDescriptorClient.h"
 #import "VT100GridTypes.h"
 
-extern NSString *kCoprocessStatusChangeNotification;
-
 @class Coprocess;
 @class iTermProcessInfo;
 @class PTYTab;

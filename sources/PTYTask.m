@@ -36,8 +36,6 @@
 
 #define CTRLKEY(c) ((c)-'A'+1)
 
-NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
-
 static NSSize PTYTaskClampViewSize(NSSize viewSize) {
     return NSMakeSize(MAX(0, MIN(viewSize.width, USHRT_MAX)),
                       MAX(0, MIN(viewSize.height, USHRT_MAX)));
@@ -103,7 +101,7 @@ static void HandleSigChld(int n) {
 @implementation PTYTaskLock
 @end
 
-@interface PTYTask ()
+@interface PTYTask ()<iTermTask>
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
 @property(atomic, retain) NSFileHandle *logHandle;
