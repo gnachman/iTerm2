@@ -12,7 +12,11 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermProcessCache.h"
+#import "NSWorkspace+iTerm.h"
+#import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
+
+#import <AppKit/AppKit.h>
 
 @implementation iTermMonoServerJobManager
 
@@ -31,6 +35,62 @@
         _fd = -1;
     }
     return self;
+}
+
+- (pid_t)childPid {
+    return -1;
+}
+
+- (void)setChildPid:(pid_t)childPid {
+    assert(NO);
+}
+
+- (NSString *)pathToNewUnixDomainSocket {
+    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+    NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
+                                                                             suffix:@""];
+    if (tempPath == nil) {
+        [self showFailedToCreateTempSocketError];
+    }
+    return tempPath;
+}
+
+- (void)showFailedToCreateTempSocketError {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Error";
+    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
+    [alert addButtonWithTitle:@"OK"];
+    [alert runModal];
+}
+
+- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                        ttyState:(iTermTTYState *)ttyStatePtr
+                         argpath:(const char *)argpath
+                            argv:(const char **)argv
+                      initialPwd:(const char *)initialPwd
+                      newEnviron:(char **)newEnviron {
+    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+    DLog(@"get path to UDS");
+    NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
+    DLog(@"done");
+    if (unixDomainSocketPath == nil) {
+        return NO;
+    }
+
+    // Begin listening on that path as a unix domain socket.
+    DLog(@"fork");
+
+    self.fd = iTermForkAndExecToRunJobInServer(forkStatePtr,
+                                               ttyStatePtr,
+                                               unixDomainSocketPath,
+                                               argpath,
+                                               argv,
+                                               NO,
+                                               initialPwd,
+                                               newEnviron);
+    // If you get here you're the parent.
+    self.serverPid = forkStatePtr->pid;
+    return YES;
 }
 
 - (void)didForkParent:(const iTermForkState *)forkStatePtr

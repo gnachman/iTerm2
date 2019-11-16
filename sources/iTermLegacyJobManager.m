@@ -7,17 +7,21 @@
 
 #import "iTermLegacyJobManager.h"
 
+#import "iTermProcessCache.h"
+#import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 
 @implementation iTermLegacyJobManager
 
 @synthesize fd = _fd;
 @synthesize tty = _tty;
+@synthesize childPid = _childPid;
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _fd = -1;
+        _childPid = -1;
     }
     return self;
 }
@@ -40,6 +44,27 @@
 
 - (void)setSocketFd:(int)socketFd {
     assert(NO);
+}
+
+- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                        ttyState:(iTermTTYState *)ttyStatePtr
+                         argpath:(const char *)argpath
+                            argv:(const char **)argv
+                      initialPwd:(const char *)initialPwd
+                      newEnviron:(char **)newEnviron {
+    self.fd = iTermForkAndExecToRunJobDirectly(forkStatePtr,
+                                               ttyStatePtr,
+                                               argpath,
+                                               argv,
+                                               YES,
+                                               initialPwd,
+                                               newEnviron);
+    // If you get here you're the parent.
+    _childPid = forkStatePtr->pid;
+    if (_childPid > 0) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
+    }
+    return YES;
 }
 
 - (void)didForkParent:(const iTermForkState *)forkState

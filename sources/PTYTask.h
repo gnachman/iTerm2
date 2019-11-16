@@ -49,6 +49,7 @@ typedef struct {
 @property (nonatomic) int fd;
 @property (nonatomic, copy) NSString *tty;
 @property (nonatomic) pid_t serverPid;  // -1 when servers are not in use.
+@property (nonatomic) pid_t childPid;  // -1 when servers ARE in use.
 @property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
 @property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
@@ -57,6 +58,14 @@ typedef struct {
           synchronous:(BOOL)synchronous
                  task:(id<iTermTask>)task
            completion:(void (^)(BOOL taskDiedImmediately))completion;
+
+// Returns YES on success.
+- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                        ttyState:(iTermTTYState *)ttyStatePtr
+                         argpath:(const char *)argpath
+                            argv:(const char **)argv
+                      initialPwd:(const char *)initialPwd
+                      newEnviron:(char **)newEnviron;
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid

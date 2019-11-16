@@ -117,7 +117,6 @@ typedef struct {
 } PTYTaskSize;
 
 @implementation PTYTask {
-    pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
     int _fd;
     int status;
     NSString* path;
@@ -145,7 +144,6 @@ typedef struct {
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _childPid = (pid_t)-1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
@@ -164,10 +162,10 @@ typedef struct {
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders?
-    if (_childPid > 0) {
+    if (_jobManager.childPid > 0) {
         // Terminate an owned child.
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
-        killpg(_childPid, SIGHUP);
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.childPid];
+        killpg(_jobManager.childPid, SIGHUP);
     } else if (_jobManager.serverChildPid) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
         // Kill a server-owned child.
@@ -221,7 +219,7 @@ typedef struct {
 }
 
 - (BOOL)pidIsChild {
-    return _jobManager.serverChildPid == -1 && _childPid != -1;
+    return _jobManager.serverChildPid == -1 && _jobManager.childPid != -1;
 }
 
 - (pid_t)serverPid {
@@ -242,7 +240,7 @@ typedef struct {
     if (_jobManager.serverChildPid != -1) {
         return _jobManager.serverChildPid;
     } else {
-        return _childPid;
+        return _jobManager.childPid;
     }
 }
 
@@ -440,9 +438,9 @@ typedef struct {
     } else if (_jobManager.serverChildPid != -1) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
         kill(_jobManager.serverChildPid, signo);
-    } else if (_childPid >= 0) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
-        kill(_childPid, signo);
+    } else if (_jobManager.childPid >= 0) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.childPid];
+        kill(_jobManager.childPid, signo);
     }
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
@@ -765,14 +763,6 @@ typedef struct {
     argv[max + 1] = NULL;
 }
 
-- (void)showFailedToCreateTempSocketError {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Error";
-    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
-    [alert addButtonWithTitle:@"OK"];
-    [alert runModal];
-}
-
 - (void)failedToForkWithEnvironment:(char **)newEnviron program:(NSString *)progpath {
     DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
     [[iTermNotificationController sharedInstance] notify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
@@ -833,16 +823,6 @@ typedef struct {
                     }];
 }
 
-- (NSString *)pathToNewUnixDomainSocket {
-    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
-    NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
-                                                                             suffix:@""];
-    if (tempPath == nil) {
-        [self showFailedToCreateTempSocketError];
-    }
-    return tempPath;
-}
-
 - (void)reallyLaunchWithPath:(NSString *)progpath
                    arguments:(NSArray *)args
                  environment:(NSDictionary *)env
@@ -896,28 +876,19 @@ typedef struct {
         .deadMansPipe = { 0, 0 },
     };
 
-    const BOOL runJobsInServers = [iTermAdvancedSettingsModel runJobsInServers];
-    if (runJobsInServers) {
-        const BOOL ok = [self forkAndExecToRunJobInServerWithForkState:&forkState
-                                                              ttyState:&ttyState
-                                                               argpath:argpath
-                                                                  argv:argv
-                                                            initialPwd:initialPwd
-                                                            newEnviron:newEnviron];
-        if (!ok) {
-            [self freeEnvironment:newEnviron];
-            if (completion != nil) {
-                completion();
-            }
-            return;
+    const BOOL ok =
+    [_jobManager forkAndExecWithForkState:&forkState
+                                 ttyState:&ttyState
+                                  argpath:argpath
+                                     argv:argv
+                               initialPwd:initialPwd
+                               newEnviron:newEnviron];
+    if (!ok) {
+        [self freeEnvironment:newEnviron];
+        if (completion != nil) {
+            completion();
         }
-    } else {
-        [self forkAndExecToRunJobDirectlyWithForkState:&forkState
-                                              ttyState:&ttyState
-                                               argpath:argpath
-                                                  argv:argv
-                                            initialPwd:initialPwd
-                                            newEnviron:newEnviron];
+        return;
     }
 
     if (forkState.pid < (pid_t)0) {
@@ -939,58 +910,6 @@ typedef struct {
             synchronous:synchronous
              completion:completion];
 }
-
-- (void)forkAndExecToRunJobDirectlyWithForkState:(iTermForkState *)forkStatePtr
-                                        ttyState:(iTermTTYState *)ttyStatePtr
-                                         argpath:(const char *)argpath
-                                            argv:(const char **)argv
-                                      initialPwd:(const char *)initialPwd
-                                      newEnviron:(char **)newEnviron {
-    self.fd = iTermForkAndExecToRunJobDirectly(forkStatePtr,
-                                               ttyStatePtr,
-                                               argpath,
-                                               argv,
-                                               YES,
-                                               initialPwd,
-                                               newEnviron);
-    // If you get here you're the parent.
-    _childPid = forkStatePtr->pid;
-    if (_childPid > 0) {
-        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
-    }
-}
-
-// Returns YES on success.
-- (BOOL)forkAndExecToRunJobInServerWithForkState:(iTermForkState *)forkStatePtr
-                                        ttyState:(iTermTTYState *)ttyStatePtr
-                                         argpath:(const char *)argpath
-                                            argv:(const char **)argv
-                                      initialPwd:(const char *)initialPwd
-                                      newEnviron:(char **)newEnviron {
-    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
-    DLog(@"get path to UDS");
-    NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
-    DLog(@"done");
-    if (unixDomainSocketPath == nil) {
-        return NO;
-    }
-
-    // Begin listening on that path as a unix domain socket.
-    DLog(@"fork");
-
-    self.fd = iTermForkAndExecToRunJobInServer(forkStatePtr,
-                                               ttyStatePtr,
-                                               unixDomainSocketPath,
-                                               argpath,
-                                               argv,
-                                               NO,
-                                               initialPwd,
-                                               newEnviron);
-    // If you get here you're the parent.
-    _jobManager.serverPid = forkStatePtr->pid;
-    return YES;
-}
-
 
 #pragma mark I/O
 
