@@ -815,9 +815,6 @@ typedef struct {
              ttyState:(iTermTTYState *)ttyState
           synchronous:(BOOL)synchronous
            completion:(void (^)(void))completion {
-    DLog(@"free environment");
-    [self freeEnvironment:newEnviron];
-
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
     fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
@@ -900,46 +897,27 @@ typedef struct {
     };
 
     const BOOL runJobsInServers = [iTermAdvancedSettingsModel runJobsInServers];
-    BOOL closeFileDescriptors = !runJobsInServers;
     if (runJobsInServers) {
-        // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
-        DLog(@"get path to UDS");
-        NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
-        DLog(@"done");
-        if (unixDomainSocketPath == nil) {
+        const BOOL ok = [self forkAndExecToRunJobInServerWithForkState:&forkState
+                                                              ttyState:&ttyState
+                                                               argpath:argpath
+                                                                  argv:argv
+                                                            initialPwd:initialPwd
+                                                            newEnviron:newEnviron];
+        if (!ok) {
             [self freeEnvironment:newEnviron];
             if (completion != nil) {
                 completion();
             }
             return;
         }
-
-        // Begin listening on that path as a unix domain socket.
-        DLog(@"fork");
-
-        self.fd = iTermForkAndExecToRunJobInServer(&forkState,
-                                                   &ttyState,
-                                                   unixDomainSocketPath,
-                                                   argpath,
-                                                   argv,
-                                                   closeFileDescriptors,
-                                                   initialPwd,
-                                                   newEnviron);
-        // If you get here you're the parent.
-        _jobManager.serverPid = forkState.pid;
     } else {
-        self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
-                                                   &ttyState,
-                                                   argpath,
-                                                   argv,
-                                                   closeFileDescriptors,
-                                                   initialPwd,
-                                                   newEnviron);
-        // If you get here you're the parent.
-        _childPid = forkState.pid;
-        if (_childPid > 0) {
-            [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
-        }
+        [self forkAndExecToRunJobDirectlyWithForkState:&forkState
+                                              ttyState:&ttyState
+                                               argpath:argpath
+                                                  argv:argv
+                                            initialPwd:initialPwd
+                                            newEnviron:newEnviron];
     }
 
     if (forkState.pid < (pid_t)0) {
@@ -953,12 +931,66 @@ typedef struct {
 
     // Parent
     DLog(@"done forking");
+    DLog(@"free environment");
+    [self freeEnvironment:newEnviron];
     [self didForkParent:&forkState
              newEnviron:newEnviron
                ttyState:&ttyState
             synchronous:synchronous
              completion:completion];
 }
+
+- (void)forkAndExecToRunJobDirectlyWithForkState:(iTermForkState *)forkStatePtr
+                                        ttyState:(iTermTTYState *)ttyStatePtr
+                                         argpath:(const char *)argpath
+                                            argv:(const char **)argv
+                                      initialPwd:(const char *)initialPwd
+                                      newEnviron:(char **)newEnviron {
+    self.fd = iTermForkAndExecToRunJobDirectly(forkStatePtr,
+                                               ttyStatePtr,
+                                               argpath,
+                                               argv,
+                                               YES,
+                                               initialPwd,
+                                               newEnviron);
+    // If you get here you're the parent.
+    _childPid = forkStatePtr->pid;
+    if (_childPid > 0) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
+    }
+}
+
+// Returns YES on success.
+- (BOOL)forkAndExecToRunJobInServerWithForkState:(iTermForkState *)forkStatePtr
+                                        ttyState:(iTermTTYState *)ttyStatePtr
+                                         argpath:(const char *)argpath
+                                            argv:(const char **)argv
+                                      initialPwd:(const char *)initialPwd
+                                      newEnviron:(char **)newEnviron {
+    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+    DLog(@"get path to UDS");
+    NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
+    DLog(@"done");
+    if (unixDomainSocketPath == nil) {
+        return NO;
+    }
+
+    // Begin listening on that path as a unix domain socket.
+    DLog(@"fork");
+
+    self.fd = iTermForkAndExecToRunJobInServer(forkStatePtr,
+                                               ttyStatePtr,
+                                               unixDomainSocketPath,
+                                               argpath,
+                                               argv,
+                                               NO,
+                                               initialPwd,
+                                               newEnviron);
+    // If you get here you're the parent.
+    _jobManager.serverPid = forkStatePtr->pid;
+    return YES;
+}
+
 
 #pragma mark I/O
 
