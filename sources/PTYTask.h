@@ -1,11 +1,15 @@
 // Implements the interface to the pty session.
 
 #import <Foundation/Foundation.h>
+
 #import "iTermFileDescriptorClient.h"
 #import "VT100GridTypes.h"
 
+#import <termios.h>
+
 @class Coprocess;
 @class iTermProcessInfo;
+@protocol iTermTask;
 @class PTYTab;
 @class PTYTask;
 
@@ -25,6 +29,40 @@
 
 // Main thread
 - (void)taskDidChangeTTY:(PTYTask *)task;
+@end
+
+typedef struct {
+    pid_t pid;
+    int connectionFd;
+    int deadMansPipe[2];
+    int numFileDescriptorsToPreserve;
+} iTermForkState;
+
+typedef struct {
+    struct termios term;
+    struct winsize win;
+    char tty[PATH_MAX];
+} iTermTTYState;
+
+@protocol iTermJobManager<NSObject>
+
+@property (nonatomic) int fd;
+@property (nonatomic, copy) NSString *tty;
+@property (nonatomic) pid_t serverPid;  // -1 when servers are not in use.
+@property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
+@property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
+
+- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
+                              ttyState:(const iTermTTYState *)ttyStatePtr
+                           synchronous:(BOOL)synchronous
+                                  task:(id<iTermTask>)task
+                            completion:(void (^)(BOOL taskDiedImmediately))completion;
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
+         withProcessID:(pid_t)thePid
+                  task:(id<iTermTask>)task;
+
+- (void)closeSocketFd;
+
 @end
 
 @interface PTYTask : NSObject

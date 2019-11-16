@@ -1836,6 +1836,8 @@
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
 		A6435116233B195D00828AF6 /* iTermApplescriptPythonCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */; };
 		A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */; };
+		A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */; };
+		A64511C42380673300EB6ADF /* iTermMonoServerJobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */; };
 		A6461D891E1B654D00FEDCD6 /* iTermShellPromptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */; };
 		A6461D8A1E1B654D00FEDCD6 /* iTermShellPromptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */; };
 		A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
@@ -4929,6 +4931,8 @@
 		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
 		A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermApplescriptPythonCommands.h; sourceTree = "<group>"; };
 		A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermApplescriptPythonCommands.m; sourceTree = "<group>"; };
+		A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMonoServerJobManager.h; sourceTree = "<group>"; };
+		A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMonoServerJobManager.m; sourceTree = "<group>"; };
 		A6460F40206F3ED1004CF71F /* iTermMetalConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalConfig.h; path = Metal/Infrastructure/iTermMetalConfig.h; sourceTree = "<group>"; };
 		A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShellPromptTrigger.h; sourceTree = "<group>"; };
 		A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellPromptTrigger.m; sourceTree = "<group>"; };
@@ -7890,6 +7894,8 @@
 				A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */,
 				A6EE7F31234082BE00D0F724 /* iTermMalloc.h */,
 				A6EE7F32234082BE00D0F724 /* iTermMalloc.m */,
+				A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */,
+				A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10254,6 +10260,7 @@
 				A66719481DCE36C3000CE608 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A66719491DCE36C3000CE608 /* iTermHotkeyPreferencesWindowController.h in Headers */,
 				A639E1A02112CA33001696DE /* iTermEchoProbe.h in Headers */,
+				A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */,
 				A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */,
 				A630116520E606F9008114B7 /* iTermStatusBarViewController.h in Headers */,
 				A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */,
@@ -12723,6 +12730,7 @@
 				A63011C520E85132008114B7 /* iTermStatusBarBaseComponent.m in Sources */,
 				A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */,
 				A6A4866220B6765E00493302 /* BulkCopyProfilePreferencesWindowController.m in Sources */,
+				A64511C42380673300EB6ADF /* iTermMonoServerJobManager.m in Sources */,
 				A66F3CF11FEA3D9E00AA2021 /* iTermHistogram.mm in Sources */,
 				A68400B01FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m in Sources */,
 				53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */,

@@ -12,6 +12,7 @@
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
+#import "iTermMonoServerJobManager.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOrphanServerAdopter.h"
 #import "NSDictionary+iTerm.h"
@@ -106,6 +107,7 @@ static void HandleSigChld(int n) {
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
 @property(atomic, retain) NSFileHandle *logHandle;
 @property(nonatomic, copy) NSString *logPath;
+@property(atomic, readwrite) int fd;
 @end
 
 typedef struct {
@@ -114,11 +116,8 @@ typedef struct {
 } PTYTaskSize;
 
 @implementation PTYTask {
-    NSString *_tty;
-    pid_t _serverPid;  // -1 when servers are not in use.
-    pid_t _serverChildPid;  // -1 when servers are not in use.
     pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
-    int fd;
+    int _fd;
     int status;
     NSString* path;
     BOOL hasOutput;
@@ -135,24 +134,21 @@ typedef struct {
     int _spinsNeeded;
     BOOL _paused;
 
-    int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
-
     PTYTaskSize _desiredSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
+    iTermMonoServerJobManager *_monoServer;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _serverPid = (pid_t)-1;
-        _socketFd = -1;
         _childPid = (pid_t)-1;
-        fd = -1;
-        _serverChildPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
+        _monoServer = [[iTermMonoServerJobManager alloc] init];
+        self.fd = -1;
     }
     return self;
 }
@@ -167,11 +163,11 @@ typedef struct {
         // Terminate an owned child.
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         killpg(_childPid, SIGHUP);
-    } else if (_serverChildPid) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
+    } else if (_monoServer.serverChildPid) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_monoServer.serverChildPid];
         // Kill a server-owned child.
         // TODO: Don't want to do this when Sparkle is upgrading.
-        killpg(_serverChildPid, SIGHUP);
+        killpg(_monoServer.serverChildPid, SIGHUP);
     }
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
@@ -187,7 +183,7 @@ typedef struct {
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p child pid=%d server-child pid=%d, filedesc=%d tmux pid=%@>",
-            NSStringFromClass([self class]), self, _serverChildPid, _serverPid, fd, _tmuxClientProcessID];
+            NSStringFromClass([self class]), self, _monoServer.serverChildPid, _monoServer.serverPid, self.fd, _tmuxClientProcessID];
 }
 
 #pragma mark - APIs
@@ -220,20 +216,26 @@ typedef struct {
 }
 
 - (BOOL)pidIsChild {
-    return _serverChildPid == -1 && _childPid != -1;
+    return _monoServer.serverChildPid == -1 && _childPid != -1;
 }
 
 - (pid_t)serverPid {
-    return _serverPid;
+    return _monoServer.serverPid;
 }
 
 - (int)fd {
-    return fd;
+    assert(_monoServer);
+    return _monoServer.fd;
+}
+
+- (void)setFd:(int)fd {
+    assert(_monoServer);
+    _monoServer.fd = fd;
 }
 
 - (pid_t)pid {
-    if (_serverChildPid != -1) {
-        return _serverChildPid;
+    if (_monoServer.serverChildPid != -1) {
+        return _monoServer.serverChildPid;
     } else {
         return _childPid;
     }
@@ -294,9 +296,9 @@ typedef struct {
 - (BOOL)passwordInput {
     struct termios termAttributes;
     if ([iTermAdvancedSettingsModel detectPasswordInput] &&
-        fd > 0 &&
-        isatty(fd) &&
-        tcgetattr(fd, &termAttributes) == 0) {
+        self.fd > 0 &&
+        isatty(self.fd) &&
+        tcgetattr(self.fd, &termAttributes) == 0) {
         return !(termAttributes.c_lflag & ECHO) && (termAttributes.c_lflag & ICANON);
     } else {
         return NO;
@@ -427,12 +429,12 @@ typedef struct {
 }
 
 - (void)sendSignal:(int)signo toServer:(BOOL)toServer {
-    if (toServer && _serverPid != -1) {
-        DLog(@"Sending signal to server %@", @(_serverPid));
-        kill(_serverPid, signo);
-    } else if (_serverChildPid != -1) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
-        kill(_serverChildPid, signo);
+    if (toServer && _monoServer.serverPid != -1) {
+        DLog(@"Sending signal to server %@", @(_monoServer.serverPid));
+        kill(_monoServer.serverPid, signo);
+    } else if (_monoServer.serverChildPid != -1) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_monoServer.serverChildPid];
+        kill(_monoServer.serverChildPid, signo);
     } else if (_childPid >= 0) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         kill(_childPid, signo);
@@ -461,7 +463,7 @@ typedef struct {
     [self sendSignal:SIGHUP toServer:NO];
     [self killServerIfRunning];
 
-    if (fd >= 0) {
+    if (self.fd >= 0) {
         [self closeFileDescriptor];
         [[TaskNotifier sharedInstance] deregisterTask:self];
         // Require that it spin twice so we can be completely sure that the task won't get called
@@ -481,7 +483,7 @@ typedef struct {
         // being passed a half-broken fd. We must change it because after this
         // function returns, a new task may be created with this fd and then
         // the select thread wouldn't know which task a fd belongs to.
-        fd = -1;
+        self.fd = -1;
     }
     if (self.isCoprocessOnly) {
         self.coprocessOnlyTaskIsDead = YES;
@@ -530,7 +532,7 @@ typedef struct {
     char buffer[MAXRW * iterations];
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
-        ssize_t n = read(fd, buffer + bytesRead, MAXRW);
+        ssize_t n = read(self.fd, buffer + bytesRead, MAXRW);
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
@@ -570,7 +572,7 @@ typedef struct {
     if (length > MAXRW) {
         length = MAXRW;
     }
-    ssize_t written = write(fd, [writeBuffer mutableBytes], length);
+    ssize_t written = write(self.fd, [writeBuffer mutableBytes], length);
 
     // No data?
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
@@ -622,7 +624,7 @@ typedef struct {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
     }
-    if (_serverChildPid != -1) {
+    if (_monoServer.serverChildPid != -1) {
         return NO;
     }
 
@@ -636,46 +638,27 @@ typedef struct {
         return NO;
     } else {
         DLog(@"Succeeded.");
-        [self attachToServer:serverConnection];
-
-        // Prevent any future attempt to connect to this server as an orphan.
-        char buffer[PATH_MAX + 1];
-        iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);
-        [[iTermOrphanServerAdopter sharedInstance] removePath:[NSString stringWithUTF8String:buffer]];
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+        [_monoServer attachToServer:serverConnection withProcessID:thePid task:self];
         return YES;
     }
 }
 
-- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
-    fd = serverConnection.ptyMasterFd;
-    _serverPid = serverConnection.serverPid;
-    _serverChildPid = serverConnection.childPid;
-    if (_serverChildPid > 0) {
-        [[iTermProcessCache sharedInstance] registerTrackedPID:_serverChildPid];
-    }
-    _socketFd = serverConnection.socketFd;
-    [[TaskNotifier sharedInstance] registerTask:self];
-}
-
 // Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
 - (void)killServerIfRunning {
-    if (_serverPid >= 0) {
+    if (_monoServer.serverPid >= 0) {
         // This makes the server unlink its socket and exit immediately.
-        kill(_serverPid, SIGUSR1);
+        kill(_monoServer.serverPid, SIGUSR1);
 
         // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
         // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
         // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
         // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
         // and that it's rare enough that the zombies don't pile up. Not much else I can do.
-        [[TaskNotifier sharedInstance] waitForPid:_serverPid];
+        [[TaskNotifier sharedInstance] waitForPid:_monoServer.serverPid];
 
         // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
         // the server is dead it's not needed any more.
-        close(_socketFd);
-        _socketFd = -1;
+        [_monoServer closeSocketFd];
         NSLog(@"File descriptor server exited with status %d", status);
     }
 }
@@ -794,82 +777,15 @@ typedef struct {
     free(newEnviron);
 }
 
-- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
-                              ttyState:(const iTermTTYState *)ttyStatePtr
-                           synchronous:(BOOL)synchronous
-                            completion:(void (^)(void))completion {
-    iTermForkState forkState = *forkStatePtr;
-    iTermTTYState ttyState = *ttyStatePtr;
-    DLog(@"Begin handshake");
-    int connectionFd = forkState.connectionFd;
-    int deadmansPipeFd = forkState.deadMansPipe[0];
-    // This takes about 200ms on a fast machine so pop off to a background queue to do it.
-    if (!synchronous) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
-                                                                                                 deadmansPipeFd);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self didCompleteHandshakeWithForkState:forkState
-                                               ttyState:ttyState
-                                       serverConnection:serverConnection
-                                             completion:completion];
-            });
-        });
-    } else {
-        iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
-                                                                                             deadmansPipeFd);
-        [self didCompleteHandshakeWithForkState:forkState
-                                       ttyState:ttyState
-                               serverConnection:serverConnection
-                                     completion:completion];
-    }
-}
-
-- (void)didCompleteHandshakeWithForkState:(iTermForkState)state
-                                 ttyState:(const iTermTTYState)ttyState
-                         serverConnection:(iTermFileDescriptorServerConnection)serverConnection
-                               completion:(void (^)(void))completion {
-    DLog(@"Handshake complete");
-    close(state.deadMansPipe[0]);
-    if (serverConnection.ok) {
-        // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
-        // lets the server know it should call accept(). We now have two copies of the master PTY
-        // file descriptor. Let's close the original one because attachToServer: will use the
-        // copy in serverConnection.
-        close(fd);
-        DLog(@"close fd");
-        fd = -1;
-
-        // The serverConnection has the wrong server PID because the connection was made prior
-        // to fork(). Update serverConnection with the real server PID.
-        serverConnection.serverPid = state.pid;
-
-        // Connect this task to the server's PIDs and file descriptor.
-        DLog(@"attaching...");
-        [self attachToServer:serverConnection];
-        DLog(@"attached. Set nonblocking");
-        self.tty = [NSString stringWithUTF8String:ttyState.tty];
-        fcntl(fd, F_SETFL, O_NONBLOCK);
-    } else {
-        close(fd);
-        DLog(@"Server died immediately!");
-        [_delegate taskDiedImmediately];
-    }
-    DLog(@"fini");
-    if (completion) {
-        completion();
-    }
-}
-
 - (NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        return _tty;
+        return _monoServer.tty;
     }
 }
 
 - (void)setTty:(NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        _tty = [tty copy];
+        _monoServer.tty = tty;
     }
     if ([NSThread isMainThread]) {
         [self.delegate taskDidChangeTTY:self];
@@ -887,7 +803,7 @@ typedef struct {
 
 - (void)finishLaunchingDirectChild:(iTermTTYState *)ttyState {
     self.tty = [NSString stringWithUTF8String:ttyState->tty];
-    fcntl(fd, F_SETFL, O_NONBLOCK);
+    fcntl(self.fd, F_SETFL, O_NONBLOCK);
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
@@ -901,17 +817,22 @@ typedef struct {
 
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
-    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
 
     if (forkState->connectionFd > 0) {
         // Jobs run in servers. The client and server connected to each other
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
-        [self finishHandshakeWithJobInServer:forkState
-                                    ttyState:ttyState
-                                 synchronous:synchronous
-                                  completion:completion];
+        [_monoServer finishHandshakeWithJobInServer:forkState
+                                           ttyState:ttyState
+                                        synchronous:synchronous
+                                               task:self
+                                         completion:^(BOOL taskDiedImmediately) {
+                                             if (taskDiedImmediately) {
+                                                 [self->_delegate taskDiedImmediately];
+                                             }
+                                         }];
     } else {
         // Jobs are direct children of iTerm2
         [self finishLaunchingDirectChild:ttyState];
@@ -1002,24 +923,24 @@ typedef struct {
         // Begin listening on that path as a unix domain socket.
         DLog(@"fork");
 
-        fd = iTermForkAndExecToRunJobInServer(&forkState,
-                                              &ttyState,
-                                              unixDomainSocketPath,
-                                              argpath,
-                                              argv,
-                                              closeFileDescriptors,
-                                              initialPwd,
-                                              newEnviron);
+        self.fd = iTermForkAndExecToRunJobInServer(&forkState,
+                                                   &ttyState,
+                                                   unixDomainSocketPath,
+                                                   argpath,
+                                                   argv,
+                                                   closeFileDescriptors,
+                                                   initialPwd,
+                                                   newEnviron);
         // If you get here you're the parent.
-        _serverPid = forkState.pid;
+        _monoServer.serverPid = forkState.pid;
     } else {
-        fd = iTermForkAndExecToRunJobDirectly(&forkState,
-                                              &ttyState,
-                                              argpath,
-                                              argv,
-                                              closeFileDescriptors,
-                                              initialPwd,
-                                              newEnviron);
+        self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
+                                                   &ttyState,
+                                                   argpath,
+                                                   argv,
+                                                   closeFileDescriptors,
+                                                   initialPwd,
+                                                   newEnviron);
         // If you get here you're the parent.
         _childPid = forkState.pid;
         if (_childPid > 0) {
@@ -1081,8 +1002,8 @@ typedef struct {
 }
 
 - (void)closeFileDescriptor {
-    if (fd != -1) {
-        close(fd);
+    if (self.fd != -1) {
+        close(self.fd);
     }
 }
 
@@ -1113,7 +1034,7 @@ typedef struct {
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
 
     struct winsize winsize;
-    ioctl(fd, TIOCGWINSZ, &winsize);
+    ioctl(self.fd, TIOCGWINSZ, &winsize);
     if (winsize.ws_col != _desiredSize.gridSize.width ||
         winsize.ws_row != _desiredSize.gridSize.height ||
         winsize.ws_xpixel != _desiredSize.viewSize.width ||
@@ -1123,7 +1044,7 @@ typedef struct {
         winsize.ws_row = _desiredSize.gridSize.height;
         winsize.ws_xpixel = _desiredSize.viewSize.width;
         winsize.ws_ypixel = _desiredSize.viewSize.height;
-        ioctl(fd, TIOCSWINSZ, &winsize);
+        ioctl(self.fd, TIOCSWINSZ, &winsize);
     }
 }
 
