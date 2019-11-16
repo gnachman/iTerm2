@@ -53,6 +53,8 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 @property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
 @property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
+@property (nonatomic, readonly) pid_t pidToWaitOn;
+
 - (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
                         argpath:(const char *)argpath
                            argv:(const char **)argv
@@ -67,6 +69,8 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
                   task:(id<iTermTask>)task;
 
 - (void)closeSocketFd;
+
+- (void)killProcessGroup;
 
 @end
 

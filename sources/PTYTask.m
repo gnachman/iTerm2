@@ -117,7 +117,6 @@ typedef struct {
 } PTYTaskSize;
 
 @implementation PTYTask {
-    int _fd;
     int status;
     NSString* path;
     BOOL hasOutput;
@@ -162,16 +161,7 @@ typedef struct {
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders?
-    if (_jobManager.childPid > 0) {
-        // Terminate an owned child.
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.childPid];
-        killpg(_jobManager.childPid, SIGHUP);
-    } else if (_jobManager.serverChildPid) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
-        // Kill a server-owned child.
-        // TODO: Don't want to do this when Sparkle is upgrading.
-        killpg(_jobManager.serverChildPid, SIGHUP);
-    }
+    [_jobManager killProcessGroup];
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -206,16 +196,7 @@ typedef struct {
 }
 
 - (pid_t)pidToWaitOn {
-    pid_t pid = self.pid;
-    if (pid != -1 && self.pidIsChild) {
-        // Not a task running in a server.
-        return self.pid;
-    }
-    if (self.serverPid != -1 && !self.pidIsChild) {
-        // Prevent server from becoming a zombie.
-        return self.serverPid;
-    }
-    return -1;
+    return _jobManager.pidToWaitOn;
 }
 
 - (BOOL)pidIsChild {

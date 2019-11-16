@@ -211,4 +211,18 @@
     _socketFd = -1;
 }
 
+- (void)killProcessGroup {
+    if (_serverChildPid > 0) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
+        // Kill a server-owned child.
+        // TODO: Don't want to do this when Sparkle is upgrading.
+        killpg(_serverChildPid, SIGHUP);
+    }
+}
+
+- (pid_t)pidToWaitOn {
+    // Prevent server from becoming a zombie.
+    return _serverPid;
+}
+
 @end

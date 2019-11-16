@@ -96,4 +96,16 @@
     assert(NO);
 }
 
+- (void)killProcessGroup {
+    if (_childPid > 0) {
+        // Terminate an owned child.
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
+        killpg(_childPid, SIGHUP);
+    }
+}
+
+- (pid_t)pidToWaitOn {
+    return _childPid;
+}
+
 @end
