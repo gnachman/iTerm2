@@ -1838,6 +1838,8 @@
 		A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */; };
 		A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */; };
 		A64511C42380673300EB6ADF /* iTermMonoServerJobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */; };
+		A64511C723806FBA00EB6ADF /* iTermLegacyJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C523806FB900EB6ADF /* iTermLegacyJobManager.h */; };
+		A64511C823806FBA00EB6ADF /* iTermLegacyJobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A64511C623806FB900EB6ADF /* iTermLegacyJobManager.m */; };
 		A6461D891E1B654D00FEDCD6 /* iTermShellPromptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */; };
 		A6461D8A1E1B654D00FEDCD6 /* iTermShellPromptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */; };
 		A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
@@ -4933,6 +4935,8 @@
 		A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermApplescriptPythonCommands.m; sourceTree = "<group>"; };
 		A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMonoServerJobManager.h; sourceTree = "<group>"; };
 		A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMonoServerJobManager.m; sourceTree = "<group>"; };
+		A64511C523806FB900EB6ADF /* iTermLegacyJobManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLegacyJobManager.h; sourceTree = "<group>"; };
+		A64511C623806FB900EB6ADF /* iTermLegacyJobManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLegacyJobManager.m; sourceTree = "<group>"; };
 		A6460F40206F3ED1004CF71F /* iTermMetalConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalConfig.h; path = Metal/Infrastructure/iTermMetalConfig.h; sourceTree = "<group>"; };
 		A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShellPromptTrigger.h; sourceTree = "<group>"; };
 		A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellPromptTrigger.m; sourceTree = "<group>"; };
@@ -7896,6 +7900,8 @@
 				A6EE7F32234082BE00D0F724 /* iTermMalloc.m */,
 				A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */,
 				A64511C22380673300EB6ADF /* iTermMonoServerJobManager.m */,
+				A64511C523806FB900EB6ADF /* iTermLegacyJobManager.h */,
+				A64511C623806FB900EB6ADF /* iTermLegacyJobManager.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10275,6 +10281,7 @@
 				530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */,
 				A6EC47BF21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */,
 				5370678521C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.h in Headers */,
+				A64511C723806FBA00EB6ADF /* iTermLegacyJobManager.h in Headers */,
 				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */,
@@ -12782,6 +12789,7 @@
 				5365206E21433E9C003C58FD /* iTermGitCache.m in Sources */,
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,
+				A64511C823806FBA00EB6ADF /* iTermLegacyJobManager.m in Sources */,
 				A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,

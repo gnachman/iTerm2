@@ -12,6 +12,7 @@
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
+#import "iTermLegacyJobManager.h"
 #import "iTermMonoServerJobManager.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOrphanServerAdopter.h"
@@ -138,7 +139,7 @@ typedef struct {
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
-    iTermMonoServerJobManager *_monoServer;
+    id<iTermJobManager> _jobManager;
 }
 
 - (instancetype)init {
@@ -147,7 +148,11 @@ typedef struct {
         _childPid = (pid_t)-1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
-        _monoServer = [[iTermMonoServerJobManager alloc] init];
+        if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            _jobManager = [[iTermMonoServerJobManager alloc] init];
+        } else {
+            _jobManager = [[iTermLegacyJobManager alloc] init];
+        }
         self.fd = -1;
     }
     return self;
@@ -163,11 +168,11 @@ typedef struct {
         // Terminate an owned child.
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         killpg(_childPid, SIGHUP);
-    } else if (_monoServer.serverChildPid) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_monoServer.serverChildPid];
+    } else if (_jobManager.serverChildPid) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
         // Kill a server-owned child.
         // TODO: Don't want to do this when Sparkle is upgrading.
-        killpg(_monoServer.serverChildPid, SIGHUP);
+        killpg(_jobManager.serverChildPid, SIGHUP);
     }
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
@@ -183,7 +188,7 @@ typedef struct {
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p child pid=%d server-child pid=%d, filedesc=%d tmux pid=%@>",
-            NSStringFromClass([self class]), self, _monoServer.serverChildPid, _monoServer.serverPid, self.fd, _tmuxClientProcessID];
+            NSStringFromClass([self class]), self, _jobManager.serverChildPid, _jobManager.serverPid, self.fd, _tmuxClientProcessID];
 }
 
 #pragma mark - APIs
@@ -216,26 +221,26 @@ typedef struct {
 }
 
 - (BOOL)pidIsChild {
-    return _monoServer.serverChildPid == -1 && _childPid != -1;
+    return _jobManager.serverChildPid == -1 && _childPid != -1;
 }
 
 - (pid_t)serverPid {
-    return _monoServer.serverPid;
+    return _jobManager.serverPid;
 }
 
 - (int)fd {
-    assert(_monoServer);
-    return _monoServer.fd;
+    assert(_jobManager);
+    return _jobManager.fd;
 }
 
 - (void)setFd:(int)fd {
-    assert(_monoServer);
-    _monoServer.fd = fd;
+    assert(_jobManager);
+    _jobManager.fd = fd;
 }
 
 - (pid_t)pid {
-    if (_monoServer.serverChildPid != -1) {
-        return _monoServer.serverChildPid;
+    if (_jobManager.serverChildPid != -1) {
+        return _jobManager.serverChildPid;
     } else {
         return _childPid;
     }
@@ -429,12 +434,12 @@ typedef struct {
 }
 
 - (void)sendSignal:(int)signo toServer:(BOOL)toServer {
-    if (toServer && _monoServer.serverPid != -1) {
-        DLog(@"Sending signal to server %@", @(_monoServer.serverPid));
-        kill(_monoServer.serverPid, signo);
-    } else if (_monoServer.serverChildPid != -1) {
-        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_monoServer.serverChildPid];
-        kill(_monoServer.serverChildPid, signo);
+    if (toServer && _jobManager.serverPid != -1) {
+        DLog(@"Sending signal to server %@", @(_jobManager.serverPid));
+        kill(_jobManager.serverPid, signo);
+    } else if (_jobManager.serverChildPid != -1) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_jobManager.serverChildPid];
+        kill(_jobManager.serverChildPid, signo);
     } else if (_childPid >= 0) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         kill(_childPid, signo);
@@ -624,7 +629,7 @@ typedef struct {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
     }
-    if (_monoServer.serverChildPid != -1) {
+    if (_jobManager.serverChildPid != -1) {
         return NO;
     }
 
@@ -638,27 +643,27 @@ typedef struct {
         return NO;
     } else {
         DLog(@"Succeeded.");
-        [_monoServer attachToServer:serverConnection withProcessID:thePid task:self];
+        [_jobManager attachToServer:serverConnection withProcessID:thePid task:self];
         return YES;
     }
 }
 
 // Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
 - (void)killServerIfRunning {
-    if (_monoServer.serverPid >= 0) {
+    if (_jobManager.serverPid >= 0) {
         // This makes the server unlink its socket and exit immediately.
-        kill(_monoServer.serverPid, SIGUSR1);
+        kill(_jobManager.serverPid, SIGUSR1);
 
         // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
         // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
         // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
         // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
         // and that it's rare enough that the zombies don't pile up. Not much else I can do.
-        [[TaskNotifier sharedInstance] waitForPid:_monoServer.serverPid];
+        [[TaskNotifier sharedInstance] waitForPid:_jobManager.serverPid];
 
         // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
         // the server is dead it's not needed any more.
-        [_monoServer closeSocketFd];
+        [_jobManager closeSocketFd];
         NSLog(@"File descriptor server exited with status %d", status);
     }
 }
@@ -779,13 +784,13 @@ typedef struct {
 
 - (NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        return _monoServer.tty;
+        return _jobManager.tty;
     }
 }
 
 - (void)setTty:(NSString *)tty {
     @synchronized([PTYTaskLock class]) {
-        _monoServer.tty = tty;
+        _jobManager.tty = tty;
     }
     if ([NSThread isMainThread]) {
         [self.delegate taskDidChangeTTY:self];
@@ -824,7 +829,7 @@ typedef struct {
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
-        [_monoServer finishHandshakeWithJobInServer:forkState
+        [_jobManager finishHandshakeWithJobInServer:forkState
                                            ttyState:ttyState
                                         synchronous:synchronous
                                                task:self
@@ -932,7 +937,7 @@ typedef struct {
                                                    initialPwd,
                                                    newEnviron);
         // If you get here you're the parent.
-        _monoServer.serverPid = forkState.pid;
+        _jobManager.serverPid = forkState.pid;
     } else {
         self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
                                                    &ttyState,

@@ -28,6 +28,7 @@
         _serverPid = (pid_t)-1;
         _serverChildPid = -1;
         _socketFd = -1;
+        _fd = -1;
     }
     return self;
 }
