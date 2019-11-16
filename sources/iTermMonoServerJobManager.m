@@ -33,11 +33,14 @@
     return self;
 }
 
-- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
-                              ttyState:(const iTermTTYState *)ttyStatePtr
-                           synchronous:(BOOL)synchronous
-                                  task:(id<iTermTask>)task
-                            completion:(void (^)(BOOL taskDiedImmediately))completion {
+- (void)didForkParent:(const iTermForkState *)forkStatePtr
+             ttyState:(iTermTTYState *)ttyStatePtr
+          synchronous:(BOOL)synchronous
+                 task:(id<iTermTask>)task
+           completion:(void (^)(BOOL))completion {
+    // The client and server connected to each other before forking. The server
+    // will send us the child pid now. We don't really need the rest of the
+    // stuff in serverConnection since we already know it, but that's ok.
     iTermForkState forkState = *forkStatePtr;
     iTermTTYState ttyState = *ttyStatePtr;
     DLog(@"Begin handshake");

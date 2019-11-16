@@ -7,6 +7,8 @@
 
 #import "iTermLegacyJobManager.h"
 
+#import "TaskNotifier.h"
+
 @implementation iTermLegacyJobManager
 
 @synthesize fd = _fd;
@@ -40,13 +42,18 @@
     assert(NO);
 }
 
-- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
-                              ttyState:(const iTermTTYState *)ttyStatePtr
-                           synchronous:(BOOL)synchronous
-                                  task:(id<iTermTask>)task
-                            completion:(void (^)(BOOL taskDiedImmediately))completion {
+- (void)didForkParent:(const iTermForkState *)forkState
+             ttyState:(iTermTTYState *)ttyState
+          synchronous:(BOOL)synchronous
+                 task:(id<iTermTask>)task
+           completion:(void (^)(BOOL))completion {
+    self.tty = [NSString stringWithUTF8String:ttyState->tty];
+    fcntl(self.fd, F_SETFL, O_NONBLOCK);
+    [[TaskNotifier sharedInstance] registerTask:task];
 
+    completion(NO);
 }
+
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid

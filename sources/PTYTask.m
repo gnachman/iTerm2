@@ -810,12 +810,6 @@ typedef struct {
     }
 }
 
-- (void)finishLaunchingDirectChild:(iTermTTYState *)ttyState {
-    self.tty = [NSString stringWithUTF8String:ttyState->tty];
-    fcntl(self.fd, F_SETFL, O_NONBLOCK);
-    [[TaskNotifier sharedInstance] registerTask:self];
-}
-
 - (void)didForkParent:(const iTermForkState *)forkState
            newEnviron:(char **)newEnviron
              ttyState:(iTermTTYState *)ttyState
@@ -828,30 +822,18 @@ typedef struct {
     DLog(@"fcntl");
     fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
 
-    if (forkState->connectionFd > 0) {
-        // Jobs run in servers. The client and server connected to each other
-        // before forking. The server will send us the child pid now. We don't
-        // really need the rest of the stuff in serverConnection since we already know
-        // it, but that's ok.
-        [_jobManager finishHandshakeWithJobInServer:forkState
-                                           ttyState:ttyState
-                                        synchronous:synchronous
-                                               task:self
-                                         completion:^(BOOL taskDiedImmediately) {
-                                             if (taskDiedImmediately) {
-                                                 [self->_delegate taskDiedImmediately];
-                                             }
-                                             if (completion) {
-                                                 completion();
-                                             }
-                                         }];
-    } else {
-        // Jobs are direct children of iTerm2
-        [self finishLaunchingDirectChild:ttyState];
-        if (completion) {
-            completion();
-        }
-    }
+    [_jobManager didForkParent:forkState
+                      ttyState:ttyState
+                   synchronous:synchronous
+                          task:self
+                    completion:^(BOOL taskDiedImmediately) {
+                        if (taskDiedImmediately) {
+                            [self->_delegate taskDiedImmediately];
+                        }
+                        if (completion) {
+                            completion();
+                        }
+                    }];
 }
 
 - (NSString *)pathToNewUnixDomainSocket {

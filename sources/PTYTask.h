@@ -52,11 +52,12 @@ typedef struct {
 @property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
 @property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
-- (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkStatePtr
-                              ttyState:(const iTermTTYState *)ttyStatePtr
-                           synchronous:(BOOL)synchronous
-                                  task:(id<iTermTask>)task
-                            completion:(void (^)(BOOL taskDiedImmediately))completion;
+- (void)didForkParent:(const iTermForkState *)forkState
+             ttyState:(iTermTTYState *)ttyState
+          synchronous:(BOOL)synchronous
+                 task:(id<iTermTask>)task
+           completion:(void (^)(BOOL taskDiedImmediately))completion;
+
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task;
