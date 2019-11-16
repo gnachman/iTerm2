@@ -763,12 +763,6 @@ typedef struct {
     argv[max + 1] = NULL;
 }
 
-- (void)failedToForkWithEnvironment:(char **)newEnviron program:(NSString *)progpath {
-    DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
-    [[iTermNotificationController sharedInstance] notify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
-    [self freeEnvironment:newEnviron];
-}
-
 - (void)freeEnvironment:(char **)newEnviron {
     for (int j = 0; newEnviron[j]; j++) {
         free(newEnviron[j]);
@@ -876,39 +870,51 @@ typedef struct {
         .deadMansPipe = { 0, 0 },
     };
 
-    const BOOL ok =
-    [_jobManager forkAndExecWithForkState:&forkState
-                                 ttyState:&ttyState
-                                  argpath:argpath
-                                     argv:argv
-                               initialPwd:initialPwd
-                               newEnviron:newEnviron];
-    if (!ok) {
-        [self freeEnvironment:newEnviron];
-        if (completion != nil) {
-            completion();
-        }
-        return;
-    }
-
-    if (forkState.pid < (pid_t)0) {
-        // Error
-        [self failedToForkWithEnvironment:newEnviron program:progpath];
-        if (completion != nil) {
-            completion();
-        }
-        return;
-    }
-
-    // Parent
-    DLog(@"done forking");
-    DLog(@"free environment");
+    const iTermJobManagerForkAndExecStatus status =
+        [_jobManager forkAndExecWithForkState:&forkState
+                                     ttyState:&ttyState
+                                      argpath:argpath
+                                         argv:argv
+                                   initialPwd:initialPwd
+                                   newEnviron:newEnviron];
     [self freeEnvironment:newEnviron];
-    [self didForkParent:&forkState
-             newEnviron:newEnviron
-               ttyState:&ttyState
-            synchronous:synchronous
-             completion:completion];
+
+    switch (status) {
+        case iTermJobManagerForkAndExecStatusSuccess:
+            // Parent
+            DLog(@"done forking");
+            DLog(@"free environment");
+            [self didForkParent:&forkState
+                     newEnviron:newEnviron
+                       ttyState:&ttyState
+                    synchronous:synchronous
+                     completion:completion];
+            break;
+
+        case iTermJobManagerForkAndExecStatusTempFileError:
+            [self showFailedToCreateTempSocketError];
+            if (completion != nil) {
+                completion();
+            }
+            break;
+
+        case iTermJobManagerForkAndExecStatusFailedToFork:
+            DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
+            [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
+                                                 withDescription:@"You may have too many processes already running."];
+            if (completion != nil) {
+                completion();
+            }
+            break;
+    }
+}
+
+- (void)showFailedToCreateTempSocketError {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Error";
+    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
+    [alert addButtonWithTitle:@"OK"];
+    [alert runModal];
 }
 
 #pragma mark I/O

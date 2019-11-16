@@ -44,6 +44,12 @@ typedef struct {
     char tty[PATH_MAX];
 } iTermTTYState;
 
+typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
+    iTermJobManagerForkAndExecStatusSuccess,
+    iTermJobManagerForkAndExecStatusTempFileError,
+    iTermJobManagerForkAndExecStatusFailedToFork
+};
+
 @protocol iTermJobManager<NSObject>
 
 @property (nonatomic) int fd;
@@ -59,13 +65,12 @@ typedef struct {
                  task:(id<iTermTask>)task
            completion:(void (^)(BOOL taskDiedImmediately))completion;
 
-// Returns YES on success.
-- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                        ttyState:(iTermTTYState *)ttyStatePtr
-                         argpath:(const char *)argpath
-                            argv:(const char **)argv
-                      initialPwd:(const char *)initialPwd
-                      newEnviron:(char **)newEnviron;
+- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                                                    ttyState:(iTermTTYState *)ttyStatePtr
+                                                     argpath:(const char *)argpath
+                                                        argv:(const char **)argv
+                                                  initialPwd:(const char *)initialPwd
+                                                  newEnviron:(char **)newEnviron;
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid

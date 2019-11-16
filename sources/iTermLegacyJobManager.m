@@ -46,7 +46,7 @@
     assert(NO);
 }
 
-- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
                         ttyState:(iTermTTYState *)ttyStatePtr
                          argpath:(const char *)argpath
                             argv:(const char **)argv
@@ -64,7 +64,10 @@
     if (_childPid > 0) {
         [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
     }
-    return YES;
+    if (forkStatePtr->pid < (pid_t)0) {
+        return iTermJobManagerForkAndExecStatusFailedToFork;
+    }
+    return iTermJobManagerForkAndExecStatusSuccess;
 }
 
 - (void)didForkParent:(const iTermForkState *)forkState

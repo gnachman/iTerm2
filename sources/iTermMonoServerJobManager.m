@@ -16,7 +16,7 @@
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 
-#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
 
 @implementation iTermMonoServerJobManager
 
@@ -49,32 +49,21 @@
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
                                                                              suffix:@""];
-    if (tempPath == nil) {
-        [self showFailedToCreateTempSocketError];
-    }
     return tempPath;
 }
 
-- (void)showFailedToCreateTempSocketError {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Error";
-    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
-    [alert addButtonWithTitle:@"OK"];
-    [alert runModal];
-}
-
-- (BOOL)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                        ttyState:(iTermTTYState *)ttyStatePtr
-                         argpath:(const char *)argpath
-                            argv:(const char **)argv
-                      initialPwd:(const char *)initialPwd
-                      newEnviron:(char **)newEnviron {
+- (iTermJobManagerForkAndExecStatus)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
+                                                    ttyState:(iTermTTYState *)ttyStatePtr
+                                                     argpath:(const char *)argpath
+                                                        argv:(const char **)argv
+                                                  initialPwd:(const char *)initialPwd
+                                                  newEnviron:(char **)newEnviron {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     DLog(@"get path to UDS");
     NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];
     DLog(@"done");
     if (unixDomainSocketPath == nil) {
-        return NO;
+        return iTermJobManagerForkAndExecStatusTempFileError;
     }
 
     // Begin listening on that path as a unix domain socket.
@@ -90,7 +79,11 @@
                                                newEnviron);
     // If you get here you're the parent.
     self.serverPid = forkStatePtr->pid;
-    return YES;
+
+    if (forkStatePtr->pid < (pid_t)0) {
+        return iTermJobManagerForkAndExecStatusFailedToFork;
+    }
+    return iTermJobManagerForkAndExecStatusSuccess;
 }
 
 - (void)didForkParent:(const iTermForkState *)forkStatePtr
