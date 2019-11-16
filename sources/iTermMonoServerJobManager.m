@@ -225,4 +225,8 @@
     return _serverPid;
 }
 
+- (BOOL)isSessionRestorationPossible {
+    return _serverChildPid > 0;
+}
+
 @end

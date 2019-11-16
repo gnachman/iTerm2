@@ -4445,7 +4445,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (includeContents && !self.isTmuxClient) {
         // These values are used for restoring sessions after a crash. It's only saved when contents
         // are included since saved window arrangements have no business knowing the process id.
-        if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
+        if ([iTermAdvancedSettingsModel runJobsInServers] && _shell.isSessionRestorationPossible) {
             result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
             if (self.tty) {
                 result[SESSION_ARRANGEMENT_TTY] = self.tty;

@@ -54,6 +54,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 @property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 
 @property (nonatomic, readonly) pid_t pidToWaitOn;
+@property (nonatomic, readonly) BOOL isSessionRestorationPossible;
 
 - (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
                         argpath:(const char *)argpath
@@ -81,7 +82,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
 
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;
-@property(nonatomic, readonly) BOOL pidIsChild;
+@property(nonatomic, readonly) BOOL isSessionRestorationPossible;
 @property(nonatomic, readonly) pid_t serverPid;
 
 // Tmux sessions are coprocess-only tasks. They have no file descriptor or pid,

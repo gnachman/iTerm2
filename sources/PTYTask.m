@@ -199,8 +199,8 @@ typedef struct {
     return _jobManager.pidToWaitOn;
 }
 
-- (BOOL)pidIsChild {
-    return _jobManager.serverChildPid == -1 && _jobManager.childPid != -1;
+- (BOOL)isSessionRestorationPossible {
+    return _jobManager.isSessionRestorationPossible;
 }
 
 - (pid_t)serverPid {

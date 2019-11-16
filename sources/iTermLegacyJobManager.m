@@ -108,4 +108,8 @@
     return _childPid;
 }
 
+- (BOOL)isSessionRestorationPossible {
+    return NO;
+}
+
 @end
