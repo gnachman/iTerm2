@@ -842,20 +842,15 @@ typedef struct {
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     DLog(@"initialPwd=%s", initialPwd);
-    iTermForkState forkState = {
-        .connectionFd = -1,
-        .deadMansPipe = { 0, 0 },
-    };
 
-    [_jobManager forkAndExecWithForkState:&forkState
-                                 ttyState:&ttyState
-                                  argpath:argpath
-                                     argv:argv
-                               initialPwd:initialPwd
-                               newEnviron:newEnviron
-                              synchronous:synchronous
-                                     task:self
-                               completion:
+    [_jobManager forkAndExecWithTtyState:&ttyState
+                                 argpath:argpath
+                                    argv:argv
+                              initialPwd:initialPwd
+                              newEnviron:newEnviron
+                             synchronous:synchronous
+                                    task:self
+                              completion:
      ^(iTermJobManagerForkAndExecStatus status) {
          [self freeEnvironment:newEnviron];
          switch (status) {

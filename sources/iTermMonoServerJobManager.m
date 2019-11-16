@@ -52,8 +52,7 @@
     return tempPath;
 }
 
-- (void)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                        ttyState:(iTermTTYState *)ttyStatePtr
+- (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
                          argpath:(const char *)argpath
                             argv:(const char **)argv
                       initialPwd:(const char *)initialPwd
@@ -73,7 +72,12 @@
     // Begin listening on that path as a unix domain socket.
     DLog(@"fork");
 
-    self.fd = iTermForkAndExecToRunJobInServer(forkStatePtr,
+    iTermForkState forkState = {
+        .connectionFd = -1,
+        .deadMansPipe = { 0, 0 },
+    };
+
+    self.fd = iTermForkAndExecToRunJobInServer(&forkState,
                                                ttyStatePtr,
                                                unixDomainSocketPath,
                                                argpath,
@@ -82,14 +86,14 @@
                                                initialPwd,
                                                newEnviron);
     // If you get here you're the parent.
-    self.serverPid = forkStatePtr->pid;
+    self.serverPid = forkState.pid;
 
-    if (forkStatePtr->pid < (pid_t)0) {
+    if (forkState.pid < (pid_t)0) {
         completion(iTermJobManagerForkAndExecStatusFailedToFork);
         return;
     }
 
-    [self didForkParent:forkStatePtr
+    [self didForkParent:&forkState
                ttyState:ttyStatePtr
             synchronous:synchronous
                    task:task

@@ -47,16 +47,19 @@
     assert(NO);
 }
 
-- (void)forkAndExecWithForkState:(iTermForkState *)forkStatePtr
-                        ttyState:(iTermTTYState *)ttyStatePtr
-                         argpath:(const char *)argpath
-                            argv:(const char **)argv
-                      initialPwd:(const char *)initialPwd
-                      newEnviron:(char **)newEnviron
-                     synchronous:(BOOL)synchronous
-                            task:(id<iTermTask>)task
-                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
-    self.fd = iTermForkAndExecToRunJobDirectly(forkStatePtr,
+- (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
+                        argpath:(const char *)argpath
+                           argv:(const char **)argv
+                     initialPwd:(const char *)initialPwd
+                     newEnviron:(char **)newEnviron
+                    synchronous:(BOOL)synchronous
+                           task:(id<iTermTask>)task
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+    iTermForkState forkState = {
+        .connectionFd = -1,
+        .deadMansPipe = { 0, 0 },
+    };
+    self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
                                                ttyStatePtr,
                                                argpath,
                                                argv,
@@ -64,11 +67,11 @@
                                                initialPwd,
                                                newEnviron);
     // If you get here you're the parent.
-    _childPid = forkStatePtr->pid;
+    _childPid = forkState.pid;
     if (_childPid > 0) {
         [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
     }
-    if (forkStatePtr->pid < (pid_t)0) {
+    if (forkState.pid < (pid_t)0) {
         completion(iTermJobManagerForkAndExecStatusFailedToFork);
         return;
     }
