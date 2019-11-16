@@ -119,10 +119,14 @@
 }
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
-         withProcessID:(pid_t)thePid
+         withProcessID:(NSNumber *)pidNumber
                   task:(id<iTermTask>)task {
     [self attachToServer:serverConnection task:task];
+    if (pidNumber == nil) {
+        return;
+    }
 
+    const pid_t thePid = pidNumber.integerValue;
     // Prevent any future attempt to connect to this server as an orphan.
     char buffer[PATH_MAX + 1];
     iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);

@@ -625,6 +625,10 @@ typedef struct {
     }
 }
 
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
+    [_jobManager attachToServer:serverConnection withProcessID:nil task:self];
+}
+
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
@@ -643,7 +647,7 @@ typedef struct {
         return NO;
     } else {
         DLog(@"Succeeded.");
-        [_jobManager attachToServer:serverConnection withProcessID:thePid task:self];
+        [_jobManager attachToServer:serverConnection withProcessID:@(thePid) task:self];
         return YES;
     }
 }
@@ -836,6 +840,9 @@ typedef struct {
                                          completion:^(BOOL taskDiedImmediately) {
                                              if (taskDiedImmediately) {
                                                  [self->_delegate taskDiedImmediately];
+                                             }
+                                             if (completion) {
+                                                 completion();
                                              }
                                          }];
     } else {

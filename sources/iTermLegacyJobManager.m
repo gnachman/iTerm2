@@ -49,7 +49,7 @@
 }
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection
-         withProcessID:(pid_t)thePid
+         withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task {
 
 }
