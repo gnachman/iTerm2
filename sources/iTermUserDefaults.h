@@ -13,6 +13,8 @@ extern NSString *const kSelectionRespectsSoftBoundariesKey;
 
 @interface iTermUserDefaults : NSObject
 
++ (void)performMigrations;
+
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
 @property (class, nonatomic) BOOL secureKeyboardEntry;
 @property (class, nonatomic) BOOL enableAutomaticProfileSwitchingLogging;

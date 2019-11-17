@@ -21,25 +21,48 @@ static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLoggin
 
 @implementation iTermUserDefaults
 
-static NSArray *iTermUserDefaultsGetTypedArray(Class objectClass, NSString *key) {
-    return [[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeySearchHistory]] mapWithBlock:^id(id anObject) {
+static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
+    return [[NSArray castFrom:[userDefaults objectForKey:iTermUserDefaultsKeySearchHistory]] mapWithBlock:^id(id anObject) {
         return [objectClass castFrom:anObject];
     }];
 }
 
-static void iTermUserDefaultsSetTypedArray(Class objectClass, NSString *key, id value) {
+static void iTermUserDefaultsSetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key, id value) {
     NSArray *array = [[NSArray castFrom:value] mapWithBlock:^id(id anObject) {
         return [objectClass castFrom:anObject];
     }];
-    [[NSUserDefaults standardUserDefaults] setObject:array forKey:key];
+    [userDefaults setObject:array forKey:key];
+}
+
+static NSUserDefaults *iTermPrivateUserDefaults(void) {
+    static dispatch_once_t onceToken;
+    static NSUserDefaults *privateUserDefaults;
+    dispatch_once(&onceToken, ^{
+        privateUserDefaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.googlecode.iterm2.private"];
+    });
+    return privateUserDefaults;
+}
+
++ (void)performMigrations {
+    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeySearchHistory];
+    if (!obj) {
+        return;
+    }
+    [self setSearchHistory:obj];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeySearchHistory];
+
+    id maybeSearchHistory = [[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+    if (maybeSearchHistory && ![maybeSearchHistory isKindOfClass:[NSNumber class]]) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+    }
 }
 
 + (NSArray<NSString *> *)searchHistory {
-    return iTermUserDefaultsGetTypedArray([NSString class], iTermUserDefaultsKeySearchHistory) ?: @[];
+    return iTermUserDefaultsGetTypedArray(iTermPrivateUserDefaults(), [NSString class], iTermUserDefaultsKeySearchHistory) ?: @[];
 }
 
 + (void)setSearchHistory:(NSArray<NSString *> *)objects {
-    iTermUserDefaultsSetTypedArray([NSString class], iTermUserDefaultsKeySearchHistory, objects);
+    iTermUserDefaultsSetTypedArray(iTermPrivateUserDefaults(), [NSString class], iTermUserDefaultsKeySearchHistory, objects);
 }
 
 + (BOOL)secureKeyboardEntry {

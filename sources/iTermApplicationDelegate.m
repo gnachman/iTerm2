@@ -87,6 +87,7 @@
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableScope+Global.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
@@ -1160,6 +1161,7 @@ static BOOL hasBecomeActive = NO;
 
     // Fix up various user defaults settings.
     [iTermPreferences initializeUserDefaults];
+    [iTermUserDefaults performMigrations];
 
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
