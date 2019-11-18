@@ -364,6 +364,9 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 - (IBAction)remove:(id)sender {
     if (sAuthenticated) {
         NSInteger selectedRow = [_tableView selectedRow];
+        if (selectedRow < 0 || selectedRow >= _entries.count) {
+            return;
+        }
         [_tableView reloadData];
         [[self keychain] deletePasswordForService:kServiceName account:_entries[selectedRow].combinedAccountNameUserName];
         [self reloadAccounts];
@@ -580,6 +583,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         DLog(@"selectedPassword: return nil, negative index");
         return nil;
     }
+    if (index >= _entries.count) {
+        DLog(@"index too bvig");
+        return nil;
+    }
     NSError *error = nil;
     NSString *password = [[self keychain] passwordForService:kServiceName
                                                      account:_entries[index].combinedAccountNameUserName
@@ -609,6 +616,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     NSInteger index = [_tableView selectedRow];
     if (index < 0) {
         DLog(@"selectedPassword: return nil, negative index");
+        return nil;
+    }
+    if (index >= _entries.count) {
+        DLog(@"Index out of bounds");
         return nil;
     }
     return _entries[index].userName;
@@ -647,10 +658,16 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 - (NSString *)accountNameForRow:(NSInteger)rowIndex {
+    if (rowIndex < 0 || rowIndex >= _entries.count) {
+        return nil;
+    }
     return _entries[rowIndex].accountName;
 }
 
 - (NSString *)userNameForRow:(NSInteger)rowIndex {
+    if (rowIndex < 0 || rowIndex >= _entries.count) {
+        return nil;
+    }
     return _entries[rowIndex].userName;
 }
 
@@ -707,7 +724,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         NSString *const existingAccountName = _entries[rowIndex].combinedAccountNameUserName;
 
         iTermPasswordEntry *entry = [[iTermPasswordEntry alloc] init];
-        entry.accountName = (aTableColumn == _accountNameColumn) ? anObject : [self accountNameForRow:rowIndex];;
+        entry.accountName = (aTableColumn == _accountNameColumn) ? anObject : [self accountNameForRow:rowIndex];
         entry.userName = (aTableColumn == _userNameColumn) ? anObject : [self userNameForRow:rowIndex];
 
         NSError *error = nil;
