@@ -308,7 +308,7 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
     }
 
     private func newCheckMarkCell(_ checked: Bool) -> NSTextField {
-        let identifier = NSUserInterfaceItemIdentifier("FontNameTableViewCellIdentifier")
+        let identifier = NSUserInterfaceItemIdentifier("CheckMarkTableViewCellIdentifier")
         if let textField = tableView.makeView(withIdentifier: identifier, owner: self) as? NSTextField {
             textField.stringValue = "✓"
             textField.alignment = .right
