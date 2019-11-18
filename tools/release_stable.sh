@@ -80,7 +80,7 @@ function Build {
   # Zip it, notarize it, staple it, and re-zip it.
   PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
   zip -ry $PRENOTARIZED_ZIP iTerm.app
-  xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1
+  xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
   UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
   echo "uuid is $UUID"
   xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
