@@ -442,6 +442,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     NSArray *_screenConfigurationAtTimeOfForceFrame;
     NSRect _forceFrame;
     NSTimeInterval _forceFrameUntil;
+    BOOL _deallocing;
 }
 
 @synthesize scope = _scope;
@@ -1111,6 +1112,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    _deallocing = YES;
     [_contentView shutdown];
 
     [self closeInstantReplayWindow];
@@ -2262,6 +2264,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setWindowTitle:(NSString *)title {
     DLog(@"setWindowTitle:%@", title);
+    if (_deallocing) {
+        // This uses -weakSelf and can be called during dealloc. Doing so is a crash.
+        return;
+    }
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
