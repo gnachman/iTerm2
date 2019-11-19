@@ -1422,7 +1422,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 DLog(@"Try to attach to pid %d", (int)serverPid);
                 // serverPid might be -1 if the user turned on session restoration and then quit.
-                if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid]) {
+                if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid
+                                                                              tty:arrangement[SESSION_ARRANGEMENT_TTY]]) {
                     DLog(@"Success!");
 
                     if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
@@ -1433,7 +1434,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
                     runCommand = NO;
                     attachedToServer = YES;
-                    aSession.shell.tty = arrangement[SESSION_ARRANGEMENT_TTY];
                     shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
@@ -1679,13 +1679,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid
+                                     tty:(NSString *)tty {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Failing to attach because run jobs in servers is off");
         return NO;
     }
     DLog(@"Try to attach...");
-    if ([_shell tryToAttachToServerWithProcessId:serverPid]) {
+    if ([_shell tryToAttachToServerWithProcessId:serverPid tty:tty]) {
         @synchronized(self) {
             _registered = YES;
         }
@@ -4451,7 +4452,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // These values are used for restoring sessions after a crash. It's only saved when contents
         // are included since saved window arrangements have no business knowing the process id.
         if ([iTermAdvancedSettingsModel runJobsInServers] && _shell.isSessionRestorationPossible) {
-            result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
+            result[SESSION_ARRANGEMENT_SERVER_PID] = _shell.sessionRestorationIdentifier;
             if (self.tty) {
                 result[SESSION_ARRANGEMENT_TTY] = self.tty;
             }

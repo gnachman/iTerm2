@@ -12,11 +12,12 @@
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 
-@implementation iTermLegacyJobManager
+@implementation iTermLegacyJobManager {
+    pid_t _childPid;
+}
 
 @synthesize fd = _fd;
 @synthesize tty = _tty;
-@synthesize childPid = _childPid;
 
 - (instancetype)init {
     self = [super init];
@@ -27,16 +28,17 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p fd=%d tty=%@ childPid=%@>",
+            NSStringFromClass([self class]), self, _fd, _tty, @(_childPid)];
+}
+
 - (pid_t)serverPid {
     return -1;
 }
 
 - (void)setServerPid:(pid_t)serverPid {
     assert(NO);
-}
-
-- (pid_t)serverChildPid {
-    return -1;
 }
 
 - (int)socketFd {
@@ -92,10 +94,6 @@
 
 }
 
-- (void)closeSocketFd {
-    assert(NO);
-}
-
 - (void)sendSignal:(int)signo toProcessGroup:(BOOL)toProcessGroup {
     if (_childPid <= 0) {
         return;
@@ -137,6 +135,18 @@
 
 - (BOOL)isSessionRestorationPossible {
     return NO;
+}
+
+- (pid_t)externallyVisiblePid {
+    return _childPid;
+}
+
+- (BOOL)hasJob {
+    return _childPid != -1;
+}
+
+- (id)sessionRestorationIdentifier {
+    return nil;
 }
 
 @end

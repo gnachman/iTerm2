@@ -51,11 +51,9 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 
 @property (nonatomic) int fd;
 @property (nonatomic, copy) NSString *tty;
-@property (nonatomic) pid_t serverPid;  // -1 when servers are not in use.
-@property (nonatomic) pid_t childPid;  // -1 when servers ARE in use.
-@property (nonatomic, readonly) pid_t serverChildPid;  // -1 when servers are not in use.
-@property (nonatomic) int socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
-
+@property (nonatomic, readonly) pid_t externallyVisiblePid;
+@property (nonatomic, readonly) BOOL hasJob;
+@property (nonatomic, readonly) id sessionRestorationIdentifier;
 @property (nonatomic, readonly) pid_t pidToWaitOn;
 @property (nonatomic, readonly) BOOL isSessionRestorationPossible;
 
@@ -72,8 +70,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task;
 
-- (void)closeSocketFd;
-
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
 @end
@@ -86,7 +82,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;
 @property(nonatomic, readonly) BOOL isSessionRestorationPossible;
-@property(nonatomic, readonly) pid_t serverPid;
+@property(nonatomic, readonly) id sessionRestorationIdentifier;
 
 // Tmux sessions are coprocess-only tasks. They have no file descriptor or pid,
 // but they may have a coprocess that needs TaskNotifier to read, write, and wait on.
@@ -96,7 +92,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 @property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
 // Externally, only PTYSession should assign to this when reattaching to a server.
-@property(atomic, copy) NSString *tty;
+@property(atomic, readonly) NSString *tty;
 @property(atomic, readonly) NSString *path;
 @property(atomic, readonly) NSString *getWorkingDirectory;
 @property(atomic, readonly) BOOL logging;
@@ -151,7 +147,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 // If [iTermAdvancedSettingsModel runJobsInServers] is on, then try for up to
 // |timeout| seconds to connect to the server. Returns YES on success.
 // If successful, it will be wired up as the task's file descriptor and process.
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid;
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty;
 
 // Wire up the server as the task's file descriptor and process. The caller
 // will have connected to the server to get this info. Requires

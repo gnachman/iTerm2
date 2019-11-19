@@ -18,13 +18,16 @@
 
 #import <Foundation/Foundation.h>
 
-@implementation iTermMonoServerJobManager
+@implementation iTermMonoServerJobManager {
+    pid_t _serverChildPid;
+    pid_t _serverPid;
+
+    // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
+    pid_t _socketFd;
+}
 
 @synthesize fd = _fd;
 @synthesize tty = _tty;
-@synthesize serverPid = _serverPid;
-@synthesize serverChildPid = _serverChildPid;
-@synthesize socketFd = _socketFd;
 
 - (instancetype)init {
     self = [super init];
@@ -35,6 +38,12 @@
         _fd = -1;
     }
     return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p fd=%d tty=%@ serverPid=%@ serverChildPid=%@ socketFd=%@>",
+            NSStringFromClass([self class]), self,
+            _fd, _tty, @(_serverPid), @(_serverChildPid), @(_socketFd)];
 }
 
 - (pid_t)childPid {
@@ -86,7 +95,7 @@
                                                initialPwd,
                                                newEnviron);
     // If you get here you're the parent.
-    self.serverPid = forkState.pid;
+    _serverPid = forkState.pid;
 
     if (forkState.pid < (pid_t)0) {
         completion(iTermJobManagerForkAndExecStatusFailedToFork);
@@ -284,6 +293,18 @@
 
 - (BOOL)isSessionRestorationPossible {
     return _serverChildPid > 0;
+}
+
+- (pid_t)externallyVisiblePid {
+    return _serverChildPid;
+}
+
+- (BOOL)hasJob {
+    return _serverChildPid != -1;
+}
+
+- (id)sessionRestorationIdentifier {
+    return @(_serverPid);
 }
 
 @end

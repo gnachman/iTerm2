@@ -118,8 +118,8 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p child pid=%d server-child pid=%d, filedesc=%d tmux pid=%@>",
-            NSStringFromClass([self class]), self, _jobManager.serverChildPid, _jobManager.serverPid, self.fd, _tmuxClientProcessID];
+    return [NSString stringWithFormat:@"<%@: %p jobManager=%@ tmuxClientProcessID=%@>",
+            NSStringFromClass([self class]), self, _jobManager, _tmuxClientProcessID];
 }
 
 #pragma mark - APIs
@@ -146,8 +146,8 @@ static void HandleSigChld(int n) {
     return _jobManager.isSessionRestorationPossible;
 }
 
-- (pid_t)serverPid {
-    return _jobManager.serverPid;
+- (NSString *)sessionRestorationIdentifier {
+    return _jobManager.sessionRestorationIdentifier;
 }
 
 - (int)fd {
@@ -161,11 +161,7 @@ static void HandleSigChld(int n) {
 }
 
 - (pid_t)pid {
-    if (_jobManager.serverChildPid != -1) {
-        return _jobManager.serverChildPid;
-    } else {
-        return _jobManager.childPid;
-    }
+    return _jobManager.externallyVisiblePid;
 }
 
 - (int)status {
@@ -545,18 +541,18 @@ static void HandleSigChld(int n) {
     [_jobManager attachToServer:serverConnection withProcessID:nil task:self];
 }
 
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid {
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
     }
-    if (_jobManager.serverChildPid != -1) {
+    if (_jobManager.hasJob) {
         return NO;
     }
 
     // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
     // logs. These should eventually become DLog's and the log statements in the server should
     // become LOG_DEBUG level.
-    DLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
+    DLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d, tty %@", (int)thePid, tty);
     iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(thePid);
     if (!serverConnection.ok) {
         NSLog(@"Failed with error %s", serverConnection.error);
@@ -564,6 +560,7 @@ static void HandleSigChld(int n) {
     } else {
         DLog(@"Succeeded.");
         [_jobManager attachToServer:serverConnection withProcessID:@(thePid) task:self];
+        [self setTty:tty];
         return YES;
     }
 }
@@ -754,6 +751,7 @@ static void HandleSigChld(int n) {
          switch (status) {
              case iTermJobManagerForkAndExecStatusSuccess:
                  // Parent
+                 [self setTty:_jobManager.tty];
                  DLog(@"finished succesfully");
                  break;
 
