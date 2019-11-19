@@ -751,7 +751,7 @@ static void HandleSigChld(int n) {
          switch (status) {
              case iTermJobManagerForkAndExecStatusSuccess:
                  // Parent
-                 [self setTty:_jobManager.tty];
+                 [self setTty:self->_jobManager.tty];
                  DLog(@"finished succesfully");
                  break;
 
