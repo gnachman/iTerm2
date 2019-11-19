@@ -7,6 +7,8 @@
 
 #import "PTYTask.h"
 
+#import "iTermTTYState.h"
+
 #include <util.h>
 
 typedef struct {

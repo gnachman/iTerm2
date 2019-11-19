@@ -3,6 +3,7 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermFileDescriptorClient.h"
+#import "iTermTTYState.h"
 #import "VT100GridTypes.h"
 
 #import <termios.h>
@@ -30,12 +31,6 @@
 // Main thread
 - (void)taskDidChangeTTY:(PTYTask *)task;
 @end
-
-typedef struct {
-    struct termios term;
-    struct winsize win;
-    char tty[PATH_MAX];
-} iTermTTYState;
 
 typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {
     iTermJobManagerForkAndExecStatusSuccess,

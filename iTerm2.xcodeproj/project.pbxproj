@@ -3316,6 +3316,8 @@
 		A6E74757188C66CF005355CF /* iTermExposeTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74755188C66CF005355CF /* iTermExposeTabView.h */; };
 		A6E7475C188C6731005355CF /* iTermExposeGridView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475A188C6731005355CF /* iTermExposeGridView.h */; };
 		A6E74761188C679C005355CF /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
+		A6E74ADF2383AA1D0089004A /* iTermTTYState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74ADD2383AA1D0089004A /* iTermTTYState.h */; };
+		A6E74AE02383AA1D0089004A /* iTermTTYState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74ADE2383AA1D0089004A /* iTermTTYState.m */; };
 		A6E761641D39D216005C0E5C /* iTermMutableAttributedStringBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E761621D39D216005C0E5C /* iTermMutableAttributedStringBuilder.h */; };
 		A6E77F7B1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */; };
 		A6E77F7C1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */; };
@@ -5839,6 +5841,8 @@
 		A6E7475B188C6731005355CF /* iTermExposeGridView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeGridView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7475F188C679C005355CF /* iTermExposeView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermExposeView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E74760188C679C005355CF /* iTermExposeView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6E74ADD2383AA1D0089004A /* iTermTTYState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTTYState.h; sourceTree = "<group>"; };
+		A6E74ADE2383AA1D0089004A /* iTermTTYState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTTYState.m; sourceTree = "<group>"; };
 		A6E761621D39D216005C0E5C /* iTermMutableAttributedStringBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMutableAttributedStringBuilder.h; sourceTree = "<group>"; };
 		A6E761631D39D216005C0E5C /* iTermMutableAttributedStringBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMutableAttributedStringBuilder.m; sourceTree = "<group>"; };
 		A6E77F711A23D195009B1CB6 /* iTermSelectionScrollHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectionScrollHelper.m; sourceTree = "<group>"; };
@@ -7808,6 +7812,8 @@
 				A61F456D22FA52CD00E2054A /* iTermUnreadCountView.m */,
 				A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */,
 				A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */,
+				A6E74ADD2383AA1D0089004A /* iTermTTYState.h */,
+				A6E74ADE2383AA1D0089004A /* iTermTTYState.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10196,6 +10202,7 @@
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
 				A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */,
 				A66719361DCE36C3000CE608 /* iTermHostRecordMO.h in Headers */,
+				A6E74ADF2383AA1D0089004A /* iTermTTYState.h in Headers */,
 				535EA50020D0F15400FC81E0 /* iTermQuotedRecognizer.h in Headers */,
 				A60C034A20881D6000FE2F1F /* iTermWebSocketCookieJar.h in Headers */,
 				A655E699207153CB00DC21B9 /* NSSavePanel+iTerm.h in Headers */,
@@ -12818,6 +12825,7 @@
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
 				A66319882312139400C502BD /* NSImage+iTerm.m in Sources */,
+				A6E74AE02383AA1D0089004A /* iTermTTYState.m in Sources */,
 				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,

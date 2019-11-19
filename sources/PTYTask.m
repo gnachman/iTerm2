@@ -36,59 +36,6 @@
 #include <unistd.h>
 #include <util.h>
 
-#define CTRLKEY(c) ((c)-'A'+1)
-
-static NSSize PTYTaskClampViewSize(NSSize viewSize) {
-    return NSMakeSize(MAX(0, MIN(viewSize.width, USHRT_MAX)),
-                      MAX(0, MIN(viewSize.height, USHRT_MAX)));
-}
-
-static void
-setup_tty_param(iTermTTYState *ttyState,
-                VT100GridSize gridSize,
-                NSSize viewSize,
-                BOOL isUTF8) {
-    struct termios *term = &ttyState->term;
-    struct winsize *win = &ttyState->win;
-
-    memset(term, 0, sizeof(struct termios));
-    memset(win, 0, sizeof(struct winsize));
-
-    // UTF-8 input will be added on demand.
-    term->c_iflag = ICRNL | IXON | IXANY | IMAXBEL | BRKINT | (isUTF8 ? IUTF8 : 0);
-    term->c_oflag = OPOST | ONLCR;
-    term->c_cflag = CREAD | CS8 | HUPCL;
-    term->c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE | ECHOCTL;
-
-    term->c_cc[VEOF] = CTRLKEY('D');
-    term->c_cc[VEOL] = -1;
-    term->c_cc[VEOL2] = -1;
-    term->c_cc[VERASE] = 0x7f;           // DEL
-    term->c_cc[VWERASE] = CTRLKEY('W');
-    term->c_cc[VKILL] = CTRLKEY('U');
-    term->c_cc[VREPRINT] = CTRLKEY('R');
-    term->c_cc[VINTR] = CTRLKEY('C');
-    term->c_cc[VQUIT] = 0x1c;           // Control+backslash
-    term->c_cc[VSUSP] = CTRLKEY('Z');
-    term->c_cc[VDSUSP] = CTRLKEY('Y');
-    term->c_cc[VSTART] = CTRLKEY('Q');
-    term->c_cc[VSTOP] = CTRLKEY('S');
-    term->c_cc[VLNEXT] = CTRLKEY('V');
-    term->c_cc[VDISCARD] = CTRLKEY('O');
-    term->c_cc[VMIN] = 1;
-    term->c_cc[VTIME] = 0;
-    term->c_cc[VSTATUS] = CTRLKEY('T');
-
-    term->c_ispeed = B38400;
-    term->c_ospeed = B38400;
-
-    NSSize safeViewSize = PTYTaskClampViewSize(viewSize);
-    win->ws_row = gridSize.height;
-    win->ws_col = gridSize.width;
-    win->ws_xpixel = safeViewSize.width;
-    win->ws_ypixel = safeViewSize.height;
-}
-
 static void HandleSigChld(int n) {
     // This is safe to do because write(2) is listed in the sigaction(2) man page
     // as allowed in a signal handler. Calling a method is *NOT* safe since something might
@@ -110,11 +57,6 @@ static void HandleSigChld(int n) {
 @property(nonatomic, copy) NSString *logPath;
 @property(atomic, readwrite) int fd;
 @end
-
-typedef struct {
-    VT100GridSize gridSize;
-    NSSize viewSize;
-} PTYTaskSize;
 
 @implementation PTYTask {
     int status;
@@ -426,7 +368,7 @@ typedef struct {
         return;
     }
 
-    NSSize safeViewSize = PTYTaskClampViewSize(viewSize);
+    NSSize safeViewSize = iTermTTYClampWindowSize(viewSize);
     _desiredSize.gridSize = size;
     _desiredSize.viewSize = safeViewSize;
 
@@ -766,7 +708,7 @@ typedef struct {
     }
 
     iTermTTYState ttyState;
-    setup_tty_param(&ttyState, gridSize, viewSize, isUTF8);
+    iTermTTYStateInit(&ttyState, gridSize, viewSize, isUTF8);
 
     [self setCommand:progpath];
     env = [self environmentBySettingShell:env];
@@ -911,19 +853,7 @@ typedef struct {
     DLog(@"Set size of %@ to %@ cells, %@ px", _delegate, VT100GridSizeDescription(_desiredSize.gridSize), NSStringFromSize(_desiredSize.viewSize));
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
 
-    struct winsize winsize;
-    ioctl(self.fd, TIOCGWINSZ, &winsize);
-    if (winsize.ws_col != _desiredSize.gridSize.width ||
-        winsize.ws_row != _desiredSize.gridSize.height ||
-        winsize.ws_xpixel != _desiredSize.viewSize.width ||
-        winsize.ws_ypixel != _desiredSize.viewSize.height) {
-        DLog(@"Actually setting the size");
-        winsize.ws_col = _desiredSize.gridSize.width;
-        winsize.ws_row = _desiredSize.gridSize.height;
-        winsize.ws_xpixel = _desiredSize.viewSize.width;
-        winsize.ws_ypixel = _desiredSize.viewSize.height;
-        ioctl(self.fd, TIOCSWINSZ, &winsize);
-    }
+    iTermSetTerminalSize(self.fd, _desiredSize);
 }
 
 #pragma mark Process Tree
