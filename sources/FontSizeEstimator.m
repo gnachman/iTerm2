@@ -63,6 +63,10 @@
     return [[[NSTextContainer alloc] initWithContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)] autorelease];
 }
 
++ (BOOL)useGenerousRoundingForFont:(NSFont *)aFont {
+    return [[[aFont familyName] lowercaseStringWithLocale:[NSLocale localeWithLocaleIdentifier:@"en_US"]] containsString:@"consolas"];
+}
+
 + (id)fontSizeEstimatorForFont:(NSFont *)aFont
 {
     FontSizeEstimator* fse = [[[FontSizeEstimator alloc] init] autorelease];
@@ -95,7 +99,11 @@
 
         CGFontRelease(cgfont);
 
-        size.height = [aFont ascender] - [aFont descender];
+        if ([self useGenerousRoundingForFont:aFont]) {
+            size.height = ceil([aFont ascender]) - floor([aFont descender]);
+        } else {
+            size.height = [aFont ascender] - [aFont descender];
+        }
 
         // Things go very badly indeed if the size is 0.
         size.width = MAX(1, size.width);
