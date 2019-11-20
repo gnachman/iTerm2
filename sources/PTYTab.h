@@ -92,12 +92,6 @@ extern NSString *const PTYTabVariableTitleOverride;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
 
-+ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
-                        inTerminal:(NSWindowController<iTermWindowController> *)term
-                   hasFlexibleView:(BOOL)hasFlexible
-                           viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
-                        sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap;
-
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
