@@ -243,7 +243,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (BOOL)switchToWindowByNumber:(NSEvent *)event {
     const NSUInteger allModifiers =
         (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption);
-    if (([event it_modifierFlags] & allModifiers) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]]) {
+    const NSUInteger maskedValue = ([event it_modifierFlags] & allModifiers);
+    const NSUInteger requirement = [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]];
+    if (maskedValue == requirement) {
         // Command-Alt (or selected modifier) + number: Switch to window by number.
         int digit = [self digitKeyForEvent:event];
         if (digit >= 1 && digit <= 9) {

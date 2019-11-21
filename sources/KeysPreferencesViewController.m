@@ -203,6 +203,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     for (NSPopUpButton *button in buttons) {
         if (button.selectedTag == buttonThatChanged.selectedTag) {
             [button selectItemWithTag:kPreferenceModifierTagNone];
+            PreferenceInfo *info = [self infoForControl:button];
+            [self setInt:kPreferenceModifierTagNone forKey:info.key];
         }
     }
 }
