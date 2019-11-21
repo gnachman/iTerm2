@@ -44,6 +44,7 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
                  shouldShow:(BOOL)shouldShow
                       image:(NSImage *)image;
 - (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out iTermMetalUnavailableReason *)reason;
+- (void)tabDidChangeMetalViewVisibility:(PTYTab *)tab;
 - (BOOL)tabShouldUseTransparency:(PTYTab *)tab;
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab;
 - (BOOL)tabAnyDragInProgress:(PTYTab *)tab;

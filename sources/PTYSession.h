@@ -214,6 +214,7 @@ typedef enum {
 
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
+- (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue;
 
 // Amount of transparency changed (perhaps to none!)
 - (void)sessionTransparencyDidChange;

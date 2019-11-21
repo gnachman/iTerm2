@@ -5664,7 +5664,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _view.scrollview.alphaValue = 0;
         }
     }
-    _view.metalView.alphaValue = 1;
+    [self setMetalViewAlphaValue:1];
+}
+
+- (void)setMetalViewAlphaValue:(CGFloat)alphaValue {
+    _view.metalView.alphaValue = alphaValue;
+    [self.delegate sessionDidChangeMetalViewAlphaValue:self to:alphaValue];
 }
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
@@ -10938,7 +10943,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _view.scrollview.alphaValue = 1;
         }
     }
-    _view.metalView.alphaValue = 0;
+    [self setMetalViewAlphaValue:0];
     id token = @(_nextMetalDisabledToken++);
     [_metalDisabledTokens addObject:token];
     DLog(@"temporarilyDisableMetal return new token=%@ %@", token, self);

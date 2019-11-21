@@ -651,6 +651,9 @@ typedef struct {
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
+    if (useMetal == _useMetal) {
+        return;
+    }
     _useMetal = useMetal;
     if (@available(macOS 10.14, *)) {
         self.tabView.drawsBackground = NO;

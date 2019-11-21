@@ -5742,6 +5742,10 @@ typedef struct {
     }
 }
 
+- (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue {
+    [self.delegate tabDidChangeMetalViewVisibility:self];
+}
+
 - (void)sessionTransparencyDidChange {
     [self sessionUpdateMetalAllowed];
     [realParentWindow_ tabSessionDidChangeTransparency:self];

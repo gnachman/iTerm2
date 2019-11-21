@@ -10447,7 +10447,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
-    _contentView.useMetal = useMetal;
+    [self updateContentViewExpectsMetal];
 }
 
 - (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out iTermMetalUnavailableReason *)reason {
@@ -10458,6 +10458,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
     }
     return YES;
+}
+
+- (void)tabDidChangeMetalViewVisibility:(PTYTab *)tab {
+    [self updateContentViewExpectsMetal];
+}
+
+- (void)updateContentViewExpectsMetal {
+    [_contentView setUseMetal:[self.currentTab.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+        MTKView *metalView = anObject.view.metalView;
+        return !metalView.isHidden && metalView.alphaValue == 1;
+    }]];
 }
 
 - (BOOL)tabShouldUseTransparency:(PTYTab *)tab {
