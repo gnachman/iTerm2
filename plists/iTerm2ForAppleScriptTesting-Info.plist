@@ -36,14 +36,14 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
-			<key>CFBundleTypeName</key>
-			<string>Folders</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>fold</string>
-			</array>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
+                        <key>CFBundleTypeName</key>
+                        <string>Folder</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                            <string>public.folder</string>
+                        </array>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
