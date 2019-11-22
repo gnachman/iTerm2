@@ -188,6 +188,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_pendingWindows release];
     [sessionName_ release];
     [sessionObjects_ release];
+    [_defaultTerminal release];
 
     [super dealloc];
 }
@@ -857,6 +858,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (pid > 0) {
         NSString *name = [iTermLSOF nameOfProcessWithPid:pid isForeground:NULL];
         _serverIsLocal = [name isEqualToString:@"tmux"];
+    }
+}
+
+- (void)loadDefaultTerminal {
+    NSString *command = @"show-options -v -s default-terminal";
+    [self.gateway sendCommand:command
+               responseTarget:self
+             responseSelector:@selector(didFetchDefaultTerminal:)
+               responseObject:nil
+                        flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didFetchDefaultTerminal:(NSString *)defaultTerminal {
+    if (defaultTerminal.length > 0)  {
+        [_defaultTerminal autorelease];
+        _defaultTerminal = [defaultTerminal copy];
     }
 }
 

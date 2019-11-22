@@ -4089,8 +4089,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _terminal;
 }
 
-- (void)setTermVariable:(NSString *)termVariable
-{
+- (void)setTermVariable:(NSString *)termVariable {
+    if (self.isTmuxClient) {
+        return;
+    }
     [_termVariable autorelease];
     _termVariable = [termVariable copy];
     [_terminal setTermType:_termVariable];
@@ -5927,6 +5929,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             case TMUX_CLIENT:
                 name = @"client";
                 _terminal.tmuxMode = YES;
+                _terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
                 [self loadTmuxProcessID];
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
@@ -6376,6 +6379,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
+    [_tmuxController loadDefaultTerminal];
     [_tmuxController guessVersion];  // NOTE: This kicks off more stuff that depends on knowing the version number.
 }
 

@@ -56,6 +56,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 @property(nonatomic, readonly) BOOL variableWindowSize;
 @property(nonatomic, readonly) BOOL shouldSetTitles;
 @property(nonatomic, readonly) BOOL serverIsLocal;
+@property(nonatomic, readonly) NSString *defaultTerminal;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -193,6 +194,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder;
 - (void)setCurrentWindow:(int)windowId;
 - (void)checkForUTF8;
+- (void)loadDefaultTerminal;
 
 - (void)clearHistoryForWindowPane:(int)windowPane;
 

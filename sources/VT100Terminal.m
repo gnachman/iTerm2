@@ -1307,7 +1307,7 @@ static const int kMaxScreenRows = 4096;
         return;
     }
 
-    if (_tmuxMode) {
+    if (_tmuxMode && [self.termType containsString:@"screen"]) {
         [token translateFromScreenTerminal];
     }
 
