@@ -98,6 +98,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
             [triggers addObject:[[class alloc] init]];
         }
         _triggers = triggers;
+        _textEditingRow = -1;
     }
     return self;
 }
