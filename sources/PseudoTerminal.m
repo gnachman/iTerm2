@@ -10524,7 +10524,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)updateDocumentEdited {
     self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return session.hasNontrivialJob;
+        return ![[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:@"Yes"] && session.hasNontrivialJob;
     }];
 }
 
