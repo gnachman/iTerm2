@@ -61,7 +61,7 @@ a minimum, install the `iterm2` module.
     iTerm2 creates the `ApplicationSupport` symlink to `Application
     Support` because shell scripts may not have spaces in their paths.
 
-If you'd like your script to launch iTerm2, you'll need to use pybobjc. To install it:
+If you'd like your script to launch iTerm2, you'll need to use pyobjc. To install it:
 
 .. code-block:: bash
 
