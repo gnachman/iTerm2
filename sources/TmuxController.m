@@ -121,6 +121,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
     NSMutableDictionary<NSNumber *, void(^)(int)> *_pendingWindows;
     BOOL _hasStatusBar;
+    int _currentWindowID;  // -1 if undefined
 }
 
 @synthesize gateway = gateway_;
@@ -160,6 +161,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         _pendingWindows = [[NSMutableDictionary alloc] init];
+        _currentWindowID = -1;
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
     }
     return self;
@@ -2275,12 +2277,16 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
 
     [gateway_ sendCommandList:commands];
+    if (_currentWindowID >= 0) {
+        [self setCurrentWindow:_currentWindowID];
+    }
 }
 
 - (void)didSwapWindows:(NSString *)response {
 }
 
 - (void)setCurrentWindow:(int)windowId {
+    _currentWindowID = windowId;
     NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
     [gateway_ sendCommand:command
            responseTarget:nil
