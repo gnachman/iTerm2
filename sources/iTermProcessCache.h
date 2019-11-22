@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermProcessInfo *)deepestForegroundJobForPid:(pid_t)pid;
 - (void)registerTrackedPID:(pid_t)pid;
 - (void)unregisterTrackedPID:(pid_t)pid;
-
+- (BOOL)processIsDirty:(pid_t)pid;
 
 @end
 

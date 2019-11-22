@@ -4540,6 +4540,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!self.jobName) {
         return YES;
     }
+    if ([[iTermProcessCache sharedInstance] processIsDirty:_shell.pid]) {
+        DLog(@"Update title immediately because process %@ is dirty", @(_shell.pid));
+        return YES;
+    }
+
     static const NSTimeInterval dirtyTitlePeriod = 0.02;
     static const NSTimeInterval pollingTitlePeriod = 0.7;
     const NSTimeInterval elapsedTime = now - _lastUpdate;

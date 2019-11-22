@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
+#import "iTermProcessMonitor.h"
 #import "iTermRateLimitedUpdate.h"
 #import "NSArray+iTerm.h"
 #import <stdatomic.h>
@@ -25,10 +26,12 @@
     dispatch_queue_t _lockQueue;
     dispatch_queue_t _workQueue;
     iTermProcessCollection *_collectionLQ; // _lockQueue
-    NSMutableSet<NSNumber *> *_trackedPidsLQ;  // _lockQueue
+    NSMutableDictionary<NSNumber *, iTermProcessMonitor *> *_trackedPidsLQ;  // _lockQueue
     NSMutableArray<void (^)(void)> *_blocksLQ; // _lockQueue
     BOOL _needsUpdateFlagLQ;  // _lockQueue
     iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
+    NSMutableIndexSet *_dirtyPIDsLQ;  // _lockQueue
+    BOOL _forcingLQ;
 }
 
 + (instancetype)sharedInstance {
@@ -47,7 +50,8 @@
         _workQueue = dispatch_queue_create("com.iterm2.process-cache-work", DISPATCH_QUEUE_SERIAL);
         _rateLimit = [[iTermRateLimitedUpdate alloc] init];
         _rateLimit.minimumInterval = 0.5;
-        _trackedPidsLQ = [NSMutableSet set];
+        _trackedPidsLQ = [NSMutableDictionary dictionary];
+        _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
         [self setNeedsUpdate:YES];
         _blocksLQ = [NSMutableArray array];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -152,14 +156,50 @@
 // Any queue
 - (void)registerTrackedPID:(pid_t)pid {
     dispatch_async(_lockQueue, ^{
-        [self->_trackedPidsLQ addObject:@(pid)];
+        __weak __typeof(self) weakSelf = self;
+        iTermProcessMonitor *monitor = [[iTermProcessMonitor alloc] initWithQueue:self->_lockQueue
+                                                                   callback:
+                                  ^(iTermProcessMonitor * monitor, dispatch_source_proc_flags_t flags) {
+            [weakSelf processMonitor:monitor didChangeFlags:flags];
+        }];
+        monitor.processInfo = [self->_collectionLQ infoForProcessID:pid];
+        self->_trackedPidsLQ[@(pid)] = monitor;
     });
+}
+
+// lockQueue
+- (void)processMonitor:(iTermProcessMonitor *)monitor didChangeFlags:(dispatch_source_proc_flags_t)flags {
+    DLog(@"Flags changed for %@.", @(monitor.processInfo.processID));
+    _needsUpdateFlagLQ = YES;
+    const BOOL wasForced = _forcingLQ;
+    _forcingLQ = YES;
+    if (!wasForced) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Forcing update");
+            [self->_rateLimit performRateLimitedSelector:@selector(updateIfNeeded) onTarget:self withObject:nil];
+            [self->_rateLimit performWithinDuration:0.0167];
+            self->_forcingLQ = NO;
+        });
+    }
+}
+
+// Main queue
+- (BOOL)processIsDirty:(pid_t)pid {
+    __block BOOL result;
+    dispatch_sync(_lockQueue, ^{
+        result = [_dirtyPIDsLQ containsIndex:pid];
+        if (result) {
+            DLog(@"Found dirty process %@", @(pid));
+            [_dirtyPIDsLQ removeIndex:pid];
+        }
+    });
+    return result;
 }
 
 // Any queue
 - (void)unregisterTrackedPID:(pid_t)pid {
     dispatch_async(_lockQueue, ^{
-        [self->_trackedPidsLQ removeObject:@(pid)];
+        [self->_trackedPidsLQ removeObjectForKey:@(pid)];
     });
 }
 
@@ -207,7 +247,7 @@
     NSMutableDictionary<NSNumber *, iTermProcessInfo *> *cache = [NSMutableDictionary dictionary];
     __block NSSet<NSNumber *> *trackedPIDs;
     dispatch_sync(_lockQueue, ^{
-        trackedPIDs = [self->_trackedPidsLQ copy];
+        trackedPIDs = [self->_trackedPidsLQ.allKeys copy];
     });
     for (NSNumber *root in trackedPIDs) {
         iTermProcessInfo *info = [collection infoForProcessID:root.integerValue].deepestForegroundJob;
@@ -220,7 +260,7 @@
 
 // _workQueue
 - (void)reallyUpdate {
-    DLog(@"Process cache reallyUpdate starting");
+    DLog(@"* DOING THE EXPENSIVE THING * Process cache reallyUpdate starting");
 
     // Do expensive stuff
     iTermProcessCollection *collection = [self.class newProcessCollection];
@@ -233,6 +273,13 @@
         self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
         self->_collectionLQ = collection;
         self->_needsUpdateFlagLQ = NO;
+        [_trackedPidsLQ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermProcessMonitor * _Nonnull monitor, BOOL * _Nonnull stop) {
+            iTermProcessInfo *info = [collection infoForProcessID:key.intValue];
+            if ([monitor setProcessInfo:info]) {
+                DLog(@"%@ changed! Set dirty", @(info.processID));
+                [_dirtyPIDsLQ addIndex:key.intValue];
+            }
+        }];
     });
 }
 

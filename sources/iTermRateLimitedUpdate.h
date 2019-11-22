@@ -27,6 +27,10 @@
 // If there is a pending block, do it now (synchronously) and cancel the delayed perform.
 - (void)force;
 
+// Forces a pending update to occur within `duration` seconds. Does nothing if
+// there is no pending update.
+- (void)performWithinDuration:(NSTimeInterval)duration;
+
 @end
 
 // Remembers the delay across restarts. Useful for things like checking for updates every N days.

@@ -36,6 +36,17 @@
     [self scheduleTimer];
 }
 
+- (void)performWithinDuration:(NSTimeInterval)duration {
+    if (!_timer) {
+        return;
+    }
+    const NSTimeInterval deadline = [NSDate timeIntervalSinceReferenceDate] + duration;
+    if (_timer.fireDate.timeIntervalSinceReferenceDate < deadline) {
+        return;
+    }
+    [self scheduleTimerAfterDelay:duration];
+}
+
 - (void)scheduleTimer {
     [self scheduleTimerAfterDelay:self.minimumInterval];
 }
