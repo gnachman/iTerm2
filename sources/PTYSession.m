@@ -6460,7 +6460,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Write to tmux: \"%@\"", string);
     }
     if (_tmuxGateway.tmuxLogging) {
-        [self printTmuxMessage:string];
+        [self printTmuxMessage:[@"> " stringByAppendingString:string]];
     }
     [self writeTaskImpl:string encoding:NSUTF8StringEncoding forceEncoding:YES canBroadcast:NO];
 }

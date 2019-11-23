@@ -425,7 +425,7 @@ error:
     NSString *command = token.string;
     NSData *data = token.savedData;
     if (_tmuxLogging) {
-        [delegate_ tmuxPrintLine:command];
+        [delegate_ tmuxPrintLine:[@"< " stringByAppendingString:command]];
     }
     if (![command hasPrefix:@"%output "] &&
         !currentCommand_) {
