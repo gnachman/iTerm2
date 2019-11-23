@@ -37,6 +37,7 @@
 
     [self startProgram:args[@"command"]
            environment:@{}
+           customShell:nil
                 isUTF8:[args[@"isUTF8"] boolValue]
          substitutions:nil
            synchronous:YES
@@ -162,7 +163,7 @@
     if (command) {
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
-        temp[KEY_CUSTOM_COMMAND] = @"Yes";
+        temp[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomValue;
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
     }

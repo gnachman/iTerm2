@@ -73,6 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
                                       cmd:(NSString *)cmd
                                completion:(void (^ _Nullable)(BOOL))completion
                               environment:(NSDictionary * _Nonnull)environment
+                              customShell:(NSString *)customShell
                                    isUTF8:(BOOL)isUTF8
                          serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                             substitutions:(NSDictionary *)substitutions
@@ -91,6 +92,7 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         [self startProgram:cmd
                environment:environment
+               customShell:customShell
                     isUTF8:isUTF8
                  inSession:aSession
              substitutions:substitutions
@@ -107,6 +109,7 @@ NS_ASSUME_NONNULL_BEGIN
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
                            environment:(nullable NSDictionary *)environment
+                           customShell:(nullable NSString *)forceCustomShell
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD
                                command:(nullable NSString *)command
@@ -130,6 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     NSString *cmd = command ?: [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                                    forObjectType:objectType];
+    NSString *customShell = forceCustomShell ?: [ITAddressBookMgr customShellForProfile:profileForComputingCommand];
     NSString *name = profile[KEY_NAME];
 
     // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
@@ -200,6 +204,7 @@ NS_ASSUME_NONNULL_BEGIN
                                             cmd:cmd
                                      completion:wrapper
                                     environment:[environment ?: @{} dictionaryBySettingObject:pwd forKey:@"PWD"]
+                                    customShell:customShell
                                          isUTF8:isUTF8
                                serverConnection:serverConnection
                                   substitutions:substitutions
@@ -245,6 +250,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Execute the given program and set the window title if it is uninitialized.
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)prog_env
+         customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
         substitutions:(NSDictionary *)substitutions
@@ -253,6 +259,7 @@ NS_ASSUME_NONNULL_BEGIN
           completion:(void (^ _Nullable)(BOOL))completion {
     [theSession startProgram:command
                  environment:prog_env
+                 customShell:customShell
                       isUTF8:isUTF8
                substitutions:substitutions
                  synchronous:synchronous

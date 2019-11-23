@@ -21,9 +21,6 @@
 
 #define PROFILE_BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
-NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
-NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
-
 NSString *const kProfilePreferenceInitialDirectoryCustomValue = @"Yes";
 NSString *const kProfilePreferenceInitialDirectoryHomeValue = @"No";
 NSString *const kProfilePreferenceInitialDirectoryRecycleValue = @"Recycle";

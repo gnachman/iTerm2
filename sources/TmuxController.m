@@ -1446,7 +1446,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)hideWindow:(int)windowId
 {
-    NSLog(@"hideWindow: Add these window IDS to hidden: %d", windowId);
+    DLog(@"hideWindow: Add these window IDS to hidden: %d", windowId);
     [hiddenWindows_ addObject:[NSNumber numberWithInt:windowId]];
     [self saveHiddenWindows];
     PTYTab *theTab = [self window:windowId];
@@ -1460,7 +1460,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
              intentional:(BOOL)intentional
                  profile:(Profile *)profile {
     if (intentional) {
-        NSLog(@"open intentional: Remove these window IDS to hidden: %d", windowId);
+        DLog(@"open intentional: Remove these window IDS to hidden: %d", windowId);
         [hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
         [self saveHiddenWindows];
     }
@@ -1972,7 +1972,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [hiddenWindows_ removeAllObjects];
     if ([response length] > 0) {
         NSArray *windowIds = [response componentsSeparatedByString:@","];
-        NSLog(@"getHiddenWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+        DLog(@"getHiddenWindowsResponse: Add these window IDS to hidden: %@", windowIds);
         for (NSString *wid in windowIds) {
             [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
         }
@@ -2049,7 +2049,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)listSessionsResponse:(NSString *)result
 {
-    NSLog(@"%@ got list-session response:\n%@", self, result);
+    DLog(@"%@ got list-session response:\n%@", self, result);
     self.sessionObjects = [[result componentsSeparatedByRegex:@"\n"] mapWithBlock:^iTermTmuxSessionObject *(NSString *line) {
         const NSInteger space = [line rangeOfString:@" "].location;
         if (space == NSNotFound) {
@@ -2119,7 +2119,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     for (NSString *layoutString in layoutStrings) {
         NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]+))?"];
         if ([components count] < 3) {
-            NSLog(@"Bogus layout string: \"%@\"", layoutString);
+            DLog(@"Bogus layout string: \"%@\"", layoutString);
         } else {
             int window = [[components objectAtIndex:1] intValue];
             NSString *layout = [components objectAtIndex:2];
@@ -2183,7 +2183,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [affinities_ removeValue:windowId];
         }
     } else {
-        NSLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
+        DLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
     }
 }
 

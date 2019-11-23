@@ -32,12 +32,32 @@
 static const int kPtySlaveFileDescriptor = 1;
 static const int kPtySocketFileDescriptor = 2;
 
-int launch_shell(void) {
-    const char *shell = getenv("SHELL");
+static const char *UnprefixedCustomShell(const char *shell) {
+    if (shell == NULL) {
+        return NULL;
+    }
+    const char *prefix = "SHELL=";
+    const size_t len = strlen(prefix);
+    if (!strncmp(shell, prefix, len)) {
+        return shell + len;
+    }
+    return NULL;
+}
+
+int launch_shell(const char *customShell) {
+    const char *shell = UnprefixedCustomShell(customShell) ? : getenv("SHELL");
     if (!shell) {
         err(1, "SHELL environment variable not set");
     }
-
+    if (customShell) {
+        extern const char **environ;
+        for (int i = 0; environ[i] != NULL; i++) {
+            if (!strncmp(environ[i], "SHELL=", strlen("SHELL="))) {
+                environ[i] = customShell;
+                break;
+            }
+        }
+    }
     char *slash = strrchr(shell, '/');
     char *argv0;
     int len;

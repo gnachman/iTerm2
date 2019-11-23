@@ -806,10 +806,12 @@ const CGFloat kDefaultTagsWidth = 80;
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
         NSString *theString = nil;
-        if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
-            theString = @"Login shell";
-        } else {
+        NSString *customCommand = bookmark[KEY_CUSTOM_COMMAND];
+        if ([customCommand isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
+            [customCommand isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
             theString = [bookmark objectForKey:KEY_COMMAND_LINE];
+        } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
+            theString = @"Login shell";
         }
         return [self attributedStringForString:theString
                                       selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];

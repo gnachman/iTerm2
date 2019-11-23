@@ -121,6 +121,7 @@
                                                                        urlString:nil
                                                                     allowURLSubs:NO
                                                                      environment:@{}
+                                                                     customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
                                                                           oldCWD:nil
                                                                   forceUseOldCWD:NO
                                                                          command:nil

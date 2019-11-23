@@ -191,6 +191,7 @@
                                                                           urlString:_url
                                                                        allowURLSubs:YES
                                                                         environment:@{}
+                                                                        customShell:[ITAddressBookMgr customShellForProfile:profile]
                                                                              oldCWD:nil
                                                                      forceUseOldCWD:NO
                                                                             command:nil
@@ -234,7 +235,7 @@
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommand:aDict
                              forObjectType:objectType] isEqualToString:@"$$"] ||
-        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
+        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
         Profile *prototype = aDict;
         if (!prototype) {
             prototype = [[iTermController sharedInstance] defaultBookmark];
@@ -332,14 +333,14 @@
     }
     DLog(@"Use command line: %@", tempString);
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
+                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
 }
 
 - (Profile *)profileByModifyingProfile:(Profile *)prototype toFtpTo:(NSString *)url {
     NSMutableString *tempString = [NSMutableString stringWithFormat:@"%@ %@", [iTermAdvancedSettingsModel pathToFTP], url];
     DLog(@"Command line is %@", tempString);
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
+                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toTelnetTo:(NSURL *)url {
@@ -363,7 +364,7 @@
     }
     DLog(@"Command line is %@", tempString);
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: @"Yes" }];
+                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
 }
 
 

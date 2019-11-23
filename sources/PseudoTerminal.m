@@ -7823,6 +7823,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                    urlString:nil
                                                 allowURLSubs:NO
                                                  environment:@{}
+                                                customShell:[ITAddressBookMgr customShellForProfile:theBookmark]
                                                       oldCWD:oldCWD
                                               forceUseOldCWD:NO
                                                      command:nil
@@ -10100,7 +10101,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if (command) {
         profile = [[profile
-                    dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_COMMAND]
+                    dictionaryBySettingObject:kProfilePreferenceCommandTypeCustomValue forKey:KEY_CUSTOM_COMMAND]
                    dictionaryBySettingObject:command forKey:KEY_COMMAND_LINE];
 
     }
@@ -10118,6 +10119,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                               urlString:nil
                                            allowURLSubs:NO
                                             environment:environment
+                                            customShell:[ITAddressBookMgr customShellForProfile:profile]
                                                  oldCWD:previousDirectory
                                          forceUseOldCWD:NO
                                                 command:nil
@@ -10524,7 +10526,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)updateDocumentEdited {
     self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return ![[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:@"Yes"] && session.hasNontrivialJob;
+        return ![[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue] && session.hasNontrivialJob;
     }];
 }
 

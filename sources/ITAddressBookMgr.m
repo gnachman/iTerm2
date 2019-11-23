@@ -45,6 +45,10 @@
 
 NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
 
+NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
+NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
+NSString *const kProfilePreferenceCommandTypeCustomShellValue = @"Custom Shell";
+
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
@@ -368,7 +372,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
                                                [NSBundle bundleForClass: [self class]],
                                                @"Terminal Profiles");
     [aDict setObject:aName forKey: KEY_NAME];
-    [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
+    [aDict setObject:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND_LINE];
     [aDict setObject:aName forKey: KEY_DESCRIPTION];
     [aDict setObject:kProfilePreferenceInitialDirectoryHomeValue
@@ -399,7 +403,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString]
                     forKey:KEY_COMMAND_LINE];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-    [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+    [newBookmark setObject:kProfilePreferenceCommandTypeCustomValue forKey:KEY_CUSTOM_COMMAND];
     [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
                     forKey:KEY_CUSTOM_DIRECTORY];
     [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
@@ -536,11 +540,22 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     }
 }
 
-+ (NSString *)shellLauncherCommand {
-    return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell",
++ (NSString *)sanitizedCustomShell:(NSString *)customShell {
+    NSArray<NSString *> *parts = [customShell componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if ([parts[0] length] == 0) {
+        return nil;
+    }
+    return parts[0];
+}
+
++ (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell {
+    NSString *sanitizedCustomShell = [self sanitizedCustomShell:customShell];
+    NSString *customShellArg = sanitizedCustomShell ? [@" SHELL=" stringByAppendingString:sanitizedCustomShell] : @"";
+    return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell%@",
             [self hushlogin] ? @"q" : @"",
             [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-            [[[NSBundle mainBundle] executablePath] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+            [[[NSBundle mainBundle] executablePath] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+            customShellArg];
 }
 
 + (NSString*)loginShellCommandForBookmark:(Profile*)profile
@@ -565,14 +580,15 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         customDirectoryString = profile[KEY_CUSTOM_DIRECTORY];
     }
 
-    if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
+    if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue] &&
+        [[self customShellForProfile:profile] length] == 0) {
         // Run login without -l argument: this is a login session and will use the home dir.
         return [self standardLoginCommand];
     } else {
-        // Not using the home directory. This requires some trickery.
+        // Not using the home directory/default shell. This requires some trickery.
         // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
         // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        NSString *launchShellCommand = [self shellLauncherCommand];
+        NSString *launchShellCommand = [self shellLauncherCommandWithCustomShell:[self customShellForProfile:profile]];
         return launchShellCommand;
     }
 }
@@ -600,9 +616,9 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             userName];
 }
 
-+ (NSString*)bookmarkCommand:(Profile*)bookmark
-               forObjectType:(iTermObjectType)objectType {
-    BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
++ (NSString *)bookmarkCommand:(Profile *)bookmark
+                forObjectType:(iTermObjectType)objectType {
+    BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     if (custom) {
         NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
@@ -611,6 +627,18 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     }
     return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
                                             forObjectType:objectType];
+}
+
++ (NSString *)customShellForProfile:(Profile *)profile {
+    if (![profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
+        return nil;
+    }
+    NSString *customShell = profile[KEY_COMMAND_LINE];
+    customShell = [customShell stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (customShell.length == 0) {
+        return nil;
+    }
+    return customShell;
 }
 
 + (NSString *)_advancedWorkingDirWithOption:(NSString *)option

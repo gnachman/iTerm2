@@ -578,7 +578,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
         newDict[KEY_COMMAND_LINE] = @"";
         newDict[KEY_INITIAL_TEXT] = @"";
-        newDict[KEY_CUSTOM_COMMAND] = @"No";
+        newDict[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeLoginShellValue;
         newDict[KEY_WORKING_DIRECTORY] = @"";
         newDict[KEY_CUSTOM_DIRECTORY] = @"No";
     }

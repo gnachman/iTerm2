@@ -354,9 +354,7 @@ int gMigrated;
     }
 }
 
-- (void)addBookmark:(Profile*)bookmark inSortedOrder:(BOOL)sort
-{
-
+- (void)addBookmark:(Profile*)bookmark inSortedOrder:(BOOL)sort {
     NSMutableDictionary *newBookmark = [[bookmark mutableCopy] autorelease];
 
     // Ensure required fields are present
@@ -367,7 +365,7 @@ int gMigrated;
         [newBookmark setObject:@[] forKey:KEY_TAGS];
     }
     if (![newBookmark objectForKey:KEY_CUSTOM_COMMAND]) {
-        [newBookmark setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
+        [newBookmark setObject:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
     }
     if (![newBookmark objectForKey:KEY_COMMAND_LINE]) {
         [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND_LINE];

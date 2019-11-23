@@ -10,10 +10,6 @@
 #import "PreferenceInfo.h"
 #import "ProfileModel.h"
 
-// Values for KEY_CUSTOM_COMMAND
-extern NSString *const kProfilePreferenceCommandTypeCustomValue;
-extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
-
 // Values for KEY_CUSTOM_DIRECTORY
 extern NSString *const kProfilePreferenceInitialDirectoryCustomValue;
 extern NSString *const kProfilePreferenceInitialDirectoryHomeValue;

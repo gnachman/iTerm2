@@ -582,6 +582,7 @@ typedef enum {
 
 - (void)startProgram:(NSString *)program
          environment:(NSDictionary *)prog_env
+         customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
          synchronous:(BOOL)synchronous

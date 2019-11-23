@@ -239,10 +239,12 @@ static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
 static NSString *const kProgramCommand = @"Command";  // For kProgramTypeCommand: value is command to run.
+static NSString *const kCustomShell = @"Custom Shell";
 
 // Values for kProgramType
 static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use iTerm2 --launch_shell
 static NSString *const kProgramTypeCommand = @"Command";  // Use command in kProgramCommand
+static NSString *const kProgramTypeCustomShell = @"Custom Shell";
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -305,6 +307,7 @@ static const NSUInteger kMaxHosts = 100;
 // Info about what happens when the program is run so it can be restarted after
 // a broken pipe if the user so chooses. Contains $$MACROS$$ pre-substitution.
 @property(nonatomic, copy) NSString *program;
+@property(nonatomic, copy) NSString *customShell;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
 @property(nonatomic, copy) NSDictionary *substitutions;
@@ -828,6 +831,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_variables release];
     [_userVariables release];
     [_program release];
+    [_customShell release];
     [_environment release];
     [_commands release];
     [_directories release];
@@ -1363,15 +1367,19 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = arrangement[SESSION_ARRANGEMENT_PROGRAM];
         if ([dict[kProgramType] isEqualToString:kProgramTypeShellLauncher]) {
-            aSession.program = [ITAddressBookMgr shellLauncherCommand];
+            aSession.program = [ITAddressBookMgr shellLauncherCommandWithCustomShell:nil];
         } else if ([dict[kProgramType] isEqualToString:kProgramTypeCommand]) {
             aSession.program = dict[kProgramCommand];
+        } else if ([dict[kProgramType] isEqualToString:kProgramTypeCustomShell]) {
+            aSession.program = [ITAddressBookMgr shellLauncherCommandWithCustomShell:dict[kCustomShell]];
+            aSession.customShell = dict[kCustomShell];
         } else {
             haveSavedProgramData = NO;
         }
     } else {
         haveSavedProgramData = NO;
     }
+
     if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
         aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
     } else {
@@ -1488,6 +1496,7 @@ ITERM_WEAKLY_REFERENCEABLE
             NSString *commandArg = nil;
             NSNumber *isUTF8Arg = nil;
             NSDictionary *substitutionsArg = nil;
+            NSString *customShell = nil;
             if (haveSavedProgramData) {
                 // This is the normal case; the else clause is for legacy saved arrangements.
                 environmentArg = aSession.environment ?: @{};
@@ -1497,10 +1506,11 @@ ITERM_WEAKLY_REFERENCEABLE
                     // Create a login session that drops you in the old directory instead of
                     // using login -fp "$USER". This lets saved arrangements properly restore
                     // the working directory when the profile specifies the home directory.
-                    commandArg = [ITAddressBookMgr shellLauncherCommand];
+                    commandArg = [ITAddressBookMgr shellLauncherCommandWithCustomShell:aSession.customShell];
                 }
                 isUTF8Arg = @(aSession.isUTF8);
                 substitutionsArg = aSession.substitutions;
+                customShell = aSession.customShell;
             }
             runCommandBlock = ^(iTermBooleanCompletionBlock completion) {
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
@@ -1511,6 +1521,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                               urlString:nil
                                            allowURLSubs:NO
                                             environment:environmentArg
+                                            customShell:customShell
                                                  oldCWD:oldCWD
                                          forceUseOldCWD:contents != nil && oldCWD.length
                                                 command:commandArg
@@ -2051,6 +2062,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
+         customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
          synchronous:(BOOL)synchronous
@@ -2059,6 +2071,7 @@ ITERM_WEAKLY_REFERENCEABLE
          command, environment, @(isUTF8), substitutions);
 
     self.program = command;
+    self.customShell = customShell;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
@@ -2074,6 +2087,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
+                           customShell:customShell
                               gridSize:_screen.size
                               viewSize:_screen.viewSize
                                 isUTF8:isUTF8
@@ -2990,6 +3004,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell setSize:_screen.size viewSize:_screen.viewSize];
     [self startProgram:_program
            environment:_environment
+           customShell:_customShell
                 isUTF8:_isUTF8
          substitutions:_substitutions
            synchronous:YES
@@ -4401,10 +4416,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
-    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommand]]) {
+    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommandWithCustomShell:self.customShell]]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).
-        // I don't want to use a magic string, so setting program to an empty dic
-        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeShellLauncher };
+        // I don't want to use a magic string, so setting program to an empty dict.
+        NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
+        if (self.customShell.length) {
+            dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
+        }
+        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
     } else if (self.program) {
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };

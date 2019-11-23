@@ -25,7 +25,7 @@
 - (void)taskWasDeregistered;
 - (void)writeForCoprocessOnlyTask:(NSData *)data;
 
-// Called on main thread from within launchWithPath:arguments:environment:gridSize:viewSize:isUTF8:.
+// Called on main thread from within launchWithPath:arguments:environment:customShell:gridSize:viewSize:isUTF8:.
 - (void)taskDiedImmediately;
 
 // Main thread
@@ -116,6 +116,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
+           customShell:(NSString *)customShell
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8

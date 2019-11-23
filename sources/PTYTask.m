@@ -239,6 +239,7 @@ static void HandleSigChld(int n) {
 - (void)launchWithPath:(NSString *)progpath
              arguments:(NSArray *)args
            environment:(NSDictionary *)env
+           customShell:(NSString *)customShell
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
@@ -258,6 +259,7 @@ static void HandleSigChld(int n) {
         [self reallyLaunchWithPath:[[NSBundle mainBundle] executablePath]
                          arguments:updatedArgs
                        environment:env
+                       customShell:customShell
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
@@ -268,6 +270,7 @@ static void HandleSigChld(int n) {
         [self reallyLaunchWithPath:progpath
                          arguments:args
                        environment:env
+                       customShell:customShell
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
@@ -692,6 +695,7 @@ static void HandleSigChld(int n) {
 - (void)reallyLaunchWithPath:(NSString *)progpath
                    arguments:(NSArray *)args
                  environment:(NSDictionary *)env
+                 customShell:(NSString *)customShell
                     gridSize:(VT100GridSize)gridSize
                     viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
@@ -708,7 +712,12 @@ static void HandleSigChld(int n) {
     iTermTTYStateInit(&ttyState, gridSize, viewSize, isUTF8);
 
     [self setCommand:progpath];
-    env = [self environmentBySettingShell:env];
+    if (customShell) {
+        env = [env dictionaryBySettingObject:customShell forKey:@"SHELL"];
+    } else {
+        env = [self environmentBySettingShell:env];
+    }
+
     DLog(@"After setting shell environment is %@", env);
     path = [progpath copy];
     NSString *commandToExec = [progpath stringByStandardizingPath];

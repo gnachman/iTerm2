@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
                            environment:(nullable NSDictionary *)environment
+                           customShell:(nullable NSString *)customShell
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD  // Change custom directory setting to make it use the passed-in oLDCWD
                                command:(nullable NSString *)command   // Overrides profile's command if nonnil

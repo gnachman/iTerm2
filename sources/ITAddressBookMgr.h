@@ -258,6 +258,11 @@ extern NSString *const iTermUnicodeVersionDidChangeNotification;
 // Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 extern const NSTimeInterval kMinimumAntiIdlePeriod;
 
+// Values for KEY_CUSTOM_COMMAND
+extern NSString *const kProfilePreferenceCommandTypeCustomValue;
+extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
+extern NSString *const kProfilePreferenceCommandTypeCustomShellValue;
+
 // Special values for KEY_SPACE.
 typedef NS_ENUM(NSInteger, iTermProfileSpaceSetting) {
     iTermProfileJoinsAllSpaces = -1,
@@ -381,15 +386,16 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
 + (NSColor*)decodeColor:(NSDictionary*)plist;
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict;
-+ (NSString *)shellLauncherCommand;
++ (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell;
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
 
 // This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
-+ (NSString*)descFromFont:(NSFont*)font __attribute__((deprecated));
-+ (NSString*)bookmarkCommand:(Profile*)bookmark
-               forObjectType:(iTermObjectType)objectType;
++ (NSString *)descFromFont:(NSFont*)font __attribute__((deprecated));
++ (NSString *)bookmarkCommand:(Profile*)bookmark
+                forObjectType:(iTermObjectType)objectType;
++ (NSString *)customShellForProfile:(Profile *)profile;
 
 // Indicates if it is safe to remove the profile from the model.
 + (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;

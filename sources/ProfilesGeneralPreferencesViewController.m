@@ -25,6 +25,7 @@
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -32,8 +33,11 @@
 #import "PTYSession.h"
 
 // Tags for _commandType matrix selectedCell.
-static const NSInteger kCommandTypeCustomTag = 0;
-static const NSInteger kCommandTypeLoginShellTag = 1;
+typedef NS_ENUM(NSInteger, iTermGeneralProfilePreferenceCustomCommandTag) {
+    iTermGeneralProfilePreferenceCustomCommandTagCustom = 0,
+    iTermGeneralProfilePreferenceCustomCommandTagLoginShell = 1,
+    iTermGeneralProfilePreferenceCustomCommandTagCustomShell = 2
+};
 
 // Tags for _initialDirectoryType
 static const NSInteger kInitialDirectoryTypeCustomTag = 0;
@@ -206,7 +210,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
-            displayName:@"Profile uses login shell or custom command"
+            displayName:@"Profile uses login shell, custom shell, or custom command"
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
@@ -222,7 +226,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         if (!strongSelf) {
             return NO;
         }
-        return strongSelf->_commandType.selectedTag == kCommandTypeCustomTag;
+        return strongSelf->_commandType.selectedTag != iTermGeneralProfilePreferenceCustomCommandTagLoginShell;
     };
 
     [self defineControl:_sendTextAtStart
@@ -530,7 +534,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)updateEnabledState {
     [super updateEnabledState];
-    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
+        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
         _customCommand.hidden = NO;
         _customCommand.enabled = YES;
     } else {
@@ -701,10 +706,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)commandTypeDidChange {
     NSInteger tag = _commandType.selectedTag;
     NSString *value;
-    if (tag == kCommandTypeCustomTag) {
-        value = kProfilePreferenceCommandTypeCustomValue;
-    } else {
-        value = kProfilePreferenceCommandTypeLoginShellValue;
+    switch (tag) {
+        case iTermGeneralProfilePreferenceCustomCommandTagCustom:
+            value = kProfilePreferenceCommandTypeCustomValue;
+            break;
+        case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
+            value = kProfilePreferenceCommandTypeLoginShellValue;
+            break;
+        case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
+            value = kProfilePreferenceCommandTypeCustomShellValue;
+            break;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
     [self updateEnabledState];
@@ -713,9 +724,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateCommandType {
     NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
     if ([value isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
-        [_commandType selectItemWithTag:kCommandTypeCustomTag];
+        [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagCustom];
+        _customCommand.placeholderString = @"Enter command to run when a new session is created";
+    } else if ([value isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
+        [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagCustomShell];
+        _customCommand.placeholderString = @"Enter full path to shell";
+        [self removeWhitespaceFromCustomCommand];
+        [[NSUserDefaults standardUserDefaults] setObject:_customCommand.stringValue
+                                                  forKey:KEY_COMMAND_LINE];
     } else {
-        [_commandType selectItemWithTag:kCommandTypeLoginShellTag];
+        [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
     }
     [self updateEnabledState];
 }
@@ -1002,7 +1020,22 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if (control == _windowTitle) {
         [self windowTitleDidChange];
     }
+    if (control == _customCommand) {
+        if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
+            [self removeWhitespaceFromCustomCommand];
+        }
+    }
     [super controlTextDidChange:aNotification];
+}
+
+- (void)removeWhitespaceFromCustomCommand {
+    while (1) {
+        const NSRange range = [_customCommand.stringValue rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (range.location == NSNotFound) {
+            return;
+        }
+        _customCommand.stringValue = [_customCommand.stringValue stringByReplacingCharactersInRange:range withString:@""];
+    }
 }
 
 - (void)sessionNameDidChange {
