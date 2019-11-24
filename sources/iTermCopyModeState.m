@@ -35,6 +35,14 @@
     return [self moveInDirection:kPTYTextViewSelectionExtensionDirectionRight unit:kPTYTextViewSelectionExtensionUnitWord];
 }
 
+- (BOOL)moveBackwardBigWord {
+    return [self moveInDirection:kPTYTextViewSelectionExtensionDirectionLeft unit:kPTYTextViewSelectionExtensionUnitBigWord];
+}
+
+- (BOOL)moveForwardBigWord {
+    return [self moveInDirection:kPTYTextViewSelectionExtensionDirectionRight unit:kPTYTextViewSelectionExtensionUnitBigWord];
+}
+
 - (BOOL)moveLeft {
     return [self moveInDirection:kPTYTextViewSelectionExtensionDirectionLeft unit:kPTYTextViewSelectionExtensionUnitCharacter];
 }
@@ -224,11 +232,12 @@
     [extractor restrictToLogicalWindowIncludingCoord:_coord];
     VT100GridWindowedRange windowedRange = [self trivialRange];
     windowedRange.columnWindow = [extractor logicalWindow];
-    VT100GridWindowedRange range = [_textView rangeByExtendingRange:windowedRange
-                                                           endpoint:kPTYTextViewSelectionEndpointStart
-                                                          direction:direction
-                                                          extractor:extractor
-                                                               unit:unit];
+    iTermLogicalMovementHelper *helper = [_textView logicalMovementHelperForCursorCoordinate:_textView.cursorCoord];
+    VT100GridWindowedRange range = [helper rangeByExtendingRange:windowedRange
+                                                        endpoint:kPTYTextViewSelectionEndpointStart
+                                                       direction:direction
+                                                       extractor:extractor
+                                                            unit:unit];
     _coord = range.coordRange.start;
 
     // Make a new selection

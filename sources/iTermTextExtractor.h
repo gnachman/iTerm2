@@ -60,6 +60,10 @@ extern const NSInteger kLongMaximumWordLength;
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength;
 
+// A big word is delimited by whitespace.
+- (VT100GridWindowedRange)rangeForBigWordAt:(VT100GridCoord)location
+                              maximumLength:(NSInteger)maximumLength;
+
 // Returns the string for the character at a screen location.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location;
 - (NSString *)stringForCharacter:(screen_char_t)theChar;

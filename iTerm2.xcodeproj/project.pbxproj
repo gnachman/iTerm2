@@ -3159,6 +3159,8 @@
 		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
+		A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */; };
+		A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CD8A3B22344C78007C5B39 /* iTermAPIPermissionsWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */; };
@@ -5681,6 +5683,8 @@
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
+		A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLogicalMovementHelper.h; sourceTree = "<group>"; };
+		A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLogicalMovementHelper.m; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CD8A3822344C78007C5B39 /* iTermAPIPermissionsWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIPermissionsWindowController.h; sourceTree = "<group>"; };
@@ -8660,6 +8664,8 @@
 				A686F3881D36A49100F08ED7 /* iTermPreciseTimer.m */,
 				532755832387821C00C50732 /* iTermProcessMonitor.h */,
 				532755842387821C00C50732 /* iTermProcessMonitor.m */,
+				A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */,
+				A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10335,6 +10341,7 @@
 				A62EED9E20E010C000943DE3 /* iTermScriptImporter.h in Headers */,
 				A66719531DCE36C3000CE608 /* iTermSocketAddress.h in Headers */,
 				A66F52B52105AC5B00571168 /* iTermStatusBarGitComponent.h in Headers */,
+				A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */,
 				A618FFC12243E91900B8FD88 /* iTermToolActions.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
 				A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */,
@@ -12577,6 +12584,7 @@
 				A618FFBE22409DF900B8FD88 /* iTermTheme.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */,
+				A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				53A96EE822A48A1A001C2C6F /* iTermTmuxOptionMonitor.m in Sources */,
 				A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */,

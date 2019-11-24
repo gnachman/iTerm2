@@ -25,6 +25,9 @@
 - (BOOL)moveBackwardWord;
 - (BOOL)moveForwardWord;
 
+- (BOOL)moveBackwardBigWord;
+- (BOOL)moveForwardBigWord;
+
 - (BOOL)moveLeft;
 - (BOOL)moveRight;
 

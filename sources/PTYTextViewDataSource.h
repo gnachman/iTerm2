@@ -1,6 +1,7 @@
 // DataSource for PTYTextView.
 #import "iTermCursor.h"
 #import "iTermFindDriver.h"
+#import "iTermLogicalMovementHelper.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 #import "VT100GridTypes.h"
@@ -33,7 +34,7 @@
 @end
 
 
-@protocol PTYTextViewDataSource <iTermTextDataSource>
+@protocol PTYTextViewDataSource <iTermLogicalMovementHelperDelegate, iTermTextDataSource>
 
 - (VT100Terminal *)terminal;
 - (int)height;
@@ -113,12 +114,6 @@
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (VT100ScreenMark *)markOnLine:(int)line;
-
-// return -1 if none
-- (int)lineNumberOfMarkAfterLine:(int)line;
-
-// return -1 if none
-- (int)lineNumberOfMarkBeforeLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;

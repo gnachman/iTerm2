@@ -591,6 +591,8 @@ exit:
             return @"By Character";
         case kPTYTextViewSelectionExtensionUnitWord:
             return @"By Word";
+        case kPTYTextViewSelectionExtensionUnitBigWord:
+            return @"By WORD";
         case kPTYTextViewSelectionExtensionUnitMark:
             return @"By Mark";
     }

@@ -6,6 +6,7 @@
 #import "iTermFindDriver.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermKeyboardHandler.h"
+#import "iTermLogicalMovementHelper.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
@@ -44,32 +45,6 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_WORDCHAR,    // Any character considered part of a word, including user-defined chars.
     CHARTYPE_DW_FILLER,   // Double-width character effluvia.
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
-};
-
-typedef NS_ENUM(NSInteger, PTYTextViewSelectionEndpoint) {
-    kPTYTextViewSelectionEndpointStart,
-    kPTYTextViewSelectionEndpointEnd
-};
-
-typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionDirection) {
-    kPTYTextViewSelectionExtensionDirectionLeft,
-    kPTYTextViewSelectionExtensionDirectionRight,
-
-    // These ignore the unit and are simple movements.
-    kPTYTextViewSelectionExtensionDirectionUp,
-    kPTYTextViewSelectionExtensionDirectionDown,
-    kPTYTextViewSelectionExtensionDirectionStartOfLine,
-    kPTYTextViewSelectionExtensionDirectionEndOfLine,
-    kPTYTextViewSelectionExtensionDirectionTop,
-    kPTYTextViewSelectionExtensionDirectionBottom,
-    kPTYTextViewSelectionExtensionDirectionStartOfIndentation,
-};
-
-typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
-    kPTYTextViewSelectionExtensionUnitCharacter,
-    kPTYTextViewSelectionExtensionUnitWord,
-    kPTYTextViewSelectionExtensionUnitLine,
-    kPTYTextViewSelectionExtensionUnitMark,
 };
 
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate>
@@ -393,6 +368,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 @property (nonatomic, readonly) iTermURLActionHelper *urlActionHelper;
 
+@property (nonatomic, readonly) VT100GridCoord cursorCoord;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
@@ -606,11 +583,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                            by:(PTYTextViewSelectionExtensionUnit)unit
                   cursorCoord:(VT100GridCoord)cursorCoord;
 
-- (VT100GridWindowedRange)rangeByExtendingRange:(VT100GridWindowedRange)existingRange
-                                       endpoint:(PTYTextViewSelectionEndpoint)endpoint
-                                      direction:(PTYTextViewSelectionExtensionDirection)direction
-                                      extractor:(iTermTextExtractor *)extractor
-                                           unit:(PTYTextViewSelectionExtensionUnit)unit;
+- (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)cursorCoord;
 
 // For focus follows mouse. Allows a new split pane to become focused even though the mouse pointer
 // is elsewhere. Records the mouse position. Refuses first responder as long as the mouse doesn't

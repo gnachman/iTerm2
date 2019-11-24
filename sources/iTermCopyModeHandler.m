@@ -19,8 +19,10 @@ typedef NS_ENUM(NSUInteger, iTermCopyModeAction) {
     iTermCopyModeActionCopySelection,
     iTermCopyModeActionExitCopyMode,
     iTermCopyModeActionMoveBackwardWord,
+    iTermCopyModeActionMoveBackwardBigWord,
     iTermCopyModeActionMoveDown,
     iTermCopyModeActionMoveForwardWord,
+    iTermCopyModeActionMoveForwardBigWord,
     iTermCopyModeActionMoveLeft,
     iTermCopyModeActionMoveRight,
     iTermCopyModeActionMoveToBottomOfVisibleArea,
@@ -123,8 +125,12 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
             return NO;
         case iTermCopyModeActionMoveBackwardWord:
             return [_state moveBackwardWord];
+        case iTermCopyModeActionMoveBackwardBigWord:
+            return [_state moveBackwardBigWord];
         case iTermCopyModeActionMoveForwardWord:
             return [_state moveForwardWord];
+        case iTermCopyModeActionMoveForwardBigWord:
+            return [_state moveForwardBigWord];
         case iTermCopyModeActionMoveToStartOfIndentation:
             return [_state moveToStartOfIndentation];
         case iTermCopyModeActionMoveToStartOfNextLine:
@@ -232,6 +238,8 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
                 return iTermCopyModeActionToggleCharacterSelection;
             case 'b':
                 return iTermCopyModeActionMoveBackwardWord;
+            case 'B':
+                return iTermCopyModeActionMoveBackwardBigWord;
             case '0':
                 return iTermCopyModeActionMoveToStartOfLine;
             case 'H':
@@ -262,6 +270,8 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
                 return iTermCopyModeActionSwap;
             case 'w':
                 return iTermCopyModeActionMoveForwardWord;
+            case 'W':
+                return iTermCopyModeActionMoveForwardBigWord;
             case 'y':
                 return iTermCopyModeActionCopySelection;
             case '/':

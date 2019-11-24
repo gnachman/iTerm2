@@ -23,6 +23,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
     iTermAlphaNumericDefinitionNarrow,
     iTermAlphaNumericDefinitionUserDefined,
     iTermAlphaNumericDefinitionUnixCommands,
+    iTermAlphaNumericDefinitionBigWords
 };
 
 // Must find at least this many divider chars in a row for it to count as a divider.
@@ -257,9 +258,46 @@ const NSInteger kLongMaximumWordLength = 100000;
     return result;
 }
 
-// The maximum length is a rough guideline. You might get a word up to twice as long.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
+    return [self rangeForWordAt:location maximumLength:maximumLength big:NO];
+}
+
+- (VT100GridWindowedRange)rangeForBigWordAt:(VT100GridCoord)unsafeLocation
+                              maximumLength:(NSInteger)maximumLength {
+    if (unsafeLocation.y < 0) {
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                          _logicalWindow.location, _logicalWindow.length);
+    }
+    const VT100GridCoord location = [self successorOfCoord:[self coordLockedToWindow:unsafeLocation]];
+    const VT100GridCoord predecessor = [self predecessorOfCoord:location];
+
+    const iTermTextExtractorClass classAtLocation =
+        [self classForCharacter:[self characterAt:predecessor]
+                       bigWords:YES];
+
+    VT100GridWindowedRange wordRange = [self rangeForWordAt:predecessor
+                                              maximumLength:maximumLength
+                                                        big:YES];
+    if (classAtLocation == kTextExtractorClassWhitespace) {
+        VT100GridWindowedRange beforeRange = [self rangeForWordAt:[self predecessorOfCoord:wordRange.coordRange.start]
+                                                    maximumLength:maximumLength
+                                                              big:YES];
+        wordRange.coordRange.start = beforeRange.coordRange.start;
+    } else {
+        // wordRange is a half-open interval so end gives the successor
+        VT100GridWindowedRange afterRange = [self rangeForWordAt:wordRange.coordRange.end
+                                                   maximumLength:maximumLength
+                                                             big:NO];
+        wordRange.coordRange.end = afterRange.coordRange.end;
+    }
+    return wordRange;
+}
+
+// The maximum length is a rough guideline. You might get a word up to twice as long.
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
+                           maximumLength:(NSInteger)maximumLength
+                                     big:(BOOL)big {
     ITBetaAssert(location.y >= 0, @"Location has negative Y");
     if (location.y < 0) {
         return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
@@ -271,7 +309,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
     location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
-        [self classForCharacter:[self characterAt:location]];
+        [self classForCharacter:[self characterAt:location] bigWords:big];
     DLog(@"Initial class for '%@' at %@ is %@",
          [self stringForCharacter:[self characterAt:location]], VT100GridCoordDescription(location), @(theClass));
     if (theClass == kTextExtractorClassDoubleWidthPlaceholder) {
@@ -329,7 +367,8 @@ const NSInteger kLongMaximumWordLength = 100000;
                               DLog(@"Max length hit when searching forwards");
                               return YES;
                           }
-                          iTermTextExtractorClass newClass = [self classForCharacter:theChar];
+                          iTermTextExtractorClass newClass = [self classForCharacter:theChar
+                                                                            bigWords:big];
                           DLog(@"Class is %@", @(newClass));
 
                           BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
@@ -374,7 +413,8 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        DLog(@"Max length hit when searching backwards");
                                        return YES;
                                    }
-                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar];
+                                   iTermTextExtractorClass newClass = [self classForCharacter:theChar
+                                                                                     bigWords:big];
                                    DLog(@"Class is %@", @(newClass));
                                    BOOL isInWord = (newClass == kTextExtractorClassDoubleWidthPlaceholder ||
                                                     newClass == theClass);
@@ -410,7 +450,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                     location.y)];
     }
 
-    if (theClass != kTextExtractorClassWord) {
+    if (theClass != kTextExtractorClassWord || big) {
         DLog(@"Not word class");
         VT100GridCoord start = [[coords firstObject] gridCoordValue];
         VT100GridCoord end = [[coords lastObject] gridCoordValue];
@@ -754,9 +794,14 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
 }
 
-// Returns the class for a character.
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter {
-    return [self classForCharacter:theCharacter definitionOfAlphanumeric:iTermAlphaNumericDefinitionUserDefined];
+    return [self classForCharacter:theCharacter bigWords:NO];
+}
+
+// Returns the class for a character.
+- (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
+                                    bigWords:(BOOL)bigWords {
+    return [self classForCharacter:theCharacter definitionOfAlphanumeric:bigWords ? iTermAlphaNumericDefinitionBigWords : iTermAlphaNumericDefinitionUserDefined];
 }
 
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
@@ -808,6 +853,8 @@ const NSInteger kLongMaximumWordLength = 100000;
         case iTermAlphaNumericDefinitionNarrow:
             // The narrow definition only allows hyphen.
             return [characterAsString isEqualToString:@"-"];
+        case iTermAlphaNumericDefinitionBigWords:
+            return [characterAsString rangeOfCharacterFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].location == NSNotFound;
     }
 }
 
