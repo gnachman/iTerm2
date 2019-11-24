@@ -99,7 +99,6 @@
 - (NSDictionary *)dictionaryValue {
     NSDictionary *dict =
         @{ @"store": [NSData dataWithBytes:store_ length:capacity_],
-           @"scratchOffset": scratch_ ? @(scratch_ - store_) : [NSNull null],
            @"index": [self exportedIndex],
            @"firstKey": @(firstKey_),
            @"nextKey": @(nextKey_),
@@ -115,12 +114,7 @@
     }
     memmove(store_, store.bytes, store.length);
 
-    id scratch = dict[@"scratchOffset"];
-    if ([scratch isKindOfClass:[NSNull class]]) {
-        scratch_ = nil;
-    } else {
-        scratch_ = store_ + [scratch integerValue];
-    }
+    scratch_ = 0;
 
     NSDictionary *indexDict = dict[@"index"];
     for (NSNumber *key in indexDict) {
@@ -135,7 +129,13 @@
     firstKey_ = [dict[@"firstKey"] longLongValue];
     nextKey_ = [dict[@"nextKey"] longLongValue];
     begin_ = [dict[@"begin"] longLongValue];
+    if (begin_ >= store.length || begin_ < 0) {
+        begin_ = 0;
+    }
     end_ = [dict[@"end"] longLongValue];
+    if (end_ >= store.length || end_ < 0) {
+        end_ = 0;
+    }
     return YES;
 }
 
