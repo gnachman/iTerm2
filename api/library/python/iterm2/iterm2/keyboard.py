@@ -304,7 +304,10 @@ class KeystrokeMonitor:
         return Keystroke(notification)
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
 class KeystrokeFilter:
     """An async context manager that disables the regular handling of keystrokes matching patterns during its lifetime.
@@ -347,4 +350,7 @@ class KeystrokeFilter:
         return self
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass

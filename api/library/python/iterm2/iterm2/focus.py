@@ -156,7 +156,10 @@ class FocusMonitor:
         return self
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
     async def async_get_next_update(self) -> FocusUpdate:
         """

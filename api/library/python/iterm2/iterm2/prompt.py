@@ -126,4 +126,7 @@ class PromptMonitor:
         raise iterm2.rpc.RPCException(f'Unexpected oneof in prompt notification: {message}')
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass

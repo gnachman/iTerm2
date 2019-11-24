@@ -124,7 +124,10 @@ class ScreenStreamer:
         return self
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.connection, self.token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.connection, self.token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
     async def async_get(self) -> typing.Union[None, ScreenContents]:
         """

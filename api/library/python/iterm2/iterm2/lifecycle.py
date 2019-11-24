@@ -79,7 +79,10 @@ class EachSessionOnceMonitor:
         return session_id
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
 
 class SessionTerminationMonitor:
@@ -121,9 +124,12 @@ class SessionTerminationMonitor:
         return session_id
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(
-                self.__connection,
-                self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(
+                    self.__connection,
+                    self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
 class LayoutChangeMonitor:
     """
@@ -170,7 +176,10 @@ class LayoutChangeMonitor:
         await self.__queue.get()
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 
 class NewSessionMonitor:
     """Watches for the creation of new sessions.
@@ -214,5 +223,8 @@ class NewSessionMonitor:
         return session_id
 
     async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        try:
+            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+        except iterm2.notifications.SubscriptionException:
+            pass
 

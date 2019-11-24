@@ -104,7 +104,7 @@ class Tab:
 
     async def async_select(self, order_window_front: bool=True) -> None:
         """Deprecated in favor of `async_activate`."""
-        await async_activate(order_window_front)
+        await self.async_activate(order_window_front)
 
     async def async_activate(self, order_window_front: bool=True) -> None:
         """
