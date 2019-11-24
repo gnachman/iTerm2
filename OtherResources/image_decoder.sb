@@ -37,8 +37,5 @@
   (regex "^/Library/Fonts/")
   (regex "^/var$"))
 
-(allow file-write-create file-write-data file-write-unlink
-  (regex "^/private/var"))
-
 (allow process-exec (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@"))
 (allow mach* sysctl-read)
