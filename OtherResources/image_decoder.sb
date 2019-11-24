@@ -20,7 +20,6 @@
   (literal "@PATH_TO_EXECUTABLE@")
   (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@")
   (regex "^/Library/Preferences/")
-  (regex "^/private/var")
   (regex "^/System/Library/CoreServices/SystemAppearance.bundle")
   (regex "^/usr/lib")
   (regex "^/etc"))
