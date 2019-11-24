@@ -11,7 +11,6 @@
 #import "iTermImageDecoderDriver.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
-#import "sixel.h"
 
 static const CGFloat kMaxDimension = 10000;
 
@@ -85,7 +84,8 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 #endif
 
     iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
-    NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
+    NSData *jsonData = [driver jsonForCompressedImageData:compressedData
+                                                     type:@"image/*"];
     if (jsonData) {
         return [[iTermImage alloc] initWithJson:jsonData];
     } else {
@@ -93,64 +93,19 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     }
 }
 
-- (instancetype)initWithSixelData:(NSData *)sixel {
-    self = [super init];
-    if (self) {
-        sixel_decoder_t *decoder;
-        SIXELSTATUS status = sixel_decoder_new(&decoder, NULL);
-        if (status != SIXEL_OK) {
-            return nil;
-        }
-
-        _images = [NSMutableArray array];
-        NSImage *image = [self decodeImageData:sixel withDecoder:decoder];
-        sixel_decoder_unref(decoder);
-        if (!image) {
-            return nil;
-        }
-        [_images addObject:image];
-        _size = image.size;
-    }
-    return self;
++ (instancetype)imageWithSixelData:(NSData *)sixelData {
+    return [[self alloc] initWithSixelData:sixelData];
 }
 
-- (NSImage *)decodeImageData:(NSData *)data withDecoder:(sixel_decoder_t *)decoder {
-    unsigned char *pixels = NULL;
-    int width = 0;
-    int height = 0;
-    unsigned char *palette = NULL;  // argb
-    int ncolors = 0;
-    SIXELSTATUS status = sixel_decode_raw((unsigned char *)[[data mutableCopy] mutableBytes],
-                                          data.length,
-                                          &pixels,
-                                          &width,
-                                          &height,
-                                          &palette,
-                                          &ncolors,
-                                          NULL);
-    if (status != SIXEL_OK || ncolors <= 0) {
+- (instancetype)initWithSixelData:(NSData *)sixel {
+    iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
+    NSData *jsonData = [driver jsonForCompressedImageData:sixel
+                                                     type:@"image/x-sixel"];
+    if (!jsonData) {
         return nil;
     }
-
-    const int limit = ncolors - 1;
-    NSMutableData *rgbaData = [NSMutableData dataWithLength:width * height * 4];
-    unsigned char *rgba = rgbaData.mutableBytes;
-    const int stride = 3;
-    for (int i = 0; i < width * height; i++) {
-        const unsigned char index = MAX(0, MIN(pixels[i], limit));
-        rgba[i * 4 + 0] = palette[index * stride + 0];
-        rgba[i * 4 + 1] = palette[index * stride + 1];
-        rgba[i * 4 + 2] = palette[index * stride + 2];
-        rgba[i * 4 + 3] = 0xff;
-    }
-    return [NSImage imageWithRawData:rgbaData
-                                size:NSMakeSize(width, height)
-                       bitsPerSample:8
-                     samplesPerPixel:4
-                            hasAlpha:YES
-                      colorSpaceName:NSDeviceRGBColorSpace];
+    return [[iTermImage alloc] initWithJson:jsonData];
 }
-
 
 - (instancetype)init {
     self = [super init];

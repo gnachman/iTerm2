@@ -160,7 +160,8 @@ extern int kVT100ScreenMinRows;
                             roundUp:(BOOL)roundUp
                               inset:(NSEdgeInsets)inset
                               image:(NSImage *)image
-                               data:(NSData *)data;
+                               data:(NSData *)data
+                            isSixel:(BOOL)isSixel;
 
 - (void)resetAnimatedLines;
 

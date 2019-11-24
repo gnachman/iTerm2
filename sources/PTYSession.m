@@ -2827,7 +2827,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                      roundUp:YES
                                        inset:zeroInset
                                        image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
-                                        data:nil];
+                                        data:nil
+                                     isSixel:NO];
     }
     [_screen appendStringAtCursor:message];
     if (width > 0) {
@@ -2840,7 +2841,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                      roundUp:YES
                                        inset:zeroInset
                                        image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
-                                        data:nil];
+                                        data:nil
+                                     isSixel:NO];
     }
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor

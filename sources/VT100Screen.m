@@ -3802,11 +3802,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                             roundUp:(BOOL)roundUp
                               inset:(NSEdgeInsets)requestedInset
                               image:(NSImage *)nativeImage
-                               data:(NSData *)data {
+                               data:(NSData *)data
+                            isSixel:(BOOL)isSixel {
     iTermImage *image;
     if (nativeImage) {
         image = [iTermImage imageWithNativeImage:nativeImage];
         DLog(@"Image is native");
+    } else if (isSixel) {
+        image = [iTermImage imageWithSixelData:data];
     } else {
         image = [iTermImage imageWithCompressedData:data];
     }
@@ -4018,7 +4021,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                               roundUp:NO
                                 inset:NSEdgeInsetsZero
                                 image:nil
-                                 data:data];
+                                 data:data
+                              isSixel:YES];
 }
 
 - (void)terminalDidFinishReceivingFile {
@@ -4035,7 +4039,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                   roundUp:YES
                                     inset:[inlineFileInfo_[kInlineFileInset] futureEdgeInsetsValue]
                                     image:nil
-                                     data:data];
+                                     data:data
+                                  isSixel:NO];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
         [delegate_ screenDidFinishReceivingInlineFile];

@@ -21,4 +21,8 @@
 // Decompresses in a sandboxed process. Returns nil if anything goes wrong.
 + (instancetype)imageWithCompressedData:(NSData *)data;
 
+// Assumes it begins with DCS parameters followed by newline.
+// Decompresses in a sandboxed processes. Returns nil if anything goes wrong.
++ (instancetype)imageWithSixelData:(NSData *)sixelData;
+
 @end

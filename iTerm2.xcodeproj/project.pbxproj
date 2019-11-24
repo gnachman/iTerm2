@@ -2329,7 +2329,6 @@
 		A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
 		A67D0D901A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
 		A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */; };
-		A67D194F2237045C00BD0D4D /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A67D19512237045C00BD0D4D /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A67D1953223704C400BD0D4D /* VT100SixelParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A67D1952223704C400BD0D4D /* VT100SixelParser.m */; };
@@ -3568,6 +3567,7 @@
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
 		A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */; };
+		A6FE418A238A026600BBD086 /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -5983,6 +5983,7 @@
 		A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Hamburger@2x.png"; path = "images/Hamburger@2x.png"; sourceTree = "<group>"; };
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };
 		A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigArrow@2x.png"; path = "images/BigArrow@2x.png"; sourceTree = "<group>"; };
+		A6FE41892389FDAF00BBD086 /* VT100SixelParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100SixelParser.h; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -6134,7 +6135,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A67D194F2237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
@@ -6163,6 +6163,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6FE418A238A026600BBD086 /* libsixel.a in Frameworks */,
 				A656AE4C1DBBE1CE00CE8448 /* libaprutil-1.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -7913,6 +7914,7 @@
 		A647E3B118C35DD900450FA1 /* VT100 */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE41892389FDAF00BBD086 /* VT100SixelParser.h */,
 				A67D1952223704C400BD0D4D /* VT100SixelParser.m */,
 				A647E39918C3515900450FA1 /* VT100AnsiParser.m */,
 				A647E3AD18C3588800450FA1 /* VT100ControlParser.m */,
@@ -13376,10 +13378,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				OTHER_CFLAGS = "-DBETA=1";
@@ -14043,10 +14042,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "-DBETA=1";
@@ -14398,6 +14394,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -14445,10 +14443,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					ThirdParty,
-					ThirdParty/libsixel/include,
-				);
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -14505,10 +14500,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					ThirdParty,
-					ThirdParty/libsixel/include,
-				);
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -14565,10 +14557,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					ThirdParty,
-					ThirdParty/libsixel/include,
-				);
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -14619,10 +14608,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					ThirdParty,
-					ThirdParty/libsixel/include,
-				);
+				HEADER_SEARCH_PATHS = ThirdParty;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -14678,7 +14664,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty;
+				HEADER_SEARCH_PATHS = (
+					ThirdParty,
+					ThirdParty/libsixel/include,
+				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
@@ -14719,6 +14709,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -14758,6 +14750,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -15167,10 +15161,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "-MO -gline-tables-only";
@@ -15249,10 +15240,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "";

@@ -6,11 +6,10 @@
 //
 
 #import "VT100SixelParser.h"
-#import "sixel.h"
 
 @implementation VT100SixelParser {
-    sixel_decoder_t *_decoder;
     NSMutableData *_accumulator;
+    NSArray<NSString *> *_parameters;
 }
 
 - (instancetype)initWithParameters:(NSArray *)parameters {
@@ -24,23 +23,21 @@
             [_accumulator appendData:[joined dataUsingEncoding:NSUTF8StringEncoding]];
         }
         [_accumulator appendBytes:"q" length:1];
-
-        SIXELSTATUS status = sixel_decoder_new(&_decoder, NULL);
-        if (status != SIXEL_OK) {
-            return nil;
-        }
-
-        [parameters enumerateObjectsUsingBlock:^(NSString * _Nonnull value, NSUInteger index, BOOL * _Nonnull stop) {
-            sixel_decoder_setopt(self->_decoder,
-                                 index,
-                                 value.UTF8String);
-        }];
+        _parameters = [parameters copy];
     }
     return self;
 }
 
 - (NSString *)hookDescription {
     return @"[SIXEL]";
+}
+
+- (NSData *)combinedData {
+    NSString *joined = [[_parameters componentsJoinedByString:@";"] stringByAppendingString:@"\n"];
+    NSData *paramData = [joined dataUsingEncoding:NSUTF8StringEncoding];
+    NSMutableData *result = [paramData mutableCopy];
+    [result appendData:_accumulator];
+    return result;
 }
 
 // Return YES if it should unhook.
@@ -59,7 +56,7 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
                 if (support8BitControlCharacters) {
                     iTermParserConsume(context);
                     result->type = DCS_SIXEL;
-                    result.savedData = _accumulator;
+                    result.savedData = [self combinedData];
                     return YES;
                 }
                 break;
@@ -110,7 +107,7 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
     }
 
     result->type = DCS_SIXEL;
-    result.savedData = _accumulator;
+    result.savedData = [self combinedData];
     return YES;
 }
 
