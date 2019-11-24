@@ -103,6 +103,8 @@ static NSImage *DecodeSixelData(sixel_decoder_t *decoder, NSData *data) {
         rgba[i * 4 + 2] = palette[index * stride + 2];
         rgba[i * 4 + 3] = 0xff;
     }
+    free(palette);
+    free(pixels);
     return [NSImage imageWithRawData:rgbaData
                                 size:NSMakeSize(width, height)
                        bitsPerSample:8
