@@ -33,17 +33,6 @@
 #import "iTermMalloc.h"
 #import "LineBuffer.h"
 
-@interface DVRDecoder ()
-
-// Seek directly to a particular key.
-- (void)_seekToEntryWithKey:(long long)key;
-
-// Load a key or diff frame from a particular key.
-- (void)_loadKeyFrameWithKey:(long long)key;
-- (void)_loadDiffFrameWithKey:(long long)key;
-
-@end
-
 @implementation DVRDecoder {
     // Circular buffer not owned by us.
     DVRBuffer* buffer_;
@@ -211,7 +200,9 @@
     // Apply all the diff frames up to key.
     while (j != key) {
         ++j;
-        [self _loadDiffFrameWithKey:j];
+        if (![self _loadDiffFrameWithKey:j]) {
+            return;
+        }
 #ifdef DVRDEBUG
         [self debug:[NSString stringWithFormat:@"After applying diff of %d:", j] buffer:frame_ length:length_];
 #endif
@@ -239,7 +230,27 @@
     memcpy(frame_,  data, length_);
 }
 
-- (void)_loadDiffFrameWithKey:(long long)key
+// Add two positive ints. Returns NO if it can't be done. Returns YES and places the result in
+// *sum if possible.
+static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
+    if (summand < 0 || addend < 0) {
+        DLog(@"Have negative value: summand=%@ addend=%@", @(summand), @(addend));
+        return NO;
+    }
+    assert(sizeof(long long) > sizeof(int));
+    const long long temp1 = summand;
+    const long long temp2 = addend;
+    const long long temp3 = temp1 + temp2;
+    if (temp3 > INT_MAX) {
+        DLog(@"Prevented overflow: summand=%@ addend=%@", @(summand), @(addend));
+        return NO;
+    }
+    *sum = temp3;
+    return YES;
+}
+
+// Returns NO if the input was broken.
+- (BOOL)_loadDiffFrameWithKey:(long long)key
 {
 #ifdef DVRDEBUG
     NSLog(@"Load diff frame at index %lld", key);
@@ -253,23 +264,36 @@
         switch (diff[i++]) {
             case kSameSequence:
                 memcpy(&n, diff + i, sizeof(n));
-                i += sizeof(n);
+                if (!SafeIncr(i, sizeof(n), &i)) {
+                    return NO;
+                }
 #ifdef DVRDEBUG
                 NSLog(@"%d bytes of sameness at offset %d", n, o);
 #endif
-                o += n;
+                if (!SafeIncr(n, o, &o)) {
+                    return NO;
+                }
                 break;
 
             case kDiffSequence:
                 memcpy(&n, diff + i, sizeof(n));
-                i += sizeof(n);
-                assert(o + n - 1 < length_);
+                if (!SafeIncr(i, sizeof(n), &i)) {
+                    return NO;
+                }
+                int proposedEnd;
+                if (!SafeIncr(o, n, &proposedEnd)) {
+                    return NO;
+                }
+                if (proposedEnd -1 >= length_) {
+                    return NO;
+                }
                 memcpy(frame_ + o, diff + i, n);
 #ifdef DVRDEBUG
                 NSLog(@"%d bytes of difference at offset %d", n, o);
 #endif
-                o += n;
-                i += n;
+                if (!SafeIncr(n, o, &o) || !SafeIncr(n, o, &i)) {
+                    return NO;
+                }
                 break;
 
             default:
@@ -277,6 +301,7 @@
                 assert(0);
         }
     }
+    return YES;
 }
 
 @end
