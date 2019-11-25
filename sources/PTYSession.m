@@ -4098,7 +4098,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)popIconTitle {
     NSString *theName = [_nameController popIconTitle];
-    [self setIconName:theName];
+    [self setIconName:theName ?: [iTermProfilePreferences stringForKey:KEY_NAME inProfile:self.profile]];
 }
 
 - (VT100Terminal *)terminal
