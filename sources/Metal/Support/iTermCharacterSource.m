@@ -15,6 +15,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermData.h"
 #import "iTermTextureArray.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
@@ -77,6 +78,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     descriptor.nonAsciiAntiAliased = nonAsciiAntiAliased;
 
     return descriptor;
+}
+
+- (NSString *)description {
+    NSDictionary *dict = [self dictionaryValue];
+    NSString *props = [[[dict.allKeys sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^id(NSString *key) {
+        return [NSString stringWithFormat:@"%@=“%@”", key, dict[key]];
+    }] componentsJoinedByString:@" "];
+    return [NSString stringWithFormat:@"<%@: %p %@>",
+            NSStringFromClass([self class]), self, props];
 }
 
 - (NSDictionary *)dictionaryValue {
@@ -279,6 +289,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _isAscii = (string.length == 1 && [string characterAtIndex:0] < 128);
         _antialiased = _isAscii ? descriptor.asciiAntiAliased : descriptor.nonAsciiAntiAliased;
         _font = [descriptor fontForASCII:_isAscii attributes:attributes renderBold:&_fakeBold renderItalic:&_fakeItalic];
+        DLog(@"%p initialize with descriptor %@, isAscii=%@", self, descriptor, @(_isAscii));
         ITAssertWithMessage(_font, @"Nil font for string=%@ attributes=%@", string, attributes);
         _attributes = attributes;
         _radius = radius;
@@ -295,6 +306,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
+            DLog(@"Create lineref %@ with attributed string %@", @(i), _attributedStrings[i]);
             _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
         }
     }
@@ -311,6 +323,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_imageRef) {
         CGImageRelease(_imageRef);
     }
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p font=%@>",
+            NSStringFromClass([self class]),
+            self,
+            _font];
 }
 
 - (int)maxParts {
@@ -551,7 +570,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
                               ceil(CGRectGetMaxY(frame)));
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
-    DLog(@"Bounding box for character '%@' in font %@ is %@ at scale %@", _string, _font, NSStringFromRect(frame), @(_descriptor.scale));
+    DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@", self, _string, _font, NSStringFromRect(frame), @(_descriptor.scale));
 
     return frame;
 }
@@ -747,7 +766,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         const CGGlyph *buffer = [self glyphsInRun:run length:length];
         CGPoint *positions = [self positionsInRun:run length:length];
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
-
+        DLog(@"%@ For run %@, run is %@ and runFont is %@", self, @(j), run, runFont);
         [self prepareToDrawRunAtIteration:iteration offset:offset runFont:runFont skew:skew initialized:haveInitializedThisIteration];
         haveInitializedThisIteration = YES;
         CGContextRef context = _context;
