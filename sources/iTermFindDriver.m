@@ -383,6 +383,9 @@ static NSString *gSearchString;
 }
 
 - (void)didLoseFocus {
+    if (_timer == nil) {
+        [_viewController setProgress:0];
+    }
     _lastEditTime = 0;
 }
 
