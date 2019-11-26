@@ -2201,7 +2201,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSRect tabFrame = [[realParentWindow_ tabBarControl] frame];
     NSSize viewSize = [root_ frame].size;
     CGFloat yOrigin = 0;
-    CGFloat yOffset = 0;
     CGFloat xOrigin = 0;
     if (withSpaceForFrame) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -2212,7 +2211,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
             case PSMTab_TopTab:
                 viewSize.height += tabFrame.size.height;
-                yOffset = viewSize.height;
                 break;
 
             case PSMTab_LeftTab:
@@ -2220,17 +2218,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 viewSize.width += tabFrame.size.width;
                 break;
         }
-    }
-    BOOL horizontal = YES;
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_BottomTab:
-        case PSMTab_TopTab:
-            horizontal = YES;
-            break;
-
-        case PSMTab_LeftTab:
-            horizontal = NO;
-            break;
     }
 
     if (viewSize.width == 0 || viewSize.height == 0) {

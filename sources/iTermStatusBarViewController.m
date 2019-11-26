@@ -71,7 +71,7 @@ const CGFloat iTermStatusBarHeight = 21;
     [self updateViews];
 }
 
-- (iTermStatusBarContainerView *)mandatoryView {
+- (nullable iTermStatusBarContainerView *)mandatoryView {
     if (!self.mustShowSearchComponent) {
         return nil;
     }

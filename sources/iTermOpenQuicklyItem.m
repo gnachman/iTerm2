@@ -4,15 +4,6 @@
 #import "NSImage+iTerm.h"
 
 @implementation iTermOpenQuicklyItem
-
-- (void)dealloc {
-    [_identifier release];
-    [_title release];
-    [_detail release];
-    [_view release];
-    [super dealloc];
-}
-
 @end
 
 @implementation iTermOpenQuicklySessionItem
@@ -23,11 +14,6 @@
         _logoGenerator = [[iTermLogoGenerator alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_logoGenerator release];
-    [super dealloc];
 }
 
 - (NSImage *)icon {
@@ -60,12 +46,6 @@
         _logoGenerator = [[iTermLogoGenerator alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_logoGenerator release];
-    [_presetName release];
-    [super dealloc];
 }
 
 - (NSImage *)icon {

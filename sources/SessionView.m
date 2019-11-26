@@ -1168,18 +1168,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if ([_delegate sessionViewUseSeparateStatusBarsPerPane]) {
         newVC = [self.delegate sessionViewStatusBarViewController];
     }
-    BOOL statusBarChanged = NO;
     switch ((iTermStatusBarPosition)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
             if (newVC != _title.statusBarViewController) {
-                statusBarChanged = YES;
                 _title.statusBarViewController = newVC;
             }
             break;
             
         case iTermStatusBarPositionBottom:
             if (newVC != _genericStatusBarContainer.statusBarViewController) {
-                statusBarChanged = YES;
                 _genericStatusBarContainer.statusBarViewController = newVC;
             }
             break;

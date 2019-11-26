@@ -5004,9 +5004,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (self.windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            if (exitingLionFullscreen_) {
-                shouldEnableShadow = YES;
-            } else {
+            if (!exitingLionFullscreen_) {
                 window.hasShadow = NO;
             }
             return;

@@ -227,7 +227,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [result uniq];
 }
 
-- (NSArray<NSString *> *)variantsOfCurrentStateBranch {
+- (nullable NSArray<NSString *> *)variantsOfCurrentStateBranch {
     NSString *branch = self.currentState.branch;
     if (!branch) {
         return nil;

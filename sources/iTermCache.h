@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCapacity:(NSInteger)capacity NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (id)objectForKeyedSubscript:(KeyType<NSCopying>)key;
+- (nullable id)objectForKeyedSubscript:(KeyType<NSCopying>)key;
 - (void)setObject:(ValueType)obj forKeyedSubscript:(KeyType<NSCopying>)key;
 
 @end

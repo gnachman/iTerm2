@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermOpenDirectory : NSObject
 
-+ (NSString *)userShell;
++ (nullable NSString *)userShell;
 
 @end
 

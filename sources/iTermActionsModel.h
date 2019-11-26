@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)moveActionsWithIdentifiers:(NSArray<NSNumber *> *)identifiersToMove
                            toIndex:(NSInteger)row;
 - (void)setActions:(NSArray<iTermAction *> *)actions;
-- (iTermAction *)actionWithIdentifier:(NSInteger)identifier;
+- (nullable iTermAction *)actionWithIdentifier:(NSInteger)identifier;
 
 @end
 

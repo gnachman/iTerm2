@@ -180,6 +180,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
             // error
             NSLog(@"Fork failed: %s", strerror(errno));
             free(sandbox);
+            free(typeCString);
             free(utf8Executable);
             return nil;
 

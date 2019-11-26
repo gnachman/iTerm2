@@ -153,8 +153,6 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                                                    withString:linkName];
     if (linkName.length) {
         [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
-    } else {
-        linkName = @"_ApplicationSupport";
     }
 
     NSString *executableName =

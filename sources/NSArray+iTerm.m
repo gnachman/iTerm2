@@ -38,7 +38,7 @@
 - (NSArray *)it_arrayByRemovingObjectsAtIndexes:(NSIndexSet *)indexes {
     NSMutableArray *result = [self mutableCopy];
     [result removeObjectsAtIndexes:indexes];
-    return result;
+    return [result autorelease];
 }
 
 - (NSArray *)objectsOfClasses:(NSArray *)classes {

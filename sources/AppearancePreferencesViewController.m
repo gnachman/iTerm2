@@ -149,10 +149,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         [weakSelf updateHiddenAndEnabled];
     };
 
-    info = [self defineControl:_preserveWindowSizeWhenTabBarVisibilityChanges
-                           key:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_preserveWindowSizeWhenTabBarVisibilityChanges
+                    key:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber

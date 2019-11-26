@@ -80,7 +80,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
 - (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
-- (iTermBuiltInMethod *)methodWithSignature:(NSString *)signature;
+- (nullable iTermBuiltInMethod *)methodWithSignature:(NSString *)signature;
 
 @end
 
