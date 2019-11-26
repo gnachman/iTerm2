@@ -2164,7 +2164,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // split pane but not for making a selection.
         return;
     }
-    if (!dragOk_) {
+    if (!dragOk_ && !_makingThreeFingerSelection) {
         DLog(@"drag not ok");
         return;
     }
