@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
 #import "iTermSocketAddress.h"
+#import "iTermSyntheticConfParser.h"
 #import "NSStringITerm.h"
 #include <arpa/inet.h>
 #include <libproc.h>
@@ -559,9 +560,15 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
         return nil;
     } else {
         // All is good
-        NSString *dir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
-        DLog(@"Result: %@", dir);
-        return dir;
+        NSString *rawDir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
+        if (@available(macOS 10.15, *)) {
+            NSString *dir = [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:rawDir];
+            DLog(@"Result: %@ -> %@", rawDir, dir);
+            return dir;
+        } else {  // pre-10.15 code path - no synthetics existed
+            DLog(@"Result: %@", rawDir);
+            return rawDir;
+        }
     }
 }
 
