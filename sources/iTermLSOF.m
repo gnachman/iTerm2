@@ -52,6 +52,57 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     return rc;
 }
 
+static NSArray<NSDictionary<NSString *, NSString *> *> *getSyntheticDirectories(void) {
+    static NSArray<NSDictionary<NSString *, NSString *> *> *syntheticDirectories = NULL;
+
+    if (syntheticDirectories) {
+        return syntheticDirectories;
+    }
+
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    if (![fileManager fileExistsAtPath:@"/etc/synthetic.conf"]) {
+        syntheticDirectories = @[];
+        return syntheticDirectories;
+    }
+
+    NSString *contents = [NSString stringWithContentsOfFile:@"/etc/synthetic.conf" encoding:NSUTF8StringEncoding error:nil];
+
+    NSMutableArray<NSDictionary<NSString *, NSString *> *> *directories = [[NSMutableArray<NSDictionary<NSString *, NSString*> *> alloc] init];
+
+    for (NSString *line in [contents componentsSeparatedByString: @"\n"]) {
+        if ([line hasPrefix:@"#"]) {
+            continue;
+        }
+
+        NSArray<NSString *> *mapping = [line componentsSeparatedByString: @"\t"];
+
+        if (mapping.count != 2) {
+            continue;
+        }
+
+        NSString *root = [@"/" stringByAppendingString:mapping[0]];
+        NSString *target = [@"/" stringByAppendingString:mapping[1]];
+
+        [directories addObject: @{@"root": root, @"target": target, @"targetPrefix": [target stringByAppendingString:@"/"]}];
+    }
+
+    syntheticDirectories = directories;
+
+    return syntheticDirectories;
+}
+
+static NSString *convertToSyntheticRoot(NSString *dir) {
+    for (NSDictionary<NSString *, NSString *> *mapping in getSyntheticDirectories()) {
+        if ([dir isEqualToString:mapping[@"target"]]) {
+            return mapping[@"root"];
+        } else if ([dir hasPrefix:mapping[@"targetPrefix"]]) {
+            return [mapping[@"root"] stringByAppendingString:[dir substringFromIndex:mapping[@"targetPrefix"].length - 1]];
+        }
+    }
+    return dir;
+}
+
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
 }
@@ -559,7 +610,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
         return nil;
     } else {
         // All is good
-        NSString *dir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
+        NSString *dir = convertToSyntheticRoot([NSString stringWithUTF8String:vpi.pvi_cdir.vip_path]);
         DLog(@"Result: %@", dir);
         return dir;
     }
