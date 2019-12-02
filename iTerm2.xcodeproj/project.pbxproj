@@ -1484,7 +1484,6 @@
 		A608CD09214DE7C1007A7B87 /* iTermAutomaticProfileSwitcherTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */; };
 		A608CD0A214DE7C1007A7B87 /* iTermNSURLCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */; };
 		A608CD0B214DE7C1007A7B87 /* iTermNSArrayCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */; };
-		A608CD0C214DE7C1007A7B87 /* iTermCppLruCacheTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD4B1FC2A187006B9A69 /* iTermCppLruCacheTest.mm */; };
 		A608CD0D214DE7C1007A7B87 /* iTermFunctionCallSuggesterTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 535EA4F320D0D6A300FC81E0 /* iTermFunctionCallSuggesterTest.m */; };
 		A608CD27214E09E1007A7B87 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A608F22120F07658008E8009 /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
@@ -5659,8 +5658,6 @@
 		A6BF8D1521EB188E003CF805 /* iTermDependencyEditorWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermDependencyEditorWindowController.xib; sourceTree = "<group>"; };
 		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
 		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
-		A6C1FD491FC2A0B0006B9A69 /* lrucache.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lrucache.hpp; path = "cpp-lru-cache/include/lrucache.hpp"; sourceTree = "<group>"; };
-		A6C1FD4B1FC2A187006B9A69 /* iTermCppLruCacheTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermCppLruCacheTest.mm; sourceTree = "<group>"; };
 		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
 		A6C1FD4F1FC2AC9B006B9A69 /* iTermMarginRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMarginRenderer.h; path = Metal/Renderers/iTermMarginRenderer.h; sourceTree = "<group>"; };
 		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMarginRenderer.m; path = Metal/Renderers/iTermMarginRenderer.m; sourceTree = "<group>"; };
@@ -6673,7 +6670,6 @@
 				A6A7A94D214393F1000DA2D4 /* hyper-tab-icons-plus */,
 				A69CCB13211BC284008ADA71 /* GZIP */,
 				A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */,
-				A6C1FD481FC29EB5006B9A69 /* cpp-lru-cache */,
 				A65871661D85E6660061CEEE /* LetsMove */,
 				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
@@ -8961,14 +8957,6 @@
 			name = Language;
 			sourceTree = "<group>";
 		};
-		A6C1FD481FC29EB5006B9A69 /* cpp-lru-cache */ = {
-			isa = PBXGroup;
-			children = (
-				A6C1FD491FC2A0B0006B9A69 /* lrucache.hpp */,
-			);
-			name = "cpp-lru-cache";
-			sourceTree = "<group>";
-		};
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -8997,7 +8985,6 @@
 				A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */,
 				A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */,
 				A67778B61CFF40AC00DEED78 /* iTermNSArrayCategoryTest.m */,
-				A6C1FD4B1FC2A187006B9A69 /* iTermCppLruCacheTest.mm */,
 				535EA4F320D0D6A300FC81E0 /* iTermFunctionCallSuggesterTest.m */,
 				A62F8FD221DA8457008EA71C /* iTermTermkeyKeyMapperTest.m */,
 				A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */,
@@ -13201,7 +13188,6 @@
 				A608CCFD214DE7C1007A7B87 /* iTermSemanticHistoryTest.m in Sources */,
 				A608CD03214DE7C1007A7B87 /* VT100GridTest.m in Sources */,
 				A608CD08214DE7C1007A7B87 /* iTermTextExtractorTest.m in Sources */,
-				A608CD0C214DE7C1007A7B87 /* iTermCppLruCacheTest.mm in Sources */,
 				A608CD0D214DE7C1007A7B87 /* iTermFunctionCallSuggesterTest.m in Sources */,
 				A608CD01214DE7C1007A7B87 /* VT100CSIParserTest.m in Sources */,
 				A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */,
