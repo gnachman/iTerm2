@@ -18,6 +18,8 @@
 @property (nonatomic, strong) NSColor *defaultBackgroundColor;
 @property (nonatomic, strong) NSColor *defaultTextColor;
 @property (nonatomic, copy) void (^onChange)(void);
+// Drops from this view are accepted
+@property (nonatomic, weak) NSCollectionView *sourceCollectionView;
 
 - (void)setLayout:(iTermStatusBarLayout *)layout;
 - (NSDictionary *)layoutDictionary;

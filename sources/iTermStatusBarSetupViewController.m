@@ -135,6 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)awakeFromNib {
     _destinationViewController.defaultBackgroundColor = self.defaultBackgroundColor;
     _destinationViewController.defaultTextColor = self.defaultTextColor;
+    _destinationViewController.sourceCollectionView = _collectionView;
 
     [self loadElements];
     for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {

@@ -307,6 +307,11 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
                      validateDrop:(id <NSDraggingInfo>)draggingInfo
                 proposedIndexPath:(NSIndexPath * __nonnull * __nonnull)proposedDropIndexPath
                     dropOperation:(NSCollectionViewDropOperation *)proposedDropOperation {
+    if (draggingInfo.draggingSource != collectionView &&
+        draggingInfo.draggingSource != _sourceCollectionView) {
+        return NSDragOperationNone;
+    }
+
     *proposedDropOperation = NSCollectionViewDropBefore;
     if ([draggingInfo.draggingSource isKindOfClass:[self class]]) {
         return NSDragOperationMove;
