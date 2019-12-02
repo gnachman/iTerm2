@@ -1583,6 +1583,8 @@ static BOOL hasBecomeActive = NO;
     return result == NSOrderedDescending;
 }
 
+/*
+ Keeping this around for debugging purposes. Otherwise, just run `sample` from another terminal.
 - (IBAction)createCPUProfile:(id)sender {
     [iTermCPUProfilerUI createProfileWithCompletion:^(iTermCPUProfile * _Nonnull profile) {
         NSString *string = [profile stringTree];
@@ -1592,6 +1594,7 @@ static BOOL hasBecomeActive = NO;
         [[NSWorkspace sharedWorkspace] openFile:path withApplication:@"Finder"];
     }];
 }
+ */
 
 - (IBAction)copyPerformanceStats:(id)sender {
     NSString *copyString = iTermPreciseTimerGetSavedLogs();
