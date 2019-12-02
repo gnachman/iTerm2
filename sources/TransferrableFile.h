@@ -54,6 +54,8 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
 - (NSString *)finalDestinationForPath:(NSString *)baseName
                  destinationDirectory:(NSString *)destinationDirectory;
 - (NSString *)downloadsDirectory;
+- (BOOL)quarantine:(NSString *)path sourceURL:(NSURL *)sourceURL;
+- (void)failedToRemoveUnquarantinedFileAt:(NSString *)path;
 
 @end
 

@@ -252,6 +252,17 @@ static NSError *SCPFileError(NSString *description) {
     return value;
 }
 
+- (NSURL *)sessionURL {
+    assert(self.session);
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.host = self.session.host;
+    components.user = self.session.username;
+    components.port = self.session.port;
+    components.path = self.path.path;
+    components.scheme = @"ssh";
+    return components.URL;
+}
+
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
@@ -284,6 +295,7 @@ static NSError *SCPFileError(NSString *description) {
             return;
         }
     }
+    NSURL *url = [self sessionURL];
     if (!self.session.isConnected) {
         NSError *theError = [self lastError];
         if (!theError) {
@@ -460,21 +472,39 @@ static NSError *SCPFileError(NSString *description) {
         }
         self.destination = tempfile;
         self.status = kTransferrableFileStatusTransferring;
+        __block BOOL quarantined = NO;
+        __block BOOL quarantineError = NO;
         BOOL ok = [self.session.channel downloadFile:self.path.path
                                                   to:tempfile
                                             progress:^BOOL (NSUInteger bytes, NSUInteger fileSize) {
-                                                self.bytesTransferred = bytes;
-                                                self.fileSize = fileSize;
-                                                dispatch_sync(dispatch_get_main_queue(), ^() {
-                                                    if (!self.stopped) {
-                                                        [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
-                                                    }
-                                                });
-                                                if (self.stopped) {
-                                                    XLog(@"Stopping mid-download");
-                                                }
-                                                return !self.stopped;
-                                            }];
+            if (!quarantined) {
+                if (![self quarantine:tempfile sourceURL:url]) {
+                    quarantineError = YES;
+                    return NO;
+                }
+                quarantined = YES;
+            }
+            self.bytesTransferred = bytes;
+            self.fileSize = fileSize;
+            dispatch_sync(dispatch_get_main_queue(), ^() {
+                if (!self.stopped) {
+                    [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
+                }
+            });
+            if (self.stopped) {
+                XLog(@"Stopping mid-download");
+            }
+            return !self.stopped;
+        }];
+        if (!quarantined && [[NSFileManager defaultManager] fileExistsAtPath:tempfile]) {
+            // Zero-byte file, presumably.
+            if (![self quarantine:tempfile sourceURL:url]) {
+                quarantineError = YES;
+                ok = NO;
+            } else {
+                quarantined = YES;
+            }
+        }
         __block NSError *error;
         __block NSString *finalDestination = nil;
         if (ok) {
@@ -495,18 +525,28 @@ static NSError *SCPFileError(NSString *description) {
             [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
             self.destination = [finalDestination autorelease];
         } else {
-            [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
+            NSError *error = nil;
+            const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:tempfile error:&error];
+            if (quarantineError && (!ok || error)) {
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    [self failedToRemoveUnquarantinedFileAt:tempfile];
+                });
+            }
             if (self.stopped) {
                 dispatch_sync(dispatch_get_main_queue(), ^() {
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 });
                 return;
             } else {
-                NSString *errorDescription = [[self lastError] localizedDescription];
-                if (errorDescription.length) {
-                    self.error = errorDescription;
+                if (quarantineError) {
+                    self.error = @"Quarantine Error";
                 } else {
-                    self.error = @"Download failed";
+                    NSString *errorDescription = [[self lastError] localizedDescription];
+                    if (errorDescription.length) {
+                        self.error = errorDescription;
+                    } else {
+                        self.error = @"Download failed";
+                    }
                 }
                 error = SCPFileError(@"Download failed");
             }

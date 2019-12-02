@@ -8,8 +8,10 @@
 
 #import "TransferrableFile.h"
 
+#import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
 #import "iTermNotificationController.h"
+#import "iTermWarning.h"
 
 @implementation TransferrableFile {
     NSTimeInterval _timeOfLastStatusChange;
@@ -170,6 +172,60 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 
 - (NSTimeInterval)timeOfLastStatusChange {
     return _timeOfLastStatusChange;
+}
+
+- (void)failedToRemoveUnquarantinedFileAt:(NSString *)path {
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The file at “%@” could not be quarantined or deleted! It is dangerous and should be removed.", path]
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Danger!"
+                                window:nil];
+}
+
+- (BOOL)quarantine:(NSString *)path sourceURL:(NSURL *)sourceURL {
+    NSURL *url = [NSURL fileURLWithPath:path];
+
+    NSMutableDictionary *properties = [NSMutableDictionary dictionary];
+    {
+        NSError *error = nil;
+        NSDictionary *temp;
+        const BOOL ok = [url getResourceValue:&temp
+                                       forKey:NSURLQuarantinePropertiesKey
+                                        error:&error];
+        if (!ok) {
+            XLog(@"Get quarantine of %@ failed: %@", path, error);
+            return NO;
+        }
+        if (temp && ![temp isKindOfClass:[NSDictionary class]]) {
+            XLog(@"Quarantine of wrong class: %@", NSStringFromClass([temp class]));
+            return NO;
+        }
+        properties = [[temp ?: @{} mutableCopy] autorelease];
+    }
+
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSDictionary *info = bundle.infoDictionary;
+    properties[(__bridge NSString *)kLSQuarantineAgentNameKey] = info[(__bridge NSString *)kCFBundleNameKey] ?: @"iTerm2";
+    properties[(__bridge NSString *)kLSQuarantineAgentBundleIdentifierKey] = info[(__bridge NSString *)kCFBundleIdentifierKey] ?: @"com.googlecode.iterm2";
+    if (sourceURL.absoluteString) {
+        properties[(__bridge NSString *)kLSQuarantineDataURLKey] = sourceURL.absoluteString;
+    }
+    properties[(__bridge NSString *)kLSQuarantineTimeStampKey] = [NSDate date];
+    properties[(__bridge NSString *)kLSQuarantineTypeKey] = (__bridge NSString *)kLSQuarantineTypeOtherDownload;
+
+    {
+        NSError *error = nil;
+        const BOOL ok = [url setResourceValue:properties
+                                       forKey:NSURLQuarantinePropertiesKey
+                                        error:&error];
+        if (!ok) {
+            XLog(@"Set quarantine of %@ failed: %@", path, error);
+            return NO;
+        }
+    }
+    return YES;
 }
 
 @end

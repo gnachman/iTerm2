@@ -176,7 +176,16 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
                                  didFinishTransmissionWithError:[self errorWithDescription:@"Failed to write file to disk."]];
         return;
     }
-
+    if (![self quarantine:self.localPath sourceURL:nil]) {
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                 didFinishTransmissionWithError:[self errorWithDescription:@"Failed to set quarantine."]];
+        NSError *error = nil;
+        const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:&error];
+        if (!ok || error) {
+            [self failedToRemoveUnquarantinedFileAt:self.localPath];
+        }
+        return;
+    }
     [[FileTransferManager sharedInstance] transferrableFile:self didFinishTransmissionWithError:nil];
     return;
 }
