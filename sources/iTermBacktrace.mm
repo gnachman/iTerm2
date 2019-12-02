@@ -156,6 +156,10 @@ static void _setup_callstack_signal_handler() {
     sigaction(CALLSTACK_SIG, &sa, NULL);
 }
 
+static void _remove_callstack_signal_handler() {
+    signal(CALLSTACK_SIG, SIG_DFL);
+}
+
 __attribute__((noinline))
 int InternalGetCallstack(pthread_t threadId, void **buffer, int size) {
     if (threadId == 0 || threadId == (pthread_t)pthread_self()) {
@@ -189,6 +193,7 @@ int InternalGetCallstack(pthread_t threadId, void **buffer, int size) {
             return 0;
         }
         dispatch_group_wait(gBacktraceGroup, DISPATCH_TIME_FOREVER);
+        _remove_callstack_signal_handler();
 
         threadCallstackBuffer = NULL;
         threadCallstackBufferSize = 0;
