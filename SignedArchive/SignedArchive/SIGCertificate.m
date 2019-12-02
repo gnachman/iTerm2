@@ -185,4 +185,12 @@
     return [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
 }
 
+- (BOOL)isEqual:(id)object {
+    if (![object isKindOfClass:[SIGCertificate class]]) {
+        return NO;
+    }
+    SIGCertificate *other = object;
+    return [self.data isEqual:other.data];
+}
+
 @end

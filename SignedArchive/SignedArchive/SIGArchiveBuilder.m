@@ -79,6 +79,9 @@
         if (![self writeCertificate:issuerCertificate.data toStream:writeStream error:error]) {
             return NO;
         }
+        if ([issuerCertificate.issuer isEqual:issuerCertificate]) {
+            break;
+        }
         issuerCertificate = issuerCertificate.issuer;
     }
     [writeStream close];
