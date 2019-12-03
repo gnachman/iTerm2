@@ -158,6 +158,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return YES;
 }
 
+- (BOOL)truncatesTail {
+    return YES;
+}
+
 - (NSArray<NSAttributedString *> *)attributedStringVariants {
     NSArray<NSAttributedString *> *result = [[[self variantsOfCurrentStateBranch] mapWithBlock:^id(NSString *branch) {
         return [self attributedStringValueForBranch:branch];
@@ -193,6 +197,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
                                   NSForegroundColorAttributeName: [self textColor],
                                   NSParagraphStyleAttributeName: self.paragraphStyle };
     return [[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes];
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    return [self widthForAttributedString:[self attributedStringValueForBranch:@"M"]];
 }
 
 - (BOOL)onLocalhost {
@@ -232,15 +240,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     if (!branch) {
         return nil;
     }
-
-    iTermTuple<NSString *, NSString *> *remoteAndBranch = [branch it_stringBySplittingOnFirstSubstring:@"/"];
-    if (remoteAndBranch) {
-        NSArray<NSString *> *variants = [self variantsOfBranch:remoteAndBranch.secondObject];
-        return [variants mapWithBlock:^id(NSString *anObject) {
-            return [NSString stringWithFormat:@"%@/%@", remoteAndBranch.firstObject, anObject];
-        }];
-    }
-    return [self variantsOfBranch:branch];
+    return @[ branch ];
 }
 
 - (nullable NSAttributedString *)attributedStringValueForBranch:(NSString *)branchString {

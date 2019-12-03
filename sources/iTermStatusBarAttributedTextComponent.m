@@ -58,14 +58,22 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
+    const CGFloat maxWidth = self.bounds.size.width - point.x;
     if (reallyDraw) {
         NSColor *textColor = attrs[NSForegroundColorAttributeName];
         if (!textColor) {
             attrs = [attrs dictionaryBySettingObject:self.textColor forKey:NSForegroundColorAttributeName];
         }
-        [string drawAtPoint:point withAttributes:attrs];
+        NSRect rect = {
+            .origin = point,
+            .size = {
+                .width = self.bounds.size.width - point.x,
+                .height = self.bounds.size.height - point.y
+            }
+        };
+        [string drawInRect:rect withAttributes:attrs];
     }
-    *width = [self retinaRound:[string sizeWithAttributes:attrs].width];
+    *width = [self retinaRound:MIN(maxWidth, [string sizeWithAttributes:attrs].width)];
 }
 
 - (void)sizeToFit {
@@ -250,7 +258,15 @@ NS_ASSUME_NONNULL_BEGIN
     }];
 }
 
+- (BOOL)truncatesTail {
+    return NO;
+}
+
 - (nullable NSAttributedString *)attributedStringForWidth:(CGFloat)width {
+    if (self.truncatesTail) {
+        return self.attributedStringVariants.firstObject;
+    }
+
     NSArray<iTermTuple<NSAttributedString *,NSNumber *> *> *tuples = [self widthAttributedStringTuples];
     tuples = [tuples filteredArrayUsingBlock:^BOOL(iTermTuple<NSAttributedString *,NSNumber *> *anObject) {
         return ceil(anObject.secondObject.doubleValue) <= ceil(width);

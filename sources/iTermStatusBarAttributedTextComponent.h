@@ -21,6 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)widthForAttributedString:(NSAttributedString *)string;
 - (void)updateTextFieldIfNeeded;
 
+// Subclasses can override this to return YES if the longest variant can always be truncated to fit.
+- (BOOL)truncatesTail;
+
 @end
 
 NS_ASSUME_NONNULL_END
