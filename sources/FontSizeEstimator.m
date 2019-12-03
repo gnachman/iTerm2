@@ -64,7 +64,12 @@
 }
 
 + (BOOL)useGenerousRoundingForFont:(NSFont *)aFont {
-    return [[[aFont familyName] lowercaseStringWithLocale:[NSLocale localeWithLocaleIdentifier:@"en_US"]] containsString:@"consolas"];
+    for (NSString *family in [[iTermAdvancedSettingsModel fontsForGenerousRounding] componentsSeparatedByString:@","]) {
+        if ([[[aFont familyName] lowercaseStringWithLocale:[NSLocale localeWithLocaleIdentifier:@"en_US"]] containsString:family]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 + (id)fontSizeEstimatorForFont:(NSFont *)aFont
