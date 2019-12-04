@@ -367,7 +367,7 @@ static int OctalValue(const char *bytes) {
 
                 // Check if we know the position for the window
                 NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
-                NSValue *windowPos = [self.controller positionForWindowWithPanes:panes];
+                NSValue *windowPos = [self.controller positionForWindowWithPanes:panes windowID:windowIndex_];
                 if (windowPos) {
                     [[term window] setFrameOrigin:[windowPos pointValue]];
                 }

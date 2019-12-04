@@ -1501,8 +1501,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 // Find a position for any key in panes and remove all entries with keys in panes.
+// windowPositions_ is used for setting the origin of a pane after moving it into a window, which
+// is rarely done. This falls back to the recorded window origin if one is present.
 - (NSValue *)positionForWindowWithPanes:(NSArray *)panes
-{
+                               windowID:(int)windowID {
     NSValue *pos = nil;
     for (NSNumber *n in panes) {
         pos = [windowPositions_ objectForKey:n];
@@ -1512,7 +1514,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
     }
     [windowPositions_ removeObjectsForKeys:panes];
-    return pos;
+    return pos ?: origins_[@(windowID)];
 }
 
 - (void)renameSessionNumber:(int)sessionNumber

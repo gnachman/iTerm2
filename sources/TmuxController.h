@@ -98,7 +98,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session;
 - (void)changeWindow:(int)window tabTo:(PTYTab *)tab;
-- (NSValue *)positionForWindowWithPanes:(NSArray *)panes;
+- (NSValue *)positionForWindowWithPanes:(NSArray *)panes windowID:(int)windowID;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
