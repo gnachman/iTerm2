@@ -164,10 +164,9 @@
     if ([self actionForEvent:event clicks:1 withTouches:3]) {
         return NO;
     }
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.forceClick"];
-    if (number && number.boolValue) {
-        // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
-        // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.
+
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.threeFingerTapGesture"];
+    if (number.integerValue == 2) {
         [self performAction:kQuickLookAction forEvent:event withArgument:nil];
         return YES;
     }
