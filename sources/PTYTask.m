@@ -53,9 +53,8 @@ static void HandleSigChld(int n) {
 @interface PTYTask ()<iTermTask>
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
-@property(atomic, retain) NSFileHandle *logHandle;
-@property(nonatomic, copy) NSString *logPath;
 @property(atomic, readwrite) int fd;
+@property(atomic, weak) iTermLoggingHelper *loggingHelper;
 @end
 
 @implementation PTYTask {
@@ -110,7 +109,6 @@ static void HandleSigChld(int n) {
     }
 
     [self closeFileDescriptor];
-    [_logHandle closeFile];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
@@ -180,12 +178,6 @@ static void HandleSigChld(int n) {
     return [iTermLSOF workingDirectoryOfProcess:self.pid];
 }
 
-- (BOOL)logging {
-    @synchronized(self) {
-        return (_logHandle != nil);
-    }
-}
-
 - (Coprocess *)coprocess {
     @synchronized (self) {
         return coprocess_;
@@ -243,11 +235,10 @@ static void HandleSigChld(int n) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
-           autologPath:(NSString *)autologPath
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion {
-    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
-         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8), autologPath, @(synchronous));
+    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@ synchronous:%@",
+         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8),  @(synchronous));
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // We want to run
@@ -263,7 +254,6 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
-                       autologPath:autologPath
                        synchronous:synchronous
                         completion:completion];
     } else {
@@ -274,7 +264,6 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
-                       autologPath:autologPath
                        synchronous:synchronous
                         completion:completion];
     }
@@ -376,7 +365,7 @@ static void HandleSigChld(int n) {
 
 - (void)stop {
     self.paused = NO;
-    [self stopLogging];
+    [self.loggingHelper stop];
     [self killWithMode:iTermJobManagerKillingModeRegular];
 
     // Ensure the server is broken out of accept()ing for future connections
@@ -407,35 +396,6 @@ static void HandleSigChld(int n) {
     }
     if (self.isCoprocessOnly) {
         self.coprocessOnlyTaskIsDead = YES;
-    }
-}
-
-- (BOOL)startLoggingToFileWithPath:(NSString*)aPath shouldAppend:(BOOL)shouldAppend {
-    @synchronized(self) {
-        self.logPath = [aPath stringByStandardizingPath];
-
-        [_logHandle closeFile];
-        self.logHandle = [NSFileHandle fileHandleForWritingAtPath:_logPath];
-        if (_logHandle == nil) {
-            NSFileManager *fileManager = [NSFileManager defaultManager];
-            [fileManager createFileAtPath:_logPath contents:nil attributes:nil];
-            self.logHandle = [NSFileHandle fileHandleForWritingAtPath:_logPath];
-        }
-        if (shouldAppend) {
-            [_logHandle seekToEndOfFile];
-        } else {
-            [_logHandle truncateFileAtOffset:0];
-        }
-
-        return self.logging;
-    }
-}
-
-- (void)stopLogging {
-    @synchronized(self) {
-        [_logHandle closeFile];
-        self.logPath = nil;
-        self.logHandle = nil;
     }
 }
 
@@ -524,20 +484,6 @@ static void HandleSigChld(int n) {
     [[TaskNotifier sharedInstance] performSelectorOnMainThread:@selector(notifyCoprocessChange)
                                                     withObject:nil
                                                  waitUntilDone:NO];
-}
-
-- (void)logData:(const char *)buffer length:(int)length {
-    @synchronized(self) {
-        if ([self logging]) {
-            @try {
-                [_logHandle writeData:[NSData dataWithBytes:buffer
-                                                     length:length]];
-            } @catch (NSException *exception) {
-                DLog(@"Exception while logging %@ bytes of data: %@", @(length), exception);
-                [self stopLogging];
-            }
-        }
-    }
 }
 
 - (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
@@ -699,14 +645,10 @@ static void HandleSigChld(int n) {
                     gridSize:(VT100GridSize)gridSize
                     viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
-                 autologPath:(NSString *)autologPath
                  synchronous:(BOOL)synchronous
                   completion:(void (^)(void))completion {
-    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
-         progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8), autologPath, @(synchronous));
-    if (autologPath) {
-        [self startLoggingToFileWithPath:autologPath shouldAppend:[iTermAdvancedSettingsModel autologAppends]];
-    }
+    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@ synchronous:%@",
+         progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8), @(synchronous));
 
     iTermTTYState ttyState;
     iTermTTYStateInit(&ttyState, gridSize, viewSize, isUTF8);
@@ -815,7 +757,11 @@ static void HandleSigChld(int n) {
 
 // The bytes in data were just read from the fd.
 - (void)readTask:(char *)buffer length:(int)length {
-    [self logData:buffer length:length];
+    if (self.loggingHelper) {
+        [self.loggingHelper logData:[NSData dataWithBytesNoCopy:buffer
+                                                         length:length
+                                                   freeWhenDone:NO]];
+    }
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
     // main thread for execution. If its queues get too large, it can block.
@@ -885,6 +831,17 @@ static void HandleSigChld(int n) {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
         [self.delegate taskWasDeregistered];
     }
+}
+
+#pragma mark - iTermLoggingHelper 
+
+// NOTE: This can be called before the task is launched. It is not used when logging plain text.
+- (void)loggingHelperStart:(iTermLoggingHelper *)loggingHelper {
+    self.loggingHelper = loggingHelper;
+}
+
+- (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
+    self.loggingHelper = nil;
 }
 
 @end

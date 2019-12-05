@@ -4795,8 +4795,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             chars[1].complexChar = NO;
         }
 
+        NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars length:length shouldFree:NO];
+            [delegate_ screenDidAppendStringToCurrentLine:string];
         }
     }
 }

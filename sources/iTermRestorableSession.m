@@ -27,7 +27,10 @@
         self.sessions = [restorableState[@"sessionFrameTuples"] mapWithBlock:^id(NSArray *tuple) {
             NSRect frame = [(NSValue *)tuple[0] rectValue];
             NSDictionary *arrangement = tuple[1];
-            return [PTYSession sessionFromArrangement:arrangement inView:[[[SessionView alloc] initWithFrame:frame] autorelease] withDelegate:nil forObjectType:iTermPaneObject];
+            return [PTYSession sessionFromArrangement:arrangement
+                                               inView:[[[SessionView alloc] initWithFrame:frame] autorelease]
+                                         withDelegate:nil
+                                        forObjectType:iTermPaneObject];
         }];
         self.terminalGuid = restorableState[@"terminalGuid"];
         self.arrangement = restorableState[@"arrangement"];

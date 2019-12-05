@@ -3,6 +3,7 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermFileDescriptorClient.h"
+#import "iTermLoggingHelper.h"
 #import "iTermTTYState.h"
 #import "VT100GridTypes.h"
 
@@ -74,7 +75,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 
 @end
 
-@interface PTYTask : NSObject
+@interface PTYTask : NSObject<iTermLogging>
 
 @property(atomic, readonly) BOOL hasMuteCoprocess;
 @property(atomic, weak) id<PTYTaskDelegate> delegate;
@@ -95,7 +96,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 @property(atomic, readonly) NSString *tty;
 @property(atomic, readonly) NSString *path;
 @property(atomic, readonly) NSString *getWorkingDirectory;
-@property(atomic, readonly) BOOL logging;
 @property(atomic, readonly) BOOL hasOutput;
 @property(atomic, readonly) BOOL wantsRead;
 @property(atomic, readonly) BOOL wantsWrite;
@@ -120,7 +120,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
-           autologPath:(NSString *)autologPath
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion;
 
@@ -135,15 +134,11 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 
 - (void)stop;
 
-- (BOOL)startLoggingToFileWithPath:(NSString*)path shouldAppend:(BOOL)shouldAppend;
-- (void)stopLogging;
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
 
 - (void)stopCoprocess;
-
-- (void)logData:(const char *)buffer length:(int)length;
 
 // If [iTermAdvancedSettingsModel runJobsInServers] is on, then try for up to
 // |timeout| seconds to connect to the server. Returns YES on success.

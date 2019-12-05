@@ -884,7 +884,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenDidReceiveLineFeed {
 }
 
-
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
 }
 

@@ -209,6 +209,7 @@
 #define KEY_REDUCE_FLICKER                    @"Reduce Flicker"
 #define KEY_SHOW_STATUS_BAR                   @"Show Status Bar"
 #define KEY_STATUS_BAR_LAYOUT                 @"Status Bar Layout"
+#define KEY_PLAIN_TEXT_LOGGING                @"Plain Text Logging"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"

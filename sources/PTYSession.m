@@ -39,6 +39,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermScriptConsole.h"
@@ -235,6 +236,7 @@ static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  
 static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Lived Single Use";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to Shell";  // NSString -> NSString (example: example.com -> fish)
 static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type Override";  // NSNumber wrapping ITermCursorType
+static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Name";  // NSString. New as of 12/4/19
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -276,6 +278,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermCoprocessDelegate,
     iTermCopyModeHandlerDelegate,
     iTermHotKeyNavigableSession,
+    iTermLogging,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
     iTermObject,
@@ -554,6 +557,7 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _titleDirty;
     // May be stale, but allows us to update titles fast after an OSC 0/1/2
     iTermProcessInfo *_lastProcessInfo;
+    iTermLoggingHelper *_logging;
 }
 
 @synthesize isDivorced = _divorced;
@@ -786,6 +790,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     [_view release];
+    [_logging stop];
     if (@available(macOS 10.11, *)) {
         [_metalGlue release];
     }
@@ -893,6 +898,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_divorceDecree release];
     [_cursorTypeOverride release];
     [_lastProcessInfo release];
+    _logging.rawLogger = nil;
+    _logging.plainLogger = nil;
+    [_logging release];
 
     [super dealloc];
 }
@@ -1416,7 +1424,6 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL attachedToServer = NO;
     typedef void (^iTermBooleanCompletionBlock)(BOOL ok);
     void (^runCommandBlock)(iTermBooleanCompletionBlock) = ^(void (^completion)(BOOL)) { completion(YES); };
-    BOOL startAutoLog = NO;
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
@@ -1535,9 +1542,6 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         // Is a tmux pane
         // NOTE: There used to be code here that used state[@"title"] but AFAICT that didn't exist.
-        if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
-            startAutoLog = YES;
-        }
         [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
     void (^finish)(BOOL) = ^(BOOL ok) {
@@ -1558,23 +1562,37 @@ ITERM_WEAKLY_REFERENCEABLE
                                               missingProfile:missingProfile];
         [aSession didFinishInitialization:YES];
     };
-    if (startAutoLog) {
+    if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
         [aSession retain];
-        [aSession fetchAutoLogFilenameSynchronously:NO
-                                         completion:
-         ^(NSString * _Nonnull filename) {
-             if (filename) {
-                 [aSession.shell startLoggingToFileWithPath:filename
-                                               shouldAppend:[iTermAdvancedSettingsModel autologAppends]];
-             }
-             [aSession autorelease];
-             runCommandBlock(finish);
-         }];
+        void (^startLogging)(NSString *) = ^(NSString *filename) {
+            if (filename) {
+                [[aSession loggingHelper] setPath:filename
+                                          enabled:YES
+                                        plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
+                                                                            inProfile:aSession.profile]
+                                       append:@YES];
+            }
+            [aSession autorelease];
+            runCommandBlock(finish);
+        };
+        if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents) {
+            startLogging(arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME]);
+        } else {
+            [aSession fetchAutoLogFilenameSynchronously:NO completion:startLogging];
+        }
     } else {
         runCommandBlock(finish);
     }
 
     return aSession;
+}
+
+- (iTermLoggingHelper *)loggingHelper {
+    if (_logging) {
+        return _logging;
+    }
+    _logging = [[iTermLoggingHelper alloc] initWithRawLogger:_shell plainLogger:self];
+    return _logging;
 }
 
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
@@ -2084,6 +2102,12 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             [self fetchAutoLogFilenameSynchronously:synchronous
                                          completion:^(NSString * _Nonnull autoLogFilename) {
+                [[self loggingHelper] setPath:autoLogFilename
+                                      enabled:autoLogFilename != nil
+                                    plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
+                                                                        inProfile:self.profile]
+                                       append:nil];
+
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
@@ -2091,7 +2115,6 @@ ITERM_WEAKLY_REFERENCEABLE
                               gridSize:_screen.size
                               viewSize:_screen.viewSize
                                 isUTF8:isUTF8
-                           autologPath:autoLogFilename
                            synchronous:synchronous
                             completion:^{
                                 [self sendInitialText];
@@ -2899,6 +2922,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     DLog(@"  brokenPipe: set exited = YES");
     _exited = YES;
+    [_logging stop];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
@@ -3001,6 +3025,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     _exited = NO;
     [_shell release];
+    [_logging stop];
+
+    self.guid = [NSString uuid];
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
     [_shell setSize:_screen.size viewSize:_screen.viewSize];
@@ -4299,9 +4326,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview updateCursor:[NSApp currentEvent]];
 }
 
-- (BOOL)logging
-{
-    return [_shell logging];
+- (BOOL)logging {
+    return _logging.enabled;
 }
 
 - (void)logStart {
@@ -4311,16 +4337,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                                 defaultFilename:@""];
     if (savePanel.path) {
         BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
-        BOOL ok = [_shell startLoggingToFileWithPath:savePanel.path
-                                        shouldAppend:shouldAppend];
-        if (!ok) {
-            NSBeep();
-        }
+        [[self loggingHelper] setPath:savePanel.path
+                              enabled:YES
+                            plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
+                                                                inProfile:self.profile]
+                               append:@(shouldAppend)];
     }
 }
 
 - (void)logStop {
-    [_shell stopLogging];
+    [_logging stop];
 }
 
 - (void)clearBuffer {
@@ -4480,6 +4506,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 result[SESSION_ARRANGEMENT_TTY] = self.tty;
             }
         }
+    }
+    if (_logging.enabled) {
+        result[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] = _logging.path;
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
         result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
@@ -6499,7 +6528,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)tmuxReadTask:(NSData *)data
 {
     if (!_exited) {
-        [_shell logData:(const char *)[data bytes] length:[data length]];
+        if (!_logging.plainText) {
+            [_logging logData:data];
+        }
         // Dispatch this in a background thread to keep threadedReadTask:
         // simple. It always asynchronously dispatches to the main thread,
         // which would deadlock if it were called on the main thread.
@@ -8784,6 +8815,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [self appendStringToTriggerLine:string];
+    if (_logging.enabled && _logging.plainText) {
+        [_logging logData:[string dataUsingEncoding:_terminal.encoding]];
+    }
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
@@ -8792,6 +8826,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                      length:asciiData->length
                                                    encoding:NSASCIIStringEncoding] autorelease];
         [self screenDidAppendStringToCurrentLine:string];
+    } else {
+        if (_logging.enabled && _logging.plainText) {
+            [_logging logData:[NSData dataWithBytesNoCopy:asciiData->buffer
+                                                   length:asciiData->length
+                                             freeWhenDone:NO]];
+        }
     }
 }
 
@@ -10550,6 +10590,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidReceiveLineFeed {
     [_pwdPoller didReceiveLineFeed];
+    if (_logging.enabled && _logging.plainText) {
+        [_logging logData:[NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
+    }
 }
 
 - (void)screenSoftAlternateScreenModeDidChange {
@@ -12046,6 +12089,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     response.status = ITMNotificationResponse_Status_Ok;
     return response;
+}
+
+#pragma mark - iTermLogging
+
+- (void)loggingHelperStart:(iTermLoggingHelper *)loggingHelper {
+}
+
+- (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
 }
 
 @end

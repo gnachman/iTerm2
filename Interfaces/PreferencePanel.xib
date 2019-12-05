@@ -1555,6 +1555,7 @@ DQ
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_neverWarn" destination="S85-6e-Wc9" id="6nd-Pt-QYC"/>
                 <outlet property="_onEndAction" destination="P7Z-yJ-1GX" id="I5b-mZ-OFg"/>
+                <outlet property="_plainTextLogging" destination="Tl8-Wq-C80" id="ZeC-1a-hoU"/>
                 <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
@@ -3667,7 +3668,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" ambiguous="YES" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -3978,6 +3979,17 @@ DQ
                         <action selector="settingChanged:" target="TG6-06-mq9" id="JDH-Oz-X6P"/>
                     </connections>
                 </popUpButton>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tl8-Wq-C80">
+                    <rect key="frame" x="437" y="118" width="104" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Log plain text" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Ajt-gf-YM2">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="TG6-06-mq9" id="jrl-4x-XIp"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesSession"/>
             <point key="canvasLocation" x="713.5" y="725"/>
