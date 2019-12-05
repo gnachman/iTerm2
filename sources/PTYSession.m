@@ -4331,7 +4331,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)logStart {
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionPlainTextAccessory
+    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory
                                                      identifier:@"StartSessionLog"
                                                initialDirectory:NSHomeDirectory()
                                                 defaultFilename:@""];
@@ -4339,7 +4339,7 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
         [[self loggingHelper] setPath:savePanel.path
                               enabled:YES
-                            plainText:savePanel.checkboxSelected
+                            plainText:savePanel.shoudLogPlainText
                                append:@(shouldAppend)];
     }
 }
