@@ -164,8 +164,6 @@ static BOOL hasBecomeActive = NO;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *logStart;
-    IBOutlet NSMenuItem *logStop;
     IBOutlet NSMenuItem *closeTab;
     IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *irPrev;
@@ -1730,14 +1728,6 @@ static BOOL hasBecomeActive = NO;
     if (currentTerminal != [[aSession delegate] parentWindow] ||
         ![[currentTerminal window] isKeyWindow]) {
         return;
-    }
-
-    if (aSession == nil || [aSession exited]) {
-        [logStart setEnabled: NO];
-        [logStop setEnabled: NO];
-    } else {
-        [logStart setEnabled: ![aSession logging]];
-        [logStop setEnabled: [aSession logging]];
     }
 }
 

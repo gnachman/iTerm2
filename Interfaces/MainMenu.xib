@@ -816,16 +816,12 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Log" id="227">
-                                <menu key="submenu" title="Log" autoenablesItems="NO" id="228">
+                                <menu key="submenu" title="Log" id="228">
                                     <items>
-                                        <menuItem title="Start" identifier="Log.Start" id="229">
+                                        <menuItem title="Log to File" identifier="Log.Toggle" id="dj8-Cg-b5y">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
-                                                <action selector="logStart:" target="-1" id="231"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Stop" identifier="Log.Stop" id="230">
-                                            <connections>
-                                                <action selector="logStop:" target="-1" id="232"/>
+                                                <action selector="startStopLogging:" target="-1" id="8Wf-nY-BBO"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="xCY-NV-Vjc"/>
@@ -1317,8 +1313,6 @@ DQ
                 <outlet property="closeTab" destination="635" id="795"/>
                 <outlet property="closeWindow" destination="598" id="796"/>
                 <outlet property="irPrev" destination="976" id="980"/>
-                <outlet property="logStart" destination="229" id="793"/>
-                <outlet property="logStop" destination="230" id="794"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
                 <outlet property="selectTab" destination="847" id="863"/>
                 <outlet property="showFullScreenTabs" destination="1257" id="1260"/>

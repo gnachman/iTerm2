@@ -9494,26 +9494,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [iTermRecordingCodec exportRecording:self.currentSession];
 }
 
-// Turn on session logging in the current session.
-- (IBAction)logStart:(id)sender
-{
-    if (![[self currentSession] logging]) {
+- (IBAction)startStopLogging:(id)sender {
+    if (self.currentSession.logging) {
+        [[self currentSession] logStop];
+    } else {
         [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
         [[self currentSession] logStart];
     }
-    // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
-                                                        object:[self currentSession]];
-}
-
-// Turn off session logging in the current session.
-- (IBAction)logStop:(id)sender {
-    if ([[self currentSession] logging]) {
-        [[self currentSession] logStop];
-    }
-    // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
-                                                        object:[self currentSession]];
 }
 
 - (void)addRevivedSession:(PTYSession *)session {
@@ -9524,9 +9511,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
-    BOOL logging = [[self currentSession] logging];
     BOOL result = YES;
-
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
         [item action] == @selector(newTmuxTab:) ||
@@ -9562,10 +9547,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {
         result = [[self currentSession] hasCoprocess];
-    } else if ([item action] == @selector(logStart:)) {
-        result = logging == YES ? NO : YES;
-    } else if ([item action] == @selector(logStop:)) {
-        result = logging == NO ? NO : YES;
+    } else if ([item action] == @selector(startStopLogging:)) {
+        PTYSession *session = self.currentSession;
+        if (!session || session.exited) {
+            item.state = NSOffState;
+            return NO;
+        }
+        item.state = session.logging ? NSOnState : NSOffState;
+        return YES;
     } else if ([item action] == @selector(irPrev:)) {
         result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {

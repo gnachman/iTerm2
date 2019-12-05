@@ -12,7 +12,8 @@ typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     // If the file exists, ask the user if he'd like to append to it or replace it.
     // If this option is not set, the user will only be asked about replacing.
     kSavePanelOptionAppendOrReplace = (1 << 0),
-    kSavePanelOptionFileFormatAccessory = (1 << 1)
+    kSavePanelOptionFileFormatAccessory = (1 << 1),
+    kSavePanelOptionPlainTextAccessory = (1 << 2)
 };
 
 typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
@@ -28,6 +29,7 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
 
 // Path the user selected.
 @property(nonatomic, readonly) NSString *path;
+@property (nonatomic, readonly) BOOL checkboxSelected;
 
 // Prompts the user and returns a new iTermSavePanel.
 + (iTermSavePanel *)showWithOptions:(NSInteger)options

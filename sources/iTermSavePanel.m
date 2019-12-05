@@ -92,9 +92,16 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         savePanel.allowedFileTypes = allowedFileTypes;
     }
     iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
+    NSButton *button = nil;
     if (options & kSavePanelOptionFileFormatAccessory) {
         accessoryViewController = [self newFileFormatAccessoryViewControllerFileWithFileTypes:allowedFileTypes];
         savePanel.accessoryView = accessoryViewController.view;
+    } else if (options & kSavePanelOptionPlainTextAccessory) {
+        button = [[NSButton alloc] init];
+        button.buttonType = NSSwitchButton;
+        button.title = @"Log plain text only";
+        [button sizeToFit];
+        savePanel.accessoryView = button;
     }
     iTermSavePanel *delegate = [[iTermSavePanel alloc] initWithOptions:options];
     accessoryViewController.onChange = ^(NSInteger i){
@@ -147,7 +154,10 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             @{ kInitialDirectoryKey: [delegate.path stringByDeletingLastPathComponent] };
         [[NSUserDefaults standardUserDefaults] setObject:settings forKey:key];
     }
-
+    if (delegate) {
+        delegate->_checkboxSelected = (button.state == NSOnState);
+    }
+    
     return delegate.path ? delegate : nil;
 }
 
