@@ -2135,6 +2135,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseDragged:(NSEvent *)event {
     DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
+    const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
     _makingThreeFingerSelection = (_numTouches == 3);
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
@@ -2225,8 +2226,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
 
-    if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
-        _committedToDrag = YES;
+    if (!wasMakingThreeFingerSelection && _makingThreeFingerSelection) {
+        DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
+        const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
+        const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
+        const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
+        const BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+        if (isExtension && [_selection hasSelection]) {
+            if (!_selection.live) {
+                DLog(@"Begin extending");
+                [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+            }
+        } else {
+            iTermSelectionMode mode;
+            if ((event.it_modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
+                mode = kiTermSelectionModeBox;
+            } else {
+                mode = kiTermSelectionModeCharacter;
+            }
+
+            DLog(@"Begin selection");
+            [_selection beginSelectionAt:VT100GridCoordMake(x, y)
+                                    mode:mode
+                                  resume:NO
+                                  append:(cmdPressed && !altPressed)];
+            _selection.resumable = YES;
+        }
+    } else {
+        DLog(@"Update live selection during drag");
+        if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
+            _committedToDrag = YES;
+        }
     }
 }
 
