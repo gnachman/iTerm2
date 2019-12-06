@@ -3688,8 +3688,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
         NSColor *theColor = nil;
         if ([profileKey isKindOfClass:[NSString class]]) {
-            theColor = [[iTermProfilePreferences objectForKey:profileKey
-                                                    inProfile:aDict] colorValue];
+            NSDictionary *dict = [iTermProfilePreferences objectForKey:profileKey
+                                                             inProfile:aDict];
+            if (![dict isKindOfClass:[NSDictionary class]]) {
+                continue;
+            }
+            theColor = [dict colorValue];
         }
 
         [_colorMap setColor:theColor forKey:[colorKey intValue]];

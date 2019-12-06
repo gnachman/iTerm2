@@ -19,6 +19,9 @@
 
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
+@interface ProfilesColorsPreferencesViewController()<NSMenuDelegate>
+@end
+
 @implementation ProfilesColorsPreferencesViewController {
     IBOutlet CPKColorWell *_ansi0Color;
     IBOutlet CPKColorWell *_ansi1Color;
@@ -85,6 +88,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSPopUpButton *_presetsPopupButton;
     IBOutlet NSView *_bwWarning1;
     IBOutlet NSView *_bwWarning2;
+
+    NSDictionary<NSString *, id> *_savedColors;
 }
 
 + (NSArray<NSString *> *)presetNames {
@@ -319,6 +324,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [self addPresetItemWithTitle:@"Export..." action:@selector(exportColorPreset:)];
     [self addPresetItemWithTitle:@"Delete Preset..." action:@selector(deleteColorPreset:)];
     [self addPresetItemWithTitle:@"Visit Online Gallery" action:@selector(visitGallery:)];
+    _presetsMenu.delegate = self;
 }
 
 - (void)addPresetItemWithTitle:(NSString *)title action:(SEL)action {
@@ -418,6 +424,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (void)loadColorPreset:(id)sender {
+    _savedColors = nil;
     [self loadColorPresetWithName:[sender title]];
 }
 
@@ -438,11 +445,30 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return YES;
 }
 
+- (NSDictionary *)currentColors {
+    NSMutableDictionary<NSString *, id> *dict = [NSMutableDictionary dictionary];
+    for (NSString *key in [ProfileModel colorKeys]) {
+        dict[key] = [self objectForKey:key] ?: [NSNull null];
+    }
+    return dict;
+}
+
+- (void)restoreColors {
+    [_savedColors enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id value = [obj nilIfNull];
+        if (![NSObject object:value isEqualToObject:[self objectForKey:key]]) {
+            [self setObject:value forKey:key];
+        }
+    }];
+}
+
 // If the current color settings exactly match a preset, place a check mark next to it and uncheck
 // all others. If multiple presets match, check the first matching one.
 - (void)popupButtonWillPopUp:(id)sender {
     BOOL found = NO;
     iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
+
+    _savedColors = [self currentColors];
 
     for (NSMenuItem *item in _presetsMenu.itemArray) {
         if (item.action == @selector(loadColorPreset:)) {
@@ -455,6 +481,21 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             }
         }
     }
+}
+
+#pragma mark - NSMenuDelegate
+
+- (void)menu:(NSMenu *)menu willHighlightItem:(nullable NSMenuItem *)item {
+    if (item.action == @selector(loadColorPreset:)) {
+        [self loadColorPresetWithName:item.title];
+    } else {
+        [self restoreColors];
+    }
+}
+
+- (void)menuDidClose:(NSMenu *)menu {
+    [self restoreColors];
+    _savedColors = nil;
 }
 
 @end
