@@ -13,4 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 // or malloc returns NULL. Use `free` to dispose of this pointer.
 void *iTermMalloc(NSInteger size);
 
+// Like realloc, but will never return NULL. Dies if the size is negative or realloc() returns NULL.
+// Stubbornly refuses to allow signed integers to overflow. Use `free` to dispose of this pointer.
+void *iTermRealloc(void *p, NSInteger count, size_t size);
+
 NS_ASSUME_NONNULL_END

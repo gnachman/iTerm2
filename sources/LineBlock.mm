@@ -281,8 +281,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
-        cumulative_line_lengths = (int*) realloc((void*) cumulative_line_lengths, cll_capacity * sizeof(int));
-        metadata_ = (LineBlockMetadata *)realloc((void *)metadata_, cll_capacity * sizeof(LineBlockMetadata));
+        cumulative_line_lengths = (int*) iTermRealloc((void*) cumulative_line_lengths, cll_capacity, sizeof(int));
+        metadata_ = (LineBlockMetadata *)iTermRealloc((void *)metadata_, cll_capacity, sizeof(LineBlockMetadata));
         if (gEnableDoubleWidthCharacterLineCache) {
             memset(metadata_ + cll_entries,
                    0,
@@ -922,7 +922,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 - (void)changeBufferSize:(int)capacity {
     ITUpgradedNSAssert(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
-    raw_buffer = (screen_char_t*) realloc((void*) raw_buffer, sizeof(screen_char_t) * capacity);
+    raw_buffer = (screen_char_t*) iTermRealloc((void*) raw_buffer, sizeof(screen_char_t), capacity);
     buffer_start = raw_buffer + start_offset;
     buffer_size = capacity;
     cached_numlines_width = -1;

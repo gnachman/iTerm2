@@ -45,8 +45,9 @@ NS_INLINE void CVectorSet(const CVector *vector, int index, void *value) {
 
 NS_INLINE void CVectorAppend(CVector *vector, void *value) {
     if (vector->count + 1 == vector->capacity) {
+        assert(vector->capacity >= 0 && vector->capacity < (1 << 27));
         vector->capacity *= 2;
-        vector->elements = realloc(vector->elements, sizeof(void *) * vector->capacity);
+        vector->elements = iTermRealloc(vector->elements, vector->capacity, sizeof(void *));
     }
     vector->elements[vector->count++] = value;
 }
@@ -107,8 +108,9 @@ do { \
   __typeof(__vector) __v = (__vector); \
   \
   while (__v->count + 1 >= __v->capacity) { \
+    assert(__v->capacity >= 0 && __v->capacity < (1 << 27)); \
     __v->capacity *= 2; \
-    __v->elements = realloc(__v->elements, sizeof(*__v->elements) * __v->capacity); \
+    __v->elements = iTermRealloc(__v->elements, __v->capacity, sizeof(*__v->elements)); \
   } \
   __v->elements[__v->count++] = (__value); \
 } while(0)
