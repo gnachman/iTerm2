@@ -4801,11 +4801,39 @@ ITERM_WEAKLY_REFERENCEABLE
         self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     } else {
         self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
-        self.window.styleMask = [self styleMask];
+        [self safelySetStyleMask:self.styleMask];
         [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
                       display:YES];
     }
     self.window.alphaValue = 1;
+}
+
+- (void)safelySetStyleMask:(NSWindowStyleMask)styleMask {
+    // Try to work around a bug that seems to have been added in the 10.15 SDK. NSScrollView is KVO-
+    // observing contentLayoutGuide.frame and NSWindow is not KVO compliant for it. When the style
+    // mask changes, the scroll view removes its observers and dies because the _borderView changed
+    // without its knowledge. The symptom is a crash with this text:
+    // Crashing on exception: Cannot remove an observer <PTYScrollView 0xaddress> for the key path
+    // "contentLayoutGuide.frame" from <iTermWindow 0xaddress)>, most likely because the value for
+    // the key "contentLayoutGuide" has changed without an appropriate KVO notification being sent.
+    // Check the KVO-compliance of the iTermWindow class.
+    //
+    // https://feedbackassistant.apple.com/feedback/7483151
+    const BOOL hasThemeFrame = (styleMask & NSWindowStyleMaskTitled);
+    const BOOL hadThemeFrame = (self.window.styleMask & NSWindowStyleMaskTitled);
+    if (hasThemeFrame == hadThemeFrame) {
+        // The _borderView won't change so the bug shouldn't recur. This is the normal case when
+        // not toggling traditional fullscreen.
+        self.window.styleMask = styleMask;
+        return;
+    }
+
+    // Force the KVO to be removed, replace the style mask, and then re-add the content view to make
+    // all well again.
+    [[_contentView retain] autorelease];
+    self.window.contentView = [[[NSView alloc] init] autorelease];
+    self.window.styleMask = styleMask;
+    self.window.contentView = _contentView;
 }
 
 - (void)willExitTraditionalFullScreenMode {
@@ -4817,7 +4845,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // NOTE: Setting the style mask causes the presentation options to be
         // changed (menu/dock hidden) because refreshTerminal gets called.
         self.windowType = self.savedWindowType;
-        self.window.styleMask = [self styleMask];
+        [self safelySetStyleMask:[self styleMask]];
     }
     [self showMenuBar];
 
@@ -5213,10 +5241,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (@available(macOS 10.14, *)) {
         if (lionFullScreen_) {
-            self.window.styleMask = self.styleMask | NSWindowStyleMaskFullScreen;
+            [self safelySetStyleMask:self.styleMask | NSWindowStyleMaskFullScreen];
         } else {
             NSRect frameBefore = self.window.frame;
-            self.window.styleMask = [self styleMask];
+            [self safelySetStyleMask:[self styleMask]];
             if (!_fullScreen) {
                 // Changing the style mask can cause the frame to change.
                 [self.window setFrame:frameBefore display:YES];
@@ -5401,9 +5429,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
     } else {
-        self.window.styleMask = [PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                       savedWindowType:self.savedWindowType
-                                                      hotkeyWindowType:_hotkeyWindowType];
+        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
+                                                        savedWindowType:self.savedWindowType
+                                                       hotkeyWindowType:_hotkeyWindowType]];
     }
     [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
     [_contentView.tabBarControl updateFlashing];
@@ -5432,9 +5460,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     DLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
     if (@available(macOS 10.14, *)) {
-        self.window.styleMask = [PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                       savedWindowType:self.savedWindowType
-                                                      hotkeyWindowType:_hotkeyWindowType];
+        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
+                                                        savedWindowType:self.savedWindowType
+                                                       hotkeyWindowType:_hotkeyWindowType]];
     }
     const iTermWindowType desiredWindowType = self.savedWindowType;
     [self updateWindowForWindowType:desiredWindowType];
@@ -8470,7 +8498,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
-    self.window.styleMask = self.styleMask;
+    [self safelySetStyleMask:self.styleMask];
     [self updateTabBarStyle];
     [self updateProxyIcon];
 
