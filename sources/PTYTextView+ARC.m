@@ -415,6 +415,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                 break;
             }
             url = [NSURL URLWithUserSuppliedString:urlAction.string];
+            if (![@[ @"http", @"https" ] containsObject:url.scheme]) {
+                return;
+            }
             if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
                 return;
             }
