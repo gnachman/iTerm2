@@ -172,7 +172,8 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
 
 #pragma mark - Private
 
-- (NSDictionary<NSString *, NSString *> *)metadataDictionaryFromString:(NSString *)metadata {
+- (NSDictionary<NSString *, NSString *> *)metadataDictionaryFromString:(NSString *)metadata
+                                                                 error:(out NSError **)error {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     NSArray<NSString *> *rows = [metadata componentsSeparatedByString:@"\n"];
     NSArray<NSString *> *knownKeys = SIGArchiveGetKnownKeys();
@@ -186,6 +187,12 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
         if (![knownKeys containsObject:key]) {
             continue;
         }
+        if (dictionary[key]) {
+            if (error) {
+                *error = [SIGError errorWithCode:SIGErrorCodeMalformedMetadata];
+            }
+            return nil;
+        }
         NSString *value = [row substringFromIndex:SIGAddNonnegativeInt64s(index, 1)];
         dictionary[key] = value;
     }
@@ -193,7 +200,11 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
 }
 
 - (BOOL)verifyMetadata:(NSString *)metadata error:(out NSError **)error {
-    NSDictionary *const dictionary = [self metadataDictionaryFromString:metadata];
+    NSDictionary *const dictionary = [self metadataDictionaryFromString:metadata
+                                                                  error:error];
+    if (!dictionary) {
+        return NO;
+    }
     NSString *const versionString = dictionary[SIGArchiveMetadataKeyVersion];
     if (!versionString) {
         if (error) {
