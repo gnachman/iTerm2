@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, SIGErrorCode) {
     SIGErrorCodeVersionTooNew,
     SIGErrorCodeMalformedHeader,
     SIGErrorCodeInputMalformedCertificate,
+    SIGErrorCodeDeprecatedOldVersion,
 
     // Missing container chunks
     SIGErrorCodeNoPrivateKey,
@@ -36,7 +37,7 @@ typedef NS_ENUM(NSUInteger, SIGErrorCode) {
     SIGErrorCodeConsistency,
     SIGErrorCodeUnknown,
 
-    // Algorithm aerrors
+    // Algorithm errors
     SIGErrorCodeAlgorithmCreationFailed,
     SIGErrorCodeUnsupportedAlgorithm,
 

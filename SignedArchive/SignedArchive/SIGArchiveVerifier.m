@@ -9,6 +9,7 @@
 #import "SIGArchiveVerifier.h"
 
 #import "SIGArchiveChunk.h"
+#import "SIGArchiveFlags.h"
 #import "SIGArchiveReader.h"
 #import "SIGCertificate.h"
 #import "SIGError.h"
@@ -18,16 +19,27 @@
 #import "SIGTrust.h"
 #import "SIGVerificationAlgorithm.h"
 
-static NSInteger SIGArchiveVerifiedHighestSupportedVersion = 1;
+static NSInteger SIGArchiveVerifiedHighestSupportedVersion = 2;
+
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
 static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
+#else
+static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
+#endif
 
 @implementation SIGArchiveVerifier {
     SIGArchiveReader *_reader;
     NSError *_readerLoadError;
     SIGTrust *_trust;
     NSInputStream *_payloadInputStream;
+    NSInputStream *_payload2InputStream;
     NSArray<SIGCertificate *> *_certificates;
+
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
     NSData *_signatureData;
+#endif
+
+    NSData *_signature2Data;
     BOOL _called;
     BOOL _prepared;
 }
@@ -193,7 +205,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     }
     if (version < SIGArchiveVerifiedLowestSupportedVersion) {
         if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeMalformedMetadata];
+            *error = [SIGError errorWithCode:SIGErrorCodeDeprecatedOldVersion];
         }
         return NO;
     }
@@ -245,14 +257,30 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
         return NO;
     }
     
-    _payloadInputStream = [_reader payloadInputStream:error];
-    if (!_payloadInputStream) {
-        return NO;
+    _signature2Data = [_reader signature2:error];
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
+    if (!_signature2Data) {
+        _signatureData = [_reader signature:error];
+        if (!_signatureData) {
+            return NO;
+        }
     }
+#endif
 
-    _signatureData = [_reader signature:error];
-    if (!_signatureData) {
+    if (_signature2Data) {
+        _payload2InputStream = [_reader payload2InputStream:error];
+        if (!_payload2InputStream) {
+            return NO;
+        }
+    } else {
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
+        _payloadInputStream = [_reader payloadInputStream:error];
+        if (!_payloadInputStream) {
+            return NO;
+        }
+#else
         return NO;
+#endif
     }
 
     NSArray<NSData *> *certificateDatas = [_reader signingCertificates:error];
@@ -306,10 +334,21 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     if (!algorithm) {
         return NO;
     }
+    if (_signature2Data) {
+        return [algorithm verifyInputStream:_payload2InputStream
+                              signatureData:_signature2Data
+                                  publicKey:_certificates.firstObject.publicKey.secKey
+                                      error:error];
+    }
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
     return [algorithm verifyInputStream:_payloadInputStream
                           signatureData:_signatureData
                               publicKey:_certificates.firstObject.publicKey.secKey
                                   error:error];
+#else
+    *error = [SIGError errorWithCode:SIGErrorCodeNoSignature];
+    return NO;
+#endif
 }
 
 - (SIGArchiveReader *)reader {

@@ -5940,6 +5940,7 @@
 		A6F22AC4239637E200C5D1A9 /* iTermSyntheticConfParser+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermSyntheticConfParser+Private.h"; sourceTree = "<group>"; };
 		A6F22ACA2398D3C900C5D1A9 /* iTermLoggingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLoggingHelper.h; sourceTree = "<group>"; };
 		A6F22ACB2398D3C900C5D1A9 /* iTermLoggingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLoggingHelper.m; sourceTree = "<group>"; };
+		A6F22ACE239B66CC00C5D1A9 /* SIGArchiveFlags.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SIGArchiveFlags.h; path = SignedArchive/SIGArchiveFlags.h; sourceTree = "<group>"; };
 		A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSmartCursorColor.h; sourceTree = "<group>"; };
 		A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSmartCursorColor.m; sourceTree = "<group>"; };
 		A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInitialDirectory.h; sourceTree = "<group>"; };
@@ -7557,6 +7558,7 @@
 				5370677121C9D2750088D0F3 /* SIGTrust.m */,
 				5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */,
 				5370676C21C9D2740088D0F3 /* SIGVerificationAlgorithm.m */,
+				A6F22ACE239B66CC00C5D1A9 /* SIGArchiveFlags.h */,
 			);
 			path = SignedArchive;
 			sourceTree = "<group>";

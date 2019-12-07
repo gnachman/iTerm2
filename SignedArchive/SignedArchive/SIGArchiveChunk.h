@@ -14,8 +14,9 @@ typedef NS_ENUM(long long, SIGArchiveTag) {
     SIGArchiveTagHeader = 0,
     SIGArchiveTagPayload = 1,
     SIGArchiveTagMetadata = 2,
-    SIGArchiveTagSignature = 3,
+    SIGArchiveTagSignature = 3,  // Deprecated. Signs only the payload.
     SIGArchiveTagCertificate = 4,
+    SIGArchiveTagSignature2 = 5,  // Signs the entire file excluding the signature2 chunk. Must be the last entry.
 };
 
 extern NSString *const SIGArchiveHeaderMagicString;

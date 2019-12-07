@@ -10,6 +10,7 @@
 
 #import "SIGArchiveBuilder.h"
 #import "SIGArchiveChunk.h"
+#import "SIGArchiveFlags.h"
 #import "SIGError.h"
 #import "SIGPartialInputStream.h"
 
@@ -86,9 +87,22 @@
     return string;
 }
 
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
 - (NSData *)signature:(out NSError * _Nullable __autoreleasing *)error {
     SIGArchiveChunk *chunk = [self chunkWithTag:SIGArchiveTagSignature];
     if (!chunk) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNoSignature];
+        }
+        return nil;
+    }
+    return [chunk data:error];
+}
+#endif
+
+- (NSData *)signature2:(out NSError * _Nullable __autoreleasing *)error {
+    SIGArchiveChunk *chunk = [self lastChunk];
+    if (chunk.tag != SIGArchiveTagSignature2) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeNoSignature];
         }
@@ -127,6 +141,29 @@
     return [[SIGPartialInputStream alloc] initWithURL:_url
                                                 range:NSMakeRange(chunk.payloadOffset,
                                                                   chunk.payloadLength)];
+}
+
+- (NSInputStream *)payload2InputStream:(out NSError **)error {
+    // The last chunk is the signature. It signs the chunks that precede it. Find the chunk before
+    // the signature to establish the number of bytes to sign.
+    SIGArchiveChunk *chunk = [self penultimateChunk];
+    if (!chunk) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNoPayload];
+        }
+        return nil;
+    }
+
+    const long long length = [chunk payloadOffset] + [chunk payloadLength];
+    if (length <= 0) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNoPayload];
+        }
+        return nil;
+    }
+
+    return [[SIGPartialInputStream alloc] initWithURL:_url
+                                                range:NSMakeRange(0, length)];
 }
 
 - (long long)payloadLength {
@@ -186,6 +223,17 @@
 }
 
 #pragma mark - Private
+
+- (SIGArchiveChunk *)lastChunk {
+    return _chunks.lastObject;
+}
+
+- (SIGArchiveChunk *)penultimateChunk {
+    if (_chunks.count < 2) {
+        return nil;
+    }
+    return _chunks[_chunks.count - 2];
+}
 
 - (SIGArchiveChunk *)chunkWithTag:(SIGArchiveTag)tag {
     NSInteger index = [_chunks indexOfObjectPassingTest:^BOOL(SIGArchiveChunk * _Nonnull obj,

@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "SIGArchiveFlags.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SIGArchiveReader : NSObject
@@ -22,8 +24,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSString *)header:(out NSError **)error;
 - (nullable NSString *)metadata:(out NSError **)error;
+
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
 - (nullable NSData *)signature:(out NSError **)error;
+#endif
+
+- (NSData *)signature2:(out NSError * _Nullable __autoreleasing *)error;
+
+
 - (nullable NSInputStream *)payloadInputStream:(out NSError **)error;
+- (nullable NSInputStream *)payload2InputStream:(out NSError **)error;
 - (nullable NSArray<NSData *> *)signingCertificates:(out NSError **)error;
 
 @end
