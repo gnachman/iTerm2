@@ -195,7 +195,7 @@
 - (void)screenPromptDidStartAtLine:(int)line;
 - (void)screenPromptDidEndAtLine:(int)line;
 
-- (void)screenActivateWindow;
+- (void)screenStealFocus;
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value;
 - (void)screenSetPasteboard:(NSString *)value;

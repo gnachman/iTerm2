@@ -9275,8 +9275,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                          ofClass:theClass];
 }
 
-- (void)screenActivateWindow {
-    [NSApp activateIgnoringOtherApps:YES];
+- (void)screenStealFocus {
+    NSString *const identifier = @"NoSyncAllowDenyStealFocus";
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"A control sequence attempted to activate a session. Allow it?"
+                               actions:@[ @"Allow", @"Deny" ]
+                             accessory:nil
+                            identifier:identifier
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Permission Required"
+                                window:nil];
+    if (selection == kiTermWarningSelection0) {
+        [self reveal];
+    }
 }
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value {

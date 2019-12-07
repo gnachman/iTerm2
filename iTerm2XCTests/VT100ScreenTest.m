@@ -755,7 +755,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return nil;
 }
 
-- (void)screenActivateWindow {
+- (void)screenStealFocus {
 }
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value {

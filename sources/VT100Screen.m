@@ -3667,8 +3667,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalStealFocus {
-    [delegate_ screenActivateWindow];
-    [delegate_ screenRaise:YES];
+    [delegate_ screenStealFocus];
 }
 
 - (void)terminalSetProxyIcon:(NSString *)value {
