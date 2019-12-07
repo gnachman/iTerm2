@@ -33,6 +33,8 @@
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
+NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix = @"NewWindow:";
+NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix = @"NewTab:";
 
 id gAltOpenAllRepresentedObject;
 // Set to true if a bookmark was changed automatically due to migration to a new
@@ -1002,6 +1004,11 @@ int gMigrated;
     return pos;
 }
 
++ (NSString *)identifierForMenuItem:(NSMenuItem *)item {
+    NSString *prefix = item.isAlternate ? iTermProfileModelNewWindowMenuItemIdentifierPrefix : iTermProfileModelNewTabMenuItemIdentifierPrefix;
+    return [prefix stringByAppendingString:item.title];
+}
+
 - (void)addBookmark:(Profile*)b
              toMenu:(NSMenu*)menu
          atPosition:(int)pos
@@ -1012,14 +1019,15 @@ int gMigrated;
     NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:[b objectForKey:KEY_NAME]
                                                   action:isAlternate ? params->alternateSelector : params->selector
                                            keyEquivalent:@""];
-    NSString* shortcut = [b objectForKey:KEY_SHORTCUT];
+    [item setAlternate:isAlternate];
+    item.identifier = [ProfileModel identifierForMenuItem:item];
+    NSString *shortcut = [b objectForKey:KEY_SHORTCUT];
     if ([shortcut length]) {
         [item setKeyEquivalent:[shortcut lowercaseString]];
         [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagControl | (isAlternate ? NSEventModifierFlagOption : 0)];
     } else if (isAlternate) {
         [item setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     }
-    [item setAlternate:isAlternate];
     [item setTarget:params->target];
     [item setRepresentedObject:[[[b objectForKey:KEY_GUID] copy] autorelease]];
     [item setTag:tag];

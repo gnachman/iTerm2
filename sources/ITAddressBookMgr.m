@@ -750,4 +750,19 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     }
 }
 
+// identifier is optional. Old shortcuts only have a title.
++ (BOOL)shortcutIdentifier:(NSString *)identifier title:(NSString *)title matchesItem:(NSMenuItem *)item {
+    if (item.identifier && [identifier isEqualToString:item.identifier]) {
+        return YES;
+    }
+    if (!identifier && [title isEqualToString:[item title]]) {
+        [NSApp sendAction:[item action]
+                       to:[item target]
+                     from:item];
+        return YES;
+    }
+
+    return NO;
+}
+
 @end

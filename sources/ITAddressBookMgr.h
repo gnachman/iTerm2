@@ -405,5 +405,5 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 // kProfileWasDeletedNotification notification, then flushes the model to backing store.
 + (BOOL)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
 + (void)performBlockWithCoalescedNotifications:(void (^)(void))block;
-
++ (BOOL)shortcutIdentifier:(NSString *)identifier title:(NSString *)title matchesItem:(NSMenuItem *)item;
 @end

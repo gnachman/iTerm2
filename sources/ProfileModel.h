@@ -30,6 +30,10 @@ extern NSString *const kReloadAddressBookNotification;
 // All profiles should be reloaded.
 extern NSString *const kReloadAllProfiles;
 
+// Menu item identifier prefixes for NSMenuItems that open a window/tab
+extern NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix;
+extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
+
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
 #define Profile NSDictionary

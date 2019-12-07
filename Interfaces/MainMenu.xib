@@ -978,7 +978,7 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
-                <menuItem title="Profiles" id="591">
+                <menuItem title="Profiles" identifier=".Profiles" id="591">
                     <menu key="submenu" title="Profiles" id="592">
                         <items>
                             <menuItem title="Open Profiles…" keyEquivalent="o" identifier="Open Profiles…" id="952">
@@ -997,6 +997,7 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                         </items>
+                        <accessibility identifier=".Profiles"/>
                     </menu>
                 </menuItem>
                 <menuItem title="Toolbelt" id="1295">

@@ -3201,12 +3201,8 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([PTYSession _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[item submenu]]) {
                 return YES;
             }
-        } else if (item.identifier && [identifier isEqualToString:item.identifier]) {
-            [NSApp sendAction:[item action]
-                           to:[item target]
-                         from:item];
-            return YES;
-        } else if (!identifier && [title isEqualToString:[item title]]) {
+        }
+        if ([ITAddressBookMgr shortcutIdentifier:identifier title:title matchesItem:item]) {
             [NSApp sendAction:[item action]
                            to:[item target]
                          from:item];
