@@ -9525,6 +9525,38 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)screenDidTryToUseDECRQCRA {
+    NSString *const userDefaultsKey = @"NoSyncDisableDECRQCRA";
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSNumber *obj = [NSNumber castFrom:[ud objectForKey:userDefaultsKey]];
+    if (obj) {
+        return;
+    }
+
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"An app tried to read screen contents with DECRQCRA. Enable this feature?"
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:@[ @"Yes", @"No" ]
+                                                completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // Closed
+                break;
+
+            case 0: // Enable
+                [iTermAdvancedSettingsModel setNoSyncDisableDECRQCRA:NO];
+                break;
+
+            case 1: // Disable
+                [iTermAdvancedSettingsModel setNoSyncDisableDECRQCRA:YES];
+                break;
+        }
+    }];
+    [self queueAnnouncement:announcement identifier:userDefaultsKey];
+}
+
 - (void)screenDisinterSession {
     [[iTermBuriedSessions sharedInstance] restoreSession:self];
 }

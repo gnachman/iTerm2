@@ -4144,6 +4144,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return result;
 }
 
+- (BOOL)terminalCanUseDECRQCRA {
+    if (![iTermAdvancedSettingsModel disableDECRQCRA]) {
+        return YES;
+    }
+    [delegate_ screenDidTryToUseDECRQCRA];
+    return NO;
+}
+
 - (void)terminalRequestAttention:(VT100AttentionRequestType)request {
     [delegate_ screenRequestAttention:request];
 }

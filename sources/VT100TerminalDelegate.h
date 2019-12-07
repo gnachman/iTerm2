@@ -393,6 +393,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (BOOL)terminalCursorVisible;
 
 - (BOOL)terminalIsTrusted;
+- (BOOL)terminalCanUseDECRQCRA;
 
 - (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion;
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)value;

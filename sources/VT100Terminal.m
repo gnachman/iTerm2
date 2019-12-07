@@ -1521,6 +1521,9 @@ static const int kMaxScreenRows = 4096;
             break;
         case VT100CSI_DECRQCRA: {
             if ([delegate_ terminalIsTrusted]) {
+                if (![delegate_ terminalCanUseDECRQCRA]) {
+                    break;
+                }
                 VT100GridRect defaultRectangle = VT100GridRectMake(0,
                                                                    0,
                                                                    [delegate_ terminalWidth],

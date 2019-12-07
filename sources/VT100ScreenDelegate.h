@@ -173,6 +173,7 @@
 
 // Bounce the dock. Set request to false to cancel.
 - (void)screenRequestAttention:(VT100AttentionRequestType)request;
+- (void)screenDidTryToUseDECRQCRA;
 
 - (void)screenDisinterSession;
 
