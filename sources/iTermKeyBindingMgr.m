@@ -92,9 +92,6 @@ NSString *const iTermKeyBindingDictionaryKeyAction = @"Action";
 NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
 NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
 
-NSString *const iTermKeyBindingNewWindowActionSuffix = @" — New Window";
-NSString *const iTermKeyBindingNewTabActionSuffix = @" — New Tab";
-
 @implementation iTermKeyBindingMgr
 
 + (NSString *)stringForCharacter:(unsigned int)character isArrow:(BOOL *)isArrowPtr {

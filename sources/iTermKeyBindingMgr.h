@@ -37,9 +37,6 @@ extern NSString *const iTermKeyBindingDictionaryKeyParameter;
 // Dictionary key for touch bar giving the label to show on the touch bar.
 extern NSString *const iTermKeyBindingDictionaryKeyLabel;
 
-extern NSString *const iTermKeyBindingNewWindowActionSuffix;
-extern NSString *const iTermKeyBindingNewTabActionSuffix;
-
 // Actions for key bindings
 typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_NEXT_SESSION = 0,
