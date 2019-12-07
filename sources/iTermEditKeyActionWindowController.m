@@ -416,7 +416,7 @@
 + (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
                            selectedTitle:(NSString *)selectedValue
                               identifier:(NSString *)identifier {
-    [self recursiveAddMenu:[NSApp mainMenu] toButtonMenu:[button menu] depth:0 ancestors:@[]];
+    [self recursiveAddMenu:[NSApp mainMenu] toButtonMenu:[button menu] depth:0];
     if (selectedValue) {
         NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
         if (theItem) {
@@ -434,49 +434,28 @@
     return ([item.title isMatchedByRegex:@"^\\d+\\. " ]);
 }
 
-+ (BOOL)ancestorsContainsProfilesMenuItem:(NSArray<NSMenuItem *> *)ancestors {
-    if (ancestors.count == 0) {
-        return NO;
-    }
-    return [ancestors[0].identifier isEqualToString:@".Profiles"];
-}
-
 + (void)recursiveAddMenu:(NSMenu *)menu
             toButtonMenu:(NSMenu *)buttonMenu
-                   depth:(int)depth
-               ancestors:(NSArray<NSMenuItem *> *)ancestors {
-    const BOOL descendsFromProfiles = [self ancestorsContainsProfilesMenuItem:ancestors];
-    for (NSMenuItem *item in [menu itemArray]) {
-        if (item.isSeparatorItem) {
+                   depth:(int)depth{
+    for (NSMenuItem* item in [menu itemArray]) {
+        if ([item isSeparatorItem]) {
             continue;
         }
-        if ([item.title isEqualToString:@"Services"] ||  // exclude services menu
+        if ([[item title] isEqualToString:@"Services"] ||  // exclude services menu
             [self item:item isWindowInWindowsMenu:menu]) {  // exclude windows in window menu
             continue;
         }
         NSMenuItem *theItem = [[NSMenuItem alloc] init];
-
-        if (item.identifier == nil && descendsFromProfiles && !item.hasSubmenu) {
-            if (item.isAlternate) {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Window", item.title];
-            } else {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Tab", item.title];
-            }
-        } else {
-            theItem.title = item.title;
-        }
+        [theItem setTitle:[item title]];
         theItem.identifier = item.identifier;
-        theItem.indentationLevel = depth;
-        if (item.hasSubmenu) {
-            if (depth == 0 && buttonMenu.itemArray.count) {
+        [theItem setIndentationLevel:depth];
+        if ([item hasSubmenu]) {
+            if (depth == 0 && [[buttonMenu itemArray] count]) {
                 [buttonMenu addItem:[NSMenuItem separatorItem]];
             }
-            theItem.enabled = NO;
+            [theItem setEnabled:NO];
             [buttonMenu addItem:theItem];
-            [self recursiveAddMenu:item.submenu
-                      toButtonMenu:buttonMenu
-                             depth:depth + 1
-                         ancestors:[ancestors arrayByAddingObject:item]];
+            [self recursiveAddMenu:[item submenu] toButtonMenu:buttonMenu depth:depth + 1];
         } else {
             [buttonMenu addItem:theItem];
         }
