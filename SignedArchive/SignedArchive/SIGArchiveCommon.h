@@ -1,3 +1,5 @@
+#import <Foundation/Foundation.h>
+
 // Create archives readable by older versions?
 #define ENABLE_SIGARCHIVE_MIGRATION_CREATION 1
 
@@ -7,4 +9,11 @@
 #if ENABLE_SIGARCHIVE_MIGRATION_CREATION || ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
 #warning NOTE: SIGArchive migration flags enabled
 #endif
+
+extern NSString *const SIGArchiveDigestTypeSHA2;
+
+extern NSString *const SIGArchiveMetadataKeyVersion;
+extern NSString *const SIGArchiveMetadataKeyDigestType;
+
+NSArray<NSString *> *SIGArchiveGetKnownKeys(void);
 

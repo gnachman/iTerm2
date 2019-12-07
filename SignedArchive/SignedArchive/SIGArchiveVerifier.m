@@ -9,7 +9,7 @@
 #import "SIGArchiveVerifier.h"
 
 #import "SIGArchiveChunk.h"
-#import "SIGArchiveFlags.h"
+#import "SIGArchiveCommon.h"
 #import "SIGArchiveReader.h"
 #import "SIGCertificate.h"
 #import "SIGError.h"
@@ -175,12 +175,17 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
 - (NSDictionary<NSString *, NSString *> *)metadataDictionaryFromString:(NSString *)metadata {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     NSArray<NSString *> *rows = [metadata componentsSeparatedByString:@"\n"];
+    NSArray<NSString *> *knownKeys = SIGArchiveGetKnownKeys();
+
     for (NSString *row in rows) {
         NSInteger index = [row rangeOfString:@"="].location;
         if (index == NSNotFound) {
             continue;
         }
         NSString *key = [row substringToIndex:index];
+        if (![knownKeys containsObject:key]) {
+            continue;
+        }
         NSString *value = [row substringFromIndex:index + 1];
         dictionary[key] = value;
     }
@@ -189,7 +194,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
 
 - (BOOL)verifyMetadata:(NSString *)metadata error:(out NSError **)error {
     NSDictionary *const dictionary = [self metadataDictionaryFromString:metadata];
-    NSString *const versionString = dictionary[@"version"];
+    NSString *const versionString = dictionary[SIGArchiveMetadataKeyVersion];
     if (!versionString) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeMalformedMetadata];
@@ -210,7 +215,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
         return NO;
     }
     
-    NSString *const digestType = dictionary[@"digest-type"];
+    NSString *const digestType = dictionary[SIGArchiveMetadataKeyDigestType];
     if (!digestType) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeMalformedMetadata];

@@ -9,7 +9,7 @@
 #import "SIGArchiveBuilder.h"
 
 #import "SIGArchiveChunk.h"
-#import "SIGArchiveFlags.h"
+#import "SIGArchiveCommon.h"
 #import "SIGArchiveVerifier.h"
 #import "SIGCertificate.h"
 #import "SIGError.h"
@@ -161,16 +161,31 @@
     return ok;
 }
 
-- (BOOL)writeMetadataToStream:(NSOutputStream *)writeStream error:(out NSError * _Nullable __autoreleasing *)error {
+- (NSString *)keyValuePairsFromDictionary:(NSDictionary<NSString *, NSString *> *)dictionary {
+    NSMutableArray<NSString *> *entries = [NSMutableArray array];
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+        [entries addObject:[NSString stringWithFormat:@"%@=%@", key, obj]];
+    }];
+    return [entries componentsJoinedByString:@"\n"];
+}
+
+- (NSString *)producedVersion {
     // Version 1 signed only the payload. Version 2 signs the container except the signature's chunk.
-    NSArray<NSString *> *fields = @[
 #if ENABLE_SIGARCHIVE_MIGRATION_CREATION
-        @"version=1",
+    return @"1";
 #else
-        @"version=2",
+    return @"2";
 #endif
-        @"digest-type=SHA2" ];
-    NSString *metadata = [fields componentsJoinedByString:@"\n"];
+}
+
+- (NSString *)producedDigestType {
+    return [[self signingAlgorithmClass] name];
+}
+
+- (BOOL)writeMetadataToStream:(NSOutputStream *)writeStream error:(out NSError * _Nullable __autoreleasing *)error {
+    NSDictionary *const fieldDict = @{ SIGArchiveMetadataKeyVersion: [self producedVersion],
+                                       SIGArchiveMetadataKeyDigestType: [self producedDigestType] };
+    NSString *metadata = [self keyValuePairsFromDictionary:fieldDict];
     NSData *data = [metadata dataUsingEncoding:NSUTF8StringEncoding];
     SIGArchiveChunkWriter *chunkWriter = [[SIGArchiveChunkWriter alloc] initWithTag:SIGArchiveTagMetadata
                                                                              length:data.length
@@ -219,8 +234,12 @@
 
 #pragma mark - Signing
 
+- (Class)signingAlgorithmClass {
+    return [SIGSHA2SigningAlgorithm class];
+}
+
 - (id<SIGSigningAlgorithm>)signingAlgorithm:(out NSError **)error {
-    id<SIGSigningAlgorithm> algorithm = [[SIGSHA2SigningAlgorithm alloc] init];
+    id<SIGSigningAlgorithm> algorithm = [[[self signingAlgorithmClass] alloc] init];
     if (!algorithm) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeAlgorithmCreationFailed];

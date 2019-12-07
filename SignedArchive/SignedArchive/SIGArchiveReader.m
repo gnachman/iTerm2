@@ -10,7 +10,7 @@
 
 #import "SIGArchiveBuilder.h"
 #import "SIGArchiveChunk.h"
-#import "SIGArchiveFlags.h"
+#import "SIGArchiveCommon.h"
 #import "SIGError.h"
 #import "SIGPartialInputStream.h"
 

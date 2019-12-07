@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SIGArchiveFlags.h"
+#import "SIGArchiveCommon.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

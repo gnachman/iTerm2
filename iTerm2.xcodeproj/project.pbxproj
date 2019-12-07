@@ -3467,6 +3467,7 @@
 		A6F22AC5239638B500C5D1A9 /* iTermSyntheticConfParser+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F22AC4239637E200C5D1A9 /* iTermSyntheticConfParser+Private.h */; };
 		A6F22ACC2398D3C900C5D1A9 /* iTermLoggingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F22ACA2398D3C900C5D1A9 /* iTermLoggingHelper.h */; };
 		A6F22ACD2398D3C900C5D1A9 /* iTermLoggingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F22ACB2398D3C900C5D1A9 /* iTermLoggingHelper.m */; };
+		A6F22AD0239B6CAC00C5D1A9 /* SIGArchiveCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F22ACF239B6CAC00C5D1A9 /* SIGArchiveCommon.m */; };
 		A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */; };
 		A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
@@ -5940,7 +5941,8 @@
 		A6F22AC4239637E200C5D1A9 /* iTermSyntheticConfParser+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermSyntheticConfParser+Private.h"; sourceTree = "<group>"; };
 		A6F22ACA2398D3C900C5D1A9 /* iTermLoggingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLoggingHelper.h; sourceTree = "<group>"; };
 		A6F22ACB2398D3C900C5D1A9 /* iTermLoggingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLoggingHelper.m; sourceTree = "<group>"; };
-		A6F22ACE239B66CC00C5D1A9 /* SIGArchiveFlags.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SIGArchiveFlags.h; path = SignedArchive/SIGArchiveFlags.h; sourceTree = "<group>"; };
+		A6F22ACE239B66CC00C5D1A9 /* SIGArchiveCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SIGArchiveCommon.h; path = SignedArchive/SIGArchiveCommon.h; sourceTree = "<group>"; };
+		A6F22ACF239B6CAC00C5D1A9 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSmartCursorColor.h; sourceTree = "<group>"; };
 		A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSmartCursorColor.m; sourceTree = "<group>"; };
 		A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInitialDirectory.h; sourceTree = "<group>"; };
@@ -7558,7 +7560,8 @@
 				5370677121C9D2750088D0F3 /* SIGTrust.m */,
 				5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */,
 				5370676C21C9D2740088D0F3 /* SIGVerificationAlgorithm.m */,
-				A6F22ACE239B66CC00C5D1A9 /* SIGArchiveFlags.h */,
+				A6F22ACE239B66CC00C5D1A9 /* SIGArchiveCommon.h */,
+				A6F22ACF239B6CAC00C5D1A9 /* SIGArchiveCommon.m */,
 			);
 			path = SignedArchive;
 			sourceTree = "<group>";
@@ -12761,6 +12764,7 @@
 				A68400C21FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A6A4867720B67C3600493302 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A6352253238CA23100FED5BC /* iTermOpenQuicklyItem.m in Sources */,
+				A6F22AD0239B6CAC00C5D1A9 /* SIGArchiveCommon.m in Sources */,
 				A6EB2042223EC54E00E928C3 /* ini.c in Sources */,
 				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,

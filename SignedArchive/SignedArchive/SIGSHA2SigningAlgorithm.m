@@ -8,6 +8,7 @@
 
 #import "SIGSHA2SigningAlgorithm.h"
 
+#import "SIGArchiveCommon.h"
 #import "SIGError.h"
 #import "SIGIdentity.h"
 #import "SIGKey.h"
@@ -20,7 +21,7 @@
 }
 
 + (NSString *)name {
-    return @"SHA2";
+    return SIGArchiveDigestTypeSHA2;
 }
 
 - (void)dealloc {
