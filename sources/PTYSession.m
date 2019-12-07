@@ -3211,6 +3211,16 @@ ITERM_WEAKLY_REFERENCEABLE
                            to:[item target]
                          from:item];
             return YES;
+        } else if (!identifier && item.isAlternate && [title isEqualToString:[item.title stringByAppendingString:iTermKeyBindingNewWindowActionSuffix]]) {
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:item];
+            return YES;
+        } else if (!identifier && !item.isAlternate && [title isEqualToString:[item.title stringByAppendingString:iTermKeyBindingNewTabActionSuffix]]) {
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:item];
+            return YES;
         }
     }
     return NO;

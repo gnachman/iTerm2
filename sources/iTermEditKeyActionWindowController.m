@@ -458,9 +458,9 @@
 
         if (item.identifier == nil && descendsFromProfiles && !item.hasSubmenu) {
             if (item.isAlternate) {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Window", item.title];
+                theItem.title = [NSString stringWithFormat:@"%@ — %@", item.title, iTermKeyBindingNewWindowActionSuffix];
             } else {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Tab", item.title];
+                theItem.title = [NSString stringWithFormat:@"%@ — %@", item.title, iTermKeyBindingNewTabActionSuffix];
             }
         } else {
             theItem.title = item.title;
