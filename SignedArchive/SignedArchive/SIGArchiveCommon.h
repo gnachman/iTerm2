@@ -17,3 +17,4 @@ extern NSString *const SIGArchiveMetadataKeyDigestType;
 
 NSArray<NSString *> *SIGArchiveGetKnownKeys(void);
 
+long long SIGAddNonnegativeInt64s(long long a, long long b);

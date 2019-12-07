@@ -186,7 +186,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
         if (![knownKeys containsObject:key]) {
             continue;
         }
-        NSString *value = [row substringFromIndex:index + 1];
+        NSString *value = [row substringFromIndex:SIGAddNonnegativeInt64s(index, 1)];
         dictionary[key] = value;
     }
     return dictionary;

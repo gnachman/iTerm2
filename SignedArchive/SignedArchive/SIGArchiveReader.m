@@ -154,7 +154,7 @@
         return nil;
     }
 
-    const long long length = [chunk payloadOffset] + [chunk payloadLength];
+    const long long length = SIGAddNonnegativeInt64s([chunk payloadOffset], [chunk payloadLength]);
     if (length <= 0) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeNoPayload];
@@ -210,7 +210,7 @@
             return NO;
         }
         [chunks addObject:chunk];
-        offset = chunk.payloadOffset + chunk.payloadLength;
+        offset = SIGAddNonnegativeInt64s(chunk.payloadOffset, chunk.payloadLength);
     }
     if (offset > length) {
         if (errorOut) {

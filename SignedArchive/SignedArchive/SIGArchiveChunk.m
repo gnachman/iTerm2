@@ -8,6 +8,7 @@
 
 #import "SIGArchiveChunk.h"
 
+#import "SIGArchiveCommon.h"
 #import "SIGError.h"
 
 static const NSInteger SIGArchiveChunkOverhead = sizeof(long long) * 2;
@@ -15,17 +16,6 @@ NSString *const SIGArchiveHeaderMagicString = @"signed-archive";
 
 @implementation SIGArchiveChunk {
     NSData *_data;
-}
-
-static long long SafelyAddNonnegativeInt64(long long a, long long b) {
-    assert(a >= 0);
-    assert(b >= 0);
-
-    unsigned long long ua = a;
-    unsigned long long ub = b;
-    unsigned long long sum = ua + ub;
-    assert(sum >= ua && sum >= ub);
-    return sum;
 }
 
 + (instancetype)chunkFromFileHandle:(NSFileHandle *)fileHandle
@@ -46,13 +36,13 @@ static long long SafelyAddNonnegativeInt64(long long a, long long b) {
     }
 
     long long length;
-    if (![self readNonnegativeIntegerFromFileHandle:fileHandle fromOffset:SafelyAddNonnegativeInt64(offset, sizeof(long long)) value:(long long *)&length error:error]) {
+    if (![self readNonnegativeIntegerFromFileHandle:fileHandle fromOffset:SIGAddNonnegativeInt64s(offset, sizeof(long long)) value:(long long *)&length error:error]) {
         return nil;
     }
     
     SIGArchiveChunk *chunk = [[SIGArchiveChunk alloc] initWithTag:tag
                                                            length:length
-                                                           offset:SafelyAddNonnegativeInt64(offset, SIGArchiveChunkOverhead)];
+                                                           offset:SIGAddNonnegativeInt64s(offset, SIGArchiveChunkOverhead)];
     if (!chunk) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeUnknown
@@ -157,7 +147,7 @@ static long long SafelyAddNonnegativeInt64(long long a, long long b) {
 }
 
 - (long long)chunkLength {
-    return SafelyAddNonnegativeInt64(self.payloadLength, SIGArchiveChunkOverhead);
+    return SIGAddNonnegativeInt64s(self.payloadLength, SIGArchiveChunkOverhead);
 }
 
 - (NSData *)data:(out NSError * _Nullable __autoreleasing * _Nullable)error {
@@ -242,7 +232,7 @@ static long long SafelyAddNonnegativeInt64(long long a, long long b) {
             }
             return NO;
         }
-        totalNumberOfBytes = SafelyAddNonnegativeInt64(totalNumberOfBytes, numberOfBytesRead);
+        totalNumberOfBytes = SIGAddNonnegativeInt64s(totalNumberOfBytes, numberOfBytesRead);
         if (totalNumberOfBytes > self.payloadLength) {
             if (error) {
                 *error = [SIGError errorWithCode:SIGErrorCodeConsistency
