@@ -109,7 +109,7 @@ int iTermFileDescriptorClientConnect(const char *path) {
             assert(0);
             exit(1);
         }
-        strcpy(remote.sun_path, path);
+        strlcpy(remote.sun_path, path, sizeof(remote.sun_path));
         int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
         FDLog(LOG_DEBUG, "Calling fcntl() 1");
         flags = fcntl(socketFd, F_GETFL, 0);
@@ -141,7 +141,8 @@ int iTermFileDescriptorClientConnect(const char *path) {
 }
 
 static int FileDescriptorClientConnectPid(pid_t pid) {
-    char path[PATH_MAX + 1];
+    struct sockaddr_un sun;
+    char path[sizeof(sun.sun_path)];
     iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
     FDLog(LOG_DEBUG, "Connect to path %s\n", path);
