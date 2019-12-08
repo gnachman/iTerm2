@@ -517,30 +517,48 @@ DQ
                                                 <action selector="saveScrollPosition:" target="-1" id="1247"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Jump to Mark" keyEquivalent="J" identifier="Marks and Annotations.Jump to Mark" id="1245">
+                                            <connections>
+                                                <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Pvx-sU-bPM">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Next Mark" keyEquivalent="" identifier="Marks and Annotations.Next Mark" id="mcu-LX-9Aj">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="nextMark:" target="-1" id="hrq-af-Vgg"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Previous Mark" keyEquivalent="" identifier="Marks and Annotations.Previous Mark" id="sZa-7I-YDa">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="previousMark:" target="-1" id="ogz-2q-Ljb"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="E6L-9C-lk7">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
                                         <menuItem title="Add Annotation at Cursor" keyEquivalent="m" identifier="Marks and Annotations.Add Annotation at Cursor" id="Fna-Ng-9y6">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="Pvx-sU-bPM">
+                                        <menuItem isSeparatorItem="YES" id="Dk5-W1-EQg">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-                                        <menuItem title="Jump to Mark" keyEquivalent="J" identifier="Marks and Annotations.Jump to Mark" id="1245">
+                                        <menuItem title="Next Annotation" keyEquivalent="" identifier="Marks and Annotations.Next  Annotation" id="FvD-eZ-yBV">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                             <connections>
-                                                <action selector="jumpToSavedScrollPosition:" target="-1" id="1248"/>
+                                                <action selector="nextAnnotation:" target="-1" id="vEg-Q0-9jd"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Previous Mark/Annotation" keyEquivalent="" identifier="Marks and Annotations.Previous Mark or Annotation" id="sZa-7I-YDa">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                        <menuItem title="Previous Annotation" keyEquivalent="" identifier="Marks and Annotations.Previous  Annotation" id="q2T-zq-icd">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                             <connections>
-                                                <action selector="previousMarkOrNote:" target="-1" id="Qrg-Y8-KM2"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Next Mark/Annotation" keyEquivalent="" identifier="Marks and Annotations.Next Mark or Annotation" id="mcu-LX-9Aj">
-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="nextMarkOrNote:" target="-1" id="HSR-a4-u0F"/>
+                                                <action selector="previousAnnotation:" target="-1" id="R3u-d7-8eC"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="OqF-Et-Rt4">

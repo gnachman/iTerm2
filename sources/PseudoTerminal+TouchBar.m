@@ -471,11 +471,11 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (void)nextMarkTouchBarItemSelected:(id)sender {
-    [self.currentSession nextMarkOrNote];
+    [self.currentSession nextMark];
 }
 
 - (void)previousMarkTouchBarItemSelected:(id)sender {
-    [self.currentSession previousMarkOrNote];
+    [self.currentSession previousMark];
 }
 
 - (void)manPageTouchBarItemSelected:(iTermTouchBarButton *)sender {

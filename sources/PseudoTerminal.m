@@ -8193,12 +8193,20 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[self currentSession] addNoteAtCursor];
 }
 
-- (IBAction)nextMarkOrNote:(id)sender {
-    [[self currentSession] nextMarkOrNote];
+- (IBAction)nextMark:(id)sender {
+    [[self currentSession] nextMark];
 }
 
-- (IBAction)previousMarkOrNote:(id)sender {
-    [[self currentSession] previousMarkOrNote];
+- (IBAction)previousMark:(id)sender {
+    [[self currentSession] previousMark];
+}
+
+- (IBAction)nextAnnotation:(id)sender {
+    [[self currentSession] nextAnnotation];
+}
+
+- (IBAction)previousAnnotation:(id)sender {
+    [[self currentSession] previousAnnotation];
 }
 
 - (IBAction)toggleAlertOnNextMark:(id)sender {

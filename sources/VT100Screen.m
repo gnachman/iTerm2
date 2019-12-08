@@ -2399,22 +2399,48 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray *)lastMarksOrNotes {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
-    NSArray *objects;
-    do {
-        objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
-                                               [VT100ScreenMark class] ]];
-    } while (objects && !objects.count);
-    return objects;
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
+                                                   [VT100ScreenMark class] ]
+                                usingEnumerator:enumerator];
 }
 
 - (NSArray *)firstMarksOrNotes {
     NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
+                                                   [VT100ScreenMark class] ]
+                                usingEnumerator:enumerator];
+}
+
+- (NSArray *)lastMarks {
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
+                                usingEnumerator:enumerator];
+}
+
+- (NSArray *)firstMarks {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
+                                usingEnumerator:enumerator];
+}
+
+- (NSArray *)lastAnnotations {
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
+                                usingEnumerator:enumerator];
+}
+
+- (NSArray *)firstAnnotations {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
+                                usingEnumerator:enumerator];
+}
+
+- (NSArray *)firstMarkBelongingToAnyClassIn:(NSArray<Class> *)allowedClasses
+                            usingEnumerator:(NSEnumerator *)enumerator {
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
-                                               [VT100ScreenMark class] ]];
+        objects = [objects objectsOfClasses:allowedClasses];
     } while (objects && !objects.count);
     return objects;
 }
@@ -2451,26 +2477,60 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return -1;
 }
 
-- (NSArray *)marksOrNotesBefore:(Interval *)location {
+- (NSArray *)marksOfAnyClassIn:(NSArray<Class> *)allowedClasses
+                        before:(Interval *)location {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:location.limit];
+    return [self firstObjectsFoundWithEnumerator:enumerator
+                                    ofAnyClassIn:allowedClasses];
+}
+
+- (NSArray *)marksOfAnyClassIn:(NSArray<Class> *)allowedClasses
+                         after:(Interval *)location {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:location.limit];
+    return [self firstObjectsFoundWithEnumerator:enumerator
+                                    ofAnyClassIn:allowedClasses];
+}
+
+- (NSArray *)firstObjectsFoundWithEnumerator:(NSEnumerator *)enumerator
+                                ofAnyClassIn:(NSArray<Class> *)allowedClasses {
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
-                                               [VT100ScreenMark class] ]];
+        objects = [objects objectsOfClasses:allowedClasses];
     } while (objects && !objects.count);
     return objects;
 }
 
+- (NSArray *)marksOrNotesBefore:(Interval *)location {
+    NSArray<Class> *classes = @[ [PTYNoteViewController class],
+                                 [VT100ScreenMark class] ];
+    return [self marksOfAnyClassIn:classes before:location];
+}
+
 - (NSArray *)marksOrNotesAfter:(Interval *)location {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:location.limit];
-    NSArray *objects;
-    do {
-        objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ [PTYNoteViewController class],
-                                               [VT100ScreenMark class] ]];
-    } while (objects && !objects.count);
-    return objects;
+    NSArray<Class> *classes = @[ [PTYNoteViewController class],
+                                 [VT100ScreenMark class] ];
+    return [self marksOfAnyClassIn:classes after:location];
+}
+
+- (NSArray *)marksBefore:(Interval *)location {
+    NSArray<Class> *classes = @[ [VT100ScreenMark class] ];
+    return [self marksOfAnyClassIn:classes before:location];
+}
+
+- (NSArray *)marksAfter:(Interval *)location {
+    NSArray<Class> *classes = @[ [VT100ScreenMark class] ];
+    return [self marksOfAnyClassIn:classes after:location];
+}
+
+- (NSArray *)annotationsBefore:(Interval *)location {
+    NSArray<Class> *classes = @[ [PTYNoteViewController class] ];
+    return [self marksOfAnyClassIn:classes before:location];
+}
+
+- (NSArray *)annotationsAfter:(Interval *)location {
+    NSArray<Class> *classes = @[ [PTYNoteViewController class] ];
+    return [self marksOfAnyClassIn:classes after:location];
 }
 
 - (BOOL)containsMark:(id<iTermMark>)mark {

@@ -740,8 +740,10 @@ typedef enum {
 
 - (void)addNoteAtCursor;
 - (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)range;
-- (void)previousMarkOrNote;
-- (void)nextMarkOrNote;
+- (void)previousMark;
+- (void)nextMark;
+- (void)previousAnnotation;
+- (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
 - (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass;
 

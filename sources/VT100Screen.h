@@ -184,8 +184,21 @@ extern int kVT100ScreenMinRows;
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
 - (NSArray *)lastMarksOrNotes;
 - (NSArray *)firstMarksOrNotes;
+
+- (NSArray *)lastMarks;
+- (NSArray *)firstMarks;
+- (NSArray *)lastAnnotations;
+- (NSArray *)firstAnnotations;
+
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
+
+- (NSArray *)marksBefore:(Interval *)location;
+- (NSArray *)marksAfter:(Interval *)location;
+
+- (NSArray *)annotationsBefore:(Interval *)location;
+- (NSArray *)annotationsAfter:(Interval *)location;
+
 - (BOOL)containsMark:(id<iTermMark>)mark;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed;

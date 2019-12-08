@@ -6291,14 +6291,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)previousMarkOrNote {
+- (void)nextMark {
+    [self nextMarkOrNote:NO];
+}
+
+- (void)nextAnnotation {
+    [self nextMarkOrNote:YES];
+}
+
+- (void)previousMark {
+    [self previousMarkOrNote:NO];
+}
+
+- (void)previousAnnotation {
+    [self previousMarkOrNote:YES];
+}
+
+- (void)previousMarkOrNote:(BOOL)annotationsOnly {
     NSArray *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
-        objects = [_screen lastMarksOrNotes];
+        objects = annotationsOnly ? [_screen lastAnnotations] : [_screen lastMarks];
     } else {
-        objects = [_screen marksOrNotesBefore:self.currentMarkOrNotePosition];
+        if (annotationsOnly) {
+            objects = [_screen annotationsBefore:self.currentMarkOrNotePosition];
+        } else {
+            objects = [_screen marksBefore:self.currentMarkOrNotePosition];
+        }
         if (!objects.count) {
-            objects = [_screen lastMarksOrNotes];
+            objects = annotationsOnly ? [_screen lastAnnotations] : [_screen lastMarks];
             if (objects.count) {
                 [_textview beginFlash:kiTermIndicatorWrapToBottom];
             }
@@ -6315,14 +6335,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)nextMarkOrNote {
+- (void)nextMarkOrNote:(BOOL)annotationsOnly {
     NSArray *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
-        objects = [_screen firstMarksOrNotes];
+        objects = annotationsOnly ? [_screen firstAnnotations] : [_screen firstMarks];
     } else {
-        objects = [_screen marksOrNotesAfter:self.currentMarkOrNotePosition];
+        if (annotationsOnly) {
+            objects = [_screen annotationsAfter:self.currentMarkOrNotePosition];
+        } else {
+            objects = [_screen marksAfter:self.currentMarkOrNotePosition];
+        }
         if (!objects.count) {
-            objects = [_screen firstMarksOrNotes];
+            objects = annotationsOnly ? [_screen firstAnnotations] : [_screen firstMarks];
             if (objects.count) {
                 [_textview beginFlash:kiTermIndicatorWrapToTop];
             }
