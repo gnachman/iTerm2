@@ -167,6 +167,9 @@ static const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // For REP
     screen_char_t _lastCharacter;
     BOOL _lastCharacterIsDoubleWidth;
+
+    // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
+    VT100GridSize _initialSize;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -228,6 +231,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _animatedLines = [[NSMutableIndexSet alloc] init];
         _cursorVisible = YES;
+        _initialSize = VT100GridSizeMake(-1, -1);
     }
     return self;
 }
@@ -5725,22 +5729,6 @@ static void SwapInt(int *a, int *b) {
                              maxLinesToRestore:altGrid_.size.height];
 
         NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
-
-        [intervalTree_ release];
-        intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
-        [self fixUpDeserializedIntervalTree:intervalTree_
-                              knownTriggers:triggers
-                                    visible:YES
-                      guidOfLastCommandMark:guidOfLastCommandMark];
-
-        [savedIntervalTree_ release];
-        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
-        [self fixUpDeserializedIntervalTree:savedIntervalTree_
-                              knownTriggers:triggers
-                                    visible:NO
-                      guidOfLastCommandMark:guidOfLastCommandMark];
-
-        [self reloadMarkCache];
         if (reattached) {
             commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
             commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
@@ -5757,6 +5745,39 @@ static void SwapInt(int *a, int *b) {
             primaryGrid_.cursor = savedCursor;
         }
         [altGrid_ setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
+
+        _initialSize = self.size;
+        // Change the size to how big it was when state was saved so that
+        // interval trees can be fixed up properly when it is set back later by
+        // restoreInitialSize. Interval tree ranges cannot be interpreted
+        // outside the context of the data they annotate because when an
+        // annotation affects all the trailing nulls on a line, the length of
+        // that annotation is dependent on the screen size and how text laid
+        // out (maybe there are no nulls after reflow!).
+        VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+        [self setSize:savedSize];
+        [intervalTree_ release];
+        intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:intervalTree_
+                              knownTriggers:triggers
+                                    visible:YES
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [savedIntervalTree_ release];
+        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:savedIntervalTree_
+                              knownTriggers:triggers
+                                    visible:NO
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [self reloadMarkCache];
+    }
+}
+
+- (void)restoreInitialSize {
+    if (_initialSize.width > 0 && _initialSize.height > 0) {
+        [self setSize:_initialSize];
+        _initialSize = VT100GridSizeMake(-1, -1);
     }
 }
 

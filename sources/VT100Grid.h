@@ -48,6 +48,8 @@
 // Serialized state, but excludes screen contents.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
++ (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
+
 - (instancetype)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;

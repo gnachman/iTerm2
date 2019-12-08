@@ -1631,6 +1631,11 @@ static NSString *const kGridSizeKey = @"Size";
               kGridSizeKey: [NSDictionary dictionaryWithGridSize:size_] };
 }
 
++ (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict {
+    VT100GridSize size = [dict[kGridSizeKey] gridSize];
+    return size;
+}
+
 - (void)setStateFromDictionary:(NSDictionary *)dict {
     if (!dict || [dict isKindOfClass:[NSNull class]]) {
         return;

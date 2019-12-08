@@ -207,10 +207,15 @@ extern int kVT100ScreenMinRows;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 - (NSDictionary *)contentsDictionary;
+
+// WARNING: This may change the screen size! Use -restoreInitialSize to restore it.
+// This is useful for restoring other stuff that depends on the screen having its original size
+// such as selections.
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                 knownTriggers:(NSArray *)triggers
                    reattached:(BOOL)reattached;
+- (void)restoreInitialSize;
 
 // Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
 - (void)setCursorPosition:(VT100GridCoord)coord;

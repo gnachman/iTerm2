@@ -1194,10 +1194,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
-        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]
-                                                      width:aSession.screen.width];
-    }
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
         aSession.automaticProfileSwitcher =
             [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
@@ -1488,6 +1484,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
                                                reattached:attachedToServer];
+            // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
         }
 
         if (runCommand) {
@@ -1544,6 +1541,13 @@ ITERM_WEAKLY_REFERENCEABLE
         // NOTE: There used to be code here that used state[@"title"] but AFAICT that didn't exist.
         [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
+
+    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
+        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]
+                                                      width:aSession.screen.width];
+    }
+    [aSession.screen restoreInitialSize];
+
     void (^finish)(BOOL) = ^(BOOL ok) {
         if (!ok) {
             return;
@@ -1595,6 +1599,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return _logging;
 }
 
+// WARNING: This leaves the screen with the wrong size! Call -restoreInitialSize afterwards.
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
                    includeRestorationBanner:(BOOL)includeRestorationBanner
                                  reattached:(BOOL)reattached {
