@@ -148,8 +148,14 @@
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
 
-- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord width:(int)width offset:(int)offset;
-- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position width:(int)width ok:(BOOL *)ok;
+- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
+                                        width:(int)width
+                                       offset:(int)offset;
+
+- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
+                                  width:(int)width
+                           extendsRight:(BOOL)extendsRight
+                                     ok:(BOOL *)ok;
 
 - (LineBufferPosition *)firstPosition;
 - (LineBufferPosition *)lastPosition;

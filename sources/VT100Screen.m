@@ -302,7 +302,8 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     return ([note isKindOfClass:[VT100RemoteHost class]] ||
             [note isKindOfClass:[VT100WorkingDirectory class]] ||
             [note isKindOfClass:[iTermImageMark class]] ||
-            [note isKindOfClass:[iTermURLMark class]]);
+            [note isKindOfClass:[iTermURLMark class]] ||
+            [note isKindOfClass:[PTYNoteViewController class]]);
 }
 
 // This is used for a very specific case. It's used when you have some history, optionally followed
@@ -402,6 +403,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     }
     resultRangePtr->start = [lineBuffer coordinateForPosition:startPos
                                                         width:newWidth
+                                                 extendsRight:NO
                                                            ok:NULL];
     int numScrollbackLines = [linebuffer_ numLinesWithWidth:newWidth];
 
@@ -421,6 +423,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
 
     resultRangePtr->end = [lineBuffer coordinateForPosition:endPos
                                                       width:newWidth
+                                               extendsRight:YES
                                                          ok:NULL];
     if (resultRangePtr->end.y >= numScrollbackLines) {
         if (resultRangePtr->end.y < numScrollbackLines + linesMovedUp) {
@@ -916,9 +919,22 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     [linebuffer_ beginResizing];
     [self reallySetSize:newSize];
     [linebuffer_ endResizing];
+
+    if (gDebugLogging) {
+        DLog(@"Notes after resizing to width=%@", @(self.width));
+        for (PTYNoteViewController *note in intervalTree_.allObjects) {
+            if (![note isKindOfClass:[PTYNoteViewController class]]) {
+                continue;
+            }
+            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+        }
+        DLog(@"------------ end -----------");
+    }
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize {
+    DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
+
     [self sanityCheckIntervalsFrom:currentGrid_.size note:@"pre-hoc"];
     [self.temporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = currentGrid_.size;
@@ -1867,6 +1883,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         BOOL ok;
         VT100GridCoord startPosCoord = [linebuffer_ coordinateForPosition:startPos
                                                                     width:currentGrid_.size.width
+                                                             extendsRight:YES
                                                                        ok:&ok];
         LineBufferPosition *lastValidPosition = [[linebuffer_ lastPosition] predecessor];
         if (!ok) {
@@ -1874,6 +1891,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         } else {
             VT100GridCoord lastPositionCoord = [linebuffer_ coordinateForPosition:lastValidPosition
                                                                             width:currentGrid_.size.width
+                                                                     extendsRight:YES
                                                                                ok:&ok];
             assert(ok);
             long long s = startPosCoord.y;
@@ -2123,6 +2141,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         result.start.y = 0;
         result.start.x = 0;
     }
+    if (result.start.x == self.width) {
+        result.start.y += 1;
+        result.start.x = 0;
+    }
     return result;
 }
 
@@ -2260,7 +2282,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
     [intervalTree_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
-    [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
+    [currentGrid_ markAllCharsDirty:YES];
     note.delegate = self;
     [delegate_ screenDidAddNote:note];
 }
@@ -5028,18 +5050,20 @@ static void SwapInt(int *a, int *b) {
     screen_char_t *line = [self getLineAtIndex:y];
     int numberOfLines = [self numberOfLines];
     int width = [self width];
-    while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
-        x++;
-        result.length--;
-        if (x == width) {
-            x = 0;
-            y++;
-            if (y == numberOfLines) {
-                // Run is all nulls
-                result.length = 0;
-                return result;
+    if (x > 0) {
+        while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
+            x++;
+            result.length--;
+            if (x == width) {
+                x = 0;
+                y++;
+                if (y == numberOfLines) {
+                    // Run is all nulls
+                    result.length = 0;
+                    return result;
+                }
+                break;
             }
-            line = [self getLineAtIndex:y];
         }
     }
     result.origin = VT100GridCoordMake(x, y);
@@ -5049,17 +5073,15 @@ static void SwapInt(int *a, int *b) {
     y = end.y;
     ITBetaAssert(y >= 0, @"Negative y to from max of run %@", VT100GridRunDescription(run));
     line = [self getLineAtIndex:y];
-    while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
-        x--;
-        result.length--;
-        if (x == -1) {
-            x = width - 1;
-            y--;
-            assert(y >= 0);
-            line = [self getLineAtIndex:y];
+    if (x < width - 1) {
+        while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
+            x--;
+            result.length--;
+            if (x == -1) {
+                break;
+            }
         }
     }
-
     return result;
 }
 
@@ -5210,10 +5232,12 @@ static void SwapInt(int *a, int *b) {
 
     resultPtr->start = [lineBuffer coordinateForPosition:selectionRange.start
                                                    width:newWidth
+                                            extendsRight:NO
                                                       ok:NULL];
     BOOL ok = NO;
     VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionRange.end
                                                         width:newWidth
+                                                 extendsRight:YES
                                                            ok:&ok];
     if (ok) {
         newEnd.x++;
@@ -5366,9 +5390,8 @@ static void SwapInt(int *a, int *b) {
     return [linebuffer_ absPositionOfFindContext:findContext_];
 }
 
-- (BOOL)continueFindResultsInContext:(FindContext*)context
-                             toArray:(NSMutableArray*)results
-{
+- (BOOL)continueFindResultsInContext:(FindContext *)context
+                             toArray:(NSMutableArray *)results {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
@@ -5561,6 +5584,16 @@ static void SwapInt(int *a, int *b) {
         numLines = [currentGrid_ numberOfLinesUsed];
     }
     [currentGrid_ appendLines:numLines toLineBuffer:temp];
+    if (gDebugLogging) {
+        DLog(@"Saving state with width=%@", @(self.width));
+        for (PTYNoteViewController *note in intervalTree_.allObjects) {
+            if (![note isKindOfClass:[PTYNoteViewController class]]) {
+                continue;
+            }
+            DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+        }
+    }
+
     NSMutableDictionary *dict = [[[temp dictionary] mutableCopy] autorelease];
     dict[kScreenStateKey] =
         [@{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
@@ -5771,6 +5804,17 @@ static void SwapInt(int *a, int *b) {
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [self reloadMarkCache];
+
+        if (gDebugLogging) {
+            DLog(@"Notes after restoring with width=%@", @(self.width));
+            for (PTYNoteViewController *note in intervalTree_.allObjects) {
+                if (![note isKindOfClass:[PTYNoteViewController class]]) {
+                    continue;
+                }
+                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+            }
+            DLog(@"------------ end -----------");
+        }
     }
 }
 

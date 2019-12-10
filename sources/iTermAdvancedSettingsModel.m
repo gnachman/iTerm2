@@ -565,9 +565,13 @@ DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should r
                 }];
             }
         }];
-        if ([NSApp isRunningUnitTests]) {
-            sAdvancedSetting_runJobsInServers = @NO;
-        }
+        [self updateSettingsForUnitTestsIfNeeded];
+    }
+}
+
++ (void)updateSettingsForUnitTestsIfNeeded {
+    if ([NSApp isRunningUnitTests]) {
+        sAdvancedSetting_runJobsInServers = @NO;
     }
 }
 
@@ -579,6 +583,7 @@ DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should r
             impl(self, selector);
         }
     }];
+    [self updateSettingsForUnitTestsIfNeeded];
 }
 
 @end

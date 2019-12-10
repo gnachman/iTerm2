@@ -510,15 +510,29 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 {
     int length;
     int eol;
+    BOOL isStartOfWrappedLine = NO;
     screen_char_t* p = [self getWrappedLineWithWrapWidth:width
                                                  lineNum:lineNum
                                               lineLength:&length
                                        includesEndOfLine:&eol
                                                  yOffset:yOffsetPtr
-                                            continuation:NULL];
+                                            continuation:NULL
+                                    isStartOfWrappedLine:&isStartOfWrappedLine];
     if (!p) {
         return -1;
     } else {
+        if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
+            *yOffsetPtr = 0;
+        } else if (length > 0 && isStartOfWrappedLine && x == 0) {
+            // First character of a line. For example, in this grid:
+            //   abc.
+            //   d...
+            // The cell after c has position 3, as does the cell with d. The difference is that
+            // d has a yOffset=1 and the null cell after c has yOffset=0.
+            //
+            // If you wanted the cell after c then x > 0.
+            *yOffsetPtr += 1;
+        }
         if (x >= length) {
             *extendsPtr = YES;
             return p - raw_buffer + length;
@@ -670,7 +684,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                   lineLength:lineLength
                            includesEndOfLine:includesEndOfLine
                                      yOffset:NULL
-                                continuation:continuationPtr];
+                                continuation:continuationPtr
+                        isStartOfWrappedLine:NULL];
 }
 
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
@@ -679,19 +694,20 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
-{
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
     ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
     for (int i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         const int length = cll - prev;
-        if (length == 0) {
-            ++numEmptyLines;
-        } else {
-            numEmptyLines = 0;
+        if (*lineNum > 0) {
+            if (length == 0) {
+                ++numEmptyLines;
+            } else {
+                numEmptyLines = 0;
+            }
         }
-
         int spans;
         const BOOL useCache = gUseCachingNumberOfLines;
         if (useCache && _mayHaveDoubleWidthCharacter) {
@@ -764,6 +780,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             if (continuationPtr) {
                 *continuationPtr = metadata_[i].continuation;
                 continuationPtr->code = *includesEndOfLine;
+            }
+            if (isStartOfWrappedLine) {
+                *isStartOfWrappedLine = (offset == 0);
             }
             return buffer_start + prev + offset;
         }
@@ -1452,6 +1471,7 @@ static int Search(NSString* needle,
 // Returns YES if the position is valid for this block.
 - (BOOL)convertPosition:(int)position
               withWidth:(int)width
+              wrapOnEOL:(BOOL)wrapOnEOL
                     toX:(int*)x
                     toY:(int*)y {
     if (width <= 0) {
@@ -1464,7 +1484,7 @@ static int Search(NSString* needle,
     for (i = first_entry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
         int line_length = eol - prev;
-        if (position >= eol) {
+        if ((wrapOnEOL && position >= eol) || (!wrapOnEOL && position > eol)) {
             // Get the number of full-width lines in the raw line. If there were
             // only single-width characters the formula would be:
             //     spans = (line_length - 1) / width;

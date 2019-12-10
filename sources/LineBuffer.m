@@ -774,7 +774,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 // Returns an array of XRange values
-- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width {
+- (NSArray*)convertPositions:(NSArray *)resultRanges withWidth:(int)width {
     if (width <= 0) {
         return nil;
     }
@@ -820,6 +820,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             assert(used == [block rawSpaceUsed]);
             BOOL isOk = [block convertPosition:position - passed
                                      withWidth:width
+                                     wrapOnEOL:YES
                                            toX:&x
                                            toY:&y];
             assert(x < 2000);
@@ -876,6 +877,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                          withWidth:width
                            yOffset:&yOffset
                            extends:&extends];
+    if (coord.x == 0 && coord.y == 0 && index == 0 && yOffset == 1) {
+        // getPositionOfLine:… will set yOffset to 1 when returning the first cell of a raw line to
+        // disambiguate the position. That's the right thing to do except for the very first cell
+        // in the buffer, where the position is unambiguous.
+        yOffset = 0;
+    }
     if (pos < 0) {
         DLog(@"failed to get position of line %@", @(line));
         return nil;
@@ -889,7 +896,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     // Make sure position is valid (might not be because of offset).
     BOOL ok;
-    [self coordinateForPosition:result width:width ok:&ok];
+    [self coordinateForPosition:result
+                          width:width
+                   extendsRight:YES  // doesn't matter for deciding if the result is valid
+                             ok:&ok];
     if (ok) {
         return result;
     } else {
@@ -899,6 +909,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
+                           extendsRight:(BOOL)extendsRight
                                      ok:(BOOL *)ok {
     if (position.absolutePosition == self.lastPosition.absolutePosition) {
         VT100GridCoord result;
@@ -914,12 +925,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         result.x = lastLine.length;
         if (position.yOffset > 0) {
             result.x = 0;
-            result.y += position.yOffset;
+            result.y += position.yOffset + 1;
         } else {
             result.x = lastLine.length;
         }
         if (position.extendsToEndOfLine) {
-            result.x = width - 1;
+            if (extendsRight) {
+                result.x = width - 1;
+            }
         }
         if (ok) {
             *ok = YES;
@@ -945,17 +958,24 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     int x;
     BOOL positionIsValid = [block convertPosition:p
                                         withWidth:width
+                                        wrapOnEOL:NO  //  using extendsRight here is wrong because extension happens below
                                               toX:&x
                                               toY:&y];
     if (ok) {
         *ok = positionIsValid;
     }
     if (position.yOffset > 0) {
-        x = 0;
+        if (!position.extendsToEndOfLine) {
+            x = 0;
+        }
         y += position.yOffset;
     }
     if (position.extendsToEndOfLine) {
-        x = width - 1;
+        if (extendsRight) {
+            x = width - 1;
+        } else {
+            x = 0;
+        }
     }
     return VT100GridCoordMake(x, y + yoffset);
 }

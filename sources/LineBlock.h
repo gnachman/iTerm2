@@ -70,7 +70,8 @@ typedef struct {
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
-                                 continuation:(screen_char_t *)continuationPtr;
+                                 continuation:(screen_char_t *)continuationPtr
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine;
 
 
 // Get the number of lines in this block at a given screen width.
@@ -143,8 +144,12 @@ typedef struct {
 
 // Tries to convert a byte offset into the block to an x,y coordinate relative to the first char
 // in the block. Returns YES on success, NO if the position is out of range.
+//
+// If the position is after the last character on a line, wrapEOL determines if it will return the
+// coordinate of the first null on that line of the first character on the next line.
 - (BOOL)convertPosition:(int)position
               withWidth:(int)width
+              wrapOnEOL:(BOOL)wrapOnEOL
                     toX:(int*)x
                     toY:(int*)y;
 

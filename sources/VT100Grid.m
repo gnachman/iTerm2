@@ -106,6 +106,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
     DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
+    assert(from.x <= to.x);
     if (!dirty) {
         allDirty_ = NO;
     }
