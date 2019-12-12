@@ -16,6 +16,7 @@ static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrph
 static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
 static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDownloadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier = @"AbortUploadOnKeyPressAnnouncement";
+static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier = @"ThisProfileNoLongerExists";
 
 @implementation iTermNaggingController
 
@@ -67,7 +68,7 @@ static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementId
     [self.delegate naggingControllerShowMessage:notice
                                      isQuestion:NO
                                       important:NO
-                                     identifier:@"ThisProfileNoLongerExists"
+                                     identifier:iTermNaggingControllerArrangementProfileMissingIdentifier
                                         options:actions
                                      completion:^(int selection) {
         [self handleCompletionForMissingProfileInArrangementWithName:savedArrangementName
@@ -131,6 +132,10 @@ static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementId
 
 - (void)didFinishDownload {
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAbortDownloadIdentifier];
+}
+
+- (void)didRepairSavedArrangement {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerArrangementProfileMissingIdentifier];
 }
 
 - (void)willRecycleSession {

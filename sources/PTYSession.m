@@ -4807,7 +4807,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _originalProfile = nil;
         self.profile = newProfile;
         [self setPreferencesFromAddressBookEntry:newProfile];
-        [self dismissAnnouncementWithIdentifier:@"ThisProfileNoLongerExists"];
+        [_naggingController didRepairSavedArrangement];
     }
 }
 

@@ -43,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)arrangementWithName:(NSString *)savedArrangementName
         missingProfileNamed:(NSString *)profileName
                        guid:(NSString *)guid;
+- (void)didRepairSavedArrangement;
+
 - (void)brokenPipe;
 
 - (void)didRestoreOrphan;
