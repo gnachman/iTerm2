@@ -176,6 +176,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setNoSyncSuppressMissingProfileInArrangementWarning:(BOOL)value;
 + (BOOL)NoSyncSuppressRestartSessionConfirmationAlert;
 + (BOOL)noSyncTipsDisabled;
++ (NSString *)noSyncVariablesToReport;
++ (void)setNoSyncVariablesToReport:(NSString *)value;
 + (int)numberOfLinesForAccessibility;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileOverridesSendText;

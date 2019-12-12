@@ -230,6 +230,7 @@
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
+- (BOOL)screenShouldSendReportForVariable:(NSString *)name;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;

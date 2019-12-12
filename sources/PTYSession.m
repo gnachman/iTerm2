@@ -32,6 +32,7 @@
 #import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
 #import "iTermGraphicSource.h"
+#import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
 #import "iTermHapticActuator.h"
 #import "iTermHistogram.h"
@@ -281,6 +282,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermLogging,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
+    iTermNaggingControllerDelegate,
     iTermObject,
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
@@ -558,6 +560,7 @@ static const NSUInteger kMaxHosts = 100;
     // May be stale, but allows us to update titles fast after an OSC 0/1/2
     iTermProcessInfo *_lastProcessInfo;
     iTermLoggingHelper *_logging;
+    iTermNaggingController *_naggingController;
 }
 
 @synthesize isDivorced = _divorced;
@@ -901,6 +904,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _logging.rawLogger = nil;
     _logging.plainLogger = nil;
     [_logging release];
+    [_naggingController release];
 
     [super dealloc];
 }
@@ -10009,6 +10013,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return (_shell != nil) && (![self isTmuxClient]);
 }
 
+- (iTermNaggingController *)naggingController {
+    if (!_naggingController) {
+        _naggingController = [[iTermNaggingController alloc] init];
+        _naggingController.delegate = self;
+    }
+    return _naggingController;
+}
+
+- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
+    if (![self screenShouldSendReport]) {
+        return NO;
+    }
+    return [self.naggingController permissionToReportVariableNamed:name];
+}
+
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return NO;
@@ -12168,6 +12187,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
+}
+
+#pragma mark - iTermNaggingControllerDelegate
+
+- (BOOL)naggingControllerCanShowMessageWithIdentifier:(NSString *)identifier {
+    return ![self hasAnnouncementWithIdentifier:identifier];
+}
+
+- (void)naggingControllerShowMessage:(NSString *)message
+                          identifier:(NSString *)identifier
+                             options:(NSArray<NSString *> *)options
+                          completion:(void (^)(int))completion {
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:message
+                                                     style:kiTermAnnouncementViewStyleQuestion
+                                               withActions:options
+                                                completion:^(int selection) {
+        completion(selection);
+    }];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 @end

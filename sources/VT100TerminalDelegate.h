@@ -82,6 +82,8 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Returns if it's safe to send reports.
 - (BOOL)terminalShouldSendReport;
 
+- (BOOL)terminalShouldSendReportForVariable:(NSString *)variable;
+
 // Sends a report.
 - (void)terminalSendReport:(NSData *)report;
 

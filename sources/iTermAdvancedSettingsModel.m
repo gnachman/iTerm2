@@ -144,6 +144,9 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, double, kiTermAdvancedSetting
 #define DEFINE_STRING(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, NSString *, kiTermAdvancedSettingTypeString, theDefault, theDescription, iTermAdvancedSettingsModelTransformString, iTermAdvancedSettingsModelInverseTransformString)
 
+#define DEFINE_SETTABLE_STRING(name, capitalizedName, theDefault, theDescription) \
+DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSettingTypeString, theDefault, theDescription, iTermAdvancedSettingsModelTransformString, iTermAdvancedSettingsModelInverseTransformString)
+
 // Convenience default value for boolean settings that are on for beta users.
 #if BETA
 #define YES_IF_BETA_ELSE_NO YES
@@ -260,6 +263,7 @@ DEFINE_FLOAT(echoProbeDuration, 0.5, SECTION_TERMINAL @"Amount of time to wait w
 DEFINE_BOOL(disablePasswordManagerAnimations, NO, SECTION_TERMINAL @"Disable animations for showing/hiding password manager.");
 DEFINE_BOOL(optionIsMetaForSpecialChars, YES, SECTION_TERMINAL @"When you press an arrow key or other function key that transmits the modifiers, should ⌥ be translated to Meta?\nIf this is set to No then it will be translated to Alt.");
 DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, SECTION_TERMINAL @"Automatically silence bell when it rings too much.");
+DEFINE_SETTABLE_STRING(noSyncVariablesToReport, NoSyncVariablesToReport, @"", SECTION_TERMINAL @"Variables to report via control sequence\nThis is a comma-delimited list of variables that can be reported with the OSC 1337 ReportVariable=name control sequence. Each variable name must be prefixed with “allow:” or “deny:”.");
 DEFINE_BOOL(restoreWindowContents, YES, SECTION_TERMINAL @"Restore window contents at startup.\nThis requires “System Prefs>General>Close windows when quitting an app” to be off.");
 DEFINE_INT(numberOfLinesForAccessibility, 1000, SECTION_TERMINAL @"Maximum number of lines of history to expose to Accessibility.\nAccessibility APIs can make iTerm2 slow. In order to limit the effect, you can restrict the number of lines in each session that are visible to accessibility. The last lines of each session will be made accessible.");
 DEFINE_INT(triggerRadius, 3, SECTION_TERMINAL @"Number of screen lines to match against trigger regular expressions.\nTrigger regular expressions are matched against the last logical line of text when a newline is received. A search is performed to find the start of the line. Since very long lines would cause performance problems, the search (and consequently the regular expression match, highlighting, and so on) is limited to this many screen lines.");

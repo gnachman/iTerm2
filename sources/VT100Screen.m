@@ -2933,9 +2933,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-- (BOOL)terminalShouldSendReport
-{
+- (BOOL)terminalShouldSendReport {
     return [delegate_ screenShouldSendReport];
+}
+
+- (BOOL)terminalShouldSendReportForVariable:(NSString *)variable {
+    return [delegate_ screenShouldSendReportForVariable:variable];
 }
 
 - (void)terminalSendReport:(NSData *)report

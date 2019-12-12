@@ -2472,20 +2472,22 @@ static const int kMaxScreenRows = 4096;
     } else if ([key isEqualToString:@"Disinter"]) {
         [delegate_ terminalDisinterSession];
     } else if ([key isEqualToString:@"ReportVariable"]) {
-        if ([delegate_ terminalShouldSendReport] && [delegate_ terminalIsTrusted]) {
+        if ([delegate_ terminalIsTrusted]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
             if (!valueAsData) {
                 return;
             }
             NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
-            NSString *encodedValue = @"";
-            if (name) {
-                NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
-                encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
+            if ([delegate_ terminalShouldSendReportForVariable:name]) {
+                NSString *encodedValue = @"";
+                if (name) {
+                    NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
+                    encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
+                }
+                NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
+                [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
             }
-            NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
-            [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
         }
     } else if ([key isEqualToString:@"Custom"]) {
         if ([delegate_ terminalIsTrusted]) {
