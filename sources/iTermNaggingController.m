@@ -18,6 +18,8 @@ static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDo
 static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier = @"AbortUploadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier = @"ThisProfileNoLongerExists";
 static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier = @"Tmux2.2SupplementaryPlaneAnnouncement";
+static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
+static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 
 @implementation iTermNaggingController
 
@@ -167,6 +169,37 @@ static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifi
 - (void)showTmuxSupplementaryPlaneBugHelpPage {
     NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
     [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+}
+
+- (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
+    if (!isTrying) {
+        [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier];
+        return;
+    }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll]) {
+        return;
+    }
+    [self.delegate naggingControllerShowMessage:@"Do you want the scroll wheel to move the cursor in interactive programs like this?"
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier
+                                        options:@[ @"Yes", @"Don‘t Ask Again" ]
+                                     completion:^(int selection) {
+        [self handleTryingToSendArrowKeysWithScrollWheel:selection];
+    }];
+}
+
+- (void)handleTryingToSendArrowKeysWithScrollWheel:(int)selection {
+    switch (selection) {
+        case 0: // Yes
+            [iTermAdvancedSettingsModel setAlternateMouseScroll:YES];
+            break;
+
+        case 1: { // Never
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll];
+            break;
+        }
+    }
 }
 
 #pragma mark - Variable Reporting

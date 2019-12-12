@@ -55,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didFinishDownload;
 
 - (void)tmuxSupplementaryPlaneErrorForCharacter:(NSString *)string;
+- (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying;
 
 @end
 
