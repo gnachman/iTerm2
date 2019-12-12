@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "ProfileModel.h"
 
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
@@ -20,6 +21,10 @@ static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier
 static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier = @"Tmux2.2SupplementaryPlaneAnnouncement";
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
+
+static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetBackgroundImageFile";
+static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
+static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"AlwaysDenyBackgroundImage";
 
 @implementation iTermNaggingController
 
@@ -197,6 +202,76 @@ static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlte
 
         case 1: { // Never
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll];
+            break;
+        }
+    }
+}
+
+- (void)setBackgroundImageToFileWithName:(NSString *)maybeFilename {
+    NSString *filename = maybeFilename ?: @"";
+    DLog(@"screenSetbackgroundImageFile:%@", filename);
+
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSArray *allowedFiles = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage];
+    NSArray *deniedFiles = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage];
+    if ([deniedFiles containsObject:filename]) {
+        return;
+    }
+    if ([allowedFiles containsObject:filename]) {
+        [self.delegate naggingControllerSetBackgroundImageToFileWithName:filename];
+        return;
+    }
+
+    NSString *title;
+    if (filename.length) {
+        title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
+    } else {
+        title = @"Remove background image?";
+    }
+    [self.delegate naggingControllerShowMessage:title
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerSetBackgroundImageFileIdentifier
+                                        options:@[ @"Yes", @"Always", @"Never" ]
+                                     completion:^(int selection) {
+        [self handleSetBackgroundImageToFileWithName:filename selection:selection];
+    }];
+}
+
+- (void)handleSetBackgroundImageToFileWithName:(NSString *)filename selection:(int)selection {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    switch (selection) {
+        case 0: // Yes
+            if (!filename.length) {
+                DLog(@"Filename is empty. Reset the background image.");
+                [self.delegate naggingControllerSetBackgroundImageToFileWithName:nil];
+                return;
+            }
+            [self.delegate naggingControllerSetBackgroundImageToFileWithName:filename];
+            break;
+
+        case 1: { // Always
+            NSArray *allowed = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage];
+            if (!allowed) {
+                allowed = @[];
+            }
+            allowed = [allowed arrayByAddingObject:filename];
+            [userDefaults setObject:allowed forKey:iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage];
+            if (!filename.length) {
+                DLog(@"Filename is empty. Reset the background image.");
+                [self.delegate naggingControllerSetBackgroundImageToFileWithName:nil];
+                return;
+            }
+            [self.delegate naggingControllerSetBackgroundImageToFileWithName:filename];
+            break;
+        }
+        case 2: {  // Never
+            NSArray *denied = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage];
+            if (!denied) {
+                denied = @[];
+            }
+            denied = [denied arrayByAddingObject:filename];
+            [userDefaults setObject:denied forKey:iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage];
             break;
         }
     }

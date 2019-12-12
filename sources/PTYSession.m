@@ -9437,72 +9437,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[iTermBuriedSessions sharedInstance] restoreSession:self];
 }
 
-- (void)screenSetBackgroundImageFile:(NSString *)filename {
-    DLog(@"screenSetbackgroundImageFile:%@", filename);
-    filename = [[filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (!filename.length) {
-        DLog(@"Filename is empty. Reset the background image.");
-        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null] }];
-        return;
-    }
-    if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+- (void)screenSetBackgroundImageFile:(NSString *)originalFilename {
+    NSString *const filename = [[originalFilename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (filename.length && ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
         DLog(@"file %@ does not exist", filename);
         return;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    static NSString *kIdentifier = @"SetBackgroundImageFile";
-    static NSString *kAllowedFilesKey = @"AlwaysAllowBackgroundImage";
-    static NSString *kDeniedFilesKey = @"AlwaysDenyBackgroundImage";
-    NSArray *allowedFiles = [userDefaults objectForKey:kAllowedFilesKey];
-    NSArray *deniedFiles = [userDefaults objectForKey:kDeniedFilesKey];
-    if ([deniedFiles containsObject:filename]) {
-        return;
-    }
-    if ([allowedFiles containsObject:filename]) {
-        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
-        return;
-    }
-
-
-    NSString *title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:title
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                    completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
-                    break;
-
-                case 1: { // Always
-                    NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
-                    if (!allowed) {
-                        allowed = @[];
-                    }
-                    allowed = [allowed arrayByAddingObject:filename];
-                    [userDefaults setObject:allowed forKey:kAllowedFilesKey];
-                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
-                    break;
-                }
-                case 2: {  // Never
-                    NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
-                    if (!denied) {
-                        denied = @[];
-                    }
-                    denied = [denied arrayByAddingObject:filename];
-                    [userDefaults setObject:denied forKey:kDeniedFilesKey];
-                    break;
-                }
-            }
-        }];
-    [self queueAnnouncement:announcement identifier:kIdentifier];
+    [self.naggingController setBackgroundImageToFileWithName:filename];
 }
 
 - (void)screenSetBadgeFormat:(NSString *)base64Format {
@@ -12093,6 +12034,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_pasteHelper abort];
     [self.upload endOfData];
     self.upload = nil;
+}
+
+- (void)naggingControllerSetBackgroundImageToFileWithName:(NSString *)filename {
+    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename.length ? filename : [NSNull null] }];
 }
 
 @end

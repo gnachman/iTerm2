@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)naggingControllerRestart;
 - (void)naggingControllerAbortDownload;
 - (void)naggingControllerAbortUpload;
-
+- (void)naggingControllerSetBackgroundImageToFileWithName:(nullable NSString *)filename;
 @end
 
 @interface iTermNaggingController : NSObject
@@ -56,6 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)tmuxSupplementaryPlaneErrorForCharacter:(NSString *)string;
 - (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying;
+
+- (void)setBackgroundImageToFileWithName:(NSString *)filename;
 
 @end
 
