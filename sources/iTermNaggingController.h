@@ -21,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)naggingControllerRepairSavedArrangement:(NSString *)savedArrangementName
                             missingProfileNamed:(NSString *)profileName
                                            guid:(NSString *)guid;
+
+- (void)naggingControllerRemoveMessageWithIdentifier:(NSString *)identifier;
+
+- (void)naggingControllerRestart;
 @end
 
 @interface iTermNaggingController : NSObject
@@ -36,6 +40,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)arrangementWithName:(NSString *)savedArrangementName
         missingProfileNamed:(NSString *)profileName
                        guid:(NSString *)guid;
+- (void)brokenPipe;
+
+- (void)didRestoreOrphan;
+- (void)willRecycleSession;
 
 @end
 

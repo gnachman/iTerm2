@@ -12,6 +12,9 @@
 #import "NSArray+iTerm.h"
 #import "ProfileModel.h"
 
+static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
+static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
+
 @implementation iTermNaggingController
 
 - (BOOL)permissionToReportVariableNamed:(NSString *)name {
@@ -72,6 +75,38 @@
     }];
 }
 
+- (void)didRestoreOrphan {
+    [self.delegate naggingControllerShowMessage:@"This already-running session was restored but its contents were not saved."
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerOrphanIdentifier
+                                        options:@[ @"Why?" ]
+                                     completion:^(int selection) {
+        if (selection == 0) {
+            // Why?
+            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+        }
+    }];
+}
+
+- (void)brokenPipe {
+    [self.delegate naggingControllerShowMessage:@"Session ended (broken pipe). Restart it?"
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier
+                                        options:@[ @"Restart", @"Don’t Ask Again" ]
+                                     completion:^(int selection) {
+        [self handleCompletionForBrokenPipe:selection];
+    }];
+}
+
+- (void)willRecycleSession {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerOrphanIdentifier];
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier];
+}
+
+
 #pragma mark - Variable Reporting
 
 - (NSArray<NSString *> *)variablesToReportEntries {
@@ -120,6 +155,18 @@
                                            missingProfileNamed:missingProfileName
                                                           guid:guid];
         return;
+    }
+}
+
+- (void)handleCompletionForBrokenPipe:(int)selection {
+    switch (selection) {
+        case 0: // Yes
+            [self.delegate naggingControllerRestart];
+            break;
+
+        case 1: // Don't ask again
+            [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
+            break;
     }
 }
 

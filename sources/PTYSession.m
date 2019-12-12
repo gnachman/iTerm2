@@ -166,7 +166,6 @@ NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
 static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyingBellAutomatically";
-static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
@@ -1571,20 +1570,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)showOrphanAnnouncement {
-    NSString *notice = @"This already-running session was restored but its contents were not saved.";
-    iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:notice
-                                                     style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"Why?" ]
-                                                completion:^(int selection) {
-                                                    if (selection == 0) {
-                                                        // Why?
-                                                        NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
-                                                        [[NSWorkspace sharedWorkspace] openURL:whyUrl];
-                                                    }
-                                                }];
-    announcement.dismissOnKeyDown = YES;
-    [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+    [self.naggingController didRestoreOrphan];
 }
 
 // Session specific methods
@@ -2168,7 +2154,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)restartSession {
     assert(self.isRestartable);
-    [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
+    [_naggingController willRecycleSession];
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
     } else {
@@ -2944,27 +2930,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_shortLivedSingleUse) {
         return;
     }
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"Restart", @"Don’t Ask Again" ]
-                                                    completion:^(int selection) {
-                                                        switch (selection) {
-                                                            case -2:  // Dismiss programmatically
-                                                                break;
-
-                                                            case -1: // No
-                                                                break;
-
-                                                            case 0: // Yes
-                                                                [self replaceTerminatedShellWithNewInstance];
-                                                                break;
-
-                                                            case 1: // Don't ask again
-                                                                [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
-                                                        }
-                                                    }];
-    [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+    [self.naggingController brokenPipe];
 }
 
 - (BOOL)isRestartable {
@@ -3002,8 +2968,7 @@ ITERM_WEAKLY_REFERENCEABLE
          substitutions:_substitutions
            synchronous:YES
             completion:nil];
-    [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
-    [self removeAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
+    [_naggingController willRecycleSession];
     DLog(@"  replaceTerminatedShellWithNewInstance: return with terminal=%@", _screen.terminal);
 }
 
@@ -12179,6 +12144,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
                                                         object:guid
                                                       userInfo:@{ @"new profile": similarlyNamedProfile }];
+}
+
+- (void)naggingControllerRemoveMessageWithIdentifier:(NSString *)identifier {
+    [self dismissAnnouncementWithIdentifier:identifier];
+    [self removeAnnouncementWithIdentifier:identifier];
+}
+
+- (void)naggingControllerRestart {
+    [self replaceTerminatedShellWithNewInstance];
 }
 
 @end
