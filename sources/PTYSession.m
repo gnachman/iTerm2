@@ -5236,19 +5236,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_view snapshot];
 }
 
-- (void)askAboutAbortingDownload {
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"A file is being downloaded. Abort the download?"
-                                                         style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"OK", @"Cancel" ]
-                                                    completion:^(int selection) {
-                                                        if (selection == 0) {
-                                                            [self.terminal stopReceivingFile];
-                                                        }
-                                                    }];
-    [self queueAnnouncement:announcement identifier:@"AbortDownloadOnKeyPressAnnouncement"];
-}
-
 - (void)askAboutAbortingUpload {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:@"A file is being uploaded. Abort the uploaded?"
@@ -6714,7 +6701,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if ((event.it_modifierFlags & NSEventModifierFlagControl) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
             if (self.terminal.receivingFile) {
                 // Offer to abort download if you press ^c while downloading an inline file
-                [self askAboutAbortingDownload];
+                [self.naggingController askAboutAbortingDownload];
             } else if (self.upload) {
                 [self askAboutAbortingUpload];
             }
@@ -9347,12 +9334,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidFinishReceivingFile {
+    [_naggingController didFinishDownload];
     [self.download endOfData];
     self.download = nil;
 }
 
 - (void)screenDidFinishReceivingInlineFile {
-    [self dismissAnnouncementWithIdentifier:@"AbortDownloadOnKeyPressAnnouncement"];
+    [_naggingController didFinishDownload];
 }
 
 - (void)screenDidReceiveBase64FileData:(NSString *)data {
@@ -12153,6 +12141,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerRestart {
     [self replaceTerminatedShellWithNewInstance];
+}
+
+- (void)naggingControllerAbortDownload {
+    [self.terminal stopReceivingFile];
 }
 
 @end

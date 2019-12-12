@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)naggingControllerRemoveMessageWithIdentifier:(NSString *)identifier;
 
 - (void)naggingControllerRestart;
+- (void)naggingControllerAbortDownload;
+
 @end
 
 @interface iTermNaggingController : NSObject
@@ -44,6 +46,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)didRestoreOrphan;
 - (void)willRecycleSession;
+
+- (void)askAboutAbortingDownload;
+- (void)didFinishDownload;
 
 @end
 

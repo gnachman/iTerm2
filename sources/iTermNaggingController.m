@@ -14,6 +14,7 @@
 
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
 static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
+static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDownloadOnKeyPressAnnouncement";
 
 @implementation iTermNaggingController
 
@@ -101,9 +102,27 @@ static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentif
     }];
 }
 
+- (void)askAboutAbortingDownload {
+    [self.delegate naggingControllerShowMessage:@"A file is being downloaded. Abort the download?"
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerAbortDownloadIdentifier
+                                        options:@[ @"OK", @"Cancel" ]
+                                     completion:^(int selection) {
+        if (selection == 0) {
+            [self.delegate naggingControllerAbortDownload];
+        }
+    }];
+}
+
+- (void)didFinishDownload {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAbortDownloadIdentifier];
+}
+
 - (void)willRecycleSession {
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerOrphanIdentifier];
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier];
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAbortDownloadIdentifier];
 }
 
 
