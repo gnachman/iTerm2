@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)naggingControllerRestart;
 - (void)naggingControllerAbortDownload;
+- (void)naggingControllerAbortUpload;
 
 @end
 
@@ -48,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)willRecycleSession;
 
 - (void)askAboutAbortingDownload;
+- (void)askAboutAbortingUpload;
 - (void)didFinishDownload;
 
 @end

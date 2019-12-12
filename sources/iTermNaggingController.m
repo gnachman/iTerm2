@@ -15,6 +15,7 @@
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
 static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
 static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDownloadOnKeyPressAnnouncement";
+static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier = @"AbortUploadOnKeyPressAnnouncement";
 
 @implementation iTermNaggingController
 
@@ -115,14 +116,32 @@ static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDo
     }];
 }
 
+- (void)askAboutAbortingUpload {
+    [self.delegate naggingControllerShowMessage:@"A file is being uploaded. Abort the upload?"
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier
+                                        options:@[ @"OK", @"Cancel" ]
+                                     completion:^(int selection) {
+        if (selection == 0) {
+            [self.delegate naggingControllerAbortUpload];
+        }
+    }];
+}
+
 - (void)didFinishDownload {
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAbortDownloadIdentifier];
 }
 
 - (void)willRecycleSession {
-    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerOrphanIdentifier];
-    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier];
-    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAbortDownloadIdentifier];
+    NSArray<NSString *> *identifiers = @[
+        iTermNaggingControllerOrphanIdentifier,
+        iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier,
+        iTermNaggingControllerAbortDownloadIdentifier,
+        iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier ];
+    for (NSString *identifier in identifiers) {
+        [self.delegate naggingControllerRemoveMessageWithIdentifier:identifier];
+    }
 }
 
 

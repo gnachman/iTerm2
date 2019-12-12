@@ -5236,23 +5236,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_view snapshot];
 }
 
-- (void)askAboutAbortingUpload {
-    iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:@"A file is being uploaded. Abort the uploaded?"
-                                                     style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"OK", @"Cancel" ]
-                                                completion:^(int selection) {
-                                                    if (selection == 0) {
-                                                        if (self.upload) {
-                                                            [_pasteHelper abort];
-                                                            [self.upload endOfData];
-                                                            self.upload = nil;
-                                                        }
-                                                    }
-                                                }];
-    [self queueAnnouncement:announcement identifier:@"AbortUploadOnKeyPressAnnouncement"];
-}
-
 #pragma mark - Metal Support
 
 #pragma mark iTermMetalGlueDelegate
@@ -6703,7 +6686,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 // Offer to abort download if you press ^c while downloading an inline file
                 [self.naggingController askAboutAbortingDownload];
             } else if (self.upload) {
-                [self askAboutAbortingUpload];
+                [self.naggingController askAboutAbortingUpload];
             }
         }
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
@@ -12145,6 +12128,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerAbortDownload {
     [self.terminal stopReceivingFile];
+}
+
+- (void)naggingControllerAbortUpload {
+    if (!self.upload) {
+        return;
+    }
+    [_pasteHelper abort];
+    [self.upload endOfData];
+    self.upload = nil;
 }
 
 @end
