@@ -2770,6 +2770,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
+                                  named:(NSString *)arrangementName
                                sessions:(NSArray *)sessions
                forceOpeningHotKeyWindow:(BOOL)force {
     PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
@@ -2777,16 +2778,20 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYSession *session in sessions) {
         assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
-    if ([term loadArrangement:arrangement sessions:sessions]) {
+    if ([term loadArrangement:arrangement named:arrangementName sessions:sessions]) {
         return term;
     } else {
         return term;
     }
 }
 
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
-                  forceOpeningHotKeyWindow:(BOOL)force {
-    return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
++ (PseudoTerminal *)terminalWithArrangement:(NSDictionary *)arrangement
+                                      named:(NSString *)arrangementName
+                   forceOpeningHotKeyWindow:(BOOL)force {
+    return [self terminalWithArrangement:arrangement
+                                   named:arrangementName
+                                sessions:nil
+                forceOpeningHotKeyWindow:force];
 }
 
 - (iTermVariables *)variables {
@@ -2947,11 +2952,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return mutableArrangement;
 }
 
-- (BOOL)loadArrangement:(NSDictionary *)arrangement {
-    return [self loadArrangement:arrangement sessions:nil];
+- (BOOL)loadArrangement:(NSDictionary *)arrangement named:(NSString *)arrangementName {
+    return [self loadArrangement:arrangement named:arrangementName sessions:nil];
 }
 
-- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions {
+- (BOOL)loadArrangement:(NSDictionary *)arrangement
+                  named:(NSString *)arrangementName
+               sessions:(NSArray *)sessions {
     PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
         desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
@@ -2985,7 +2992,9 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL savedRestoringWindow = _restoringWindow;
     _restoringWindow = YES;
     _suppressMakeCurrentTerminal = (self.hotkeyWindowType != iTermHotkeyWindowTypeNone);
-    const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement sessions:sessions];
+    const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
+                                                          named:arrangementName
+                                                       sessions:sessions];
     _suppressMakeCurrentTerminal = NO;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
@@ -3056,13 +3065,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return [string rangeOfCharacterFromSet:characterSet.invertedSet].location == NSNotFound;
 }
 
-- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions {
+- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
+                             named:(NSString *)arrangementName
+                          sessions:(NSArray<PTYSession *> *)sessions {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
         if (sessions) {
             sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
         }
         if (![self openTabWithArrangement:tabArrangement
+                                    named:arrangementName
                             hasFlexibleView:NO
                                     viewMap:nil
                                  sessionMap:sessionMap]) {
@@ -7606,6 +7618,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     PTYSession *originalActiveSession = [tab activeSession];
     PTYTab *temporaryTab = [PTYTab tabWithArrangement:arrangement
+                                                named:nil
                                            inTerminal:nil
                                       hasFlexibleView:NO
                                               viewMap:nil
@@ -7639,6 +7652,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     DLog(@"Creating a tab to receive the arrangement");
     PTYTab *tab = [PTYTab tabWithArrangement:arrangement
+                                       named:nil
                                   inTerminal:self
                              hasFlexibleView:NO
                                      viewMap:nil
@@ -8233,11 +8247,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return minWidth;
 }
 
-- (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
+- (PTYTab *)openTabWithArrangement:(NSDictionary *)arrangement
+                             named:(NSString *)arrangementName
                    hasFlexibleView:(BOOL)hasFlexible
                            viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
                         sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
+                                          named:arrangementName
                                      inTerminal:self
                                 hasFlexibleView:hasFlexible
                                         viewMap:viewMap
@@ -9833,6 +9849,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                               completion:nil];
     } else {
         [self openTabWithArrangement:self.currentTab.arrangement
+                               named:nil
                      hasFlexibleView:self.currentTab.isTmuxTab
                              viewMap:nil
                           sessionMap:nil];
@@ -10174,6 +10191,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.window-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
     [self loadArrangement:arrangement
+                    named:nil
                  sessions:nil];
     self.restorableStateDecodePending = NO;
 }

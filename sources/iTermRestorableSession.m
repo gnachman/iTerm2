@@ -28,6 +28,7 @@
             NSRect frame = [(NSValue *)tuple[0] rectValue];
             NSDictionary *arrangement = tuple[1];
             return [PTYSession sessionFromArrangement:arrangement
+                                                named:nil
                                                inView:[[[SessionView alloc] initWithFrame:frame] autorelease]
                                          withDelegate:nil
                                         forObjectType:iTermPaneObject];

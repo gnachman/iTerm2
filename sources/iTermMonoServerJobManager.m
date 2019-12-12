@@ -62,13 +62,13 @@
 }
 
 - (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
-                         argpath:(const char *)argpath
-                            argv:(const char **)argv
-                      initialPwd:(const char *)initialPwd
-                      newEnviron:(char **)newEnviron
-                     synchronous:(BOOL)synchronous
-                            task:(id<iTermTask>)task
-                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                        argpath:(const char *)argpath
+                           argv:(const char **)argv
+                     initialPwd:(const char *)initialPwd
+                     newEnviron:(char **)newEnviron
+                    synchronous:(BOOL)synchronous
+                           task:(id<iTermTask>)task
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     DLog(@"get path to UDS");
     NSString *unixDomainSocketPath = [self pathToNewUnixDomainSocket];

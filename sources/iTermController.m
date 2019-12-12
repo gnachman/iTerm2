@@ -436,13 +436,11 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement {
-    [self tryOpenArrangement:terminalArrangement asTabsInWindow:nil];
-}
-
-- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement asTabsInWindow:(PseudoTerminal *)term {
+- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement
+                     named:(NSString *)arrangementName
+            asTabsInWindow:(PseudoTerminal *)term {
     if (term) {
-        [term restoreTabsFromArrangement:terminalArrangement sessions:nil];
+        [term restoreTabsFromArrangement:terminalArrangement named:arrangementName sessions:nil];
         return;
     }
     BOOL shouldDelay = NO;
@@ -463,6 +461,7 @@ static iTermController *gSharedInstance;
     } else {
         DLog(@"Opening it.");
         PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:terminalArrangement
+                                                                 named:arrangementName
                                               forceOpeningHotKeyWindow:NO];
         if (term) {
           [self addTerminalWindow:term];
@@ -472,15 +471,13 @@ static iTermController *gSharedInstance;
 
 - (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term {
     BOOL ok = NO;
-    _savedArrangementNameBeingRestored = [[theName retain] autorelease];
     NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary *terminalArrangement in terminalArrangements) {
-            [self tryOpenArrangement:terminalArrangement asTabsInWindow:term];
+            [self tryOpenArrangement:terminalArrangement named:theName asTabsInWindow:term];
             ok = YES;
         }
     }
-    _savedArrangementNameBeingRestored = nil;
     return ok;
 }
 

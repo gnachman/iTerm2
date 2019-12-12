@@ -490,6 +490,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (id)copyWithZone:(NSZone *)zone {
     NSDictionary *arrangement = [self arrangement];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
+                                           named:nil
                                       inTerminal:[self realParentWindow]
                                  hasFlexibleView:flexibleView_ != nil
                                          viewMap:nil
@@ -2598,6 +2599,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (PTYSession *)_recursiveRestoreSessions:(NSDictionary<NSString *, id> *)arrangement
+                                    named:(NSString *)arrangementName
                                    atNode:(__kindof NSView *)view
                                     inTab:(PTYTab *)theTab
                             forObjectType:(iTermObjectType)objectType {
@@ -2610,6 +2612,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         for (NSInteger i = 0; i < [subArrangements count] && i < splitter.subviews.count; ++i) {
             NSDictionary<NSString *, id> *subArrangement = subArrangements[i];
             PTYSession *session = [self _recursiveRestoreSessions:subArrangement
+                                                            named:arrangementName
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
                                                     forObjectType:subObjectType];
@@ -2637,6 +2640,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [session setSizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
         } else {
             session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
+                                                   named:arrangementName
                                                   inView:view
                                             withDelegate:theTab
                                            forObjectType:objectType];
@@ -2728,6 +2732,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
+                         named:(NSString *)arrangementName
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
@@ -2767,6 +2772,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [theTab.viewToSessionMap setObject:session forKey:session.view];
     }
     [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                         named:arrangementName
                                                         atNode:theTab->root_
                                                          inTab:theTab
                                                  forObjectType:objectType]];
@@ -3228,6 +3234,7 @@ typedef struct {
                                                               tmuxController:tmuxController
                                                                       window:tmuxWindow];
     PTYTab *theTab = [self tabWithArrangement:arrangement
+                                        named:nil
                                    inTerminal:term
                               hasFlexibleView:YES
                                       viewMap:nil
@@ -3953,6 +3960,7 @@ typedef struct {
     }
     // TODO does this preserve the active session correctly? i don't think so
     PTYSession *activeSession = [self _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                          named:nil
                                                          atNode:newRoot
                                                           inTab:self
                                                   forObjectType:objectType];

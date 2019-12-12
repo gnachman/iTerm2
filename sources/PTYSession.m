@@ -477,12 +477,6 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<NSString *, NSString *> *_keyLabels;
     NSMutableArray<iTermKeyLabels *> *_keyLabelsStack;
 
-    // If the session was created from a saved arrangement with a missing profile then this records
-    // the GUID of the missing profile. If the saved arrangement gets repaired then a notification
-    // is posted and all sessions with that bogus GUID can hide their profile and reload their
-    // profile.
-    NSString *_missingSavedArrangementProfileGUID;
-
     // The containing window is in the midst of a live resize. The update timer
     // runs in the common modes runloop in this case. That's not acceptable
     // for normal use for reasons that Apple leaves up to your imagination (it
@@ -853,7 +847,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_keyLabels release];
     [_keyLabelsStack release];
-    [_missingSavedArrangementProfileGUID release];
     [_currentHost release];
     [_hostnameToShell release];
 
@@ -1072,50 +1065,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (iTermAnnouncementViewController *)announcementForMissingProfileInArrangement:(NSDictionary *)arrangement {
-    iTermAnnouncementViewController *announcement = nil;
-    NSString *missingProfileName = [[arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_NAME] copy] autorelease];
-    DLog(@"Can't find profile %@ guid %@", missingProfileName, arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]);
-    if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
-        NSString *notice;
-        NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
-        NSString *savedArrangementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
-        if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
-            notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists. A profile with that name happens to exist.", missingProfileName];
-            if (savedArrangementName) {
-                actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
-            }
-        } else {
-            notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists.", missingProfileName];
-        }
-        Profile *thisProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
-        [_missingSavedArrangementProfileGUID autorelease];
-        _missingSavedArrangementProfileGUID = [thisProfile[KEY_GUID] copy];
-        announcement =
-            [iTermAnnouncementViewController announcementWithTitle:notice
-                                                             style:kiTermAnnouncementViewStyleWarning
-                                                       withActions:actions
-                                                        completion:^(int selection) {
-                                                            if (selection == 0) {
-                                                                [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
-                                                            } else if (selection == 1) {
-                                                                // Repair
-                                                                Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
-                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArrangementName
-                                                                                                         replacingMissingGUID:thisProfile[KEY_GUID]
-                                                                                                                     withGUID:similarlyNamedProfile[KEY_GUID]];
-                                                                [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
-                                                                                                                    object:thisProfile[KEY_GUID]
-                                                                                                                  userInfo:@{ @"new profile": similarlyNamedProfile }];
-                                                            }
-                                                        }];
-        announcement.dismissOnKeyDown = YES;
-    }
-    return announcement;
-}
-
 + (void)finishInitializingArrangementOriginatedSession:(PTYSession *)aSession
                                            arrangement:(NSDictionary *)arrangement
+                                       arrangementName:(NSString *)arrangementName
                                       attachedToServer:(BOOL)attachedToServer
                                               delegate:(id<PTYSessionDelegate>)delegate
                                     didRestoreContents:(BOOL)didRestoreContents
@@ -1258,6 +1210,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [delegate addHiddenLiveView:liveView];
         aSession.liveSession = [self sessionFromArrangement:liveArrangement
+                                                      named:nil
                                                      inView:liveView
                                                withDelegate:delegate
                                               forObjectType:objectType];
@@ -1269,10 +1222,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
     }
     if (missingProfile) {
-        iTermAnnouncementViewController *announcement = [aSession announcementForMissingProfileInArrangement:arrangement];
-        if (announcement) {
-            [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
-        }
+        NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
+        [aSession.naggingController arrangementWithName:arrangementName
+                                    missingProfileNamed:arrangementProfile[KEY_NAME]
+                                                   guid:arrangementProfile[KEY_GUID]];
     }
 
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
@@ -1283,6 +1236,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
+                                 named:(NSString *)arrangementName
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
                          forObjectType:(iTermObjectType)objectType {
@@ -1557,7 +1511,8 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
         [self finishInitializingArrangementOriginatedSession:aSession
-                                                 arrangement:arrangement
+                                             arrangement:arrangement
+                                             arrangementName:arrangementName
                                             attachedToServer:attachedToServer
                                                     delegate:delegate
                                           didRestoreContents:restoreContents
@@ -4879,7 +4834,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
-    if ([notification.object isEqual:_missingSavedArrangementProfileGUID]) {
+    if ([notification.object isEqual:_naggingController.missingSavedArrangementProfileGUID]) {
         Profile *newProfile = notification.userInfo[@"new profile"];
         [self setIsDivorced:NO withDecree:@"Saved arrangement was repaired. Set divorced to NO."];
         [_overriddenFields removeAllObjects];
@@ -12196,17 +12151,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)naggingControllerShowMessage:(NSString *)message
+                          isQuestion:(BOOL)isQuestion
+                           important:(BOOL)important
                           identifier:(NSString *)identifier
                              options:(NSArray<NSString *> *)options
                           completion:(void (^)(int))completion {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:message
-                                                     style:kiTermAnnouncementViewStyleQuestion
+                                                     style:isQuestion ? kiTermAnnouncementViewStyleQuestion : kiTermAnnouncementViewStyleWarning
                                                withActions:options
                                                 completion:^(int selection) {
         completion(selection);
     }];
+    if (!important) {
+        announcement.dismissOnKeyDown = YES;
+    }
     [self queueAnnouncement:announcement identifier:identifier];
+}
+
+- (void)naggingControllerRepairSavedArrangement:(NSString *)savedArrangementName
+                            missingProfileNamed:(NSString *)missingProfileName
+                                           guid:(NSString *)guid {
+    Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
+    [[iTermController sharedInstance] repairSavedArrangementNamed:savedArrangementName
+                                             replacingMissingGUID:guid
+                                                         withGUID:similarlyNamedProfile[KEY_GUID]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
+                                                        object:guid
+                                                      userInfo:@{ @"new profile": similarlyNamedProfile }];
 }
 
 @end

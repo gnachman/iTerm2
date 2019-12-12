@@ -565,6 +565,7 @@ typedef enum {
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
+                                named:(NSString *)arrangementName
                                inView:(SessionView *)sessionView
                          withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType;

@@ -119,10 +119,12 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // tabs/sessions also restored. May return nil.
 // forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
 // specified profile, or the arrangement is defective in specifying details of the hotkey window.
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
-                  forceOpeningHotKeyWindow:(BOOL)force;
++ (PseudoTerminal *)terminalWithArrangement:(NSDictionary *)arrangement
+                                      named:(NSString *)arrangementName
+                   forceOpeningHotKeyWindow:(BOOL)force;
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
+                                  named:(NSString *)arrangementName
                                sessions:(NSArray *)sessions
                forceOpeningHotKeyWindow:(BOOL)force;
 
@@ -266,10 +268,12 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                           withProfile:(Profile *)goodProfile;
 
 // Load an arrangement into an empty window.
-- (BOOL)loadArrangement:(NSDictionary *)arrangement;
+- (BOOL)loadArrangement:(NSDictionary *)arrangement named:(NSString *)arrangementName;
 
 // Load just the tabs into this window.
-- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement sessions:(NSArray<PTYSession *> *)sessions;
+- (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
+                             named:(NSString *)arrangementName
+                          sessions:(NSArray<PTYSession *> *)sessions;
 
 // Returns the arrangement for this window.
 - (NSDictionary*)arrangement;

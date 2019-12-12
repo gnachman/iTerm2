@@ -759,6 +759,7 @@ static NSString *const kArrangement = @"Arrangement";
     }
 
     PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:arrangement
+                                                             named:nil
                                           forceOpeningHotKeyWindow:NO];
     if (term) {
         [[iTermController sharedInstance] addTerminalWindow:term];

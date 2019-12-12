@@ -12,15 +12,30 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermNaggingControllerDelegate<NSObject>
 - (BOOL)naggingControllerCanShowMessageWithIdentifier:(NSString *)identifier;
 - (void)naggingControllerShowMessage:(NSString *)message
+                          isQuestion:(BOOL)isQuestion
+                           important:(BOOL)important
                           identifier:(NSString *)identifier
                              options:(NSArray<NSString *> *)options
                           completion:(void (^)(int))completion;
+
+- (void)naggingControllerRepairSavedArrangement:(NSString *)savedArrangementName
+                            missingProfileNamed:(NSString *)profileName
+                                           guid:(NSString *)guid;
 @end
 
 @interface iTermNaggingController : NSObject
 @property (nonatomic, weak) id<iTermNaggingControllerDelegate> delegate;
 
+// If we have complained that the saved arrangement is missing a profile, this is the GUID of the
+// missing profile.
+@property (nonatomic, copy, readonly) NSString *missingSavedArrangementProfileGUID;
+
+
 - (BOOL)permissionToReportVariableNamed:(NSString *)name;
+
+- (void)arrangementWithName:(NSString *)savedArrangementName
+        missingProfileNamed:(NSString *)profileName
+                       guid:(NSString *)guid;
 
 @end
 

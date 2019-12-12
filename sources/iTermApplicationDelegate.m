@@ -1939,6 +1939,7 @@ static BOOL hasBecomeActive = NO;
                     // Restore a widow.
                     DLog(@"Restore a widow");
                     term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
+                                                             named:nil
                                                           sessions:restorableSession.sessions
                                           forceOpeningHotKeyWindow:YES];
                     [[iTermController sharedInstance] addTerminalWindow:term];

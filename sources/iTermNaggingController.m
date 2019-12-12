@@ -7,16 +7,12 @@
 
 #import "iTermNaggingController.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
+#import "ProfileModel.h"
 
 @implementation iTermNaggingController
-
-- (NSArray<NSString *> *)variablesToReportEntries {
-    return [[[iTermAdvancedSettingsModel noSyncVariablesToReport] componentsSeparatedByString:@","] filteredArrayUsingBlock:^BOOL(NSString *anObject) {
-        return anObject.length > 0;
-    }];
-}
 
 - (BOOL)permissionToReportVariableNamed:(NSString *)name {
     static NSString *const allow = @"allow:";
@@ -45,6 +41,45 @@
     }];
 }
 
+- (void)arrangementWithName:(NSString *)savedArrangementName
+        missingProfileNamed:(NSString *)missingProfileName
+                       guid:(NSString *)guid {
+    DLog(@"Can’t find profile %@ guid %@", missingProfileName, guid);
+    if ([iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
+        return;
+    }
+    NSString *notice;
+    NSArray<NSString *> *actions = @[ @"Don’t Warn Again" ];
+    if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
+        notice = [NSString stringWithFormat:@"This session’s profile, “%@”, no longer exists. A profile with that name happens to exist.", missingProfileName];
+        if (savedArrangementName) {
+            actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
+        }
+    } else {
+        notice = [NSString stringWithFormat:@"This session’s profile, “%@”, no longer exists.", missingProfileName];
+    }
+    _missingSavedArrangementProfileGUID = [guid copy];
+    [self.delegate naggingControllerShowMessage:notice
+                                     isQuestion:NO
+                                      important:NO
+                                     identifier:@"ThisProfileNoLongerExists"
+                                        options:actions
+                                     completion:^(int selection) {
+        [self handleCompletionForMissingProfileInArrangementWithName:savedArrangementName
+                                                 missingProfileNamed:missingProfileName
+                                                                guid:guid
+                                                           selection:selection];
+    }];
+}
+
+#pragma mark - Variable Reporting
+
+- (NSArray<NSString *> *)variablesToReportEntries {
+    return [[[iTermAdvancedSettingsModel noSyncVariablesToReport] componentsSeparatedByString:@","] filteredArrayUsingBlock:^BOOL(NSString *anObject) {
+        return anObject.length > 0;
+    }];
+}
+
 - (BOOL)requestPermissionWithOriginalValue:(NSNumber *)setting
                                        key:(NSString *)key
                                     prompt:(NSString *)prompt
@@ -56,6 +91,8 @@
         return NO;
     }
     [self.delegate naggingControllerShowMessage:prompt
+                                     isQuestion:YES
+                                      important:YES
                                      identifier:key
                                         options:@[ @"Always Allow", @"Always Deny" ]
                                      completion:^(int selection) {
@@ -68,5 +105,22 @@
     return NO;
 }
 
+#pragma mark - Arrangement with missing profile
+
+- (void)handleCompletionForMissingProfileInArrangementWithName:(NSString *)savedArrangementName
+                                           missingProfileNamed:(NSString *)missingProfileName
+                                                          guid:(NSString *)guid
+                                                     selection:(int)selection {
+    if (selection == 0) {
+        [iTermAdvancedSettingsModel setNoSyncSuppressMissingProfileInArrangementWarning:YES];
+        return;
+    }
+    if (selection == 1) {
+        [self.delegate naggingControllerRepairSavedArrangement:savedArrangementName
+                                           missingProfileNamed:missingProfileName
+                                                          guid:guid];
+        return;
+    }
+}
 
 @end
