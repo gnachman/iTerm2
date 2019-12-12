@@ -23,5 +23,6 @@
 @property (nonatomic, readonly) NSTableView *tableView;
 
 - (void)windowWillOpen;
+- (void)profileDidChange;
 
 @end

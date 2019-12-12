@@ -162,7 +162,7 @@
 
 - (void)setTriggersValue:(NSArray *)value {
     [self setObject:value forKey:KEY_TRIGGERS];
-    [_triggerWindowController.tableView reloadData];
+    [_triggerWindowController profileDidChange];
 }
 
 - (void)triggerSetUseInterpolatedStrings:(BOOL)useInterpolatedStrings {

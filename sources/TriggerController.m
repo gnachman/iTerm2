@@ -682,5 +682,10 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     _textEditingRow = -1;
 }
 
+- (void)profileDidChange {
+    _textEditingRow = -1;
+    [_tableView reloadData];
+}
+
 @end
 
