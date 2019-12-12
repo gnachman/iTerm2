@@ -17,6 +17,7 @@ static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentif
 static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDownloadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier = @"AbortUploadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier = @"ThisProfileNoLongerExists";
+static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier = @"Tmux2.2SupplementaryPlaneAnnouncement";
 
 @implementation iTermNaggingController
 
@@ -149,6 +150,24 @@ static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier
     }
 }
 
+- (void)tmuxSupplementaryPlaneErrorForCharacter:(NSString *)string {
+    NSString *message = [NSString stringWithFormat:@"Because of a bug in tmux 2.2, the character “%@” cannot be sent.", string];
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:NO
+                                      important:NO
+                                     identifier:iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier
+                                        options:@[ @"Why?" ]
+                                     completion:^(int selection) {
+        if (selection == 0) {
+            [self showTmuxSupplementaryPlaneBugHelpPage];
+        }
+    }];
+}
+
+- (void)showTmuxSupplementaryPlaneBugHelpPage {
+    NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
+    [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+}
 
 #pragma mark - Variable Reporting
 

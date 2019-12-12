@@ -54,6 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)askAboutAbortingUpload;
 - (void)didFinishDownload;
 
+- (void)tmuxSupplementaryPlaneErrorForCharacter:(NSString *)string;
+
 @end
 
 NS_ASSUME_NONNULL_END
