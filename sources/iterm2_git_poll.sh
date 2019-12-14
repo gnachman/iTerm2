@@ -52,10 +52,10 @@ deletes() {
 
 git_poll () {
     local previous_path=$(pwd) 
-    # make sure to replace ~ with home, if it's in the path. Users
-    # might be using triggers to "Report Directory", which could pick up 
-    # a path with a '~' (representing the user's home) in it
-    local directory="${1/\~/${HOME}}" 
+    # Users might be using triggers to "Report Directory", which could pick up
+    # a path with a '~' (representing the user's home) in it. Or it might be an
+    # actual tilde in a directory name.
+    local directory="${1/#\~/${HOME}}"
     cd "${directory}"
 
     ulimit -m 4096
