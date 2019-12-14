@@ -6,7 +6,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        self.cornerRadius = 2;
+        self.cpk_cornerRadius = 2;
         self.borderColor = [NSColor grayColor];
     }
     return self;
@@ -22,8 +22,8 @@
     rect.size.height -= 1;
 
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:rect
-                                                         xRadius:self.cornerRadius
-                                                         yRadius:self.cornerRadius];
+                                                         xRadius:self.cpk_cornerRadius
+                                                         yRadius:self.cpk_cornerRadius];
     [NSGraphicsContext saveGraphicsState];
     [path addClip];
 

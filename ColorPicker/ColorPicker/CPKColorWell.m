@@ -94,7 +94,7 @@
 }
 
 - (void)awakeFromNib {
-    self.cornerRadius = 3;
+    self.cpk_cornerRadius = 3;
     self.open = NO;
 }
 

@@ -6,7 +6,7 @@
 @property(nonatomic, retain) NSColor *color;
 
 /** Defaults to 3 */
-@property(nonatomic) NSInteger cornerRadius;
+@property(nonatomic) NSInteger cpk_cornerRadius;
 
 /** Defaults to gray */
 @property(nonatomic, retain) NSColor *borderColor;
