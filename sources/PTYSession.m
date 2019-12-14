@@ -7915,7 +7915,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
-                          deltaY:(CGFloat)deltaY {
+                          deltaY:(CGFloat)deltaY
+        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord));
@@ -7983,7 +7984,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
         case NSEventTypeOtherMouseDragged:
-            if (_reportingMouseDown &&
+            if ((_reportingMouseDown || allowDragBeforeMouseDown) &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
 

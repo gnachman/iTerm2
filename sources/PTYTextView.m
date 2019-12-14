@@ -2170,7 +2170,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if ([self reportMouseEvent:event]) {
+    if ([self reportMouseEvent:event] || [self shouldReportMouseEvent:event at:[self pointForEvent:event]]) {
         _committedToDrag = YES;
         return;
     }
@@ -5696,6 +5696,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return rect;
 }
 
+- (BOOL)trackpadThreeFingerDragEnabled {
+    static NSUserDefaults *ud;
+    if (!ud) {
+        ud = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.driver.AppleBluetoothMultitouch.trackpad"];
+    }
+    return [ud boolForKey:@"TrackpadThreeFingerDrag"];
+}
+
 - (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
     NSRect liveRect = [self liveRect];
     if (!NSPointInRect(point, liveRect)) {
@@ -5707,8 +5715,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         if (event.buttonNumber == 0 && _numTouches > 1) {
             // When three-finger tap emulates middle click then buttonNumber will be 2. Middle clicks are reportable.
-            DLog(@"Num touches is %@ so not reporting it", @(_numTouches));
-            return NO;
+            if (_numTouches != 3 || ![self trackpadThreeFingerDragEnabled]) {
+                DLog(@"Num touches is %@ so not reporting it", @(_numTouches));
+                return NO;
+            }
         }
     }
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
@@ -5751,9 +5761,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (NSPoint)pointForEvent:(NSEvent *)event {
+    return [self convertPoint:[event locationInWindow] fromView:nil];
+}
+
 // Returns YES if the mouse event should not be handled natively.
 - (BOOL)reportMouseEvent:(NSEvent *)event {
-    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+    NSPoint point = [self pointForEvent:event];
 
     if (![self shouldReportMouseEvent:event at:point]) {
         return NO;
@@ -5769,7 +5783,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      modifiers:event.it_modifierFlags
                                         button:[self mouseReportingButtonNumberForEvent:event]
                                     coordinate:coord
-                                        deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]];
+                                        deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]
+                      allowDragBeforeMouseDown:_makingThreeFingerSelection];
 }
 
 #pragma mark - NSDraggingSource

@@ -135,7 +135,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
-                          deltaY:(CGFloat)deltaY;
+                          deltaY:(CGFloat)deltaY
+        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
 - (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand;
