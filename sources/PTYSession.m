@@ -5617,6 +5617,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             _view.scrollview.alphaValue = 0;
+        } else {
+            _view.scrollview.contentView.alphaValue = 0;
         }
     }
     [self setMetalViewAlphaValue:1];
@@ -5634,6 +5636,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (@available(macOS 10.14, *)) {
             if (PTYScrollView.shouldDismember) {
                 _view.scrollview.alphaValue = 1;
+            } else {
+                _view.scrollview.contentView.alphaValue = 1;
             }
         }
     }
@@ -10892,6 +10896,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             _view.scrollview.alphaValue = 1;
+        } else {
+            _view.scrollview.contentView.alphaValue = 1;
         }
     }
     [self setMetalViewAlphaValue:0];
