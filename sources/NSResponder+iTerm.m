@@ -36,4 +36,11 @@ static char iTermIgnoreFirstResponderChangesCountKey;
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+- (BOOL)it_wantsScrollWheelMomentumEvents {
+    return NO;
+}
+
+- (void)it_scrollWheelMomentum:(NSEvent *)event {
+}
+
 @end

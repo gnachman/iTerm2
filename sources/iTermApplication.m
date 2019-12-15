@@ -40,6 +40,7 @@
 #import "NSArray+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSResponder+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -430,6 +431,22 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return NO;
 }
 
+- (void)handleScrollWheelEvent:(NSEvent *)event {
+    NSWindow *window = self.keyWindow;
+    if (!window) {
+        return;
+    }
+    NSResponder *current = window.firstResponder;
+    while (current) {
+        if ([current respondsToSelector:@selector(it_wantsScrollWheelMomentumEvents)] &&
+            [current it_wantsScrollWheelMomentumEvents]) {
+            [current it_scrollWheelMomentum:event];
+            return;
+        }
+        current = current.nextResponder;
+    }
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
     if ([event type] == NSEventTypeFlagsChanged) {
@@ -443,8 +460,11 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             return;
         }
         DLog(@"NSKeyDown event taking the regular path");
+    } else if (event.type == NSEventTypeScrollWheel && (event.momentumPhase == NSEventPhaseChanged ||
+                                                        event.momentumPhase == NSEventPhaseEnded)) {
+        [self handleScrollWheelEvent:event];
     }
-    
+
     [super sendEvent:event];
 }
 

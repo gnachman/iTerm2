@@ -1492,9 +1492,23 @@ static const int kDragThreshold = 3;
     [self scrollLineDown:nil];
 }
 
-- (void)scrollWheel:(NSEvent *)event {
-    DLog(@"scrollWheel:%@", event);
+- (BOOL)it_wantsScrollWheelMomentumEvents {
+    return YES;
+}
 
+- (void)it_scrollWheelMomentum:(NSEvent *)event {
+    DLog(@"Scroll wheel momentum event!");
+    [self scrollWheel:event];
+}
+
+ - (void)scrollWheel:(NSEvent *)event {
+    DLog(@"scrollWheel:%@", event);
+    if ([self scrollWheelImpl:event]) {
+        [super scrollWheel:event];
+    }
+}
+
+- (BOOL)scrollWheelImpl:(NSEvent *)event {
     if (!_haveSeenScrollWheelEvent) {
         // Work around a weird bug. Commit 9e4b97b18fac24bea6147c296b65687f0523ad83 caused it.
         // When you restore a window and have an inline scroller (but not a legacy scroller!) then
@@ -1524,8 +1538,21 @@ static const int kDragThreshold = 3;
             [self deselect];
         }
     } else if (![self reportMouseEvent:event]) {
-        [super scrollWheel:event];
+        if (_selection.live) {
+            // Scroll via wheel while selecting. This is even possible with the trackpad by using
+            // three fingers as described in issue 8538.
+            const NSPoint locationInTextView = [self locationInTextViewFromEvent:event];
+            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+            const int x = clickPoint.x;
+            const int y = clickPoint.y;
+            DLog(@"Update live selection during SCROLL");
+            if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
+                _committedToDrag = YES;
+            }
+        }
+        return YES;
     }
+    return NO;
 }
 
 - (BOOL)hasUnderline {
@@ -2132,6 +2159,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self reportMouseEvent:event];
 }
 
+- (NSPoint)locationInTextViewFromEvent:(NSEvent *)event {
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    locationInTextView.x = ceil(locationInTextView.x);
+    locationInTextView.y = ceil(locationInTextView.y);
+    // Clamp the y position to be within the view. Sometimes we get events we probably shouldn't.
+    locationInTextView.y = MIN(self.frame.size.height - 1,
+                               MAX(0, locationInTextView.y));
+    return locationInTextView;
+}
+
 - (void)mouseDragged:(NSEvent *)event {
     DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
@@ -2143,13 +2181,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     // Prevent accidental dragging while dragging semantic history item.
     BOOL dragThresholdMet = NO;
-    NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
-    locationInTextView.x = ceil(locationInTextView.x);
-    locationInTextView.y = ceil(locationInTextView.y);
-    // Clamp the y position to be within the view. Sometimes we get events we probably shouldn't.
-    locationInTextView.y = MIN(self.frame.size.height - 1,
-                               MAX(0, locationInTextView.y));
+    const NSPoint locationInWindow = [event locationInWindow];
+    const NSPoint locationInTextView = [self locationInTextViewFromEvent:event];
 
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
