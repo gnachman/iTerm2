@@ -157,6 +157,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
 + (BOOL)neverWarnAboutPossibleOverrides;
++ (BOOL)noSyncSuppressDownloadConfirmation;
 + (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
 + (void)setNoSyncDoNotWarnBeforeMultilinePaste:(BOOL)value;
 + (NSString *)noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey;

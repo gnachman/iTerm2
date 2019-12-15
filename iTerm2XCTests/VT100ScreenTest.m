@@ -928,7 +928,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenCommandDidExitWithCode:(int)code {
 }
 
-- (BOOL)screenConfirmDownloadCanExceedSize:(NSInteger)limit {
+- (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit {
     return YES;
 }
 

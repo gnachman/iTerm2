@@ -73,7 +73,7 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-static const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
+const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 @interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
@@ -3842,18 +3842,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetPasteboard:value];
 }
 
-- (BOOL)preconfirmDownloadOfSize:(NSInteger)size {
-    if (size < VT100ScreenBigFileDownloadThreshold) {
-        return YES;
-    }
-    return [self.delegate screenConfirmDownloadCanExceedSize:VT100ScreenBigFileDownloadThreshold];
+- (BOOL)preconfirmDownloadOfSize:(NSInteger)size name:(NSString *)name promptIfBig:(BOOL *)promptIfBig {
+    return [self.delegate screenConfirmDownloadAllowed:name size:size promptIfBig:promptIfBig];
 }
 
 - (BOOL)terminalWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size {
-    if (![self preconfirmDownloadOfSize:size]) {
+    BOOL promptIfBig = YES;
+    if (![self preconfirmDownloadOfSize:size name:name promptIfBig:&promptIfBig]) {
         return NO;
     }
-    [delegate_ screenWillReceiveFileNamed:name ofSize:size preconfirmed:size >= VT100ScreenBigFileDownloadThreshold];
+    [delegate_ screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
     return YES;
 }
 
@@ -3865,7 +3863,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset {
-    if (![self preconfirmDownloadOfSize:size]) {
+    BOOL promptIfBig = YES;
+    if (![self preconfirmDownloadOfSize:size name:name promptIfBig:&promptIfBig]) {
         return NO;
     }
     [inlineFileInfo_ release];
@@ -3877,7 +3876,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                           kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
                           kInlineFileBase64String: [NSMutableString string],
                           kInlineFileInset: [NSValue futureValueWithEdgeInsets:inset],
-                          kInlineFilePreconfirmed: @(size >= VT100ScreenBigFileDownloadThreshold) } retain];
+                          kInlineFilePreconfirmed: @(!promptIfBig) } retain];
     return YES;
 }
 
@@ -4139,9 +4138,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
-                               afterSize:(NSInteger)afterSize {
+                               afterSize:(NSInteger)afterSize
+                                    name:(NSString *)name {
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
-        if (![self.delegate screenConfirmDownloadCanExceedSize:VT100ScreenBigFileDownloadThreshold]) {
+        if (![self.delegate screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
             [terminal_ stopReceivingFile];
             [self terminalFileReceiptEndedUnexpectedly];
             return NO;
@@ -4157,7 +4157,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         const NSInteger lengthAfter = [inlineFileInfo_[kInlineFileBase64String] length];
 
         if (![inlineFileInfo_[kInlineFilePreconfirmed] boolValue]) {
-            [self confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter];
+            [self confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter name:inlineFileInfo_[kInlineFileName] ?: @"Unnamed file"];
         }
     } else {
         [delegate_ screenDidReceiveBase64FileData:data];

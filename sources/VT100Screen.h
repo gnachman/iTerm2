@@ -32,6 +32,7 @@ extern NSString *const kScreenStateNumberOfLinesDroppedKey;
 
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
+extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @interface VT100Screen : NSObject <
     PTYNoteViewControllerDelegate,
@@ -232,7 +233,8 @@ extern int kVT100ScreenMinRows;
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
-                               afterSize:(NSInteger)afterSize;
+                               afterSize:(NSInteger)afterSize
+                                    name:(NSString *)name;
 
 @end
 

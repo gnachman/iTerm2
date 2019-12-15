@@ -129,11 +129,17 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTy
 #define DEFINE_OPTIONAL_BOOL(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
 
+#define DEFINE_SETTABLE_OPTIONAL_BOOL(name, capitalizedName, theDefault, theDescription) \
+DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
+
 #define DEFINE_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformInt, iTermAdvancedSettingsModelInverseTransformInt)
 
 #define DEFINE_NONNEGATIVE_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformNonnegativeInt, iTermAdvancedSettingsModelInverseTransformInt)
+
+#define DEFINE_OPTIONAL_INT(name, theDefault, theDescription) \
+DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalInt, iTermAdvancedSettingsModelInverseTransformOptionalInt)
 
 #define DEFINE_FLOAT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, double, kiTermAdvancedSettingTypeFloat, theDefault, theDescription, iTermAdvancedSettingsModelTransformFloat, iTermAdvancedSettingsModelInverseTransformFloat)
@@ -310,6 +316,7 @@ DEFINE_BOOL(performDictionaryLookupOnQuickLook, YES, SECTION_GENERAL @"Perform d
 DEFINE_BOOL(jiggleTTYSizeOnClearBuffer, NO, SECTION_GENERAL @"Redraw the screen after the Clear Buffer menu item is selected.\nWhen enabled, the TTY size is briefly changed after clearing the buffer to cause the shell or current app to redraw.");
 DEFINE_BOOL(indicateBellsInDockBadgeLabel, YES, SECTION_GENERAL @"Indicate the number of bells rung while the app is inactive in the dock icon’s badge label");
 DEFINE_STRING(downloadsDirectory, @"", SECTION_GENERAL @"Downloads folder.\nIf set, downloaded files go to this location instead of the user’s $HOME/Downloads folder.");
+DEFINE_BOOL(noSyncSuppressDownloadConfirmation, NO, SECTION_GENERAL @"Suppress confirmation of terminal-initiated downloads?");
 DEFINE_FLOAT(pointSizeOfTimeStamp, 10, SECTION_GENERAL @"Point size for timestamps");
 DEFINE_NONNEGATIVE_INT(terminalMargin, 5, SECTION_GENERAL @"Width of left and right margins in terminal panes\nHow much space to leave between the left and right edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_INT(terminalVMargin, 2, SECTION_GENERAL @"Height of top and bottom margins in terminal panes\nHow much space to leave between the top and bottom edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");

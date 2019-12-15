@@ -264,6 +264,9 @@
 - (void)screenDidReceiveLineFeed;
 - (void)screenSoftAlternateScreenModeDidChange;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
-- (BOOL)screenConfirmDownloadCanExceedSize:(NSInteger)limit;
+- (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit;
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name
+                                size:(NSInteger)size
+                         promptIfBig:(BOOL *)promptIfBig;
 
 @end

@@ -9292,7 +9292,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.download appendData:data];
     const NSInteger lengthAfter = self.download.length;
     if (!self.download.preconfirmed) {
-        [_screen confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter];
+        [_screen confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter name:self.download.shortName];
     }
 }
 
@@ -10540,16 +10540,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _delegate.realParentWindow.isFloatingHotKeyWindow;
 }
 
-- (BOOL)screenConfirmDownloadCanExceedSize:(NSInteger)limit {
+- (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit {
+    NSString *identifier = @"NoSyncAllowBigDownload";
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The current download is larger than %@. Continue?", [NSString it_formatBytes:limit]]
-                               actions:@[ @"OK", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The download “%@” is larger than %@. Continue?", name, [NSString it_formatBytes:limit]]
+                               actions:@[ @"Allow", @"Deny" ]
                              accessory:nil
-                            identifier:@"NoSyncAllowBigDownload"
+                            identifier:identifier
                            silenceable:kiTermWarningTypePermanentlySilenceable
                                heading:@"Allow Large File Download?"
                                 window:_view.window];
     return selection == kiTermWarningSelection0;
+}
+
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size promptIfBig:(BOOL *)promptIfBig {
+    NSString *identifier = @"NoSyncSuppressDownloadConfirmation";
+    *promptIfBig = YES;
+    const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The terminal has initiated transfer of a file named “%@” of size %@. Download it?", name, [NSString it_formatBytes:size]]
+                               actions:@[ @"Yes", @"No" ]
+                             accessory:nil
+                            identifier:identifier
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Allow Terminal-Initiated Download?"
+                                window:_view.window];
+    const BOOL allow = (selection == kiTermWarningSelection0);
+    if (allow && wasSilenced) {
+        if (size > VT100ScreenBigFileDownloadThreshold) {
+            *promptIfBig = NO;
+            return [self screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold];
+        }
+    }
+    return allow;
 }
 
 - (VT100Screen *)popupVT100Screen {
