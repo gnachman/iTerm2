@@ -144,8 +144,8 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1199"/>
-                            <menuItem title="Duplicate Tab" identifier="Duplicate Tab" id="Heo-Xb-RKN">
-                                <modifierMask key="keyEquivalentModifierMask"/>
+                            <menuItem title="Duplicate Tab" keyEquivalent="t" identifier="Duplicate Tab" id="Heo-Xb-RKN">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="duplicateTab:" target="-1" id="DcR-B7-VKj"/>
                                 </connections>
