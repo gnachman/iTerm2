@@ -194,17 +194,19 @@
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object {
     NSMutableData *data = [NSMutableData data];
     NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    archiver.requiresSecureCoding = YES;
     [archiver encodeObject:object forKey:@"object"];
     [archiver finishEncoding];
     [archiver release];
     return data;
 }
 
-- (id)it_unarchivedObject {
+- (id)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses {
     NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:self];
     id object = nil;
     @try {
-        object = [unarchiver decodeObjectForKey:@"object"];
+        unarchiver.requiresSecureCoding = YES;
+        object = [unarchiver decodeObjectOfClasses:[NSSet setWithArray:allowedClasses] forKey:@"object"];
     }
     @catch (NSException *exception) {
         return nil;

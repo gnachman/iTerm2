@@ -47,8 +47,10 @@
                                     window:nil];
         return;
     }
-
-    NSDictionary *dict = [data it_unarchivedObject];
+    // I don't know why, but if you only give it a dictionary it fails to
+    // decode. I find it hard to believe that keyed unarchiver would still have
+    // a bug like this, but I can't come up with a better explanation :(
+    NSDictionary *dict = [data it_unarchivedObjectOfClasses:@[ [NSDictionary class], [NSArray class] ]];
     if (![dict isKindOfClass:[NSDictionary class]]) {
         [iTermWarning showWarningWithTitle:@"Could not read the file: unarchiving decompressed data failed."
                                    actions:@[ @"OK" ]
