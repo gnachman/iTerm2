@@ -2203,10 +2203,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if ([self reportMouseEvent:event] || [self shouldReportMouseEvent:event at:[self pointForEvent:event]]) {
+    if ([self reportMouseEvent:event]) {
+        DLog(@"Reported drag");
         _committedToDrag = YES;
         return;
     }
+    DLog(@"Did not report drag");
     [self removeUnderline];
 
     BOOL pressingCmdOnly = ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand;
@@ -2259,7 +2261,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
 
-    if (!wasMakingThreeFingerSelection && _makingThreeFingerSelection) {
+    if (!wasMakingThreeFingerSelection && _makingThreeFingerSelection && ![self shouldReportMouseEvent:event at:[self pointForEvent:event]]) {
         DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
         const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
         const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
