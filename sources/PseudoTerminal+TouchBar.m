@@ -10,6 +10,7 @@
 #import "PseudoTerminal+Private.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
@@ -152,10 +153,71 @@ ITERM_IGNORE_PARTIAL_BEGIN
                           iTermTouchBarIdentifierPreviousMark,
                           iTermTouchBarIdentifierAutocomplete,
                           iTermTouchBarIdentifierStatus ];
-        ids = [ids arrayByAddingObjectsFromArray:[iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]]];
+        NSArray<NSString *> *customIDs = [iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]];
+        customIDs = [self idsByAddingVersions:customIDs];
+        ids = [ids arrayByAddingObjectsFromArray:customIDs];
         self.touchBar.customizationAllowedItemIdentifiers = ids;
         [self updateTouchBarFunctionKeyLabels];
     }
+}
+
+// Returns the version for a global touch bar identifier by checking if its
+// value has changed and incrementing the version if so, otherwise returning
+// the last version. If it's never been seen before then it's assigned version
+// 0.
+//
+// This scheme is used because the touch bar doesn't recognize changes to
+// existing identifiers. If you modify a custom touch bar button then you also
+// have to change its identifier. Prefs has no notion of versioning because
+// that's never been needed before. So the touch bar code imposes its own
+// notion of versions on it.
+//
+// We have to make sure to remove the version number (if present) before using
+// an identifier from the touch bar APIs.
+//
+// The version table is global because custom touch bar items are global.
+//
+// Versioned identifiers will be saved, which breaks downgrading to an older
+// version of iTerm2. Backward compatibility is preserved because the code to
+// remove a version number does nothing if one is missing.
+- (NSNumber *)versionFor:(NSString *)identifier withValue:(NSDictionary *)binding {
+    assert(binding);
+    static NSMutableDictionary<NSString *, NSDictionary *> *table;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        table = [[NSMutableDictionary alloc] init];
+    });
+    NSString *const bindingKey = @"binding";
+    NSString *const versionKey = @"version";
+    NSDictionary *const entry = table[identifier];
+    NSDictionary *const existingBinding = entry[bindingKey];
+    if (existingBinding && [existingBinding isEqual:binding]) {
+        return entry[versionKey];
+    }
+    if (!existingBinding) {
+        table[identifier] = @{ bindingKey: binding, versionKey: @0 };
+        return @0;
+    }
+    NSNumber *const lastVersion = entry[versionKey];
+    NSNumber *const currentVersion = @(lastVersion.integerValue + 1);
+    table[identifier] = @{ bindingKey: binding, versionKey: currentVersion };
+    return currentVersion;
+}
+
+- (NSArray<NSString *> *)idsByAddingVersions:(NSArray<NSString *> *)unversioned {
+    NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
+    return [unversioned mapWithBlock:^id(NSString *string) {
+        NSDictionary *binding = map[string];
+        return [string stringByAppendingFormat:@"/v%@", [self versionFor:string withValue:binding]];
+    }];
+}
+
+- (NSString *)idByRemovingVersion:(NSString *)identifier {
+    NSRange range = [identifier rangeOfString:@"/v"];
+    if (range.location == NSNotFound) {
+        return identifier;
+    }
+    return [identifier substringToIndex:range.location];
 }
 
 - (NSTouchBar *)amendTouchBar:(NSTouchBar *)touchBar {
@@ -441,8 +503,11 @@ ITERM_IGNORE_PARTIAL_BEGIN
         }
         return item;
     }
+    
+    // Custom action
+    NSString *unversionedIdentifier = [self idByRemovingVersion:identifier];
     NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
-    NSDictionary *binding = map[identifier];
+    NSDictionary *binding = map[unversionedIdentifier];
 
     if (!binding) {
         return nil;
@@ -460,7 +525,14 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (void)touchBarItemSelected:(iTermTouchBarButton *)sender {
-    NSDictionary *binding = sender.keyBindingAction;
+    NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
+    NSString *unversionedIdentifier = [self idByRemovingVersion:sender.identifier];
+    NSDictionary *binding = unversionedIdentifier ? map[unversionedIdentifier] : nil;
+    if (!binding) {
+        // The item has been deleted from prefs but the touch bar retains
+        // existing config until the user edits it.
+        binding = sender.keyBindingAction;
+    }
     [self.currentSession performKeyBindingAction:[iTermKeyBindingMgr actionForTouchBarItemBinding:binding]
                                        parameter:[iTermKeyBindingMgr parameterForTouchBarItemBinding:binding]
                                            event:[NSApp currentEvent]];
