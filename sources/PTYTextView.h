@@ -154,6 +154,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)isRestartable;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
+- (void)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion;
 
 // We guess the user is trying to send arrow keys with the scroll wheel in alt screen.
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying;
@@ -527,8 +528,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 // Show a visual highlight of a mark on the given line number.
 - (void)highlightMarkOnLine:(int)line hasErrorCode:(BOOL)hasErrorCode;
-
-- (IBAction)installShellIntegration:(id)sender;
 
 // Open a semantic history path.
 - (void)openSemanticHistoryPath:(NSString *)path

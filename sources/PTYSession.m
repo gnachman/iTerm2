@@ -123,6 +123,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "RegexKitLite.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -554,6 +555,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermProcessInfo *_lastProcessInfo;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
+
+    void (^_shellInferenceCompletionBlock)(NSString *);
 }
 
 @synthesize isDivorced = _divorced;
@@ -897,6 +900,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _logging.plainLogger = nil;
     [_logging release];
     [_naggingController release];
+    [_shellInferenceCompletionBlock release];
 
     [super dealloc];
 }
@@ -2737,6 +2741,15 @@ ITERM_WEAKLY_REFERENCEABLE
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
 
+    if (_shellInferenceCompletionBlock) {
+        NSArray *capture = [stringLine.stringValue captureComponentsMatchedByRegex:@"My shell is ([a-z]+)\\."];
+        if (capture.count) {
+            _shellInferenceCompletionBlock(capture[1]);
+            [_shellInferenceCompletionBlock release];
+            _shellInferenceCompletionBlock = nil;
+        }
+    }
+
     // If a trigger changes the current profile then _triggers gets released and we should stop
     // processing triggers. This can happen with automatic profile switching.
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
@@ -2768,7 +2781,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)clearTriggerLine {
-    if ([_triggers count]) {
+    if ([_triggers count] || _shellInferenceCompletionBlock) {
         [self checkTriggers];
         _triggerLineNumber = -1;
     }
@@ -8359,6 +8372,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionUpdateMetalAllowed];
 }
 
+- (void)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {
+    [_shellInferenceCompletionBlock release];
+    _shellInferenceCompletionBlock = [completion copy];
+    [self writeTask:@"echo My shell is `basename $SHELL`.\n"];
+}
+
 - (void)bury {
     if (self.isTmuxClient) {
         if (!self.delegate) {
@@ -8704,7 +8723,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
-    if ([_triggers count]) {
+    if ([_triggers count] || _shellInferenceCompletionBlock) {
         NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
                                                      length:asciiData->length
                                                    encoding:NSASCIIStringEncoding] autorelease];

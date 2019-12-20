@@ -79,6 +79,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c;
 
+#pragma mark - Install Shell Integration
+
+- (IBAction)installShellIntegration:(id)sender;
+
 @end
 
 NS_ASSUME_NONNULL_END
