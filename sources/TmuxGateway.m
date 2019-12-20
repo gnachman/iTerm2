@@ -16,8 +16,6 @@
 #import "VT100Token.h"
 
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
-const int kTmuxGatewayCommandShouldTolerateErrors = (1 << 0);
-const int kTmuxGatewayCommandWantsData = (1 << 1);
 
 #define NEWLINE @"\r"
 
@@ -37,6 +35,7 @@ static NSString *kCommandFlags = @"flags";
 static NSString *kCommandId = @"id";
 static NSString *kCommandIsInList = @"inList";
 static NSString *kCommandIsLastInList = @"lastInList";
+static NSString *kCommandTimestamp = @"timestamp";
 
 @implementation TmuxGateway {
     // Set to YES when the remote host closed the connection. We won't send commands when this is
@@ -624,9 +623,18 @@ error:
 }
 
 - (void)detach {
-    [self sendCommand:@"detach"
+    NSString *command = @"detach";
+    if (detachSent_ && [self isTmuxUnresponsive]) {
+        [delegate_ tmuxGatewayDidTimeOut];
+        if (disconnected_) {
+            return;
+        }
+    }
+    [self sendCommand:command
        responseTarget:self
-     responseSelector:@selector(noopResponseSelector:)];
+     responseSelector:@selector(noopResponseSelector:)
+       responseObject:nil
+                flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
     detachSent_ = YES;
 }
 
@@ -649,9 +657,41 @@ error:
             nil];
 }
 
-- (void)enqueueCommandDict:(NSDictionary *)dict
-{
-    [commandQueue_ addObject:[NSMutableDictionary dictionaryWithDictionary:dict]];
+- (void)enqueueCommandDict:(NSDictionary *)dict {
+    if ([dict[kCommandFlags] intValue] & kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate) {
+        if ([self havePendingCommandEqualTo:dict[kCommandString]] && [self isTmuxUnresponsive]) {
+            [delegate_ tmuxGatewayDidTimeOut];
+            if (disconnected_) {
+                return;
+            }
+        }
+    }
+    NSMutableDictionary *object = [[dict mutableCopy] autorelease];
+    object[kCommandTimestamp] = @(CACurrentMediaTime());
+    [commandQueue_ addObject:object];
+}
+
+- (BOOL)isTmuxUnresponsive {
+    const CFTimeInterval now = CACurrentMediaTime();
+    for (NSDictionary *dict in commandQueue_) {
+        NSNumber *sentDate = dict[kCommandTimestamp];
+        if (!sentDate) {
+            continue;
+        }
+        if (now - sentDate.doubleValue > 5) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)havePendingCommandEqualTo:(NSString *)command {
+    for (NSDictionary *dict in commandQueue_) {
+        if ([dict[kCommandString] isEqual:command]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector
@@ -679,6 +719,9 @@ error:
                                      responseObject:obj
                                               flags:flags];
     [self enqueueCommandDict:dict];
+    if (disconnected_) {
+        return;
+    }
     TmuxLog(@"Send command: %@", commandWithNewline);
     [delegate_ tmuxWriteString:commandWithNewline];
     TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
@@ -708,6 +751,10 @@ error:
             [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInitial];
         }
         [self enqueueCommandDict:amended];
+        if (disconnected_) {
+            DLog(@"Aborting! Disconnected");
+            return;
+        }
         sep = @"; ";
         TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
     }

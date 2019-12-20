@@ -6371,6 +6371,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen crlf];
 }
 
+- (void)tmuxGatewayDidTimeOut {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Force Detach?";
+    alert.informativeText = @"Tmux is not responding. Would you like to force detach?";
+    [alert addButtonWithTitle:@"Detach"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSWindow *window = self.view.window;
+    NSInteger button;
+    if (window) {
+        button = [alert runSheetModalForWindow:window];
+    } else {
+        button = [alert runModal];
+    }
+    if (button == NSAlertFirstButtonReturn) {
+        [_tmuxGateway forceDetach];
+    }
+}
+
 - (BOOL)tmuxGatewayShouldForceDetach {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Force Detach?";

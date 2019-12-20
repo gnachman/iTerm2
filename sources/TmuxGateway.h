@@ -9,13 +9,18 @@
 #import "VT100GridTypes.h"
 #import "WindowControllerInterface.h"
 
-// Constant values for flags:
-// Command may fail with an error and selector is still run but with nil
-// output.
-extern const int kTmuxGatewayCommandShouldTolerateErrors;
-// Send NSData, not NSString, for output (allowing busted/partial utf-8
-// sequences).
-extern const int kTmuxGatewayCommandWantsData;
+typedef NS_OPTIONS(int, kTmuxGatewayCommandOptions) {
+    // Command may fail with an error and selector is still run but with nil
+    // output.
+    kTmuxGatewayCommandShouldTolerateErrors = (1 << 0),
+
+    // Send NSData, not NSString, for output (allowing busted/partial utf-8
+    // sequences).
+    kTmuxGatewayCommandWantsData = (1 << 1),
+
+    // If this exact command was sent and has been pending for a while, offer to detach.
+    kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate = (1 << 2)
+};
 
 @class TmuxController;
 @class VT100Token;
@@ -51,7 +56,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID;
 - (NSString *)tmuxOwningSessionGUID;
 - (BOOL)tmuxGatewayShouldForceDetach;
-
+- (void)tmuxGatewayDidTimeOut;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {
@@ -72,6 +77,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, assign) BOOL acceptNotifications;
 @property(nonatomic, readonly) NSString *dcsID;
 @property(nonatomic, readonly) BOOL detachSent;
+@property(nonatomic, readonly) BOOL isTmuxUnresponsive;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -110,5 +116,6 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (void)detach;
 - (void)forceDetach;
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;
+- (BOOL)havePendingCommandEqualTo:(NSString *)command;
 
 @end

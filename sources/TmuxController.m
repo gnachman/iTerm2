@@ -1264,7 +1264,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-pane -t \"%%%d\"", windowPane]
            responseTarget:nil
-         responseSelector:nil];
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
 }
 
 - (void)unlinkWindowWithId:(int)windowId {
@@ -1407,13 +1409,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return _tabColors[@(windowPane)];
 }
 
-- (void)killWindow:(int)window
-{
-    [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
+- (void)killWindow:(int)window {
+        [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:0];
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
 }
 
 - (NSString *)breakPaneWindowPaneFlag {
@@ -1549,7 +1550,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *killCommand = [NSString stringWithFormat:@"kill-session -t \"$%d\"", sessionNumber];
     [gateway_ sendCommand:killCommand
               responseTarget:nil
-            responseSelector:nil];
+            responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
     [self listSessions];
 }
 
