@@ -447,7 +447,7 @@ typedef enum {
             break;
         case MOUSE_FORMAT_XTERM:
         default:
-            snprintf(buf, sizeof(buf), "\033[M%c%c%c", 32 + button, 32 + x, 32 + y);
+            snprintf(buf, sizeof(buf), "\033[M%c%c%c", 32 + button, MIN(255, 32 + x), MIN(255, 32 + y));
             break;
     }
     return buf;
