@@ -1740,6 +1740,14 @@ typedef struct iTermTextColorContext {
                                                style:(NSUnderlineStyle)underlineStyle
                                                 font:(NSFont *)font
                                                block:(void (^)(CGContextRef))block {
+    if ([iTermAdvancedSettingsModel solidUnderlines]) {
+        [self drawUnderlineOrStrikethroughOfColor:underlineColor
+                                    wantUnderline:wantUnderline
+                                            style:underlineStyle
+                                             font:font
+                                             rect:rect];
+        return;
+    }
     if (!underlineContext->maskGraphicsContext) {
         // Create a mask image.
         [self initializeUnderlineContext:underlineContext

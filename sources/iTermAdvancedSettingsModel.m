@@ -372,6 +372,7 @@ DEFINE_BOOL(useLowPowerGPUWhenUnplugged, NO, SECTION_DRAWING @"Metal renderer us
 #endif
 
 DEFINE_BOOL(underlineHyperlinks, YES, SECTION_DRAWING @"Underline OSC 8 hyperlinks");
+DEFINE_BOOL(solidUnderlines, NO, SECTION_DRAWING @"Use solid underlines?\nWhen disabled, underlines break near text that would intersect them.");
 
 #pragma mark - Semantic History
 

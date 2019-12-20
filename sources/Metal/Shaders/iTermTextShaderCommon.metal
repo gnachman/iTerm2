@@ -195,7 +195,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 cellSize,
                                        texture2d<float> texture,
                                        sampler textureSampler,
-                                       float scale) {
+                                       float scale,
+                                       bool solid) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,
@@ -209,7 +210,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
     }
-    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
         return weight;
     }
     float4 mask = GetMinimumColorComponentsOfNeighbors(textureSize,
@@ -244,7 +245,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 cellSize,
                                       texture2d<float> texture,
                                       sampler textureSampler,
-                                      float scale) {
+                                      float scale,
+                                      bool solid) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,
@@ -258,7 +260,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
     }
-    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough) {
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
         return weight;
     }
     float maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,

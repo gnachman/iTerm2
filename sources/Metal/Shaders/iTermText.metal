@@ -29,7 +29,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
                       constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                       constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                       constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                      constant iTermVertexInputMojaveVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexInputMojaveVertexTextInfo) ]],
+                      constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
                       device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                       unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutput out;
@@ -54,6 +54,8 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = perInstanceUniforms[iid].underlineColor;
     out.alphaVector = iTermAlphaVectorForTextColor(out.textColor);
+    out.flags = textInfo->flags;
+
     return out;
 }
 
@@ -62,6 +64,7 @@ iTermTextVertexShaderEmoji(uint vertexID [[ vertex_id ]],
                            constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                            constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                            constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                           constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
                            device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                            unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputEmoji out;
@@ -85,6 +88,7 @@ iTermTextVertexShaderBlending(uint vertexID [[ vertex_id ]],
                               constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                               constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                               constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                              constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
                               device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                               unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputBlending out;
@@ -112,7 +116,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
                                 constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                                 constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                                 constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                                constant iTermVertexInputMojaveVertexTextInfoStruct *textInfo [[ buffer(iTermVertexInputMojaveVertexTextInfo) ]],
+                                constant iTermVertexTextInfoStruct *textInfo [[ buffer(iTermVertexTextInfo) ]],
                                 device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                 unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputMonochrome out;
@@ -200,24 +204,26 @@ iTermTextFragmentShaderWithBlendingUnderlinedEmoji(iTermTextVertexFunctionOutput
                                                               dimensions->cellSize,
                                                               texture,
                                                               textureSampler,
-                                                              dimensions->scale);
+                                                              dimensions->scale,
+                                                              (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     }
 
     // Underlined emoji code path
     const float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                 in.clipSpacePosition.xy,
-                                                                 in.viewportSize,
-                                                                 in.cellOffset,
-                                                                 dimensions->underlineOffset,
-                                                                 dimensions->underlineThickness,
-                                                                 dimensions->textureSize,
-                                                                 in.textureOffset,
-                                                                 in.textureCoordinate,
-                                                                 dimensions->glyphSize,
-                                                                 dimensions->cellSize,
-                                                                 texture,
-                                                                 textureSampler,
-                                                                 dimensions->scale);
+                                                                  in.clipSpacePosition.xy,
+                                                                  in.viewportSize,
+                                                                  in.cellOffset,
+                                                                  dimensions->underlineOffset,
+                                                                  dimensions->underlineThickness,
+                                                                  dimensions->textureSize,
+                                                                  in.textureOffset,
+                                                                  in.textureCoordinate,
+                                                                  dimensions->glyphSize,
+                                                                  dimensions->cellSize,
+                                                                  texture,
+                                                                  textureSampler,
+                                                                  dimensions->scale,
+                                                                  (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     return mix(bwColor,
                in.underlineColor,
                max(strikethroughWeight, underlineWeight));
@@ -237,21 +243,22 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
 
     // Underlined not emoji.
     const float underlineWeight = ComputeWeightOfUnderlineInverted(in.underlineStyle,
-                                                                  in.clipSpacePosition.xy,
-                                                                  in.viewportSize,
-                                                                  in.cellOffset,
-                                                                  dimensions->underlineOffset,
-                                                                  dimensions->underlineThickness,
-                                                                  dimensions->strikethroughOffset,
-                                                                  dimensions->strikethroughThickness,
-                                                                  dimensions->textureSize,
-                                                                  in.textureOffset,
-                                                                  in.textureCoordinate,
-                                                                  dimensions->glyphSize,
-                                                                  dimensions->cellSize,
-                                                                  texture,
-                                                                  textureSampler,
-                                                                  dimensions->scale);
+                                                                   in.clipSpacePosition.xy,
+                                                                   in.viewportSize,
+                                                                   in.cellOffset,
+                                                                   dimensions->underlineOffset,
+                                                                   dimensions->underlineThickness,
+                                                                   dimensions->strikethroughOffset,
+                                                                   dimensions->strikethroughThickness,
+                                                                   dimensions->textureSize,
+                                                                   in.textureOffset,
+                                                                   in.textureCoordinate,
+                                                                   dimensions->glyphSize,
+                                                                   dimensions->cellSize,
+                                                                   texture,
+                                                                   textureSampler,
+                                                                   dimensions->scale,
+                                                                   (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
@@ -305,7 +312,8 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
                                                               dimensions->cellSize,
                                                               texture,
                                                               textureSampler,
-                                                              dimensions->scale);
+                                                              dimensions->scale,
+                                                              (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     }
 
     // Underlined emoji code path
@@ -322,7 +330,8 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
                                                                  dimensions->cellSize,
                                                                  texture,
                                                                  textureSampler,
-                                                                 dimensions->scale);
+                                                                 dimensions->scale,
+                                                                  (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     float4 result = mix(textureColor,
                        in.underlineColor,
                        max(strikethroughWeight, underlineWeight));
@@ -356,23 +365,25 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                               dimensions->cellSize,
                                                               texture,
                                                               textureSampler,
-                                                              dimensions->scale);
+                                                              dimensions->scale,
+                                                              (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     }
     // Underlined not emoji.
     const float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                 in.clipSpacePosition.xy,
-                                                                 in.viewportSize,
-                                                                 in.cellOffset,
-                                                                 dimensions->underlineOffset,
-                                                                 dimensions->underlineThickness,
-                                                                 dimensions->textureSize,
-                                                                 in.textureOffset,
-                                                                 in.textureCoordinate,
-                                                                 dimensions->glyphSize,
-                                                                 dimensions->cellSize,
-                                                                 texture,
-                                                                 textureSampler,
-                                                                 dimensions->scale);
+                                                                  in.clipSpacePosition.xy,
+                                                                  in.viewportSize,
+                                                                  in.cellOffset,
+                                                                  dimensions->underlineOffset,
+                                                                  dimensions->underlineThickness,
+                                                                  dimensions->textureSize,
+                                                                  in.textureOffset,
+                                                                  in.textureCoordinate,
+                                                                  dimensions->glyphSize,
+                                                                  dimensions->cellSize,
+                                                                  texture,
+                                                                  textureSampler,
+                                                                  dimensions->scale,
+                                                                  (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
 
     float4 recoloredTextColor = in.textColor;
     recoloredTextColor.w = dot(textureColor, in.alphaVector);

@@ -80,23 +80,25 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
                                                               dimensions->cellSize,
                                                               texture,
                                                               textureSampler,
-                                                              dimensions->scale);
+                                                              dimensions->scale,
+                                                              (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     }
     // Emoji, underlined
     float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                           in.clipSpacePosition.xy,
-                                                           in.viewportSize,
-                                                           in.cellOffset,
-                                                           dimensions->underlineOffset,
-                                                           dimensions->underlineThickness,
-                                                           dimensions->textureSize,
-                                                           in.textureOffset,
-                                                           in.textureCoordinate,
-                                                           dimensions->glyphSize,
-                                                           dimensions->cellSize,
-                                                           texture,
-                                                           textureSampler,
-                                                           dimensions->scale);
+                                                            in.clipSpacePosition.xy,
+                                                            in.viewportSize,
+                                                            in.cellOffset,
+                                                            dimensions->underlineOffset,
+                                                            dimensions->underlineThickness,
+                                                            dimensions->textureSize,
+                                                            in.textureOffset,
+                                                            in.textureCoordinate,
+                                                            dimensions->glyphSize,
+                                                            dimensions->cellSize,
+                                                            texture,
+                                                            textureSampler,
+                                                            dimensions->scale,
+                                                            (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     return mix(bwColor,
                in.underlineColor,
                max(strikethroughWeight, underlineWeight));
@@ -130,7 +132,8 @@ iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput i
                                                        dimensions->cellSize,
                                                        texture,
                                                        textureSampler,
-                                                       dimensions->scale);
+                                                       dimensions->scale,
+                                                       (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0);
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }

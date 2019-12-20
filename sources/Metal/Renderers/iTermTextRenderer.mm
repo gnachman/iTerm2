@@ -8,6 +8,7 @@ extern "C" {
 #import "iTermMetalCellRenderer.h"
 
 #import "GlyphKey.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermASCIITexture.h"
 #import "iTermCharacterParts.h"
 #import "iTermGlyphEntry.h"
@@ -212,7 +213,7 @@ static BOOL gMonochromeText;
         _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
-        _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexInputMojaveVertexTextInfoStruct)];
+        _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexTextInfo)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -427,16 +428,11 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 }
 
 - (id<MTLBuffer>)textInfoBufferForTransientState:(iTermTextRendererTransientState *)tState {
-    iTermVertexInputMojaveVertexTextInfoStruct textInfo;
-    float power;
-    if (tState.cellConfiguration.scale == 2.0) {
-        power = 3;
-    } else {
-        // See issue 7032 for how this was arrived at
-        power = 2.0;
+    iTermVertexTextInfoStruct textInfo;
+    memset(&textInfo, 0, sizeof(textInfo));
+    if ([iTermAdvancedSettingsModel solidUnderlines]) {
+        textInfo.flags |= iTermTextVertexInfoFlagsSolidUnderlines;
     }
-    textInfo.powerConstant = power;
-    textInfo.powerMultiplier = -(power - 1.0);
     id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
                                                                withBytes:&textInfo
                                                           checkIfChanged:YES];
@@ -557,7 +553,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                        numberOfVertices:6
                                            numberOfPIUs:instances
                                           vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
-                                                           @(iTermVertexInputMojaveVertexTextInfo): textInfoBuffer,
+                                                           @(iTermVertexTextInfo): textInfoBuffer,
                                                            @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                            @(iTermVertexInputIndexOffset): tState.offsetBuffer }
                                         fragmentBuffers:fragmentBuffers
