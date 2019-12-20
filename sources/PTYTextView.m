@@ -1391,6 +1391,7 @@ static const int kDragThreshold = 3;
 - (void)otherMouseDragged:(NSEvent *)event
 {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
+    [threeFingerTapGestureRecognizer_ mouseDragged];
     if ([self reportMouseEvent:event]) {
         return;
     }
@@ -1433,6 +1434,7 @@ static const int kDragThreshold = 3;
 - (void)rightMouseDragged:(NSEvent *)event
 {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
+    [threeFingerTapGestureRecognizer_ mouseDragged];
     if ([self reportMouseEvent:event]) {
         return;
     }
@@ -2173,6 +2175,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseDragged:(NSEvent *)event {
     DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
+    [threeFingerTapGestureRecognizer_ mouseDragged];
     const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
     _makingThreeFingerSelection = (_numTouches == 3);
     if (_mouseDownIsThreeFingerClick) {

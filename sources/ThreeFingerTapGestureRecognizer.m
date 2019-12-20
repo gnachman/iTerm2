@@ -117,6 +117,11 @@
     return fired_;
 }
 
+- (void)mouseDragged {
+    DLog(@"mouse dragged");
+    [self cancel];
+}
+
 - (BOOL)mouseUp:(NSEvent*)event
 {
     DLog(@"mouse up");

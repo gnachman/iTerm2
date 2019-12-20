@@ -30,4 +30,6 @@
 - (BOOL)mouseDown:(NSEvent*)event;
 - (BOOL)mouseUp:(NSEvent*)event;
 
+- (void)mouseDragged;
+
 @end
