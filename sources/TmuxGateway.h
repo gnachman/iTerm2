@@ -50,6 +50,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxDidOpenInitialWindows;
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID;
 - (NSString *)tmuxOwningSessionGUID;
+- (BOOL)tmuxGatewayShouldForceDetach;
 
 @end
 
@@ -70,6 +71,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, retain) NSDecimalNumber *maximumServerVersion;
 @property(nonatomic, assign) BOOL acceptNotifications;
 @property(nonatomic, readonly) NSString *dcsID;
+@property(nonatomic, readonly) BOOL detachSent;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -106,6 +108,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane;
 - (void)detach;
+- (void)forceDetach;
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;
 
 @end

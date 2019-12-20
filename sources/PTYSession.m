@@ -97,6 +97,7 @@
 #import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
+#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
@@ -6370,6 +6371,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen crlf];
 }
 
+- (BOOL)tmuxGatewayShouldForceDetach {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Force Detach?";
+    alert.informativeText = @"A previous detach request has not yet been honored. Force detach?";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSWindow *window = self.view.window;
+    NSInteger button;
+    if (window) {
+        button = [alert runSheetModalForWindow:window];
+    } else {
+        button = [alert runModal];
+    }
+    return button == NSAlertFirstButtonReturn;
+}
+
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow {
     return _delegate.realParentWindow;
 }
@@ -6498,7 +6515,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID {
-    NSArray<NSString *> *actions = @[ @"OK", @"Reveal" ];
+    NSArray<NSString *> *actions = @[ @"OK", @"Reveal", @"Force Detach Other" ];
     TmuxController *controller = [[TmuxControllerRegistry sharedInstance] tmuxControllerWithSessionGUID:sessionGUID];
     if (!controller) {
         actions = @[ @"OK" ];
@@ -6511,30 +6528,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                            silenceable:kiTermWarningTypePersistent
                                heading:@"Cannot Attach"
                                 window:self.view.window];
-    if (selection != kiTermWarningSelection1) {
-        return;
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return;
+        case kiTermWarningSelection1:
+            break;
+        case kiTermWarningSelection2:
+            [controller.gateway forceDetach];
+            return;
+        default:
+            assert(NO);
     }
-    NSArray<NSWindow *> *windows = [[[controller.clientSessions mapWithBlock:^id(PTYSession *anObject) {
-        return anObject.view.window;
-    }] sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-        intptr_t p1 = (intptr_t)obj1;
-        intptr_t p2 = (intptr_t)obj2;
-        return [@(p1) compare:@(p2)];
-    }] uniq];
 
-    if (windows.count == 0) {
+    PTYSession *aSession =
+    [[controller.clientSessions sortedArrayUsingComparator:^NSComparisonResult(PTYSession *s1, PTYSession *s2) {
+        return [s1.guid compare:s2.guid];
+    }] firstObject];
+
+    if (!aSession) {
+        aSession = [PTYSession castFrom:controller.gateway.delegate];
+    }
+    if (!aSession) {
         iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
         [delegate openDashboard:nil];
         return;
     }
-
-    for (NSWindow *window in windows) {
-        if (window.miniaturized) {
-            [window deminiaturize:nil];
-        } else {
-            [window orderFront:nil];
-        }
-    }
+    [aSession reveal];
 }
 
 - (NSString*)encodingName

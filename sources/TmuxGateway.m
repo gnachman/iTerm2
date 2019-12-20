@@ -51,7 +51,6 @@ static NSString *kCommandIsLastInList = @"lastInList";
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
     NSMutableData *currentCommandData_;
 
-    BOOL detachSent_;
     BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
     NSMutableString *strayMessages_;
 
@@ -62,6 +61,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
 @synthesize delegate = delegate_;
 @synthesize acceptNotifications = acceptNotifications_;
+@synthesize detachSent = detachSent_;
 
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID {
     self = [super init];
@@ -105,8 +105,6 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid {
     [self.delegate tmuxDoubleAttachForSessionGUID:sessionGuid];
-    [self detach];
-    [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];  // Force the client to quit
 }
 
 - (NSData *)decodeEscapedOutput:(const char *)bytes
@@ -267,8 +265,11 @@ error:
     [delegate_ tmuxSessionsChanged];
 }
 
-- (void)hostDisconnected
-{
+- (void)forceDetach {
+    [self hostDisconnected];
+}
+
+- (void)hostDisconnected {
     [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];
     [commandQueue_ removeAllObjects];
     disconnected_ = YES;
@@ -622,8 +623,7 @@ error:
     return dict;
 }
 
-- (void)detach
-{
+- (void)detach {
     [self sendCommand:@"detach"
        responseTarget:self
      responseSelector:@selector(noopResponseSelector:)];

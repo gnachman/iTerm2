@@ -163,6 +163,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _pendingWindows = [[NSMutableDictionary alloc] init];
         _currentWindowID = -1;
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
+        DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
 }
@@ -235,6 +236,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                     initial:(BOOL)initial {
     DLog(@"openWindowWithIndex:%d name:%@ affinities:%@ flags:%@ initial:%@",
          windowIndex, name, affinities, windowFlags, @(initial));
+    if (!gateway_) {
+        DLog(@"Deciding NOT to open window because gateway is nil");
+        return;
+    }
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
     if ([pendingWindowOpens_ containsObject:n]) {
         return;
@@ -557,11 +562,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                              sessionId_, guid];
         [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
         self.sessionGuid = guid;
-    } else if ([self.attachedSessionGuids containsObject:sessionGuid]) {
-        [self.gateway doubleAttachDetectedForSessionGUID:sessionGuid];
-    } else {
-        self.sessionGuid = sessionGuid;
+        return;
     }
+    if ([self.attachedSessionGuids containsObject:sessionGuid]) {
+        [self.gateway doubleAttachDetectedForSessionGUID:sessionGuid];
+        if ([self.attachedSessionGuids containsObject:sessionGuid]) {
+            // Delegate did not choose to force disconnect other, so we say goodbye.
+            TmuxGateway *gateway = [[gateway_ retain] autorelease];
+            [self detach];
+            [gateway forceDetach];
+            return;
+        }
+    }
+    // This is the only one.
+    self.sessionGuid = sessionGuid;
 }
 
 - (NSNumber *)_keyForWindowPane:(int)windowPane
@@ -608,12 +622,18 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return !detached_;
 }
 
-- (void)requestDetach
-{
-    [self.gateway detach];
+- (void)requestDetach {
+    if (self.gateway.detachSent) {
+        if ([self.gateway.delegate tmuxGatewayShouldForceDetach]) {
+            [self.gateway forceDetach];
+        }
+    } else {
+        [self.gateway detach];
+    }
 }
 
 - (void)detach {
+    DLog(@"%@: detach", self);
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
