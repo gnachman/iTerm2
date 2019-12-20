@@ -23,8 +23,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="NSPanel">
-            <windowStyleMask key="styleMask" utility="YES"/>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="iTermShellIntegrationPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="513" height="257"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
@@ -289,11 +288,11 @@ Gw
             <point key="canvasLocation" x="192" y="920"/>
         </view>
         <view id="lU3-F8-nfu" userLabel="Paste Shell Commands">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="168"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="179"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="E7S-NE-DXr">
-                    <rect key="frame" x="20" y="49" width="547" height="105"/>
+                    <rect key="frame" x="20" y="60" width="547" height="105"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="bFR-qd-VRH">
                         <font key="font" metaFont="system"/>
@@ -347,14 +346,14 @@ Gw
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="192" y="1136"/>
+            <point key="canvasLocation" x="192" y="1141.5"/>
         </view>
         <view id="1jl-mR-2Xs" userLabel="Manual Install — Choose Shell">
-            <rect key="frame" x="0.0" y="0.0" width="401" height="173"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="173"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="apn-FL-iyl">
-                    <rect key="frame" x="18" y="142" width="340" height="16"/>
+                    <rect key="frame" x="18" y="142" width="547" height="16"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="AJr-8h-LEq">
                         <font key="font" metaFont="systemMedium" size="13"/>
@@ -363,7 +362,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YSH-AL-k5Z">
-                    <rect key="frame" x="210" y="13" width="82" height="32"/>
+                    <rect key="frame" x="417" y="13" width="82" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QEz-Fi-AKV">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -377,7 +376,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hKO-M8-BQw">
-                    <rect key="frame" x="292" y="13" width="95" height="32"/>
+                    <rect key="frame" x="499" y="13" width="95" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X9A-Hy-K5x">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -402,7 +401,7 @@ DQ
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NJO-dj-9lK">
-                    <rect key="frame" x="285" y="143" width="98" height="16"/>
+                    <rect key="frame" x="492" y="143" width="98" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="e1m-DK-2Ai">
                         <font key="font" metaFont="system"/>
@@ -445,14 +444,14 @@ DQ
                     </popUpButtonCell>
                 </popUpButton>
             </subviews>
-            <point key="canvasLocation" x="88.5" y="1361.5"/>
+            <point key="canvasLocation" x="192" y="1361.5"/>
         </view>
         <view id="M1V-DE-kJe" userLabel="Manual Install — Write Script">
-            <rect key="frame" x="0.0" y="0.0" width="528" height="249"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="249"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1cQ-kU-C9A">
-                    <rect key="frame" x="19" y="219" width="467" height="16"/>
+                    <rect key="frame" x="19" y="219" width="547" height="16"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="LPS-ee-0D7">
                         <font key="font" metaFont="systemMedium" size="13"/>
@@ -461,7 +460,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pHi-Ed-IBF">
-                    <rect key="frame" x="337" y="13" width="82" height="32"/>
+                    <rect key="frame" x="417" y="13" width="82" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cxX-KV-hhg">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -472,7 +471,7 @@ Gw
                     </buttonCell>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FoQ-B2-7QQ">
-                    <rect key="frame" x="419" y="13" width="95" height="32"/>
+                    <rect key="frame" x="499" y="13" width="95" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aa0-5t-zSE">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -515,7 +514,7 @@ DQ
                     </buttonCell>
                 </button>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6af-oG-GDx">
-                    <rect key="frame" x="20" y="175" width="490" height="36"/>
+                    <rect key="frame" x="20" y="175" width="570" height="36"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" title="In this step, you must place the contents of the shell integration script in ~/.iterm2_shell_integration.$SHELL" id="lHt-ss-p70">
                         <font key="font" metaFont="system"/>
@@ -551,7 +550,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRW-b9-UfJ">
-                    <rect key="frame" x="416" y="219" width="94" height="16"/>
+                    <rect key="frame" x="496" y="219" width="94" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="VHz-mh-E8U">
                         <font key="font" metaFont="system"/>
@@ -560,14 +559,14 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="152" y="1625.5"/>
+            <point key="canvasLocation" x="192" y="1625.5"/>
         </view>
         <view id="aCN-Uh-dBC" userLabel="Manual Install — Update Dotfile">
-            <rect key="frame" x="0.0" y="0.0" width="560" height="253"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="253"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ldU-e9-E8y">
-                    <rect key="frame" x="18" y="223" width="381" height="16"/>
+                    <rect key="frame" x="18" y="223" width="429" height="16"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="Ti1-ad-2Gj">
                         <font key="font" metaFont="systemMedium" size="13"/>
@@ -576,7 +575,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eGx-vR-Cs7">
-                    <rect key="frame" x="369" y="13" width="82" height="32"/>
+                    <rect key="frame" x="417" y="13" width="82" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="JCe-Ed-myc">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -590,7 +589,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dau-3n-0AX">
-                    <rect key="frame" x="451" y="13" width="95" height="32"/>
+                    <rect key="frame" x="499" y="13" width="95" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="f8F-q6-NeZ">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -637,7 +636,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AZM-Nk-QiA">
-                    <rect key="frame" x="18" y="151" width="524" height="64"/>
+                    <rect key="frame" x="18" y="151" width="572" height="64"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" id="JGG-6R-kzW">
                         <font key="font" metaFont="system"/>
@@ -667,7 +666,7 @@ You must append a line to $DOTFILE, if it isn’t already there.</string>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OCK-Gg-CFn">
-                    <rect key="frame" x="448" y="223" width="94" height="16"/>
+                    <rect key="frame" x="496" y="223" width="94" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="qjJ-av-XPa">
                         <font key="font" metaFont="system"/>
@@ -676,7 +675,7 @@ You must append a line to $DOTFILE, if it isn’t already there.</string>
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="168" y="1925.5"/>
+            <point key="canvasLocation" x="192" y="1925.5"/>
         </view>
         <view id="Ehv-zX-u0O" userLabel="Manual Install — Install Utilities">
             <rect key="frame" x="0.0" y="0.0" width="759" height="295"/>
@@ -808,11 +807,11 @@ Because there are a number of scripts, the manual installer offers a base64-enco
             <point key="canvasLocation" x="267.5" y="2244.5"/>
         </view>
         <view id="kWX-qb-HtK" userLabel="Finished">
-            <rect key="frame" x="0.0" y="0.0" width="309" height="210"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="161"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="akf-2O-WIV">
-                    <rect key="frame" x="41" y="180" width="130" height="16"/>
+                    <rect key="frame" x="52" y="125" width="429" height="16"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="You’re done!" allowsEditingTextAttributes="YES" id="vT8-og-7pl">
                         <font key="font" metaFont="systemMedium" size="13"/>
@@ -820,8 +819,29 @@ Because there are a number of scripts, the manual installer offers a base64-enco
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YQY-DE-zoC">
+                    <rect key="frame" x="18" y="44" width="572" height="64"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" selectable="YES" id="WeK-Fh-3OJ">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">Log out and log back in for it to take effect.
+
+Note that you should install this on both  your local machine and any remote hosts you ssh into.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iNu-Fh-d9v">
+                    <rect key="frame" x="18" y="117" width="34" height="30"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="🎉" id="ra4-BC-EG1">
+                        <font key="font" size="26" name=".AppleColorEmojiUI"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IVH-y2-yaN">
-                    <rect key="frame" x="218" y="13" width="59" height="32"/>
+                    <rect key="frame" x="535" y="13" width="59" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="b2l-Qa-QNL">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -834,29 +854,8 @@ DQ
                         <action selector="cancel:" target="-2" id="XVK-KG-IQR"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YQY-DE-zoC">
-                    <rect key="frame" x="18" y="69" width="273" height="88"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" id="WeK-Fh-3OJ">
-                        <font key="font" metaFont="system"/>
-                        <string key="title">Log out and log back in for it to take effect.
-
-Note that you should install this on both  your local machine and any remote hosts you ssh into.</string>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iNu-Fh-d9v">
-                    <rect key="frame" x="18" y="180" width="23" height="16"/>
-                    <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="🎉" id="ra4-BC-EG1">
-                        <font key="font" size="13" name=".AppleColorEmojiUI"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
             </subviews>
-            <point key="canvasLocation" x="42.5" y="2546"/>
+            <point key="canvasLocation" x="192" y="2521.5"/>
         </view>
         <viewController id="cVJ-uZ-UYm" userLabel="iTermShellIntegrationFirstPageViewController" customClass="iTermShellIntegrationFirstPageViewController">
             <connections>

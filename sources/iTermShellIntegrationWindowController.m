@@ -7,6 +7,12 @@
 
 #import "iTermShellIntegrationWindowController.h"
 
+@interface iTermShellIntegrationPanel: NSPanel
+@end
+
+@implementation iTermShellIntegrationPanel
+@end
+
 @protocol iTermShellIntegrationInstallerViewController <NSObject>
 @optional
 - (NSArray<NSTextField *> *)labelsNeedingSubstitutions;
@@ -86,27 +92,81 @@
     if (stage <= 0) {
         self.shell = nil;
     }
-    NSString *newString =
-    [NSString stringWithFormat:
-@"This will send commands into the current terminal window to:\n"
-@"\n"
-@"%@ Discover which shell you use%@\n"
-@"%@ Modify your shell’s startup scripts.\n",
-     stage > 0 ? @"✅": @"1.",
-     stage > 0 ? [NSString stringWithFormat:@": You use “%@”.", self.shell] : @".",
-     stage > 1 ? @"✅": @"2."];
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    NSInteger indexToBold = NSNotFound;
+    [lines addObject:@"Select “Continue” to perform each step:"];
+    [lines addObject:@""];
+
+    NSString *step;
+    NSString *prefix;
+
+    if (stage < 0) {
+        prefix = @"1. Discover";
+    } else if (stage == 0) {
+        prefix = @"1. Press “Continue” to discover";
+        indexToBold = lines.count;
+    } else if (stage > 0) {
+        prefix = @"✅ Discovered";
+    }
+    step = [NSString stringWithFormat:@"%@ which shell you use", prefix];
+    if (stage > 0) {
+        step = [step stringByAppendingFormat:@": you use “%@”.", self.shell];
+    } else {
+        step = [step stringByAppendingString:@"."];
+    }
+    [lines addObject:step];
+
+    if (stage < 1) {
+        prefix = @"2. Modify";
+    } else if (stage == 1) {
+        prefix = @"2. Press “Continue” to modify";
+        indexToBold = lines.count;
+    } else if (stage > 1) {
+        prefix = @"✅ Modfied";
+    }
+    step = [NSString stringWithFormat:@"%@ your shell’s startup scripts.", prefix];
+    [lines addObject:step];
+
     int i = 2;
     if (self.installUtilities) {
         i += 1;
-        newString = [newString stringByAppendingFormat:@"%@ Install iTerm2 utility scripts.\n",
-                     stage > 2 ? @"✅": @"3."];
+        if (stage < 2) {
+            prefix = @"3. Install";
+        } else if (stage == 2) {
+            prefix = @"3. Press “Continue” to install";
+            indexToBold = lines.count;
+        } else {
+            prefix = @"✅ Installed";
+        }
+        step = [NSString stringWithFormat:@"%@ iTerm2 utility scripts.", prefix];
+        [lines addObject:step];
     }
-    newString =
-    [newString stringByAppendingFormat:
-     @"%@ Add script files under your home directory.",
-     stage > i ? @"✅": [[@(i + 1) stringValue] stringByAppendingString:@"."]];
 
-    self.textField.stringValue = newString;
+    if (stage < i) {
+        prefix = [NSString stringWithFormat:@"%d. Add", i + 1];
+    } else if (stage == i) {
+        prefix = [NSString stringWithFormat:@"%d. Press “Continue” to add", i + 1];
+        indexToBold = lines.count;
+    } else if (stage > i) {
+        prefix = @"✅ Added";
+    }
+    step =
+    [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
+    [lines addObject:step];
+
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
+    NSDictionary *regularAttributes =
+    @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
+       NSForegroundColorAttributeName: [NSColor textColor] };
+    NSDictionary *boldAttributes =
+    @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]],
+       NSForegroundColorAttributeName: [NSColor textColor] };
+    [lines enumerateObjectsUsingBlock:^(NSString * _Nonnull string, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *temp = [string stringByAppendingString:@"\n"];
+        NSAttributedString *as = [[NSAttributedString alloc] initWithString:temp attributes:idx == indexToBold ? boldAttributes : regularAttributes];
+        [attributedString appendAttributedString:as];
+    }];
+    self.textField.attributedStringValue = attributedString;
 }
 
 - (IBAction)next:(id)sender {
@@ -218,6 +278,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (void)windowDidLoad {
     [super windowDidLoad];
+    NSPanel *panel = (NSPanel *)self.window;
+    panel.movableByWindowBackground = YES;
+    panel.floatingPanel = YES;
     self.containerView.autoresizesSubviews = YES;
     [self setState:iTermShellIntegrationInstallationStateFirstPage];
 }
@@ -503,6 +566,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (void)discoverShell {
     [self.delegate shellIntegrationInferShellWithCompletion:^(NSString * _Nonnull shell) {
+#warning TOOD: Handle unrecognized shells
         self.shell = shell;
         if (shell) {
             self.sendShellCommandsViewController.stage = 1;
@@ -518,7 +582,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 - (void)installUtilityScripts {
     [self.delegate shellIntegrationWindowControllerSendText:@"mkdir ~/.iterm2\n"];
     [self catToUtilities];
-    self.sendShellCommandsViewController.stage = 4;
+    self.sendShellCommandsViewController.stage = 3;
 }
 
 - (void)modifyStartupScriptsAndProceedTo:(int)nextStage {
