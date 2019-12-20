@@ -2926,6 +2926,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [note setNoteHidden:NO];
 }
 
+- (void)sendSelection:(id)sender {
+    if (![_selection hasSelection]) {
+        return;
+    }
+    [self.delegate sendText:self.selectedText];
+}
 
 - (void)addNote:(id)sender
 {
@@ -3174,6 +3180,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
+        [item action]==@selector(sendSelection:) ||
         [item action]==@selector(addNote:) ||
         [item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
@@ -3731,6 +3738,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Select all
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(selectAll:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+
+    [theMenu addItemWithTitle:@"Send Selection"
+                       action:@selector(sendSelection:)
+                keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Clear buffer
