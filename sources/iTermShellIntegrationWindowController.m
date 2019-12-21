@@ -89,10 +89,33 @@
 }
 @end
 
+typedef NS_ENUM(NSUInteger, iTermShellIntegrationShell) {
+    iTermShellIntegrationShellBash,
+    iTermShellIntegrationShellTcsh,
+    iTermShellIntegrationShellZsh,
+    iTermShellIntegrationShellFish,
+    iTermShellIntegrationShellUnknown
+};
+
+NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
+    switch (shell) {
+        case iTermShellIntegrationShellZsh:
+            return @"zsh";
+        case iTermShellIntegrationShellTcsh:
+            return @"tcsh";
+        case iTermShellIntegrationShellBash:
+            return @"bash";
+        case iTermShellIntegrationShellFish:
+            return @"fish";
+        case iTermShellIntegrationShellUnknown:
+            return @"an unsupported shell";
+    }
+}
+
 @interface iTermShellIntegrationPasteShellCommandsViewController : NSViewController<iTermShellIntegrationInstallerViewController>
 @property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
 @property (nonatomic) int stage;
-@property (nonatomic, copy) NSString *shell;
+@property (nonatomic) iTermShellIntegrationShell shell;
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
 @property (nonatomic, strong) IBOutlet NSButton *previewCommandButton1;
 @property (nonatomic, strong) IBOutlet NSButton *previewCommandButton2;
@@ -102,13 +125,29 @@
 @property (nonatomic) BOOL installUtilities;
 @property (nonatomic, strong) IBOutlet NSViewController *popoverViewController;
 @property (nonatomic, strong) IBOutlet NSPopover *popover;
+@property (nonatomic, strong) IBOutlet NSButton *continueButton;
 @end
 
 @implementation iTermShellIntegrationPasteShellCommandsViewController
+
+- (void)setShell:(iTermShellIntegrationShell)shell {
+    _shell = shell;
+    if (shell == iTermShellIntegrationShellUnknown) {
+        self.continueButton.enabled = NO;
+    } else {
+        self.continueButton.enabled = YES;
+    }
+}
+
 - (void)setStage:(int)stage {
     _stage = stage;
+    [self update];
+}
+
+- (void)update {
+    const int stage = _stage;
     if (stage <= 0) {
-        self.shell = nil;
+        self.shell = iTermShellIntegrationShellUnknown;
     }
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
     NSInteger indexToBold = NSNotFound;
@@ -121,59 +160,79 @@
         prefix = @"➡ Select “Continue” to discover";
         indexToBold = lines.count;
     } else if (stage > 0) {
-        prefix = @"✅ Discovered";
+        if (self.shell == iTermShellIntegrationShellUnknown) {
+            prefix = @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, and zsh work with shell integration";
+        } else {
+            prefix = @"✅ Discovered";
+        }
     }
-    step = [NSString stringWithFormat:@"%@ which shell you use", prefix];
+    if (self.shell == iTermShellIntegrationShellUnknown) {
+        step = prefix;
+    } else {
+        step = [NSString stringWithFormat:@"%@ your shell.", prefix];
+    }
     if (stage > 0) {
-        step = [step stringByAppendingFormat:@": you use “%@”.", self.shell];
+        if (self.shell != iTermShellIntegrationShellUnknown) {
+            step = [step stringByAppendingFormat:@": you use “%@”.", iTermShellIntegrationShellString(self.shell)];
+        }
     } else {
         step = [step stringByAppendingString:@"."];
     }
     [lines addObject:step];
 
-    if (stage < 1) {
-        prefix = @"Step 2. Modify";
-    } else if (stage == 1) {
-        prefix = @"➡ Select “Continue” to modify";
-        indexToBold = lines.count;
-    } else if (stage > 1) {
-        prefix = @"✅ Modfied";
-    }
-    step = [NSString stringWithFormat:@"%@ your shell’s startup scripts.", prefix];
-    [lines addObject:step];
-
-    int i = 2;
-    if (self.installUtilities) {
-        i += 1;
-        if (stage < 2) {
-            prefix = @"Step 3. Install";
-        } else if (stage == 2) {
-            prefix = @"➡ Select “Continue” to install";
+    const BOOL unavailable = (stage == 1 && self.shell == iTermShellIntegrationShellUnknown);
+    if (unavailable) {
+        self.continueButton.enabled = NO;
+    } else {
+        self.continueButton.enabled = YES;
+        if (stage < 1) {
+            prefix = @"Step 2. Modify";
+        } else if (stage == 1) {
+            if (self.shell == iTermShellIntegrationShellUnknown) {
+                prefix = @"Step 2. Modify";
+            } else {
+                prefix = @"➡ Select “Continue” to modify";
+            }
             indexToBold = lines.count;
-        } else {
-            prefix = @"✅ Installed";
+        } else if (stage > 1) {
+            prefix = @"✅ Modfied";
         }
-        step = [NSString stringWithFormat:@"%@ iTerm2 utility scripts.", prefix];
+        step = [NSString stringWithFormat:@"%@ your shell’s startup scripts.", prefix];
         [lines addObject:step];
-    }
 
-    if (stage < i) {
-        prefix = [NSString stringWithFormat:@"Step %d. Add", i + 1];
-    } else if (stage == i) {
-        prefix = [NSString stringWithFormat:@"➡ Select “Continue” to add"];
-        indexToBold = lines.count;
-    } else if (stage > i) {
-        prefix = @"✅ Added";
+        int i = 2;
+        if (self.installUtilities) {
+            i += 1;
+            if (stage < 2) {
+                prefix = @"Step 3. Install";
+            } else if (stage == 2) {
+                prefix = @"➡ Select “Continue” to install";
+                indexToBold = lines.count;
+            } else {
+                prefix = @"✅ Installed";
+            }
+            step = [NSString stringWithFormat:@"%@ iTerm2 utility scripts.", prefix];
+            [lines addObject:step];
+        }
+
+        if (stage < i) {
+            prefix = [NSString stringWithFormat:@"Step %d. Add", i + 1];
+        } else if (stage == i) {
+            prefix = [NSString stringWithFormat:@"➡ Select “Continue” to add"];
+            indexToBold = lines.count;
+        } else if (stage > i) {
+            prefix = @"✅ Added";
+        }
+        step =
+        [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
+        [lines addObject:step];
+        
+        if (stage > i) {
+            [lines addObject:@""];
+            [lines addObject:@"Done! Select “Continue” to proceed."];
+        }
     }
-    step =
-    [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
-    [lines addObject:step];
     
-    if (stage > i) {
-        [lines addObject:@""];
-        [lines addObject:@"Done! Select “Continue” to proceed."];
-    }
-
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
     NSDictionary *regularAttributes =
     @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
@@ -192,7 +251,7 @@
     preview = [preview stringByReplacingOccurrencesOfString:ctrlD withString:@"^D\n"];
     NSArray<NSButton *> *buttons = self.previewCommandButtons;
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
-        buttons[i].hidden = (i != stage) || preview == nil;
+        buttons[i].hidden = unavailable || (i != stage) || preview == nil;
     }
     self.previewTextView.string = preview ?: @"";
 }
@@ -256,7 +315,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 @property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *finishedViewController;
 
 @property (nonatomic) BOOL installUtilities;
-@property (nonatomic, copy) NSString *shell;
+@property (nonatomic) iTermShellIntegrationShell shell;
 @property (nonatomic) iTermShellIntegrationInstallationState state;
 @end
 
@@ -343,9 +402,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self.window setFrame:rect display:YES animate:YES];
 }
 
-- (void)setShell:(NSString *)shell {
-    _shell = [shell copy];
+- (void)setShell:(iTermShellIntegrationShell)shell {
+    _shell = shell;
     self.sendShellCommandsViewController.shell = shell;
+    [self.sendShellCommandsViewController update];
 }
 
 - (void)setInstallUtilities:(BOOL)installUtilities {
@@ -369,19 +429,19 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 #pragma mark - Helpers
 
-- (NSString *)dotfileBaseName {
-    if ([self.shell isEqualToString:@"tcsh"]) {
-        return @".login";
-    } else if ([self.shell isEqualToString:@"zsh"]) {
-        return @".zshrc";
-    } else if ([self.shell isEqualToString:@"bash"]) {
-        return @".profile or .bash_profile";
-    } else if ([self.shell isEqualToString:@"fish"]) {
-        return @"config.fish";
-    } else {
-        assert(NO);
+- (NSString *)humanReadableDotfileBaseName {
+    switch (self.shell) {
+        case iTermShellIntegrationShellTcsh:
+            return @".login";
+        case iTermShellIntegrationShellZsh:
+            return @".zshrc";
+        case iTermShellIntegrationShellBash:
+            return @".profile or .bash_profile";
+        case iTermShellIntegrationShellFish:
+            return @"config.fish";
+        case iTermShellIntegrationShellUnknown:
+        return @"?";
     }
-    return @"?";
 }
 
 - (void)performSubstitutionsInTextField:(NSTextField *)label {
@@ -390,7 +450,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         // Save a backup copy
         label.identifier = string;
     }
-    NSDictionary *subs = @{ @"$DOTFILE": [self dotfileBaseName] };
+    NSDictionary *subs = @{ @"$DOTFILE": [self humanReadableDotfileBaseName] };
     for (NSString *key in subs) {
         NSString *value = subs[key];
         string = [string stringByReplacingOccurrencesOfString:key withString:value];
@@ -399,7 +459,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)shellIntegrationPath {
-    return [NSString stringWithFormat:@"~/.iterm2_shell_integration.%@", self.shell];
+    return [NSString stringWithFormat:@"~/.iterm2_shell_integration.%@", iTermShellIntegrationShellString(self.shell)];
 }
 
 - (NSString *)scriptForCurrentShell {
@@ -420,28 +480,33 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)dotfileCommandWithBashDotfile:(NSString *)bashDotFile {
-        NSString *home_prefix = @"~";
-        NSString *shell_and = @"&&";
-        NSString *shell_or = @"||";
-        NSString *quote = @"";
-        NSString *script = nil;
-        if ([self.shell isEqualToString:@"tcsh"]) {
+    NSString *home_prefix = @"~";
+    NSString *shell_and = @"&&";
+    NSString *shell_or = @"||";
+    NSString *quote = @"";
+    NSString *script = nil;
+    switch (self.shell) {
+        case iTermShellIntegrationShellTcsh:
             script = @"~/.login";
-        } else if ([self.shell isEqualToString:@"zsh"]) {
+            break;
+        case iTermShellIntegrationShellZsh:
             script = @"~/.zshrc";
-        } else if ([self.shell isEqualToString:@"bash"]) {
+            break;
+        case iTermShellIntegrationShellBash:
             script = bashDotFile;
-        } else if ([self.shell isEqualToString:@"fish"]) {
+            break;
+        case iTermShellIntegrationShellFish:
             script = @"~/.config/fish/config.fish";
             home_prefix=@"{$HOME}";
             shell_and=@"; and";
             shell_or=@"; or";
-        } else {
+            break;
+        case iTermShellIntegrationShellUnknown:
             assert(NO);
         }
-        NSString *relative_filename = [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
-                                       home_prefix, self.shell];
-
+    NSString *relative_filename = [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
+                                   home_prefix, iTermShellIntegrationShellString(self.shell)];
+    
     return [NSString stringWithFormat:@"test -e %@%@%@ %@ source %@%@%@ %@ true\n",
             quote, relative_filename, quote, shell_and, quote, relative_filename, quote, shell_or];
 }
@@ -450,21 +515,27 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     const BOOL reallySend = (completion != nil);
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     NSString *script = nil;
-    if ([self.shell isEqualToString:@"tcsh"]) {
-        script = @"~/.login";
-    } else if ([self.shell isEqualToString:@"zsh"]) {
-        script = @"~/.zshrc";
-    } else if ([self.shell isEqualToString:@"bash"]) {
-        NSString *assignment = @"IT2_INSTALLER_DOTFILE=$(test -f \"~/.bash_profile\" && SCRIPT=\"~/.bash_profile\" || SCRIPT=\"~/.profile\")\n";
-        [strings addObject:assignment];
-        script = @"\"$IT2_INSTALLER_DOTFILE\"";
-    } else if ([self.shell isEqualToString:@"fish"]) {
-        [strings addObject:@"mkdir -p \"~/.config/fish\"\n"];
-        script = @"~/.config/fish/config.fish";
-    } else {
-        assert(NO);
+    switch (self.shell) {
+        case iTermShellIntegrationShellTcsh:
+            script = @"~/.login";
+            break;
+        case iTermShellIntegrationShellZsh:
+            script = @"~/.zshrc";
+            break;
+        case iTermShellIntegrationShellBash: {
+            NSString *assignment = @"IT2_INSTALLER_DOTFILE=$(test -f \"~/.bash_profile\" && SCRIPT=\"~/.bash_profile\" || SCRIPT=\"~/.profile\")\n";
+            [strings addObject:assignment];
+            script = @"\"$IT2_INSTALLER_DOTFILE\"";
+            break;
+        }
+        case iTermShellIntegrationShellFish:
+            [strings addObject:@"mkdir -p \"~/.config/fish\"\n"];
+            script = @"~/.config/fish/config.fish";
+            break;
+        case iTermShellIntegrationShellUnknown:
+            assert(NO);
     }
-    const bool switchToBash = ![self.shell isEqualToString:@"bash"];
+    const bool switchToBash = (self.shell != iTermShellIntegrationShellBash);
     if (switchToBash) {
         [strings addObject:@"bash\n"];
     }
@@ -501,11 +572,17 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)discoverShell:(BOOL)reallySend {
     void (^completion)(NSString * _Nonnull) = ^(NSString * _Nonnull shell) {
-    #warning TOOD: Handle unrecognized shells
-            self.shell = shell;
-            if (shell) {
-                self.sendShellCommandsViewController.stage = 1;
-            }
+        NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
+                                                       @"bash": @(iTermShellIntegrationShellBash),
+                                                       @"zsh": @(iTermShellIntegrationShellZsh),
+                                                       @"fish": @(iTermShellIntegrationShellFish) };
+        NSNumber *number = map[shell ?: @""];
+        if (number) {
+            self.shell = number.integerValue;
+        } else {
+            self.shell = iTermShellIntegrationShellUnknown;
+        }
+        self.sendShellCommandsViewController.stage = 1;
     };
     return [self.delegate shellIntegrationInferShellWithCompletion:reallySend ? completion : nil];
 }

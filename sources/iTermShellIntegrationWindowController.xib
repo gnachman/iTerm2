@@ -87,7 +87,7 @@
                     <rect key="frame" x="36" y="74" width="459" height="14"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more. Learn more." id="cyF-wg-XYY">
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -443,6 +443,7 @@ DQ
         </viewController>
         <viewController id="cSI-jV-MOv" userLabel="iTermShellIntegrationPasteShellCommandsViewController" customClass="iTermShellIntegrationPasteShellCommandsViewController">
             <connections>
+                <outlet property="continueButton" destination="lx9-PO-TB1" id="WCp-2d-H08"/>
                 <outlet property="popover" destination="mse-4A-lyq" id="adr-3V-O6g"/>
                 <outlet property="popoverViewController" destination="6l6-bO-gT6" id="b9W-oS-SgI"/>
                 <outlet property="previewCommandButton1" destination="U81-Xk-bH1" id="5qb-ZS-kvK"/>
