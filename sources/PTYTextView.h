@@ -154,7 +154,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)isRestartable;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
-- (void)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion;
+- (NSString *)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion;
 
 // We guess the user is trying to send arrow keys with the scroll wheel in alt screen.
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying;

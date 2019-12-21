@@ -5527,6 +5527,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"View %@ did move to window %@\n%@", self, self.window, [NSThread callStackSymbols]);
     // If you change tabs while dragging you never get a mouseUp. Issue 8350.
     [_selection endLiveSelection];
+    if (self.window == nil) {
+        [_shellIntegrationInstallerWindow close];
+        _shellIntegrationInstallerWindow = nil;
+    }
     [super viewDidMoveToWindow];
 }
 

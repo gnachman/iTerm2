@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermShellIntegrationWindowControllerDelegate<NSObject>
 - (void)shellIntegrationWindowControllerSendText:(NSString *)text;
-- (void)shellIntegrationInferShellWithCompletion:(void (^)(NSString *))completion;
+- (NSString *)shellIntegrationInferShellWithCompletion:(void (^)(NSString *))completion;
 @end
 
 @interface iTermShellIntegrationWindowController : NSWindowController

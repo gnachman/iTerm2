@@ -701,8 +701,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [self.delegate sendText:text];
 }
 
-- (void)shellIntegrationInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {
-    [self.delegate textViewInferShellWithCompletion:completion];
+- (NSString *)shellIntegrationInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {
+    return [self.delegate textViewInferShellWithCompletion:completion];
 }
 
 @end

@@ -7,6 +7,31 @@
 
 #import "iTermShellIntegrationWindowController.h"
 
+@interface iTermShellIntegrationRootView: NSView
+@end
+
+@implementation iTermShellIntegrationRootView {
+    NSTrackingArea *_area;
+}
+
+- (void)viewDidMoveToWindow {
+    if (!_area) {
+        [self createTrackingArea];
+    }
+    
+}
+- (void)createTrackingArea {
+    NSTrackingAreaOptions options = NSTrackingMouseMoved | NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways;
+    _area = [[NSTrackingArea alloc] initWithRect:self.bounds options:options owner:self userInfo:nil];
+    [self addTrackingArea:_area];
+}
+
+- (void)cursorUpdate:(NSEvent *)event {
+    [[NSCursor pointingHandCursor] set];
+}
+
+@end
+
 @interface iTermShellIntegrationPanel: NSPanel
 @end
 
@@ -26,18 +51,7 @@
 - (void)shellIntegrationInstallerConfirmDownloadAndRun;
 - (void)shellIntegrationInstallerReallyDownloadAndRun;
 - (void)shellIntegrationInstallerSendShellCommands:(int)stage;
-- (void)shellIntegrationInstallerManualInstall;
-- (void)shellIntegrationInstallerSetShell:(NSString *)shell;
-
-- (void)shellIntegrationInstallerCopyPath;
-- (void)shellIntegrationInstallerCopyScript;
-- (void)shellIntegrationInstallerCatScript;
-- (void)shellIntegrationInstallerCopyDotfileCommand;
-- (void)shellIntegrationInstallerAmendDotfile;
-
-- (void)shellIntegrationInstallerCopyUntar;
-- (void)shellIntegrationInstallerCopyUtilitiesTarball;
-- (void)shellIntegrationInstallerUntarUtilities;
+- (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands;
 @end
 
 @interface iTermShellIntegrationFirstPageViewController: NSViewController<iTermShellIntegrationInstallerViewController>
@@ -63,9 +77,6 @@
 - (IBAction)sendShellCommands:(id)sender {
     [self.shellInstallerDelegate shellIntegrationInstallerSendShellCommands:-1];
 }
-- (IBAction)manualInstall:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerManualInstall];
-}
 @end
 
 @interface iTermShellIntegrationDownloadAndRunViewController : NSViewController<iTermShellIntegrationInstallerViewController>
@@ -83,7 +94,14 @@
 @property (nonatomic) int stage;
 @property (nonatomic, copy) NSString *shell;
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
+@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton1;
+@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton2;
+@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton3;
+@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton4;
+@property (nonatomic, strong) IBOutlet NSTextView *previewTextView;
 @property (nonatomic) BOOL installUtilities;
+@property (nonatomic, strong) IBOutlet NSViewController *popoverViewController;
+@property (nonatomic, strong) IBOutlet NSPopover *popover;
 @end
 
 @implementation iTermShellIntegrationPasteShellCommandsViewController
@@ -94,16 +112,13 @@
     }
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
     NSInteger indexToBold = NSNotFound;
-    [lines addObject:@"Select “Continue” to perform each step:"];
-    [lines addObject:@""];
-
     NSString *step;
     NSString *prefix;
 
     if (stage < 0) {
         prefix = @"1. Discover";
     } else if (stage == 0) {
-        prefix = @"1. Press “Continue” to discover";
+        prefix = @"➡ Select “Continue” to discover";
         indexToBold = lines.count;
     } else if (stage > 0) {
         prefix = @"✅ Discovered";
@@ -117,9 +132,9 @@
     [lines addObject:step];
 
     if (stage < 1) {
-        prefix = @"2. Modify";
+        prefix = @"Step 2. Modify";
     } else if (stage == 1) {
-        prefix = @"2. Press “Continue” to modify";
+        prefix = @"➡ Select “Continue” to modify";
         indexToBold = lines.count;
     } else if (stage > 1) {
         prefix = @"✅ Modfied";
@@ -131,9 +146,9 @@
     if (self.installUtilities) {
         i += 1;
         if (stage < 2) {
-            prefix = @"3. Install";
+            prefix = @"Step 3. Install";
         } else if (stage == 2) {
-            prefix = @"3. Press “Continue” to install";
+            prefix = @"➡ Select “Continue” to install";
             indexToBold = lines.count;
         } else {
             prefix = @"✅ Installed";
@@ -143,9 +158,9 @@
     }
 
     if (stage < i) {
-        prefix = [NSString stringWithFormat:@"%d. Add", i + 1];
+        prefix = [NSString stringWithFormat:@"Step %d. Add", i + 1];
     } else if (stage == i) {
-        prefix = [NSString stringWithFormat:@"%d. Press “Continue” to add", i + 1];
+        prefix = [NSString stringWithFormat:@"➡ Select “Continue” to add"];
         indexToBold = lines.count;
     } else if (stage > i) {
         prefix = @"✅ Added";
@@ -153,6 +168,11 @@
     step =
     [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
     [lines addObject:step];
+    
+    if (stage > i) {
+        [lines addObject:@""];
+        [lines addObject:@"Done! Select “Continue” to proceed."];
+    }
 
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
     NSDictionary *regularAttributes =
@@ -167,6 +187,35 @@
         [attributedString appendAttributedString:as];
     }];
     self.textField.attributedStringValue = attributedString;
+    NSString *preview = [self.shellInstallerDelegate shellIntegrationInstallerNextCommandForSendShellCommands];
+    NSString *ctrlD = [NSString stringWithFormat:@"%c", 4];
+    preview = [preview stringByReplacingOccurrencesOfString:ctrlD withString:@"^D\n"];
+    NSArray<NSButton *> *buttons = self.previewCommandButtons;
+    for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
+        buttons[i].hidden = (i != stage) || preview == nil;
+    }
+    self.previewTextView.string = preview ?: @"";
+}
+
+- (NSArray<NSButton *> *)previewCommandButtons {
+    return @[ self.previewCommandButton1, self.previewCommandButton2, self.previewCommandButton3, self.previewCommandButton4 ];
+}
+
+- (NSButton *)previewCommandButton {
+    NSArray<NSButton *> *buttons = self.previewCommandButtons;
+    if (self.stage < 0 || self.stage >= buttons.count) {
+        return nil;
+    }
+    return buttons[self.stage];
+}
+
+- (IBAction)previewCommand:(id)sender {
+    self.popover.behavior = NSPopoverBehaviorTransient;
+    [self.popoverViewController view];
+    self.previewTextView.font = [NSFont fontWithName:@"Menlo" size:12];
+    [self.popover showRelativeToRect:self.previewCommandButton.bounds
+                              ofView:self.previewCommandButton
+                       preferredEdge:NSRectEdgeMaxY];
 }
 
 - (IBAction)next:(id)sender {
@@ -181,62 +230,6 @@
 }
 @end
 
-@interface iTermShellIntegrationChooseShellViewController : NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, strong) IBOutlet NSPopUpButton *shells;
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@end
-
-@implementation iTermShellIntegrationChooseShellViewController
-- (IBAction)next:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerSetShell:self.shells.selectedItem.identifier];
-}
-@end
-
-@interface iTermShellIntegrationWriteScriptViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@end
-
-@implementation iTermShellIntegrationWriteScriptViewController
-- (IBAction)copyPath:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCopyPath];
-}
-- (IBAction)copyScript:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCopyScript];
-}
-- (IBAction)doItForMe:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCatScript];
-}
-@end
-
-@interface iTermShellIntegrationUpdateDotfileViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@end
-
-@implementation iTermShellIntegrationUpdateDotfileViewController
-- (IBAction)copyCommand:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCopyDotfileCommand];
-}
-- (IBAction)doItForMe:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerAmendDotfile];
-}
-@end
-
-@interface iTermShellIntegrationInstallUtilitiesViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@end
-
-@implementation iTermShellIntegrationInstallUtilitiesViewController
-- (IBAction)copyUntarCommand:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCopyUntar];
-}
-- (IBAction)copyTarball:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCopyUtilitiesTarball];
-}
-- (IBAction)doItForMe:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerUntarUtilities];
-}
-@end
-
 @interface iTermShellIntegrationFinishedViewController: NSViewController<iTermShellIntegrationInstallerViewController>
 @end
 
@@ -248,10 +241,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateSecondPage,
     iTermShellIntegrationInstallationStateDownloadAndRunConfirm,
     iTermShellIntegrationInstallationStateSendShellCommandsConfirm,
-    iTermShellIntegrationInstallationStateManualInstallChooseShell,
-    iTermShellIntegrationInstallationStateManualInstallWriteScript,
-    iTermShellIntegrationInstallationStateManualInstallUpdateDotfile,
-    iTermShellIntegrationInstallationStateManualInstallUtilities,
     iTermShellIntegrationInstallationStateConfirmation
 };
 
@@ -264,9 +253,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 @property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *secondPageViewController;
 @property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *downloadAndRunViewController;
 @property (nonatomic, strong) IBOutlet iTermShellIntegrationPasteShellCommandsViewController *sendShellCommandsViewController;
-@property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *chooseShellViewController;
-@property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *updateDotfileViewController;
-@property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *installUtilitiesViewController;
 @property (nonatomic, strong) IBOutlet NSViewController<iTermShellIntegrationInstallerViewController> *finishedViewController;
 
 @property (nonatomic) BOOL installUtilities;
@@ -283,6 +269,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     panel.floatingPanel = YES;
     self.containerView.autoresizesSubviews = YES;
     [self setState:iTermShellIntegrationInstallationStateFirstPage];
+    panel.hidesOnDeactivate = YES;
+    panel.opaque = NO;
 }
 
 - (iTermShellIntegrationInstallationState)nextState {
@@ -295,18 +283,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         case iTermShellIntegrationInstallationStateSendShellCommandsConfirm:
             return iTermShellIntegrationInstallationStateConfirmation;
 
-        case iTermShellIntegrationInstallationStateManualInstallChooseShell:
-            return iTermShellIntegrationInstallationStateManualInstallWriteScript;
-        case iTermShellIntegrationInstallationStateManualInstallWriteScript:
-            return iTermShellIntegrationInstallationStateManualInstallUpdateDotfile;
-        case iTermShellIntegrationInstallationStateManualInstallUpdateDotfile:
-            if (self.installUtilities) {
-                return iTermShellIntegrationInstallationStateManualInstallUtilities;
-            } else {
-                return iTermShellIntegrationInstallationStateConfirmation;
-            }
-        case iTermShellIntegrationInstallationStateManualInstallUtilities:
-            return iTermShellIntegrationInstallationStateConfirmation;
         case iTermShellIntegrationInstallationStateConfirmation:
             assert(NO);
     }
@@ -322,14 +298,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             return iTermShellIntegrationInstallationStateSecondPage;
         case iTermShellIntegrationInstallationStateSendShellCommandsConfirm:
             return iTermShellIntegrationInstallationStateSecondPage;
-        case iTermShellIntegrationInstallationStateManualInstallChooseShell:
-            return iTermShellIntegrationInstallationStateSecondPage;
-        case iTermShellIntegrationInstallationStateManualInstallWriteScript:
-            return iTermShellIntegrationInstallationStateManualInstallChooseShell;
-        case iTermShellIntegrationInstallationStateManualInstallUpdateDotfile:
-            return iTermShellIntegrationInstallationStateManualInstallWriteScript;
-        case iTermShellIntegrationInstallationStateManualInstallUtilities:
-            return iTermShellIntegrationInstallationStateManualInstallUpdateDotfile;
         case iTermShellIntegrationInstallationStateConfirmation:
             assert(NO);
     }
@@ -345,14 +313,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             return self.downloadAndRunViewController;
         case iTermShellIntegrationInstallationStateSendShellCommandsConfirm:
             return self.sendShellCommandsViewController;
-        case iTermShellIntegrationInstallationStateManualInstallChooseShell:
-            return self.chooseShellViewController;
-        case iTermShellIntegrationInstallationStateManualInstallWriteScript:
-            return self.updateDotfileViewController;
-        case iTermShellIntegrationInstallationStateManualInstallUpdateDotfile:
-            return self.updateDotfileViewController;
-        case iTermShellIntegrationInstallationStateManualInstallUtilities:
-            return self.installUtilitiesViewController;
         case iTermShellIntegrationInstallationStateConfirmation:
             return self.finishedViewController;
     }
@@ -409,26 +369,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 #pragma mark - Helpers
 
-- (int)step {
-    switch (self.state) {
-        case iTermShellIntegrationInstallationStateFirstPage:
-        case iTermShellIntegrationInstallationStateSecondPage:
-        case iTermShellIntegrationInstallationStateDownloadAndRunConfirm:
-        case iTermShellIntegrationInstallationStateSendShellCommandsConfirm:
-        case iTermShellIntegrationInstallationStateConfirmation:
-            return 0;
-
-        case iTermShellIntegrationInstallationStateManualInstallChooseShell:
-            return 1;
-        case iTermShellIntegrationInstallationStateManualInstallWriteScript:
-            return 2;
-        case iTermShellIntegrationInstallationStateManualInstallUpdateDotfile:
-            return 3;
-        case iTermShellIntegrationInstallationStateManualInstallUtilities:
-            return 4;
-    }
-}
-
 - (NSString *)dotfileBaseName {
     if ([self.shell isEqualToString:@"tcsh"]) {
         return @".login";
@@ -450,9 +390,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         // Save a backup copy
         label.identifier = string;
     }
-    NSDictionary *subs = @{ @"$STEP": [@([self step]) stringValue],
-                            @"$N": self.installUtilities ? @"4" : @"3",
-                            @"$DOTFILE": [self dotfileBaseName] };
+    NSDictionary *subs = @{ @"$DOTFILE": [self dotfileBaseName] };
     for (NSString *key in subs) {
         NSString *value = subs[key];
         string = [string stringByReplacingOccurrencesOfString:key withString:value];
@@ -508,7 +446,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             quote, relative_filename, quote, shell_and, quote, relative_filename, quote, shell_or];
 }
 
-- (void)amendDotFileWithCompletion:(void (^)(void))completion {
+- (NSString *)amendDotFileWithCompletion:(void (^)(void))completion {
+    const BOOL reallySend = (completion != nil);
+    NSMutableArray<NSString *> *strings = [NSMutableArray array];
     NSString *script = nil;
     if ([self.shell isEqualToString:@"tcsh"]) {
         script = @"~/.login";
@@ -516,41 +456,36 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         script = @"~/.zshrc";
     } else if ([self.shell isEqualToString:@"bash"]) {
         NSString *assignment = @"IT2_INSTALLER_DOTFILE=$(test -f \"~/.bash_profile\" && SCRIPT=\"~/.bash_profile\" || SCRIPT=\"~/.profile\")\n";
-        [self.delegate shellIntegrationWindowControllerSendText:assignment];
+        [strings addObject:assignment];
         script = @"\"$IT2_INSTALLER_DOTFILE\"";
     } else if ([self.shell isEqualToString:@"fish"]) {
-        [self.delegate shellIntegrationWindowControllerSendText:@"mkdir -p \"~/.config/fish\"\n"];
+        [strings addObject:@"mkdir -p \"~/.config/fish\"\n"];
         script = @"~/.config/fish/config.fish";
     } else {
         assert(NO);
     }
     const bool switchToBash = ![self.shell isEqualToString:@"bash"];
     if (switchToBash) {
-        [self.delegate shellIntegrationWindowControllerSendText:@"bash\n"];
+        [strings addObject:@"bash\n"];
     }
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @"if ! grep iterm2_shell_integration "];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     script];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @" > /dev/null 2>&1; then\n"];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @"    cat <<-EOF >> "];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     script];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @"\n"];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     [self dotfileCommandWithBashDotfile:@"$IT2_INSTALLER_DOTFILE"]];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @"EOF\n"];
-    [self.delegate shellIntegrationWindowControllerSendText:
-     @"fi\n"];
+    [strings addObject: @"if ! grep iterm2_shell_integration "];
+    [strings addObject:script];
+    [strings addObject:@" > /dev/null 2>&1; then\n"];
+    [strings addObject:@"    cat <<-EOF >> "];
+    [strings addObject:script];
+    [strings addObject:@"\n"];
+    [strings addObject:[self dotfileCommandWithBashDotfile:@"$IT2_INSTALLER_DOTFILE"]];
+    [strings addObject:@"EOF\n"];
+    [strings addObject:@"fi\n"];
     if (switchToBash) {
-        [self.delegate shellIntegrationWindowControllerSendText:
-         @"exit\n"];
+        [strings addObject:@"exit\n"];
     }
-    completion();
+    NSString *joined = [strings componentsJoinedByString:@""];
+    [self sendText:joined reallySend:reallySend];
+    if (completion) {
+        completion();
+    }
+    return joined;
 }
 
 #pragma mark - iTermShellIntegrationInstallerDelegate
@@ -564,31 +499,41 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self next:nil];
 }
 
-- (void)discoverShell {
-    [self.delegate shellIntegrationInferShellWithCompletion:^(NSString * _Nonnull shell) {
-#warning TOOD: Handle unrecognized shells
-        self.shell = shell;
-        if (shell) {
-            self.sendShellCommandsViewController.stage = 1;
-        }
-    }];
+- (NSString *)discoverShell:(BOOL)reallySend {
+    void (^completion)(NSString * _Nonnull) = ^(NSString * _Nonnull shell) {
+    #warning TOOD: Handle unrecognized shells
+            self.shell = shell;
+            if (shell) {
+                self.sendShellCommandsViewController.stage = 1;
+            }
+    };
+    return [self.delegate shellIntegrationInferShellWithCompletion:reallySend ? completion : nil];
 }
 
-- (void)addScriptFiles {
-    [self catToScript];
-    self.sendShellCommandsViewController.stage = 2;
+- (NSString *)addScriptFiles:(BOOL)reallySend {
+    NSString *result = [self catToScript:reallySend];
+    if (reallySend) {
+        self.sendShellCommandsViewController.stage = 2;
+    }
+    return result;
 }
 
-- (void)installUtilityScripts {
-    [self.delegate shellIntegrationWindowControllerSendText:@"mkdir ~/.iterm2\n"];
-    [self catToUtilities];
-    self.sendShellCommandsViewController.stage = 3;
+- (NSString *)installUtilityScripts:(BOOL)reallySend {
+    NSMutableString *result = [NSMutableString string];
+    [result appendString:[self sendText:@"mkdir ~/.iterm2\n" reallySend:reallySend]];
+    [result appendString:[self catToUtilities:reallySend]];
+    if (reallySend) {
+        self.sendShellCommandsViewController.stage = 3;
+    }
+    return result;
 }
 
-- (void)modifyStartupScriptsAndProceedTo:(int)nextStage {
-    [self amendDotFileWithCompletion:^{
+- (NSString *)modifyStartupScriptsAndProceedTo:(int)nextStage
+                                    reallySend:(BOOL)reallySend {
+    void (^completion)(void) = ^{
         self.sendShellCommandsViewController.stage = nextStage;
-    }];
+    };
+    return [self amendDotFileWithCompletion:reallySend ? completion : nil];
 }
 
 - (void)finishSendShellCommandsInstall {
@@ -603,23 +548,25 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     } else {
         switch (stage) {
             case 0: {
-                [self discoverShell];
+                [self discoverShell:YES];
                 break;
             }
             case 1:
-                [self addScriptFiles];
+                [self addScriptFiles:YES];
                 break;
             case 2: {
                 if (self.installUtilities) {
-                    [self installUtilityScripts];
+                    [self installUtilityScripts:YES];
                 } else {
-                    [self modifyStartupScriptsAndProceedTo:stage+1];
+                    [self modifyStartupScriptsAndProceedTo:stage+1
+                                                reallySend:YES];
                 }
                 break;
             }
             case 3:
                 if (self.installUtilities) {
-                    [self modifyStartupScriptsAndProceedTo:stage+1];
+                    [self modifyStartupScriptsAndProceedTo:stage+1
+                                                reallySend:YES];
                 } else {
                     [self finishSendShellCommandsInstall];
                 }
@@ -628,10 +575,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 [self finishSendShellCommandsInstall];
         }
     }
-}
-
-- (void)shellIntegrationInstallerManualInstall {
-    [self setState:iTermShellIntegrationInstallationStateManualInstallChooseShell];
 }
 
 - (void)shellIntegrationInstallerSetInstallUtilities:(BOOL)installUtilities {
@@ -650,62 +593,75 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self next:nil];
 }
 
+- (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands {
+    const int stage = self.sendShellCommandsViewController.stage;
+    switch (stage) {
+        case 0: {
+            return [self discoverShell:NO];
+        }
+        case 1:
+            return [self addScriptFiles:NO];
+            break;
+        case 2: {
+            if (self.installUtilities) {
+                return [self installUtilityScripts:NO];
+            } else {
+                return [self modifyStartupScriptsAndProceedTo:stage+1
+                                                   reallySend:NO];
+            }
+            break;
+        }
+        case 3:
+            if (self.installUtilities) {
+                return [self modifyStartupScriptsAndProceedTo:stage+1
+                                                   reallySend:NO];
+            } else {
+                return nil;
+            }
+            break;
+        case 4:
+            return nil;
+    }
+    return nil;
+}
+
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
     [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)shellIntegrationInstallerSetShell:(NSString *)shell {
-    self.shell = shell;
+- (NSString *)catString:(NSString *)string to:(NSString *)path reallySend:(BOOL)reallySend {
+    NSMutableString *result = [NSMutableString string];
+    [result appendString:[self sendText:[NSString stringWithFormat:@"cat > %@\n", path]
+                             reallySend:reallySend]];
+    [result appendString:[self sendText:string
+                             reallySend:reallySend]];
+    [result appendString:[self sendText:[NSString stringWithFormat:@"\n%c", 4]
+                             reallySend:reallySend]];
+    return result;
 }
 
-- (void)shellIntegrationInstallerCopyPath {
-    [self copyString:[self shellIntegrationPath]];
-}
-- (void)shellIntegrationInstallerCopyScript {
-    [self copyString:[self scriptForCurrentShell]];
-}
-
-- (void)catString:(NSString *)string to:(NSString *)path {
-    [self.delegate shellIntegrationWindowControllerSendText:[NSString stringWithFormat:@"cat > %@\n", path]];
-    [self.delegate shellIntegrationWindowControllerSendText:string];
-    [self.delegate shellIntegrationWindowControllerSendText:[NSString stringWithFormat:@"\n%c", 4]];
+- (NSString *)catToScript:(BOOL)reallySend {
+    NSMutableString *result = [NSMutableString string];
+    [result appendString:[self catString:[self scriptForCurrentShell] to:[self shellIntegrationPath]
+                              reallySend:reallySend]];
+    [result appendString:[self sendText:[NSString stringWithFormat:@"chmod +x %@\n", [self shellIntegrationPath]]
+                             reallySend:reallySend]];
+    return result;
 }
 
-- (void)catToScript {
-    [self catString:[self scriptForCurrentShell] to:[self shellIntegrationPath]];
-    [self.delegate shellIntegrationWindowControllerSendText:[NSString stringWithFormat:@"chmod +x %@\n", [self shellIntegrationPath]]];
+- (NSString *)sendText:(NSString *)text reallySend:(BOOL)reallySend {
+    if (reallySend) {
+        [self.delegate shellIntegrationWindowControllerSendText:text];
+    }
+    return text;
 }
 
-- (void)catToUtilities {
-    [self catString:@"TODO UTILITIES" to:@"/tmp/TODO"];
+- (NSString *)catToUtilities:(BOOL)reallySend {
+    NSMutableString *result = [NSMutableString string];
+    [result appendString:[self sendText:@"base64 -D | tar xfz -\n" reallySend:reallySend]];
+    [result appendString:[self sendText:@"TODO - UTILITIES TARBALL\n" reallySend:reallySend]];
+    [result appendString:[self sendText:[NSString stringWithFormat:@"%c", 4] reallySend:reallySend]];
+    return result;
 }
-
-- (void)shellIntegrationInstallerCatScript {
-    [self catToScript];
-}
-
-- (void)shellIntegrationInstallerCopyDotfileCommand {
-    [self copyString:[[self dotfileCommandWithBashDotfile:@"~/.bash_profile"] stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]]];
-}
-
-- (void)shellIntegrationInstallerAmendDotfile {
-    [self amendDotFileWithCompletion:^{}];
-}
-
-- (void)shellIntegrationInstallerCopyUntar {
-    [self copyString:@"base64 -D | tar xfz -"];
-}
-
-- (void)shellIntegrationInstallerCopyUtilitiesTarball {
-    [self copyString:@"TODO - UTILITIES TARBALL"];
-}
-
-- (void)shellIntegrationInstallerUntarUtilities {
-    [self.delegate shellIntegrationWindowControllerSendText:@"base64 -D | tar xfz -\n"];
-    [self.delegate shellIntegrationWindowControllerSendText:@"TODO - UTILITIES TARBALL\n"];
-    [self.delegate shellIntegrationWindowControllerSendText:[NSString stringWithFormat:@"%c", 4]];
-    [self.delegate shellIntegrationWindowControllerSendText:@"chmod +x imgcat imgls it2api it2attention it2check it2copy it2dl it2getvar it2git it2setcolor it2setkeylabel it2ul it2universion\n"];
-}
-
 
 @end

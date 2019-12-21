@@ -8372,10 +8372,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionUpdateMetalAllowed];
 }
 
-- (void)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {
-    [_shellInferenceCompletionBlock release];
-    _shellInferenceCompletionBlock = [completion copy];
-    [self writeTask:@"echo My shell is `basename $SHELL`.\n"];
+- (NSString *)textViewInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {
+    if (completion != nil) {
+        [_shellInferenceCompletionBlock release];
+        _shellInferenceCompletionBlock = [completion copy];
+        [self writeTask:@"echo My shell is `basename $SHELL`.\n"];
+    }
+    return @"echo My shell is `basename $SHELL`.\n";
 }
 
 - (void)bury {

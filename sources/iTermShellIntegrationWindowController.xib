@@ -1,61 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermShellIntegrationWindowController">
             <connections>
-                <outlet property="chooseShellViewController" destination="eQF-du-JsL" id="qhu-Hc-ufB"/>
                 <outlet property="containerView" destination="hnT-wu-REV" id="6TZ-H9-vJu"/>
                 <outlet property="downloadAndRunViewController" destination="lLN-Pm-irp" id="rlZ-Wb-GdG"/>
                 <outlet property="finishedViewController" destination="Pfw-0c-jXm" id="eM2-8a-OyL"/>
                 <outlet property="firstPageViewController" destination="cVJ-uZ-UYm" id="FJc-Li-B78"/>
                 <outlet property="header" destination="oKD-1E-lOE" id="hBj-PP-qZI"/>
-                <outlet property="installUtilitiesViewController" destination="LOB-lg-GNX" id="5lt-xJ-HCD"/>
                 <outlet property="secondPageViewController" destination="Bjd-E5-gMN" id="wIg-dC-jHK"/>
                 <outlet property="sendShellCommandsViewController" destination="cSI-jV-MOv" id="hyS-kL-LKd"/>
-                <outlet property="updateDotfileViewController" destination="RZ6-wM-eq7" id="41x-JY-cNh"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="iTermShellIntegrationPanel">
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="iTermShellIntegrationPanel">
+            <windowStyleMask key="styleMask" texturedBackground="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="513" height="257"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
-            <view key="contentView" id="se5-gp-TjO">
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1057"/>
+            <view key="contentView" id="se5-gp-TjO" customClass="iTermShellIntegrationRootView">
                 <rect key="frame" x="0.0" y="0.0" width="513" height="257"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oKD-1E-lOE">
-                        <rect key="frame" x="0.0" y="194" width="513" height="66"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <subviews>
-                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jZy-at-RHT">
-                                <rect key="frame" x="18" y="17" width="477" height="33"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Install Shell Integration" id="ypn-Vl-A1e">
-                                    <font key="font" metaFont="systemUltraLight" size="28"/>
-                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </textFieldCell>
-                            </textField>
-                        </subviews>
-                    </customView>
-                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hnT-wu-REV">
-                        <rect key="frame" x="0.0" y="0.0" width="513" height="196"/>
+                    <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="sheet" state="active" translatesAutoresizingMaskIntoConstraints="NO" id="n6t-kJ-FY3" customClass="iTermVibrantVisualEffectView">
+                        <rect key="frame" x="0.0" y="0.0" width="513" height="257"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                    </customView>
+                        <subviews>
+                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oKD-1E-lOE">
+                                <rect key="frame" x="0.0" y="191" width="513" height="66"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <subviews>
+                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jZy-at-RHT">
+                                        <rect key="frame" x="18" y="17" width="477" height="33"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Install Shell Integration" id="ypn-Vl-A1e">
+                                            <font key="font" metaFont="systemUltraLight" size="28"/>
+                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                </subviews>
+                            </customView>
+                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hnT-wu-REV">
+                                <rect key="frame" x="0.0" y="0.0" width="513" height="196"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </customView>
+                        </subviews>
+                    </visualEffectView>
                 </subviews>
             </view>
             <connections>
                 <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
             </connections>
-            <point key="canvasLocation" x="155.5" y="140.5"/>
+            <point key="canvasLocation" x="144.5" y="138.5"/>
         </window>
         <view id="dKV-0y-gWk" userLabel="First page">
             <rect key="frame" x="0.0" y="0.0" width="513" height="196"/>
@@ -72,7 +76,7 @@
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WlT-w4-Xu4">
                     <rect key="frame" x="20" y="118" width="452" height="58"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="wl0-hO-Vi5">
+                    <textFieldCell key="cell" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="wl0-hO-Vi5">
                         <font key="font" metaFont="system"/>
                         <string key="title">Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. Learn more.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -83,7 +87,7 @@
                     <rect key="frame" x="36" y="74" width="459" height="14"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more. Learn more." id="cyF-wg-XYY">
-                        <font key="font" metaFont="smallSystem"/>
+                        <font key="font" metaFont="menu" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -120,25 +124,11 @@ DQ
             <point key="canvasLocation" x="144.5" y="413"/>
         </view>
         <view id="Gaa-pS-9bv" userLabel="Second page">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="235"/>
+            <rect key="frame" x="0.0" y="0.0" width="608" height="251"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dgv-7Z-UST">
-                    <rect key="frame" x="14" y="49" width="205" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Manual Install" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="R8D-Se-Moi">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="manualInstall:" target="Bjd-E5-gMN" id="I1S-tq-9Hm"/>
-                    </connections>
-                </button>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2DM-0Q-0MB">
-                    <rect key="frame" x="18" y="151" width="572" height="64"/>
+                    <rect key="frame" x="18" y="159" width="572" height="72"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="UYA-J9-ck1">
                         <font key="font" metaFont="system"/>
@@ -150,7 +140,7 @@ In this process, your shell’s startup scripts will be modified. To do so, comm
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D1J-Nr-OS4">
-                    <rect key="frame" x="14" y="115" width="205" height="32"/>
+                    <rect key="frame" x="14" y="102" width="205" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Download and Run Installer" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ncg-Is-RuU">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -164,9 +154,9 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RoP-xI-DXR">
-                    <rect key="frame" x="14" y="82" width="205" height="32"/>
+                    <rect key="frame" x="14" y="69" width="205" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Send Shell Commands" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="naS-Ve-VEB">
+                    <buttonCell key="cell" type="push" title="Internet-Free Install" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="naS-Ve-VEB">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -175,27 +165,18 @@ DQ
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KLO-4I-QbI">
-                    <rect key="frame" x="227" y="125" width="301" height="16"/>
+                    <rect key="frame" x="227" y="112" width="284" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Downloads a script with curl piped to bash. Easy!" id="3ik-Ec-g95">
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Downloads the latest version. Runs curl | bash" id="3ik-Ec-g95">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hn7-rk-u4a">
-                    <rect key="frame" x="227" y="92" width="318" height="16"/>
+                    <rect key="frame" x="227" y="79" width="309" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Sends shell commands for you. No internet needed." id="oFz-OK-xmV">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dwO-i7-saZ">
-                    <rect key="frame" x="227" y="59" width="303" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Guides you through each step. Not for beginners." id="5pq-nc-JeF">
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Guided manual installation. No download required." id="oFz-OK-xmV">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -227,7 +208,7 @@ Gw
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="192" y="679.5"/>
+            <point key="canvasLocation" x="192" y="687.5"/>
         </view>
         <view id="ei6-g3-X1l" userLabel="Download and Run Installer">
             <rect key="frame" x="0.0" y="0.0" width="608" height="148"/>
@@ -292,13 +273,11 @@ Gw
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="E7S-NE-DXr">
-                    <rect key="frame" x="20" y="60" width="547" height="105"/>
+                    <rect key="frame" x="20" y="60" width="464" height="105"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="bFR-qd-VRH">
                         <font key="font" metaFont="system"/>
-                        <string key="title">This will send commands into the current terminal window to:
-
-1. Discover which shell you use.
+                        <string key="title">1. Discover which shell you use.
 2. Add script files under your home directory.
 3. Install utility scripts.
 4. Modify your shell’s startup scripts.</string>
@@ -345,473 +324,59 @@ Gw
                         <action selector="cancel:" target="-2" id="v8L-gf-GRg"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U81-Xk-bH1">
+                    <rect key="frame" x="489" y="147" width="106" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OOc-Is-r4d">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu" size="9"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="previewCommand:" target="cSI-jV-MOv" id="Zr5-B1-lRz"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8p7-LD-gio">
+                    <rect key="frame" x="489" y="131" width="106" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="K0a-WG-CVu">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu" size="9"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="previewCommand:" target="cSI-jV-MOv" id="686-QC-2zd"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6eh-cx-vgI">
+                    <rect key="frame" x="489" y="115" width="106" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="srv-Ew-0Pt">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu" size="9"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="previewCommand:" target="cSI-jV-MOv" id="Sai-dd-MbX"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O5Q-Z2-qdR">
+                    <rect key="frame" x="489" y="99" width="106" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="vFx-5X-71f">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu" size="9"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="previewCommand:" target="cSI-jV-MOv" id="hDd-MA-opV"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="192" y="1141.5"/>
         </view>
-        <view id="1jl-mR-2Xs" userLabel="Manual Install — Choose Shell">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="173"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <subviews>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="apn-FL-iyl">
-                    <rect key="frame" x="18" y="142" width="547" height="16"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="AJr-8h-LEq">
-                        <font key="font" metaFont="systemMedium" size="13"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YSH-AL-k5Z">
-                    <rect key="frame" x="417" y="13" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QEz-Fi-AKV">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="cancel:" target="-2" id="cJi-t2-9gE"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hKO-M8-BQw">
-                    <rect key="frame" x="499" y="13" width="95" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X9A-Hy-K5x">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="next:" target="eQF-du-JsL" id="ACL-u9-kZg"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KK6-kH-mzp">
-                    <rect key="frame" x="16" y="13" width="91" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Go Back" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fSv-sC-9Z1">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="back:" target="-2" id="QA0-G8-a8e"/>
-                    </connections>
-                </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NJO-dj-9lK">
-                    <rect key="frame" x="492" y="143" width="98" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="e1m-DK-2Ai">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="I4e-3f-w2z">
-                    <rect key="frame" x="18" y="106" width="151" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="What is your login shell?" id="nJt-Vn-Be8">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PUr-Vo-2SX">
-                    <rect key="frame" x="18" y="73" width="365" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="This is important because each shell uses a different script." id="hmr-la-X8F">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cHb-OZ-khM">
-                    <rect key="frame" x="173" y="100" width="77" height="25"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="bash" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="nud-bR-mYF" id="GQB-aZ-p2n">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <menu key="menu" id="JKk-c3-S7S">
-                            <items>
-                                <menuItem title="bash" state="on" identifier="bash" id="nud-bR-mYF"/>
-                                <menuItem title="fish" identifier="fish" id="KH0-YC-t91"/>
-                                <menuItem title="tcsh" identifier="tcsh" id="eP3-iR-ijr"/>
-                                <menuItem title="zsh" identifier="zsh" id="kul-nE-gJZ"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                </popUpButton>
-            </subviews>
-            <point key="canvasLocation" x="192" y="1361.5"/>
-        </view>
-        <view id="M1V-DE-kJe" userLabel="Manual Install — Write Script">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="249"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <subviews>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1cQ-kU-C9A">
-                    <rect key="frame" x="19" y="219" width="547" height="16"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="LPS-ee-0D7">
-                        <font key="font" metaFont="systemMedium" size="13"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pHi-Ed-IBF">
-                    <rect key="frame" x="417" y="13" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cxX-KV-hhg">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FoQ-B2-7QQ">
-                    <rect key="frame" x="499" y="13" width="95" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aa0-5t-zSE">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YFI-JG-rb6">
-                    <rect key="frame" x="16" y="13" width="91" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Go Back" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gUE-1C-4XH">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iLf-SO-cWS">
-                    <rect key="frame" x="15" y="95" width="200" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Copy Script to Pasteboard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aqb-Wh-ee2">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TTw-7L-QoH">
-                    <rect key="frame" x="16" y="62" width="199" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Do it for Me" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aW3-Ah-hF9">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qpu-ca-DPc">
-                    <rect key="frame" x="15" y="128" width="201" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Copy Path to Pasteboard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="VMU-xK-Sme">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6af-oG-GDx">
-                    <rect key="frame" x="20" y="175" width="570" height="36"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" title="In this step, you must place the contents of the shell integration script in ~/.iterm2_shell_integration.$SHELL" id="lHt-ss-p70">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dS2-oD-FUq">
-                    <rect key="frame" x="218" y="138" width="216" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="~/.iterm2_shell_integration.$SHELL" id="OWD-48-aqf">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Il1-cu-5Sk">
-                    <rect key="frame" x="218" y="105" width="212" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="A $NUMLINES-line $SHELL script" id="ZqI-Au-gWc">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7tj-gm-NgQ">
-                    <rect key="frame" x="218" y="72" width="292" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Sends cat &gt; ~/.iterm2_shell_integration.$SHELL" id="sef-mS-8gI">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRW-b9-UfJ">
-                    <rect key="frame" x="496" y="219" width="94" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="VHz-mh-E8U">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-            </subviews>
-            <point key="canvasLocation" x="192" y="1625.5"/>
-        </view>
-        <view id="aCN-Uh-dBC" userLabel="Manual Install — Update Dotfile">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="253"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <subviews>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ldU-e9-E8y">
-                    <rect key="frame" x="18" y="223" width="429" height="16"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="Ti1-ad-2Gj">
-                        <font key="font" metaFont="systemMedium" size="13"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eGx-vR-Cs7">
-                    <rect key="frame" x="417" y="13" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="JCe-Ed-myc">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="cancel:" target="-2" id="9mx-3w-Plg"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dau-3n-0AX">
-                    <rect key="frame" x="499" y="13" width="95" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="f8F-q6-NeZ">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="next:" target="-2" id="tDg-vJ-1yR"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8m8-bV-hnj">
-                    <rect key="frame" x="14" y="13" width="91" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Go Back" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="huE-pj-rTd">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="back:" target="-2" id="utb-ch-YwJ"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oMe-oy-2FC">
-                    <rect key="frame" x="14" y="70" width="225" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Do it for Me" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="f8E-Qu-LPH">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="doItForMe:" target="RZ6-wM-eq7" id="fsi-vz-PI5"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CMT-W0-84y">
-                    <rect key="frame" x="14" y="96" width="225" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Copy Command to Pasteboard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="dZP-gb-X0F">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="copyCommand:" target="RZ6-wM-eq7" id="ll1-bF-a8G"/>
-                    </connections>
-                </button>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AZM-Nk-QiA">
-                    <rect key="frame" x="18" y="151" width="572" height="64"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" id="JGG-6R-kzW">
-                        <font key="font" metaFont="system"/>
-                        <string key="title">Now it’s time to update your shell’s startup script so that the shell integration script gets run when you log in.
-
-You must append a line to $DOTFILE, if it isn’t already there.</string>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="um3-dQ-Zzo">
-                    <rect key="frame" x="239" y="106" width="303" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="A command to source the script you just created." id="kRn-g3-j9A">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="E9E-qJ-NG4">
-                    <rect key="frame" x="239" y="80" width="207" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Appends to $DOTFILE, if needed." id="nY8-tZ-GBQ">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OCK-Gg-CFn">
-                    <rect key="frame" x="496" y="223" width="94" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="qjJ-av-XPa">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-            </subviews>
-            <point key="canvasLocation" x="192" y="1925.5"/>
-        </view>
-        <view id="Ehv-zX-u0O" userLabel="Manual Install — Install Utilities">
-            <rect key="frame" x="0.0" y="0.0" width="759" height="295"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <subviews>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F3B-ZJ-SqQ">
-                    <rect key="frame" x="18" y="265" width="580" height="16"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="Manual Shell Integration Install" allowsEditingTextAttributes="YES" id="zzX-4g-aS4">
-                        <font key="font" metaFont="systemMedium" size="13"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pmT-hp-yIk">
-                    <rect key="frame" x="568" y="13" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cff-l8-xS5">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="cancel:" target="-2" id="VDR-3e-cze"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D39-vy-IZ0">
-                    <rect key="frame" x="650" y="13" width="95" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Continue" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="a1U-Gp-rLt">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="next:" target="-2" id="SeX-c4-obu"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="apc-PF-moK">
-                    <rect key="frame" x="14" y="13" width="91" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Go Back" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5V8-3d-wXb">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="back:" target="-2" id="Jo3-fQ-nM6"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DtD-Yz-aR2">
-                    <rect key="frame" x="14" y="87" width="261" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Copy Base64 Tarball to Pasteboard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="bPr-MS-0jH">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gLf-oa-QQ2">
-                    <rect key="frame" x="14" y="113" width="261" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Copy untar Command to Pasteboard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iqW-qd-MM4">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cx1-xg-c4o">
-                    <rect key="frame" x="278" y="123" width="129" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="base64 -D | tar xfz -" id="uhj-Zr-LH9">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Aoa-A4-hOx">
-                    <rect key="frame" x="278" y="72" width="453" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Runs the command above and sends the base64-encoded tarball to stdin." id="TYq-3C-U6O">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T2w-4L-UdC">
-                    <rect key="frame" x="278" y="97" width="270" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Paste this into the base64 command above." id="hET-Fa-f3j">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YKI-MK-MlJ">
-                    <rect key="frame" x="647" y="265" width="94" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Step $STEP/$N" id="8c0-nl-Q2N">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sMh-4a-7lq">
-                    <rect key="frame" x="14" y="65" width="261" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Do it for Me" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="acY-T7-Vv9">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                </button>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GiU-QL-XhJ">
-                    <rect key="frame" x="18" y="161" width="723" height="96"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" selectable="YES" id="eo3-Xk-Nyj">
-                        <font key="font" metaFont="system"/>
-                        <string key="title">Finally, it's time to install the utilities. These are a collection of scripts that are useful for controlling iTerm2.
-
-Place them in a folder that’s in your PATH.
-
-Because there are a number of scripts, the manual installer offers a base64-encoded tar file. Extract it to get the utility scripts.</string>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-            </subviews>
-            <point key="canvasLocation" x="267.5" y="2244.5"/>
-        </view>
         <view id="kWX-qb-HtK" userLabel="Finished">
-            <rect key="frame" x="0.0" y="0.0" width="608" height="161"/>
+            <rect key="frame" x="0.0" y="0.0" width="615" height="171"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="akf-2O-WIV">
-                    <rect key="frame" x="52" y="125" width="429" height="16"/>
+                    <rect key="frame" x="52" y="135" width="436" height="16"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" enabled="NO" allowsUndo="NO" title="You’re done!" allowsEditingTextAttributes="YES" id="vT8-og-7pl">
                         <font key="font" metaFont="systemMedium" size="13"/>
@@ -820,28 +385,28 @@ Because there are a number of scripts, the manual installer offers a base64-enco
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YQY-DE-zoC">
-                    <rect key="frame" x="18" y="44" width="572" height="64"/>
+                    <rect key="frame" x="18" y="54" width="579" height="64"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" id="WeK-Fh-3OJ">
                         <font key="font" metaFont="system"/>
                         <string key="title">Log out and log back in for it to take effect.
 
-Note that you should install this on both  your local machine and any remote hosts you ssh into.</string>
+Note that you should install this on both your local machine and any remote hosts you ssh into.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iNu-Fh-d9v">
-                    <rect key="frame" x="18" y="117" width="34" height="30"/>
+                    <rect key="frame" x="18" y="127" width="34" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="🎉" id="ra4-BC-EG1">
-                        <font key="font" size="26" name=".AppleColorEmojiUI"/>
+                        <font key="font" metaFont="system" size="26"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IVH-y2-yaN">
-                    <rect key="frame" x="535" y="13" width="59" height="32"/>
+                    <rect key="frame" x="542" y="13" width="59" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="b2l-Qa-QNL">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -855,7 +420,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="192" y="2521.5"/>
+            <point key="canvasLocation" x="195.5" y="2526.5"/>
         </view>
         <viewController id="cVJ-uZ-UYm" userLabel="iTermShellIntegrationFirstPageViewController" customClass="iTermShellIntegrationFirstPageViewController">
             <connections>
@@ -878,6 +443,13 @@ DQ
         </viewController>
         <viewController id="cSI-jV-MOv" userLabel="iTermShellIntegrationPasteShellCommandsViewController" customClass="iTermShellIntegrationPasteShellCommandsViewController">
             <connections>
+                <outlet property="popover" destination="mse-4A-lyq" id="adr-3V-O6g"/>
+                <outlet property="popoverViewController" destination="6l6-bO-gT6" id="b9W-oS-SgI"/>
+                <outlet property="previewCommandButton1" destination="U81-Xk-bH1" id="5qb-ZS-kvK"/>
+                <outlet property="previewCommandButton2" destination="8p7-LD-gio" id="LYs-iE-ZO3"/>
+                <outlet property="previewCommandButton3" destination="6eh-cx-vgI" id="0Vu-i8-ILH"/>
+                <outlet property="previewCommandButton4" destination="O5Q-Z2-qdR" id="OtY-yS-Vbq"/>
+                <outlet property="previewTextView" destination="NAF-vj-inx" id="E51-mF-nUZ"/>
                 <outlet property="shellInstallerDelegate" destination="-2" id="qtv-k4-f5d"/>
                 <outlet property="textField" destination="E7S-NE-DXr" id="DfC-A3-z3l"/>
                 <outlet property="view" destination="lU3-F8-nfu" id="PeH-me-M2v"/>
@@ -886,20 +458,16 @@ DQ
         <viewController id="eQF-du-JsL" userLabel="iTermShellIntegrationChooseShellViewController" customClass="iTermShellIntegrationChooseShellViewController">
             <connections>
                 <outlet property="shellInstallerDelegate" destination="-2" id="Caf-b4-Bf6"/>
-                <outlet property="shells" destination="cHb-OZ-khM" id="ljY-cC-0eh"/>
-                <outlet property="view" destination="1jl-mR-2Xs" id="nDl-DG-O1E"/>
             </connections>
         </viewController>
         <viewController id="RZ6-wM-eq7" userLabel="iTermShellIntegrationUpdateDotfileViewController" customClass="iTermShellIntegrationUpdateDotfileViewController">
             <connections>
                 <outlet property="shellInstallerDelegate" destination="-2" id="abg-CG-GVd"/>
-                <outlet property="view" destination="aCN-Uh-dBC" id="gwc-Je-QiW"/>
             </connections>
         </viewController>
         <viewController id="LOB-lg-GNX" userLabel="iTermShellIntegrationInstallUtilitiesViewController" customClass="iTermShellIntegrationInstallUtilitiesViewController">
             <connections>
                 <outlet property="shellInstallerDelegate" destination="-2" id="vbE-IH-wV6"/>
-                <outlet property="view" destination="Ehv-zX-u0O" id="gxw-47-Ggw"/>
             </connections>
         </viewController>
         <viewController id="Pfw-0c-jXm" userLabel="iTermShellIntegrationFinishedViewController" customClass="iTermShellIntegrationFinishedViewController">
@@ -907,5 +475,49 @@ DQ
                 <outlet property="view" destination="kWX-qb-HtK" id="Mpf-Rp-jLt"/>
             </connections>
         </viewController>
+        <viewController id="6l6-bO-gT6" userLabel="Popover View Controller">
+            <connections>
+                <outlet property="view" destination="Vw5-vJ-iCL" id="kCg-WK-ayT"/>
+            </connections>
+        </viewController>
+        <popover id="mse-4A-lyq">
+            <connections>
+                <outlet property="contentViewController" destination="6l6-bO-gT6" id="3F4-Fm-S5B"/>
+            </connections>
+        </popover>
+        <customView id="Vw5-vJ-iCL" userLabel="Preview Command Popover View">
+            <rect key="frame" x="0.0" y="0.0" width="496" height="257"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SGV-38-5pm">
+                    <rect key="frame" x="20" y="20" width="456" height="217"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="iwC-J2-hbd">
+                        <rect key="frame" x="0.0" y="0.0" width="456" height="217"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" id="NAF-vj-inx">
+                                <rect key="frame" x="0.0" y="0.0" width="456" height="217"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                <size key="minSize" width="456" height="217"/>
+                                <size key="maxSize" width="496" height="10000000"/>
+                                <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                            </textView>
+                        </subviews>
+                    </clipView>
+                    <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="nNk-Wf-GXl">
+                        <rect key="frame" x="-100" y="-100" width="240" height="16"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </scroller>
+                    <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="bkW-Iy-WIj">
+                        <rect key="frame" x="432" y="0.0" width="16" height="211"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </scroller>
+                </scrollView>
+            </subviews>
+            <point key="canvasLocation" x="89" y="1489.5"/>
+        </customView>
     </objects>
 </document>
