@@ -278,7 +278,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         NSBeep();
         return;
     }
-    if (!(pasteEvent.flags & kPasteFlagsCommands)) {
+    if (!(pasteEvent.flags & (kPasteFlagsCommands | kPasteFlagsDisableWarnings))) {
         if (![self maybeWarnAboutMultiLinePaste:pasteEvent]) {
             DLog(@"Multiline paste declined.");
             return;

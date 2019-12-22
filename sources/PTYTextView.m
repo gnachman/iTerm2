@@ -2668,55 +2668,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
-- (IBAction)installShellIntegration:(id)sender {
-    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
-    warning.title = @"Shell Integration comes with an optional Utilities Package, which lets you view images and download files. What would you prefer?";
-    warning.actionLabels = @[ @"Install Shell Integration & Utilities", @"Cancel", @"Shell Integration Only" ];
-    warning.identifier = @"NoSyncInstallUtilitiesPackage";
-    warning.warningType = kiTermWarningTypePermanentlySilenceable;
-    warning.cancelLabel = @"Cancel";
-    warning.window = self.window;
-    warning.showHelpBlock = ^() {
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/utilities.html"]];
-    };
-
-    NSString *theCommand = nil;
-    switch ([warning runModal]) {
-        case kiTermWarningSelection0:
-            theCommand = @"curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash\n";
-            break;
-        case kiTermWarningSelection1:
-            return;
-        case kiTermWarningSelection2:
-            theCommand = @"curl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash\n";
-            break;
-        default:
-            assert(false);
-    }
-    if (theCommand) {
-        [self installShellIntegrationWithCommand:theCommand];
-    } else {
-        assert(false);
-    }
-}
-
-- (void)installShellIntegrationWithCommand:(NSString *)theCommand {
-    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
-    warning.title = [NSString stringWithFormat:@"Ok to run this command in the current shell?\n\n%@", theCommand];
-    warning.warningActions =
-    @[
-          [iTermWarningAction warningActionWithLabel:@"OK" block:^(iTermWarningSelection selection) {
-              [_delegate writeTask:theCommand];
-          }],
-          [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil]
-      ];
-    warning.identifier = @"NoSyncConfirmShellIntegrationCommand";
-    warning.warningType = kiTermWarningTypePermanentlySilenceable;
-    warning.cancelLabel = @"Cancel";
-    warning.window = self.window;
-    [warning runModal];
-}
-
 - (IBAction)selectAll:(id)sender
 {
     // Set the selection region to the whole text.
@@ -5597,6 +5548,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"View %@ did move to window %@\n%@", self, self.window, [NSThread callStackSymbols]);
     // If you change tabs while dragging you never get a mouseUp. Issue 8350.
     [_selection endLiveSelection];
+    if (self.window == nil) {
+        [_shellIntegrationInstallerWindow close];
+        _shellIntegrationInstallerWindow = nil;
+    }
     [super viewDidMoveToWindow];
 }
 

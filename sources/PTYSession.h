@@ -43,6 +43,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermAction;
 @class iTermAnnouncementViewController;
 @class iTermEchoProbe;
+@class iTermExpect;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
@@ -516,6 +517,7 @@ typedef enum {
 @property(nonatomic, retain) NSNumber *cursorTypeOverride;
 @property(nonatomic, readonly) NSDictionary *environment;
 @property(nonatomic, readonly) BOOL hasNontrivialJob;
+@property(nonatomic, readonly) iTermExpect *expect;
 
 #pragma mark - methods
 

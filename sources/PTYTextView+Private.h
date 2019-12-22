@@ -20,6 +20,7 @@
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 
+@class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
 
 @interface PTYTextView () <
@@ -41,6 +42,7 @@ NSPopoverDelegate> {
     BOOL _committedToDrag;
 
     iTermURLActionHelper *_urlActionHelper;
+    iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

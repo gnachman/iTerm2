@@ -16,6 +16,7 @@
 #import "iTermLocalHostNameGuesser.h"
 #import "iTermMouseCursor.h"
 #import "iTermPreferences.h"
+#import "iTermShellIntegrationWindowController.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
@@ -35,6 +36,9 @@
 static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
 static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
+
+@interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate>
+@end
 
 @implementation PTYTextView (ARC)
 
@@ -675,6 +679,30 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (nonnull iTermSelection *)urlActionHelperSelection:(nonnull iTermURLActionHelper *)helper {
     return self.selection;
+}
+
+#pragma mark - Install Shell Integration
+
+- (IBAction)installShellIntegration:(id)sender {
+    if (_shellIntegrationInstallerWindow.isWindowLoaded &&
+        _shellIntegrationInstallerWindow.window.isVisible) {
+        return;
+    }
+    _shellIntegrationInstallerWindow =
+    [[iTermShellIntegrationWindowController alloc] initWithWindowNibName:@"iTermShellIntegrationWindowController"];
+    [_shellIntegrationInstallerWindow.window makeKeyAndOrderFront:nil];
+    _shellIntegrationInstallerWindow.delegate = self;
+    [_shellIntegrationInstallerWindow.window center];
+}
+
+#pragma mark iTermShellIntegrationWindowControllerDelegate
+
+- (void)shellIntegrationWindowControllerSendText:(NSString *)text {
+    [self.delegate sendTextSlowly:text];
+}
+
+- (iTermExpect *)shellIntegrationExpect {
+    return [self.delegate textViewExpect];
 }
 
 @end

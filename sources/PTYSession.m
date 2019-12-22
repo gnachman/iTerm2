@@ -29,6 +29,7 @@
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
 #import "iTermEchoProbe.h"
+#import "iTermExpect.h"
 #import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
 #import "iTermGraphicSource.h"
@@ -124,6 +125,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "RegexKitLite.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -714,7 +716,7 @@ static const NSUInteger kMaxHosts = 100;
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
         standardKeyMapper.delegate = self;
         _keyMapper = standardKeyMapper;
-
+        _expect = [[iTermExpect alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -898,6 +900,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _logging.plainLogger = nil;
     [_logging release];
     [_naggingController release];
+    [_expect release];
 
     [super dealloc];
 }
@@ -2738,6 +2741,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
 
+    for (iTermExpectation *expectation in [[_expect.expectations copy] autorelease]) {
+        NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
+        if (capture.count) {
+            [expectation didMatchWithCaptureGroups:capture];
+        }
+    }
+
     // If a trigger changes the current profile then _triggers gets released and we should stop
     // processing triggers. This can happen with automatic profile switching.
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
@@ -2769,7 +2779,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)clearTriggerLine {
-    if ([_triggers count]) {
+    if ([_triggers count] || _expect.expectations.count) {
         [self checkTriggers];
         _triggerLineNumber = -1;
     }
@@ -8396,6 +8406,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionUpdateMetalAllowed];
 }
 
+- (iTermExpect *)textViewExpect {
+    return self.expect;
+}
+
 - (void)bury {
     if (self.isTmuxClient) {
         if (!self.delegate) {
@@ -8460,6 +8474,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
         [self writeTask:temp];
     }
+}
+
+- (void)sendTextSlowly:(NSString *)text {
+    PasteEvent *event = [_pasteHelper pasteEventWithString:text
+                                                    slowly:NO
+                                          escapeShellChars:NO
+                                                  isUpload:NO
+                                              tabTransform:NO
+                                              spacesPerTab:0
+                                                  progress:^(NSInteger progress) {}];
+    event.defaultChunkSize = 80;
+    event.defaultDelay = 0.02;
+    event.chunkKey = @"";
+    event.delayKey = @"";
+    event.flags = event.flags | kPasteFlagsDisableWarnings;
+    [_pasteHelper tryToPasteEvent:event];
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command
@@ -8741,7 +8771,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
-    if ([_triggers count]) {
+    if ([_triggers count] || _expect.expectations.count) {
         NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
                                                      length:asciiData->length
                                                    encoding:NSASCIIStringEncoding] autorelease];

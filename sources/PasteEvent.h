@@ -43,6 +43,9 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
     kPasteFlagsRemovingNewlines = (1 << 9),
 
     kPasteFlagsUseRegexSubstitution = (1 << 10),
+    
+    // Disable warnings?
+    kPasteFlagsDisableWarnings = (1 << 11)
 };
 
 @interface PasteEvent : NSEvent
