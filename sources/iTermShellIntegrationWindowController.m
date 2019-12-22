@@ -711,6 +711,16 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return nil;
 }
 
+- (void)shellIntegrationInstallerSkipStage {
+    const int stage = self.sendShellCommandsViewController.stage;
+    
+    const int lastStage = self.installUtilities ? 4 : 3;
+    if (stage + 1 > lastStage) {
+        return;
+    }
+    self.sendShellCommandsViewController.stage = stage + 1;
+}
+
 - (void)shellIntegrationInstallerCancelExpectations {
     [self cancelAllExpectations];
 }

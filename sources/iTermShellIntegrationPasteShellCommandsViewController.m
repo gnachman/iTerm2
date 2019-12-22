@@ -18,6 +18,7 @@
 @property (nonatomic, strong) IBOutlet NSViewController *popoverViewController;
 @property (nonatomic, strong) IBOutlet NSPopover *popover;
 @property (nonatomic, strong) IBOutlet NSButton *continueButton;
+@property (nonatomic, strong) IBOutlet NSButton *skipButton;
 
 @end
 
@@ -84,7 +85,9 @@
 
     const BOOL unavailable = (stage == 1 && self.shell == iTermShellIntegrationShellUnknown);
     self.continueButton.enabled = !(unavailable || _busy);
-    if (!unavailable) {
+    if (unavailable) {
+        self.skipButton.enabled = NO;
+    } else {
         if (stage < 1) {
             prefix = @"Step 2. Modify";
         } else if (stage == 1) {
@@ -151,6 +154,9 @@
             [lines addObject:@""];
             indexToBold = lines.count;
             [lines addObject:@"Done! Select “Continue” to proceed."];
+            self.skipButton.enabled = NO;
+        } else {
+            self.skipButton.enabled = !_busy;
         }
     }
     
@@ -206,9 +212,14 @@
                        preferredEdge:NSRectEdgeMaxY];
 }
 
+- (IBAction)skip:(id)sender {
+    [self.shellInstallerDelegate shellIntegrationInstallerSkipStage];
+}
+
 - (IBAction)next:(id)sender {
     [self.shellInstallerDelegate shellIntegrationInstallerSendShellCommands:_stage];
 }
+
 - (IBAction)back:(id)sender {
     [self.shellInstallerDelegate shellIntegrationInstallerCancelExpectations];
     if (_stage == 0) {

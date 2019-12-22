@@ -90,7 +90,7 @@
                     <rect key="frame" x="36" y="74" width="459" height="14"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more. " id="cyF-wg-XYY">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -317,20 +317,6 @@ DQ
                         <action selector="back:" target="cSI-jV-MOv" id="vxK-jT-vzi"/>
                     </connections>
                 </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="54d-Cg-7Mj">
-                    <rect key="frame" x="417" y="13" width="82" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="BbS-EU-hMu">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                        <string key="keyEquivalent" base64-UTF8="YES">
-Gw
-</string>
-                    </buttonCell>
-                    <connections>
-                        <action selector="cancel:" target="-2" id="v8L-gf-GRg"/>
-                    </connections>
-                </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U81-Xk-bH1">
                     <rect key="frame" x="489" y="146" width="106" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -373,6 +359,31 @@ Gw
                     </buttonCell>
                     <connections>
                         <action selector="previewCommand:" target="cSI-jV-MOv" id="hDd-MA-opV"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xRu-Lc-X27">
+                    <rect key="frame" x="432" y="13" width="67" height="32"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Skip" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="GW7-My-Ydm">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="skip:" target="cSI-jV-MOv" id="Bsa-EE-xk9"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="54d-Cg-7Mj">
+                    <rect key="frame" x="350" y="13" width="82" height="32"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="BbS-EU-hMu">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                    </buttonCell>
+                    <connections>
+                        <action selector="cancel:" target="-2" id="v8L-gf-GRg"/>
                     </connections>
                 </button>
             </subviews>
@@ -464,6 +475,7 @@ DQ
                 <outlet property="previewCommandButton4" destination="O5Q-Z2-qdR" id="OtY-yS-Vbq"/>
                 <outlet property="previewTextView" destination="NAF-vj-inx" id="E51-mF-nUZ"/>
                 <outlet property="shellInstallerDelegate" destination="-2" id="qtv-k4-f5d"/>
+                <outlet property="skipButton" destination="xRu-Lc-X27" id="fsp-CR-9cN"/>
                 <outlet property="textField" destination="E7S-NE-DXr" id="DfC-A3-z3l"/>
                 <outlet property="view" destination="lU3-F8-nfu" id="PeH-me-M2v"/>
             </connections>

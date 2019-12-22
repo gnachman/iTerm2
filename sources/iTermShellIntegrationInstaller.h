@@ -21,6 +21,7 @@
 - (void)shellIntegrationInstallerConfirmDownloadAndRun;
 - (void)shellIntegrationInstallerReallyDownloadAndRun;
 - (void)shellIntegrationInstallerSendShellCommands:(int)stage;
+- (void)shellIntegrationInstallerSkipStage;
 - (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands;
 - (void)shellIntegrationInstallerCancelExpectations;
 @end
