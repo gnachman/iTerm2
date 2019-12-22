@@ -10,191 +10,11 @@
 #import "iTermClickableTextField.h"
 #import "iTermExpect.h"
 #import "NSArray+iTerm.h"
-
-@interface iTermShellIntegrationRootView: NSView
-@end
-
-@implementation iTermShellIntegrationRootView {
-    NSTrackingArea *_area;
-}
-
-- (void)viewDidMoveToWindow {
-    if (!_area) {
-        [self createTrackingArea];
-    }
-    
-}
-- (void)createTrackingArea {
-    NSTrackingAreaOptions options = NSTrackingMouseMoved | NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways;
-    _area = [[NSTrackingArea alloc] initWithRect:self.bounds options:options owner:self userInfo:nil];
-    [self addTrackingArea:_area];
-}
-
-- (void)cursorUpdate:(NSEvent *)event {
-    [[NSCursor pointingHandCursor] set];
-}
-
-@end
-
-@interface iTermShellIntegrationPanel: NSPanel
-@end
-
-@implementation iTermShellIntegrationPanel
-@end
-
-@protocol iTermShellIntegrationInstallerViewController <NSObject>
-- (void)setBusy:(BOOL)busy;
-@optional
-- (NSArray<NSTextField *> *)labelsNeedingSubstitutions;
-@end
-
-@protocol iTermShellIntegrationInstallerDelegate<NSObject>
-- (void)shellIntegrationInstallerContinue;
-- (void)shellIntegrationInstallerSetInstallUtilities:(BOOL)installUtilities;
-- (void)shellIntegrationInstallerBack;
-- (void)shellIntegrationInstallerCancel;
-- (void)shellIntegrationInstallerConfirmDownloadAndRun;
-- (void)shellIntegrationInstallerReallyDownloadAndRun;
-- (void)shellIntegrationInstallerSendShellCommands:(int)stage;
-- (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands;
-- (void)shellIntegrationInstallerCancelExpectations;
-@end
-
-@interface iTermShellIntegrationFirstPageViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@property (nonatomic, strong) IBOutlet NSButton *utilities;
-@property (nonatomic, strong) IBOutlet NSTextField *descriptionLabel;
-@property (nonatomic, strong) IBOutlet NSTextField *utilitiesLabel;
-@end
-
-@implementation iTermShellIntegrationFirstPageViewController
-static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"NoSyncInstallUtilities";
-
-- (void)setBusy:(BOOL)busy {
-}
-
-- (NSAttributedString *)attributedStringWithFont:(NSFont *)font
-                                          string:(NSString *)string {
-    NSDictionary *attributes = @{ NSFontAttributeName: font };
-    return [[NSAttributedString alloc] initWithString:string attributes:attributes];
-}
-
-- (NSAttributedString *)attributedStringWithLinkToURL:(NSURL *)url title:(NSString *)title {
-    NSDictionary *linkAttributes = @{ NSLinkAttributeName: url };
-    NSString *localizedTitle = title;
-    return [[NSAttributedString alloc] initWithString:localizedTitle
-                                           attributes:linkAttributes];
-}
-
-- (void)appendLearnMoreToAttributedString:(NSMutableAttributedString *)attributedString
-                                      url:(NSURL *)url {
-    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url title:@"Learn more."]];
-}
-
-- (void)viewDidLoad {
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
-    BOOL installUtilities = number ? number.boolValue : YES;
-    self.utilities.state = installUtilities ? NSOnState : NSOffState;
-
-    NSMutableAttributedString *attributedString;
-    attributedString = [[self attributedStringWithFont:_descriptionLabel.font
-                                                string:_descriptionLabel.stringValue] mutableCopy];
-    [self appendLearnMoreToAttributedString:attributedString
-                                        url:[NSURL URLWithString:@"https://iterm2.com/documentation-shell-integration.html"]];
-    _descriptionLabel.attributedStringValue = attributedString;
-    
-    attributedString = [[self attributedStringWithFont:_utilitiesLabel.font
-                                                string:_utilitiesLabel.stringValue] mutableCopy];
-    [self appendLearnMoreToAttributedString:attributedString
-                                        url:[NSURL URLWithString:@"https://www.iterm2.com/documentation-utilities.html"]];
-    _utilitiesLabel.attributedStringValue = attributedString;
-}
-
-- (IBAction)toggleInstallUtilities:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setBool:self.utilities.state == NSOnState forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
-}
-
-- (IBAction)next:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerSetInstallUtilities:self.utilities.state == NSOnState];
-    [self.shellInstallerDelegate shellIntegrationInstallerContinue];
-}
-@end
-
-@interface iTermShellIntegrationSecondPageViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@end
-
-@implementation iTermShellIntegrationSecondPageViewController
-- (void)setBusy:(BOOL)busy {
-}
-
-- (IBAction)downloadAndRun:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerConfirmDownloadAndRun];
-}
-- (IBAction)sendShellCommands:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerSendShellCommands:-1];
-}
-@end
-
-@interface iTermShellIntegrationDownloadAndRunViewController : NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@property (nonatomic, strong) IBOutlet NSButton *continueButton;
-@property (nonatomic, strong) IBOutlet NSProgressIndicator *progressIndicator;
-@property (nonatomic, strong) IBOutlet NSTextField *textField;
-@property (nonatomic) BOOL installUtilities;
-@property (nonatomic) BOOL busy;
-@property (nonatomic, readonly) NSString *urlString;
-@property (nonatomic, readonly) NSString *command;
-@end
-
-@implementation iTermShellIntegrationDownloadAndRunViewController
-- (void)willAppear {
-    self.continueButton.enabled = YES;
-    self.progressIndicator.hidden = YES;
-    [self setInstallUtilities:_installUtilities];
-}
-
-- (NSString *)urlString {
-    if (self.installUtilities) {
-        return @"https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh";
-    }
-    return @"https://iterm2.com/shell_integration/install_shell_integration.sh";
-}
-
-- (NSString *)command {
-    return [NSString stringWithFormat:@"curl -L %@ | bash", self.urlString];
-}
-
-- (void)setInstallUtilities:(BOOL)installUtilities {
-    _installUtilities = installUtilities;
-    NSString *prefix = self.busy ? @"Waiting for this command to finish:" : @"Press “Continue” to run this command:";
-    self.textField.stringValue = [NSString stringWithFormat:@"%@\n\n%@", prefix, self.command];
-}
-
-- (IBAction)pipeCurlToBash:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerReallyDownloadAndRun];
-    self.continueButton.enabled = NO;
-}
-
-- (void)setBusy:(BOOL)busy {
-    _busy = busy;
-    self.continueButton.enabled = !busy;
-    self.progressIndicator.hidden = !busy;
-    if (busy) {
-        [self.progressIndicator startAnimation:nil];
-    } else {
-        [self.progressIndicator stopAnimation:nil];
-    }
-}
-@end
-
-typedef NS_ENUM(NSUInteger, iTermShellIntegrationShell) {
-    iTermShellIntegrationShellBash,
-    iTermShellIntegrationShellTcsh,
-    iTermShellIntegrationShellZsh,
-    iTermShellIntegrationShellFish,
-    iTermShellIntegrationShellUnknown
-};
+#import "iTermShellIntegrationFirstPageViewController.h"
+#import "iTermShellIntegrationSecondPageViewController.h"
+#import "iTermShellIntegrationDownloadAndRunViewController.h"
+#import "iTermShellIntegrationPasteShellCommandsViewController.h"
+#import "iTermShellIntegrationFinishedViewController.h"
 
 NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     switch (shell) {
@@ -210,234 +30,6 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
             return @"an unsupported shell";
     }
 }
-
-@interface iTermShellIntegrationPasteShellCommandsViewController : NSViewController<iTermShellIntegrationInstallerViewController>
-@property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
-@property (nonatomic) int stage;
-@property (nonatomic) iTermShellIntegrationShell shell;
-@property (nonatomic, strong) IBOutlet NSTextField *textField;
-@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton1;
-@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton2;
-@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton3;
-@property (nonatomic, strong) IBOutlet NSButton *previewCommandButton4;
-@property (nonatomic, strong) IBOutlet NSTextView *previewTextView;
-@property (nonatomic) BOOL installUtilities;
-@property (nonatomic, strong) IBOutlet NSViewController *popoverViewController;
-@property (nonatomic, strong) IBOutlet NSPopover *popover;
-@property (nonatomic, strong) IBOutlet NSButton *continueButton;
-@end
-
-@implementation iTermShellIntegrationPasteShellCommandsViewController {
-    BOOL _busy;
-}
-
-- (void)setShell:(iTermShellIntegrationShell)shell {
-    _shell = shell;
-    if (shell == iTermShellIntegrationShellUnknown) {
-        self.continueButton.enabled = NO;
-    } else {
-        self.continueButton.enabled = YES;
-    }
-}
-
-- (void)setStage:(int)stage {
-    _stage = stage;
-    [self update];
-}
-
-- (NSString *)waitingText {
-    return @"⏳ Waiting for command to complete…";
-}
-- (void)update {
-    const int stage = _stage;
-    if (stage < 0) {
-        self.shell = iTermShellIntegrationShellUnknown;
-    }
-    NSMutableArray<NSString *> *lines = [NSMutableArray array];
-    NSInteger indexToBold = NSNotFound;
-    NSString *step;
-    NSString *prefix;
-
-    if (stage < 0) {
-        prefix = @"1. Discover";
-    } else if (stage == 0) {
-        if (_busy) {
-            prefix = self.waitingText;
-        } else {
-            prefix = @"➡ Select “Continue” to discover";
-        }
-        indexToBold = lines.count;
-    } else if (stage > 0) {
-        if (self.shell == iTermShellIntegrationShellUnknown) {
-            prefix = @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, and zsh work with shell integration";
-        } else {
-            prefix = @"✅ Discovered";
-        }
-    }
-    if (self.shell == iTermShellIntegrationShellUnknown || (_busy && stage == 0)) {
-        step = prefix;
-    } else {
-        step = [NSString stringWithFormat:@"%@ your shell", prefix];
-    }
-    if (stage > 0) {
-        if (self.shell != iTermShellIntegrationShellUnknown) {
-            step = [step stringByAppendingFormat:@": you use “%@”.", iTermShellIntegrationShellString(self.shell)];
-        }
-    } else if (stage != 0 || !_busy) {
-        step = [step stringByAppendingString:@"."];
-    }
-    [lines addObject:step];
-
-    const BOOL unavailable = (stage == 1 && self.shell == iTermShellIntegrationShellUnknown);
-    self.continueButton.enabled = !(unavailable || _busy);
-    if (!unavailable) {
-        if (stage < 1) {
-            prefix = @"Step 2. Modify";
-        } else if (stage == 1) {
-            if (self.shell == iTermShellIntegrationShellUnknown) {
-                prefix = @"Step 2. Modify";
-            } else if (_busy) {
-                prefix = self.waitingText;
-            } else {
-                prefix = @"➡ Select “Continue” to modify";
-            }
-            indexToBold = lines.count;
-        } else if (stage > 1) {
-            prefix = @"✅ Modfied";
-        }
-        if (_busy && stage == 1) {
-            step = prefix;
-        } else {
-            step = [NSString stringWithFormat:@"%@ your shell’s startup scripts.", prefix];
-        }
-        [lines addObject:step];
-
-        int i = 2;
-        if (self.installUtilities) {
-            i += 1;
-            if (stage < 2) {
-                prefix = @"Step 3. Install";
-            } else if (stage == 2 && !_busy) {
-                prefix = @"➡ Select “Continue” to install";
-                indexToBold = lines.count;
-            } else if (stage == 2 && _busy) {
-                prefix = self.waitingText;
-                indexToBold = lines.count;
-            } else {
-                prefix = @"✅ Installed";
-            }
-            if (_busy && stage == 2) {
-                step = prefix;
-            } else {
-                step = [NSString stringWithFormat:@"%@ iTerm2 utility scripts.", prefix];
-            }
-            [lines addObject:step];
-        }
-
-        if (stage < i) {
-            prefix = [NSString stringWithFormat:@"Step %d. Add", i + 1];
-        } else if (stage == i && !_busy) {
-            prefix = [NSString stringWithFormat:@"➡ Select “Continue” to add"];
-            indexToBold = lines.count;
-        } else if (stage == i && _busy) {
-            prefix = self.waitingText;
-            indexToBold = lines.count;
-        } else if (stage > i) {
-            prefix = @"✅ Added";
-        }
-        if (_busy && stage == i) {
-            step = prefix;
-        } else {
-            step =
-            [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
-        }
-        [lines addObject:step];
-        
-        if (stage > i) {
-            [lines addObject:@""];
-            indexToBold = lines.count;
-            [lines addObject:@"Done! Select “Continue” to proceed."];
-        }
-    }
-    
-    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
-    NSDictionary *regularAttributes =
-    @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
-       NSForegroundColorAttributeName: [NSColor textColor] };
-    NSDictionary *boldAttributes =
-    @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]],
-       NSForegroundColorAttributeName: [NSColor textColor] };
-    [lines enumerateObjectsUsingBlock:^(NSString * _Nonnull string, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSString *temp = [string stringByAppendingString:@"\n"];
-        NSAttributedString *as = [[NSAttributedString alloc] initWithString:temp attributes:idx == indexToBold ? boldAttributes : regularAttributes];
-        [attributedString appendAttributedString:as];
-    }];
-    self.textField.attributedStringValue = attributedString;
-    NSString *preview = [self.shellInstallerDelegate shellIntegrationInstallerNextCommandForSendShellCommands];
-    NSArray<NSButton *> *buttons = self.previewCommandButtons;
-    for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
-        buttons[i].hidden = unavailable || (i != stage) || preview == nil;
-        if (_busy && i == stage) {
-            [buttons[i] setTitle:@"Send Again"];
-        } else {
-            [buttons[i] setTitle:@"Preview Command"];
-        }
-    }
-    self.previewTextView.string = preview ?: @"";
-}
-
-- (NSArray<NSButton *> *)previewCommandButtons {
-    return @[ self.previewCommandButton1, self.previewCommandButton2, self.previewCommandButton3, self.previewCommandButton4 ];
-}
-
-- (NSButton *)previewCommandButton {
-    NSArray<NSButton *> *buttons = self.previewCommandButtons;
-    if (self.stage < 0 || self.stage >= buttons.count) {
-        return nil;
-    }
-    return buttons[self.stage];
-}
-
-- (IBAction)previewCommand:(id)sender {
-    if (_busy) {
-        [self.shellInstallerDelegate shellIntegrationInstallerCancelExpectations];
-        [self.shellInstallerDelegate shellIntegrationInstallerSendShellCommands:_stage];
-        return;
-    }
-    self.popover.behavior = NSPopoverBehaviorTransient;
-    [self.popoverViewController view];
-    self.previewTextView.font = [NSFont fontWithName:@"Menlo" size:12];
-    [self.popover showRelativeToRect:self.previewCommandButton.bounds
-                              ofView:self.previewCommandButton
-                       preferredEdge:NSRectEdgeMaxY];
-}
-
-- (IBAction)next:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerSendShellCommands:_stage];
-}
-- (IBAction)back:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerCancelExpectations];
-    if (_stage == 0) {
-        [self.shellInstallerDelegate shellIntegrationInstallerBack];
-    } else {
-        self.stage = self.stage - 1;
-    }
-}
-
-- (void)setBusy:(BOOL)busy {
-    _busy = busy;
-    [self update];
-}
-
-@end
-
-@interface iTermShellIntegrationFinishedViewController: NSViewController<iTermShellIntegrationInstallerViewController>
-@end
-
-@implementation iTermShellIntegrationFinishedViewController
-- (void)setBusy:(BOOL)busy {
-}
-@end
 
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateFirstPage,
@@ -467,6 +59,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSMutableArray<iTermExpectation *> *_pendingExpectations;
 }
 
+#pragma mark - NSWindowController
+
+- (void)encodeWithCoder:(nonnull NSCoder *)coder {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
 - (void)windowDidLoad {
     [super windowDidLoad];
     
@@ -479,6 +77,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     panel.hidesOnDeactivate = YES;
     panel.opaque = NO;
 }
+
+#pragma mark - State Machine
 
 - (iTermShellIntegrationInstallationState)nextState {
     switch (self.state) {
@@ -533,18 +133,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self.currentViewController.view removeFromSuperview];
     self.currentViewController = [self viewControllerForState:state];
     if ([self.currentViewController respondsToSelector:@selector(willAppear)]) {
-        [(id)self.currentViewController willAppear];
+        [self.currentViewController willAppear];
     }
     [self.containerView addSubview:self.currentViewController.view];
     NSRect frame = self.currentViewController.view.frame;
     frame.origin.x = 0;
     frame.origin.y = self.containerView.bounds.size.height - frame.size.height;
     self.currentViewController.view.frame = frame;
-    if ([self.currentViewController respondsToSelector:@selector(labelsNeedingSubstitutions)]) {
-        for (NSTextField *textField in [self.currentViewController labelsNeedingSubstitutions]) {
-            [self performSubstitutionsInTextField:textField];
-        }
-    }
     self.downloadAndRunViewController.installUtilities = self.installUtilities;
     NSRect rect = self.window.frame;
     const CGFloat originalMaxY = NSMaxY(rect);
@@ -554,6 +149,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     rect.origin.y = originalMaxY - NSHeight(rect);
     [self.window setFrame:rect display:YES animate:YES];
 }
+
+#pragma mark - Accessors
 
 - (void)setShell:(iTermShellIntegrationShell)shell {
     _shell = shell;
@@ -567,6 +164,82 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     self.downloadAndRunViewController.installUtilities = installUtilities;
 }
 
+#pragma mark - Expectations
+
+- (NSString *)sendText:(NSString *)text
+            reallySend:(BOOL)reallySend
+            afterRegex:(NSString *)regex
+           expectation:(inout iTermExpectation **)expectation {
+    return [self sendText:text
+               reallySend:reallySend
+               afterRegex:regex
+              expectation:expectation
+               completion:nil];
+}
+
+- (NSString *)sendText:(NSString *)text
+            reallySend:(BOOL)reallySend
+            afterRegex:(NSString *)regex
+           expectation:(inout iTermExpectation **)expectation
+            completion:(void (^)(NSArray<NSString *> *))completion {
+    if (!reallySend) {
+        return text;
+    }
+    
+    __weak __typeof(self) weakSelf = self;
+    iTermExpectation *newExpectation =
+    [self expectRegularExpression:regex
+                            after:(*expectation).lastExpectation
+                       willExpect:^{
+        if (text) {
+            [weakSelf.delegate shellIntegrationWindowControllerSendText:text];
+        }
+    }
+                       completion:completion];
+    if (!*expectation) {
+        *expectation = newExpectation;
+    }
+    return text;
+}
+
+- (iTermExpectation *)expectRegularExpression:(NSString *)regex
+                                   completion:(void (^)(NSArray<NSString *> * _Nonnull))completion {
+    return [self expectRegularExpression:regex after:nil willExpect:nil completion:completion];
+}
+
+- (iTermExpectation *)expectRegularExpression:(NSString *)regex
+                                        after:(iTermExpectation *)precedecessor
+                                   willExpect:(void (^)(void))willExpect
+                                   completion:(void (^)(NSArray<NSString *> * _Nonnull))completion {
+    __weak __typeof(self) weakSelf = self;
+    __block BOOL removed = NO;
+    [self.currentViewController setBusy:YES];
+    __block iTermExpectation *expectation =
+    [[self.delegate shellIntegrationExpect] expectRegularExpression:regex
+                                                              after:precedecessor
+                                                         willExpect:willExpect
+                                                         completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        if (expectation) {
+            removed = YES;
+            [weakSelf removeExpectation:expectation];
+        }
+        if (completion) {
+            completion(captureGroups);
+        }
+    }];
+    if (!removed) {
+        [_pendingExpectations addObject:expectation];
+    }
+    return expectation;
+}
+
+- (void)removeExpectation:(iTermExpectation *)expectation {
+    [_pendingExpectations removeObject:expectation];
+    if (_pendingExpectations.count == 0) {
+        [self.currentViewController setBusy:NO];
+    }
+}
+
 - (void)cancelAllExpectations {
     [_pendingExpectations enumerateObjectsUsingBlock:^(iTermExpectation * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [[self.delegate shellIntegrationExpect] cancelExpectation:obj];
@@ -575,7 +248,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self.currentViewController setBusy:NO];
 }
 
-#pragma mark - Common Actions
+#pragma mark - Actions
 
 - (IBAction)cancel:(id)sender {
     [self cancelAllExpectations];
@@ -590,7 +263,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self setState:[self previousState]];
 }
 
-#pragma mark - Helpers
+#pragma mark - String Builders
 
 - (NSString *)humanReadableDotfileBaseName {
     switch (self.shell) {
@@ -605,20 +278,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         case iTermShellIntegrationShellUnknown:
         return @"?";
     }
-}
-
-- (void)performSubstitutionsInTextField:(NSTextField *)label {
-    NSString *string = label.identifier ?: label.stringValue;
-    if (!label.identifier) {
-        // Save a backup copy
-        label.identifier = string;
-    }
-    NSDictionary *subs = @{ @"$DOTFILE": [self humanReadableDotfileBaseName] };
-    for (NSString *key in subs) {
-        NSString *value = subs[key];
-        string = [string stringByReplacingOccurrencesOfString:key withString:value];
-    }
-    label.stringValue = string;
 }
 
 - (NSString *)shellIntegrationPath {
@@ -663,12 +322,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return [self.downloadAndRunViewController.command stringByAppendingString:@"\n"];
 }
 
-- (void)copyString:(NSString *)string {
-    NSPasteboard *generalPasteboard = [NSPasteboard generalPasteboard];
-    [generalPasteboard declareTypes:@[ NSStringPboardType ] owner:nil];
-    [generalPasteboard setString:string forType:NSStringPboardType];
-}
-
 - (NSString *)dotfileCommandWithBashDotfile:(NSString *)bashDotFile {
     NSString *home_prefix = @"~";
     NSString *shell_and = @"&&";
@@ -699,6 +352,29 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     
     return [NSString stringWithFormat:@"test -e %@%@%@ %@ source %@%@%@ %@ true\n",
             quote, relative_filename, quote, shell_and, quote, relative_filename, quote, shell_or];
+}
+
+#pragma mark - AppKit Helpers
+
+- (void)copyString:(NSString *)string {
+    NSPasteboard *generalPasteboard = [NSPasteboard generalPasteboard];
+    [generalPasteboard declareTypes:@[ NSStringPboardType ] owner:nil];
+    [generalPasteboard setString:string forType:NSStringPboardType];
+}
+
+#pragma mark - Text Sending
+
+- (NSString *)discoverShell:(BOOL)reallySend completion:(void (^)(NSString *shell))completion {
+    iTermExpectation *expectation = nil;
+    NSString *result = [self sendText:@"echo My shell is `basename $SHELL`.\n" reallySend:reallySend];
+    [self sendText:nil
+        reallySend:reallySend
+        afterRegex:@"My shell is ([a-z]+)\\."
+       expectation:&expectation
+        completion:^(NSArray<NSString *> *captures) {
+        completion(captures[1]);
+    }];
+    return result;
 }
 
 - (NSString *)amendDotFileWithExpectation:(inout iTermExpectation **)expectation
@@ -763,250 +439,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     }]];
     joined = [joined stringByAppendingString:[strings componentsJoinedByString:@""]];
     return joined;
-}
-
-- (iTermExpectation *)expectRegularExpression:(NSString *)regex
-                                   completion:(void (^)(NSArray<NSString *> * _Nonnull))completion {
-    return [self expectRegularExpression:regex after:nil willExpect:nil completion:completion];
-}
-
-- (iTermExpectation *)expectRegularExpression:(NSString *)regex
-                                        after:(iTermExpectation *)precedecessor
-                                   willExpect:(void (^)(void))willExpect
-                                   completion:(void (^)(NSArray<NSString *> * _Nonnull))completion {
-    __weak __typeof(self) weakSelf = self;
-    __block BOOL removed = NO;
-    [self.currentViewController setBusy:YES];
-    __block iTermExpectation *expectation =
-    [[self.delegate shellIntegrationExpect] expectRegularExpression:regex
-                                                              after:precedecessor
-                                                         willExpect:willExpect
-                                                         completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
-        if (expectation) {
-            removed = YES;
-            [weakSelf removeExpectation:expectation];
-        }
-        if (completion) {
-            completion(captureGroups);
-        }
-    }];
-    if (!removed) {
-        [_pendingExpectations addObject:expectation];
-    }
-    return expectation;
-}
-
-- (void)removeExpectation:(iTermExpectation *)expectation {
-    [_pendingExpectations removeObject:expectation];
-    if (_pendingExpectations.count == 0) {
-        [self.currentViewController setBusy:NO];
-    }
-}
-
-#pragma mark - iTermShellIntegrationInstallerDelegate
-
-- (void)shellIntegrationInstallerConfirmDownloadAndRun {
-    [self setState:iTermShellIntegrationInstallationStateDownloadAndRunConfirm];
-}
-
-- (void)shellIntegrationInstallerReallyDownloadAndRun {
-    [self.delegate shellIntegrationWindowControllerSendText:[self curlPipeBashCommand]];
-    __weak __typeof(self) weakSelf = self;
-
-    [self expectRegularExpression:@"^Done.$"
-                       completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
-        [weakSelf next:nil];
-    }];
-}
-
-- (NSString *)discoverShell:(BOOL)reallySend {
-    void (^completion)(NSString * _Nonnull) = ^(NSString * _Nonnull shell) {
-        NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
-                                                       @"bash": @(iTermShellIntegrationShellBash),
-                                                       @"zsh": @(iTermShellIntegrationShellZsh),
-                                                       @"fish": @(iTermShellIntegrationShellFish) };
-        NSNumber *number = map[shell ?: @""];
-        if (number) {
-            self.shell = number.integerValue;
-        } else {
-            self.shell = iTermShellIntegrationShellUnknown;
-        }
-        self.sendShellCommandsViewController.stage = 1;
-    };
-    if (reallySend) {
-        [self expectRegularExpression:@"My shell is ([a-z]+)\\."
-                           completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
-            if (completion) {
-                completion(captureGroups[1]);
-            }
-        }];
-    }
-    return [self sendText:@"echo My shell is `basename $SHELL`.\n" reallySend:reallySend];
-}
-
-- (NSString *)addScriptFiles:(BOOL)reallySend {
-    __weak __typeof(self) weakSelf = self;
-    NSString *result = [self catToScript:reallySend completion:^{
-        if (reallySend) {
-            weakSelf.sendShellCommandsViewController.stage = 2;
-        }
-    }];
-    return result;
-}
-
-- (NSString *)installUtilityScripts:(BOOL)reallySend {
-    NSMutableString *result = [NSMutableString string];
-    iTermExpectation *expectation = nil;
-    __weak __typeof(self) weakSelf = self;
-    [result appendString:[self catToUtilities:reallySend
-                                  expectation:&expectation
-                                   completion:^{
-        if (reallySend) {
-            [weakSelf.sendShellCommandsViewController setBusy:NO];
-            weakSelf.sendShellCommandsViewController.stage = 3;
-        }
-    }]];
-    if (reallySend) {
-        [self.sendShellCommandsViewController setBusy:YES];
-    }
-    return result;
-}
-
-- (NSString *)modifyStartupScriptsAndProceedTo:(int)nextStage
-                                    reallySend:(BOOL)reallySend {
-    void (^completion)(void) = ^{
-        self.sendShellCommandsViewController.stage = nextStage;
-    };
-    iTermExpectation *expectation = nil;
-    return [self amendDotFileWithExpectation:&expectation
-                                  completion:reallySend ? completion : nil];
-}
-
-- (void)finishSendShellCommandsInstall {
-    [self next:nil];
-    self.sendShellCommandsViewController.stage = 0;
-}
-
-- (void)shellIntegrationInstallerSendShellCommands:(int)stage {
-    if (stage < 0) {
-        _sendShellCommandsViewController.stage = 0;
-        self.state = iTermShellIntegrationInstallationStateSendShellCommandsConfirm;
-    } else {
-        switch (stage) {
-            case 0: {
-                [self discoverShell:YES];
-                break;
-            }
-            case 1:
-                [self addScriptFiles:YES];
-                break;
-            case 2: {
-                if (self.installUtilities) {
-                    [self installUtilityScripts:YES];
-                } else {
-                    [self modifyStartupScriptsAndProceedTo:stage+1
-                                                reallySend:YES];
-                }
-                break;
-            }
-            case 3:
-                if (self.installUtilities) {
-                    [self modifyStartupScriptsAndProceedTo:stage+1
-                                                reallySend:YES];
-                } else {
-                    [self finishSendShellCommandsInstall];
-                }
-                break;
-            case 4:
-                [self finishSendShellCommandsInstall];
-        }
-    }
-}
-
-- (void)shellIntegrationInstallerSetInstallUtilities:(BOOL)installUtilities {
-    self.installUtilities = installUtilities;
-}
-
-- (void)shellIntegrationInstallerBack {
-    [self back:nil];
-}
-
-- (void)shellIntegrationInstallerCancel {
-    [self dismissController:nil];
-}
-
-- (void)shellIntegrationInstallerContinue {
-    [self next:nil];
-}
-
-- (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands {
-    const int stage = self.sendShellCommandsViewController.stage;
-    switch (stage) {
-        case 0: {
-            return [self discoverShell:NO];
-        }
-        case 1:
-            return [self addScriptFiles:NO];
-            break;
-        case 2: {
-            if (self.installUtilities) {
-                return [self installUtilityScripts:NO];
-            } else {
-                return [self modifyStartupScriptsAndProceedTo:stage+1
-                                                   reallySend:NO];
-            }
-            break;
-        }
-        case 3:
-            if (self.installUtilities) {
-                return [self modifyStartupScriptsAndProceedTo:stage+1
-                                                   reallySend:NO];
-            } else {
-                return nil;
-            }
-            break;
-        case 4:
-            return nil;
-    }
-    return nil;
-}
-
-- (void)encodeWithCoder:(nonnull NSCoder *)coder {
-    [self doesNotRecognizeSelector:_cmd];
-}
-
-- (NSString *)sendText:(NSString *)text
-            reallySend:(BOOL)reallySend
-            afterRegex:(NSString *)regex
-           expectation:(inout iTermExpectation **)expectation {
-    return [self sendText:text
-               reallySend:reallySend
-               afterRegex:regex
-              expectation:expectation
-               completion:nil];
-}
-
-- (NSString *)sendText:(NSString *)text
-            reallySend:(BOOL)reallySend
-            afterRegex:(NSString *)regex
-           expectation:(inout iTermExpectation **)expectation
-            completion:(void (^)(NSArray<NSString *> *))completion {
-    if (!reallySend) {
-        return text;
-    }
-    
-    __weak __typeof(self) weakSelf = self;
-    iTermExpectation *newExpectation =
-    [self expectRegularExpression:regex
-                            after:(*expectation).lastExpectation
-                       willExpect:^{
-        [weakSelf.delegate shellIntegrationWindowControllerSendText:text];
-    }
-                       completion:completion];
-    if (!*expectation) {
-        *expectation = newExpectation;
-    }
-    return text;
 }
 
 - (NSString *)switchToBash:(BOOL)reallySend
@@ -1111,6 +543,172 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         completion();
     }]];
     return result;
+}
+
+#pragma mark - Orchestration
+
+- (NSString *)discoverShell:(BOOL)reallySend {
+    __weak __typeof(self) weakSelf = self;
+    return [self discoverShell:reallySend completion:^(NSString *shell) {
+        [weakSelf didDiscoverShell:shell];
+    }];
+}
+
+- (void)didDiscoverShell:(NSString *)shell {
+    NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
+                                                   @"bash": @(iTermShellIntegrationShellBash),
+                                                   @"zsh": @(iTermShellIntegrationShellZsh),
+                                                   @"fish": @(iTermShellIntegrationShellFish) };
+    NSNumber *number = map[shell ?: @""];
+    if (number) {
+        self.shell = number.integerValue;
+    } else {
+        self.shell = iTermShellIntegrationShellUnknown;
+    }
+    self.sendShellCommandsViewController.stage = 1;
+}
+
+- (NSString *)addScriptFiles:(BOOL)reallySend {
+    __weak __typeof(self) weakSelf = self;
+    NSString *result = [self catToScript:reallySend completion:^{
+        if (reallySend) {
+            weakSelf.sendShellCommandsViewController.stage = 2;
+        }
+    }];
+    return result;
+}
+
+- (NSString *)installUtilityScripts:(BOOL)reallySend {
+    NSMutableString *result = [NSMutableString string];
+    iTermExpectation *expectation = nil;
+    __weak __typeof(self) weakSelf = self;
+    [result appendString:[self catToUtilities:reallySend
+                                  expectation:&expectation
+                                   completion:^{
+        if (reallySend) {
+            [weakSelf.sendShellCommandsViewController setBusy:NO];
+            weakSelf.sendShellCommandsViewController.stage = 3;
+        }
+    }]];
+    if (reallySend) {
+        [self.sendShellCommandsViewController setBusy:YES];
+    }
+    return result;
+}
+
+- (NSString *)modifyStartupScriptsAndProceedTo:(int)nextStage
+                                    reallySend:(BOOL)reallySend {
+    void (^completion)(void) = ^{
+        self.sendShellCommandsViewController.stage = nextStage;
+    };
+    iTermExpectation *expectation = nil;
+    return [self amendDotFileWithExpectation:&expectation
+                                  completion:reallySend ? completion : nil];
+}
+
+- (void)finishSendShellCommandsInstall {
+    [self next:nil];
+    self.sendShellCommandsViewController.stage = 0;
+}
+
+#pragma mark - iTermShellIntegrationInstallerDelegate
+
+- (void)shellIntegrationInstallerConfirmDownloadAndRun {
+    [self setState:iTermShellIntegrationInstallationStateDownloadAndRunConfirm];
+}
+
+- (void)shellIntegrationInstallerReallyDownloadAndRun {
+    [self.delegate shellIntegrationWindowControllerSendText:[self curlPipeBashCommand]];
+    __weak __typeof(self) weakSelf = self;
+
+    [self expectRegularExpression:@"^Done.$"
+                       completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        [weakSelf next:nil];
+    }];
+}
+
+- (void)shellIntegrationInstallerSendShellCommands:(int)stage {
+    if (stage < 0) {
+        _sendShellCommandsViewController.stage = 0;
+        self.state = iTermShellIntegrationInstallationStateSendShellCommandsConfirm;
+    } else {
+        switch (stage) {
+            case 0: {
+                [self discoverShell:YES];
+                break;
+            }
+            case 1:
+                [self addScriptFiles:YES];
+                break;
+            case 2: {
+                if (self.installUtilities) {
+                    [self installUtilityScripts:YES];
+                } else {
+                    [self modifyStartupScriptsAndProceedTo:stage+1
+                                                reallySend:YES];
+                }
+                break;
+            }
+            case 3:
+                if (self.installUtilities) {
+                    [self modifyStartupScriptsAndProceedTo:stage+1
+                                                reallySend:YES];
+                } else {
+                    [self finishSendShellCommandsInstall];
+                }
+                break;
+            case 4:
+                [self finishSendShellCommandsInstall];
+        }
+    }
+}
+
+- (void)shellIntegrationInstallerSetInstallUtilities:(BOOL)installUtilities {
+    self.installUtilities = installUtilities;
+}
+
+- (void)shellIntegrationInstallerBack {
+    [self back:nil];
+}
+
+- (void)shellIntegrationInstallerCancel {
+    [self dismissController:nil];
+}
+
+- (void)shellIntegrationInstallerContinue {
+    [self next:nil];
+}
+
+- (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands {
+    const int stage = self.sendShellCommandsViewController.stage;
+    switch (stage) {
+        case 0: {
+            return [self discoverShell:NO];
+        }
+        case 1:
+            return [self addScriptFiles:NO];
+            break;
+        case 2: {
+            if (self.installUtilities) {
+                return [self installUtilityScripts:NO];
+            } else {
+                return [self modifyStartupScriptsAndProceedTo:stage+1
+                                                   reallySend:NO];
+            }
+            break;
+        }
+        case 3:
+            if (self.installUtilities) {
+                return [self modifyStartupScriptsAndProceedTo:stage+1
+                                                   reallySend:NO];
+            } else {
+                return nil;
+            }
+            break;
+        case 4:
+            return nil;
+    }
+    return nil;
 }
 
 - (void)shellIntegrationInstallerCancelExpectations {
