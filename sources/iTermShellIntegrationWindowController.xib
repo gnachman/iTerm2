@@ -72,13 +72,16 @@
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="toggleInstallUtilities:" target="cVJ-uZ-UYm" id="zLl-Ac-k2j"/>
+                    </connections>
                 </button>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WlT-w4-Xu4">
                     <rect key="frame" x="20" y="118" width="452" height="58"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="wl0-hO-Vi5">
                         <font key="font" metaFont="system"/>
-                        <string key="title">Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. Learn more.</string>
+                        <string key="title">Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -86,8 +89,8 @@
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sXD-BI-dGd">
                     <rect key="frame" x="36" y="74" width="459" height="14"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more. Learn more." id="cyF-wg-XYY">
-                        <font key="font" metaFont="label" size="11"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more." id="cyF-wg-XYY">
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -487,23 +490,23 @@ DQ
             </connections>
         </popover>
         <customView id="Vw5-vJ-iCL" userLabel="Preview Command Popover View">
-            <rect key="frame" x="0.0" y="0.0" width="496" height="257"/>
+            <rect key="frame" x="0.0" y="0.0" width="694" height="257"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SGV-38-5pm">
-                    <rect key="frame" x="20" y="20" width="456" height="217"/>
+                    <rect key="frame" x="20" y="20" width="654" height="217"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="iwC-J2-hbd">
-                        <rect key="frame" x="0.0" y="0.0" width="456" height="217"/>
+                        <rect key="frame" x="0.0" y="0.0" width="654" height="217"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" id="NAF-vj-inx">
-                                <rect key="frame" x="0.0" y="0.0" width="456" height="217"/>
+                                <rect key="frame" x="0.0" y="0.0" width="654" height="217"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                <size key="minSize" width="456" height="217"/>
-                                <size key="maxSize" width="496" height="10000000"/>
+                                <size key="minSize" width="654" height="217"/>
+                                <size key="maxSize" width="654" height="10000000"/>
                                 <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                             </textView>
                         </subviews>
@@ -518,7 +521,7 @@ DQ
                     </scroller>
                 </scrollView>
             </subviews>
-            <point key="canvasLocation" x="89" y="1489.5"/>
+            <point key="canvasLocation" x="188" y="1489.5"/>
         </customView>
     </objects>
 </document>

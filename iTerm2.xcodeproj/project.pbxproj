@@ -1637,6 +1637,21 @@
 		A629C702220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
 		A629C705221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C703221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h */; };
 		A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C704221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m */; };
+		A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */ = {isa = PBXBuildFile; fileRef = A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */; };
+		A629F57A23AF2DD900C2F16B /* iterm2_shell_integration.tcsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */; };
+		A629F57B23AF2DD900C2F16B /* iterm2_shell_integration.zsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */; };
+		A629F57C23AF2DD900C2F16B /* iterm2_shell_integration.fish in Resources */ = {isa = PBXBuildFile; fileRef = A629F57623AF2DD900C2F16B /* iterm2_shell_integration.fish */; };
+		A629F57D23AF2DD900C2F16B /* utilities.tgz in Resources */ = {isa = PBXBuildFile; fileRef = A629F57823AF2DD900C2F16B /* utilities.tgz */; };
+		A629F57E23AF2DDF00C2F16B /* iterm2_shell_integration.bash in Resources */ = {isa = PBXBuildFile; fileRef = A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */; };
+		A629F57F23AF2DE100C2F16B /* iterm2_shell_integration.bash in Resources */ = {isa = PBXBuildFile; fileRef = A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */; };
+		A629F58023AF2DE500C2F16B /* iterm2_shell_integration.tcsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */; };
+		A629F58123AF2DE600C2F16B /* iterm2_shell_integration.tcsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */; };
+		A629F58223AF2DE800C2F16B /* iterm2_shell_integration.zsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */; };
+		A629F58323AF2DE900C2F16B /* iterm2_shell_integration.zsh in Resources */ = {isa = PBXBuildFile; fileRef = A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */; };
+		A629F58423AF2DED00C2F16B /* iterm2_shell_integration.fish in Resources */ = {isa = PBXBuildFile; fileRef = A629F57623AF2DD900C2F16B /* iterm2_shell_integration.fish */; };
+		A629F58523AF2DEE00C2F16B /* iterm2_shell_integration.fish in Resources */ = {isa = PBXBuildFile; fileRef = A629F57623AF2DD900C2F16B /* iterm2_shell_integration.fish */; };
+		A629F58623AF2DF100C2F16B /* utilities.tgz in Resources */ = {isa = PBXBuildFile; fileRef = A629F57823AF2DD900C2F16B /* utilities.tgz */; };
+		A629F58723AF2DF200C2F16B /* utilities.tgz in Resources */ = {isa = PBXBuildFile; fileRef = A629F57823AF2DD900C2F16B /* utilities.tgz */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
@@ -4764,6 +4779,11 @@
 		A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProfilePreferencesTabViewWrapperView.m; sourceTree = "<group>"; };
 		A629C703221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMoveTabToWindowBuiltInFunction.h; sourceTree = "<group>"; };
 		A629C704221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMoveTabToWindowBuiltInFunction.m; sourceTree = "<group>"; };
+		A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = iterm2_shell_integration.bash; sourceTree = "<group>"; };
+		A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = iterm2_shell_integration.tcsh; sourceTree = "<group>"; };
+		A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = iterm2_shell_integration.zsh; sourceTree = "<group>"; };
+		A629F57623AF2DD900C2F16B /* iterm2_shell_integration.fish */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = iterm2_shell_integration.fish; sourceTree = "<group>"; };
+		A629F57823AF2DD900C2F16B /* utilities.tgz */ = {isa = PBXFileReference; lastKnownFileType = file; path = utilities.tgz; sourceTree = "<group>"; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
 		A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextDrawingHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHelpMessageViewController.h; sourceTree = "<group>"; };
@@ -6641,6 +6661,7 @@
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				A629F57123AF2DD900C2F16B /* Resources */,
 				A686C0D21ADA38CA00906FAE /* Golden Images for Tests */,
 				A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */,
 				1D03D42719144C3B0049EB8F /* Other Assets */,
@@ -7670,6 +7691,34 @@
 				A6180D7321A36F730073F219 /* iTermMetalPerFrameStateRow.m */,
 			);
 			name = Glue;
+			sourceTree = "<group>";
+		};
+		A629F57123AF2DD900C2F16B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A629F57223AF2DD900C2F16B /* shell_integration */,
+				A629F57723AF2DD900C2F16B /* utilities */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A629F57223AF2DD900C2F16B /* shell_integration */ = {
+			isa = PBXGroup;
+			children = (
+				A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */,
+				A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */,
+				A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */,
+				A629F57623AF2DD900C2F16B /* iterm2_shell_integration.fish */,
+			);
+			path = shell_integration;
+			sourceTree = "<group>";
+		};
+		A629F57723AF2DD900C2F16B /* utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A629F57823AF2DD900C2F16B /* utilities.tgz */,
+			);
+			path = utilities;
 			sourceTree = "<group>";
 		};
 		A62C3B371BD40D1400B5629D /* Marks */ = {
@@ -10783,6 +10832,7 @@
 				A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A67F61EF214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
+				A629F58323AF2DE900C2F16B /* iterm2_shell_integration.zsh in Resources */,
 				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
 				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */,
@@ -10821,6 +10871,7 @@
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67F6163214395990093940A /* graphic_mysql@2x.png in Resources */,
+				A629F58723AF2DF200C2F16B /* utilities.tgz in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
@@ -10851,6 +10902,7 @@
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
 				A69C933B2121101D00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				A6E7AEB1214394F600DE9F3B /* graphic_git@2x.png in Resources */,
+				A629F58123AF2DE600C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				A67D0D761A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A618FFD2224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
@@ -10935,6 +10987,7 @@
 				A67F61E9214395D50093940A /* graphic_yo@2x.png in Resources */,
 				A6F7A70F213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				A629F58523AF2DEE00C2F16B /* iterm2_shell_integration.fish in Resources */,
 				53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				A67F619D214395B70093940A /* graphic_php@2x.png in Resources */,
@@ -11051,6 +11104,7 @@
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6E7AE94214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
+				A629F57F23AF2DE100C2F16B /* iterm2_shell_integration.bash in Resources */,
 				A63011BD20E83083008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
 				A6F7A730213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
@@ -11218,6 +11272,7 @@
 				A6E7AE8A214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				1D44D0011CC7F5A600BE5630 /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */,
 				1D44CF9C1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlockCursorReverseVideo.png in Resources */,
+				A629F57E23AF2DDF00C2F16B /* iterm2_shell_integration.bash in Resources */,
 				A631FCA420EF0DFA00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
 				A67F61DC214395D50093940A /* graphic_yo.png in Resources */,
 				A67F6139214395680093940A /* graphic_heroku@2x.png in Resources */,
@@ -11268,9 +11323,11 @@
 				A6B70FBE19830C37007A4284 /* dead@2x.png in Resources */,
 				1D44CFF11CC7F5A600BE5630 /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png in Resources */,
 				1D44D01B1CC7F5A600BE5630 /* PTYTextViewTest-golden-testIME.png in Resources */,
+				A629F58623AF2DF100C2F16B /* utilities.tgz in Resources */,
 				1D44D09F1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */,
 				A67F61A2214395B70093940A /* graphic_python.png in Resources */,
 				1D44CFC91CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testScrollbackOverflow.png in Resources */,
+				A629F58223AF2DE800C2F16B /* iterm2_shell_integration.zsh in Resources */,
 				1D44D0161CC7F5A600BE5630 /* PTYTextViewTest-golden-testFindMatches.png in Resources */,
 				A67D0D481A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				1D44D08E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSelectedTabOrphan.png in Resources */,
@@ -11395,6 +11452,7 @@
 				1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A6FE8D0B209382C000B5C648 /* download.png in Resources */,
 				1D44CFB81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testHiddenCursor.png in Resources */,
+				A629F58023AF2DE500C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				1D44D01A1CC7F5A600BE5630 /* PTYTextViewTest-golden-testHorizontalSpacing.png in Resources */,
 				1D44D0201CC7F5A600BE5630 /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */,
 				1D44CFD01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png in Resources */,
@@ -11405,6 +11463,7 @@
 				A6E7AE56214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A6E7AE99214394DD00DE9F3B /* graphic_code.png in Resources */,
 				A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
+				A629F58423AF2DED00C2F16B /* iterm2_shell_integration.fish in Resources */,
 				1D44D0821CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testMinimumContrastAndCursorBoost.png in Resources */,
 				1D44CFC61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
 				53FF9819209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
@@ -11685,6 +11744,7 @@
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6EC47C221EC623D000E1321 /* iTermOnboardingWindowController.xib in Resources */,
 				A6E7AE55214394CA00DE9F3B /* graphic_bq.png in Resources */,
+				A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */,
 				A67D0D891A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
 				1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */,
@@ -11848,6 +11908,7 @@
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				A636C3B822891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
+				A629F57A23AF2DD900C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
 				A67F618D214395A70093940A /* graphic_nodejs@2x.png in Resources */,
@@ -11911,7 +11972,9 @@
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6614C77210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				A66F52C42106F6F100571168 /* gitdown.png in Resources */,
+				A629F57C23AF2DD900C2F16B /* iterm2_shell_integration.fish in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
+				A629F57B23AF2DD900C2F16B /* iterm2_shell_integration.zsh in Resources */,
 				A6E7AEB2214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
 				A6E7AE5E214394CA00DE9F3B /* graphic_clojure.png in Resources */,
@@ -11928,6 +11991,7 @@
 				A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */,
 				A6E7AEAF214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A67F61A4214395B70093940A /* graphic_python@2x.png in Resources */,
+				A629F57D23AF2DD900C2F16B /* utilities.tgz in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
 				A630118520E6A61D008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
 				A67D0D621A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,

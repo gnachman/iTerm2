@@ -698,7 +698,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark iTermShellIntegrationWindowControllerDelegate
 
 - (void)shellIntegrationWindowControllerSendText:(NSString *)text {
-    [self.delegate sendText:text];
+    [self.delegate sendTextSlowly:text];
 }
 
 - (NSString *)shellIntegrationInferShellWithCompletion:(void (^)(NSString * _Nonnull))completion {

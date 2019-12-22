@@ -60,6 +60,18 @@
 @end
 
 @implementation iTermShellIntegrationFirstPageViewController
+static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"NoSyncInstallUtilities";
+
+- (void)viewDidLoad {
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
+    BOOL installUtilities = number ? number.boolValue : YES;
+    self.utilities.state = installUtilities ? NSOnState : NSOffState;
+}
+
+- (IBAction)toggleInstallUtilities:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setBool:self.utilities.state == NSOnState forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
+}
+
 - (IBAction)next:(id)sender {
     [self.shellInstallerDelegate shellIntegrationInstallerSetInstallUtilities:self.utilities.state == NSOnState];
     [self.shellInstallerDelegate shellIntegrationInstallerContinue];
@@ -146,7 +158,7 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
 
 - (void)update {
     const int stage = _stage;
-    if (stage <= 0) {
+    if (stage < 0) {
         self.shell = iTermShellIntegrationShellUnknown;
     }
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
@@ -169,7 +181,7 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     if (self.shell == iTermShellIntegrationShellUnknown) {
         step = prefix;
     } else {
-        step = [NSString stringWithFormat:@"%@ your shell.", prefix];
+        step = [NSString stringWithFormat:@"%@ your shell", prefix];
     }
     if (stage > 0) {
         if (self.shell != iTermShellIntegrationShellUnknown) {
@@ -247,8 +259,6 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     }];
     self.textField.attributedStringValue = attributedString;
     NSString *preview = [self.shellInstallerDelegate shellIntegrationInstallerNextCommandForSendShellCommands];
-    NSString *ctrlD = [NSString stringWithFormat:@"%c", 4];
-    preview = [preview stringByReplacingOccurrencesOfString:ctrlD withString:@"^D\n"];
     NSArray<NSButton *> *buttons = self.previewCommandButtons;
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
         buttons[i].hidden = unavailable || (i != stage) || preview == nil;
@@ -463,7 +473,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)scriptForCurrentShell {
-    return @"TODO - SHELL INTEGRATION SCRIPT GOES HERE";
+    NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"iterm2_shell_integration" withExtension:iTermShellIntegrationShellString(self.shell)];
+    if (!url) {
+        return nil;
+    }
+    return [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:nil];
 }
 
 - (NSString *)curlPipeBashCommand {
@@ -597,7 +611,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)installUtilityScripts:(BOOL)reallySend {
     NSMutableString *result = [NSMutableString string];
-    [result appendString:[self sendText:@"mkdir ~/.iterm2\n" reallySend:reallySend]];
     [result appendString:[self catToUtilities:reallySend]];
     if (reallySend) {
         self.sendShellCommandsViewController.stage = 3;
@@ -708,12 +721,19 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)catString:(NSString *)string to:(NSString *)path reallySend:(BOOL)reallySend {
     NSMutableString *result = [NSMutableString string];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"cat > %@\n", path]
+    const bool switchToBash = (self.shell != iTermShellIntegrationShellBash);
+    if (switchToBash) {
+        [result appendString:[self sendText:@"bash\n" reallySend:reallySend]];
+    }
+    [result appendString:[self sendText:[NSString stringWithFormat:@"cat <<'EOF' > %@\n", path]
                              reallySend:reallySend]];
     [result appendString:[self sendText:string
                              reallySend:reallySend]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"\n%c", 4]
+    [result appendString:[self sendText:@"\nEOF\n"
                              reallySend:reallySend]];
+    if (switchToBash) {
+        [result appendString:[self sendText:@"exit\n" reallySend:reallySend]];
+    }
     return result;
 }
 
@@ -735,9 +755,22 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)catToUtilities:(BOOL)reallySend {
     NSMutableString *result = [NSMutableString string];
-    [result appendString:[self sendText:@"base64 -D | tar xfz -\n" reallySend:reallySend]];
-    [result appendString:[self sendText:@"TODO - UTILITIES TARBALL\n" reallySend:reallySend]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"%c", 4] reallySend:reallySend]];
+    const bool switchToBash = (self.shell != iTermShellIntegrationShellBash);
+    if (switchToBash) {
+        [result appendString:[self sendText:@"bash\n" reallySend:reallySend]];
+    }
+    [result appendString:[self sendText:@"mkdir ~/.iterm2; cd ~/.iterm2; base64 -D <<'EOF'| tar xfz -\n" reallySend:reallySend]];
+    NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities" withExtension:@"tgz"];
+    if (!url) {
+        return nil;
+    }
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
+    [result appendString:[self sendText:encoded reallySend:reallySend]];
+    [result appendString:[self sendText:@"\nEOF\n" reallySend:reallySend]];
+    if (switchToBash) {
+        [result appendString:[self sendText:@"exit\n" reallySend:reallySend]];
+    }
     return result;
 }
 

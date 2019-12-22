@@ -1989,12 +1989,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
+        [_selection endLiveSelection];
         return;
     } else if (numTouches == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
         [pointer_ mouseUp:event withTouches:numTouches];
         _mouseDown = NO;
         DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
+        // We don't want a three finger tap followed by a scrollwheel to make a selection.
+        [_selection endLiveSelection];
         return;
     }
     dragOk_ = NO;
@@ -2002,6 +2005,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseUp:event withTouches:numTouches];
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
+        [_selection endLiveSelection];
         return;
     }
     const BOOL cmdActuallyPressed = (([event it_modifierFlags] & NSEventModifierFlagCommand) != 0);
@@ -2011,6 +2015,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                    [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
     if (mouseDown == NO) {
         DLog(@"Returning from mouseUp because the mouse was never down.");
+        [_selection endLiveSelection];
         return;
     }
     DLog(@"Set mouseDown=NO");
@@ -2049,6 +2054,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [_urlActionHelper openTargetWithEvent:event inBackground:NO];
         }
         DLog(@"Returning from mouseUp because the mouse event was reported.");
+        [_selection endLiveSelection];
         return;
     }
 

@@ -107,4 +107,13 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
                                    userInfo:(id)userInfo
                                     repeats:(BOOL)yesOrNo;
 
+- (PasteEvent *)pasteEventWithString:(NSString *)theString
+                              slowly:(BOOL)slowly
+                    escapeShellChars:(BOOL)escapeShellChars
+                            isUpload:(BOOL)isUpload
+                        tabTransform:(iTermTabTransformTags)tabTransform
+                        spacesPerTab:(int)spacesPerTab
+                            progress:(void (^)(NSInteger))progress;
+- (void)tryToPasteEvent:(PasteEvent *)pasteEvent;
+
 @end

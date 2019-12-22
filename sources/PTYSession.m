@@ -8447,6 +8447,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)sendTextSlowly:(NSString *)text {
+    PasteEvent *event = [_pasteHelper pasteEventWithString:text
+                                                    slowly:NO
+                                          escapeShellChars:NO
+                                                  isUpload:NO
+                                              tabTransform:NO
+                                              spacesPerTab:0
+                                                  progress:^(NSInteger progress) {}];
+    event.defaultChunkSize = 80;
+    event.defaultDelay = 0.02;
+    event.chunkKey = @"bogus";
+    event.delayKey = @"bogus";
+    [_pasteHelper tryToPasteEvent:event];
+}
+
 - (void)launchCoprocessWithCommand:(NSString *)command
 {
     [self launchCoprocessWithCommand:command mute:NO];
