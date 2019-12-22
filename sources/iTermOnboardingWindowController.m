@@ -8,6 +8,7 @@
 #import "iTermOnboardingWindowController.h"
 
 #import "ITAddressBookMgr.h"
+#import "iTermClickableTextField.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -100,38 +101,22 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 
 @end
 
-@interface iTermOnboardingTextField : NSTextField
+// For some stupid reason links aren't clickable in this window. It's probably
+// because of the type of panel. I don't feel light spending hours fighting
+// with Cocoa's undocumented insolence so let's just route around the damage.
+@interface iTermOnboardingTextField : iTermClickableTextField
 @end
 
 @implementation iTermOnboardingTextField
 
-// For some stupid reason links aren't clickable in this window. It's probably
-// because of the type of panel. I don't feel light spending hours fighting
-// with Cocoa's undocumented insolence so let's just route around the damage.
-- (void)mouseUp:(NSEvent *)event {
-    NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
-
-    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:self.attributedStringValue];
-    NSTextContainer *textContainer = [[NSTextContainer alloc] initWithContainerSize:self.bounds.size];
-    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-    [layoutManager addTextContainer:textContainer];
-    [textStorage addLayoutManager:layoutManager];
-
-    NSInteger index = [layoutManager characterIndexForPoint:point inTextContainer:textContainer fractionOfDistanceBetweenInsertionPoints:nil];
-    if (index >= 0 && index < self.attributedStringValue.length) {
-        NSDictionary *attributes = [self.attributedStringValue attributesAtIndex:index effectiveRange:nil];
-        NSURL *url = attributes[NSLinkAttributeName];
-        if (url) {
-            if ([url.scheme isEqualToString:@"iterm2whatsnew"]) {
-                iTermOpenWhatsNewURL(url.path, self.window);
-            } else {
-                [[NSWorkspace sharedWorkspace] openURL:url];
-            }
-            return;
-        }
+- (void)openURL:(NSURL *)url {
+    if ([url.scheme isEqualToString:@"iterm2whatsnew"]) {
+        iTermOpenWhatsNewURL(url.path, self.window);
+        return;
     }
-    [super mouseUp:event];
+    [super openURL:url];
 }
+
 @end
 
 @interface iTermOnboardingWindowController ()<NSPageControllerDelegate, NSTextViewDelegate>

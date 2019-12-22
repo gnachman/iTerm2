@@ -76,21 +76,21 @@
                         <action selector="toggleInstallUtilities:" target="cVJ-uZ-UYm" id="zLl-Ac-k2j"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WlT-w4-Xu4">
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WlT-w4-Xu4" customClass="iTermClickableTextField">
                     <rect key="frame" x="20" y="118" width="452" height="58"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" allowsUndo="NO" allowsEditingTextAttributes="YES" id="wl0-hO-Vi5">
                         <font key="font" metaFont="system"/>
-                        <string key="title">Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state.</string>
+                        <string key="title">Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. </string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sXD-BI-dGd">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sXD-BI-dGd" customClass="iTermClickableTextField">
                     <rect key="frame" x="36" y="74" width="459" height="14"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more." id="cyF-wg-XYY">
-                        <font key="font" metaFont="controlContent" size="11"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Utilities include scripts to download files, display images inline, and more. " id="cyF-wg-XYY">
+                        <font key="font" metaFont="menu" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -137,7 +137,7 @@ DQ
                         <font key="font" metaFont="system"/>
                         <string key="title">How would you like to install Shell Integration?
 
-In this process, your shell’s startup scripts will be modified. To do so, commands must be run in the terminal window.</string>
+In this process, your shell’s startup scripts will be modified. This installer will enter commands in the terminal window for you.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -328,7 +328,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U81-Xk-bH1">
-                    <rect key="frame" x="489" y="147" width="106" height="16"/>
+                    <rect key="frame" x="489" y="146" width="106" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OOc-Is-r4d">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -339,7 +339,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8p7-LD-gio">
-                    <rect key="frame" x="489" y="131" width="106" height="16"/>
+                    <rect key="frame" x="489" y="129" width="106" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="K0a-WG-CVu">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -350,7 +350,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6eh-cx-vgI">
-                    <rect key="frame" x="489" y="115" width="106" height="16"/>
+                    <rect key="frame" x="489" y="112" width="106" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="srv-Ew-0Pt">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -361,7 +361,7 @@ Gw
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O5Q-Z2-qdR">
-                    <rect key="frame" x="489" y="99" width="106" height="16"/>
+                    <rect key="frame" x="489" y="95" width="106" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Preview Command" bezelStyle="rounded" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="vFx-5X-71f">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -427,8 +427,10 @@ DQ
         </view>
         <viewController id="cVJ-uZ-UYm" userLabel="iTermShellIntegrationFirstPageViewController" customClass="iTermShellIntegrationFirstPageViewController">
             <connections>
+                <outlet property="descriptionLabel" destination="WlT-w4-Xu4" id="12P-zJ-kH8"/>
                 <outlet property="shellInstallerDelegate" destination="-2" id="NN4-WX-Xor"/>
                 <outlet property="utilities" destination="5RS-a5-g6Q" id="sZf-ln-Kh4"/>
+                <outlet property="utilitiesLabel" destination="sXD-BI-dGd" id="8jd-St-txf"/>
                 <outlet property="view" destination="dKV-0y-gWk" id="bpV-V2-Hc6"/>
             </connections>
         </viewController>
@@ -490,22 +492,22 @@ DQ
             </connections>
         </popover>
         <customView id="Vw5-vJ-iCL" userLabel="Preview Command Popover View">
-            <rect key="frame" x="0.0" y="0.0" width="694" height="257"/>
+            <rect key="frame" x="0.0" y="0.0" width="600" height="257"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SGV-38-5pm">
-                    <rect key="frame" x="20" y="20" width="654" height="217"/>
+                    <rect key="frame" x="20" y="20" width="560" height="217"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="iwC-J2-hbd">
-                        <rect key="frame" x="0.0" y="0.0" width="654" height="217"/>
+                        <rect key="frame" x="0.0" y="0.0" width="560" height="217"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" id="NAF-vj-inx">
-                                <rect key="frame" x="0.0" y="0.0" width="654" height="217"/>
+                                <rect key="frame" x="0.0" y="0.0" width="560" height="217"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                <size key="minSize" width="654" height="217"/>
+                                <size key="minSize" width="560" height="217"/>
                                 <size key="maxSize" width="654" height="10000000"/>
                                 <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                             </textView>
