@@ -185,6 +185,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
     [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
+    [cmdList addObject:[self dictForGetUserVars:wp]];
 }
 
 - (NSDictionary *)dictToToggleZoomForWindow {
@@ -207,6 +208,18 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                          responseSelector:@selector(getPendingOutputResponse:pane:)
                            responseObject:wp
                                     flags:kTmuxGatewayCommandWantsData];
+}
+
+- (NSDictionary *)dictForGetUserVars:(NSNumber *)wp {
+    ++pendingRequests_;
+    DLog(@"Increment pending requests to %d", pendingRequests_);
+    NSString *command = [NSString stringWithFormat:@"show-options -v -p -t %%%d @uservars",
+                         [wp intValue]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(getUserVarsResponse:pane:)
+                           responseObject:wp
+                                    flags:0];
 }
 
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp {
@@ -300,6 +313,13 @@ static int OctalValue(const char *bytes) {
     NSMutableDictionary *state = [[[states_ objectForKey:wp] mutableCopy] autorelease];
     [state setObject:pending forKey:kTmuxWindowOpenerStatePendingOutput];
     [states_ setObject:state forKey:wp];
+    [self requestDidComplete];
+}
+
+- (void)getUserVarsResponse:(NSString *)response pane:(NSNumber *)wp {
+    if (wp) {
+        [self.controller setEncodedUserVars:response forPane:wp.intValue];
+    }
     [self requestDidComplete];
 }
 

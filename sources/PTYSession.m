@@ -2452,6 +2452,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
 }
 
+- (void)setTmuxController:(TmuxController *)tmuxController {
+    [_tmuxController autorelease];
+    _tmuxController = [tmuxController retain];
+    NSDictionary<NSString *, NSString *> *dict = [tmuxController userVarsForPane:self.tmuxPane];
+    for (NSString *key in dict) {
+        if (![key hasPrefix:@"user."]) {
+            continue;
+        }
+        [self.variablesScope setValue:dict[key] forVariableNamed:key];
+    }
+}
+
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
     const unichar unicode = [event.characters length] > 0 ? [event.characters characterAtIndex:0] : 0;
     [self handleCharacterPressedInTmuxGateway:unicode];
@@ -9539,10 +9551,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermTuple *kvp = [kvpString keyValuePair];
     if (kvp) {
         NSString *key = [NSString stringWithFormat:@"user.%@", kvp.firstObject];
-        [self.variablesScope setValue:[kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]
+        NSString *value = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        [self.variablesScope setValue:value
                      forVariableNamed:key];
+        if (self.isTmuxClient) {
+            [self.tmuxController setUserVariableWithKey:key
+                                                  value:value
+                                                   pane:self.tmuxPane];
+        }
     } else {
+        NSString *key = [NSString stringWithFormat:@"user.%@", kvpString];
         [self.variablesScope setValue:nil forVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString]];
+        if (self.isTmuxClient) {
+            [self.tmuxController setUserVariableWithKey:key
+                                                  value:nil
+                                                   pane:self.tmuxPane];
+        }
     }
 }
 

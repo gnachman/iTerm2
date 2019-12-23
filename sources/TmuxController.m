@@ -48,6 +48,7 @@ static NSString *const iTermTmuxControllerEncodingPrefixTabColors = @"t_";
 static NSString *const iTermTmuxControllerEncodingPrefixAffinities = @"a_";
 static NSString *const iTermTmuxControllerEncodingPrefixOrigins = @"o_";
 static NSString *const iTermTmuxControllerEncodingPrefixHidden = @"i_";
+static NSString *const iTermTmuxControllerEncodingPrefixUserVars = @"u_";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -122,6 +123,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableDictionary<NSNumber *, void(^)(int)> *_pendingWindows;
     BOOL _hasStatusBar;
     int _currentWindowID;  // -1 if undefined
+    // Pane -> (Key -> Value)
+    NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
 }
 
 @synthesize gateway = gateway_;
@@ -162,6 +165,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         _pendingWindows = [[NSMutableDictionary alloc] init];
         _currentWindowID = -1;
+        _userVars = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
@@ -192,7 +196,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [sessionName_ release];
     [sessionObjects_ release];
     [_defaultTerminal release];
-
+    [_userVars release];
+    
     [super dealloc];
 }
 
@@ -2316,6 +2321,71 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:command
            responseTarget:nil
          responseSelector:nil];
+}
+
+- (NSString *)userVarsString:(int)paneID {
+    NSDictionary<NSString *, NSString *> *dict = _userVars[@(paneID)];
+    return [[dict.allKeys mapWithBlock:^id(NSString *key) {
+        NSString *value = dict[key];
+        NSInteger index = [value rangeOfString:@"\0"].location;
+        if (index != NSNotFound) {
+            value = [value substringToIndex:index];
+        }
+        return [NSString stringWithFormat:@"%@=%@", key, value];
+    }] componentsJoinedByString:@"\0"];
+}
+
+- (void)setEncodedUserVars:(NSString *)encodedUserVars forPane:(int)paneID {
+    NSString *decoded = [self decodedString:encodedUserVars
+                             optionalPrefix:iTermTmuxControllerEncodingPrefixUserVars] ?: @"";
+    NSArray<NSString *> *kvps = [decoded componentsSeparatedByString:@"\0"];
+    NSMutableDictionary<NSString *, NSString *> *dict = [self mutableUserVarsForPane:paneID];
+    [dict removeAllObjects];
+    for (NSString *kvp in kvps) {
+        NSInteger index = [kvp rangeOfString:@"="].location;
+        if (index == NSNotFound) {
+            continue;
+        }
+        NSString *key = [kvp substringToIndex:index];
+        NSString *value = [kvp substringFromIndex:index + 1];
+        dict[key] = value;
+    }
+}
+
+- (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID {
+    return _userVars[@(paneID)] ?: @{};
+}
+
+- (NSMutableDictionary<NSString *, NSString *> *)mutableUserVarsForPane:(int)paneID {
+    NSMutableDictionary<NSString *, NSString *> *dict = _userVars[@(paneID)];
+    if (dict) {
+        return dict;
+    }
+    dict = [NSMutableDictionary dictionary];
+    _userVars[@(paneID)] = dict;
+    return dict;
+}
+
+- (void)setUserVariableWithKey:(NSString *)key
+                         value:(NSString *)value
+                          pane:(int)paneID {
+    NSMutableDictionary<NSString *, NSString *> *dict = [self mutableUserVarsForPane:paneID];
+    if (!value) {
+        if (!dict[key]) {
+            return;
+        }
+        [dict removeObjectForKey:key];
+    } else {
+        if ([dict[key] isEqualToString:value]) {
+            return;
+        }
+        dict[key] = value;
+    }
+    NSString *command = [NSString stringWithFormat:@"set -p -t %%%d @uservars \"%@\"",
+                         paneID,
+                         [self encodedString:[self userVarsString:paneID]
+                                      prefix:iTermTmuxControllerEncodingPrefixUserVars]];
+    [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
 @end
