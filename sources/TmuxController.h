@@ -210,4 +210,10 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 
 - (void)setSize:(NSSize)size window:(int)window;
 
+- (void)setEncodedUserVars:(NSString *)encodedUserVars forPane:(int)paneID;
+- (void)setUserVariableWithKey:(NSString *)key
+                         value:(NSString *)value
+                          pane:(int)paneID;
+- (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID;
+
 @end
