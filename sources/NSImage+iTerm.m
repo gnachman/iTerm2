@@ -343,4 +343,35 @@
     }];
 }
 
+- (CGImageRef)CGImage {
+    return [self CGImageForProposedRect:nil context:nil hints:nil];
+}
+
+- (NSImage *)grayscaleImage {
+    const NSSize size = self.size;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef context = CGBitmapContextCreate(nil,
+                                                 size.width,
+                                                 size.height,
+                                                 8,
+                                                 0,
+                                                 colorSpace,
+                                                 kCGImageAlphaNone);
+    const CGRect rect = CGRectMake(0,
+                                   0,
+                                   size.width,
+                                   size.height);
+    CGContextDrawImage(context, rect, self.CGImage);
+    CGImageRef cgImage = CGBitmapContextCreateImage(context);
+
+    NSImage *result = [[NSImage alloc] initWithCGImage:cgImage
+                                                  size:size];
+
+    CFRelease(cgImage);
+    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+
+    return result;
+}
+
 @end

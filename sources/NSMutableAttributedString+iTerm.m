@@ -7,6 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
+#include "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 
 @implementation NSMutableAttributedString (iTerm)
@@ -121,6 +123,29 @@
     }];
     [result addObject:[self attributedSubstringFromRange:NSMakeRange(startAt, string.length - startAt)]];
 
+    return result;
+}
+
+- (NSAttributedString *)attributedStringByRemovingColor {
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    [self enumerateAttributesInRange:NSMakeRange(0, self.length)
+                             options:0
+                          usingBlock:^(NSDictionary<NSAttributedStringKey, id> * _Nonnull attrs,
+                                       NSRange range,
+                                       BOOL * _Nonnull stop) {
+        if (attrs[NSAttachmentAttributeName]) {
+            NSTextAttachment *attachment = attrs[NSAttachmentAttributeName];
+            NSTextAttachment *replacement = [[NSTextAttachment alloc] init];
+            replacement.image = [attachment.image grayscaleImage];
+            [result appendAttributedString:[NSAttributedString attributedStringWithAttachment:replacement]];
+            return;
+        }
+        
+        NSString *string = [self.string substringWithRange:range];
+        NSDictionary *attributes = @{};
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:attributes];
+        [result appendAttributedString:attributedString];
+    }];
     return result;
 }
 
