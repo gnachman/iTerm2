@@ -81,16 +81,40 @@ enum {
     }
 }
 
+- (NSImage *)catalinaIBeamWithCircleImage {
+    NSImage *ibeam = [[NSCursor IBeamCursor] image];
+    NSImage *overlay = [NSImage it_imageNamed:@"MouseReportingCursorOverlay"
+                                     forClass:self.class];
+    const NSSize size = ibeam.size;
+    return [NSImage imageOfSize:size drawBlock:^{
+        const NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+        [ibeam drawInRect:rect];
+        [overlay drawInRect:rect];
+    }];
+}
+
+- (NSImage *)ibeamWithCircleImage {
+    if ([iTermAdvancedSettingsModel useSystemCursorWhenPossible]) {
+        if (@available(macOS 10.15, *)) {
+            NSImage *image = [self catalinaIBeamWithCircleImage];
+            if (image) {
+                return image;
+            }
+        }
+    }
+    return [NSImage it_imageNamed:@"IBarCursorXMR" forClass:self.class];
+}
+
 - (instancetype)initWithType:(iTermMouseCursorType)cursorType {
     switch (cursorType) {
-        case iTermMouseCursorTypeIBeamWithCircle:
-            self = [super initWithImage:[NSImage it_imageNamed:@"IBarCursorXMR" forClass:self.class]
+        case iTermMouseCursorTypeIBeamWithCircle: {
+            self = [super initWithImage:[self ibeamWithCircleImage]
                                 hotSpot:NSMakePoint(4, 8)];
             if (self) {
                 _hasImage = YES;
             }
             break;
-
+        }
         case iTermMouseCursorTypeIBeam:
             if ([iTermAdvancedSettingsModel useSystemCursorWhenPossible]) {
                 self = [super init];

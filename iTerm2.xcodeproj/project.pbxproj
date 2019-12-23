@@ -1674,6 +1674,12 @@
 		A629F5AF23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5AD23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m */; };
 		A629F5B223AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F5B023AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h */; };
 		A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5B123AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m */; };
+		A629F5B623B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */; };
+		A629F5B723B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */; };
+		A629F5B823B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */; };
+		A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */; };
+		A629F5BA23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */; };
+		A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1F6E1E6BEA7900363EE9 /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
@@ -4826,6 +4832,8 @@
 		A629F5AD23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationPasteShellCommandsViewController.m; sourceTree = "<group>"; };
 		A629F5B023AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationFinishedViewController.h; sourceTree = "<group>"; };
 		A629F5B123AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationFinishedViewController.m; sourceTree = "<group>"; };
+		A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "MouseReportingCursorOverlay@1x.png"; path = "images/MouseReportingCursorOverlay@1x.png"; sourceTree = "<group>"; };
+		A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "MouseReportingCursorOverlay@2x.png"; path = "images/MouseReportingCursorOverlay@2x.png"; sourceTree = "<group>"; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
 		A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextDrawingHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHelpMessageViewController.h; sourceTree = "<group>"; };
@@ -6830,6 +6838,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */,
+				A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */,
 				53AA7645237E35A40094D75A /* OpenQuicklyActionIcon.png */,
 				53AA7644237E35A40094D75A /* OpenQuicklyActionIcon@2x.png */,
 				A636C3B322891BD800A83E2F /* StatusBarIconNoBattery.png */,
@@ -10956,6 +10966,7 @@
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A67D0D551A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
+				A629F5B823B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A67D0D371A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				53B93DE321F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
@@ -11120,6 +11131,7 @@
 				A623D94D1F89846A0011F8C3 /* key.png in Resources */,
 				A6E7AE8B214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
+				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A6E7AEA8214394F600DE9F3B /* graphic_docker.png in Resources */,
 				A63821F1229E50CD005D74BE /* Warning@2x.png in Resources */,
@@ -11298,6 +11310,7 @@
 				1D44D0101CC7F5A600BE5630 /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */,
 				1D44D0271CC7F5A600BE5630 /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */,
 				1D44D0611CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBrightBoldOff.png in Resources */,
+				A629F5BA23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				A69C933A2121101C00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				1D44D0491CC7F5A600BE5630 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */,
@@ -11472,6 +11485,7 @@
 				1D44D02A1CC7F5A600BE5630 /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */,
 				1D44D09D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
+				A629F5B723B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6F7A720213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
@@ -11803,6 +11817,7 @@
 				A67F61E7214395D50093940A /* graphic_yo@2x.png in Resources */,
 				A6EC47C621EC6D05000E1321 /* StatusBar.png in Resources */,
 				A6E7AE61214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
+				A629F5B623B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A6E7AEB5214394F600DE9F3B /* graphic_database@2x.png in Resources */,
 				A6E7AE6D214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */,
@@ -12080,6 +12095,7 @@
 				A6F7A71C213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
 				A67F61CD214395C60093940A /* graphic_read@2x.png in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
+				A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,

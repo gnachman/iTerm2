@@ -160,6 +160,17 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSet
 #define YES_IF_BETA_ELSE_NO NO
 #endif
 
+#pragma mark - Custom Defaults
+
+BOOL UseSystemCursorWhenPossibleDefault(void) {
+    if (@available(macOS 10.15, *)) {
+        return YES;
+    }
+    return NO;
+}
+
+#pragma mark - iTermAdvancedSettingsModel
+
 @implementation iTermAdvancedSettingsModel
 
 + (void)enumerateMethods:(void (^)(Method method, SEL selector))block {
@@ -228,7 +239,7 @@ DEFINE_STRING(alternateMouseScrollStringForDown, @"",
               @"The value should use Vim syntax, such as \\e for escape.");
 DEFINE_SETTABLE_BOOL(alternateMouseScroll, AlternateMouseScroll, NO, SECTION_MOUSE @"Scroll wheel sends arrow keys when in alternate screen mode.");
 DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, SECTION_MOUSE @"Disable changing font size in response to a pinch gesture.");
-DEFINE_BOOL(useSystemCursorWhenPossible, NO, SECTION_MOUSE @"Use system cursor icons when possible.");
+DEFINE_BOOL(useSystemCursorWhenPossible, UseSystemCursorWhenPossibleDefault(), SECTION_MOUSE @"Use system cursor icons when possible.");
 DEFINE_BOOL(alwaysAcceptFirstMouse, NO, SECTION_MOUSE @"Always accept first mouse event on terminal windows.\nThis means clicks will work the same when iTerm2 is active as when it’s inactive.");
 DEFINE_BOOL(doubleReportScrollWheel, NO, SECTION_MOUSE @"Double-report scroll wheel events to work around tmux scrolling bug.");
 DEFINE_BOOL(stealKeyFocus, NO, SECTION_MOUSE @"When Focus Follows Mouse is enabled, steal key focus even when inactive.");
