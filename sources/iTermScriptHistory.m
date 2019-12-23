@@ -54,6 +54,18 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     return instance;
 }
 
++ (instancetype)dynamicProfilesEntry {
+    static id instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithName:@"Dynamic Profiles"
+                                     fullPath:nil
+                                   identifier:@"__DP"
+                                     relaunch:nil];
+    });
+    return instance;
+}
+
 - (instancetype)initWithName:(NSString *)name
                     fullPath:(nullable NSString *)fullPath
                   identifier:(NSString *)identifier
@@ -224,6 +236,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     NSMutableArray<iTermScriptHistoryEntry *> *_entries;
     NSMutableSet<NSNumber *> *_replPIDs;
     BOOL _haveAddedAPSLoggingEntry;
+    BOOL _haveAddedDynamicProfilesLoggingEntry;
 }
 
 + (instancetype)sharedInstance {
@@ -257,6 +270,18 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
                                                                 object:self];
         }
+    }
+}
+
+- (void)addDynamicProfilesLoggingEntryIfNeeded {
+    if (_haveAddedDynamicProfilesLoggingEntry) {
+        return;
+    }
+    _haveAddedDynamicProfilesLoggingEntry = YES;
+    [_entries addObject:[iTermScriptHistoryEntry dynamicProfilesEntry]];
+    if (_entries.count != 1) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                            object:self];
     }
 }
 
