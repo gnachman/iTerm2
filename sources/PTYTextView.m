@@ -4147,8 +4147,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         accessory.userDidChangeSetting = ^() {
             NSAttributedString *theAttributedString = nil;
             if (accessory.blackAndWhite) {
-                theAttributedString = [[[NSAttributedString alloc] initWithString:[content string]
-                                                                       attributes:attributes] autorelease];
+                theAttributedString = [attributedString attributedStringByRemovingColor];
             } else {
                 theAttributedString = attributedString;
             }

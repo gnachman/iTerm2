@@ -24,5 +24,6 @@
 + (instancetype)attributedStringWithString:(NSString *)string attributes:(NSDictionary *)attributes;
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
 - (CGFloat)heightForWidth:(CGFloat)maxWidth;
+- (NSAttributedString *)attributedStringByRemovingColor;
 
 @end
