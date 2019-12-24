@@ -1445,8 +1445,8 @@ typedef struct iTermTextColorContext {
              return;
          }
          NSMutableDictionary *attrs = [[cheapString.attributes mutableCopy] autorelease];
-         CGFloat components[2] = { 0, 1 };
-         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+         CGFloat components[4] = { 0, 0, 0, 1 };
+         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
          CGColorRef black = CGColorCreate(colorSpace,
                                           components);
          attrs[(NSString *)kCTForegroundColorAttributeName] = (id)black;
