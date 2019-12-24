@@ -483,6 +483,12 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
     _rollingIn = YES;
+    if (self.windowController.windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+        // This has to be done before making it key or the dock will be hidden based on the
+        // display it was last on, not the display it will be on. I think it might be safe to
+        // do this for all window types, but I don't want to risk introducing bugs here.
+        [self moveToPreferredScreen];
+    }
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         DLog(@"Activate iTerm2 prior to animating hotkey window in");
         _activationPending = YES;
