@@ -758,6 +758,7 @@ int decode_utf8_char(const unsigned char *datap,
 
     // Remove trailing punctuation.
     trimmedURLString = [trimmedURLString stringByRemovingTerminatingPunctuation];
+    trimmedURLString = [trimmedURLString stringByTrimmingLeadingHyphens];
 
     return [self rangeOfString:trimmedURLString];
 }
@@ -791,6 +792,14 @@ int decode_utf8_char(const unsigned char *datap,
     }
 }
 
+- (NSString *)stringByTrimmingLeadingHyphens {
+    NSCharacterSet *characterSet = [[NSCharacterSet characterSetWithCharactersInString:@"-"] invertedSet];
+    const NSRange range = [self rangeOfCharacterFromSet:characterSet];
+    if (range.location == NSNotFound) {
+        return @"";
+    }
+    return [self substringFromIndex:range.location];
+}
 
 - (NSString *)stringByEscapingForURL {
     static NSMutableCharacterSet *allowedCharacters;
