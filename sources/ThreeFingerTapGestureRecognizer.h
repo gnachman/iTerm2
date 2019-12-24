@@ -31,5 +31,6 @@
 - (BOOL)mouseUp:(NSEvent*)event;
 
 - (void)mouseDragged;
+- (void)scrollWheel;
 
 @end

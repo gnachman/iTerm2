@@ -122,6 +122,11 @@
     [self cancel];
 }
 
+- (void)scrollWheel {
+    DLog(@"scroll wheel");
+    [self cancel];
+}
+
 - (BOOL)mouseUp:(NSEvent*)event
 {
     DLog(@"mouse up");
