@@ -2024,6 +2024,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"Set mouseDown=NO");
     _mouseDown = NO;
+    _mouseDownOnSelection = NO;
 
     [_selectionScrollHelper mouseUp];
     const BOOL mouseDragged = (_mouseDragged && _committedToDrag);
