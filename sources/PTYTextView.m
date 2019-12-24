@@ -1511,6 +1511,8 @@ static const int kDragThreshold = 3;
 }
 
 - (BOOL)scrollWheelImpl:(NSEvent *)event {
+    [threeFingerTapGestureRecognizer_ scrollWheel];
+    
     if (!_haveSeenScrollWheelEvent) {
         // Work around a weird bug. Commit 9e4b97b18fac24bea6147c296b65687f0523ad83 caused it.
         // When you restore a window and have an inline scroller (but not a legacy scroller!) then
