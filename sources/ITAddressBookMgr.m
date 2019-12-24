@@ -756,9 +756,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         return YES;
     }
     if (!identifier && [title isEqualToString:[item title]]) {
-        [NSApp sendAction:[item action]
-                       to:[item target]
-                     from:item];
         return YES;
     }
 
