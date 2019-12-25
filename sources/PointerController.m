@@ -94,6 +94,8 @@
         [delegate_ extendSelectionWithEvent:event];
     } else if ([action isEqualToString:kQuickLookAction]) {
         [delegate_ quickLookWithEvent:event];
+    } else if ([action isEqualToString:kIgnoreAction]) {
+        // Do nothing
     }
 }
 
