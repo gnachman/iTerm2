@@ -2041,32 +2041,32 @@ static BOOL hasBecomeActive = NO;
                                                                                    requiredToContinue:YES
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
-         switch (status) {
-             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
-             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
-             case iTermPythonRuntimeDownloaderStatusUnknown:
-             case iTermPythonRuntimeDownloaderStatusWorking:
-             case iTermPythonRuntimeDownloaderStatusError:
-                 return;
-             case iTermPythonRuntimeDownloaderStatusNotNeeded:
-             case iTermPythonRuntimeDownloaderStatusDownloaded:
-                 break;
-         }
-         if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
-             return;
-         }
-         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-         NSString *bannerArg = [NSString stringWithFormat:@"--banner=\\\"`cat %@`\\\"", [bannerURL.path stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-         NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
-         NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
-         [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
-                                                                arguments:@[ bannerArg ]
-                                                                   inject:nil
-                                                              environment:environment
-                                                                      pwd:nil
-                                                                  options:iTermSingleUseWindowOptionsDoNotEscapeArguments
-                                                               completion:nil];
+        switch (status) {
+            case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+            case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+            case iTermPythonRuntimeDownloaderStatusUnknown:
+            case iTermPythonRuntimeDownloaderStatusWorking:
+            case iTermPythonRuntimeDownloaderStatusError:
+                return;
+            case iTermPythonRuntimeDownloaderStatusNotNeeded:
+            case iTermPythonRuntimeDownloaderStatusDownloaded:
+                break;
+        }
+        if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
+            return;
+        }
+        NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+        NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+        NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
+        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
+        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
+        [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
+                                                               arguments:@[ @"--banner=\\\"\\\"" ]
+                                                                  inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]
+                                                             environment:environment
+                                                                     pwd:nil
+                                                                 options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                              completion:nil];
     }];
 }
 
