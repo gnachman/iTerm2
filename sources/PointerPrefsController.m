@@ -74,6 +74,7 @@ NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
 NSString *kQuickLookAction = @"kQuickLookAction";
+NSString *kIgnoreAction = @"kIgnoreAction";
 
 typedef enum {
     kNoArg,
@@ -390,6 +391,7 @@ typedef enum {
 + (NSDictionary *)localizedActionMap
 {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
+                           @"Ignore", kIgnoreAction,
                            @"Paste from Clipboard…", kPasteFromClipboardPointerAction,
                            @"Paste from Selection…", kPasteFromSelectionPointerAction,
                            @"Extend Selection", kExtendSelectionPointerAction,
