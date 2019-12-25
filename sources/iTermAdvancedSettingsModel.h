@@ -66,6 +66,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)convertItalicsToReverseVideoForTmux;
 + (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
++ (BOOL)copyBackgroundColor;
 + (BOOL)copyWithStylesByDefault;
 + (BOOL)darkThemeHasBlackTitlebar;
 + (CGFloat)defaultTabBarHeight;
