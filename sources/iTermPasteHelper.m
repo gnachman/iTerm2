@@ -96,14 +96,25 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 }
 
 - (void)abort {
+    [self abortAndCancelPendingEvents:YES];
+}
+
+- (void)abortAndCancelPendingEvents:(BOOL)cancel {
     if (_timer) {
         [_timer invalidate];
         _timer = nil;
-        [_eventQueue removeAllObjects];
+        if (cancel) {
+            [_eventQueue removeAllObjects];
+        }
     }
     [_buffer release];
     _buffer = [[NSMutableString alloc] init];
     [self hidePasteIndicator];
+    [_pasteContext release];
+    _pasteContext = nil;
+    if (!cancel) {
+        [self dequeueEvents];
+    }
 }
 
 - (BOOL)isPasting {
@@ -526,6 +537,10 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     [self pasteNextChunkAndScheduleTimer];
 }
 
+- (BOOL)isWaitingForPrompt {
+    return _pasteContext.isBlocked;
+}
+
 // This may modify pasteEvent.string.
 - (BOOL)maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent {
     const int limit = [iTermAdvancedSettingsModel alwaysWarnBeforePastingOverSize];
@@ -706,14 +721,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 }
 
 - (void)pasteViewManagerUserDidCancel {
-    [self hidePasteIndicator];
-    [_timer invalidate];
-    _timer = nil;
-    [_buffer release];
-    _buffer = [[NSMutableString alloc] init];
-    [_pasteContext release];
-    _pasteContext = nil;
-    [self dequeueEvents];
+    [self abortAndCancelPendingEvents:NO];
 }
 
 - (iTermVariableScope *)pasteViewManagerScope {
