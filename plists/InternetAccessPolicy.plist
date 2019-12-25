@@ -24,17 +24,15 @@
 		</dict>
 		<dict>
 			<key>IsIncoming</key>
-			<true/>
+			<false/>
 			<key>Host</key>
-			<string>localhost</string>
+			<string>*</string>
 			<key>NetworkProtocol</key>
 			<string>TCP</string>
-			<key>Port</key>
-			<string>1912</string>
 			<key>Purpose</key>
-			<string>iTerm2 accepts connections from localhost on port 1912 for communicating with Python scripts using the scripting API.</string>
+			<string>Applications running within iTerm2 may open connections.</string>
 			<key>DenyConsequences</key>
-			<string>The Python script that initiated the connection will not be able to proceed.</string>
+			<string>The current command will not be able to proceed.</string>
 		</dict>
 	</array>
 </dict>
