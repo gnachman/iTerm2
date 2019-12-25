@@ -549,6 +549,12 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
             font = [NSFont systemFontOfSize:size];
         }
     }
+    if (![iTermAdvancedSettingsModel copyBackgroundColor]) {
+        if (c.backgroundColorMode == ColorModeAlternate &&
+            c.backgroundColor == ALTSEM_DEFAULT) {
+            bgColor = [NSColor clearColor];
+        }
+    }
     NSDictionary *attributes = @{ NSForegroundColorAttributeName: fgColor,
                                   NSBackgroundColorAttributeName: bgColor,
                                   NSFontAttributeName: font,
