@@ -6772,7 +6772,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (accept) {
         [_metaFrustrationDetector didSendKeyEvent:event];
     }
+    if ([self eventAbortsPasteWaitingForPrompt:event]) {
+        [_pasteHelper abort];
+        return NO;
+    }
+
     return accept;
+}
+
+- (BOOL)eventAbortsPasteWaitingForPrompt:(NSEvent *)event {
+    if (!_pasteHelper.isWaitingForPrompt) {
+        return NO;
+    }
+    if (event.keyCode == kVK_Escape) {
+        return YES;
+    }
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl);
+    if ((event.modifierFlags & mask) == NSEventModifierFlagControl &&
+        [event.characters isEqualToString:[NSString stringWithLongCharacter:3]]) {
+        // ^C
+        return YES;
+    }
+    return NO;
 }
 
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window {
