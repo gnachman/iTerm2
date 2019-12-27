@@ -1,3 +1,5 @@
+:orphan:
+
 .. _oneshot_example:
 
 One-Shot Alert

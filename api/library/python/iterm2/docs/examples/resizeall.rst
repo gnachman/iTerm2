@@ -1,3 +1,5 @@
+:orphan:
+
 .. _resizeall_example:
 
 Resize Font in All Sessions in Window

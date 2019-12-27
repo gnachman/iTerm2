@@ -1,3 +1,5 @@
+:orphan:
+
 .. _movetab_example:
 
 Move Tab To Next/Previous Window

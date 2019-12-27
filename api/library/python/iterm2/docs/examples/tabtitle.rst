@@ -1,3 +1,5 @@
+:orphan:
+
 .. _tabtitle_example:
 
 Tab Title

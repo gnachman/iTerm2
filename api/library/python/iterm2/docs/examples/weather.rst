@@ -1,3 +1,5 @@
+:orphan:
+
 .. _weather_example:
 
 Web-Based Status Bar

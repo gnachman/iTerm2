@@ -1,38 +1,44 @@
 """Defines interfaces for registering functions."""
-import asyncio
 import inspect
-import iterm2.notifications
-import iterm2.rpc
 import json
 import traceback
 import websockets
 
+import iterm2.notifications
+import iterm2.rpc
+
+
 async def generic_handle_rpc(coro, connection, notif):
+    """Dispatches an inbound RPC message."""
     rpc_notif = notif.server_originated_rpc_notification
     params = {}
-    ok = False
+    successful = False
     try:
         for arg in rpc_notif.rpc.arguments:
             name = arg.name
             if arg.HasField("json_value"):
-                # NOTE: This can throw an exception if there are control characters or other nasties.
+                # NOTE: This can throw an exception if there are control
+                # characters or other nasties.
                 value = json.loads(arg.json_value)
                 params[name] = value
             else:
                 params[name] = None
         result = await coro(**params)
-        ok = True
-    except KeyboardInterrupt as e:
-        raise e
-    except websockets.exceptions.ConnectionClosed as e:
-        raise e
-    except Exception as e:
-        tb = traceback.format_exc()
-        exception = { "reason": repr(e), "traceback": tb }
-        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, True, exception)
+        successful = True
+    except KeyboardInterrupt as exception:
+        raise exception
+    except websockets.exceptions.ConnectionClosed as exception:
+        raise exception
+    except Exception as exception:
+        stack_trace = traceback.format_exc()
+        exception = {"reason": repr(exception), "traceback": stack_trace}
+        await iterm2.rpc.async_send_rpc_result(
+            connection, rpc_notif.request_id, True, exception)
 
-    if ok:
-        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, False, result)
+    if successful:
+        await iterm2.rpc.async_send_rpc_result(
+            connection, rpc_notif.request_id, False, result)
+
 
 class Reference:
     """Defines a reference to a variable for use in the @RPC decorator.
@@ -45,16 +51,38 @@ class Reference:
     def __init__(self, name):
         self.name = name
 
+
 def RPC(func):
-    """A decorator that adds an `async_register` value to the coroutine it decorates. `async_register` is a coroutine that will register the function as an RPC.
+    """
+    A decorator that adds an `async_register` value to the coroutine it
+    decorates. `async_register` is a coroutine that will register the function
+    as an RPC.
 
-    An RPC is a function in a script that iTerm2 can invoke in response to some action, such a a keypress or a trigger. You use this decorator to register a coroutine as an RPC.
+    An RPC is a function in a script that iTerm2 can invoke in response to some
+    action, such a a keypress or a trigger. You use this decorator to register
+    a coroutine as an RPC.
 
-    Every RPC must have a unique signature. The signature is composed of two parts: first, the name, which comes from the name of the coroutine being decorated; second, the names of its arguments. The order of arguments is not important.
+    Every RPC must have a unique signature. The signature is composed of two
+    parts: first, the name, which comes from the name of the coroutine being
+    decorated; second, the names of its arguments. The order of arguments is
+    not important.
 
-    The decorated coroutine will have a `async_register` value that you must call to complete the registration. `async_register` takes one required argument, the :class:`~iterm2.connection.Connection`. It also takes one optional argument, which is a timeout. The `timeout` is a value in seconds. If not given, the default timeout will be used. When waiting for an RPC to return, iTerm2 will stop waiting for the RPC after the timeout elapses.
+    The decorated coroutine will have a `async_register` value that you must
+    call to complete the registration. `async_register` takes one required
+    argument, the :class:`~iterm2.connection.Connection`. It also takes one
+    optional argument, which is a timeout. The `timeout` is a value in seconds.
+    If not given, the default timeout will be used. When waiting for an RPC to
+    return, iTerm2 will stop waiting for the RPC after the timeout elapses.
 
-    Do not use default values for arguments in your decorated coroutine, with one exception: a special kind of default value of type :class:`iterm2.Reference`. It names a variable that is visible in the context of the invocation. It will be transformed to the current value of that variable. This is the only way to get information about the current context. For example, a value of `iterm2.Reference("id")` will give you the session ID of the context where the RPC was invoked. If the RPC is run from a keyboard shortcut, that is the ID of the session that had keyboard focus at the time of invocation.
+    Do not use default values for arguments in your decorated coroutine, with
+    one exception: a special kind of default value of type
+    :class:`iterm2.Reference`. It names a variable that is visible in the
+    context of the invocation. It will be transformed to the current value of
+    that variable. This is the only way to get information about the current
+    context. For example, a value of `iterm2.Reference("id")` will give you the
+    session ID of the context where the RPC was invoked. If the RPC is run from
+    a keyboard shortcut, that is the ID of the session that had keyboard focus
+    at the time of invocation.
 
     .. seealso::
         * Example ":ref:`badgetitle_example`"
@@ -73,7 +101,8 @@ def RPC(func):
           app = await iterm2.async_get_app(connection)
 
           @iterm2.RPC
-          async def split_current_session_n_times(session_id=iterm2.Reference("id"), n=1):
+          async def split_current_session_n_times(
+                  session_id=iterm2.Reference("id"), n=1):
               session = app.get_session_by_id(session_id)
               for i in range(n):
                   await session.async_split_pane()
@@ -84,34 +113,54 @@ def RPC(func):
     async def async_register(connection, timeout=None):
         signature = inspect.signature(func)
         defaults = {}
-        for k, v in signature.parameters.items():
-            if isinstance(v.default, Reference):
-                defaults[k] = v.default.name
+        for key, value in signature.parameters.items():
+            if isinstance(value.default, Reference):
+                defaults[key] = value.default.name
+
         async def handle_rpc(connection, notif):
             await generic_handle_rpc(func, connection, notif)
-        func.rpc_token = await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
+
+        func.rpc_token = (
+            await iterm2.notifications.
+            async_subscribe_to_server_originated_rpc_notification(
                 connection,
                 handle_rpc,
                 func.__name__,
                 signature.parameters.keys(),
                 timeout,
                 defaults,
-                iterm2.notifications.RPC_ROLE_GENERIC)
+                iterm2.notifications.RPC_ROLE_GENERIC))
         func.rpc_connection = connection
 
     func.async_register = async_register
     return func
 
+
 def TitleProviderRPC(func):
-    """A decorator that prepares a function for registration as a session title provider. Similar to :func:`~iterm2.registration.RPC`.
+    """
+    A decorator that prepares a function for registration as a session title
+    provider. Similar to :func:`~iterm2.registration.RPC`.
 
-    A session title provider is a function that gets called to compute the title of a session. It may be called frequently, whenever the session title is deemed to need recomputation. Once registered, it appears as an option in the list of title settings in preferences.
+    A session title provider is a function that gets called to compute the
+    title of a session. It may be called frequently, whenever the session title
+    is deemed to need recomputation. Once registered, it appears as an option
+    in the list of title settings in preferences.
 
-    It is called when any of its inputs change. This will only happen if one or more of the inputs are :func:`~iterm2.registration.Reference` references to variables in the session context.
+    It is called when any of its inputs change. This will only happen if one or
+    more of the inputs are :func:`~iterm2.registration.Reference` references to
+    variables in the session context.
 
     It must return a string.
 
-    Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider. The third is a string identifier, which must be unique among all title providers. The identifier should be a reverse DNS name, like `com.example.my-title-provider`. As long as the identifier remains the same from one version to the next, the display name and function signature may change.
+    Note that the `async_register` function is different than in the
+    :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The
+    first is the :class:`~iterm2.connection.Connection`. The second is a
+    "display name", which is the string to show in preferences that the user
+    may select to use this title provider. The third is a string identifier,
+    which must be unique among all title providers. The identifier should be a
+    reverse DNS name, like `com.example.my-title-provider`. As long as the
+    identifier remains the same from one version to the next, the display name
+    and function signature may change.
 
     .. seealso:: Example ":ref:`georges_title_example`"
 
@@ -131,16 +180,21 @@ def TitleProviderRPC(func):
                   display_name="Upper-case Title",
                   unique_identifier="com.iterm2.example.title-provider")
     """
-    async def async_register(connection, display_name, unique_identifier, timeout=None):
+    async def async_register(
+            connection, display_name, unique_identifier, timeout=None):
         assert unique_identifier
         signature = inspect.signature(func)
         defaults = {}
-        for k, v in signature.parameters.items():
-            if isinstance(v.default, Reference):
-                defaults[k] = v.default.name
+        for key, value in signature.parameters.items():
+            if isinstance(value.default, Reference):
+                defaults[key] = value.default.name
+
         async def handle_rpc(connection, notif):
             await generic_handle_rpc(func, connection, notif)
-        func.rpc_token = await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
+
+        func.rpc_token = (
+            await iterm2.notifications.
+            async_subscribe_to_server_originated_rpc_notification(
                 connection=connection,
                 callback=handle_rpc,
                 name=func.__name__,
@@ -149,24 +203,35 @@ def TitleProviderRPC(func):
                 defaults=defaults,
                 role=iterm2.notifications.RPC_ROLE_SESSION_TITLE,
                 session_title_display_name=display_name,
-                session_title_unique_id=unique_identifier)
+                session_title_unique_id=unique_identifier))
         func.rpc_connection = connection
 
     func.async_register = async_register
     return func
 
+
 def StatusBarRPC(func):
-    """A decorator (like :func:`~iterm2.registration.RPC`) that registers a custom status bar component.
+    """
+    A decorator (like :func:`~iterm2.registration.RPC`) that registers a custom
+    status bar component.
 
-    See :class:`~iterm2.statusbar.StatusBarComponent` for details on what a status bar component is.
+    See :class:`~iterm2.statusbar.StatusBarComponent` for details on what a
+    status bar component is.
 
-    The coroutine is called when any of its inputs change. This will only happen if one or more of the inputs are :func:`~iterm2.registration.Reference` references to variables in the session context.
+    The coroutine is called when any of its inputs change. This will only
+    happen if one or more of the inputs are
+    :func:`~iterm2.registration.Reference` references to variables in the
+    session context.
 
-    The coroutine *must* take an argument named `knobs` that will contain a dictionary with configuration settings.
+    The coroutine *must* take an argument named `knobs` that will contain a
+    dictionary with configuration settings.
 
-    It may return a string or an array of strings. In the case that it returns an array, the longest string fitting the available space will be used.
+    It may return a string or an array of strings. In the case that it returns
+    an array, the longest string fitting the available space will be used.
 
-    Note that unlike the other RPC decorators, you use :meth:`~iterm2.statusbar.StatusBarComponent.async_register` to register it, rather than a register property added to the coroutine.
+    Note that unlike the other RPC decorators, you use
+    :meth:`~iterm2.statusbar.StatusBarComponent.async_register` to register it,
+    rather than a register property added to the coroutine.
 
     .. seealso::
         * Example ":ref:`escindicator_example`"
@@ -211,9 +276,9 @@ def StatusBarRPC(func):
     async def async_register(connection, component, timeout=None):
         signature = inspect.signature(func)
         defaults = {}
-        for k, v in signature.parameters.items():
-            if isinstance(v.default, Reference):
-                defaults[k] = v.default.name
+        for key, value in signature.parameters.items():
+            if isinstance(value.default, Reference):
+                defaults[key] = value.default.name
 
         async def wrapper(**kwargs):
             """handle_rpc->generic_handle_rpc->wrapper->func"""
@@ -227,7 +292,9 @@ def StatusBarRPC(func):
             """This gets run first."""
             await generic_handle_rpc(wrapper, connection, notif)
 
-        func.rpc_token = await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
+        func.rpc_token = (
+            await iterm2.notifications.
+            async_subscribe_to_server_originated_rpc_notification(
                 connection=connection,
                 callback=handle_rpc,
                 name=func.__name__,
@@ -235,10 +302,9 @@ def StatusBarRPC(func):
                 timeout_seconds=timeout,
                 defaults=defaults,
                 role=iterm2.notifications.RPC_ROLE_STATUS_BAR_COMPONENT,
-                status_bar_component=component)
+                status_bar_component=component))
         func.rpc_connection = connection
 
     func.async_register = async_register
 
     return func
-

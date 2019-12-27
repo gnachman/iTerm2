@@ -1,3 +1,5 @@
+:orphan:
+
 .. _tmux_example:
 
 Tmux Integration

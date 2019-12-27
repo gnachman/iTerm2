@@ -1,3 +1,5 @@
+:orphan:
+
 .. _random_color_example:
 
 Random Color Preset

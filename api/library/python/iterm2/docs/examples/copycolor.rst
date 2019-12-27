@@ -1,3 +1,5 @@
+:orphan:
+
 .. _copycolor_example:
 
 Preserve Tab Color

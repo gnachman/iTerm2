@@ -1,3 +1,5 @@
+:orphan:
+
 .. _increase_font_size_example:
 
 Increase Font Size By 6

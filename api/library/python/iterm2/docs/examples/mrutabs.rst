@@ -1,3 +1,5 @@
+:orphan:
+
 .. _mrutabs_example:
 
 Persistent MRU Tabs

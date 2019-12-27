@@ -1,3 +1,5 @@
+:orphan:
+
 .. _mousemode_example:
 
 Status Bar Component: Mouse Mode

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _change_default_profile_example:
 
 Change Default Profile

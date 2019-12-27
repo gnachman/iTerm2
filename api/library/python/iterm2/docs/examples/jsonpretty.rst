@@ -1,3 +1,5 @@
+:orphan:
+
 .. _jsonpretty_example:
 
 JSON Pretty Printer Status Bar Component

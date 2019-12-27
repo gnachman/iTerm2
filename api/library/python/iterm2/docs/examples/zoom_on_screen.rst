@@ -1,3 +1,5 @@
+:orphan:
+
 .. _zoom_on_screen_example:
 
 Zoom on Screen

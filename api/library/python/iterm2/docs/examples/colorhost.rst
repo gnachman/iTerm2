@@ -1,3 +1,5 @@
+:orphan:
+
 .. _colorhost_example:
 
 Per-Host Colors

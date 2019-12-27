@@ -1,3 +1,5 @@
+:orphan:
+
 .. _unread_example:
 
 Unread Count and Status Bar Icon

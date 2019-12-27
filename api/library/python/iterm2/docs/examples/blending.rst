@@ -1,3 +1,5 @@
+:orphan:
+
 .. _blending_example:
 
 Modify Background Image Blending

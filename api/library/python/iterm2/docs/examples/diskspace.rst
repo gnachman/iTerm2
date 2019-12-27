@@ -1,3 +1,5 @@
+:orphan:
+
 .. _diskspace_example:
 
 Free Disk Space Status Bar Component

@@ -1,17 +1,19 @@
 """Provides a class to facilitate atomic transactions."""
 
-import iterm2.rpc
-import iterm2.connection
 import typing
 
-gCurrentTransaction: typing.Optional['Transaction']  = None
+import iterm2.rpc
+import iterm2.connection
+
+CURRENT_TRANSACTION: typing.Optional['Transaction'] = None
+
 
 class Transaction:
     """An asyncio context manager for transactions.
 
     A transaction is a sequence of API calls that occur without anything else
-    happening in between. If you're worried about state mutating between reading
-    the screen contents and then sending text, for example, do it in a
+    happening in between. If you're worried about state mutating between
+    reading the screen contents and then sending text, for example, do it in a
     transaction and you'll know the state of the terminal will remain unchanged
     during it.
 
@@ -29,20 +31,20 @@ class Transaction:
         self.connection = connection
 
     async def __aenter__(self):
-        global gCurrentTransaction
-        if not gCurrentTransaction:
-            gCurrentTransaction = self
+        global CURRENT_TRANSACTION
+        if not CURRENT_TRANSACTION:
+            CURRENT_TRANSACTION = self
 
         await iterm2.rpc.async_start_transaction(self.connection)
 
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.rpc.async_end_transaction(self.connection)
 
-        global gCurrentTransaction
-        if gCurrentTransaction == self:
-            gCurrentTransaction = None
+        global CURRENT_TRANSACTION
+        if CURRENT_TRANSACTION == self:
+            CURRENT_TRANSACTION = None
 
     @staticmethod
     def current() -> typing.Optional['Transaction']:
-        return gCurrentTransaction
-
+        """Returns the current transaction."""
+        return CURRENT_TRANSACTION

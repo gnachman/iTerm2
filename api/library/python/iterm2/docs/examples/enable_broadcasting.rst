@@ -1,3 +1,5 @@
+:orphan:
+
 .. _enable_broadcasting_example:
 
 Enable Broadcasting Input

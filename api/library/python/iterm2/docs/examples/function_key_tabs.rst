@@ -1,3 +1,5 @@
+:orphan:
+
 .. _function_key_tabs_example:
 
 Function Key Tabs

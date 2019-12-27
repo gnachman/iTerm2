@@ -1,3 +1,5 @@
+:orphan:
+
 .. _autoalert_example:
 
 Alert on Long-Running Jobs

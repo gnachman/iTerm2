@@ -1,4 +1,6 @@
 
+:orphan:
+
 Menu Item Identifiers
 ---------------------
 
@@ -20,7 +22,6 @@ iTerm2 > Show Tip of the Day                                                    
 iTerm2 > Check For Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      
-iTerm2 > Profile CPU Usage                                                              `Profile CPU Usage`                                                           
 iTerm2 > Capture GPU Frame                                                              `Capture Metal Frame`                                                         
 iTerm2 > Preferences...                                                                 `Preferences...`                                                              
 iTerm2 > Hide iTerm2                                                                    `Hide iTerm2`                                                                 
@@ -87,10 +88,12 @@ Edit > Find > Use Selection for Find                                            
 Edit > Find > Jump to Selection                                                         `Find.Jump to Selection`                                                      
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
-Edit > Marks and Annotations > Add Annotation at Cursor                                 `Marks and Annotations.Add Annotation at Cursor`                              
 Edit > Marks and Annotations > Jump to Mark                                             `Marks and Annotations.Jump to Mark`                                          
-Edit > Marks and Annotations > Previous Mark/Annotation                                 `Marks and Annotations.Previous Mark or Annotation`                           
-Edit > Marks and Annotations > Next Mark/Annotation                                     `Marks and Annotations.Next Mark or Annotation`                               
+Edit > Marks and Annotations > Next Mark                                                `Marks and Annotations.Next Mark`                                             
+Edit > Marks and Annotations > Previous Mark                                            `Marks and Annotations.Previous Mark`                                         
+Edit > Marks and Annotations > Add Annotation at Cursor                                 `Marks and Annotations.Add Annotation at Cursor`                              
+Edit > Marks and Annotations > Next Annotation                                          `Marks and Annotations.Next  Annotation`                                      
+Edit > Marks and Annotations > Previous Annotation                                      `Marks and Annotations.Previous  Annotation`                                  
 Edit > Marks and Annotations > Alerts > Alert on Next Mark                              `Marks and Annotations.Alerts.Alert on Next Mark`                             
 Edit > Marks and Annotations > Alerts > Show Modal Alert Box                            `Marks and Annotations.Alerts.Show Modal Alert Box`                           
 Edit > Marks and Annotations > Alerts > Post Notification                               `Marks and Annotations.Alerts.Post Notification`                              
@@ -124,8 +127,7 @@ Session > Open Recent Directories…                                            
 Session > Open Paste History…                                                           `Open Paste History…`                                                         
 Session > Reset                                                                         `Reset`                                                                       
 Session > Reset Character Set                                                           `Reset Character Set`                                                         
-Session > Log > Start                                                                   `Log.Start`                                                                   
-Session > Log > Stop                                                                    `Log.Stop`                                                                    
+Session > Log > Log to File                                                             `Log.Toggle`                                                                  
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
 Session > Log > Save Contents…                                                          `Log.SaveContents`                                                            

@@ -1,3 +1,4 @@
+:orphan:
 
 .. _app_tab_color_example:
 

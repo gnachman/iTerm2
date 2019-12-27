@@ -1,3 +1,5 @@
+:orphan:
+
 .. _gmtclock_example:
 
 GMT Clock

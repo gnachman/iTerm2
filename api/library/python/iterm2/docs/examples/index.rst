@@ -1,3 +1,5 @@
+:orphan:
+
 .. _examples-index:
 .. Example Scripts
 

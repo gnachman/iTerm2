@@ -4,11 +4,13 @@ import iterm2.connection
 import iterm2.rpc
 import iterm2.api_pb2
 
+
 class SavedArrangementException(Exception):
     """A problem was encountered while saving or restoring an arrangement."""
-    pass
+
 
 class Arrangement:
+    """Provides access to saved arrangements."""
     @staticmethod
     async def async_save(connection: iterm2.connection.Connection, name: str):
         """Save all windows as a new arrangement.
@@ -28,7 +30,8 @@ class Arrangement:
                     result.saved_arrangement_response.status))
 
     @staticmethod
-    async def async_restore(connection: iterm2.connection.Connection, name: str):
+    async def async_restore(
+            connection: iterm2.connection.Connection, name: str):
         """Restore a saved window arrangement.
 
         :param connection: The name of the arrangement.
@@ -42,4 +45,3 @@ class Arrangement:
             raise SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))
-

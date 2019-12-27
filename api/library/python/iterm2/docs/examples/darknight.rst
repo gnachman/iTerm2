@@ -1,3 +1,5 @@
+:orphan:
+
 .. _darknight_example:
 
 Change Color Preset by Time of Day

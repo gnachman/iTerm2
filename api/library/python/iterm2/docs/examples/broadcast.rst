@@ -1,3 +1,5 @@
+:orphan:
+
 .. _broadcast_example:
 
 Asymmetric Broadcast Input

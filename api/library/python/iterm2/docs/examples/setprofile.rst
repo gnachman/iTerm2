@@ -1,3 +1,5 @@
+:orphan:
+
 .. _setprofile_example:
 
 Change Session's Profile

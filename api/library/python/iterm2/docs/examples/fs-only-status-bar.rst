@@ -1,3 +1,5 @@
+:orphan:
+
 .. _fsonlystatusbar_example:
 
 Show Status Bar Only in Full Screen Windows

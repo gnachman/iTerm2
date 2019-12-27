@@ -1,3 +1,5 @@
+:orphan:
+
 .. _set_title_example:
 
 Launch iTerm2 and Set Session Title

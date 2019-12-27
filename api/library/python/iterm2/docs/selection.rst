@@ -6,7 +6,7 @@ Selection
    :members:
 
 .. autoclass:: iterm2.SubSelection
-   :members: windowedCoordRange, mode, async_get_string
+   :members: windowed_coord_range, windowedCoordRange, mode, async_get_string
 .. autoclass:: iterm2.Selection
    :members: subSelections, async_get_string
 

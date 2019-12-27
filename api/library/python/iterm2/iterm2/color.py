@@ -1,9 +1,14 @@
+"""Shared classes for representing color and related concepts."""
+
 import enum
+import json
+
 
 class ColorSpace(enum.Enum):
-    """Describes the color space of a :ref:`iterm2.Color`."""
-    SRGB="sRGB" #: SRGB color space
-    CALIBRATED="Calibrated"  #: Device color space
+    """Describes the color space of a :class:`Color`."""
+    SRGB = "sRGB"  #: SRGB color space
+    CALIBRATED = "Calibrated"  #: Device color space
+
 
 class Color:
     """Describes a color.
@@ -14,7 +19,13 @@ class Color:
       :param a: Alpha, in 0-255
       :param color_space: The color space. Only sRGB is supported currently.
       """
-    def __init__(self, r: int=0, g: int=0, b: int=0, a: int=255, color_space: ColorSpace=ColorSpace.SRGB):
+    def __init__(
+            self,
+            r: int = 0,
+            g: int = 0,
+            b: int = 0,
+            a: int = 255,
+            color_space: ColorSpace = ColorSpace.SRGB):
         """Create a color."""
         self.__red = r
         self.__green = g
@@ -109,5 +120,5 @@ class Color:
 
     @property
     def json(self):
+        """Returns a JSON representation of this color."""
         return json.dumps(self.get_dict())
-

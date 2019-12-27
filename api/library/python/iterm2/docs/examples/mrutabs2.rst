@@ -1,3 +1,5 @@
+:orphan:
+
 .. _mrutabs2_example:
 
 Select MRU On Close

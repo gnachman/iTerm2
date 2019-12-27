@@ -1,3 +1,5 @@
+:orphan:
+
 .. _targeted_input_example:
 
 Targeted Input

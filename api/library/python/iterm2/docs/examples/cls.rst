@@ -1,3 +1,5 @@
+:orphan:
+
 .. _cls_example:
 
 Clear All Sessions (all tabs or current tab)

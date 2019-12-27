@@ -1,10 +1,15 @@
-"""Provides classes for monitoring keyboard activity and modifying how iTerm2 handles keystrokes."""
+"""
+Provides classes for monitoring keyboard activity and modifying how iTerm2
+handles keystrokes.
+"""
 import asyncio
 import enum
+import typing
+
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.notifications
-import typing
+
 
 class Modifier(enum.Enum):
     """Enumerated list of modifier keys."""
@@ -14,6 +19,7 @@ class Modifier(enum.Enum):
     SHIFT = iterm2.api_pb2.Modifiers.Value("SHIFT")  #: The shift key modifier
     FUNCTION = iterm2.api_pb2.Modifiers.Value("FUNCTION")  #: Indicates the key is a function key.
     NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")  #: Indicates the key is on the numeric keypad.
+
 
 class Keycode(enum.Enum):
     """Enumerated list of virtual keycodes. These repesent physical keys on a
@@ -131,6 +137,7 @@ class Keycode(enum.Enum):
     DOWN_ARROW = 0X7D
     UP_ARROW = 0X7E
 
+
 class Keystroke:
     """Describes a keystroke.
 
@@ -139,13 +146,19 @@ class Keystroke:
     """
     def __init__(self, notification):
         self.__characters = notification.characters
-        self.__characters_ignoring_modifiers = notification.charactersIgnoringModifiers
+        self.__characters_ignoring_modifiers = (
+            notification.charactersIgnoringModifiers)
         self.__modifiers = notification.modifiers
         self.__key_code = notification.keyCode
 
     def __repr__(self):
-      return "Keystroke(chars={}, charsIgnoringModifiers={}, modifiers={}, keyCode={})".format(
-          self.characters, self.characters_ignoring_modifiers, self.modifiers, self.keycode)
+        return (
+            "Keystroke(chars={}, charsIgnoringModifiers={}, " +
+            "modifiers={}, keyCode={})").format(
+                self.characters,
+                self.characters_ignoring_modifiers,
+                self.modifiers,
+                self.keycode)
 
     @property
     def characters(self) -> str:
@@ -177,6 +190,7 @@ class Keystroke:
         :returns: A :class:`Keycode` object."""
         return Keycode(self.__key_code)
 
+
 class KeystrokePattern:
     """Describes attributes that select keystrokes.
 
@@ -206,7 +220,9 @@ class KeystrokePattern:
 
     @property
     def forbidden_modifiers(self) -> typing.List[Modifier]:
-        """List of modifiers whose presence prevents the pattern from being matched.
+        """
+        List of modifiers whose presence prevents the pattern from being
+        matched.
 
         A list of type :class:`Modifier`.
         """
@@ -220,7 +236,8 @@ class KeystrokePattern:
     def keycodes(self) -> typing.List[Keycode]:
         """List of keycodes that match the pattern.
 
-        The pattern matches if the modifier constraints are satisfied and a keystroke has any of these keycodes.
+        The pattern matches if the modifier constraints are satisfied and a
+        keystroke has any of these keycodes.
 
         A list of type :class:`Keycode`."""
         return self.__keycodes
@@ -233,7 +250,8 @@ class KeystrokePattern:
     def characters(self) -> typing.List[str]:
         """List of strings. Each string has a character.
 
-        The pattern matches if the modifier constraints are satisfied and a keystroke has any of these characters.
+        The pattern matches if the modifier constraints are satisfied and a
+        keystroke has any of these characters.
         """
         return self.__characters
 
@@ -245,9 +263,12 @@ class KeystrokePattern:
     def characters_ignoring_modifiers(self) -> typing.List[str]:
         """List of strings. Each string has a character.
 
-        The pattern matches if the modifier constraints are satisfied and a keystroke has any of these characters, ignoring modifiers.
+        The pattern matches if the modifier constraints are satisfied and a
+        keystroke has any of these characters, ignoring modifiers.
 
-        "Ignoring modifiers" mostly means ignoring modifiers other than Shift. It has a lot of surprising edge cases which Apple did not document, so experiment to find how it works.
+        "Ignoring modifiers" mostly means ignoring modifiers other than Shift.
+        It has a lot of surprising edge cases which Apple did not document, so
+        experiment to find how it works.
         """
         return self.__characters_ignoring_modifiers
 
@@ -256,13 +277,20 @@ class KeystrokePattern:
         self.__characters_ignoring_modifiers = value
 
     def to_proto(self):
+        """Creates a protobuf for this pattern."""
         proto = iterm2.api_pb2.KeystrokePattern()
-        proto.required_modifiers.extend(list(map(lambda x: x.value, self.__required_modifiers)))
-        proto.forbidden_modifiers.extend(list(map(lambda x: x.value, self.__forbidden_modifiers)))
+        proto.required_modifiers.extend(
+            list(
+                map(lambda x: x.value, self.__required_modifiers)))
+        proto.forbidden_modifiers.extend(
+            list(
+                map(lambda x: x.value, self.__forbidden_modifiers)))
         proto.keycodes.extend(list(map(lambda x: x.value, self.__keycodes)))
         proto.characters.extend(self.__characters)
-        proto.characters_ignoring_modifiers.extend(self.__characters_ignoring_modifiers)
+        proto.characters_ignoring_modifiers.extend(
+            self.__characters_ignoring_modifiers)
         return proto
+
 
 class KeystrokeMonitor:
     """Monitors keystrokes in one or all sessions.
@@ -284,18 +312,25 @@ class KeystrokeMonitor:
                   keystroke = await mon.async_get()
                   DoSomething(keystroke)
     """
-    def __init__(self, connection: iterm2.connection.Connection, session: typing.Union[None, str]=None):
+    def __init__(
+            self,
+            connection: iterm2.connection.Connection,
+            session: typing.Union[None, str] = None):
         self.__connection = connection
         self.__session = session
-        self.__queue: asyncio.Queue = asyncio.Queue(loop=asyncio.get_event_loop())
+        self.__token = None
+        self.__queue: asyncio.Queue = asyncio.Queue(
+            loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def callback(connection, notification):
             await self.__queue.put(notification)
-        self.__token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
+        self.__token = (
+            await iterm2.notifications.
+            async_subscribe_to_keystroke_notification(
                 self.__connection,
                 callback,
-                self.__session)
+                self.__session))
         return self
 
     async def async_get(self) -> Keystroke:
@@ -305,15 +340,20 @@ class KeystrokeMonitor:
 
     async def __aexit__(self, exc_type, exc, _tb):
         try:
-            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+            await iterm2.notifications.async_unsubscribe(
+                self.__connection, self.__token)
         except iterm2.notifications.SubscriptionException:
             pass
 
+
 class KeystrokeFilter:
-    """An async context manager that disables the regular handling of keystrokes matching patterns during its lifetime.
+    """
+    An async context manager that disables the regular handling of keystrokes
+    matching patterns during its lifetime.
 
     :param connection: The :class:`~iterm2.Connection` to use.
-    :param patterns: A list of :class:`KeystrokePattern` objects specifying keystrokes whose regular handling should be disabled.
+    :param patterns: A list of :class:`KeystrokePattern` objects specifying
+        keystrokes whose regular handling should be disabled.
     :param session: The session ID to affect, or None meaning all.
 
     .. seealso::
@@ -337,20 +377,22 @@ class KeystrokeFilter:
             self,
             connection: iterm2.connection.Connection,
             patterns: typing.List[KeystrokePattern],
-            session: typing.Union[None, str]=None):
+            session: typing.Union[None, str] = None):
         self.__connection = connection
         self.__session = session
         self.__patterns = patterns
+        self.__token = None
 
     async def __aenter__(self):
         self.__token = await iterm2.notifications.async_filter_keystrokes(
-                self.__connection,
-                self.__patterns,
-                self.__session)
+            self.__connection,
+            self.__patterns,
+            self.__session)
         return self
 
     async def __aexit__(self, exc_type, exc, _tb):
         try:
-            await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+            await iterm2.notifications.async_unsubscribe(
+                self.__connection, self.__token)
         except iterm2.notifications.SubscriptionException:
             pass

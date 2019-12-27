@@ -1,3 +1,5 @@
+:orphan:
+
 .. _stty_example:
 
 Send stty Command When Session Resizes

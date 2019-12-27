@@ -1,3 +1,5 @@
+:orphan:
+
 .. _tile_example:
 
 Tile tmux Window Panes

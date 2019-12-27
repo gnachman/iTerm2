@@ -1,3 +1,5 @@
+:orphan:
+
 .. _tutorial-index:
 .. Python API Introduction
 

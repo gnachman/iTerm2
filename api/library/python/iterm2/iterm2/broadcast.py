@@ -1,7 +1,9 @@
 """Provides interfaces for managing input broadcasting."""
+import typing
+
 import iterm2.connection
 import iterm2.session
-import typing
+
 
 class BroadcastDomain:
     """Broadcast domains describe how keyboard input is broadcast.
@@ -24,6 +26,7 @@ class BroadcastDomain:
         self.__sessions.append(session)
 
     def add_unresolved(self, unresolved):
+        """Adds an unresolved domain."""
         self.__unresolved.append(unresolved)
 
     @property
@@ -37,8 +40,8 @@ class BroadcastDomain:
 
 
 async def async_set_broadcast_domains(
-    connection: iterm2.connection.Connection,
-    broadcast_domains: typing.List[BroadcastDomain]):
+        connection: iterm2.connection.Connection,
+        broadcast_domains: typing.List[BroadcastDomain]):
     """Sets the current set of broadcast domains.
 
     :param connection: The connection to iTerm2.
@@ -51,6 +54,8 @@ async def async_set_broadcast_domains(
             map(lambda s: s.session_id,
                 d.sessions)),
             broadcast_domains)))
-    if response.set_broadcast_domains_response.status != iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Value("OK"):
-        raise iterm2.rpc.RPCException(iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Name(response.set_broadcast_domains_response.status))
-
+    if (response.set_broadcast_domains_response.status !=
+            iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Value("OK")):
+        raise iterm2.rpc.RPCException(
+            iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Name(
+                response.set_broadcast_domains_response.status))

@@ -1,9 +1,11 @@
 """Provides interfaces for getting and changing preferences (excluding
 per-profile preferences; see the profile submodule for that)"""
 import enum
-import iterm2.rpc
 import json
 import typing
+
+import iterm2.rpc
+
 
 class PreferenceKey(enum.Enum):
     """Keys identifying particular preference settings."""
@@ -101,14 +103,15 @@ class PreferenceKey(enum.Enum):
 
 
 
-async def async_get_preference(connection, key: PreferenceKey) -> typing.Union[None, typing.Any]:
+async def async_get_preference(
+        connection, key: PreferenceKey) -> typing.Union[None, typing.Any]:
     """
     Gets a preference by key.
 
     :param key: The preference key, from the `PreferenceKey` enum.
-    :returns: An object with the preferences value, or `None` if unset and no default exists.
+    :returns: An object with the preferences value, or `None` if unset and no
+        default exists.
     """
     proto = await iterm2.rpc.async_get_preference(connection, key.value)
     j = proto.preferences_response.results[0].get_preference_result.json_value
     return json.loads(j)
-

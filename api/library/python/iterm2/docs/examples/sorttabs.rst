@@ -1,3 +1,5 @@
+:orphan:
+
 .. _sorttabs_example:
 
 Sort Tabs

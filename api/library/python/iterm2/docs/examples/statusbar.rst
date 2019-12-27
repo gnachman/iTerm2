@@ -1,3 +1,5 @@
+:orphan:
+
 .. _statusbar_example:
 
 Status Bar Component

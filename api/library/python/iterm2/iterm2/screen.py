@@ -6,6 +6,7 @@ import iterm2.rpc
 import iterm2.util
 import typing
 
+
 class LineContents:
     """Describes the contents of a line."""
     def __init__(self, proto):
@@ -30,7 +31,8 @@ class LineContents:
         """Returns the string of the cell at index `x`.
 
         :param x: The index to look up.
-        :returns: A string giving the contents of the cell at that index, or empty string if none.
+        :returns: A string giving the contents of the cell at that index, or
+            empty string if none.
         """
         offset = self.__offset_of_cell[x]
         limit = offset + self.__length_of_cell[x]
@@ -39,8 +41,13 @@ class LineContents:
     @property
     def hard_eol(self) -> bool:
         """
-        :returns: True if the line has a hard newline. If False, the text of a longer line wraps onto the next line."""
-        return self.__proto.continuation == iterm2.api_pb2.LineContents.Continuation.Value("CONTINUATION_HARD_EOL")
+        :returns: True if the line has a hard newline. If False, the text of a
+            longer line wraps onto the next line."""
+        return (
+            self.__proto.continuation ==
+            iterm2.api_pb2.LineContents.Continuation.Value(
+                "CONTINUATION_HARD_EOL"))
+
 
 class ScreenContents:
     """Describes screen contents."""
@@ -51,16 +58,16 @@ class ScreenContents:
     def windowed_coord_range(self) -> iterm2.util.WindowedCoordRange:
         """The line number of the first line in this object."""
         return iterm2.util.WindowedCoordRange(
-                iterm2.util.CoordRange(
-                    iterm2.util.Point(
-                        self.__proto.windowed_coord_range.coord_range.start.x,
-                        self.__proto.windowed_coord_range.coord_range.start.y),
-                    iterm2.util.Point(
-                        self.__proto.windowed_coord_range.coord_range.end.x,
-                        self.__proto.windowed_coord_range.coord_range.end.y)),
-                iterm2.util.Range(
-                    self.__proto.windowed_coord_range.columns.location,
-                    self.__proto.windowed_coord_range.columns.length))
+            iterm2.util.CoordRange(
+                iterm2.util.Point(
+                    self.__proto.windowed_coord_range.coord_range.start.x,
+                    self.__proto.windowed_coord_range.coord_range.start.y),
+                iterm2.util.Point(
+                    self.__proto.windowed_coord_range.coord_range.end.x,
+                    self.__proto.windowed_coord_range.coord_range.end.y)),
+            iterm2.util.Range(
+                self.__proto.windowed_coord_range.columns.location,
+                self.__proto.windowed_coord_range.columns.length))
 
     @property
     def number_of_lines(self) -> int:
@@ -85,15 +92,21 @@ class ScreenContents:
 
     @property
     def number_of_lines_above_screen(self) -> int:
-        """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrollback history.
+        """
+        Returns the number of lines before the screen including scrollback
+        history and lines lost from the head of scrollback history.
 
-        :returns: The number of lines ever received before the top line of the screen."""
+        :returns: The number of lines ever received before the top line of the
+            screen.
+        """
         return self.__proto.num_lines_above_screen
+
 
 class ScreenStreamer:
     """An asyncio context manager for monitoring the screen contents.
 
-    You can use this to be notified when screen contents change. Optionally, you can receive the actual contents of the screen.
+    You can use this to be notified when screen contents change. Optionally,
+    you can receive the actual contents of the screen.
 
     Don't create this yourself. Use Session.get_screen_streamer() instead. See
     its docstring for more info."""
@@ -117,15 +130,18 @@ class ScreenStreamer:
             if future is not None and not future.done():
                 future.set_result(message)
 
-        self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(
-            self.connection,
-            async_on_update,
-            self.session_id)
+        self.token = (
+            await iterm2.notifications.
+            async_subscribe_to_screen_update_notification(
+                self.connection,
+                async_on_update,
+                self.session_id))
         return self
 
     async def __aexit__(self, exc_type, exc, _tb):
         try:
-            await iterm2.notifications.async_unsubscribe(self.connection, self.token)
+            await iterm2.notifications.async_unsubscribe(
+                self.connection, self.token)
         except iterm2.notifications.SubscriptionException:
             pass
 
@@ -133,9 +149,11 @@ class ScreenStreamer:
         """
         Blocks until the screen contents change.
 
-        If this `ScreenStreamer` has been configured to provide screen contents, then they will be returned.
+        If this `ScreenStreamer` has been configured to provide screen
+        contents, then they will be returned.
 
-        :returns: A :class:`ScreenContents` (if so configured), otherwise `None`.
+        :returns: A :class:`ScreenContents` (if so configured), otherwise
+            `None`.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
@@ -150,7 +168,9 @@ class ScreenStreamer:
             self.connection,
             self.session_id,
             None)
-        if result.get_buffer_response.status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
+        if (result.get_buffer_response.status == iterm2.
+                api_pb2.GetBufferResponse.Status.Value("OK")):
             return ScreenContents(result.get_buffer_response)
-        raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status))
-
+        raise iterm2.rpc.RPCException(
+            iterm2.api_pb2.GetBufferResponse.Status.Name(
+                result.get_buffer_response.status))

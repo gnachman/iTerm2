@@ -1,3 +1,5 @@
+:orphan:
+
 .. _escindicator_example:
 
 Escape Key Indicator

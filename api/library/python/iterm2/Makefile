@@ -16,3 +16,6 @@ upload: force
 
 mypy: force
 	mypy --ignore-missing-imports ./test.py
+
+pycodestyle: force
+	pycodestyle `\ls -d iterm2/*.py| grep -v api_pb2`
