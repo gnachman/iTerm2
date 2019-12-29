@@ -136,7 +136,7 @@ class SubSelection:
                     self.__windowed_coord_range.end.x,
                     self.__windowed_coord_range.coordRange.end.y)))
         else:
-            callback(self.__windowed_coord_range.coordRange)
+            callback(self.__windowed_coord_range.coordRange, self)
 
 
 class Selection:
@@ -271,7 +271,7 @@ class Selection:
                         the_range.length > 0):
                     connectors |= {the_range.max}
 
-            outer.enumerate_ranges(handle_range, outer)
+            outer.enumerate_ranges(handle_range)
 
         # The ranges may be out of order so put them in an array and then sort
         # it.
@@ -304,6 +304,7 @@ class Selection:
                 the_range.start.y * width +
                 the_range.length(width))
             eol = (end_index not in connectors) and idx + 1 < len(sorted_ranges)
+            the_range.end.x += 1
             stop = await cb(iterm2.util.WindowedCoordRange(the_range), eol)
             if stop:
                 break
