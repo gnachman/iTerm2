@@ -11,6 +11,7 @@ import iterm2.connection
 import iterm2.notifications
 
 
+# pylint: disable=line-too-long
 class Modifier(enum.Enum):
     """Enumerated list of modifier keys."""
     CONTROL = iterm2.api_pb2.Modifiers.Value("CONTROL")  #: The control key modifier
@@ -19,6 +20,7 @@ class Modifier(enum.Enum):
     SHIFT = iterm2.api_pb2.Modifiers.Value("SHIFT")  #: The shift key modifier
     FUNCTION = iterm2.api_pb2.Modifiers.Value("FUNCTION")  #: Indicates the key is a function key.
     NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")  #: Indicates the key is on the numeric keypad.
+# pylint: enable=line-too-long
 
 
 class Keycode(enum.Enum):
@@ -278,6 +280,7 @@ class KeystrokePattern:
 
     def to_proto(self):
         """Creates a protobuf for this pattern."""
+        # pylint: disable=no-member
         proto = iterm2.api_pb2.KeystrokePattern()
         proto.required_modifiers.extend(
             list(
@@ -323,8 +326,10 @@ class KeystrokeMonitor:
             loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
+        # pylint: disable=unused-argument
         async def callback(connection, notification):
             await self.__queue.put(notification)
+        # pylint: enable=unused-argument
         self.__token = (
             await iterm2.notifications.
             async_subscribe_to_keystroke_notification(

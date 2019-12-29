@@ -8,13 +8,14 @@ callback will be run when the event occurs.
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.rpc
-import iterm2.variables
 
+# pylint: disable=no-member
 RPC_ROLE_GENERIC = iterm2.api_pb2.RPCRegistrationRequest.Role.Value("GENERIC")
 RPC_ROLE_SESSION_TITLE = iterm2.api_pb2.RPCRegistrationRequest.Role.Value(
         "SESSION_TITLE")
 RPC_ROLE_STATUS_BAR_COMPONENT = (
     iterm2.api_pb2.RPCRegistrationRequest.Role.Value("STATUS_BAR_COMPONENT"))
+# pylint: enable=no-member
 
 
 def _get_handlers():
@@ -124,12 +125,14 @@ async def async_filter_keystrokes(
 
     Returns: A token that can be passed to unsubscribe.
     """
+    # pylint: disable=no-member
     kmr = iterm2.api_pb2.KeystrokeMonitorRequest()
     kmr.patterns_to_ignore.extend(
         list(map(lambda x: x.to_proto(), patterns_to_ignore)))
 
-    async def callback(connection, notif):
+    async def callback(connection, notif):  # pylint: disable=unused-argument
         pass
+
     return await _async_subscribe(
         connection,
         True,
@@ -280,6 +283,9 @@ async def async_subscribe_to_broadcast_domains_change_notification(
         session=None)
 
 
+# pylint: disable=dangerous-default-value
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
 async def async_subscribe_to_server_originated_rpc_notification(
         connection,
         callback,
@@ -312,6 +318,7 @@ async def async_subscribe_to_server_originated_rpc_notification(
 
     :returns: A token that can be passed to unsubscribe.
     """
+    # pylint: disable=no-member
     rpc_registration_request = iterm2.api_pb2.RPCRegistrationRequest()
     rpc_registration_request.name = name
     if timeout_seconds is not None:
@@ -354,6 +361,9 @@ async def async_subscribe_to_server_originated_rpc_notification(
         iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC,
         callback,
         rpc_registration_request=rpc_registration_request)
+# pylint: enable=dangerous-default-value
+# pylint: enable=too-many-arguments
+# pylint: enable=too-many-locals
 
 
 async def async_subscribe_to_variable_change_notification(
@@ -370,6 +380,7 @@ async def async_subscribe_to_variable_change_notification(
         being monitored, or None for app. Sometimes this will be "all" or
         "active".
     """
+    # pylint: disable=no-member
     request = iterm2.api_pb2.VariableMonitorRequest()
     request.name = name
     request.scope = scope
@@ -424,6 +435,8 @@ def _string_rpc_registration_request(rpc):
     return rpc.name + "(" + ",".join(args) + ")"
 
 
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
 async def _async_subscribe(
         connection,
         subscribe,
@@ -464,6 +477,7 @@ async def _async_subscribe(
         profile_change_request,
         prompt_monitor_modes)
     status = response.notification_response.status
+    # pylint: disable=no-member
     status_ok = (
         status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
@@ -497,8 +511,11 @@ async def _async_subscribe(
             # Normal code path for unsubscribe
             return
 
+    # pylint: disable=no-member
     raise SubscriptionException(
         iterm2.api_pb2.NotificationResponse.Status.Name(status))
+# pylint: enable=too-many-arguments
+# pylint: enable=too-many-locals
 
 
 def _register_helper_if_needed():
@@ -553,6 +570,7 @@ def _get_all_sessions_handler_keys_from_notification(notification):
     return [(None, standard_key[1])]
 
 
+# pylint: disable=too-many-branches
 def _get_handler_key_from_notification(notification):
     key = None
 
@@ -605,6 +623,7 @@ def _get_handler_key_from_notification(notification):
         key = (notification.profile_changed_notification.guid,
                iterm2.api_pb2.NOTIFY_ON_PROFILE_CHANGE)
     return key, notification
+# pylint: enable=too-many-branches
 
 
 def _get_notification_handlers(message):

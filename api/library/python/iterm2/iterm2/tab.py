@@ -1,15 +1,14 @@
 """Provides a class that represents an iTerm2 tab."""
-
+import abc
 import enum
 import json
 import typing
 
-import iterm2
 import iterm2.api_pb2
-import iterm2.app
 import iterm2.capabilities
 import iterm2.rpc
 import iterm2.session
+import iterm2.util
 
 
 class NavigationDirection(enum.Enum):
@@ -24,6 +23,25 @@ class Tab:
     """Represents a tab.
 
     Don't create this yourself. Instead, use :class:`~iterm2.App`."""
+
+    # pylint: disable=too-few-public-methods
+    class Delegate:
+        """Delegate for Tab."""
+        @abc.abstractmethod
+        def tab_delegate_get_window(
+                self, tab: 'Tab') -> typing.Optional['iterm2.window.Window']:
+            """Returns the Window for a Tab."""
+
+        @abc.abstractmethod
+        async def tab_delegate_get_window_by_id(
+                self,
+                window_id: str) -> typing.Optional['iterm2.window.Window']:
+            """Returns the Window with the given ID."""
+    # pylint: enable=too-few-public-methods
+
+    delegate: typing.Optional[Delegate] = None
+
+    # pylint: disable=too-many-arguments
     def __init__(
             self,
             connection,
@@ -37,6 +55,7 @@ class Tab:
         self.active_session_id = None
         self.__tmux_window_id = tmux_window_id
         self.__tmux_connection_id = tmux_connection_id
+    # pylint: enable=too-many-arguments
 
     def __repr__(self):
         return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.sessions)
@@ -51,23 +70,10 @@ class Tab:
         self.__root.update_session(session)
 
     @property
-    def window(self) -> typing.Optional['iterm2.Window']:
-        """Returns the containing window."""
-        # Note: App sets get_window on Tab when it's created.
-        return Tab.get_window(self)
-
-    # Note: This is set by App during its initialization.
-    get_window_impl: typing.Optional[
-        typing.Callable[['Tab'], typing.Optional['iterm2.Window']]] = None
-
-    def get_window(self) -> typing.Optional['iterm2.Window']:
-        """Returns the window this tab belongs to.
-
-        Only call this after creating an :class:`~iterm2.app.App` object.
-        """
-        if Tab.get_window_impl:
-            return Tab.get_window_impl(self)
-        return None
+    def window(self) -> typing.Optional['iterm2.window.Window']:
+        """Returns the window this tab belongs to."""
+        assert self.__class__.delegate
+        return self.__class__.delegate.tab_delegate_get_window(self)
 
     @property
     def tmux_connection_id(self):
@@ -84,7 +90,7 @@ class Tab:
         return self.__tab_id
 
     @property
-    def sessions(self) -> typing.List[iterm2.session.Session]:
+    def sessions(self) -> typing.List['iterm2.session.Session']:
         """
         A tab contains a list of sessions, which are its split panes.
 
@@ -181,6 +187,7 @@ class Tab:
         response = await iterm2.rpc.async_set_tab_layout(
             self.connection, self.tab_id, self.__root.to_protobuf())
         status = response.set_tab_layout_response.status
+        # pylint: disable=no-member
         if status == iterm2.api_pb2.SetTabLayoutResponse.Status.Value("OK"):
             return response.set_tab_layout_response
         raise iterm2.rpc.RPCException(
@@ -212,6 +219,7 @@ class Tab:
             sets=[(name, json.dumps(value))],
             tab_id=self.__tab_id)
         status = result.variable_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -233,6 +241,7 @@ class Tab:
         result = await iterm2.rpc.async_variable(
             self.connection, gets=[name], tab_id=self.__tab_id)
         status = result.variable_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -252,6 +261,7 @@ class Tab:
         result = await iterm2.rpc.async_close(
             self.connection, tabs=[self.__tab_id], force=force)
         status = result.close_response.statuses[0]
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.CloseResponse.Status.Name(status))
@@ -300,6 +310,7 @@ class Tab:
             timeout=timeout)
         which = response.invoke_function_response.WhichOneof('disposition')
         if which == 'error':
+            # pylint: disable=no-member
             if (response.invoke_function_response.error.status ==
                     iterm2.api_pb2.InvokeFunctionResponse.Status.
                     Value("TIMEOUT")):
@@ -322,9 +333,9 @@ class Tab:
         """
         window_id = await self.async_invoke_function(
             "iterm2.move_tab_to_window()")
-        app = await iterm2.app.async_get_app(self.connection)
-        assert app
-        window = app.get_window_by_id(window_id)
+        assert self.__class__.delegate
+        window = await self.__class__.delegate.tab_delegate_get_window_by_id(
+            window_id)
         if not window:
             raise iterm2.rpc.RPCException(
                 "No such window {}".format(window_id))

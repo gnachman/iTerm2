@@ -1,10 +1,11 @@
 """Provides access to screen contents."""
 import asyncio
+import typing
+
 import iterm2.api_pb2
 import iterm2.notifications
 import iterm2.rpc
 import iterm2.util
-import typing
 
 
 class LineContents:
@@ -15,7 +16,7 @@ class LineContents:
         self.__length_of_cell = []
         offset = 0
         for cppc in proto.code_points_per_cell:
-            for i in range(cppc.repeats):
+            for i in range(cppc.repeats):  # pylint: disable=unused-variable
                 offset += cppc.num_code_points
                 self.__offset_of_cell.append(offset)
                 self.__length_of_cell.append(cppc.num_code_points)
@@ -27,7 +28,7 @@ class LineContents:
         """
         return self.__proto.text
 
-    def string_at(self, x: int) -> str:
+    def string_at(self, x: int) -> str:  # pylint: disable=invalid-name
         """Returns the string of the cell at index `x`.
 
         :param x: The index to look up.
@@ -44,6 +45,7 @@ class LineContents:
         :returns: True if the line has a hard newline. If False, the text of a
             longer line wraps onto the next line."""
         return (
+            # pylint: disable=no-member
             self.__proto.continuation ==
             iterm2.api_pb2.LineContents.Continuation.Value(
                 "CONTINUATION_HARD_EOL"))
@@ -164,6 +166,7 @@ class ScreenStreamer:
 
         if not self.want_contents:
             return None
+        # pylint: disable=no-member
         result = await iterm2.rpc.async_get_screen_contents(
             self.connection,
             self.session_id,

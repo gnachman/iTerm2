@@ -1,9 +1,9 @@
 """Provides classes for interacting with iTerm2 sessions."""
+import abc
 import json
 import typing
 
 import iterm2.api_pb2
-import iterm2.app
 import iterm2.capabilities
 import iterm2.connection
 import iterm2.keyboard
@@ -13,6 +13,10 @@ import iterm2.rpc
 import iterm2.screen
 import iterm2.selection
 import iterm2.util
+
+
+# pylint: disable=too-many-lines
+# pylint: disable=too-many-public-methods
 
 
 class SplitPaneException(Exception):
@@ -129,6 +133,7 @@ class Splitter:
         node = iterm2.api_pb2.SplitTreeNode()
         node.vertical = self.vertical
 
+        # pylint: disable=no-member
         def make_link(obj):
             link = iterm2.api_pb2.SplitTreeNode.SplitTreeLink()
             if isinstance(obj, Session):
@@ -176,6 +181,27 @@ class Session:
     """
     Represents an iTerm2 session.
     """
+
+    class Delegate:
+        """
+        Provides callbacks for Session.
+        """
+        @abc.abstractmethod
+        def session_delegate_get_tab(
+                self, session) -> typing.Optional['iterm2.Tab']:
+            """Returns the tab for a session."""
+
+        @abc.abstractmethod
+        def session_delegate_get_window(
+                self, session) -> typing.Optional['iterm2.Window']:
+            """Returns the window for a session."""
+
+        @abc.abstractmethod
+        async def session_delegate_create_session(
+                self, session_id: str) -> typing.Optional['iterm2.session.Session']:
+            """Creates a new Session object given a session ID."""
+
+    delegate: typing.Optional[Delegate] = None
 
     @staticmethod
     def active_proxy(connection: iterm2.connection.Connection) -> 'Session':
@@ -230,6 +256,7 @@ class Session:
 
     def to_session_summary_protobuf(self):
         """Returns the protobuf representation."""
+        # pylint: disable=no-member
         summary = iterm2.api_pb2.SessionSummary()
         summary.unique_identifier = self.session_id
         summary.grid_size.width = self.preferred_size.width
@@ -258,25 +285,15 @@ class Session:
         # Note: App sets get_tab on Session when it's created.
         return Session.get_tab(self)
 
-    # Note: This is set by App during its initialization.
-    get_tab_impl: typing.Optional[
-        typing.Callable[['Session'],
-                        typing.Optional['iterm2.Tab']]] = None
-
     @staticmethod
     def get_tab(obj: 'iterm2.Session') -> typing.Optional['iterm2.Tab']:
         """Returns the tab containing a given session.
 
         Do not call this before creating a :class:`~iterm2.app.App` object.
         """
-        if Session.get_tab_impl:
-            return Session.get_tab_impl(obj)
+        if Session.delegate:
+            return Session.delegate.session_delegate_get_tab(obj)
         return None
-
-    # Note: This is set by App during its initialization.
-    get_window_impl: typing.Optional[
-        typing.Callable[['Session'],
-                        typing.Optional['iterm2.Window']]] = None
 
     @staticmethod
     def get_window(obj: 'iterm2.Session') -> typing.Optional['iterm2.Window']:
@@ -284,8 +301,8 @@ class Session:
 
         Do not call this before creating a :class:`~iterm2.app.App` object.
         """
-        if Session.get_window_impl:
-            return Session.get_window_impl(obj)
+        if Session.delegate:
+            return Session.delegate.session_delegate_get_window(obj)
         return None
 
     @property
@@ -324,6 +341,7 @@ class Session:
             screen contents.
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
+        # pylint: disable=no-member
         result = await iterm2.rpc.async_get_screen_contents(
             self.connection,
             self.session_id)
@@ -378,6 +396,7 @@ class Session:
             self.connection,
             self.session_id,
             coord_range)
+        # pylint: disable=no-member
         if (response.get_buffer_response.status ==
                 iterm2.api_pb2.GetBufferResponse.Status.Value("OK")):
             contents = iterm2.screen.ScreenContents(
@@ -473,17 +492,18 @@ class Session:
             before,
             profile,
             profile_customizations=custom_dict)
+        # pylint: disable=no-member
         if (result.split_pane_response.status ==
                 iterm2.api_pb2.SplitPaneResponse.Status.Value("OK")):
             new_session_id = result.split_pane_response.session_id[0]
-            app = await iterm2.app.async_get_app(self.connection)
-            assert app
-            await app.async_refresh()
-            session = app.get_session_by_id(new_session_id)
+            assert Session.delegate
+            session = await Session.delegate.session_delegate_create_session(
+                new_session_id)
             if session:
                 return session
             raise SplitPaneException(
                 "No such session {}".format(new_session_id))
+        # pylint: disable=no-member
         raise SplitPaneException(
             iterm2.api_pb2.SplitPaneResponse.Status.Name(
                 result.split_pane_response.status))
@@ -517,6 +537,7 @@ class Session:
                 self.session_id,
                 assignments)
             status = response.set_profile_property_response.status
+            # pylint: disable=no-member
             if (status != iterm2.api_pb2.SetProfilePropertyResponse.
                     Status.Value("OK")):
                 raise iterm2.rpc.RPCException(
@@ -532,6 +553,7 @@ class Session:
                 key,
                 json_value)
             status = response.set_profile_property_response.status
+            # pylint: disable=no-member
             if (status != iterm2.api_pb2.SetProfilePropertyResponse.Status.
                     Value("OK")):
                 raise iterm2.rpc.RPCException(
@@ -556,6 +578,7 @@ class Session:
         response = await iterm2.rpc.async_get_profile(
             self.connection, self.__session_id)
         status = response.get_profile_property_response.status
+        # pylint: disable=no-member
         if status == iterm2.api_pb2.GetProfilePropertyResponse.Status.Value(
                 "OK"):
             return iterm2.profile.Profile(
@@ -592,6 +615,7 @@ class Session:
         response = await iterm2.rpc.async_inject(
             self.connection, data, [self.__session_id])
         status = response.inject_response.status[0]
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.InjectResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.InjectResponse.Status.Name(status))
@@ -637,6 +661,7 @@ class Session:
             [(name, json.dumps(value))],
             [])
         status = result.variable_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -659,6 +684,7 @@ class Session:
         result = await iterm2.rpc.async_variable(
             self.connection, self.__session_id, [], [name])
         status = result.variable_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -677,6 +703,7 @@ class Session:
         result = await iterm2.rpc.async_restart_session(
             self.connection, self.__session_id, only_if_exited)
         status = result.restart_session_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.RestartSessionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.RestartSessionResponse.Status.Name(status))
@@ -693,6 +720,7 @@ class Session:
         result = await iterm2.rpc.async_close(
             self.connection, sessions=[self.__session_id], force=force)
         status = result.close_response.statuses[0]
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.CloseResponse.Status.Name(status))
@@ -735,6 +763,7 @@ class Session:
         response = await iterm2.rpc.async_set_property(
             self.connection, key, json_value, session_id=self.session_id)
         status = response.set_property_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.SetPropertyResponse.Status.Name(status))
@@ -752,6 +781,7 @@ class Session:
         response = await iterm2.rpc.async_get_selection(
             self.connection, self.session_id)
         status = response.selection_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.SelectionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.SelectionResponse.Status.Name(status))
@@ -809,6 +839,7 @@ class Session:
         response = await iterm2.rpc.async_set_selection(
             self.connection, self.session_id, selection)
         status = response.selection_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.SelectionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.SelectionResponse.Status.Name(status))
@@ -827,6 +858,7 @@ class Session:
             "number_of_lines",
             session_id=self.session_id)
         status = response.get_property_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.GetPropertyResponse.Status.Name(status))
@@ -898,6 +930,7 @@ class Session:
             session_id=self.session_id,
             timeout=timeout)
         which = response.invoke_function_response.WhichOneof('disposition')
+        # pylint: disable=no-member
         if which == 'error':
             if (response.invoke_function_response.error.status ==
                     iterm2.api_pb2.InvokeFunctionResponse.Status.

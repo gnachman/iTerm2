@@ -1,6 +1,8 @@
 """Provides hooks for session life-cycle events."""
 import asyncio
-import iterm2
+
+import iterm2.connection
+import iterm2.notifications
 
 
 class EachSessionOnceMonitor:
@@ -15,7 +17,7 @@ class EachSessionOnceMonitor:
     :param connection: The :class:`~iterm2.connection.Connection` to use.
     :param app: An instance of :class:`~iterm2.app.App`.
     """
-    def __init__(self, app: iterm2.App):
+    def __init__(self, app: 'iterm2.app.App'):
         self.__connection = app.connection
         self.__app = app
         self.__token = None
@@ -119,7 +121,7 @@ class SessionTerminationMonitor:
                   session_id = await mon.async_get()
                   print("Session {} closed".format(session_id))
     """
-    def __init__(self, connection: iterm2.Connection):
+    def __init__(self, connection: iterm2.connection.Connection):
         self.__connection = connection
         self.__token = None
         self.__queue: asyncio.Queue = asyncio.Queue(

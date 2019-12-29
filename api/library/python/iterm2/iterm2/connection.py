@@ -85,7 +85,7 @@ class Connection:
         try:
             connection.websocket = await websockets.connect(
                 _uri(),
-                ping_interval=None,
+                ping_interval=None,  # type: ignore
                 extra_headers=_headers(),
                 subprotocols=_subprotocols())
         except websockets.exceptions.InvalidStatusCode as status_code_exception:
@@ -94,6 +94,7 @@ class Connection:
                       "the current version of iTerm2. Please upgrade.")
                 sys.exit(1)
             raise
+        # pylint: disable=protected-access
         connection.__dispatch_forever_future = asyncio.ensure_future(
             connection._async_dispatch_forever(
                 connection, asyncio.get_event_loop()))
@@ -126,6 +127,7 @@ class Connection:
         """Runs `coro` and never returns."""
         self.run(True, coro, retry, debug)
 
+    # pylint: disable=no-self-use
     def set_message_in_future(self, loop, message, future):
         """Sets message as the future's result soon."""
         assert future is not None
@@ -236,7 +238,7 @@ class Connection:
         i = self._receiver_index(message)
         if i is None:
             return None
-        match_func, future = self.__receivers[i]
+        match_func, future = self.__receivers[i]  # pylint: disable=unused-variable
         del self.__receivers[i]
         return future
 
@@ -268,6 +270,7 @@ class Connection:
         Dispatch a message to all registered helpers.
         """
         for helper in Connection.helpers:
+            # pylint: disable=try-except-raise
             assert helper is not None
             try:
                 if await helper(self, message):
@@ -317,6 +320,7 @@ class Connection:
                         subprotocols=_subprotocols()) as websocket:
                     done = True
                     self.websocket = websocket
+                    # pylint: disable=broad-except
                     try:
                         return await coro(self)
                     except Exception as _err:

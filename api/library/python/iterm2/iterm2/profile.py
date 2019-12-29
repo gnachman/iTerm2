@@ -12,6 +12,9 @@ import iterm2.colorpresets
 import iterm2.rpc
 
 
+# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-lines
+# pylint: disable=line-too-long
 class BackgroundImageMode(enum.Enum):
     """Describes how the background image should be accommodated to fit the window."""
     STRETCH = 0  #: Stretch to fit
@@ -67,6 +70,7 @@ class InitialWorkingDirectory(enum.Enum):
     INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
 
+# pylint: enable=line-too-long
 
 class IconMode(enum.Enum):
     """How should session icons be selected?"""
@@ -102,8 +106,10 @@ class LocalWriteOnlyProfile:
       * Example ":ref:`settabcolor_example`"
       * Example ":ref:`increase_font_size_example`"
     """
-    def __init__(self, values={}):
-        self.__values = {}
+    def __init__(self, values=None):
+        if not values:
+            values = {}
+        self.__values = values
         for key, value in values.items():
             self.__values[key] = json.dumps(value)
 
@@ -1927,10 +1933,7 @@ class Profile(WriteOnlyProfile):
             props[prop.key] = json.loads(prop.json_value)
 
         guid_key = "Guid"
-        if guid_key in props:
-            guid = props[guid_key]
-        else:
-            guid = None
+        guid = props.get(guid_key, None)
 
         super().__init__(session_id, connection, guid)
 
@@ -2986,7 +2989,7 @@ class PartialProfile(Profile):
     Represents a profile that has only a subset of fields available for
     reading.
     """
-
+    # pylint: disable=dangerous-default-value
     @staticmethod
     async def async_query(
             connection: iterm2.connection.Connection,
@@ -3019,6 +3022,8 @@ class PartialProfile(Profile):
             profiles.append(profile)
         return profiles
 
+    # Disable this because it's a public API and I'm stuck with it.
+    # pylint: disable=arguments-differ
     @staticmethod
     async def async_get_default(
             connection: iterm2.connection.Connection,
@@ -3032,6 +3037,7 @@ class PartialProfile(Profile):
         profiles = await PartialProfile.async_query(
             connection, [guid], properties)
         return profiles[0]
+    # pylint: enable=dangerous-default-value
 
     async def async_get_full_profile(self) -> Profile:
         """Requests a full profile and returns it.

@@ -1,11 +1,11 @@
 """Provides functions to register toolbelt webivew tools."""
-
+import iterm2.api_pb2
+import iterm2.connection
 import iterm2.rpc
-import iterm2
 
 
 async def async_register_web_view_tool(
-        connection: iterm2.Connection,
+        connection: iterm2.connection.Connection,
         display_name: str,
         identifier: str,
         reveal_if_already_registered: bool,
@@ -32,6 +32,7 @@ async def async_register_web_view_tool(
         reveal_if_already_registered,
         url)
     status = result.register_tool_response.status
+    # pylint: disable=no-member
     if status == iterm2.api_pb2.RegisterToolResponse.Status.Value("OK"):
         return None
     raise iterm2.rpc.RPCException(result.register_tool_response)

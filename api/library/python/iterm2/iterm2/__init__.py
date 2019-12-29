@@ -4,7 +4,7 @@ The iTerm2 module provides a Python interface for controlling iTerm2.
 from iterm2.alert import Alert, TextInputAlert
 
 from iterm2.app import (
-    async_get_app, CreateWindowException, App, async_invoke_function,
+    async_get_app, App, async_invoke_function,
     async_get_variable)
 
 from iterm2.arrangement import SavedArrangementException, Arrangement
@@ -73,7 +73,8 @@ from iterm2.util import (
     WindowedCoordRange, async_wait_forever)
 
 from iterm2.window import (
-    CreateTabException, SetPropertyException, GetPropertyException, Window)
+    CreateTabException, CreateWindowException, SetPropertyException,
+    GetPropertyException, Window)
 
 from iterm2._version import __version__
 

@@ -31,6 +31,7 @@ class Transaction:
         self.connection = connection
 
     async def __aenter__(self):
+        # pylint: disable=global-statement
         global CURRENT_TRANSACTION
         if not CURRENT_TRANSACTION:
             CURRENT_TRANSACTION = self
@@ -40,6 +41,7 @@ class Transaction:
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.rpc.async_end_transaction(self.connection)
 
+        # pylint: disable=global-statement
         global CURRENT_TRANSACTION
         if CURRENT_TRANSACTION == self:
             CURRENT_TRANSACTION = None

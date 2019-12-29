@@ -24,6 +24,7 @@ class ColorPreset:
         """Derives from :class:`~iterm2.Color`.
 
         Note this is is an inner class of `ColorPreset`."""
+        # pylint: disable=too-many-arguments
         def __init__(self, r, g, b, a, color_space, key):
             super().__init__(r, g, b, a, color_space)
             self.__key = key
@@ -55,6 +56,7 @@ class ColorPreset:
             * Example ":ref:`current_preset_example`"
             * Example ":ref:`random_color_example`"
         """
+        # pylint: disable=no-member
         result = await iterm2.rpc.async_list_color_presets(connection)
         if (result.color_preset_response.status == iterm2.api_pb2.
                 ColorPresetResponse.Status.Value("OK")):
@@ -81,6 +83,7 @@ class ColorPreset:
             * Example ":ref:`darknight_example`"
         """
         result = await iterm2.rpc.async_get_color_preset(connection, name)
+        # pylint: disable=no-member
         if (result.color_preset_response.status == iterm2.
                 api_pb2.ColorPresetResponse.Status.Value("OK")):
             return ColorPreset(

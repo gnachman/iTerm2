@@ -7,6 +7,7 @@ import typing
 import iterm2.rpc
 
 
+# pylint: disable=line-too-long
 class PreferenceKey(enum.Enum):
     """Keys identifying particular preference settings."""
     OPEN_PROFILES_WINDOW_AT_START = "OpenBookmark"  #: Open the profiles window at startup?  Mutually exclusive with OPEN_DEFAULT_ARRANGEMENT_AT_START and RESTORE_ONLY_HOTKEY_AT_START.  Takes a boolean.
@@ -101,6 +102,7 @@ class PreferenceKey(enum.Enum):
     EMULATE_US_KEYBOARD = "UseVirtualKeyCodesForDetectingDigits"  #: Emulate US keyboard for the purposes of switching tabs/panes/windows by keyboard? Takes a boolean.
     TEXT_SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does increasing/decreasing text size update the backing profile? Takes a boolean.
 
+# pylint: enable=line-too-long
 
 
 async def async_get_preference(

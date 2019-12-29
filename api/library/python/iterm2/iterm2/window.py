@@ -1,22 +1,25 @@
 """Provides classes that represent iTerm2 windows."""
+import abc
 import json
 import typing
 
 import iterm2.api_pb2
-import iterm2.app
 import iterm2.arrangement
 import iterm2.connection
 import iterm2.profile
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
-import iterm2.tmux
 import iterm2.transaction
 import iterm2.util
 
 
 class CreateTabException(Exception):
     """Something went wrong creating a tab."""
+
+
+class CreateWindowException(Exception):
+    """A problem was encountered while creating a window."""
 
 
 class SetPropertyException(Exception):
@@ -27,6 +30,13 @@ class GetPropertyException(Exception):
     """Something went wrong fetching a property."""
 
 
+DELEGATE_FACTORY: typing.Optional[
+    typing.Callable[
+        [iterm2.connection.Connection],
+        typing.Awaitable['Window.Delegate']]] = None
+
+
+# pylint: disable=too-many-public-methods
 class Window:
     """Represents a terminal window.
 
@@ -35,6 +45,29 @@ class Window:
     query its `windows` property. To create a new window, use
     :meth:`async_create`.
     """
+
+    class Delegate:
+        """Delegate for Window"""
+        @abc.abstractmethod
+        async def window_delegate_get_window_with_session_id(
+                self,
+                session_id: str) -> typing.Optional['Window']:
+            """Gets the Window that contains a Session by ID."""
+
+        @abc.abstractmethod
+        async def window_delegate_get_tab_by_id(
+                self,
+                tab_id: str) -> typing.Optional[iterm2.tab.Tab]:
+            """Gets a Tab by ID."""
+
+        @abc.abstractmethod
+        async def window_delegate_get_tab_with_session_id(
+                self,
+                session_id: str) -> typing.Optional[iterm2.tab.Tab]:
+            """Returns the Tab containing a Session by ID."""
+
+    delegate: typing.Optional[Delegate] = None
+
     @staticmethod
     async def async_create(
             connection: iterm2.connection.Connection,
@@ -55,7 +88,7 @@ class Window:
         :returns: A new :class:`Window` or `None` if the session ended right
             away.
 
-        :throws: `~iterm2.app.CreateWindowException` if something went wrong.
+        :throws: `CreateWindowException` if something went wrong.
 
         .. seealso:: Example ":ref:`create_window_example`"
         """
@@ -76,18 +109,18 @@ class Window:
             window=None,
             profile_customizations=custom_dict)
         ctr = result.create_tab_response
+        # pylint: disable=no-member
         if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            app = await iterm2.app.async_get_app(connection, False)
-            if not app:
+            if not Window.delegate:
                 return await Window._async_load(connection, ctr.window_id)
-            session = app.get_session_by_id(ctr.session_id)
-            if session is None:
-                return None
-            window, _tab = app.get_tab_and_window_for_session(session)
-            if window is None:
-                return None
-            return window
-        raise iterm2.app.CreateWindowException(
+
+            assert Window.delegate
+            return await (
+                Window.delegate.window_delegate_get_window_with_session_id(
+                    ctr.session_id))
+
+        # pylint: disable=no-member
+        raise CreateWindowException(
             iterm2.api_pb2.CreateTabResponse.Status.Name(
                 result.create_tab_response.status))
 
@@ -128,6 +161,7 @@ class Window:
             window.frame,
             window.number)
 
+    # pylint: disable=too-many-arguments
     def __init__(self, connection, window_id, tabs, frame, number):
         self.connection = connection
         self.__window_id = window_id
@@ -228,7 +262,7 @@ class Window:
     async def async_create_tmux_tab(
             self,
             tmux_connection:
-            iterm2.tmux.TmuxConnection) -> typing.Optional[iterm2.tab.Tab]:
+            'iterm2.tmux.TmuxConnection') -> typing.Optional[iterm2.tab.Tab]:
         """Creates a new tmux tab in this window.
 
         This may not be called from within a
@@ -238,7 +272,7 @@ class Window:
 
         :returns: A newly created tab, or `None` if it could not be created.
 
-        :throws: `~iterm2.app.CreateTabException` if something went wrong.
+        :throws: `CreateTabException` if something went wrong.
 
         .. seealso:: Example ":ref:`tmux_example`"
         """
@@ -247,15 +281,17 @@ class Window:
             self.connection,
             tmux_connection.connection_id,
             tmux_window_id)
+        # pylint: disable=no-member
         if (response.tmux_response.status !=
                 iterm2.api_pb2.TmuxResponse.Status.Value("OK")):
             raise CreateTabException(
                 iterm2.api_pb2.TmuxResponse.Status.Name(
                     response.tmux_response.status))
         tab_id = response.tmux_response.create_window.tab_id
-        app = await iterm2.app.async_get_app(self.connection)
-        assert app
-        return app.get_tab_by_id(tab_id)
+        if not Window.delegate:
+            assert DELEGATE_FACTORY
+            Window.delegate = await DELEGATE_FACTORY(self.connection)
+        return await Window.delegate.window_delegate_get_tab_by_id(tab_id)
 
     async def async_create_tab(
             self,
@@ -298,15 +334,14 @@ class Window:
             window=self.__window_id,
             index=index,
             profile_customizations=custom_dict)
+        # pylint: disable=no-member
         if (result.create_tab_response.status ==
                 iterm2.api_pb2.CreateTabResponse.Status.Value("OK")):
             session_id = result.create_tab_response.session_id
-            app = await iterm2.app.async_get_app(self.connection)
-            assert app
-            session = app.get_session_by_id(session_id)
-            assert session is not None
-            _window, tab = app.get_tab_and_window_for_session(session)
-            return tab
+            assert Window.delegate
+            return await Window.delegate.window_delegate_get_tab_with_session_id(
+                session_id)
+        # pylint: disable=no-member
         raise CreateTabException(
             iterm2.api_pb2.CreateTabResponse.Status.Name(
                 result.create_tab_response.status))
@@ -326,6 +361,7 @@ class Window:
         response = await iterm2.rpc.async_get_property(
             self.connection, "frame", self.__window_id)
         status = response.get_property_response.status
+        # pylint: disable=no-member
         if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             frame_dict = json.loads(response.get_property_response.json_value)
             frame = iterm2.util.Frame()
@@ -348,6 +384,7 @@ class Window:
             json_value,
             window_id=self.__window_id)
         status = response.set_property_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise SetPropertyException(response.get_property_response.status)
 
@@ -362,6 +399,7 @@ class Window:
         response = await iterm2.rpc.async_get_property(
             self.connection, "fullscreen", self.__window_id)
         status = response.get_property_response.status
+        # pylint: disable=no-member
         if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             return json.loads(response.get_property_response.json_value)
         raise GetPropertyException(response.get_property_response.status)
@@ -382,6 +420,7 @@ class Window:
             json_value,
             window_id=self.__window_id)
         status = response.set_property_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise SetPropertyException(response.set_property_response.status)
 
@@ -408,6 +447,7 @@ class Window:
         result = await iterm2.rpc.async_close(
             self.connection, windows=[self.__window_id], force=force)
         status = result.close_response.statuses[0]
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.CloseResponse.Status.Name(status))
@@ -420,6 +460,7 @@ class Window:
         """
         result = await iterm2.rpc.async_save_arrangement(
             self.connection, name, self.__window_id)
+        # pylint: disable=no-member
         if (result.create_tab_response.status !=
                 iterm2.api_pb2.CreateTabResponse.Status.Value("OK")):
             raise iterm2.arrangement.SavedArrangementException(
@@ -435,6 +476,7 @@ class Window:
             named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(
             self.connection, name, self.__window_id)
+        # pylint: disable=no-member
         if (result.create_tab_response.status !=
                 iterm2.api_pb2.CreateTabResponse.Status.Value("OK")):
             raise iterm2.arrangement.SavedArrangementException(
@@ -454,6 +496,7 @@ class Window:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
+        # pylint: disable=no-member
         result = await iterm2.rpc.async_variable(
             self.connection, window_id=self.__window_id, gets=[name])
         status = result.variable_response.status
@@ -474,6 +517,7 @@ class Window:
 
         :throws: :class:`RPCException` if something goes wrong.
         """
+        # pylint: disable=no-member
         result = await iterm2.rpc.async_variable(
             self.connection,
             sets=[(name, json.dumps(value))],
@@ -528,6 +572,7 @@ class Window:
             window_id=self.window_id,
             timeout=timeout)
         which = response.invoke_function_response.WhichOneof('disposition')
+        # pylint: disable=no-member
         if which == 'error':
             if (response.invoke_function_response.error.status ==
                     iterm2.api_pb2.InvokeFunctionResponse.Status.Value(

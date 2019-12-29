@@ -77,6 +77,7 @@ class TextInputAlert:
     :param default_value: Default text to place in the text field.
     :param window_id: Window ID to attach to, or None to make app-modal.
     """
+    # pylint: disable=too-many-arguments
     def __init__(
             self,
             title: str,
@@ -89,6 +90,7 @@ class TextInputAlert:
         self.__placeholder = placeholder
         self.__default_value = default_value
         self.__window_id = window_id
+    # pylint: enable=too-many-arguments
 
     @property
     def title(self) -> str:
@@ -110,10 +112,12 @@ class TextInputAlert:
         """Returns the default value."""
         return self.__default_value
 
+    # pylint: disable=invalid-name
     @property
     def defaultValue(self) -> str:
         """Deprecated in favor of default_valuedefault_value"""
         return self.__default_value
+    # pylint: enable=invalid-name
 
     @property
     def window_id(self) -> typing.Optional[str]:

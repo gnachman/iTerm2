@@ -3,11 +3,14 @@ import json
 
 import iterm2.api_pb2
 import iterm2.connection
-import iterm2.selection
-import iterm2.transaction
 
 ACTIVATE_RAISE_ALL_WINDOWS = 1
 ACTIVATE_IGNORING_OTHER_APPS = 2
+
+
+# pylint and protobufs can't be friends so disable a bunch of stuff.
+# pylint: disable=no-member
+# pylint: disable=too-many-arguments
 
 
 class RPCException(Exception):
@@ -438,8 +441,8 @@ async def async_activate(connection,
 async def async_variable(
         connection,
         session_id=None,
-        sets=[],
-        gets=[],
+        sets=None,
+        gets=None,
         tab_id=None,
         window_id=None):
     """
@@ -447,6 +450,10 @@ async def async_variable(
 
     `sets` are JSON encoded. The resulting gets will be JSON encoded.
     """
+    if not sets:
+        sets = []
+    if not gets:
+        gets = []
     request = _alloc_request()
     if session_id:
         request.variable_request.session_id = session_id

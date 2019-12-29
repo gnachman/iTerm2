@@ -22,12 +22,14 @@ class SelectionMode(enum.Enum):
     @staticmethod
     def from_proto_value(value):
         """Creates a SelectionMode from a protobuf enum value."""
+        # pylint: disable=global-statement
         global MODE_MAP
         return MODE_MAP[value]
 
     @staticmethod
     def to_proto_value(value):
         """Converts self into a protobuf enum value."""
+        # pylint: disable=global-statement
         global INVERSE_MODE_MAP
         return INVERSE_MODE_MAP[value]
 
@@ -51,10 +53,12 @@ class SubSelection:
         self.__mode = mode
         self.__connected = connected
 
+    # pylint: disable=invalid-name
     @property
     def windowedCoordRange(self) -> iterm2.util.WindowedCoordRange:
         """Deprecated in favor of windowed_coord_range"""
         return self.windowed_coord_range
+    # pylint: enable=invalid-name
 
     @property
     def windowed_coord_range(self) -> iterm2.util.WindowedCoordRange:
@@ -69,6 +73,7 @@ class SubSelection:
     @property
     def proto(self):
         """Creates a protobuf for this sub-selection."""
+        # pylint: disable=no-member
         sub_selection = iterm2.api_pb2.SubSelection()
         sub_selection.windowed_coord_range.CopyFrom(self.__windowed_coord_range.proto)
         sub_selection.selection_mode = SelectionMode.to_proto_value(self.__mode)
@@ -96,12 +101,12 @@ class SubSelection:
             connection,
             session_id,
             self.__windowed_coord_range)
+        # pylint: disable=no-member
         if (result.get_buffer_response.status == iterm2.
                 api_pb2.GetBufferResponse.Status.Value("OK")):
             screen_contents = iterm2.screen.ScreenContents(
                 result.get_buffer_response)
             built_string = ""
-            wcr = screen_contents.windowed_coord_range
             i = 0
             while i < screen_contents.number_of_lines:
                 line = screen_contents.line(i)
@@ -114,6 +119,7 @@ class SubSelection:
             iterm2.api_pb2.GetBufferResponse.Status.Name(
                 result.get_buffer_response.status))
 
+    # pylint: disable=invalid-name
     def enumerate_ranges(self, callback):
         """Invoke callback for each selected range."""
         if self.__windowed_coord_range.hasWindow:
@@ -137,6 +143,7 @@ class SubSelection:
                     self.__windowed_coord_range.coordRange.end.y)))
         else:
             callback(self.__windowed_coord_range.coordRange, self)
+    # pylint: enable=invalid-name
 
 
 class Selection:
@@ -144,15 +151,17 @@ class Selection:
     A collection of :class:`SubSelection` objects, describing all the
     selections in a session.
 
-    :param subSelections: An array of :class:`SubSelection` objects.
+    :param sub_selections: An array of :class:`SubSelection` objects.
     """
-    def __init__(self, subSelections: typing.List[SubSelection]):
-        self.__sub_selections = subSelections
+    def __init__(self, sub_selections: typing.List[SubSelection]):
+        self.__sub_selections = sub_selections
 
+    # pylint: disable=invalid-name
     @property
     def subSelections(self) -> typing.List[SubSelection]:
         """Deprecated in favore of sub_selections."""
         return self.sub_selections
+    # pylint: enable=invalid-name
 
     @property
     def sub_selections(self) -> typing.List[SubSelection]:
@@ -166,12 +175,12 @@ class Selection:
             connection,
             session_id,
             coord_range)
+        # pylint: disable=no-member
         if (result.get_buffer_response.status == iterm2.
                 api_pb2.GetBufferResponse.Status.Value("OK")):
             screen_contents = iterm2.screen.ScreenContents(
                 result.get_buffer_response)
             built_string = ""
-            wcr = screen_contents.windowed_coord_range
             i = 0
             while i < screen_contents.number_of_lines:
                 line = screen_contents.line(i)
@@ -210,18 +219,19 @@ class Selection:
         await self.async_enumerate_ranges(width, handle_range)
         return result
 
-    async def async_enumerate_ranges(self, width, cb):
+    async def async_enumerate_ranges(self, width, callback):
         """
         Gets the text belonging to each subselection and concatenates them with
         newlines.
 
         :param width: The width of the session
-        :param cb: A function to call for each range, taking a
+        :param callback: A function to call for each range, taking a
             WindowedCoordRange and a boolean which is true if there's a hard
             EOL at the end of the range.
 
         :returns: A string with the selected text.
         """
+        # pylint: disable=too-many-locals
         if len(self.__sub_selections) == 0:
             return
 
@@ -237,9 +247,14 @@ class Selection:
 
             the_range = iterm2.util.Range(0, 0)
 
-            def handle_range(outer_range, this_outer):
+            # It's OK to disable it because handle_range does not escape the
+            # loop where outer iterates subselections.
+            # pylint: disable=cell-var-from-loop
+            def handle_range(outer_range):
+                # pylint: disable=invalid-name
                 nonlocal indexes
                 nonlocal the_range
+                nonlocal connectors
                 the_range = iterm2.util.Range(
                     outer_range.start.x + outer_range.start.y * width,
                     outer_range.length(width))
@@ -253,6 +268,7 @@ class Selection:
 
                 # Iterate contiguous ranges
                 indexes_of_interest = indexes.intersection(indexes_to_add)
+                # pylint: disable=unused-variable
                 for k, g in itertools.groupby(
                         enumerate(sorted(indexes_of_interest)), f):
                     # range exists in both indexes and the_range
@@ -265,8 +281,8 @@ class Selection:
                 # In multipart windowed ranges, add connectors for the endpoint
                 # of all but the last # range. Each enumerated range is on its
                 # own line.
-                if (this_outer.windowed_coord_range.hasWindow and
-                        outer_range.end == this_outer.windowed_coord_range.
+                if (outer.windowed_coord_range.hasWindow and
+                        outer_range.end == outer.windowed_coord_range.
                         coordRange.end and
                         the_range.length > 0):
                     connectors |= {the_range.max}
@@ -277,11 +293,14 @@ class Selection:
         # it.
         all_ranges = []
 
+        # pylint: disable=invalid-name
         def f(values):
             i, x = values
             return i - x
+        # pylint: enable=invalid-name
 
         # Iterate contiguous ranges
+        # pylint: disable=unused-variable
         for k, range_group in itertools.groupby(enumerate(sorted(indexes)), f):
             # range exists in both indexes and the_range
             values_in_range = list(map(itemgetter(1), range_group))
@@ -303,9 +322,11 @@ class Selection:
                 the_range.start.x +
                 the_range.start.y * width +
                 the_range.length(width))
-            eol = (end_index not in connectors) and idx + 1 < len(sorted_ranges)
+            eol = (end_index not in connectors) and idx + 1 < len(
+                sorted_ranges)
             the_range.end.x += 1
-            stop = await cb(iterm2.util.WindowedCoordRange(the_range), eol)
+            stop = await callback(
+                iterm2.util.WindowedCoordRange(the_range), eol)
             if stop:
                 break
 

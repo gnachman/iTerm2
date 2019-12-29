@@ -5,7 +5,7 @@ import typing
 
 import iterm2.api_pb2
 
-
+# pylint: disable=invalid-name
 class Size:
     """Describes a 2D size.
 
@@ -117,7 +117,7 @@ class Point:
         """Returns a dict representation of the point."""
         return {"x": self.x, "y": self.y}
 
-    def load_from_dict(self, dict):
+    def load_from_dict(self, dict):  # pylint: disable=redefined-builtin
         """Initializes the point from a dict representation."""
         self.x = dict["x"]
         self.y = dict["y"]
@@ -186,7 +186,7 @@ class Frame:
         """
         self.__size = value
 
-    def load_from_dict(self, dict):
+    def load_from_dict(self, dict):  # pylint: disable=redefined-builtin
         """Sets the frame's values from a dict representation."""
         self.origin.load_from_dict(dict["origin"])
         self.size.load_from_dict(dict["size"])
@@ -291,6 +291,7 @@ class CoordRange:
     @property
     def proto(self):
         """Returns the protobuf CoordRange representation."""
+        # pylint: disable=no-member
         coord = iterm2.api_pb2.CoordRange()
         coord.start.CopyFrom(self.start.proto)
         coord.end.CopyFrom(self.end.proto)
@@ -385,6 +386,7 @@ class WindowedCoordRange:
     @property
     def proto(self):
         """Returns the protobuf WindowedCoordRange representation."""
+        # pylint: disable=no-member
         windowed_coord_range = iterm2.api_pb2.WindowedCoordRange()
         windowed_coord_range.coord_range.CopyFrom(self.coordRange.proto)
         windowed_coord_range.columns.CopyFrom(self.columnRange.proto)

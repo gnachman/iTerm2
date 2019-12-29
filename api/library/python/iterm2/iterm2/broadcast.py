@@ -54,6 +54,7 @@ async def async_set_broadcast_domains(
             map(lambda s: s.session_id,
                 d.sessions)),
             broadcast_domains)))
+    # pylint: disable=no-member
     if (response.set_broadcast_domains_response.status !=
             iterm2.api_pb2.SetBroadcastDomainsResponse.Status.Value("OK")):
         raise iterm2.rpc.RPCException(

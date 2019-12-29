@@ -24,6 +24,7 @@ class Arrangement:
         """
         result = await iterm2.rpc.async_save_arrangement(connection, name)
         status = result.saved_arrangement_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
@@ -41,6 +42,7 @@ class Arrangement:
         """
         result = await iterm2.rpc.async_restore_arrangement(connection, name)
         status = result.saved_arrangement_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(

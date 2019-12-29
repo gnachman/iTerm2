@@ -13,6 +13,9 @@ import iterm2.rpc
 import iterm2.util
 
 
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-instance-attributes
 class Knob:
     """Represents a configuration setting on a status bar."""
     def __init__(self, knob_type, name, placeholder, json_default_value, key):
@@ -176,6 +179,7 @@ class StatusBarComponent:
             proto.scale = self.__scale
             return proto
 
+    # pylint: disable=dangerous-default-value
     def __init__(
             self,
             short_description: str,
@@ -193,7 +197,7 @@ class StatusBarComponent:
         self.__update_cadence = update_cadence
         self.__identifier = identifier
         self.__icons = icons
-        self.__connection = None
+        self.__connection: typing.Optional[iterm2.connection.Connection] = None
 
     def set_fields_in_proto(self, proto):
         """Populates a protobuf from this object's contents."""
@@ -254,6 +258,7 @@ class StatusBarComponent:
             await iterm2.rpc.async_invoke_method(
                 self.__connection, session_id, invocation, -1)
         else:
+            assert self.__connection
             await iterm2.async_invoke_function(self.__connection, invocation)
 
     async def async_register(
@@ -327,5 +332,6 @@ class StatusBarComponent:
             handle_rpc.__name__ = magic_name
             # This is an abuse of the RPC decorator, but it's a simple way to
             # register a function with a modified name.
+            # pylint: disable=no-member
             await (iterm2.registration.RPC(handle_rpc).
                    async_register(connection, timeout=timeout))

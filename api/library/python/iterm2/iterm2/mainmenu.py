@@ -43,6 +43,7 @@ class MainMenu:
         response = await iterm2.rpc.async_menu_item(
             connection, identifier, False)
         status = response.menu_item_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
             raise MenuItemException(
                 iterm2.api_pb2.MenuItemResponse.Status.Name(status))
@@ -59,6 +60,7 @@ class MainMenu:
         response = await iterm2.rpc.async_menu_item(
             connection, identifier, True)
         status = response.menu_item_response.status
+        # pylint: disable=no-member
         if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
             raise MenuItemException(
                 iterm2.api_pb2.MenuItemResponse.Status.Name(status))

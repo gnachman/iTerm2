@@ -8,6 +8,7 @@ import iterm2.connection
 import iterm2.notifications
 
 
+# pylint: disable=too-few-public-methods
 class FocusUpdateApplicationActive:
     """Describes a change in whether the application is active."""
     def __init__(self, active):
@@ -24,9 +25,11 @@ class FocusUpdateWindowChanged:
 
     class Reason(enum.Enum):
         """Gives the reason for the change"""
+        # pylint: disable=line-too-long
         TERMINAL_WINDOW_BECAME_KEY = 0  #: A terminal window received keyboard focus.
         TERMINAL_WINDOW_IS_CURRENT = 1  #: A terminal window is current but some non-terminal window (such as Preferences) has keyboard focus.
         TERMINAL_WINDOW_RESIGNED_KEY = 2  #: A terminal window no longer has keyboard focus.
+        # pylint: enable=line-too-long
 
     def __init__(self, window_id: str, event: Reason):
         self.__window_id = window_id
@@ -43,7 +46,7 @@ class FocusUpdateWindowChanged:
         return self.__window_id
 
     @property
-    def event(self) -> Reason:
+    def event(self) -> 'Reason':
         """Describes how the window's focus changed.
 
         :returns: The reason for the update.
@@ -215,6 +218,7 @@ class FocusMonitor:
         self.__future = None
         return self.handle_proto(proto)
 
+    # pylint: disable=no-self-use
     def handle_proto(self, proto: iterm2.api_pb2.FocusChangedNotification):
         """Create a FocusUpdate from a protobuf."""
         which = proto.WhichOneof('event')
@@ -235,3 +239,4 @@ class FocusMonitor:
                 active_session_changed=FocusUpdateActiveSessionChanged(
                     proto.session))
         return FocusUpdate()
+    # pylint: enable=no-self-use

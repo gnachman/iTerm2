@@ -13,6 +13,7 @@ async def generic_handle_rpc(coro, connection, notif):
     rpc_notif = notif.server_originated_rpc_notification
     params = {}
     successful = False
+    # pylint: disable=broad-except
     try:
         for arg in rpc_notif.rpc.arguments:
             name = arg.name
@@ -39,8 +40,7 @@ async def generic_handle_rpc(coro, connection, notif):
         await iterm2.rpc.async_send_rpc_result(
             connection, rpc_notif.request_id, False, result)
 
-
-class Reference:
+class Reference:  # pylint: disable=too-few-public-methods
     """Defines a reference to a variable for use in the @RPC decorator.
 
     .. seealso::
@@ -52,7 +52,7 @@ class Reference:
         self.name = name
 
 
-def RPC(func):
+def RPC(func):  # pylint: disable=invalid-name
     """
     A decorator that adds an `async_register` value to the coroutine it
     decorates. `async_register` is a coroutine that will register the function
@@ -136,7 +136,7 @@ def RPC(func):
     return func
 
 
-def TitleProviderRPC(func):
+def TitleProviderRPC(func):  # pylint: disable=invalid-name
     """
     A decorator that prepares a function for registration as a session title
     provider. Similar to :func:`~iterm2.registration.RPC`.
@@ -210,7 +210,7 @@ def TitleProviderRPC(func):
     return func
 
 
-def StatusBarRPC(func):
+def StatusBarRPC(func):  # pylint: disable=invalid-name
     """
     A decorator (like :func:`~iterm2.registration.RPC`) that registers a custom
     status bar component.

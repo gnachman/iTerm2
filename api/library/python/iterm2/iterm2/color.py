@@ -10,6 +10,7 @@ class ColorSpace(enum.Enum):
     CALIBRATED = "Calibrated"  #: Device color space
 
 
+# pylint: disable=too-many-instance-attributes
 class Color:
     """Describes a color.
 
@@ -19,6 +20,7 @@ class Color:
       :param a: Alpha, in 0-255
       :param color_space: The color space. Only sRGB is supported currently.
       """
+    # pylint: disable=too-many-arguments
     def __init__(
             self,
             r: int = 0,

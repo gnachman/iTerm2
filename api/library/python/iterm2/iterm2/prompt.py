@@ -68,6 +68,7 @@ async def async_get_last_prompt(
     """
     response = await iterm2.rpc.async_get_prompt(connection, session_id)
     status = response.get_prompt_response.status
+    # pylint: disable=no-member
     if status == iterm2.api_pb2.GetPromptResponse.Status.Value("OK"):
         return Prompt(response.get_prompt_response)
     if status == iterm2.api_pb2.GetPromptResponse.Status.Value(
@@ -104,15 +105,19 @@ class PromptMonitor:
     class Mode(enum.Enum):
         """The mode for a prompt monitor."""
 
+        # pylint: disable=line-too-long
         PROMPT = iterm2.api_pb2.PromptMonitorMode.Value("PROMPT")  #: Notify when prompt detected
         COMMAND_START = iterm2.api_pb2.PromptMonitorMode.Value("COMMAND_START")  #: Notify when a command begins execution
         COMMAND_END = iterm2.api_pb2.PromptMonitorMode.Value("COMMAND_END")  #: Notify when a command finishes execution
+        # pylint: enable=line-too-long
 
     def __init__(
             self,
             connection: iterm2.connection.Connection,
             session_id: str,
-            modes: typing.List[Mode] = [Mode.PROMPT]):
+            modes: typing.Optional[typing.List[Mode]] = None):
+        if modes is None:
+            modes = [PromptMonitor.Mode.PROMPT]
         self.connection = connection
         self.session_id = session_id
         self.__modes = modes
