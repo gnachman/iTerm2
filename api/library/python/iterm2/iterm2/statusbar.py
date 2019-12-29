@@ -316,7 +316,7 @@ class StatusBarComponent:
                       onclick = my_status_bar_click_handler)
         """
         self.__connection = connection
-        await coro.async_register(connection, self)
+        await coro.async_register(connection, self, timeout)
         if onclick:
             magic_name = "__" + self.__identifier.replace(
                 ".", "_").replace("-", "_") + "__on_click"
