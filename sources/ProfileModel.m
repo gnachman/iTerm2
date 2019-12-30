@@ -540,6 +540,7 @@ int gMigrated;
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
     }
+#warning TODO: Log here
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
@@ -564,6 +565,7 @@ int gMigrated;
 
 - (void)removeAllBookmarks
 {
+#warning TODO: Log here
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
@@ -576,6 +578,7 @@ int gMigrated;
 }
 
 - (void)load:(NSArray *)prefs {
+#warning TODO: Log here
     [bookmarks_ removeAllObjects];
     for (Profile *profile in prefs) {
         NSArray *tags = profile[KEY_TAGS];
@@ -742,10 +745,12 @@ int gMigrated;
     }
     Profile* bookmark = [bookmarks_ objectAtIndex:sourceRow];
     [bookmark retain];
+#warning TODO: Log here
     [bookmarks_ removeObjectAtIndex:sourceRow];
     if (sourceRow < destinationRow) {
         destinationRow--;
     }
+#warning TODO: Log here
     [bookmarks_ insertObject:bookmark atIndex:destinationRow];
     [bookmark release];
 }
