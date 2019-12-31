@@ -4045,7 +4045,11 @@ ITERM_WEAKLY_REFERENCEABLE
         _customIcon = [[iTermCacheableImage alloc] init];
     }
     NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:profile];
-    return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:YES];
+    BOOL flipped = YES;
+    if (@available(macOS 10.15, *)) {
+        flipped = NO;
+    }
+    return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:flipped];
 }
 
 - (NSString *)windowTitle {
