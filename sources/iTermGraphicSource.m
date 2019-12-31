@@ -95,8 +95,12 @@ static NSDictionary *sGraphicIconMap;
     if (image) {
         return image;
     }
-    image = [[NSImage it_imageNamed:iconName forClass:[self class]] it_flippedImage];
-    
+    image = [NSImage it_imageNamed:iconName forClass:[self class]];
+    if (@available(macOS 10.15, *)) {
+    } else {
+        image = [image it_flippedImage];
+    }
+
     NSString *colorCode = sGraphicColorMap[command];
     if (!colorCode) {
         colorCode = sGraphicColorMap[logicalName];
