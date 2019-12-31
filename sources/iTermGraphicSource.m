@@ -70,6 +70,9 @@ static NSDictionary *sGraphicIconMap;
 }
 
 - (NSImage *)imageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
+    if (@available(macOS 10.13, *)) { } else {
+        return nil;
+    }
     if (!enabled) {
         return nil;
     }

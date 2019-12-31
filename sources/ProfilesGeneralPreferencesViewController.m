@@ -88,6 +88,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_windowTitleTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_customDirectoryTextFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
+    IBOutlet NSView *_iconContainer;
     IBOutlet NSPopUpButton *_icon;
     IBOutlet NSTextField *_iconLabel;
     IBOutlet NSImageView *_imageWell;
@@ -183,6 +184,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                      functionsOnly:NO];
     _profileNameFieldForEditCurrentSession.delegate = _profileNameFieldForEditCurrentSessionDelegate;
 
+    if (@available(macOS 10.13, *)) { } else {
+        // 10.12 code path — I can't get NSTextAttachment to behave itself. For some reason it doesn't
+        // draw the tab graphic at all. I'm ragequitting.
+        _iconContainer.hidden = YES;
+    }
     info = [self defineControl:_icon
                            key:KEY_ICON
                    displayName:@"Profile icon"
