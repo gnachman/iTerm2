@@ -148,13 +148,13 @@
                            key:KEY_COLUMNS
                    displayName:@"Window width in columns"
                           type:kPreferenceInfoTypeIntegerTextField];
-    info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
+    info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
     info = [self defineControl:_rowsField
                            key:KEY_ROWS
                    displayName:@"Window height in rows"
                           type:kPreferenceInfoTypeIntegerTextField];
-    info.range = NSMakeRange(1, 100000);  // An arbitrary but hopefully reasonable limit.
+    info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING

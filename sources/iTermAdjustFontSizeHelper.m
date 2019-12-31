@@ -51,8 +51,10 @@
     if (reset) {
         NSDictionary *abEntry = [session originalProfile];
         [frontTerminal sessionInitiatedResize:session
-                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+                                        width:MIN(iTermMaxInitialSessionSize,
+                                                  [[abEntry objectForKey:KEY_COLUMNS] intValue])
+                                       height:MIN(iTermMaxInitialSessionSize,
+                                                  [[abEntry objectForKey:KEY_ROWS] intValue])];
     }
 }
 

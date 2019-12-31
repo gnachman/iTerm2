@@ -4649,8 +4649,11 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYTextView *textView = session.textview;
     NSSize cellSize = NSMakeSize(textView.charWidth, textView.lineHeight);
     NSSize decorationSize = [self windowDecorationSize];
-    VT100GridSize sessionSize = VT100GridSizeMake([session.profile[KEY_COLUMNS] intValue],
-                                                  [session.profile[KEY_ROWS] intValue]);
+    VT100GridSize sessionSize =
+    VT100GridSizeMake(MIN(iTermMaxInitialSessionSize,
+                          [session.profile[KEY_COLUMNS] intValue]),
+                      MIN(iTermMaxInitialSessionSize,
+                          [session.profile[KEY_ROWS] intValue]));
     return NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
                       [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
@@ -9265,8 +9268,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     profile = aSession.profile;
     PtyLog(@"Open session with prefs: %@", profile);
-    int rows = [[profile objectForKey:KEY_ROWS] intValue];
-    int columns = [[profile objectForKey:KEY_COLUMNS] intValue];
+    int rows = MIN(iTermMaxInitialSessionSize,
+                   [[profile objectForKey:KEY_ROWS] intValue]);
+    int columns = MIN(iTermMaxInitialSessionSize,
+                      [[profile objectForKey:KEY_COLUMNS] intValue]);
     if (self.tabs.count == 0 && desiredRows_ < 0) {
         desiredRows_ = rows;
         desiredColumns_ = columns;

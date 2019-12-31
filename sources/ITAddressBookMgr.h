@@ -119,8 +119,8 @@
 #define KEY_BADGE_COLOR            @"Badge Color"
 
 // Display
-#define KEY_ROWS                   @"Rows"
-#define KEY_COLUMNS                @"Columns"
+#define KEY_ROWS                   @"Rows"  // not to exceed iTermMaxInitialSessionSize
+#define KEY_COLUMNS                @"Columns"  // not to exceed iTermMaxInitialSessionSize
 #define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
 #define KEY_WINDOW_TYPE            @"Window Type"
 #define KEY_USE_CUSTOM_WINDOW_TITLE           @"Use Custom Window Title"
@@ -263,6 +263,10 @@ extern const NSTimeInterval kMinimumAntiIdlePeriod;
 extern NSString *const kProfilePreferenceCommandTypeCustomValue;
 extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
 extern NSString *const kProfilePreferenceCommandTypeCustomShellValue;
+
+// I chose 1250 because on a 6k display each cell would be less than 5 points wide,
+// which won't be legible. It needs an upper bound because of issue 8592.
+extern const NSInteger iTermMaxInitialSessionSize;
 
 // Special values for KEY_SPACE.
 typedef NS_ENUM(NSInteger, iTermProfileSpaceSetting) {

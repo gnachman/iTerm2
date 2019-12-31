@@ -50,6 +50,7 @@ NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
 NSString *const kProfilePreferenceCommandTypeCustomShellValue = @"Custom Shell";
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
+const NSInteger iTermMaxInitialSessionSize = 1250;
 
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
 

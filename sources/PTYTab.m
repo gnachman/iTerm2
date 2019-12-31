@@ -352,8 +352,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!profile) {
         return NSMakeSize(80, 25);
     }
-    return NSMakeSize([profile[KEY_COLUMNS] intValue] ?: 80,
-                      [profile[KEY_ROWS] intValue] ?: 25);
+    const int columns = MIN(iTermMaxInitialSessionSize,
+                            [profile[KEY_COLUMNS] intValue]);
+    const int rows = MIN(iTermMaxInitialSessionSize,
+                         [profile[KEY_ROWS] intValue]);
+    return NSMakeSize(columns ?: 80, rows ?: 25);
 }
 
 #pragma mark - NSObject

@@ -1204,8 +1204,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          NSMutableArray *commands = [NSMutableArray array];
          if (_variableWindowSize) {
              Profile *profile = self.sharedProfile;
-             NSSize size = NSMakeSize([profile[KEY_COLUMNS] intValue] ?: 80,
-                                      [profile[KEY_ROWS] intValue] ?: 25);
+             NSSize size = NSMakeSize(MIN(iTermMaxInitialSessionSize,
+                                          [profile[KEY_COLUMNS] intValue] ?: 80),
+                                      MIN(iTermMaxInitialSessionSize,
+                                          [profile[KEY_ROWS] intValue] ?: 25));
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, [self adjustHeightForStatusBar:size.height]];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
