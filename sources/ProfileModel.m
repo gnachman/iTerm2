@@ -40,12 +40,13 @@ id gAltOpenAllRepresentedObject;
 // Set to true if a bookmark was changed automatically due to migration to a new
 // standard.
 int gMigrated;
+static NSMutableArray<NSString *> *_combinedLog;
 
 @implementation ProfileModel {
     NSString *_modelName;
     NSMutableArray<NSNotification *> *_delayedNotifications;
-    NSMutableSet<NSString *> *_debugGuids;
-    NSMutableDictionary<NSString *, NSMutableArray<NSString *> *> *_debugHistory;
+//    NSMutableSet<NSString *> *_debugGuids;
+//    NSMutableDictionary<NSString *, NSMutableArray<NSString *> *> *_debugHistory;
 }
 
 + (void)initialize
@@ -59,19 +60,20 @@ int gMigrated;
 }
 
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid {
-    if ([_debugGuids containsObject:guid]) {
-        if (!_debugHistory) {
-            _debugHistory = [[NSMutableDictionary alloc] init];
-        }
-        NSMutableArray *entries = _debugHistory[guid];
-        if (!entries) {
-            entries = [[[NSMutableArray alloc] init] autorelease];
-            _debugHistory[guid] = entries;
-        }
-        return entries;
-    } else {
-        return nil;
-    }
+    return _combinedLog;
+//    if ([_debugGuids containsObject:guid]) {
+//        if (!_debugHistory) {
+//            _debugHistory = [[NSMutableDictionary alloc] init];
+//        }
+//        NSMutableArray *entries = _debugHistory[guid];
+//        if (!entries) {
+//            entries = [[[NSMutableArray alloc] init] autorelease];
+//            _debugHistory[guid] = entries;
+//        }
+//        return entries;
+//    } else {
+//        return nil;
+//    }
 }
 
 - (ProfileModel*)initWithName:(NSString *)modelName {
@@ -81,7 +83,10 @@ int gMigrated;
         bookmarks_ = [[NSMutableArray alloc] init];
         defaultBookmarkGuid_ = @"";
         journal_ = [[NSMutableArray alloc] init];
-        _debugGuids = [[NSMutableSet alloc] init];
+//        _debugGuids = [[NSMutableSet alloc] init];
+        if (!_combinedLog) {
+            _combinedLog = [[NSMutableArray alloc] init];
+        }
     }
     return self;
 }
@@ -121,8 +126,8 @@ int gMigrated;
     [journal_ release];
     [_modelName release];
     [_delayedNotifications release];
-    [_debugGuids release];
-    [_debugHistory release];
+//    [_debugGuids release];
+//    [_debugHistory release];
     NSLog(@"Deallocating bookmark model!");
     [super dealloc];
 }
@@ -435,7 +440,7 @@ int gMigrated;
 }
 
 - (void)addGuidToDebug:(NSString *)guid {
-    [_debugGuids addObject:guid];
+//    [_debugGuids addObject:guid];
 }
 
 - (BOOL)bookmark:(Profile*)bookmark hasTag:(NSString*)tag
@@ -540,7 +545,12 @@ int gMigrated;
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
     }
-#warning TODO: Log here
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@\n%@",
+                                                              self,
+                                                              @(i),
+                                                              bookmarks_[i][KEY_GUID],
+                                                              bookmark[KEY_GUID],
+                                                              [NSThread trimCallStackSymbols]]];
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
@@ -565,7 +575,9 @@ int gMigrated;
 
 - (void)removeAllBookmarks
 {
-#warning TODO: Log here
+    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Remove all bookmarks\n%@",
+                                                 self,
+                                                 [NSThread trimCallStackSymbols]]];
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
@@ -578,7 +590,6 @@ int gMigrated;
 }
 
 - (void)load:(NSArray *)prefs {
-#warning TODO: Log here
     [bookmarks_ removeAllObjects];
     for (Profile *profile in prefs) {
         NSArray *tags = profile[KEY_TAGS];
@@ -586,6 +597,10 @@ int gMigrated;
             [self addBookmark:profile];
         }
     }
+    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Load bookmarks. Now have %@.\n%@",
+                                                 self,
+                                                 [self guids],
+                                                 [NSThread trimCallStackSymbols]]];
 }
 
 + (NSString*)freshGuid {
@@ -745,12 +760,21 @@ int gMigrated;
     }
     Profile* bookmark = [bookmarks_ objectAtIndex:sourceRow];
     [bookmark retain];
-#warning TODO: Log here
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Moving guid %@ to row %@. First, remove it from row %@\n%@",
+                                                              self,
+                                                              guid,
+                                                              @(destinationRow),
+                                                              @(sourceRow),
+                                                              [NSThread trimCallStackSymbols]]];
     [bookmarks_ removeObjectAtIndex:sourceRow];
     if (sourceRow < destinationRow) {
         destinationRow--;
     }
-#warning TODO: Log here
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Now insert it %@ at row %@\n%@",
+                                                              self,
+                                                              guid,
+                                                              @(destinationRow),
+                                                              [NSThread trimCallStackSymbols]]];
     [bookmarks_ insertObject:bookmark atIndex:destinationRow];
     [bookmark release];
 }
