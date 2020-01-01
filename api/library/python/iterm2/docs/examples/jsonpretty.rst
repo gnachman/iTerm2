@@ -31,7 +31,7 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
             session = app.get_session_by_id(session_id)
             selection = await session.async_get_selection()
             selectedText = await session.async_get_selection_text(selection)
-            await component.async_open_popover(session_id, tohtml(prettyprint(selectedText)), iterm2.util.Size(200, 200))
+            await component.async_open_popover(session_id, tohtml(prettyprint(selectedText)), iterm2.util.Size(600, 600))
 
         # Define the configuration knobs:
         vl = "json_pretty_printer"
