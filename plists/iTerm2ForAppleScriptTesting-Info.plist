@@ -18,6 +18,18 @@
                         <key>CFBundleTypeRole</key>
                         <string>Editor</string>
                 </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>its</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2Script.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Script</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
