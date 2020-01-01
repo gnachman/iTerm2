@@ -210,6 +210,9 @@ static const int kDragThreshold = 3;
 
     // Work around an embarassing macOS bug. Issue 8350.
     BOOL _makingThreeFingerSelection;
+
+    // Last mouse down was on already-selected text?
+    BOOL _lastMouseDownOnSelectedText;
 }
 
 
@@ -1744,6 +1747,7 @@ static const int kDragThreshold = 3;
 - (BOOL)mouseDownImpl:(NSEvent*)event {
     DLog(@"mouseDownImpl: called");
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
+    _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
     const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
     BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
     const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
@@ -1874,6 +1878,7 @@ static const int kDragThreshold = 3;
 
     iTermImageInfo *const imageBeingClickedOn = [self imageInfoAtCoord:VT100GridCoordMake(x, y)];
     const BOOL mouseDownOnSelection = [_selection containsCoord:VT100GridCoordMake(x, y)];
+    _lastMouseDownOnSelectedText = mouseDownOnSelection;
 
     if (!_mouseDownWasFirstMouse) {
         // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
@@ -2146,7 +2151,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([_selection hasSelection]), _delegate, @(wasSelecting));
-    if ([_selection hasSelection] && event.clickCount == 1 && !wasSelecting) {
+    if ([_selection hasSelection] &&
+        event.clickCount == 1 &&
+        !wasSelecting &&
+        _lastMouseDownOnSelectedText) {
         // Click on selection. When the mouse-down was on the selection we delay clearing it until
         // mouse-up so you have the chance to drag it.
         [_selection clearSelection];
@@ -2365,6 +2373,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines {
+    [_selection endLiveSelection];
     [_urlActionHelper smartSelectAndMaybeCopyWithEvent:event
                                       ignoringNewlines:ignoringNewlines];
 }
