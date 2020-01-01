@@ -30,3 +30,5 @@ This script demonstrates a custom status bar component that shows the time in GM
     await component.async_register(connection, coro)
 
     iterm2.run_forever(main)
+
+:Download:`Download<gmtclock.its>`
