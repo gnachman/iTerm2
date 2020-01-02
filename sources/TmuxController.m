@@ -275,6 +275,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.profile = profile;
     windowOpener.initial = initial || !_pendingWindows[@(windowIndex)];
     windowOpener.completion = _pendingWindows[@(windowIndex)];
+    windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     [_pendingWindows removeObjectForKey:@(windowIndex)];
     _manualOpenRequested = NO;
     if (![windowOpener openWindows:YES]) {
@@ -302,6 +303,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.zoomed = zoomed;
     windowOpener.tabColors = _tabColors;
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
+    windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     [windowOpener updateLayoutInTab:tab];
 }
 
@@ -2369,6 +2371,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)setUserVariableWithKey:(NSString *)key
                          value:(NSString *)value
                           pane:(int)paneID {
+    if (![self versionAtLeastDecimalNumberWithString:@"3.0"]) {
+        return;
+    }
     NSMutableDictionary<NSString *, NSString *> *dict = [self mutableUserVarsForPane:paneID];
     if (!value) {
         if (!dict[key]) {

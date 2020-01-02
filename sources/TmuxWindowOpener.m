@@ -185,7 +185,9 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
     [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
-    [cmdList addObject:[self dictForGetUserVars:wp]];
+    if (self.minimumServerVersion.doubleValue >= 3) {
+        [cmdList addObject:[self dictForGetUserVars:wp]];
+    }
 }
 
 - (NSDictionary *)dictToToggleZoomForWindow {
