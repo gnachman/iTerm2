@@ -233,19 +233,10 @@
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
     result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1;
+    if (cell.controlView.window.backingScaleFactor > 1) {
+        result.origin.y += 0.5;
+    }
 
-    return result;
-}
-
-- (NSRect)graphicRectForTabCell:(PSMTabBarCell *)cell x:(CGFloat)xOrigin {
-    NSRect cellFrame = [cell frame];
-    
-    CGFloat minX = xOrigin;
-    NSRect result;
-    result.size = PSMTabBarGraphicSize;
-    result.origin.x = minX;
-    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1;
-    
     return result;
 }
 
