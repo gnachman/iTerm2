@@ -65,7 +65,10 @@ NS_ASSUME_NONNULL_BEGIN
             attrs = [attrs dictionaryBySettingObject:self.textColor forKey:NSForegroundColorAttributeName];
         }
         NSRect rect = {
-            .origin = point,
+            .origin = {
+                .x = point.x,
+                .y = point.y - floor(_baselineOffset)
+            },
             .size = {
                 .width = self.bounds.size.width - point.x,
                 .height = self.bounds.size.height - point.y
