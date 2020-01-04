@@ -32,7 +32,7 @@ Dep:
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Deployment
 
 Beta:
-	cp plists/release-iTerm2.plist plists/iTerm2.plist
+	cp plists/beta-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Beta && \
 	chmod -R go+rX build/Beta
 
@@ -46,7 +46,6 @@ Nix:
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	# xcodebuild -parallelizeTargets -target iTerm2 -configuration Nightly CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && git checkout -- plists/iTerm2.plist
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Nightly && git checkout -- plists/iTerm2.plist
 	chmod -R go+rX build/Nightly
 
