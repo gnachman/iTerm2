@@ -79,8 +79,9 @@
     NSString *message =
     [NSString stringWithFormat:@"There was a problem with one of your Dynamic Profiles:\n\n%@", error];
     if (_pendingErrors > 1) {
-        message = [message stringByAppendingFormat:@"\n\n%@ additional errors may be seen in the log.",
-                   @(_pendingErrors - 1)];
+        const NSInteger count = _pendingErrors - 1;
+        message = [message stringByAppendingFormat:@"\n\n%@ additional error%@ may be seen in the log.",
+                   @(count), count == 1 ? @"" : @"s"];
     }
     _pendingErrors = 0;
     NSButton *button = nil;
@@ -238,6 +239,12 @@
                          file:filename];
             return nil;
         }
+        dict = [NSDictionary castFrom:dict];
+        if (!dict) {
+            [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ does not have an Object (i.e., a dictionary) as its root element", filename]
+                         file:filename];
+            return nil;
+        }
         if (fileType) {
             *fileType = kDynamicProfileFileTypeJSON;
         }
@@ -245,6 +252,9 @@
     NSArray *entries = dict[@"Profiles"];
     if (!entries) {
         XLog(@"Property list in %@ has no entries", entries);
+        [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ does not have a “Profiles” key at the root.",
+                           filename]
+                     file:filename];
         return nil;
     }
 
