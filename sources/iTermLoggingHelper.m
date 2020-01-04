@@ -63,6 +63,12 @@
 }
 
 - (void)stop {
+    if (self.isLoggingRaw) {
+        [_rawLogger loggingHelperStop:self];
+    }
+    if (self.isLoggingPlainText) {
+        [_plainLogger loggingHelperStop:self];
+    }
     [self close];
     _enabled = NO;
 }

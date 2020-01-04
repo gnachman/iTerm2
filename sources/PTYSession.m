@@ -8805,7 +8805,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [self appendStringToTriggerLine:string];
-    if (_logging.enabled && _logging.plainText) {
+    if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
         [_logging logData:[string dataUsingEncoding:_terminal.encoding]];
     }
 }
@@ -8817,7 +8817,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    encoding:NSASCIIStringEncoding] autorelease];
         [self screenDidAppendStringToCurrentLine:string];
     } else {
-        if (_logging.enabled && _logging.plainText) {
+        if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
             [_logging logData:[NSData dataWithBytesNoCopy:asciiData->buffer
                                                    length:asciiData->length
                                              freeWhenDone:NO]];
@@ -10592,7 +10592,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidReceiveLineFeed {
     [_pwdPoller didReceiveLineFeed];
-    if (_logging.enabled && _logging.plainText) {
+    if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
         [_logging logData:[NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
     }
 }
