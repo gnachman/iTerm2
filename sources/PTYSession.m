@@ -5913,7 +5913,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!_tmuxController.serverIsLocal) {
         return;
     }
-    NSString *command = [NSString stringWithFormat:@"display-message -t '%@' -p '#{pane_pid}'", @(self.tmuxPane)];
+    NSString *command = [NSString stringWithFormat:@"display-message -t '%%%@' -p '#{pane_pid}'", @(self.tmuxPane)];
     DLog(@"Request pane PID with command %@", command);
     [_tmuxController.gateway sendCommand:command
                           responseTarget:self
