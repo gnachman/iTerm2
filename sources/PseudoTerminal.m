@@ -7812,19 +7812,71 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                       completion:nil];
 }
 
+- (void)asyncSplitVertically:(BOOL)isVertical
+                      before:(BOOL)before
+                     profile:(Profile *)theBookmark
+               targetSession:(PTYSession *)targetSession
+                 synchronous:(BOOL)synchronous
+                  completion:(void (^)(PTYSession *))completion
+                       ready:(void (^)(BOOL ok))ready {
+    if ([targetSession isTmuxClient]) {
+        [self willSplitTmuxPane];
+        TmuxController *controller = [targetSession tmuxController];
+        [controller selectPane:targetSession.tmuxPane];
+        [controller splitWindowPane:[targetSession tmuxPane]
+                         vertically:isVertical
+                              scope:[[self tabForSession:targetSession] variablesScope]
+                   initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]
+                         completion:^(int wp) {
+            if (wp < 0) {
+                if (completion) {
+                    completion(nil);
+                }
+                if (ready) {
+                    ready(NO);
+                }
+                return;
+            }
+
+            [controller whenPaneRegistered:wp call:^(PTYSession *newSession) {
+                if (completion) {
+                    completion(newSession);
+                }
+                if (ready) {
+                    ready(YES);
+                }
+            }];
+        }];
+        return;
+    }
+
+    PTYSession *session = [self splitVertically:isVertical
+                                         before:before
+                                        profile:theBookmark
+                                  targetSession:targetSession
+                                    synchronous:synchronous
+                                     completion:ready];
+    if (completion) {
+        completion(session);
+    }
+}
+
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
                     synchronous:(BOOL)synchronous
-                     completion:(void (^)(BOOL))completion{
+                     completion:(void (^)(BOOL))completion {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
-        [[targetSession tmuxController] selectPane:targetSession.tmuxPane];
-        [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane]
-                                             vertically:isVertical
-                                                  scope:[[self tabForSession:targetSession] variablesScope]
-                                       initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]];
+        TmuxController *controller = [targetSession tmuxController];
+        [controller selectPane:targetSession.tmuxPane];
+        [controller splitWindowPane:[targetSession tmuxPane]
+                         vertically:isVertical
+                              scope:[[self tabForSession:targetSession] variablesScope]
+                   initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]
+                         completion:nil];
+        completion(NO);
         return nil;
     }
     PtyLog(@"--------- splitVertically -----------");

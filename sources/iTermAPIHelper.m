@@ -2174,20 +2174,22 @@ static iTermAPIHelper *sAPIHelperInstance;
     dispatch_group_t group = dispatch_group_create();
     for (PTYSession *session in sessions) {
         PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
+        const BOOL vertical = request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical;
         dispatch_group_enter(group);
-        PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
-                                                before:request.before
-                                               profile:profile
-                                         targetSession:session
-                                           synchronous:NO
-                                            completion:^(BOOL ok){
-                                                dispatch_group_leave(group);
-                                            }];
-        if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
-            [response.sessionIdArray addObject:newSession.guid];
-        } else if (newSession == nil && !session.isTmuxClient) {
-            response.status = ITMSplitPaneResponse_Status_CannotSplit;
+        [term asyncSplitVertically:vertical
+                            before:request.before
+                           profile:profile
+                     targetSession:session
+                       synchronous:NO
+                        completion:^(PTYSession *newSession) {
+            if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
+                [response.sessionIdArray addObject:newSession.guid];
+            } else if (newSession == nil && !session.isTmuxClient) {
+                response.status = ITMSplitPaneResponse_Status_CannotSplit;
+            }
+            dispatch_group_leave(group);
         }
+                             ready:nil];
     }
 
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{

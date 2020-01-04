@@ -90,6 +90,9 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 - (void)windowsChanged;
 - (void)windowWasRenamedWithId:(int)id to:(NSString *)newName;
 
+// Call `block` when a window pane with `wp` is registered. If one is already registered, it will be called asynchronously.
+- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession *))block;
+
 - (PTYSession *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
 - (NSArray<PTYSession *> *)sessionsInWindow:(int)window;
@@ -116,10 +119,12 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 
+// If completion is nonnull it will be called with the new window pane or -1 on error.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
                   scope:(iTermVariableScope *)scope
-       initialDirectory:(iTermInitialDirectory *)initialDirectory;
+       initialDirectory:(iTermInitialDirectory *)initialDirectory
+             completion:(void (^)(int wp))completion;
 
 - (void)newWindowInSessionNumber:(NSNumber *)sessionNumber
                            scope:(iTermVariableScope *)scope

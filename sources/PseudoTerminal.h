@@ -296,12 +296,24 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
 
+// WARNING! Do not use this for tmux windows. It will always return nil.
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
                     synchronous:(BOOL)synchronous
                      completion:(void (^)(BOOL))completion;
+
+// Use this if it might be a tmux window. The completion block will always be called eventually.
+// The ready block is called after the session has started, much like the completion block in
+// other session creation calls.
+- (void)asyncSplitVertically:(BOOL)isVertical
+                      before:(BOOL)before
+                     profile:(Profile *)theBookmark
+               targetSession:(PTYSession *)targetSession
+                 synchronous:(BOOL)synchronous
+                  completion:(void (^)(PTYSession *))completion
+                       ready:(void (^)(BOOL ok))ready;
 
 // Change visibility of menu bar (but only if it should be changed--may do
 // nothing if the menu bar is on a different screen, for example).

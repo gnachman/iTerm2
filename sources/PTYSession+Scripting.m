@@ -167,6 +167,8 @@
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
     }
+    // NOTE: This will return nil for tmux tabs. I could fix it by using the async version of the
+    // split function, but this is Applescript and I hate it.
     PTYSession *session = [[self.delegate realParentWindow] splitVertically:vertically
                                                                 withProfile:profile
                                                                 synchronous:YES];

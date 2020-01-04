@@ -50,6 +50,9 @@ static NSString *const iTermTmuxControllerEncodingPrefixOrigins = @"o_";
 static NSString *const iTermTmuxControllerEncodingPrefixHidden = @"i_";
 static NSString *const iTermTmuxControllerEncodingPrefixUserVars = @"u_";
 
+static NSString *const iTermTmuxControllerSplitStateCompletion = @"completion";
+static NSString *const iTermTmuxControllerSplitStateInitialPanes = @"initial panes";
+
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
 
@@ -125,6 +128,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     int _currentWindowID;  // -1 if undefined
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
+    NSMutableDictionary<NSNumber *, void (^)(PTYSession *)> *_when;
 }
 
 @synthesize gateway = gateway_;
@@ -166,6 +170,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _pendingWindows = [[NSMutableDictionary alloc] init];
         _currentWindowID = -1;
         _userVars = [[NSMutableDictionary alloc] init];
+        _when = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
@@ -197,7 +202,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [sessionObjects_ release];
     [_defaultTerminal release];
     [_userVars release];
-    
+    [_when release];
+
     [super dealloc];
 }
 
@@ -604,6 +610,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (tab) {
         [self retainWindow:window withTab:tab];
         [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+        void (^call)(PTYSession *) = _when[@(windowPane)];
+        if (call) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                call(aSession);
+            });
+            [_when removeObjectForKey:@(windowPane)];
+        }
     }
 }
 
@@ -613,7 +626,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (windowPanes_[key] == session) {
         [self releaseWindow:window];
         [windowPanes_ removeObjectForKey:key];
+        [_when removeObjectForKey:@(windowPane)];
     }
+}
+
+- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession *))block {
+    PTYSession *already = [self sessionForWindowPane:wp];
+    if (already) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            block(already);
+        })
+        return;
+    }
+
+    _when[@(wp)] = [[block copy] autorelease];
 }
 
 - (PTYTab *)window:(int)window {
@@ -650,6 +676,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self closeAllPanes];
     [gateway_ release];
     gateway_ = nil;
+    [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession *), BOOL * _Nonnull stop) {
+        obj(nil);
+    }];
+    [_when removeAllObjects];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
                                                         object:self];
     [[TmuxControllerRegistry sharedInstance] setController:nil
@@ -1167,7 +1197,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
                   scope:(iTermVariableScope *)scope
-       initialDirectory:(iTermInitialDirectory *)initialDirectory {
+       initialDirectory:(iTermInitialDirectory *)initialDirectory
+             completion:(void (^)(int wp))completion {
     // No need for a callback. We should get a layout-changed message and act on it.
     [initialDirectory tmuxSplitWindowCommand:wp
                                   vertically:splitVertically
@@ -1175,10 +1206,61 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                        scope:scope
                                   completion:
      ^(NSString *command) {
-         [gateway_ sendCommand:command
-                responseTarget:nil
-              responseSelector:nil];
+        if (!completion) {
+            [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+            return;
+        }
+
+        // Get the list of panes, then split, then get the list of panes again.
+        // This seems to be the only way to get the pane ID of the new pane.
+        NSString *listPanesCommand = [NSString stringWithFormat:@"list-panes -t %%%d -F '#{pane_id}'", wp];
+        NSMutableDictionary *state = [NSMutableDictionary dictionary];
+        state[iTermTmuxControllerSplitStateCompletion] = [[completion copy] autorelease];
+        NSDictionary *initialListPanes = [gateway_ dictionaryForCommand:listPanesCommand
+                                                         responseTarget:self
+                                                       responseSelector:@selector(recordPanes:state:)
+                                                         responseObject:state
+                                                                  flags:0];
+        NSDictionary *split = [gateway_ dictionaryForCommand:command
+                                              responseTarget:nil
+                                            responseSelector:nil
+                                              responseObject:nil
+                                                       flags:0];
+        NSDictionary *followupListPanes = [gateway_ dictionaryForCommand:listPanesCommand
+                                                         responseTarget:self
+                                                       responseSelector:@selector(didSplit:state:)
+                                                         responseObject:state
+                                                                  flags:0];
+        [gateway_ sendCommandList:@[ initialListPanes, split, followupListPanes ]];
      }];
+}
+
+// Save pane list before splitting.
+- (void)recordPanes:(NSString *)list state:(NSMutableDictionary *)state {
+    state[iTermTmuxControllerSplitStateInitialPanes] = [NSSet setWithArray:[list componentsSeparatedByString:@"\n"]];
+}
+
+// Compute new window pane after splitting and run callback if any.
+- (void)didSplit:(NSString *)list state:(NSMutableDictionary *)state {
+    NSSet<NSString *> *after = [NSSet setWithArray:[list componentsSeparatedByString:@"\n"]];
+    NSSet<NSString *> *before = state[iTermTmuxControllerSplitStateInitialPanes] ?: [NSSet set];
+    NSMutableSet<NSString *> *additions = [[after mutableCopy] autorelease];
+    [additions minusSet:before];
+    void (^completion)(BOOL) = state[iTermTmuxControllerSplitStateCompletion];
+    if (additions.count == 0) {
+        completion(-1);
+        return;
+    }
+    if (additions.count > 1) {
+        DLog(@"Multiple additions found! Picking one at random.");
+    }
+    NSString *string = [additions anyObject];
+    if (![string hasPrefix:@"%"]) {
+        completion(-1);
+        return;
+    }
+    string = [string substringFromIndex:1];
+    completion([string intValue]);
 }
 
 - (void)selectPane:(int)windowPane {
