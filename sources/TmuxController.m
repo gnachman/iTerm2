@@ -635,7 +635,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (already) {
         dispatch_async(dispatch_get_main_queue(), ^{
             block(already);
-        })
+        });
         return;
     }
 
