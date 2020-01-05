@@ -7876,7 +7876,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                               scope:[[self tabForSession:targetSession] variablesScope]
                    initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]
                          completion:nil];
-        completion(NO);
+        if (completion) {
+            completion(NO);
+        }
         return nil;
     }
     PtyLog(@"--------- splitVertically -----------");
