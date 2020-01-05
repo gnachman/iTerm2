@@ -51,7 +51,22 @@ cd build/Nightly
 # For the purposes of auto-update, the app's folder must be named iTerm.app since Sparkle won't accept a name change.
 rm -rf iTerm.app
 mv iTerm2.app iTerm.app
-zip -ry iTerm2-${NAME}.zip iTerm.app
+
+PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
+zip -ry $PRENOTARIZED_ZIP iTerm.app
+xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
+UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
+echo "uuid is $UUID"
+xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
+sleep 1
+while xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS" 2>&1 | egrep -i "in progress|Could not find the RequestUUID":
+do
+    echo "Trying again"
+    sleep 1
+done
+NOTARIZED_ZIP=iTerm2-${NAME}.zip
+xcrun stapler staple iTerm.app
+zip -ry $NOTARIZED_ZIP iTerm.app
 
 # Modern
 SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
