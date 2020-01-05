@@ -171,6 +171,10 @@ typedef struct {
     return result;
 }
 
+- (void)invalidate {
+    _patternedImage = nil;
+}
+
 #pragma mark - Private
 
 - (NSImage *)patternedImageForViewOfSize:(NSSize)size {

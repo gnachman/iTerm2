@@ -4125,6 +4125,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setBackgroundImageMode:(iTermBackgroundImageMode)mode {
     _backgroundImageMode = mode;
+    [_backgroundDrawingHelper invalidate];
     [self setBackgroundImagePath:_backgroundImagePath];
 }
 
