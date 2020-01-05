@@ -31,6 +31,9 @@
            blendDefaultBackground:(BOOL)blendDefaultBackground
                              flip:(BOOL)shouldFlip;
 
+// Call this when the image changes.
+- (void)invalidate;
+
 // imageSize is the size of the source image, which may have a different aspect ratio than the area it's being drawn into.
 // destinationRect is the frame of the area to draw into.
 // dirty rect is the region that needs to be redrawn.
