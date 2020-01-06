@@ -124,6 +124,7 @@
 #import "PSMMinimalTabStyle.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
+#import "PTYTextView+ARC.h"
 #import "PTYWindow.h"
 #import "RegexKitLite.h"
 #import "SCPFile.h"

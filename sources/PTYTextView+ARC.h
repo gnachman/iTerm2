@@ -81,7 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Install Shell Integration
 
-- (IBAction)installShellIntegration:(id)sender;
+- (IBAction)installShellIntegration:(nullable id)sender;
 
 @end
 
