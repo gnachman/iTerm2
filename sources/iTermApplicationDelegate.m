@@ -77,6 +77,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermServiceProvider.h"
+#import "iTermSessionLauncher.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
@@ -632,9 +633,9 @@ static BOOL hasBecomeActive = NO;
 
         PseudoTerminal *term = [self terminalToOpenFileIn];
         DLog(@"application:openFile: launching new session in window %@", term);
-        PTYSession *session = [controller launchBookmark:bookmark
-                                              inTerminal:term
-                                      respectTabbingMode:NO];
+        PTYSession *session = [iTermSessionLauncher launchBookmark:bookmark
+                                                        inTerminal:term
+                                                respectTabbingMode:NO];
         term = (id)session.delegate.realParentWindow;
 
         if (term) {
@@ -1403,17 +1404,17 @@ static BOOL hasBecomeActive = NO;
             launch = YES;
         }
         if (launch) {
-            [[iTermController sharedInstance] launchBookmark:profile
-                                                  inTerminal:term
-                                                     withURL:urlStr
-                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                     makeKey:NO
-                                                 canActivate:NO
-                                          respectTabbingMode:YES
-                                                     command:nil
-                                                       block:nil
-                                                 synchronous:NO
-                                                  completion:nil];
+            [iTermSessionLauncher launchBookmark:profile
+                                      inTerminal:term
+                                         withURL:urlStr
+                                hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                         makeKey:NO
+                                     canActivate:NO
+                              respectTabbingMode:YES
+                                         command:nil
+                                           block:nil
+                                     synchronous:NO
+                                      completion:nil];
         }
     }
 }

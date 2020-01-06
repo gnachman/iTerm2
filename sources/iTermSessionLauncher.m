@@ -25,6 +25,61 @@
     id _keepAlive;  // reference to self so I don't get released before completion.
 }
 
++ (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+            respectTabbingMode:(BOOL)respectTabbingMode {
+    return [self launchBookmark:bookmarkData
+                     inTerminal:theTerm
+                        withURL:nil
+                       hotkeyWindowType:iTermHotkeyWindowTypeNone
+                        makeKey:YES
+                    canActivate:YES
+             respectTabbingMode:respectTabbingMode
+                        command:nil
+                          block:nil
+                    synchronous:NO
+                     completion:nil];
+}
+
++ (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                       makeKey:(BOOL)makeKey
+                   canActivate:(BOOL)canActivate
+            respectTabbingMode:(BOOL)respectTabbingMode
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
+                   synchronous:(BOOL)synchronous
+                    completion:(void (^ _Nullable)(BOOL))completion {
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
+    launcher.url = url;
+    launcher.hotkeyWindowType = hotkeyWindowType;
+    launcher.makeKey = makeKey;
+    launcher.canActivate = canActivate;
+    launcher.respectTabbingMode = respectTabbingMode;
+    launcher.command = command;
+    if (block) {
+        launcher.makeSession = ^(NSDictionary * _Nonnull profile,
+                                 PseudoTerminal * _Nonnull windowController,
+                                 void (^ _Nonnull completion)(PTYSession * _Nullable)) {
+            completion(block(profile, windowController));
+        };
+    }
+    __block PTYSession *session = nil;
+    launcher.didCreateSession = ^(PTYSession * _Nullable theSession) {
+        session = theSession;
+    };
+    if (synchronous) {
+        launcher.completion = completion;
+        [launcher launchAndWait];
+    } else {
+        [launcher launchWithCompletion:completion];
+    }
+    return session;
+}
+
+
 - (instancetype)initWithProfile:(nullable Profile *)profile
                windowController:(nullable PseudoTerminal *)windowController {
     self = [super init];

@@ -29,6 +29,7 @@
 #import "iTermController.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermPreferences.h"
+#import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
 #import "PTYWindow.h"
 #import "objc/runtime.h"

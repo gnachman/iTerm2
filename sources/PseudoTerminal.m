@@ -53,6 +53,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
+#import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
@@ -6915,9 +6916,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.currentSession.isTmuxClient) {
         [self newTmuxTab:nil];
     } else {
-        [[iTermController sharedInstance] launchBookmark:nil
-                                              inTerminal:self
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:nil
+                                  inTerminal:self
+                          respectTabbingMode:NO];
     }
 }
 
@@ -7556,18 +7557,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:nil
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:nil
+                          respectTabbingMode:NO];
     }
 }
 
 - (void)newTabWithBookmarkGuid:(NSString *)guid {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:self
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:self
+                          respectTabbingMode:NO];
     }
 }
 
@@ -9875,37 +9876,37 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (destinationTerminal == nil) {
         PTYTab *copyOfTab = [[theTab copy] autorelease];
         [copyOfTab updatePaneTitles];
-        [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
-                                              inTerminal:nil
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:YES
-                                      respectTabbingMode:NO
-                                                 command:nil
-                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-                                                       // Keep session size stable.
-                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
-                                                           [aSession setIgnoreResizeNotifications:YES];
-                                                       }
-
-                                                       // This prevents the tab from getting resized to fit the window.
-                                                       [copyOfTab setReportIdealSizeAsCurrent:YES];
-
-                                                       // Add the tab to the empty window and resize the window.
-                                                       [term appendTab:copyOfTab];
-                                                       [term fitWindowToTabs];
-
-                                                       // Undo the prep work we've done.
-                                                       [copyOfTab setReportIdealSizeAsCurrent:NO];
-
-                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
-                                                           [aSession setIgnoreResizeNotifications:NO];
-                                                       }
-                                                       return copyOfTab.activeSession;
-                                                   }
-                                             synchronous:NO
-                                              completion:nil];
+        [iTermSessionLauncher launchBookmark:self.currentSession.profile
+                                  inTerminal:nil
+                                     withURL:nil
+                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                     makeKey:YES
+                                 canActivate:YES
+                          respectTabbingMode:NO
+                                     command:nil
+                                       block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+            // Keep session size stable.
+            for (PTYSession* aSession in [copyOfTab sessions]) {
+                [aSession setIgnoreResizeNotifications:YES];
+            }
+            
+            // This prevents the tab from getting resized to fit the window.
+            [copyOfTab setReportIdealSizeAsCurrent:YES];
+            
+            // Add the tab to the empty window and resize the window.
+            [term appendTab:copyOfTab];
+            [term fitWindowToTabs];
+            
+            // Undo the prep work we've done.
+            [copyOfTab setReportIdealSizeAsCurrent:NO];
+            
+            for (PTYSession* aSession in [copyOfTab sessions]) {
+                [aSession setIgnoreResizeNotifications:NO];
+            }
+            return copyOfTab.activeSession;
+        }
+                                 synchronous:NO
+                                  completion:nil];
     } else {
         [self openTabWithArrangement:self.currentTab.arrangement
                                named:nil

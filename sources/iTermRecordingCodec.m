@@ -8,6 +8,7 @@
 #import "iTermRecordingCodec.h"
 #import "iTermController.h"
 #import "iTermSavePanel.h"
+#import "iTermSessionLauncher.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
 #import "NSData+GZIP.h"
@@ -81,27 +82,27 @@
     }
 
 
-    [[iTermController sharedInstance] launchBookmark:dictProfile
-                                          inTerminal:nil
-                                             withURL:nil
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                             makeKey:YES
-                                         canActivate:YES
-                                  respectTabbingMode:NO
-                                             command:nil
-                                               block:^PTYSession *(NSDictionary *profile, PseudoTerminal *windowController) {
-                                                   PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];
-                                                   newSession.profile = profile;
-                                                   [newSession.screen.dvr loadDictionary:dvrDict];
-                                                   [windowController setupSession:newSession withSize:nil];
-                                                   dispatch_async(dispatch_get_main_queue(), ^{
-                                                       [windowController replaySession:newSession];
-                                                   });
-                                                   [windowController insertSession:newSession atIndex:0];
-                                                   return newSession;
-                                               }
-                                         synchronous:NO
-                                          completion:nil];
+    [iTermSessionLauncher launchBookmark:dictProfile
+                              inTerminal:nil
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                 command:nil
+                                   block:^PTYSession *(NSDictionary *profile, PseudoTerminal *windowController) {
+        PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];
+        newSession.profile = profile;
+        [newSession.screen.dvr loadDictionary:dvrDict];
+        [windowController setupSession:newSession withSize:nil];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [windowController replaySession:newSession];
+        });
+        [windowController insertSession:newSession atIndex:0];
+        return newSession;
+    }
+                             synchronous:NO
+                              completion:nil];
 }
 
 + (void)exportRecording:(PTYSession *)session {

@@ -9,10 +9,11 @@
 #import "ToolProfiles.h"
 
 #import "DebugLogging.h"
+#import "iTermController.h"
+#import "iTermSessionLauncher.h"
 #import "NSEvent+iTerm.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
-#import "iTermController.h"
 
 static const int kVerticalMargin = 5;
 static const int kMargin = 0;
@@ -120,9 +121,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:terminal
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:terminal
+                          respectTabbingMode:NO];
     }
 }
 
@@ -130,9 +131,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
 {
     for (NSString* guid in [listView_ selectedGuids]) {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:nil
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:nil
+                          respectTabbingMode:NO];
     }
 }
 

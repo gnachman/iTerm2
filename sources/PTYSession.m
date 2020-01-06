@@ -72,6 +72,7 @@
 #import "iTermSemanticHistoryController.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionHotkeyController.h"
+#import "iTermSessionLauncher.h"
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermSetFindStringNotification.h"
@@ -2093,17 +2094,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)launchProfileInCurrentTerminal:(Profile *)profile
                                withURL:(NSString *)url {
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-    [[iTermController sharedInstance] launchBookmark:profile
-                                          inTerminal:term
-                                             withURL:url
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                             makeKey:NO
-                                         canActivate:NO
-                                  respectTabbingMode:NO
-                                             command:nil
-                                               block:nil
-                                         synchronous:NO
-                                          completion:nil];
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:term
+                                 withURL:url
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:NO
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:nil
+                                   block:nil
+                             synchronous:NO
+                              completion:nil];
 }
 
 - (void)selectPaneLeftInCurrentTerminal {
@@ -6951,9 +6952,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE: {
             Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
-            [[iTermController sharedInstance] launchBookmark:profile
-                                                  inTerminal:nil
-                                          respectTabbingMode:NO];
+            [iTermSessionLauncher launchBookmark:profile
+                                      inTerminal:nil
+                              respectTabbingMode:NO];
             return YES;
         }
         case KEY_ACTION_UNDO:

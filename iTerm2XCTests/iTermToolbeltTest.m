@@ -10,6 +10,7 @@
 #import "iTermApplication.h"
 #import "iTermController.h"
 #import "iTermRootTerminalView.h"
+#import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -49,7 +50,7 @@
     [[iTermShellHistoryController sharedInstance] eraseDirectoriesForHost:host];
 
     // Create a window and save convenience pointers to its various bits.
-    _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil respectTabbingMode:NO];
+    _session = [iTermSessionLauncher launchBookmark:nil inTerminal:nil respectTabbingMode:NO];
     _windowController = (PseudoTerminal *)_session.delegate.realParentWindow;
     _view = (iTermRootTerminalView *)_windowController.window.contentView;
 
@@ -231,9 +232,9 @@
 }
 
 - (void)testCommandHistoryBoldsCommandsForCurrentSession {
-    PTYSession *otherSession = [[iTermController sharedInstance] launchBookmark:nil
-                                                                     inTerminal:_windowController
-                                                             respectTabbingMode:NO];
+    PTYSession *otherSession = [iTermSessionLauncher launchBookmark:nil
+                                                         inTerminal:_windowController
+                                                 respectTabbingMode:NO];
 
     // Set the hostname for both sessions
     [self sendPromptAndStartCommand:@"command 1" toSession:_session];

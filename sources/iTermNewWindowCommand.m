@@ -11,6 +11,7 @@
 #import "iTermHotKeyController.h"
 #import "iTermProfileHotKey.h"
 #import "iTermScriptingWindow.h"
+#import "iTermSessionLauncher.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -38,17 +39,17 @@
         NSString *command = args[@"command"];
         // maybe pass isUTF8 all the way through?
         PTYSession *session =
-            [[iTermController sharedInstance] launchBookmark:profile
-                                                  inTerminal:nil
-                                                     withURL:nil
-                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                     makeKey:YES
-                                                 canActivate:YES
-                                          respectTabbingMode:NO
-                                                     command:command
-                                                       block:nil
-                                                 synchronous:YES
-                                                  completion:nil];
+        [iTermSessionLauncher launchBookmark:profile
+                                  inTerminal:nil
+                                     withURL:nil
+                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                     makeKey:YES
+                                 canActivate:YES
+                          respectTabbingMode:NO
+                                     command:command
+                                       block:nil
+                                 synchronous:YES
+                                  completion:nil];
         return [iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window];
     }
     return nil;

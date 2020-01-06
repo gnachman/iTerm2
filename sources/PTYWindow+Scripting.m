@@ -4,6 +4,7 @@
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
 #import "iTermScriptingWindow.h"
+#import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"

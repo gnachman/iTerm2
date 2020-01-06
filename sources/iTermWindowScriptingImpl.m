@@ -39,17 +39,17 @@
     NSString *command = args[@"command"];
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *session =
-        [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:(PseudoTerminal *)self.ptyDelegate
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:NO
-                                      respectTabbingMode:NO
-                                                 command:command
-                                                   block:nil
-                                             synchronous:YES
-                                              completion:nil];
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:(PseudoTerminal *)self.ptyDelegate
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:command
+                                   block:nil
+                             synchronous:YES
+                              completion:nil];
     return [self.ptyDelegate tabForSession:session];
 }
 
@@ -65,17 +65,17 @@
         return nil;
     }
     PTYSession *session =
-        [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:(PseudoTerminal *)self.ptyDelegate
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:YES
-                                             canActivate:NO
-                                      respectTabbingMode:NO
-                                                 command:command
-                                                   block:nil
-                                             synchronous:YES
-                                              completion:nil];
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:(PseudoTerminal *)self.ptyDelegate
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:command
+                                   block:nil
+                             synchronous:YES
+                              completion:nil];
     return [self.ptyDelegate tabForSession:session];
 }
 

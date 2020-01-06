@@ -29,6 +29,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermSessionLauncher.h"
 #import "NSEvent+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -190,9 +191,9 @@ typedef enum {
                         targetSession:[[terminal currentTab] activeSession]
                           synchronous:NO];
         } else {
-            [[iTermController sharedInstance] launchBookmark:bookmark
-                                                  inTerminal:terminal
-                                          respectTabbingMode:NO];
+            [iTermSessionLauncher launchBookmark:bookmark
+                                      inTerminal:terminal
+                              respectTabbingMode:NO];
         }
         isFirst = NO;
     }
@@ -304,9 +305,9 @@ typedef enum {
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:terminal
-                                      respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:terminal
+                          respectTabbingMode:NO];
     }
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];

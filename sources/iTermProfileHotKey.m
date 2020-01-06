@@ -8,6 +8,7 @@
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "PseudoTerminal.h"
@@ -135,17 +136,17 @@ static NSString *const kArrangement = @"Arrangement";
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
     if (windowController) {
         if (url) {
-            [[iTermController sharedInstance] launchBookmark:self.profile
-                                                  inTerminal:windowController
-                                                     withURL:url.absoluteString
-                                            hotkeyWindowType:[self hotkeyWindowType]
-                                                     makeKey:YES
-                                                 canActivate:YES
-                                          respectTabbingMode:NO
-                                                     command:nil
-                                                       block:nil
-                                                 synchronous:NO
-                                                  completion:nil];
+            [iTermSessionLauncher launchBookmark:self.profile
+                                      inTerminal:windowController
+                                         withURL:url.absoluteString
+                                hotkeyWindowType:[self hotkeyWindowType]
+                                         makeKey:YES
+                                     canActivate:YES
+                              respectTabbingMode:NO
+                                         command:nil
+                                           block:nil
+                                     synchronous:NO
+                                      completion:nil];
         }
     } else {
         windowController = [self windowControllerFromProfile:[self profile] url:url];
@@ -799,17 +800,17 @@ static NSString *const kArrangement = @"Arrangement";
     }
     [self.delegate hotKeyWillCreateWindow:self];
     self.birthingWindow = YES;
-    PTYSession *session = [[iTermController sharedInstance] launchBookmark:hotkeyProfile
-                                                                inTerminal:nil
-                                                                   withURL:url.absoluteString
-                                                          hotkeyWindowType:[self hotkeyWindowType]
-                                                                   makeKey:YES
-                                                               canActivate:YES
-                                                        respectTabbingMode:NO
-                                                                   command:nil
-                                                                     block:nil
-                                                               synchronous:NO
-                                                                completion:nil];
+    PTYSession *session = [iTermSessionLauncher launchBookmark:hotkeyProfile
+                                                    inTerminal:nil
+                                                       withURL:url.absoluteString
+                                              hotkeyWindowType:[self hotkeyWindowType]
+                                                       makeKey:YES
+                                                   canActivate:YES
+                                            respectTabbingMode:NO
+                                                       command:nil
+                                                         block:nil
+                                                   synchronous:NO
+                                                    completion:nil];
     self.birthingWindow = NO;
 
     [self.delegate hotKeyDidCreateWindow:self];

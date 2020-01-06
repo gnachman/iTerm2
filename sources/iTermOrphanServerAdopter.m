@@ -13,6 +13,7 @@
 #import "iTermController.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermSessionFactory.h"
+#import "iTermSessionLauncher.h"
 #import "NSApplication+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -101,39 +102,39 @@
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *aSession =
-        [[iTermController sharedInstance] launchBookmark:nil
-                                              inTerminal:desiredWindow
-                                                 withURL:nil
-                                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                 makeKey:NO
-                                             canActivate:NO
-                                      respectTabbingMode:NO
-                                                 command:nil
-                                                   block:
-         ^PTYSession *(Profile *profile, PseudoTerminal *term) {
-             iTermFileDescriptorServerConnection theServerConnection = serverConnection;
-             PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile] autorelease];
-             [term addSessionInNewTab:session];
-             const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
-                                                                       canPrompt:NO
-                                                                      objectType:iTermWindowObject
-                                                                serverConnection:&theServerConnection
-                                                                       urlString:nil
-                                                                    allowURLSubs:NO
-                                                                     environment:@{}
-                                                                     customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
-                                                                          oldCWD:nil
-                                                                  forceUseOldCWD:NO
-                                                                         command:nil
-                                                                          isUTF8:nil
-                                                                   substitutions:nil
-                                                                windowController:term
-                                                                     synchronous:NO
-                                                                      completion:nil];
-             return ok ? session : nil;
-         }
-                                             synchronous:NO
-                                              completion:nil];
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:desiredWindow
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:NO
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:nil
+                                   block:
+     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
+        iTermFileDescriptorServerConnection theServerConnection = serverConnection;
+        PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile] autorelease];
+        [term addSessionInNewTab:session];
+        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
+                                                                  canPrompt:NO
+                                                                 objectType:iTermWindowObject
+                                                           serverConnection:&theServerConnection
+                                                                  urlString:nil
+                                                               allowURLSubs:NO
+                                                                environment:@{}
+                                                                customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
+                                                                     oldCWD:nil
+                                                             forceUseOldCWD:NO
+                                                                    command:nil
+                                                                     isUTF8:nil
+                                                              substitutions:nil
+                                                           windowController:term
+                                                                synchronous:NO
+                                                                 completion:nil];
+        return ok ? session : nil;
+    }
+                             synchronous:NO
+                              completion:nil];
     NSLog(@"restored an orphan");
     [aSession showOrphanAnnouncement];
     return aSession;

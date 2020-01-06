@@ -8,6 +8,7 @@
 
 #import "iTermServiceProvider.h"
 #import "iTermController.h"
+#import "iTermSessionLauncher.h"
 #import "NSDictionary+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -37,15 +38,15 @@
 
 - (PseudoTerminal *)openTab:(BOOL)allowTabs inTerminal:(PseudoTerminal *)windowController directory:(NSString *)path {
     __block PseudoTerminal *pseudoTerminal = windowController;
-    [[iTermController sharedInstance] launchBookmark:nil
-                                          inTerminal:pseudoTerminal
-                                             withURL:nil
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                             makeKey:YES
-                                         canActivate:YES
-                                  respectTabbingMode:NO
-                                             command:nil
-                                               block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:pseudoTerminal
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                 command:nil
+                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
         profile = [profile dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
         if (allowTabs && !windowController) {
@@ -57,8 +58,8 @@
                               synchronous:NO
                                completion:nil];
     }
-                                         synchronous:NO
-                                          completion:nil];
+                             synchronous:NO
+                              completion:nil];
     return pseudoTerminal;
 }
 

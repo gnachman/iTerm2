@@ -12,6 +12,7 @@
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSessionLauncher.h"
 #import "PTYSession.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
@@ -25,9 +26,9 @@ static void iTermTryMinimalCompact(NSWindow *window) {
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                         object:nil
                                                       userInfo:nil];
-    PTYSession *session = [[iTermController sharedInstance] launchBookmark:nil
-                                                                inTerminal:nil
-                                                        respectTabbingMode:NO];
+    PTYSession *session = [iTermSessionLauncher launchBookmark:nil
+                                                    inTerminal:nil
+                                            respectTabbingMode:NO];
     [session.view.window performZoom:nil];
 
     NSAlert *alert = [[NSAlert alloc] init];

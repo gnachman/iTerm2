@@ -35,7 +35,6 @@
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
 #import "iTermSessionFactory.h"
-#warning TODO: Remove this
 #import "iTermSessionLauncher.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
@@ -259,18 +258,18 @@ static iTermController *gSharedInstance;
         DLog(@"Creating a new tmux window");
         [_frontTerminalWindowController newTmuxWindow:sender];
     } else {
-        [self launchBookmark:nil
-                  inTerminal:nil
-          respectTabbingMode:YES];
+        [iTermSessionLauncher launchBookmark:nil
+                                  inTerminal:nil
+                          respectTabbingMode:YES];
     }
 }
 
 - (void)newSessionInTabAtIndex:(id)sender {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
-        [self launchBookmark:bookmark
-                  inTerminal:_frontTerminalWindowController
-          respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:_frontTerminalWindowController
+                          respectTabbingMode:NO];
     }
 }
 
@@ -299,9 +298,9 @@ static iTermController *gSharedInstance;
 - (void)newSessionInWindowAtIndex:(id)sender {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
-        [self launchBookmark:bookmark
-                  inTerminal:nil
-          respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:nil
+                          respectTabbingMode:NO];
     }
 }
 
@@ -320,9 +319,9 @@ static iTermController *gSharedInstance;
         NSString *guid = [ProfileModel freshGuid];
         bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
     }
-    PTYSession *session = [self launchBookmark:bookmark
-                                    inTerminal:_frontTerminalWindowController
-                            respectTabbingMode:NO];
+    PTYSession *session = [iTermSessionLauncher launchBookmark:bookmark
+                                                    inTerminal:_frontTerminalWindowController
+                                            respectTabbingMode:NO];
     if (divorced) {
         [session divorceAddressBookEntryFromPreferences];
     }
@@ -338,9 +337,9 @@ static iTermController *gSharedInstance;
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
         [_frontTerminalWindowController newTmuxTab:sender];
     } else {
-        [self launchBookmark:nil
-                  inTerminal:_frontTerminalWindowController
-          respectTabbingMode:NO];
+        [iTermSessionLauncher launchBookmark:nil
+                                  inTerminal:_frontTerminalWindowController
+                          respectTabbingMode:NO];
     }
 }
 
@@ -847,16 +846,16 @@ static iTermController *gSharedInstance;
     PseudoTerminal *term = newWindow ? nil : [self currentTerminal];
     for (Profile *bookmark in bookmarks) {
         if (!term) {
-            PTYSession *session = [self launchBookmark:bookmark
-                                            inTerminal:nil
-                                    respectTabbingMode:NO];
+            PTYSession *session = [iTermSessionLauncher launchBookmark:bookmark
+                                                            inTerminal:nil
+                                                    respectTabbingMode:NO];
             if (session) {
                 term = [self terminalWithSession:session];
             }
         } else {
-            [self launchBookmark:bookmark
-                      inTerminal:term
-              respectTabbingMode:NO];
+            [iTermSessionLauncher launchBookmark:bookmark
+                                      inTerminal:term
+                              respectTabbingMode:NO];
         }
     }
 }
@@ -1026,22 +1025,6 @@ static iTermController *gSharedInstance;
     [[iTermFullScreenWindowManager sharedInstance] makeWindowEnterFullScreen:term.ptyWindow];
 }
 
-- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
-                    inTerminal:(PseudoTerminal *)theTerm
-            respectTabbingMode:(BOOL)respectTabbingMode {
-    return [self launchBookmark:bookmarkData
-                     inTerminal:theTerm
-                        withURL:nil
-                       hotkeyWindowType:iTermHotkeyWindowTypeNone
-                        makeKey:YES
-                    canActivate:YES
-             respectTabbingMode:respectTabbingMode
-                        command:nil
-                          block:nil
-                    synchronous:NO
-                     completion:nil];
-}
-
 - (PseudoTerminal *)windowControllerForNewTabWithProfile:(Profile *)profile
                                                candidate:(PseudoTerminal *)preferredWindowController
                                       respectTabbingMode:(BOOL)respectTabbingMode {
@@ -1093,45 +1076,6 @@ static iTermController *gSharedInstance;
                                                                         URL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/wikis/Prefer-Tabs-When-Opening-Documents"]];
     iTermUserDefaults.haveBeenWarnedAboutTabDockSetting = YES;
 #endif
-}
-
-- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
-                    inTerminal:(PseudoTerminal *)theTerm
-                       withURL:(NSString *)url
-              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
-                       makeKey:(BOOL)makeKey
-                   canActivate:(BOOL)canActivate
-            respectTabbingMode:(BOOL)respectTabbingMode
-                       command:(NSString *)command
-                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
-                   synchronous:(BOOL)synchronous
-                    completion:(void (^ _Nullable)(BOOL))completion {
-    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
-    launcher.url = url;
-    launcher.hotkeyWindowType = hotkeyWindowType;
-    launcher.makeKey = makeKey;
-    launcher.canActivate = canActivate;
-    launcher.respectTabbingMode = respectTabbingMode;
-    launcher.command = command;
-    if (block) {
-        launcher.makeSession = ^(NSDictionary * _Nonnull profile,
-                                 PseudoTerminal * _Nonnull windowController,
-                                 void (^ _Nonnull completion)(PTYSession * _Nullable)) {
-            completion(block(profile, windowController));
-        };
-    }
-    __block PTYSession *session = nil;
-    launcher.didCreateSession = ^(PTYSession * _Nullable theSession) {
-        session = [[theSession retain] autorelease];
-    };
-    if (synchronous) {
-        launcher.completion = completion;
-        [launcher launchAndWait];
-    } else {
-        [launcher launchWithCompletion:completion];
-    }
-    [launcher release];
-    return session;
 }
 
 - (PTYTextView *)frontTextView {
@@ -1501,17 +1445,17 @@ static iTermController *gSharedInstance;
         }
         return session;
     };
-    PTYSession *session = [self launchBookmark:windowProfile
-                                    inTerminal:term
-                                       withURL:nil
-                              hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                       makeKey:YES
-                                   canActivate:YES
-                            respectTabbingMode:NO
-                                       command:command
-                                         block:makeSession
-                                   synchronous:NO
-                                    completion:nil];
+    PTYSession *session = [iTermSessionLauncher launchBookmark:windowProfile
+                                                    inTerminal:term
+                                                       withURL:nil
+                                              hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                       makeKey:YES
+                                                   canActivate:YES
+                                            respectTabbingMode:NO
+                                                       command:command
+                                                         block:makeSession
+                                                   synchronous:NO
+                                                    completion:nil];
 
     if (bury) {
         [session bury];

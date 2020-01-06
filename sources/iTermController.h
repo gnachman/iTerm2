@@ -121,23 +121,6 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
                                                candidate:(PseudoTerminal *)preferredWindowController
                                       respectTabbingMode:(BOOL)respectTabbingMode;
 
-// Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
-// new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
-// URL.
-- (PTYSession *)launchBookmark:(Profile *)bookmarkData
-                    inTerminal:(PseudoTerminal *)theTerm
-                       withURL:(NSString *)url
-              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
-                       makeKey:(BOOL)makeKey
-                   canActivate:(BOOL)canActivate
-            respectTabbingMode:(BOOL)respectTabbingMode
-                       command:(NSString *)command
-                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
-                   synchronous:(BOOL)synchronous
-                    completion:(void (^ _Nullable)(BOOL))completion;
-- (PTYSession *)launchBookmark:(Profile *)profile
-                    inTerminal:(PseudoTerminal *)theTerm
-            respectTabbingMode:(BOOL)respectTabbingMode;
 - (PTYTextView*)frontTextView;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (PseudoTerminal *)terminalForWindow:(NSWindow *)window;

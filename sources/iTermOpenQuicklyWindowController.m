@@ -11,6 +11,7 @@
 #import "iTermOpenQuicklyTableRowView.h"
 #import "iTermOpenQuicklyTextField.h"
 #import "iTermScriptsMenuController.h"
+#import "iTermSessionLauncher.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -199,17 +200,17 @@
             iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:profile[KEY_GUID]];
             if (!profileHotkey || profileHotkey.windowController.weaklyReferencedObject) {
                 // Create a new non-hotkey window
-                [[iTermController sharedInstance] launchBookmark:profile
-                                                      inTerminal:[[iTermController sharedInstance] currentTerminal]
-                                                         withURL:nil
-                                                hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                         makeKey:YES
-                                                     canActivate:YES
-                                              respectTabbingMode:NO
-                                                         command:nil
-                                                           block:nil
-                                                     synchronous:NO
-                                                      completion:nil];
+                [iTermSessionLauncher launchBookmark:profile
+                                          inTerminal:[[iTermController sharedInstance] currentTerminal]
+                                             withURL:nil
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                             makeKey:YES
+                                         canActivate:YES
+                                  respectTabbingMode:NO
+                                             command:nil
+                                               block:nil
+                                         synchronous:NO
+                                          completion:nil];
             } else {
                 // Create the hotkey window for this profile
                 [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
