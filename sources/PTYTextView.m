@@ -1165,7 +1165,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.useNativePowerlineGlyphs = self.useNativePowerlineGlyphs;
     _drawingHelper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
     _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
-
+    _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
+    
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
         [_drawingHelper createTimestampDrawingHelper];
