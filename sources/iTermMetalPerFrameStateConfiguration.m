@@ -43,8 +43,9 @@ static vector_float4 VectorForColor(NSColor *color) {
     _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
     _blinkAllowed = textView.blinkAllowed;
     _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
-    _asciiAntialias = drawingHelper.asciiAntiAlias;
-    _nonasciiAntialias = _useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias;
+    const BOOL forceAA = (drawingHelper.forceAntialiasingOnRetina && drawingHelper.isRetina);
+    _asciiAntialias = drawingHelper.asciiAntiAlias || forceAA;
+    _nonasciiAntialias = (_useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
     _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
     _showBroadcastStripes = drawingHelper.showStripes;
     _processedDefaultBackgroundColor = [drawingHelper defaultBackgroundColor];

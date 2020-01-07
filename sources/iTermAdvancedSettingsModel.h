@@ -114,6 +114,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)fontsForGenerousRounding;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
 + (BOOL)focusReportingEnabled;
++ (BOOL)forceAntialiasingOnRetina;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (BOOL)fullHeightCursor;

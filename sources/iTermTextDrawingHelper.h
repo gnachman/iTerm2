@@ -234,6 +234,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property(nonatomic, assign) BOOL animated;
 
 @property(nonatomic, assign) BOOL isRetina;
+@property(nonatomic, assign) BOOL forceAntialiasingOnRetina;
 
 // Draw mark indicators?
 @property(nonatomic, assign) BOOL drawMarkIndicators;

@@ -1950,7 +1950,12 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
 static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                                   BOOL useNonAsciiFont,
                                                   BOOL asciiAntiAlias,
-                                                  BOOL nonAsciiAntiAlias) {
+                                                  BOOL nonAsciiAntiAlias,
+                                                  BOOL isRetina,
+                                                  BOOL forceAntialiasingOnRetina) {
+    if (isRetina && forceAntialiasingOnRetina) {
+        return YES;
+    }
     if (!useNonAsciiFont || (c->code < 128 && !c->complexChar)) {
         return asciiAntiAlias;
     } else {
@@ -2025,9 +2030,11 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                        attributes:(iTermCharacterAttributes *)attributes {
     attributes->initialized = YES;
     attributes->shouldAntiAlias = iTermTextDrawingHelperShouldAntiAlias(c,
-                                                                       _useNonAsciiFont,
-                                                                       _asciiAntiAlias,
-                                                                       _nonAsciiAntiAlias);
+                                                                        _useNonAsciiFont,
+                                                                        _asciiAntiAlias,
+                                                                        _nonAsciiAntiAlias,
+                                                                        _isRetina,
+                                                                        _forceAntialiasingOnRetina);
     const BOOL isComplex = c->complexChar;
     const unichar code = c->code;
 
