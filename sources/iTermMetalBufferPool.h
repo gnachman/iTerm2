@@ -14,9 +14,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPoolContext : NSObject
+#if ENABLE_METAL_STATS
 @property (nonatomic, readonly) iTermHistogram *histogram;
 @property (nonatomic, readonly) iTermHistogram *textureHistogram;
 @property (nonatomic, readonly) iTermHistogram *wasteHistogram;
+#endif
 
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
 - (void)didAddTextureOfSize:(double)size;

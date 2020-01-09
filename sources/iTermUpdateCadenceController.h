@@ -38,7 +38,9 @@ typedef struct {
 
 @property (nonatomic, readonly) BOOL updateTimerIsValid;
 @property (nonatomic, weak) id<iTermUpdateCadenceControllerDelegate> delegate;
+#if ENABLE_METAL_STATS
 @property (nonatomic, readonly) iTermHistogram *histogram;
+#endif
 @property (nonatomic, readonly) BOOL isActive;
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator NS_DESIGNATED_INITIALIZER;

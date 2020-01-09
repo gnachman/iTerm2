@@ -246,6 +246,7 @@ void iTermPreciseTimerPeriodicLog(NSString *identifier,
     }
 }
 
+#if ENABLE_METAL_STATS
 static NSString *iTermEmojiForDuration(double ms) {
     if (ms > 100) {
         return @"😱";
@@ -261,12 +262,14 @@ static NSString *iTermEmojiForDuration(double ms) {
         return @"  ";
     }
 }
+#endif
 
 void iTermPreciseTimerLog(NSString *identifier,
                           iTermPreciseTimerStats stats[],
                           size_t count,
                           BOOL logToConsole,
                           NSArray *histograms) {
+#if ENABLE_METAL_STATS
     const int millisWidth = 7;
     NSString *(^formatMillis)(double) = ^NSString *(double ms) {
         NSString *numeric = [NSString stringWithFormat:@"%0.1fms", ms];
@@ -332,6 +335,7 @@ void iTermPreciseTimerLog(NSString *identifier,
         iTermPreciseTimerSaveLog(identifier, log);
         DLog(@"%@", log);
     }
+#endif
 }
 
 void iTermPreciseTimerLogOneEvent(NSString *identifier,
@@ -339,6 +343,7 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
                                   size_t count,
                                   BOOL logToConsole,
                                   NSArray *histograms) {
+#if ENABLE_METAL_STATS
     @synchronized([iTermPreciseTimersLock class]) {
         NSMutableString *log = [[@"-- Precise Timers (One Event) --\n" mutableCopy] autorelease];
         for (size_t i = 0; i < count; i++) {
@@ -376,6 +381,7 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
 
         DLog(@"%@", log);
     }
+#endif
 }
 
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) {

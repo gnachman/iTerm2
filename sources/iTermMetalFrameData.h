@@ -91,9 +91,10 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatCount,
     iTermMetalFrameDataStatNA = -1
 };
-
+#if ENABLE_METAL_STATS
 extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
 extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTermPreciseTimerStats *source);
+#endif
 
 @class iTermCellRenderConfiguration;
 @class iTermHistogram;
@@ -126,8 +127,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
+#if ENABLE_METAL_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 @property (nonatomic, readonly) NSArray<iTermHistogram *> *statHistograms;
+#endif
 @property (nonatomic, strong) id<CAMetalDrawable> destinationDrawable;
 @property (nonatomic, strong) id<MTLTexture> destinationTexture;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;

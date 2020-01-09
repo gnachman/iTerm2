@@ -6,6 +6,7 @@
 //
 
 #import "iTermHistogram.h"
+#if ENABLE_METAL_STATS
 
 #include <algorithm>
 #include <cmath>
@@ -342,3 +343,4 @@ static double iTermSaneDouble(const double d) {
     return characters[index];
 }
 @end
+#endif

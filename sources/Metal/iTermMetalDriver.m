@@ -24,7 +24,9 @@
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
+#if ENABLE_METAL_STATS
 #import "iTermPreciseTimer.h"
+#endif
 #import "iTermPreferences.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTexture.h"
@@ -129,8 +131,10 @@ typedef struct {
 #if ENABLE_PRIVATE_QUEUE
     dispatch_queue_t _queue;
 #endif
+#if ENABLE_METAL_STATS
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
     NSArray<iTermHistogram *> *_statHistograms;
+#endif
     int _dropped;
     int _total;
 
@@ -156,8 +160,10 @@ typedef struct {
     if (self) {
         static int gNextIdentifier;
         _identifier = [NSString stringWithFormat:@"[driver %d]", gNextIdentifier++];
+        #if ENABLE_METAL_STATS
         _startToStartHistogram = [[iTermHistogram alloc] init];
         _inFlightHistogram = [[iTermHistogram alloc] init];
+#endif
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _fullSizeTexturePool = [[iTermTexturePool alloc] init];
         
@@ -198,10 +204,12 @@ typedef struct {
 
         _fpsMovingAverage = [[MovingAverage alloc] init];
         _fpsMovingAverage.alpha = 0.75;
+#if ENABLE_METAL_STATS
         iTermMetalFrameDataStatsBundleInitialize(_stats);
         _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
             return [[iTermHistogram alloc] init];
         }];
+#endif
 
         _maxFramesInFlight = iTermMetalDriverMaximumNumberOfFramesInFlight;
 
@@ -232,6 +240,7 @@ typedef struct {
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
+#if ENABLE_METAL_STATS
 #if ENABLE_PRIVATE_QUEUE
     dispatch_async(_queue, ^{
         iTermMetalFrameDataStatsBundleInitialize(self->_stats);
@@ -241,6 +250,7 @@ typedef struct {
     });
 #else
     iTermMetalFrameDataStatsBundleInitialize(_stats);
+#endif
 #endif
 }
 
@@ -313,6 +323,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [view setNeedsDisplay:YES];
     }
 
+    #if ENABLE_METAL_STATS
     iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
                              [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)_total)]);
     if (_total % 10 == 1) {
@@ -321,6 +332,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Frames In Flight at Start", _identifier],
                                  [_inFlightHistogram stringValue]);
     }
+#endif
 }
 
 - (int)maximumNumberOfFramesInFlight {
@@ -377,9 +389,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+    #if ENABLE_METAL_STATS
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }
+#endif
     if (self.mainThreadState->rows == 0 || self.mainThreadState->columns == 0) {
         DLog(@"  abort: uninitialized");
         [self scheduleDrawIfNeededInView:view];
@@ -429,9 +443,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
         self.captureDebugInfoForNextFrame = NO;
     }
+    #if ENABLE_METAL_STATS
     if (_total > 1) {
         [_startToStartHistogram addValue:startToStartTime * 1000];
     }
+#endif
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (!frameData.deferCurrentDrawable) {
@@ -1686,6 +1702,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 #endif
 
+#if ENABLE_METAL_STATS
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
 
         iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
@@ -1699,7 +1716,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
             dispatch_async(self->_queue, scheduledBlock);
         }];
-
+#endif
         __block BOOL completed = NO;
         void (^completedBlock)(void) = [^{
             completed = [self didComplete:completed withFrameData:frameData];
@@ -1765,9 +1782,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     DLog(@"  Recording final stats");
+#if ENABLE_METAL_STATS
     [frameData didCompleteWithAggregateStats:_stats
                                   histograms:_statHistograms
                                        owner:_identifier];
+#else
+[frameData didCompleteWithAggregateStats:nil
+                              histograms:nil
+                                   owner:_identifier];
+#endif
 
     @synchronized(self) {
         frameData.status = @"retired";

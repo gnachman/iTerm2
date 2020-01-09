@@ -19,9 +19,12 @@
 
 #import <MetalKit/MetalKit.h>
 
+#if ENABLE_METAL_STATS
 static NSMutableDictionary *sHistograms;
+#endif
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
+#if ENABLE_METAL_STATS
     iTermPreciseTimerSetEnabled(YES);
 
     const char *names[iTermMetalFrameDataStatCount] = {
@@ -96,6 +99,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         iTermPreciseTimerStatsInit(&bundle[i], names[i]);
     }
+#endif
 }
 
 static NSInteger gNextFrameDataNumber;
@@ -107,7 +111,9 @@ static NSInteger gNextFrameDataNumber;
 
 @implementation iTermMetalFrameData {
     NSTimeInterval _creation;
+#if ENABLE_METAL_STATS
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
+#endif
     iTermCellRenderConfiguration *_cellConfiguration;
 }
 
@@ -121,6 +127,7 @@ static NSInteger gNextFrameDataNumber;
         _frameNumber = gNextFrameDataNumber++;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
         _transientStates = [NSMutableDictionary dictionary];
+#if ENABLE_METAL_STATS
         iTermMetalFrameDataStatsBundleInitialize(_stats);
         _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
             return [[iTermHistogram alloc] init];
@@ -128,6 +135,7 @@ static NSInteger gNextFrameDataNumber;
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatCPU]);
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
+#endif
         self.status = @"just created";
     }
     return self;
@@ -155,57 +163,77 @@ static NSInteger gNextFrameDataNumber;
         return 0;
     }
     
+#if ENABLE_METAL_STATS
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
     iTermPreciseTimerStatsStartTimer(&_stats[stat]);
+#endif
     block();
+#if ENABLE_METAL_STATS
     const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
     [_statHistograms[stat] addValue:duration * 1000];
     return duration;
+#endif
+    return 0;
 }
 
 - (void)extractStateFromAppInBlock:(void (^)(void))block {
+#if ENABLE_METAL_STATS
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
+#endif
     block();
+#if ENABLE_METAL_STATS
     const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
     [_statHistograms[iTermMetalFrameDataStatMtExtractFromApp] addValue:duration * 1000];
+#endif
 }
 
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block {
+#if ENABLE_METAL_STATS
     const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
     [_statHistograms[iTermMetalFrameDataStatMainQueueTotal] addValue:duration * 1000];
 
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+#endif
     dispatch_async(queue, ^{
+#if ENABLE_METAL_STATS
         iTermPreciseTimerStatsStartTimer(&self->_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
         const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
         [self->_statHistograms[iTermMetalFrameDataStatPrivateQueueTotal] addValue:duration * 1000];
-
+#endif
         block();
     });
 }
 
 - (void)dispatchToMainQueueForDrawing:(void (^)(void))block {
+#if ENABLE_METAL_STATS
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+#endif
     dispatch_async(dispatch_get_main_queue(), ^{
+#if ENABLE_METAL_STATS
         const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
         [self->_statHistograms[iTermMetalFrameDataStatDispatchToMainQueue] addValue:duration * 1000];
-
+#endif
         block();
     });
 }
 
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block {
     self.status = @"completion handler, waiting for dispatch";
+#if ENABLE_METAL_STATS
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
+#endif
     dispatch_async(queue, ^{
+#if ENABLE_METAL_STATS
         self.status = @"completion handler on private queue";
         const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
         [self->_statHistograms[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion] addValue:duration * 1000];
+#endif
         block();
     });
 }
 
 - (void)willHandOffToGPU {
+#if ENABLE_METAL_STATS
     double duration;
     duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatCPU]);
     [_statHistograms[iTermMetalFrameDataStatCPU] addValue:duration * 1000];
@@ -214,6 +242,7 @@ static NSInteger gNextFrameDataNumber;
     [_statHistograms[iTermMetalFrameDataStatPrivateQueueTotal] addValue:duration * 1000];
 
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
+#endif
 }
 
 - (void)updateRenderEncoderWithRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
@@ -320,6 +349,7 @@ static NSInteger gNextFrameDataNumber;
         [self.fullSizeTexturePool returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
     }
 #endif
+#if ENABLE_METAL_STATS
     double duration;
 
     duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
@@ -361,6 +391,7 @@ static NSInteger gNextFrameDataNumber;
         [aggregateHistograms[i] mergeFrom:_statHistograms[i]];
     }
     iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, [iTermAdvancedSettingsModel logDrawingPerformance], aggregateHistograms);
+#endif
 }
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer {
@@ -375,6 +406,7 @@ static NSInteger gNextFrameDataNumber;
     if (!name) {
         return;
     }
+#if ENABLE_METAL_STATS
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sHistograms = [[NSMutableDictionary alloc] init];
@@ -387,19 +419,23 @@ static NSInteger gNextFrameDataNumber;
         }
         [hist mergeFrom:histogramToMerge];
     }
+#endif
 }
 
 - (NSString *)histogramsString {
     NSMutableString *result = [NSMutableString string];
+#if ENABLE_METAL_STATS
     @synchronized(sHistograms) {
         [[sHistograms.allKeys sortedArrayUsingSelector:@selector(compare:)] enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
             iTermHistogram *histogram = sHistograms[name];
             [result appendFormat:@"%@: %@\n", name, [histogram sparklines]];
         }];
     }
+#endif
     return result;
 }
 
+#if ENABLE_METAL_STATS
 - (void)addStatsTo:(iTermPreciseTimerStats *)dest {
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         iTermPreciseTimerStatsRecord(&dest[i], _stats[i].mean * _stats[i].n, _stats[i].n);
@@ -409,6 +445,7 @@ static NSInteger gNextFrameDataNumber;
 - (iTermPreciseTimerStats *)stats {
     return _stats;
 }
+#endif
 
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block {
 #if ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS

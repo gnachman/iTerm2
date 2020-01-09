@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#if ENABLE_METAL_STATS
 
 @interface iTermHistogram : NSObject
 
@@ -22,3 +23,4 @@
 - (void)clear;
 
 @end
+#endif

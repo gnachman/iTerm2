@@ -4578,12 +4578,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     _updateCount++;
+#if ENABLE_METAL_STATS
     if (@available(macOS 10.11, *)) {
         if (_useMetal && _updateCount % 10 == 0) {
             iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
                                      _cadenceController.histogram.stringValue);
         }
     }
+#endif
     _timerRunning = YES;
 
     // Set attributes of tab to indicate idle, processing, etc.

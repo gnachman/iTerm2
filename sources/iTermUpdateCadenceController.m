@@ -48,7 +48,9 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     if (self) {
         _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
         _throughputEstimator = throughputEstimator;
+#if ENABLE_METAL_STATS
         _histogram = [[iTermHistogram alloc] init];
+#endif
         _activeUpdateCadence = 1.0 / MAX(1, [iTermAdvancedSettingsModel activeUpdateCadence]);
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
@@ -252,16 +254,20 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         _deferredCadenceChange = NO;
     }
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+#if ENABLE_METAL_STATS
     if (_lastUpdate) {
         double ms = (now - _lastUpdate) * 1000;
         [_histogram addValue:ms];
     }
+#endif
     _lastUpdate = now;
     [_delegate updateCadenceControllerUpdateDisplay:self];
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
+#if ENABLE_METAL_STATS
     _histogram = [[iTermHistogram alloc] init];
+#endif
     _lastUpdate = 0;
 }
 
