@@ -11,7 +11,7 @@
 #import "TransferrableFileMenuItemView.h"
 
 static const CGFloat kWidth = 300;
-static const CGFloat kHeight = 63;
+static const CGFloat kHeight = 59;
 static const CGFloat kCollapsedHeight = 51;
 
 @implementation TransferrableFileMenuItemViewController {

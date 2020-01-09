@@ -9,7 +9,9 @@
 #import "TransferrableFileMenuItemView.h"
 #import "NSStringITerm.h"
 
-const CGFloat rightMargin = 5;
+const CGFloat rightMargin = 8;
+const CGFloat leftMargin = 20;
+const CGFloat progressIndicatorHeight = 6;
 
 @interface TransferrableFileMenuItemView ()
 // This is used as part of the bug workaround in sanityCheckSiblings to ensure we don't try to
@@ -22,10 +24,10 @@ const CGFloat rightMargin = 5;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(5,
+        _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(leftMargin,
                                                                                       17,
-                                                                                      frameRect.size.width - 10,
-                                                                                      10)];
+                                                                                      frameRect.size.width - leftMargin - rightMargin,
+                                                                                      progressIndicatorHeight)];
         [self addSubview:_progressIndicator];
     }
     return self;
@@ -39,6 +41,10 @@ const CGFloat rightMargin = 5;
     [super dealloc];
 }
 
+- (void)setFrame:(NSRect)frame {
+    NSLog(@"%@", NSStringFromRect(frame));
+    [super setFrame:frame];
+}
 // Works around an OS bug. If the menu is closed with an item selected and then reopened, the
 // item remains selected. If you then select a different item, the originally selected item won't
 // get redrawn!
@@ -100,7 +106,6 @@ const CGFloat rightMargin = 5;
     [rightAlignStyle setAlignment:NSTextAlignmentRight];
     [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
-    const CGFloat leftMargin = 5;
     NSFont *theFont = [NSFont systemFontOfSize:14];
     NSFont *smallFont = [NSFont systemFontOfSize:10];
     NSDictionary *filenameAttributes = @{ NSParagraphStyleAttributeName: leftAlignStyle,
@@ -133,7 +138,7 @@ const CGFloat rightMargin = 5;
     // Draw file name
     NSRect filenameRect = NSMakeRect(leftMargin,
                                      topY,
-                                     self.bounds.size.width - rightMargin,
+                                     self.bounds.size.width - leftMargin - rightMargin,
                                      textHeight);
 
     [_filename drawInRect:filenameRect
@@ -142,7 +147,7 @@ const CGFloat rightMargin = 5;
     // Draw subheading
     NSRect subheadingRect = NSMakeRect(leftMargin,
                                        topY - smallTextHeight - 1,
-                                       self.bounds.size.width - rightMargin,
+                                       self.bounds.size.width - leftMargin - rightMargin,
                                        smallTextHeight);
     [_subheading drawInRect:subheadingRect withAttributes:smallGrayAttributes];
 
@@ -150,15 +155,15 @@ const CGFloat rightMargin = 5;
     if (_statusMessage) {
         [_statusMessage drawInRect:NSMakeRect(leftMargin,
                                               bottomY,
-                                              self.bounds.size.width - rightMargin,
+                                              self.bounds.size.width - leftMargin - rightMargin,
                                               smallTextHeight)
                     withAttributes:smallGrayAttributes];
     }
 
     // Draw size
-    [sizeString drawInRect:NSMakeRect(0,
+    [sizeString drawInRect:NSMakeRect(leftMargin,
                                       bottomY,
-                                      self.bounds.size.width - 5,
+                                      self.bounds.size.width - rightMargin - leftMargin,
                                       smallTextHeight)
             withAttributes:sizeAttributes];
 }

@@ -2581,6 +2581,7 @@
 		A685D9FA1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */; };
 		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
 		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
+		A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
 		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
@@ -3033,7 +3034,6 @@
 		A6C762F91B45C52B00E3C992 /* iTermExposeView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74760188C679C005355CF /* iTermExposeView.m */; };
 		A6C762FA1B45C52B00E3C992 /* iTermExposeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74751188C6693005355CF /* iTermExposeWindow.m */; };
 		A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30CC186D1414007F550F /* FileTransferManager.m */; };
-		A6C762FC1B45C52B00E3C992 /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
 		A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D6186D1429007F550F /* SCPPath.m */; };
 		A6C762FE1B45C52B00E3C992 /* TerminalFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C08187A1809004A60AF /* TerminalFile.m */; };
 		A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D7186D1429007F550F /* TransferrableFile.m */; };
@@ -12993,6 +12993,7 @@
 				A6A4867020B67A3B00493302 /* iTermSizeRememberingView.m in Sources */,
 				A66F52B22105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m in Sources */,
 				A61ED2AE20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.m in Sources */,
+				A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */,
 				A6481650228FD240008E7E0C /* iTermWeakProxy.m in Sources */,
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,
 				A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */,
@@ -13265,7 +13266,6 @@
 				A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */,
 				A6C763E51B45C70100E3C992 /* SCEvent.m in Sources */,
 				A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */,
-				A6C762FC1B45C52B00E3C992 /* SCPFile.m in Sources */,
 				A67778B51CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m in Sources */,
 				A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */,
 				A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */,
