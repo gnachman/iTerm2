@@ -234,10 +234,14 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                                                             object:nil];
     };
 
-    [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
+    info = [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification object:nil];
+    };
+
     [self updateHiddenAndEnabled];
 
     info = [self defineControl:_showTabBarInFullscreen
