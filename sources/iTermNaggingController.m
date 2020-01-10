@@ -106,7 +106,7 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier
-                                        options:@[ @"Restart", @"Don’t Ask Again" ]
+                                        options:@[ @"_Restart", @"Don’t Ask Again" ]
                                      completion:^(int selection) {
         [self handleCompletionForBrokenPipe:selection];
     }];

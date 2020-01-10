@@ -2582,6 +2582,7 @@
 		A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */ = {isa = PBXBuildFile; fileRef = A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */; };
 		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
 		A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
+		A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */; };
 		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
@@ -3077,7 +3078,6 @@
 		A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */; };
 		A6C7632F1B45C52B00E3C992 /* iTermDropDownFindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* iTermDropDownFindViewController.m */; };
 		A6C763301B45C52B00E3C992 /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
-		A6C763311B45C52B00E3C992 /* iTermAnnouncementViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */; };
 		A6C763331B45C52B00E3C992 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
 		A6C763351B45C52B00E3C992 /* iTermPasteSpecialViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */; };
 		A6C763361B45C52B00E3C992 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
@@ -12862,6 +12862,7 @@
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
+				A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */,
 				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
@@ -13249,7 +13250,6 @@
 				A6C7633D1B45C52B00E3C992 /* FindView.m in Sources */,
 				A6C763891B45C52B00E3C992 /* ProfileModel.m in Sources */,
 				A6C762F31B45C52B00E3C992 /* DVRIndexEntry.m in Sources */,
-				A6C763311B45C52B00E3C992 /* iTermAnnouncementViewController.m in Sources */,
 				A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */,
 				A62C3B361BCC265F00B5629D /* iTermHostRecordMO+Additions.m in Sources */,
 				A6C762EE1B45C52B00E3C992 /* IntervalTree.m in Sources */,

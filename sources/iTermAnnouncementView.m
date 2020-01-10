@@ -178,7 +178,7 @@ static const CGFloat kMargin = 8;
         [pullDown addItemWithTitle:@"More Actions…"];
         for (int i = limit; i < actions.count; i++) {
             NSString *action = actions[i];
-            [pullDown addItemWithTitle:action];
+            [pullDown addItemWithTitle:[self stringByAddingShortcutInString:action]];
             [[[pullDown itemArray] lastObject] setTag:i];
         }
         [pullDown sizeToFit];
@@ -197,7 +197,8 @@ static const CGFloat kMargin = 8;
         [button setTarget:self];
         [button setAction:@selector(buttonPressed:)];
         [button setTag:i];
-        [button setTitle:action];
+
+        [button setTitle:[self stringByAddingShortcutInString:action]];
         [button setBezelStyle:NSTexturedRoundedBezelStyle];
         [button sizeToFit];
         button.autoresizingMask = NSViewMinXMargin;
@@ -209,6 +210,17 @@ static const CGFloat kMargin = 8;
                                   button.frame.size.height);
         [_actionButtons addObject:button];
         [_internalView addSubview:button];
+    }
+}
+
+- (NSString *)stringByAddingShortcutInString:(NSString *)original {
+    const NSInteger index = [original rangeOfString:@"_"].location;
+    if (index == NSNotFound) {
+        return original;
+    } else {
+        NSString *shortcut = [NSString stringWithLongCharacter:[original characterAtIndex:index + 1]];
+        NSString *modifiedOriginal = [original stringByReplacingCharactersInRange:NSMakeRange(index, 1) withString:@""];
+        return [NSString stringWithFormat:@"%@ (⌥%@)", modifiedOriginal, shortcut];
     }
 }
 
@@ -322,6 +334,13 @@ static const CGFloat kMargin = 8;
     if (_block) {
         DLog(@"Invoking its block");
         _block([sender tag]);
+    }
+}
+
+- (void)selectIndex:(NSInteger)index {
+    DLog(@"selectIndex:%@", @(index));
+    if (_block) {
+        _block(index);
     }
 }
 

@@ -28,4 +28,6 @@ typedef NS_ENUM(NSInteger, iTermAnnouncementViewStyle) {
 
 - (void)addDismissOnKeyDownLabel;
 
+- (void)selectIndex:(NSInteger)index;
+
 @end

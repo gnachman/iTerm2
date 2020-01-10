@@ -8,6 +8,7 @@
 
 #import "iTermAnnouncementViewController.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "SolidColorView.h"
 
 @interface iTermAnnouncementViewController ()
@@ -27,18 +28,12 @@
                                 style:(iTermAnnouncementViewStyle)style
                           withActions:(NSArray *)actions
                            completion:(void (^)(int))completion {
-    iTermAnnouncementViewController *announcement = [[[self alloc] init] autorelease];
+    iTermAnnouncementViewController *announcement = [[self alloc] init];
     announcement.title = title;
     announcement.actions = actions;
     announcement.completion = completion;
     announcement.style = style;
     return announcement;
-}
-
-- (void)dealloc {
-    [_actions release];
-    [_completion release];
-    [super dealloc];
 }
 
 - (NSString *)description {
@@ -47,19 +42,52 @@
 }
 
 - (void)loadView {
-    [self retain];
+    __weak __typeof(self) weakSelf = self;
     self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
                                                            style:_style
                                                          actions:self.actions
                                                            block:^(int index) {
-                                                               DLog(@"Outer completion block invoked for announcement %@", self);
-                                                               if (!_dismissing) {
-                                                                   DLog(@"Invoking inner completion block with index %d", index);
-                                                                   self.completion(index);
-                                                                   [self dismiss];
-                                                               }
-                                                               [self release];
-                                                           }];
+        [weakSelf didInvoke:index];
+    }];
+}
+
+- (void)didInvoke:(int)index {
+    DLog(@"Outer completion block invoked for announcement %@", self);
+    if (!_dismissing) {
+        DLog(@"Invoking inner completion block with index %d", index);
+        self.completion(index);
+        [self dismiss];
+    }
+}
+
+- (BOOL)handleKeyDown:(NSEvent *)event {
+    if (self.dismissOnKeyDown) {
+        [self dismiss];
+        return YES;
+    }
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    if ((event.modifierFlags & mask) != NSEventModifierFlagOption) {
+        return NO;
+    }
+    const NSUInteger i =
+    [self.actions indexOfObjectPassingTest:^BOOL(NSString *action, NSUInteger i, BOOL * _Nonnull stop) {
+        const NSRange range = [action rangeOfString:@"_"];
+        if (range.location == NSNotFound) {
+            return NO;
+        }
+        NSString *shortcut = [[action substringWithRange:NSMakeRange(NSMaxRange(range), 1)] uppercaseString];
+        if (![[[event charactersIgnoringModifiers] uppercaseString] isEqualToString:shortcut]) {
+            return NO;
+        }
+        return YES;
+    }];
+    if (i != NSNotFound) {
+        [(iTermAnnouncementView *)self.view selectIndex:i];
+    }
+    return i != NSNotFound;
 }
 
 - (void)setDismissOnKeyDown:(BOOL)dismissOnKeyDown {

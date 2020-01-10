@@ -39,4 +39,6 @@
 // Indicates if it has timed out.
 - (BOOL)shouldBecomeVisible;
 
+- (BOOL)handleKeyDown:(NSEvent *)event;
+
 @end

@@ -6748,8 +6748,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
         [_pwdPoller userDidPressKey];
-        if (_view.currentAnnouncement.dismissOnKeyDown) {
-            [_view.currentAnnouncement dismiss];
+        if ([_view.currentAnnouncement handleKeyDown:event]) {
             return NO;
         }
     }
@@ -9785,7 +9784,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                               withActions:@[ @"_Yes", @"Always", @"Never" ]
                                                 completion:^(int selection) {
             switch (selection) {
                 case -2:  // Dismiss programmatically
@@ -9818,7 +9817,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                               withActions:@[ @"_Yes", @"Always", @"Never" ]
                                                 completion:^(int selection) {
             switch (selection) {
                 case -2:  // Dismiss programmatically
@@ -9851,7 +9850,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"Yes", @"Always", @"Never", @"Help" ]
+                                               withActions:@[ @"_Yes", @"Always", @"Never", @"Help" ]
                                                 completion:^(int selection) {
             switch (selection) {
                 case -2:  // Dismiss programmatically
@@ -10189,8 +10188,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
                                                                  style:kiTermAnnouncementViewStyleQuestion
-                                                           withActions:@[ @"Silence Bell Temporarily",
-                                                                          @"Suppress All Output",
+                                                           withActions:@[ @"_Silence Bell Temporarily",
+                                                                          @"Suppress _All Output",
                                                                           @"Don't Offer Again",
                                                                           @"Silence Automatically" ]
                                                             completion:^(int selection) {
@@ -10236,7 +10235,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             announcement =
                 [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Want to suppress all output until things calm down?"
                                                                  style:kiTermAnnouncementViewStyleQuestion
-                                                           withActions:@[ @"Suppress All Output",
+                                                           withActions:@[ @"Suppress _All Output",
                                                                           @"Don't Offer Again" ]
                                                             completion:^(int selection) {
                         // Release the moving average so the count will restart after the announcement goes away.
@@ -10564,7 +10563,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:notice
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"Open Prefs", @"Don't Show This Again" ]
+                                               withActions:@[ @"_Open Prefs", @"Don't Show This Again" ]
                                                 completion:^(int selection) {
                                                     if (selection == 0) {
                                                         [[[iTermApplication sharedApplication] delegate] showPrefWindow:nil];
@@ -11182,7 +11181,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"Coprocess “%@” terminated with output on stderr.", coprocess.command]
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"View Errors", @"Ignore Errors from This Command" ]
+                                               withActions:@[ @"_View Errors", @"Ignore Errors from This Command" ]
                                                 completion:^(int selection) {
                                                     if (selection == 0) {
                                                         NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"coprocess-stderr." suffix:@".txt"];
