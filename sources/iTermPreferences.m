@@ -315,7 +315,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyPerPaneBackgroundImage: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyUIElement: @NO,
-                  kPreferenceKeyFlashTabBarInFullscreen:@YES,
+                  kPreferenceKeyFlashTabBarInFullscreen:@NO,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName_Deprecated: @YES,
                   kPreferenceKeyShowProfileName_Deprecated: @NO,
