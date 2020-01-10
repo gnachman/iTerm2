@@ -42,6 +42,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "PreferencePanel.h"
@@ -432,18 +433,18 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)handleScrollWheelEvent:(NSEvent *)event {
-    NSWindow *window = self.keyWindow;
-    if (!window) {
-        return;
+    NSPoint point = event.locationInWindow;
+    if (event.window) {
+        point = [event.window convertPointToScreen:point];
     }
-    NSResponder *current = window.firstResponder;
+    NSView *current = [NSView viewAtScreenCoordinate:point];
     while (current) {
         if ([current respondsToSelector:@selector(it_wantsScrollWheelMomentumEvents)] &&
             [current it_wantsScrollWheelMomentumEvents]) {
             [current it_scrollWheelMomentum:event];
             return;
         }
-        current = current.nextResponder;
+        current = current.superview;
     }
 }
 

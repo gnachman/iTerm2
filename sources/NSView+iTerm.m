@@ -8,8 +8,37 @@
 
 #import "NSView+iTerm.h"
 #import "DebugLogging.h"
+#import "iTermApplication.h"
+#import "NSWindow+iTerm.h"
 
 @implementation NSView (iTerm)
+
++ (NSView *)viewAtScreenCoordinate:(NSPoint)point {
+    const NSRect mouseRect = {
+        .origin = point,
+        .size = NSZeroSize
+    };
+    NSArray<NSWindow *> *frontToBackWindows = [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels];
+    for (NSWindow *window in frontToBackWindows) {
+        if (!window.isOnActiveSpace) {
+            continue;
+        }
+        if (!window.isVisible) {
+            continue;
+        }
+        NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
+        if ([window isTerminalWindow]) {
+            DLog(@"Consider window %@", window.title);
+            NSView *view = [window.contentView hitTest:pointInWindow];
+            if (view) {
+                return view;
+            } else {
+                DLog(@"%@ failed hit test", window.title);
+            }
+        }
+    }
+    return nil;
+}
 
 - (NSImage *)snapshot {
     return [[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]];
