@@ -57,7 +57,7 @@
 }
 
 - (NSRect)frameExceptMenuBar {
-    if ([[NSScreen screens] firstObject] == self) {
+    if ([[NSScreen screens] firstObject] == self || [NSScreen screensHaveSeparateSpaces]) {
         NSRect frame = self.frame;
         // NSApp.mainMenu.menuBarHeight returns 0 when there's a Lion
         // fullscreen window in another display. I guess it will probably
