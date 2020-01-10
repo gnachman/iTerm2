@@ -5314,21 +5314,19 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
     if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
         NSRect frame = _lionFullScreenTabBarViewController.view.superview.bounds;
-        if (index != NSNotFound) {
-            DLog(@"Removing title bar accessory view for tabbar. Will re-add it shortly");
-            [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
-        }
         NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         viewController.fullScreenMinHeight = tabBarHeight;
 
         if (index != NSNotFound) {
-            frame.size.height = tabBarHeight;
+            frame.size.height = self.desiredTabBarHeight;
             DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
             viewController.view.frame = frame;
         }
         DLog(@"Adding title bar accessory view for %@", self);
-        [self.window addTitlebarAccessoryViewController:viewController];
+        if (index == NSNotFound) {
+            [self.window addTitlebarAccessoryViewController:viewController];
+        }
     } else if (_contentView.tabBarControlOnLoan) {
         assert(index != NSNotFound);
         [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
