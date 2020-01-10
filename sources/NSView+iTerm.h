@@ -11,6 +11,8 @@
 
 @interface NSView (iTerm)
 
++ (NSView *)viewAtScreenCoordinate:(NSPoint)point;
+
 // Returns an image representation of the view's current appearance.
 - (NSImage *)snapshot;
 - (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index;

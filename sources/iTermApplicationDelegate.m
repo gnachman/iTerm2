@@ -103,6 +103,7 @@
 #import "NSStringITerm.h"
 #import "NSUserDefaults+iTerm.h"
 #import "NSWindow+iTerm.h"
+#import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -999,11 +1000,7 @@ static BOOL hasBecomeActive = NO;
     hasBecomeActive = YES;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        NSPoint mouseLocation = [NSEvent mouseLocation];
-        NSRect mouseRect = {
-            .origin = [NSEvent mouseLocation],
-            .size = { 0, 0 }
-        };
+        const NSPoint mouseLocation = [NSEvent mouseLocation];
         if ([iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
             DLog(@"Using aggressive FFM");
             // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
@@ -1014,12 +1011,12 @@ static BOOL hasBecomeActive = NO;
                 // and a dispatch async seems to give it enough time to right itself before
                 // we iterate front to back.
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self selectWindowAtMouseRect:mouseRect];
+                    [self selectWindowAtScreenCoordinate:mouseLocation];
                 });
             }
         } else {
             DLog(@"Using non-aggressive FFM");
-            NSView *view = [self viewAtMouseRect:mouseRect];
+            NSView *view = [NSView viewAtScreenCoordinate:mouseLocation];
             [[PTYTextView castFrom:view] refuseFirstResponderAtCurrentMouseLocation];
         }
     }
@@ -1027,31 +1024,8 @@ static BOOL hasBecomeActive = NO;
     iTermPreciseTimerClearLogs();
 }
 
-- (NSView *)viewAtMouseRect:(NSRect)mouseRect {
-    NSArray<NSWindow *> *frontToBackWindows = [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels];
-    for (NSWindow *window in frontToBackWindows) {
-        if (!window.isOnActiveSpace) {
-            continue;
-        }
-        if (!window.isVisible) {
-            continue;
-        }
-        NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
-        if ([window isTerminalWindow]) {
-            DLog(@"Consider window %@", window.title);
-            NSView *view = [window.contentView hitTest:pointInWindow];
-            if (view) {
-                return view;
-            } else {
-                DLog(@"%@ failed hit test", window.title);
-            }
-        }
-    }
-    return nil;
-}
-
-- (void)selectWindowAtMouseRect:(NSRect)mouseRect {
-    NSView *view = [self viewAtMouseRect:mouseRect];
+- (void)selectWindowAtScreenCoordinate:(NSPoint)mousePoint {
+    NSView *view = [NSView viewAtScreenCoordinate:mousePoint];
     NSWindow *window = view.window;
     if (view) {
         DLog(@"Will activate %@", window.title);
