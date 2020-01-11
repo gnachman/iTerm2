@@ -3637,6 +3637,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
+    if (_selection.length == 1) {
+        iTermSubSelection *sub = _selection.allSubSelections.firstObject;
+        iTermTextExtractor *extractor =
+        [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+        const screen_char_t c = [extractor characterAt:sub.range.coordRange.start];
+        NSString *description = ScreenCharDescription(c);
+        if (description) {
+            NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+            theItem.title = ScreenCharDescription(c);
+            [theMenu addItem:theItem];
+        }
+    }
 
     // Menu items for acting on text selections
     NSString *scpTitle = @"Download with scp";

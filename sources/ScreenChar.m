@@ -742,3 +742,92 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
     ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
     hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];
 }
+
+static NSString *ScreenCharColorDescription(unsigned int red,
+                                            unsigned int green,
+                                            unsigned int blue,
+                                            ColorMode mode) {
+    switch (mode) {
+        case ColorModeAlternate:
+            switch (red) {
+                case ALTSEM_DEFAULT:
+                    return @"Default";
+                case ALTSEM_SELECTED:
+                    return @"Selected";
+                case ALTSEM_CURSOR:
+                    return @"Cursor";
+                case ALTSEM_REVERSED_DEFAULT:
+                    return @"Reversed";
+                case ALTSEM_SYSTEM_MESSAGE:
+                    return @"System";
+            }
+            return @"Invalid";
+
+        case ColorModeNormal:
+            if (red < 16) {
+                NSString *color = @"";
+                NSArray<NSString *> *names = @[ @"Black", @"Red", @"Green", @"Yellow", @"Blue",
+                                                @"Magenta", @"Cyan", @"White" ];
+                if (red > 7) {
+                    color = [color stringByAppendingString:@"ANSI Bright "];
+                }
+                color = [color stringByAppendingString:names[red & 7]];
+                return color;
+            }
+            if (red < 232) {
+                const int r = (red - 16) / 36;
+                const int g = ((red - 16) - r*36) / 6;
+                const int b = ((red - 16) - r*36 - g*6);
+                return [NSString stringWithFormat:@"8bit(%@/5,%@/5,%@/5)", @(r), @(g), @(b)];
+            }
+            const int gray = red-232;
+            return [NSString stringWithFormat:@"gray%@/22", @(gray)];
+        case ColorMode24bit:
+            return [NSString stringWithFormat:@"24bit(%@,%@,%@)", @(red), @(green), @(blue)];
+        case ColorModeInvalid:
+            return @"Invalid";
+    }
+    return @"Invalid";
+}
+
+NSString *ScreenCharDescription(screen_char_t c) {
+    if (c.image) {
+        return nil;
+    }
+    NSMutableArray<NSString *> *attrs = [NSMutableArray array];
+    if (c.bold) {
+        [attrs addObject:@"Bold"];
+    }
+    if (c.faint) {
+        [attrs addObject:@"Faint"];
+    }
+    if (c.italic) {
+        [attrs addObject:@"Italic"];
+    }
+    if (c.blink) {
+        [attrs addObject:@"Blink"];
+    }
+    if (c.underline) {
+        [attrs addObject:@"Underline"];
+    }
+    if (c.strikethrough) {
+        [attrs addObject:@"Strike"];
+    }
+    if (c.urlCode) {
+        [attrs addObject:@"URL"];
+    }
+    NSString *style = [attrs componentsJoinedByString:@" "];
+    if (style.length) {
+        style = [@" " stringByAppendingString:style];
+    }
+    return [NSString stringWithFormat:@"fg=%@ bg=%@%@",
+            ScreenCharColorDescription(c.foregroundColor,
+                                       c.fgGreen,
+                                       c.fgBlue,
+                                       c.foregroundColorMode),
+            ScreenCharColorDescription(c.backgroundColor,
+                                       c.bgGreen,
+                                       c.bgBlue,
+                                       c.backgroundColorMode),
+            style];
+}

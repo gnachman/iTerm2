@@ -134,9 +134,9 @@ typedef struct screen_char_t
     //       magenta, cyan, and white.
     //     Values between 8 and 15 are bright versions of 0-7.
     //     Values between 16 and 255 are used for 256 color mode:
-    //       16-232: rgb value given by 16 + r*36 + g*6 + b, with each color in
+    //       16-231: rgb value given by 16 + r*36 + g*6 + b, with each color in
     //         the range [0,5].
-    //       233-255: Grayscale values from dimmest gray 233 (which is not black)
+    //       232-255: Grayscale values from dimmest gray 233 (which is not black)
     //         to brightest 255 (not white).
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
@@ -462,4 +462,6 @@ VT100GridCoord GetPositionOfImageInChar(screen_char_t c);
 // Returns a dictionary of restorable state
 NSDictionary *ScreenCharEncodedRestorableState(void);
 void ScreenCharDecodeRestorableState(NSDictionary *state);
+
+NSString *ScreenCharDescription(screen_char_t c);
 
