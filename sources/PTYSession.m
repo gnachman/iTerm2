@@ -4405,11 +4405,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommandWithCustomShell:self.customShell]]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).
         // I don't want to use a magic string, so setting program to an empty dict.
-        NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
         if (self.customShell.length) {
+            NSDictionary *dict = @{ kProgramType: kProgramTypeCustomShell };
             dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
+            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
+        } else {
+            NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
+            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
         }
-        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
     } else if (self.program) {
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };
