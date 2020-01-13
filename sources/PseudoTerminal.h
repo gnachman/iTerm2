@@ -101,6 +101,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic, readonly) Profile *initialProfile;
 @property(nonatomic, readonly) iTermVariableScope<iTermWindowScope> *scope;
 @property(nonatomic, readonly) NSWindowCollectionBehavior desiredWindowCollectionBehavior;
+@property(nonatomic, readonly) BOOL isReplacingWindow;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -194,10 +195,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Miniaturizes the window and marks it as a hide-after-opening window (which
 // will be saved in window arrangements).
 - (void)hideAfterOpening;
-
-// Open a new tab with the bookmark given by the guid in
-// [sender representedObject]. Used by menu items in the Bookmarks menu.
-- (void)newSessionInTabAtIndex:(id)sender;
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
@@ -296,14 +293,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
 
-// WARNING! Do not use this for tmux windows. It will always return nil.
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                         before:(BOOL)before
-                        profile:(Profile *)theBookmark
-                  targetSession:(PTYSession *)targetSession
-                    synchronous:(BOOL)synchronous
-                     completion:(void (^)(BOOL))completion;
-
 // Use this if it might be a tmux window. The completion block will always be called eventually.
 // The ready block is called after the session has started, much like the completion block in
 // other session creation calls.
@@ -326,13 +315,14 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
-// Add a new session to this window with the given addressbook entry.
-// The optional command overrides the profile's settings.
-- (PTYSession *)createTabWithProfile:(Profile *)profile
-                         withCommand:(NSString *)command
-                         environment:(NSDictionary *)environment
-                         synchronous:(BOOL)synchronous
-                          completion:(void (^)(BOOL ok))completion;
+// Create a tab. Is async so it can fetch the current working directory without blocking the main
+// thread.
+- (void)asyncCreateTabWithProfile:(Profile *)profile
+                      withCommand:(NSString *)command
+                      environment:(NSDictionary *)environment
+                      synchronous:(BOOL)synchronous
+                   didMakeSession:(void (^)(PTYSession *session))didMakeSession
+                       completion:(void (^)(BOOL ok))completion;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;

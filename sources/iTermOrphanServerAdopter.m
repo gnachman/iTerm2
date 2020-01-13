@@ -15,6 +15,7 @@
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 
 @implementation iTermOrphanServerAdopter {
@@ -66,16 +67,32 @@
     [_pathsToOrphanedServerSockets removeObject:path];
 }
 
-- (void)openWindowWithOrphans {
-    for (NSString *path in _pathsToOrphanedServerSockets) {
-        NSLog(@"--- Begin orphan %@", path);
-        [self adoptOrphanWithPath:path];
-        NSLog(@"--- End orphan");
-    }
-    _window = nil;
+- (void)openWindowWithOrphansWithCompletion:(void (^)(void))completion {
+    [self openWindowWithOrphansFromPaths:_pathsToOrphanedServerSockets
+                              completion:completion];
 }
 
-- (void)adoptOrphanWithPath:(NSString *)filename {
+- (void)openWindowWithOrphansFromPaths:(NSArray<NSString *> *)paths
+                            completion:(void (^)(void))completion {
+    NSString *path = paths.firstObject;
+    if (!path) {
+        self->_window = nil;
+        if (completion) {
+            completion();
+        }
+        return;
+    }
+    NSArray<NSString *> *tail = [paths subarrayFromIndex:1];
+
+    NSLog(@"--- Begin orphan %@", path);
+    [self adoptOrphanWithPath:path completion:^(PTYSession *session) {
+        NSLog(@"--- End orphan");
+        [self openWindowWithOrphansFromPaths:tail
+                                  completion:completion];
+    }];
+}
+
+- (void)adoptOrphanWithPath:(NSString *)filename completion:(void (^)(PTYSession *session))completion {
     DLog(@"Try to connect to orphaned server at %@", filename);
     pid_t pid = iTermFileDescriptorProcessIdFromPath(filename.UTF8String);
     if (pid < 0) {
@@ -87,21 +104,27 @@
     if (serverConnection.ok) {
         DLog(@"Restore it");
         if (_window) {
-            [self openOrphanedSession:serverConnection inWindow:_window];
+            [self openOrphanedSession:serverConnection inWindow:_window completion:completion];
         } else {
-            PTYSession *session = [self openOrphanedSession:serverConnection inWindow:nil];
-            _window = [[iTermController sharedInstance] terminalWithSession:session];
+            [self openOrphanedSession:serverConnection inWindow:nil completion:^(PTYSession *session) {
+                self->_window = [[iTermController sharedInstance] terminalWithSession:session];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(session);
+                });
+            }];
         }
     } else {
         DLog(@"Failed: %s", serverConnection.error);
+        completion(nil);
     }
 }
 
-- (PTYSession *)openOrphanedSession:(iTermFileDescriptorServerConnection)serverConnection
-                           inWindow:(PseudoTerminal *)desiredWindow {
+- (void)openOrphanedSession:(iTermFileDescriptorServerConnection)serverConnection
+                   inWindow:(PseudoTerminal *)desiredWindow
+                 completion:(void (^)(PTYSession *session))completion {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
-    PTYSession *aSession =
+
     [iTermSessionLauncher launchBookmark:nil
                               inTerminal:desiredWindow
                                  withURL:nil
@@ -110,8 +133,7 @@
                              canActivate:NO
                       respectTabbingMode:NO
                                  command:nil
-                                   block:
-     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
+                             makeSession:^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *)) {
         iTermFileDescriptorServerConnection theServerConnection = serverConnection;
         PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile] autorelease];
         [term addSessionInNewTab:session];
@@ -131,13 +153,15 @@
                                                            windowController:term
                                                                 synchronous:NO
                                                                  completion:nil];
-        return ok ? session : nil;
+        makeSessionCompletion(ok ? session : nil);
     }
                              synchronous:NO
+                          didMakeSession:^(PTYSession *aSession) {
+        NSLog(@"restored an orphan");
+        [aSession showOrphanAnnouncement];
+        completion(aSession);
+    }
                               completion:nil];
-    NSLog(@"restored an orphan");
-    [aSession showOrphanAnnouncement];
-    return aSession;
 }
 
 #pragma mark - Properties

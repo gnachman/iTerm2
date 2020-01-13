@@ -13,7 +13,7 @@
 @property(nonatomic, readonly) BOOL haveOrphanServers;
 
 + (instancetype)sharedInstance;
-- (void)openWindowWithOrphans;
+- (void)openWindowWithOrphansWithCompletion:(void (^)(void))completion;
 - (void)removePath:(NSString *)path;
 
 @end

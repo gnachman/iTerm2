@@ -476,6 +476,15 @@ typedef enum {
 // A more resilient version of the above. If the current directory cannot be determined it uses the initial directory. This allows the creation of session in succession with proper pwd recycling behavior.
 @property(nonatomic, readonly) NSString *currentLocalWorkingDirectoryOrInitialDirectory;
 
+// Async version of currentLocalWorkingDirectory.
+- (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion;
+
+// Async version of currentLocalWorkingDirectoryOrInitialDirectory
+- (void)asyncCurrentLocalWorkingDirectoryOrInitialDirectory:(void (^)(NSString *pwd))completion;
+
+// Gets the local directory as URL. Weirdly, combines the remote hostname and the local path because this is really only used for the proxy icon.
+- (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion;
+
 // A UUID that uniquely identifies this session.
 // Used to link serialized data back to a restored session (e.g., which session
 // a command in command history belongs to). Also to link content from an
@@ -837,7 +846,8 @@ typedef enum {
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
-- (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
+- (void)handleGetPromptRequest:(ITMGetPromptRequest *)request
+                    completion:(void (^)(ITMGetPromptResponse *response))completion;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey;
 

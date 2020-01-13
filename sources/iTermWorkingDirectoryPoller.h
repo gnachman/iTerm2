@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didReceiveLineFeed;
 - (void)userDidPressKey;
 - (void)invalidateOutstandingRequests;
+- (void)addOneTimeCompletion:(void (^)(NSString * _Nullable))completion;
 
 @end
 

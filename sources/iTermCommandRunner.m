@@ -221,6 +221,7 @@
 - (void)write:(NSData *)data completion:(void (^)(size_t, int))completion {
     int fd = [[_inputPipe fileHandleForWriting] fileDescriptor];
     DLog(@"Planning to write %@ bytes to %@", @(data.length), self);
+
     dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _writingQueue, ^{
         [data length];  // just ensure data is retained
     });

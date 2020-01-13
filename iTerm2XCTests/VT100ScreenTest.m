@@ -600,10 +600,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return YES;
 }
 
-- (NSString *)screenCurrentWorkingDirectory {
-    return nil;
-}
-
 - (void)screenClearHighlights {
     highlightsCleared_ = YES;
 }

@@ -186,14 +186,18 @@ typedef enum {
         }
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane != NO_PANE && terminal != nil) {
-            [terminal splitVertically:(inPane == VERTICAL_PANE)
-                         withBookmark:bookmark
-                        targetSession:[[terminal currentTab] activeSession]
-                          synchronous:NO];
+            [terminal asyncSplitVertically:(inPane == VERTICAL_PANE)
+                                    before:NO
+                                   profile:bookmark
+                             targetSession:[[terminal currentTab] activeSession]
+                               synchronous:NO
+                                completion:nil
+                                     ready:nil];
         } else {
             [iTermSessionLauncher launchBookmark:bookmark
                                       inTerminal:terminal
-                              respectTabbingMode:NO];
+                              respectTabbingMode:NO
+                                      completion:nil];
         }
         isFirst = NO;
     }
@@ -307,7 +311,8 @@ typedef enum {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:terminal
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];

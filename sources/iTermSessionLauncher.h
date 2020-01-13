@@ -58,21 +58,23 @@ NS_ASSUME_NONNULL_BEGIN
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
 // URL.
-+ (PTYSession *)launchBookmark:(nullable Profile *)bookmarkData
-                    inTerminal:(nullable PseudoTerminal *)theTerm
-                       withURL:(nullable NSString *)url
-              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
-                       makeKey:(BOOL)makeKey
-                   canActivate:(BOOL)canActivate
-            respectTabbingMode:(BOOL)respectTabbingMode
-                       command:(nullable NSString *)command
-                         block:(PTYSession *(^ _Nullable)(Profile *, PseudoTerminal *))block
-                   synchronous:(BOOL)synchronous
-                    completion:(void (^ _Nullable)(BOOL))completion;
++ (void)launchBookmark:(nullable NSDictionary *)bookmarkData
+            inTerminal:(nullable PseudoTerminal *)theTerm
+               withURL:(nullable NSString *)url
+      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+               makeKey:(BOOL)makeKey
+           canActivate:(BOOL)canActivate
+    respectTabbingMode:(BOOL)respectTabbingMode
+               command:(nullable NSString *)command
+           makeSession:(void (^ _Nullable)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
+           synchronous:(BOOL)synchronous
+        didMakeSession:(void (^ _Nullable)(PTYSession *))didMakeSession
+            completion:(void (^ _Nullable)(BOOL))completion;
 
-+ (PTYSession *)launchBookmark:(nullable Profile *)profile
-                    inTerminal:(nullable PseudoTerminal *)theTerm
-            respectTabbingMode:(BOOL)respectTabbingMode;
++ (void)launchBookmark:(nullable NSDictionary *)bookmarkData
+            inTerminal:(nullable PseudoTerminal *)theTerm
+    respectTabbingMode:(BOOL)respectTabbingMode
+            completion:(void (^ _Nullable)(PTYSession *session))completion;
 
 - (instancetype)initWithProfile:(nullable Profile *)profile
                windowController:(nullable PseudoTerminal *)windowController NS_DESIGNATED_INITIALIZER;

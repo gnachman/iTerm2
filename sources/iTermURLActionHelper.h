@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)urlActionHelperShouldIgnoreHardNewlines:(iTermURLActionHelper *)helper;
 - (iTermImageInfo *)urlActionHelper:(iTermURLActionHelper *)helper imageInfoAt:(VT100GridCoord)coord;
 - (iTermTextExtractor *)urlActionHelperNewTextExtractor:(iTermURLActionHelper *)helper;
-- (NSString *)urlActionHelper:(iTermURLActionHelper *)helper workingDirectoryOnLine:(int)line;
+- (void)urlActionHelper:(iTermURLActionHelper *)helper workingDirectoryOnLine:(int)line completion:(void (^)(NSString *workingDirectory))completion;
 
 - (SCPPath *)urlActionHelper:(iTermURLActionHelper *)helper
        secureCopyPathForFile:(NSString *)path onLine:(int)line;

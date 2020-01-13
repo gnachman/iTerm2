@@ -156,9 +156,10 @@
     return saved;
 }
 
-- (PTYSession *)splitVertically:(BOOL)vertically
-                    withProfile:(Profile *)profile
-                        command:(NSString *)command {
+- (void)splitVertically:(BOOL)vertically
+            withProfile:(Profile *)profile
+                command:(NSString *)command
+             completion:(void (^)(PTYSession *session))completion {
     PTYSession *formerSession = [self activateSessionAndTab];
     if (command) {
         // Create a modified profile to run "command".
@@ -169,11 +170,16 @@
     }
     // NOTE: This will return nil for tmux tabs. I could fix it by using the async version of the
     // split function, but this is Applescript and I hate it.
-    PTYSession *session = [[self.delegate realParentWindow] splitVertically:vertically
-                                                                withProfile:profile
-                                                                synchronous:YES];
-    [formerSession activateSessionAndTab];
-    return session;
+    [[self.delegate realParentWindow] asyncSplitVertically:vertically
+                                                    before:NO
+                                                   profile:profile
+                                             targetSession:[[self.delegate realParentWindow] currentSession]
+                                               synchronous:YES
+                                                completion:^(PTYSession *session) {
+        [formerSession activateSessionAndTab];
+        completion(session);
+    }
+                                                     ready:nil];
 }
 
 - (id)handleSplitVertically:(NSScriptCommand *)scriptCommand {
@@ -182,11 +188,15 @@
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
         PTYSession *formerSession = [self activateSessionAndTab];
-        PTYSession *session = [self splitVertically:YES
-                                        withProfile:profile
-                                            command:args[@"command"]];
-        [formerSession activateSessionAndTab];
-        return session;
+        [scriptCommand suspendExecution];
+        [self splitVertically:YES
+                  withProfile:profile
+                      command:args[@"command"]
+                   completion:^(PTYSession *session) {
+            [formerSession activateSessionAndTab];
+            [scriptCommand resumeExecutionWithResult:session];
+        }];
+        return nil;
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
@@ -198,21 +208,29 @@
 - (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
     NSDictionary *args = [scriptCommand evaluatedArguments];
-    PTYSession *session = [self splitVertically:YES
-                                    withProfile:[[ProfileModel sharedInstance] defaultBookmark]
-                                        command:args[@"command"]];
-    [formerSession activateSessionAndTab];
-    return session;
+    [scriptCommand suspendExecution];
+    [self splitVertically:YES
+              withProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                  command:args[@"command"]
+               completion:^(PTYSession *session) {
+        [formerSession activateSessionAndTab];
+        [scriptCommand resumeExecutionWithResult:session];
+    }];
+    return nil;
 }
 
 - (id)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
     NSDictionary *args = [scriptCommand evaluatedArguments];
-    PTYSession *session = [self splitVertically:YES
-                                    withProfile:self.profile
-                                        command:args[@"command"]];
-    [formerSession activateSessionAndTab];
-    return session;
+    [scriptCommand suspendExecution];
+    [self splitVertically:YES
+              withProfile:self.profile
+                  command:args[@"command"]
+               completion:^(PTYSession *session) {
+        [formerSession activateSessionAndTab];
+        [scriptCommand resumeExecutionWithResult:session];
+    }];
+    return nil;
 }
 
 - (id)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
@@ -221,11 +239,15 @@
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
         PTYSession *formerSession = [self activateSessionAndTab];
-        PTYSession *session = [self splitVertically:NO
-                                        withProfile:profile
-                                            command:args[@"command"]];
-        [formerSession activateSessionAndTab];
-        return session;
+        [scriptCommand suspendExecution];
+        [self splitVertically:NO
+                  withProfile:profile
+                      command:args[@"command"]
+                   completion:^(PTYSession *session) {
+            [formerSession activateSessionAndTab];
+            [scriptCommand resumeExecutionWithResult:session];
+        }];
+        return nil;
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
@@ -237,21 +259,29 @@
 - (id)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
     NSDictionary *args = [scriptCommand evaluatedArguments];
-    PTYSession *session = [self splitVertically:NO
-                                    withProfile:[[ProfileModel sharedInstance] defaultBookmark]
-                                        command:args[@"command"]];
-    [formerSession activateSessionAndTab];
-    return session;
+    [scriptCommand suspendExecution];
+    [self splitVertically:NO
+              withProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                  command:args[@"command"]
+               completion:^(PTYSession *session) {
+        [scriptCommand resumeExecutionWithResult:session];
+        [formerSession activateSessionAndTab];
+    }];
+    return nil;
 }
 
 - (id)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
     NSDictionary *args = [scriptCommand evaluatedArguments];
-    PTYSession *session = [self splitVertically:NO
-                                    withProfile:self.profile
-                                        command:args[@"command"]];
-    [formerSession activateSessionAndTab];
-    return session;
+    [scriptCommand suspendExecution];
+    [self splitVertically:NO
+              withProfile:self.profile
+                  command:args[@"command"]
+               completion:^(PTYSession *session) {
+        [formerSession activateSessionAndTab];
+        [scriptCommand resumeExecutionWithResult:session];
+    }];
+    return nil;
 }
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command {

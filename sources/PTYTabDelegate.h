@@ -34,7 +34,7 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon;
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount;
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session;
-- (void)tab:(PTYTab *)tab proxyIconDidChange:(NSURL *)location;
+- (void)tabInvalidateProxyIcon:(PTYTab *)tab;
 - (void)tabRemoveTab:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState;
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;

@@ -25,9 +25,10 @@
     id _keepAlive;  // reference to self so I don't get released before completion.
 }
 
-+ (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
-                    inTerminal:(PseudoTerminal *)theTerm
-            respectTabbingMode:(BOOL)respectTabbingMode {
++ (void)launchBookmark:(NSDictionary *)bookmarkData
+            inTerminal:(PseudoTerminal *)theTerm
+    respectTabbingMode:(BOOL)respectTabbingMode
+            completion:(void (^)(PTYSession *session))completion {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
@@ -36,22 +37,24 @@
                     canActivate:YES
              respectTabbingMode:respectTabbingMode
                         command:nil
-                          block:nil
+                    makeSession:nil
                     synchronous:NO
+                 didMakeSession:completion
                      completion:nil];
 }
 
-+ (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
-                    inTerminal:(PseudoTerminal *)theTerm
-                       withURL:(NSString *)url
-              hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
-                       makeKey:(BOOL)makeKey
-                   canActivate:(BOOL)canActivate
-            respectTabbingMode:(BOOL)respectTabbingMode
-                       command:(NSString *)command
-                         block:(PTYSession *(^)(Profile *, PseudoTerminal *))block
-                   synchronous:(BOOL)synchronous
-                    completion:(void (^ _Nullable)(BOOL))completion {
++ (void)launchBookmark:(NSDictionary *)bookmarkData
+            inTerminal:(PseudoTerminal *)theTerm
+               withURL:(NSString *)url
+      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+               makeKey:(BOOL)makeKey
+           canActivate:(BOOL)canActivate
+    respectTabbingMode:(BOOL)respectTabbingMode
+               command:(NSString *)command
+           makeSession:(void (^)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
+           synchronous:(BOOL)synchronous
+        didMakeSession:(void (^)(PTYSession *))didMakeSession
+            completion:(void (^ _Nullable)(BOOL))completion {
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
     launcher.url = url;
     launcher.hotkeyWindowType = hotkeyWindowType;
@@ -59,24 +62,16 @@
     launcher.canActivate = canActivate;
     launcher.respectTabbingMode = respectTabbingMode;
     launcher.command = command;
-    if (block) {
-        launcher.makeSession = ^(NSDictionary * _Nonnull profile,
-                                 PseudoTerminal * _Nonnull windowController,
-                                 void (^ _Nonnull completion)(PTYSession * _Nullable)) {
-            completion(block(profile, windowController));
-        };
+    if (makeSession) {
+        launcher.makeSession = makeSession;
     }
-    __block PTYSession *session = nil;
-    launcher.didCreateSession = ^(PTYSession * _Nullable theSession) {
-        session = theSession;
-    };
+    launcher.didCreateSession = didMakeSession;
     if (synchronous) {
         launcher.completion = completion;
         [launcher launchAndWait];
     } else {
         [launcher launchWithCompletion:completion];
     }
-    return session;
 }
 
 
@@ -274,14 +269,12 @@
                                  completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     DLog(@"Make session by creating tab");
     __weak __typeof(self) weakSelf = self;
-    PTYSession *session = [windowController createTabWithProfile:profile
-                                                     withCommand:_command
-                                                     environment:nil
-                                                     synchronous:_synchronous
-                                                      completion:^(BOOL ok) {
-                                                          [weakSelf setFinishedWithSuccess:ok];
-                                                      }];
-    completion(session, YES);
+    [windowController asyncCreateTabWithProfile:profile
+                                    withCommand:_command
+                                    environment:nil
+                                    synchronous:_synchronous
+                                 didMakeSession:^(PTYSession *session) { completion(session, YES); }
+                                     completion:^(BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict

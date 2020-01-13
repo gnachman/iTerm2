@@ -298,6 +298,7 @@
                                                          environment:nil
                                                                  pwd:nil
                                                              options:0
+                                                      didMakeSession:nil
                                                           completion:^{
                                                               completion();
                                                           }];

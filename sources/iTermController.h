@@ -176,19 +176,21 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
     iTermSingleUseWindowOptionsDoNotEscapeArguments = (1 << 3)
 };
 
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)command
-                                     arguments:(NSArray<NSString *> *)arguments
-                                        inject:(NSData *)injection
-                                   environment:(NSDictionary *)environment
-                                           pwd:(NSString *)initialPWD
+- (void)openSingleUseWindowWithCommand:(NSString *)command
+                             arguments:(NSArray<NSString *> *)arguments
+                                inject:(NSData *)injection
+                           environment:(NSDictionary *)environment
+                                   pwd:(NSString *)initialPWD
                                options:(iTermSingleUseWindowOptions)options
-                                    completion:(void (^)(void))completion;
+                        didMakeSession:(void (^)(PTYSession *session))didMakeSession
+                            completion:(void (^)(void))completion;
 
-- (PTYSession *)openSingleUseWindowWithCommand:(NSString *)rawCommand
-                                        inject:(NSData *)injection
-                                   environment:(NSDictionary *)environment
-                                           pwd:(NSString *)initialPWD
-                                       options:(iTermSingleUseWindowOptions)options
-                                    completion:(void (^)(void))completion;
+- (void)openSingleUseWindowWithCommand:(NSString *)rawCommand
+                                inject:(NSData *)injection
+                           environment:(NSDictionary *)environment
+                                   pwd:(NSString *)initialPWD
+                               options:(iTermSingleUseWindowOptions)options
+                        didMakeSession:(void (^)(PTYSession *session))didMakeSession
+                            completion:(void (^)(void))completion;
 @end
 

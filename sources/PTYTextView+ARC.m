@@ -290,6 +290,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                          environment:nil
                                                                  pwd:nil
                                                              options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                      didMakeSession:nil
                                                           completion:nil];
 }
 
@@ -591,18 +592,20 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
 }
 
-- (NSString *)urlActionHelper:(iTermURLActionHelper *)helper workingDirectoryOnLine:(int)y {
+- (void)urlActionHelper:(iTermURLActionHelper *)helper workingDirectoryOnLine:(int)y completion:(void (^)(NSString *))completion {
     NSString *workingDirectory = [self.dataSource workingDirectoryOnLine:y];
     DLog(@"According to data source, the working directory on line %d is %@", y, workingDirectory);
     if (workingDirectory) {
-        return workingDirectory;
+        completion(workingDirectory);
+        return;
     }
 
     // Well, just try the current directory then.
     DLog(@"That failed, so try to get the current working directory...");
-    workingDirectory = [self.delegate textViewCurrentWorkingDirectory];
-    DLog(@"It is %@", workingDirectory);
-    return workingDirectory;
+    [self.delegate textViewGetCurrentWorkingDirectoryWithCompletion:^(NSString *workingDirectory) {
+        DLog(@"It is %@", workingDirectory);
+        completion(workingDirectory);
+    }];
 }
 
 - (SCPPath *)urlActionHelper:(iTermURLActionHelper *)helper secureCopyPathForFile:(NSString *)path onLine:(int)line {

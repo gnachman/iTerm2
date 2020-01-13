@@ -116,6 +116,7 @@
 - (VT100ScreenMark *)markOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
+
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark;

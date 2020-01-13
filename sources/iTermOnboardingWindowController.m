@@ -26,26 +26,28 @@ static void iTermTryMinimalCompact(NSWindow *window) {
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                         object:nil
                                                       userInfo:nil];
-    PTYSession *session = [iTermSessionLauncher launchBookmark:nil
-                                                    inTerminal:nil
-                                            respectTabbingMode:NO];
-    [session.view.window performZoom:nil];
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:nil
+                      respectTabbingMode:NO
+                              completion:^(PTYSession *session) {
+        [session.view.window performZoom:nil];
 
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Minimal Theme"];
-    [alert setInformativeText:@"The theme has been changed to minimal. Want to keep it?"];
-    [alert addButtonWithTitle:@"Save"];
-    [alert addButtonWithTitle:@"Undo"];
-    [alert setAlertStyle:NSAlertStyleInformational];
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:@"Minimal Theme"];
+        [alert setInformativeText:@"The theme has been changed to minimal. Want to keep it?"];
+        [alert addButtonWithTitle:@"Save"];
+        [alert addButtonWithTitle:@"Undo"];
+        [alert setAlertStyle:NSAlertStyleInformational];
 
-    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-        if (returnCode == NSAlertFirstButtonReturn) {
-            return;
-        };
-        [iTermPreferences setInt:savedTabStyle forKey:kPreferenceKeyTabStyle];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
-                                                            object:nil
-                                                          userInfo:nil];
+        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+            if (returnCode == NSAlertFirstButtonReturn) {
+                return;
+            };
+            [iTermPreferences setInt:savedTabStyle forKey:kPreferenceKeyTabStyle];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
+                                                                object:nil
+                                                              userInfo:nil];
+        }];
     }];
 }
 

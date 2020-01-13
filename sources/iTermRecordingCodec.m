@@ -81,7 +81,6 @@
         return;
     }
 
-
     [iTermSessionLauncher launchBookmark:dictProfile
                               inTerminal:nil
                                  withURL:nil
@@ -90,7 +89,7 @@
                              canActivate:YES
                       respectTabbingMode:NO
                                  command:nil
-                                   block:^PTYSession *(NSDictionary *profile, PseudoTerminal *windowController) {
+                             makeSession:^(NSDictionary *profile, PseudoTerminal *windowController, void (^makeSessionCompletion)(PTYSession *)) {
         PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];
         newSession.profile = profile;
         [newSession.screen.dvr loadDictionary:dvrDict];
@@ -99,9 +98,10 @@
             [windowController replaySession:newSession];
         });
         [windowController insertSession:newSession atIndex:0];
-        return newSession;
+        makeSessionCompletion(newSession);
     }
                              synchronous:NO
+                          didMakeSession:nil
                               completion:nil];
 }
 

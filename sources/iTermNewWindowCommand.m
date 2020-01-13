@@ -38,7 +38,7 @@
         NSDictionary *args = [self evaluatedArguments];
         NSString *command = args[@"command"];
         // maybe pass isUTF8 all the way through?
-        PTYSession *session =
+        [self suspendExecution];
         [iTermSessionLauncher launchBookmark:profile
                                   inTerminal:nil
                                      withURL:nil
@@ -47,10 +47,12 @@
                                  canActivate:YES
                           respectTabbingMode:NO
                                      command:command
-                                       block:nil
+                                 makeSession:nil
                                  synchronous:YES
+                              didMakeSession:^(PTYSession *session) {
+            [self resumeExecutionWithResult:[iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window]];
+        }
                                   completion:nil];
-        return [iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window];
     }
     return nil;
 }

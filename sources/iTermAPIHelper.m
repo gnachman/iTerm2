@@ -1323,7 +1323,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         response.status = ITMGetPromptResponse_Status_SessionNotFound;
         handler(response);
     } else {
-        handler([session handleGetPromptRequest:request]);
+        [session handleGetPromptRequest:request completion:handler];
     }
 }
 
@@ -2079,12 +2079,12 @@ static iTermAPIHelper *sAPIHelperInstance;
     launcher.canActivate = NO;
     launcher.makeSession = ^(NSDictionary * _Nonnull profile, PseudoTerminal * _Nonnull term, void (^ _Nonnull completion)(PTYSession * _Nullable)) {
         profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
-        PTYSession *session = [term createTabWithProfile:profile
-                                             withCommand:nil
-                                             environment:nil
-                                             synchronous:NO
-                                              completion:nil];
-        completion(session);
+        [term asyncCreateTabWithProfile:profile
+                            withCommand:nil
+                            environment:nil
+                            synchronous:NO
+                         didMakeSession:^(PTYSession *session) { completion(session); }
+                             completion:nil];
     };
     __weak iTermSessionLauncher *weakLauncher = launcher;
     __weak __typeof(self) weakSelf = self;

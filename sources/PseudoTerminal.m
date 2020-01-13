@@ -40,6 +40,7 @@
 #import "iTermMenuBarObserver.h"
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
+#import "iTermOrderEnforcer.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -211,6 +212,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
+@property(nonatomic, readwrite) BOOL isReplacingWindow;
 @end
 
 @implementation PseudoTerminal {
@@ -444,6 +446,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     NSRect _forceFrame;
     NSTimeInterval _forceFrameUntil;
     BOOL _deallocing;
+    iTermOrderEnforcer *_proxyIconOrderEnforcer;
 }
 
 @synthesize scope = _scope;
@@ -676,7 +679,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                        owner:self];
     [_scope setValue:_userVariables forVariableNamed:@"user"];
-
+    _proxyIconOrderEnforcer = [[iTermOrderEnforcer alloc] init];
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
     PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
@@ -1172,6 +1175,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_currentTabTitleTextFieldDelegate release];
     [_methods release];
     [_screenConfigurationAtTimeOfForceFrame release];
+    [_proxyIconOrderEnforcer release];
 
     [super dealloc];
 }
@@ -1554,17 +1558,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     return NSNotFound;
-}
-
-- (void)newSessionInTabAtIndex:(id)sender {
-    Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
-    if (profile) {
-        [self createTabWithProfile:profile
-                       withCommand:nil
-                       environment:nil
-                       synchronous:NO
-                        completion:nil];
-    }
 }
 
 - (void)closeSession:(PTYSession *)aSession soft:(BOOL)soft {
@@ -4797,7 +4790,9 @@ ITERM_WEAKLY_REFERENCEABLE
     self.window.contentView = _contentView;
     self.window.opaque = NO;
     self.window.delegate = self;
+    self.isReplacingWindow = YES;
     [oldWindow close];
+    self.isReplacingWindow = NO;
     return YES;
 }
 
@@ -5906,7 +5901,18 @@ ITERM_WEAKLY_REFERENCEABLE
         self.window.representedURL = self.currentSession.preferredProxyIcon;
         return;
     }
-    self.window.representedURL = self.currentSession.textViewCurrentLocation;
+    __weak __typeof(self) weakSelf = self;
+    PTYSession *session = self.currentSession;
+    id<iTermOrderedToken> token = [[_proxyIconOrderEnforcer newToken] autorelease];
+    [session asyncGetCurrentLocationWithCompletion:^(NSURL *url) {
+        if (weakSelf.currentSession != session) {
+            return;
+        }
+        if (![token commit]) {
+            return;
+        }
+        self.window.representedURL = url;
+    }];
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -6916,7 +6922,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else {
         [iTermSessionLauncher launchBookmark:nil
                                   inTerminal:self
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
 }
 
@@ -7328,7 +7335,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     NSString *guid = [SplitPanel showPanelWithParent:self isVertical:vertical];
     if (guid) {
-        [self splitVertically:vertical withBookmarkGuid:guid synchronous:NO];
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            return;
+        }
+        [self asyncSplitVertically:vertical
+                            before:NO
+                           profile:profile
+                     targetSession:[self currentSession]
+                       synchronous:NO
+                        completion:nil
+                             ready:nil];
     }
 }
 
@@ -7557,7 +7574,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (bookmark) {
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:nil
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
 }
 
@@ -7566,7 +7584,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (bookmark) {
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:self
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
 }
 
@@ -7694,28 +7713,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return index;
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                    withProfile:(Profile *)profile
-                    synchronous:(BOOL)synchronous {
-    return [self splitVertically:isVertical
-                    withBookmark:profile
-                   targetSession:[self currentSession]
-                     synchronous:synchronous];
-}
-
-- (PTYSession *)splitVertically:(BOOL)isVertical
-               withBookmarkGuid:(NSString *)guid
-                    synchronous:(BOOL)synchronous {
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    if (profile) {
-        return [self splitVertically:isVertical
-                         withProfile:profile
-                         synchronous:synchronous];
-    } else {
-        return nil;
-    }
-}
-
 - (void)splitVertically:(BOOL)isVertical
                  before:(BOOL)before
           addingSession:(PTYSession *)newSession
@@ -7799,18 +7796,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return _sessionFactory;
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                   withBookmark:(Profile*)theBookmark
-                  targetSession:(PTYSession*)targetSession
-                    synchronous:(BOOL)synchronous {
-    return [self splitVertically:isVertical
-                          before:NO
-                         profile:theBookmark
-                   targetSession:targetSession
-                     synchronous:synchronous
-                      completion:nil];
-}
-
 - (void)asyncSplitVertically:(BOOL)isVertical
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
@@ -7849,11 +7834,30 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
 
+    PTYSession *currentSession = [self currentSession];
+    if (currentSession) {
+        [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
+            PTYSession *session = [self splitVertically:isVertical
+                                                 before:before
+                                                profile:theBookmark
+                                          targetSession:targetSession
+                                            synchronous:synchronous
+                                                 oldCWD:oldCWD
+                                             completion:ready];
+            if (completion) {
+                completion(session);
+            }
+        }];
+        return;
+    }
+
+    ITBetaAssert(NO, @"This should be impossible! Splitting without a current session.");
     PTYSession *session = [self splitVertically:isVertical
                                          before:before
                                         profile:theBookmark
                                   targetSession:targetSession
                                     synchronous:synchronous
+                                         oldCWD:nil
                                      completion:ready];
     if (completion) {
         completion(session);
@@ -7865,6 +7869,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
                     synchronous:(BOOL)synchronous
+                         oldCWD:(NSString *)oldCWD
                      completion:(void (^)(BOOL))completion {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
@@ -7884,12 +7889,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
         return nil;
-    }
-
-    NSString *oldCWD = nil;
-    /* Get currently selected tabviewitem */
-    if ([self currentSession]) {
-        oldCWD = self.currentSession.currentLocalWorkingDirectoryOrInitialDirectory;
     }
 
     if ([[ProfileModel sessionsInstance] bookmarkWithGuid:theBookmark[KEY_GUID]]) {
@@ -7939,17 +7938,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)splitVertically:(id)sender {
-    [self splitVertically:YES
-             withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]
-              synchronous:NO];
+    [self asyncSplitVertically:YES
+                        before:NO
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                   synchronous:NO
+                    completion:nil
+                         ready:nil];
 }
 
 - (IBAction)splitHorizontally:(id)sender {
-    [self splitVertically:NO
-             withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]
-              synchronous:NO];
+    [self asyncSplitVertically:NO
+                        before:NO
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                   synchronous:NO
+                    completion:nil
+                         ready:nil];
 }
 
 - (void)tabActiveSessionDidChange {
@@ -9882,7 +9887,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                  canActivate:YES
                           respectTabbingMode:NO
                                      command:nil
-                                       block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+                                 makeSession:^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *)) {
             // Keep session size stable.
             for (PTYSession* aSession in [copyOfTab sessions]) {
                 [aSession setIgnoreResizeNotifications:YES];
@@ -9901,9 +9906,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             for (PTYSession* aSession in [copyOfTab sessions]) {
                 [aSession setIgnoreResizeNotifications:NO];
             }
-            return copyOfTab.activeSession;
+            makeSessionCompletion(copyOfTab.activeSession);
         }
                                  synchronous:NO
+                              didMakeSession:nil
                                   completion:nil];
     } else {
         [self openTabWithArrangement:self.currentTab.arrangement
@@ -10173,24 +10179,59 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return YES;
 }
 
+- (PTYSession *)sessionForDirectoryRecycling {
+    // Get active session's directory
+    PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (currentSession.isTmuxClient) {
+        return currentSession.tmuxGatewaySession;
+    }
+    return currentSession;
+}
+
+- (void)asyncCreateTabWithProfile:(Profile *)profile
+                      withCommand:(NSString *)command
+                      environment:(NSDictionary *)environment
+                      synchronous:(BOOL)synchronous
+                   didMakeSession:(void (^)(PTYSession *session))didMakeSession
+                       completion:(void (^)(BOOL ok))completion {
+    PTYSession *currentSession = [self sessionForDirectoryRecycling];
+    if (!currentSession) {
+        PTYSession *newSession = [self createTabWithProfile:profile
+                                                withCommand:command
+                                                environment:environment
+                                                synchronous:synchronous
+                                          previousDirectory:nil
+                                                 completion:completion];
+        if (didMakeSession) {
+            didMakeSession(newSession);
+        }
+        return;
+    }
+
+    __weak __typeof(self) weakSelf = self;
+    [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *pwd) {
+        PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
+        if (!strongSelf) {
+            return;
+        }
+        PTYSession *newSession = [strongSelf createTabWithProfile:profile
+                                                      withCommand:command
+                                                      environment:environment
+                                                      synchronous:synchronous
+                                                previousDirectory:pwd
+                                                       completion:completion];
+        if (didMakeSession) {
+            didMakeSession(newSession);
+        }
+    }];
+}
+
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment
                          synchronous:(BOOL)synchronous
+                   previousDirectory:(NSString *)previousDirectory
                           completion:(void (^)(BOOL ok))completion {
-    assert(profile);
-
-    // Get active session's directory
-    NSString *previousDirectory = nil;
-    PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
-    if (currentSession.isTmuxClient) {
-        currentSession = currentSession.tmuxGatewaySession;
-    }
-    if (currentSession) {
-        DLog(@"Getting current local working directory");
-        previousDirectory = currentSession.currentLocalWorkingDirectoryOrInitialDirectory;
-    }
-
     iTermObjectType objectType;
     if ([_contentView.tabView numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
@@ -10501,7 +10542,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
-- (void)tab:(PTYTab *)tab proxyIconDidChange:(NSURL *)location {
+- (void)tabInvalidateProxyIcon:(PTYTab *)tab {
     if (tab == self.currentTab) {
         [self updateProxyIcon];
     }

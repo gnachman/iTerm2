@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
+#import "iTermPidInfoClient.h"
 #import "iTermSocketAddress.h"
 #import "iTermSyntheticConfParser.h"
 #import "NSStringITerm.h"
@@ -19,39 +20,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/sysctl.h>
-
-int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int buffersize) {
-    static dispatch_once_t onceToken;
-    static dispatch_queue_t queue;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("com.iterm2.proc_pidinfo", DISPATCH_QUEUE_SERIAL);
-    });
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    __block int rc;
-    char *temp = iTermMalloc(MAX(1, buffersize));
-    dispatch_async(queue, ^{
-        rc = proc_pidinfo(pid, flavor, arg, temp, buffersize);
-        dispatch_semaphore_signal(sema);
-    });
-    const NSTimeInterval timeoutSeconds = 0.5;
-    int timedOut = dispatch_semaphore_wait(sema,
-                                           dispatch_time(DISPATCH_TIME_NOW,
-                                                         timeoutSeconds * NSEC_PER_SEC));
-    if (timedOut) {
-        DLog(@"proc_pidinfo timed out");
-        dispatch_async(queue, ^{
-            DLog(@"about to free temp buffer due to timeout");
-            free(temp);
-        });
-        return -1;
-    }
-
-    DLog(@"proc_pidinfo finished in time with rc=%@", @(rc));
-    memmove(buffer, temp, buffersize);
-    free(temp);
-
-    return rc;
-}
 
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
@@ -142,11 +110,19 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     return [argv componentsJoinedByString:@" "];
 }
 
-+ (NSArray<NSNumber *> *)processIDsWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
++ (void)getProcessIDsWithConnectionFromAddress:(iTermSocketAddress *)socketAddress
+                                         queue:(dispatch_queue_t)queue
+                                    completion:(void (^)(NSArray<NSNumber *> *))completion {
     NSMutableArray<NSNumber *> *results = [NSMutableArray array];
 
+    dispatch_group_t group = dispatch_group_create();
     [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
-        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
+        [self enumerateFileDescriptorsInfoInProcess:pid
+                                             ofType:PROX_FDTYPE_SOCKET
+                                              group:group
+                                              queue:queue
+                                              block:^(struct socket_fdinfo *fdInfo,
+                                                      BOOL *stop) {
             int family = [self addressFamilyForFDInfo:fdInfo];
             if (family != AF_INET && family != AF_INET6) {
                 return;
@@ -162,30 +138,9 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
             [results addObject:@(pid)];
         }];
     }];
-    return results;
-}
-
-+ (pid_t)processIDWithConnectionFromAddress:(iTermSocketAddress *)socketAddress {
-    __block pid_t result = -1;
-    [self enumerateProcesses:^(pid_t pid, BOOL *stop) {
-        [self enumerateFileDescriptorsInfoInProcess:pid ofType:PROX_FDTYPE_SOCKET block:^(struct socket_fdinfo *fdInfo, BOOL *stop) {
-            int family = [self addressFamilyForFDInfo:fdInfo];
-            if (family != AF_INET && family != AF_INET6) {
-                return;
-            }
-            struct sockaddr_storage local = [self localSocketAddressInFDInfo:fdInfo];
-            if (![socketAddress isEqualToSockAddr:(struct sockaddr *)&local]) {
-                return;
-            }
-            struct sockaddr_storage foreign = [self foreignSocketAddressInFDInfo:fdInfo];
-            if (![iTermSocketAddress socketAddressIsLoopback:(struct sockaddr *)&foreign]) {
-                return;
-            }
-            result = pid;
-            *stop = YES;
-        }];
-    }];
-    return result;
+    dispatch_group_notify(group, queue, ^{
+        completion(results);
+    });
 }
 
 + (void)enumerateProcesses:(void(^)(pid_t, BOOL*))block {
@@ -249,76 +204,39 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     }
 }
 
-+ (void)enumerateFileDescriptorsInfoInProcess:(pid_t)pid ofType:(int)fdType block:(void(^)(struct socket_fdinfo *, BOOL *))block {
-    int count = 0;
-    struct proc_fileportinfo *filePortInfoArray = [self newFilePortsForProcess:pid count:&count];
-    if (filePortInfoArray) {
-        [self enumerateFileDescriptorsInfoInProcess:pid
-                              withFilePortInfoArray:filePortInfoArray
-                                             length:count
-                                             ofType:fdType
-                                              block:block];
-        free(filePortInfoArray);
-    } else {
-        struct proc_fdinfo *fds = [self newFileDescriptorsForProcess:pid count:&count];
-        if (fds) {
++ (void)enumerateFileDescriptorsInfoInProcess:(pid_t)pid
+                                       ofType:(int)fdType
+                                        group:(dispatch_group_t)group
+                                        queue:(dispatch_queue_t)queue
+                                        block:(void(^)(struct socket_fdinfo *, BOOL *))block {
+    dispatch_group_enter(group);
+    [[iTermPidInfoClient sharedInstance] getPortsInProcess:pid queue:queue completion:^(int count,
+                                                                                        struct proc_fileportinfo * _Nonnull filePortInfoArray) {
+        if (filePortInfoArray) {
+            [self enumerateFileDescriptorsInfoInProcess:pid
+                                  withFilePortInfoArray:filePortInfoArray
+                                                 length:count
+                                                 ofType:fdType
+                                                  block:block];
+            free(filePortInfoArray);
+            dispatch_group_leave(group);
+            return;
+        }
+
+        [[iTermPidInfoClient sharedInstance] getFileDescriptorsForProcess:pid queue:queue completion:^(int count, struct proc_fdinfo * _Nonnull fds) {
+            if (!fds) {
+                dispatch_group_leave(group);
+                return;
+            }
             [self enumerateFileDescriptorsInfoInProcess:pid
                                         withFDInfoArray:fds
                                                  length:count
                                                  ofType:fdType
                                                   block:block];
             free(fds);
-            return;
-        }
-    }
-}
-
-+ (size_t)maximumNumberOfFileDescriptorsForProcess:(pid_t)pid {
-    struct proc_taskallinfo tai;
-    memset(&tai, 0, sizeof(tai));
-    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDTASKALLINFO, 0, &tai, sizeof(tai));
-    if (numBytes <= 0) {
-        return 0;
-    }
-    return tai.pbsd.pbi_nfiles;
-}
-
-+ (int)numberOfFilePortsForProcess:(pid_t)pid {
-    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFILEPORTS, 0, NULL, 0);
-    if (numBytes <= 0) {
-        return 0;
-    }
-    return numBytes / sizeof(struct proc_fileportinfo);
-}
-
-+ (struct proc_fdinfo *)newFileDescriptorsForProcess:(pid_t)pid count:(int *)count {
-    size_t maxSize = [self maximumNumberOfFileDescriptorsForProcess:pid] * sizeof(struct proc_fdinfo);
-    if (maxSize == 0) {
-        return NULL;
-    }
-    struct proc_fdinfo *fds = iTermMalloc(maxSize);
-    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFDS, 0, fds, maxSize);
-    if (numBytes <= 0) {
-        free(fds);
-        return NULL;
-    }
-    *count = numBytes / sizeof(struct proc_fdinfo);
-    return fds;
-}
-
-+ (struct proc_fileportinfo *)newFilePortsForProcess:(pid_t)pid count:(int *)count {
-    *count = [self numberOfFilePortsForProcess:pid];
-    int size = *count * sizeof(struct proc_fileportinfo);
-    if (size <= 0) {
-        return NULL;
-    }
-    struct proc_fileportinfo *filePortInfoArray = iTermMalloc(size);
-    int numBytes = iTermProcPidInfoWrapper(pid, PROC_PIDLISTFILEPORTS, 0, filePortInfoArray, size);
-    if (numBytes <= 0) {
-        free(filePortInfoArray);
-        return NULL;
-    }
-    return filePortInfoArray;
+            dispatch_group_leave(group);
+        }];
+    }];
 }
 
 + (BOOL)fdInfoIsTCPSocket:(struct socket_fdinfo *)fdInfo {
@@ -437,11 +355,11 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
 + (pid_t)ppidForPid:(pid_t)childPid {
     struct proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
-    int rc = iTermProcPidInfoWrapper(childPid,
-                                     PROC_PIDT_SHORTBSDINFO,
-                                     0,
-                                     &taskShortInfo,
-                                     sizeof(taskShortInfo));
+    int rc = proc_pidinfo(childPid,
+                          PROC_PIDT_SHORTBSDINFO,
+                          0,
+                          &taskShortInfo,
+                          sizeof(taskShortInfo));
     if (rc <= 0) {
         return 0;
     } else {
@@ -509,11 +427,11 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
     pid_t oldestPid = -1;
     for (int i = 0; i < numPids; ++i) {
         struct proc_taskallinfo taskAllInfo;
-        int rc = iTermProcPidInfoWrapper(pids[i],
-                                         PROC_PIDTASKALLINFO,
-                                         0,
-                                         &taskAllInfo,
-                                         sizeof(taskAllInfo));
+        int rc = proc_pidinfo(pids[i],
+                              PROC_PIDTASKALLINFO,
+                              0,
+                              &taskAllInfo,
+                              sizeof(taskAllInfo));
         if (rc <= 0) {
             continue;
         }
@@ -534,56 +452,66 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
 }
 
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid {
-    DLog(@"Using OS magic to get the working directory");
-    struct proc_vnodepathinfo vpi;
-    int ret;
-
-    // This only works if the child process is owned by our uid
-    // Notably it seems to work (at least on 10.10) even if the process ID is
-    // not owned by us.
-    ret = iTermProcPidInfoWrapper(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
-    if (ret <= 0) {
-        // The child was probably owned by root (which is expected if it's
-        // a login shell. Use the cwd of its oldest child instead.
-        pid_t childPid = [self pidOfFirstChildOf:pid];
-        if (childPid > 0) {
-            ret = iTermProcPidInfoWrapper(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
-        }
-    }
-    if (ret <= 0) {
-        // An error occurred
-        DLog(@"Failed with error %d", ret);
-        return nil;
-    } else if (ret != sizeof(vpi)) {
-        // Now this is very bad...
-        DLog(@"Got a struct of the wrong size back");
-        return nil;
-    } else {
-        // All is good
-        NSString *rawDir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
-        if (@available(macOS 10.15, *)) {
-            NSString *dir = [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:rawDir];
-            DLog(@"Result: %@ -> %@", rawDir, dir);
-            return dir;
-        } else {  // pre-10.15 code path - no synthetics existed
-            DLog(@"Result: %@", rawDir);
-            return rawDir;
-        }
-    }
-}
-
-+ (void)asyncWorkingDirectoryOfProcess:(pid_t)pid block:(void (^)(NSString *pwd))block {
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         queue = dispatch_queue_create("com.iterm2.pwd", DISPATCH_QUEUE_SERIAL);
     });
-    dispatch_async(queue, ^{
-        NSString *dir = [self workingDirectoryOfProcess:pid];
-        dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __block NSString *result = nil;
+    [self asyncWorkingDirectoryOfProcess:pid queue:queue block:^(NSString *pwd) {
+        result = pwd;
+        dispatch_group_leave(group);
+    }];
+    dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
+                                             0.5 * NSEC_PER_SEC));
+    return result;
+}
+
++ (void)asyncWorkingDirectoryOfProcess:(pid_t)pid
+                                 queue:(dispatch_queue_t)queue
+                                 block:(void (^)(NSString *pwd))block {
+    [self asyncWorkingDirectoryOfProcess:pid
+                             canFallBack:YES
+                                   queue:queue
+                                   block:block];
+}
+
++ (void)asyncWorkingDirectoryOfProcess:(pid_t)pid
+                           canFallBack:(BOOL)canFallBack
+                                 queue:(dispatch_queue_t)queue
+                                 block:(void (^)(NSString *pwd))block {
+    [[iTermPidInfoClient sharedInstance] getWorkingDirectoryOfProcessWithID:pid
+                                                                      queue:queue
+                                                                 completion:^(NSString *rawDir) {
+        if (!rawDir && canFallBack) {
+            pid_t childPid = [self pidOfFirstChildOf:pid];
+            if (childPid <= 0) {
+                block(nil);
+                return;
+            }
+            // pid might be owned by root. Try again with its eldest child.
+            [self asyncWorkingDirectoryOfProcess:childPid
+                                     canFallBack:NO
+                                           queue:queue
+                                           block:block];
+            return;
+        }
+        if (!rawDir) {
+            block(nil);
+            return;
+        }
+        if (@available(macOS 10.15, *)) {
+            NSString *dir = [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:rawDir];
+            DLog(@"Result: %@ -> %@", rawDir, dir);
             block(dir);
-        });
-    });
+            return;
+        }
+        // pre-10.15 code path - no synthetics existed
+        DLog(@"Result: %@", rawDir);
+        block(rawDir);
+    }];
 }
 
 @end

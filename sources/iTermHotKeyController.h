@@ -54,7 +54,6 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 - (iTermProfileHotKey *)profileHotKeyForWindowController:(PseudoTerminal *)windowController;
 
 - (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states;
-- (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState;
 
 // Auto hide all hotkey windows, if needed and possible.
 - (void)autoHideHotKeyWindows;
@@ -84,8 +83,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 // its own windows, but that's not the case for e.g. tmux windows. Returns the iTermProfileHotKey if
 // the window controller was assigned a shotkey or nil if not.
 - (iTermProfileHotKey *)didCreateWindowController:(PseudoTerminal *)windowController
-                                      withProfile:(Profile *)profile
-                                             show:(BOOL)show;
+                                      withProfile:(Profile *)profile;
 
 // Hide all hotkey windows without animation. Used by Exposé All Tabs.
 - (void)fastHideAllHotKeyWindows;

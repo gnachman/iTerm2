@@ -437,6 +437,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                                                                                          environment:nil
                                                                                                  pwd:@"/"
                                                                                              options:options
+                                                                                      didMakeSession:nil
                                                                                           completion:nil];
                                 }] ];
     warning.warningType = kiTermWarningTypePermanentlySilenceable;

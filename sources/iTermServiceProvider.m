@@ -46,19 +46,23 @@
                              canActivate:YES
                       respectTabbingMode:NO
                                  command:nil
-                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+                             makeSession:^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *)) {
         profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
         profile = [profile dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
         if (allowTabs && !windowController) {
             pseudoTerminal = [[term retain] autorelease];
         }
-        return [term createTabWithProfile:profile
-                              withCommand:nil
-                              environment:nil
-                              synchronous:NO
-                               completion:nil];
+        [term asyncCreateTabWithProfile:profile
+                            withCommand:nil
+                            environment:nil
+                            synchronous:NO
+                         didMakeSession:^(PTYSession *session) {
+            makeSessionCompletion(session);
+        }
+                             completion:nil];
     }
                              synchronous:NO
+                          didMakeSession:nil
                               completion:nil];
     return pseudoTerminal;
 }
