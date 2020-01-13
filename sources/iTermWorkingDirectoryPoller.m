@@ -107,7 +107,7 @@
     }
     __weak __typeof(self) weakSelf = self;
     NSInteger generation = _generation;
-    [iTermLSOF asyncWorkingDirectoryOfProcess:pid block:^(NSString *pwd) {
+    [iTermLSOF asyncWorkingDirectoryOfProcess:pid queue:dispatch_get_main_queue() block:^(NSString *pwd) {
         DLog(@"Got: %@", pwd);
         [weakSelf setDirectory:pwd generation:generation];
     }];

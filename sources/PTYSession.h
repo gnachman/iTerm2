@@ -473,8 +473,11 @@ typedef enum {
 // shell integration is on). If that can't be done then the current local working directory with
 // symlinks resolved is returned.
 @property(nonatomic, readonly) NSString *currentLocalWorkingDirectory;
+- (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion;
+
 // A more resilient version of the above. If the current directory cannot be determined it uses the initial directory. This allows the creation of session in succession with proper pwd recycling behavior.
 @property(nonatomic, readonly) NSString *currentLocalWorkingDirectoryOrInitialDirectory;
+- (void)asyncCurrentLocalWorkingDirectoryOrInitialDirectory:(void (^)(NSString *pwd))completion;
 
 // A UUID that uniquely identifies this session.
 // Used to link serialized data back to a restored session (e.g., which session

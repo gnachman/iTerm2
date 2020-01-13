@@ -73,21 +73,22 @@
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
 
-    NSString *workingDirectory = [self.delegate urlActionHelper:self
-                                         workingDirectoryOnLine:coord.y];
-    
-    [iTermURLActionFactory urlActionAtCoord:coord
-                        respectHardNewlines:respectHardNewlines
-                           workingDirectory:workingDirectory ?: @""
-                                 remoteHost:[self.delegate urlActionHelper:self remoteHostOnLine:coord.y]
-                                  selectors:[self.delegate urlActionHelperSmartSelectionActionSelectorDictionary:self]
-                                      rules:[self.delegate urlActionHelperSmartSelectionRules:self]
-                                  extractor:extractor
-                  semanticHistoryController:self.semanticHistoryController
-                                pathFactory:^SCPPath *(NSString *path, int line) {
-                                    return [self.delegate urlActionHelper:self secureCopyPathForFile:path onLine:line];
-                                }
-                                 completion:completion];
+    [self.delegate urlActionHelper:self
+            workingDirectoryOnLine:coord.y
+                        completion:^(NSString *workingDirectory) {
+        [iTermURLActionFactory urlActionAtCoord:coord
+                            respectHardNewlines:respectHardNewlines
+                               workingDirectory:workingDirectory ?: @""
+                                     remoteHost:[self.delegate urlActionHelper:self remoteHostOnLine:coord.y]
+                                      selectors:[self.delegate urlActionHelperSmartSelectionActionSelectorDictionary:self]
+                                          rules:[self.delegate urlActionHelperSmartSelectionRules:self]
+                                      extractor:extractor
+                      semanticHistoryController:self.semanticHistoryController
+                                    pathFactory:^SCPPath *(NSString *path, int line) {
+                                        return [self.delegate urlActionHelper:self secureCopyPathForFile:path onLine:line];
+                                    }
+                                     completion:completion];
+    }];
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {

@@ -208,8 +208,9 @@
                                          canActivate:YES
                                   respectTabbingMode:NO
                                              command:nil
-                                               block:nil
+                                         makeSession:nil
                                          synchronous:NO
+                                      didMakeSession:nil
                                           completion:nil];
             } else {
                 // Create the hotkey window for this profile

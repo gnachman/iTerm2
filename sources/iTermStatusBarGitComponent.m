@@ -672,15 +672,16 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     if (bury) {
         options |= iTermSingleUseWindowOptionsInitiallyBuried;
     }
-    _session = [[iTermController sharedInstance] openSingleUseWindowWithCommand:gitWrapper
-                                                                      arguments:args
-                                                                         inject:nil
-                                                                    environment:nil
-                                                                            pwd:pwd
-                                                                        options:options
-                                                                     completion:^{
-                                                                         [weakSelf didFinishCommand];
-                                                                     }];
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:gitWrapper
+                                                           arguments:args
+                                                              inject:nil
+                                                         environment:nil
+                                                                 pwd:pwd
+                                                             options:options
+                                                      didMakeSession:^(PTYSession *newSession) { self->_session = newSession; }
+                                                          completion:^{
+        [weakSelf didFinishCommand];
+    }];
 }
 
 - (void)didFinishCommand {

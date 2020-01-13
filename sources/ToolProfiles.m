@@ -123,7 +123,8 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:terminal
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
 }
 
@@ -133,7 +134,8 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:nil
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
 }
 

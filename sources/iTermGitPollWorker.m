@@ -181,7 +181,7 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
 
 - (void)didRead:(NSData *)data {
     DLog(@"git poll worker for bucket %d: Read %@ bytes from git poller script", _bucket, @(data.length));
-
+    NSLog(@"read %.*s", data.length, data.bytes);
     // If more than 100k gets queued up something has gone terribly wrong
     const size_t maxBytes = 100000;
     if (_readData.length + data.length > maxBytes) {

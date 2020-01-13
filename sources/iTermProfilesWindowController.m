@@ -193,7 +193,8 @@ typedef enum {
         } else {
             [iTermSessionLauncher launchBookmark:bookmark
                                       inTerminal:terminal
-                              respectTabbingMode:NO];
+                              respectTabbingMode:NO
+                                      completion:nil];
         }
         isFirst = NO;
     }
@@ -307,7 +308,8 @@ typedef enum {
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:terminal
-                          respectTabbingMode:NO];
+                          respectTabbingMode:NO
+                                  completion:nil];
     }
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];

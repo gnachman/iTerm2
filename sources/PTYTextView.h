@@ -127,6 +127,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewSwapPane;
 - (NSStringEncoding)textViewEncoding;
 - (NSString *)textViewCurrentWorkingDirectory;
+- (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion;
+
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk;
 // If the textview isn't in the key window, the delegate can return YES in this
 // method to cause the cursor to be drawn as though it were key.

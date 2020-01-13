@@ -123,17 +123,23 @@ static NSString *const kArrangement = @"Arrangement";
     return [[ProfileModel sharedInstance] bookmarkWithGuid:_profileGuid];
 }
 
-- (void)createWindow {
-    [self createWindowWithURL:nil];
+- (void)createWindowWithCompletion:(void (^)(void))completion {
+    [self createWindowWithURL:nil
+                   completion:completion];
 }
 
-- (void)createWindowWithURL:(NSURL *)url {
+- (void)createWindowWithURL:(NSURL *)url completion:(void (^)(void))completion {
     if (self.windowController.weaklyReferencedObject) {
+        if (completion) {
+            completion();
+        }
         return;
     }
 
     DLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
+    [_windowController release];
+    _windowController = nil;
     if (windowController) {
         if (url) {
             [iTermSessionLauncher launchBookmark:self.profile
@@ -144,16 +150,20 @@ static NSString *const kArrangement = @"Arrangement";
                                      canActivate:YES
                               respectTabbingMode:NO
                                          command:nil
-                                           block:nil
+                                     makeSession:nil
                                      synchronous:NO
+                                  didMakeSession:nil
                                       completion:nil];
         }
+        self.windowController = [windowController weakSelf];
     } else {
-        windowController = [self windowControllerFromProfile:[self profile] url:url];
+        [self getWindowControllerFromProfile:[self profile] url:url completion:^(PseudoTerminal *windowController) {
+            self.windowController = [windowController weakSelf];
+            if (completion) {
+                completion();
+            }
+        }];
     }
-    [_windowController release];
-    _windowController = nil;
-    self.windowController = [windowController weakSelf];
 }
 
 - (void)setWindowController:(PseudoTerminal<iTermWeakReference> *)windowController {
@@ -787,9 +797,12 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
-- (PseudoTerminal *)windowControllerFromProfile:(Profile *)hotkeyProfile url:(NSURL *)url {
+- (void)getWindowControllerFromProfile:(Profile *)hotkeyProfile
+                                   url:(NSURL *)url
+                            completion:(void (^)(PseudoTerminal *))completion {
     if (!hotkeyProfile) {
-        return nil;
+        completion(nil);
+        return;
     }
     if ([[hotkeyProfile objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         // Lion fullscreen doesn't make sense with hotkey windows. Change
@@ -800,26 +813,28 @@ static NSString *const kArrangement = @"Arrangement";
     }
     [self.delegate hotKeyWillCreateWindow:self];
     self.birthingWindow = YES;
-    PTYSession *session = [iTermSessionLauncher launchBookmark:hotkeyProfile
-                                                    inTerminal:nil
-                                                       withURL:url.absoluteString
-                                              hotkeyWindowType:[self hotkeyWindowType]
-                                                       makeKey:YES
-                                                   canActivate:YES
-                                            respectTabbingMode:NO
-                                                       command:nil
-                                                         block:nil
-                                                   synchronous:NO
-                                                    completion:nil];
-    self.birthingWindow = NO;
+    [iTermSessionLauncher launchBookmark:hotkeyProfile
+                              inTerminal:nil
+                                 withURL:url.absoluteString
+                        hotkeyWindowType:[self hotkeyWindowType]
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                 command:nil
+                             makeSession:nil
+                             synchronous:NO
+                          didMakeSession:^(PTYSession * _Nonnull session) {
+        self.birthingWindow = NO;
 
-    [self.delegate hotKeyDidCreateWindow:self];
-    PseudoTerminal *result = nil;
-    if (session) {
-        result = [[iTermController sharedInstance] terminalWithSession:session];
+        [self.delegate hotKeyDidCreateWindow:self];
+        PseudoTerminal *result = nil;
+        if (session) {
+            result = [[iTermController sharedInstance] terminalWithSession:session];
+        }
+        self.windowControllerBeingBorn = nil;
+        completion(result);
     }
-    self.windowControllerBeingBorn = nil;
-    return result;
+                              completion:nil];
 }
 
 - (void)rollInFinished {
@@ -923,10 +938,13 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL result = NO;
     if (!self.windowController.weaklyReferencedObject) {
         DLog(@"Create new hotkey window");
-        [self createWindowWithURL:url];
+        [self createWindowWithURL:url completion:^{
+            [self rollInAnimated:[iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]];
+        }];
         result = YES;
+    } else {
+        [self rollInAnimated:[iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]];
     }
-    [self rollInAnimated:[iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]];
     return result;
 }
 

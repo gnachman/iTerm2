@@ -2102,8 +2102,9 @@ ITERM_WEAKLY_REFERENCEABLE
                              canActivate:NO
                       respectTabbingMode:NO
                                  command:nil
-                                   block:nil
+                             makeSession:nil
                              synchronous:NO
+                          didMakeSession:nil
                               completion:nil];
 }
 
@@ -6956,7 +6957,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
             [iTermSessionLauncher launchBookmark:profile
                                       inTerminal:nil
-                              respectTabbingMode:NO];
+                              respectTabbingMode:NO
+                                      completion:nil];
             return YES;
         }
         case KEY_ACTION_UNDO:
@@ -7824,6 +7826,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSString *)textViewCurrentWorkingDirectory {
     return [_shell getWorkingDirectory];
+}
+
+- (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion {
+    [_shell getWorkingDirectoryWithCompletion:completion];
 }
 
 - (NSURL *)textViewCurrentLocation {
@@ -9076,6 +9082,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_shell getWorkingDirectory];
 }
 
+- (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    [_shell getWorkingDirectoryWithCompletion:completion];
+}
+
 - (void)screenSetCursorVisible:(BOOL)visible {
     _textview.cursorVisible = visible;
 }
@@ -10324,9 +10334,33 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionCurrentDirectoryDidChange:self];
 }
 
+- (void)asyncCurrentLocalWorkingDirectoryOrInitialDirectory:(void (^)(NSString *pwd))completion {
+    NSString *envPwd = self.environment[@"PWD"];
+    DLog(@"asyncCurrentLocalWorkingDirectoryOrInitialDirectory environment[pwd]=%@", envPwd);
+    [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
+        if (!pwd) {
+            completion(envPwd);
+            return;
+        }
+        completion(pwd);
+    }];
+}
+
 - (NSString *)currentLocalWorkingDirectoryOrInitialDirectory {
     DLog(@"currentLocalWorkingDirectory=%@ environment[pwd]=%@", self.currentLocalWorkingDirectory, self.environment[@"PWD"]);
     return self.currentLocalWorkingDirectory ?: self.environment[@"PWD"];
+}
+
+- (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion {
+    if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
+        DLog(@"Last directory is unsuitable or nil");
+        [_shell getWorkingDirectoryWithCompletion:completion];
+    } else {
+        DLog(@"Using last directory from shell integration: %@", _lastDirectory);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(_lastDirectory);
+        });
+    }
 }
 
 - (NSString *)currentLocalWorkingDirectory {
@@ -10359,10 +10393,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // all the time.
 - (void)screenLogWorkingDirectoryAtLine:(int)line
                           withDirectory:(NSString *)directory
-                                 pushed:(BOOL)pushed {
-    DLog(@"screenLogWorkingDirectoryAtLine:%@ withDirectory:%@ pushed:%@", @(line), directory, @(pushed));
+                                 pushed:(BOOL)pushed
+                                 timely:(BOOL)timely {
+    DLog(@"screenLogWorkingDirectoryAtLine:%@ withDirectory:%@ pushed:%@ timely:%@",
+         @(line), directory, @(pushed), @(timely));
 
-    if (pushed) {
+    if (pushed && timely) {
         // If we're currently polling for a working directory, do not create a
         // mark for the result when the poll completes because this mark is
         // from a higher-quality data source.
@@ -10380,20 +10416,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                onHost:[_screen remoteHostOnLine:line]
                                                              isChange:!isSame];
     }
-    // This has been a big ugly hairball for a long time. Because of the
-    // working directory poller I think it's safe to simplify it now. Before,
-    // we'd track whether the update was trustworthy and likely to happen
-    // again. These days, it should always be regular so that is not
-    // interesting. Instead, we just want to make sure we know if the directory
-    // is local or remote because we want to ignore local directories when we
-    // know the user is ssh'ed somewhere.
-    const BOOL directoryIsRemote = pushed && remoteHost && !remoteHost.isLocalhost;
+    if (timely) {
+        // This has been a big ugly hairball for a long time. Because of the
+        // working directory poller I think it's safe to simplify it now. Before,
+        // we'd track whether the update was trustworthy and likely to happen
+        // again. These days, it should always be regular so that is not
+        // interesting. Instead, we just want to make sure we know if the directory
+        // is local or remote because we want to ignore local directories when we
+        // know the user is ssh'ed somewhere.
+        const BOOL directoryIsRemote = pushed && remoteHost && !remoteHost.isLocalhost;
 
-    // Update lastDirectory, proxy icon, "path" variable.
-    [self setLastDirectory:directory remote:directoryIsRemote pushed:pushed];
-
-    if (pushed) {
-        self.lastRemoteHost = remoteHost;
+        // Update lastDirectory, proxy icon, "path" variable.
+        [self setLastDirectory:directory remote:directoryIsRemote pushed:pushed];
+        if (pushed) {
+            self.lastRemoteHost = remoteHost;
+        }
     }
 }
 

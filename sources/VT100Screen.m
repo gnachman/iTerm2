@@ -170,6 +170,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
     VT100GridSize _initialSize;
+
+    // Each call to setWorkingDirectory:onLine:pushed:generation: takes a monotonically increasing
+    // generation number. Sometimes it will need to perform an async fetch of the working directory.
+    // When that fetch completes, it needs to know if there has been an update to the pwd since
+    // the fetch began. _finishedWorkingDirectoryGeneration is set to the last generation that
+    // was accepted. When the async fetch finishes it should be considered not timely if
+    // _finishedWorkingDirectoryGeneration is greater than the generation of that query.
+    NSInteger _setWorkingDirectoryGeneration;
+    NSInteger _finishedWorkingDirectoryGeneration;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -2162,10 +2171,31 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed {
-    DLog(@"setWorkingDirectory:%@ onLine:%d", workingDirectory, line);
+    [self setWorkingDirectory:workingDirectory
+                       onLine:line
+                       pushed:pushed
+                   generation:++_setWorkingDirectoryGeneration];
+}
+
+- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed generation:(NSInteger)generation {
+    // If not timely, record the update but don't consider it the latest update.
+    const BOOL timely = (_finishedWorkingDirectoryGeneration < _setWorkingDirectoryGeneration);
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%d generation:%@ (timely=%@)", self, workingDirectory, line, @(generation), @(timely));
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
     if (!workingDirectory) {
-        workingDirectory = [delegate_ screenCurrentWorkingDirectory];
+        __weak __typeof(self) weakSelf = self;
+        DLog(@"%p: Performing async working directory fetch for generation %@", self, @(generation));
+        [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+            DLog(@"%p: Async update got %@ for generation %@", self, path, @(generation));
+            if (path) {
+                [weakSelf setWorkingDirectory:path onLine:line pushed:pushed generation:generation];
+            }
+        }];
+        return;
+    }
+    DLog(@"%p: Set finished working directory generation to %@", self, @(generation));
+    if (timely) {
+        _finishedWorkingDirectoryGeneration = generation;
     }
     if (workingDirectory.length) {
         DLog(@"Changing working directory to %@", workingDirectory);
@@ -2203,7 +2233,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [delegate_ screenLogWorkingDirectoryAtLine:line
                                  withDirectory:workingDirectory
-                                        pushed:pushed];
+                                        pushed:pushed
+                                        timely:timely];
 }
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {

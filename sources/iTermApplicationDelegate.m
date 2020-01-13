@@ -632,21 +632,24 @@ static BOOL hasBecomeActive = NO;
             }
         }
 
-        PseudoTerminal *term = [self terminalToOpenFileIn];
-        DLog(@"application:openFile: launching new session in window %@", term);
-        PTYSession *session = [iTermSessionLauncher launchBookmark:bookmark
-                                                        inTerminal:term
-                                                respectTabbingMode:NO];
-        term = (id)session.delegate.realParentWindow;
-
-        if (term) {
+        PseudoTerminal *windowController = [self terminalToOpenFileIn];
+        DLog(@"application:openFile: launching new session in window %@", windowController);
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:windowController
+                          respectTabbingMode:NO
+                                  completion:^(PTYSession *session) {
+            PseudoTerminal *term = (id)session.delegate.realParentWindow;
+            if (!term) {
+                return;
+            }
             // If term is a hotkey window, reveal it.
             iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
-            if (profileHotkey) {
-                DLog(@"application:openFile: revealing hotkey window");
-                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+            if (!profileHotkey) {
+                return;
             }
-        }
+            DLog(@"application:openFile: revealing hotkey window");
+            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+        }];
     }
     return YES;
 }
@@ -888,12 +891,10 @@ static BOOL hasBecomeActive = NO;
     [aMenu addItem:[NSMenuItem separatorItem]];
     [self newSessionMenu:aMenu
                    title:@"New Window…"
-                  target:[iTermController sharedInstance]
                 selector:@selector(newSessionInWindowAtIndex:)
          openAllSelector:@selector(newSessionsInNewWindow:)];
     [self newSessionMenu:aMenu
                    title:@"New Tab…"
-                  target:frontTerminal
                 selector:@selector(newSessionInTabAtIndex:)
          openAllSelector:@selector(newSessionsInWindow:)];
     [self _addArrangementsMenuTo:aMenu];
@@ -948,6 +949,7 @@ static BOOL hasBecomeActive = NO;
         if (hotkeyWindowsStates) {
             // We have to create the hotkey window now because we need to attach to servers before
             // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+#warning Make sure the issue above is not a problem. I think it probably will be.
             const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
             if (count > 0) {
                 switch (_untitledFileOpenStatus) {
@@ -960,12 +962,6 @@ static BOOL hasBecomeActive = NO;
                     case iTermUntitledFileOpenComplete:
                         break;
                 }
-            }
-        } else {
-            // Restore hotkey window from pre-3.1 version.
-            legacyState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
-            if (legacyState) {
-                [[iTermHotKeyController sharedInstance] createHiddenWindowFromLegacyRestorableState:legacyState];
             }
         }
     }
@@ -1254,7 +1250,7 @@ static BOOL hasBecomeActive = NO;
             [self restoreBuriedSessionsState];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
-                [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+                [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
             } else {
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(itermDidDecodeWindowRestorableState:)
@@ -1325,7 +1321,7 @@ static BOOL hasBecomeActive = NO;
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
         _orphansAdopted = YES;
-        [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
+        [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
     }
 }
 
@@ -1386,8 +1382,9 @@ static BOOL hasBecomeActive = NO;
                                      canActivate:NO
                               respectTabbingMode:YES
                                          command:nil
-                                           block:nil
+                                     makeSession:nil
                                      synchronous:NO
+                                  didMakeSession:nil
                                       completion:nil];
         }
     }
@@ -1607,7 +1604,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)newSessionMenu:(NSMenu *)superMenu
                  title:(NSString*)title
-                target:(id)aTarget
               selector:(SEL)selector
        openAllSelector:(SEL)openAllSelector {
     //new window menu
@@ -2041,6 +2037,7 @@ static BOOL hasBecomeActive = NO;
                                                              environment:environment
                                                                      pwd:nil
                                                                  options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                          didMakeSession:nil
                                                               completion:nil];
     }];
 }

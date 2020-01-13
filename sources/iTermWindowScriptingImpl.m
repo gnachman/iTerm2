@@ -38,7 +38,7 @@
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *command = args[@"command"];
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
-    PTYSession *session =
+    [scriptCommand suspendExecution];
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:(PseudoTerminal *)self.ptyDelegate
                                  withURL:nil
@@ -47,10 +47,13 @@
                              canActivate:NO
                       respectTabbingMode:NO
                                  command:command
-                                   block:nil
+                             makeSession:nil
                              synchronous:YES
+                          didMakeSession:^(PTYSession * _Nonnull session) {
+        [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+    }
                               completion:nil];
-    return [self.ptyDelegate tabForSession:session];
+    return nil;
 }
 
 - (id)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
@@ -64,7 +67,6 @@
                                              profileName]];
         return nil;
     }
-    PTYSession *session =
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:(PseudoTerminal *)self.ptyDelegate
                                  withURL:nil
@@ -73,10 +75,13 @@
                              canActivate:NO
                       respectTabbingMode:NO
                                  command:command
-                                   block:nil
+                             makeSession:nil
                              synchronous:YES
+                          didMakeSession:^(PTYSession * _Nonnull session) {
+        [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+    }
                               completion:nil];
-    return [self.ptyDelegate tabForSession:session];
+    return nil;
 }
 
 - (id)handleRevealHotkeyWindowCommand:(NSScriptCommand *)scriptCommand {

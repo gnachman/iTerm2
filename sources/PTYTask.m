@@ -178,6 +178,15 @@ static void HandleSigChld(int n) {
     return [iTermLSOF workingDirectoryOfProcess:self.pid];
 }
 
+- (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
+    if (self.pid == -1) {
+        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+        completion(nil);
+        return;
+    }
+    [iTermLSOF asyncWorkingDirectoryOfProcess:self.pid queue:dispatch_get_main_queue() block:completion];
+}
+
 - (Coprocess *)coprocess {
     @synchronized (self) {
         return coprocess_;

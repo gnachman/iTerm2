@@ -2583,6 +2583,11 @@
 		A685D9FD1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */; };
 		A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
 		A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */; };
+		A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6866B6B23CAA10A00ACD94C /* pidinfo.m */; };
+		A6866B6E23CAA10A00ACD94C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A6866B6D23CAA10A00ACD94C /* main.m */; };
+		A6866B7223CAA10A00ACD94C /* pidinfo.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = A6866B6723CAA10A00ACD94C /* pidinfo.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A6866B7D23CAA31900ACD94C /* iTermPidInfoClient.h in Headers */ = {isa = PBXBuildFile; fileRef = A6866B7B23CAA31900ACD94C /* iTermPidInfoClient.h */; };
+		A6866B7E23CAA31900ACD94C /* iTermPidInfoClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A6866B7C23CAA31900ACD94C /* iTermPidInfoClient.m */; };
 		A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
 		A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */; };
 		A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */ = {isa = PBXBuildFile; fileRef = A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */; };
@@ -3700,6 +3705,13 @@
 			remoteGlobalIDString = A6755F481D729A0500F3726C;
 			remoteInfo = image_decoder;
 		};
+		A6866B7023CAA10A00ACD94C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A6866B6623CAA10A00ACD94C;
+			remoteInfo = pidinfo;
+		};
 		A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -3787,6 +3799,17 @@
 			);
 			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		A6866B7823CAA10A00ACD94C /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				A6866B7223CAA10A00ACD94C /* pidinfo.xpc in Embed XPC Services */,
+			);
+			name = "Embed XPC Services";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -5397,6 +5420,14 @@
 		A685D9F81E5B6E100091C3A7 /* PseudoTerminal+TouchBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+TouchBar.h"; sourceTree = "<group>"; };
 		A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+TouchBar.m"; sourceTree = "<group>"; };
 		A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Private.h"; sourceTree = "<group>"; };
+		A6866B6723CAA10A00ACD94C /* pidinfo.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = pidinfo.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6866B6923CAA10A00ACD94C /* pidinfoProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pidinfoProtocol.h; sourceTree = "<group>"; };
+		A6866B6A23CAA10A00ACD94C /* pidinfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pidinfo.h; sourceTree = "<group>"; };
+		A6866B6B23CAA10A00ACD94C /* pidinfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = pidinfo.m; sourceTree = "<group>"; };
+		A6866B6D23CAA10A00ACD94C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		A6866B6F23CAA10A00ACD94C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6866B7B23CAA31900ACD94C /* iTermPidInfoClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPidInfoClient.h; sourceTree = "<group>"; };
+		A6866B7C23CAA31900ACD94C /* iTermPidInfoClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPidInfoClient.m; sourceTree = "<group>"; };
 		A686A1131C86A6CB0024C2DE /* NewOutputForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutputForDarkTheme.png; path = images/NewOutputForDarkTheme.png; sourceTree = "<group>"; };
 		A686A1141C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutputForDarkTheme@2x.png"; path = "images/NewOutputForDarkTheme@2x.png"; sourceTree = "<group>"; };
 		A686A11B1C86AA930024C2DE /* DeadForDarkTheme.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DeadForDarkTheme.png; path = images/DeadForDarkTheme.png; sourceTree = "<group>"; };
@@ -6265,6 +6296,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6866B6423CAA10A00ACD94C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6C760441B45C4CF00E3C992 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -6303,6 +6341,7 @@
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
 				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
 				A6755F4A1D729A0500F3726C /* image_decoder */,
+				A6866B6823CAA10A00ACD94C /* pidinfo */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -6313,6 +6352,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6866B7A23CAA30500ACD94C /* pidinfo */,
 				A629F59423AFF47300C2F16B /* Shell Integration Installer */,
 				A67D19762238D4DD00BD0D4D /* Notifications */,
 				A6BF034D21E1763D0097DA86 /* Language */,
@@ -6748,6 +6788,7 @@
 				A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */,
 				A6755F491D729A0500F3726C /* image_decoder */,
 				A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */,
+				A6866B6723CAA10A00ACD94C /* pidinfo.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -8279,6 +8320,27 @@
 				A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */,
 			);
 			name = "Shell Launcher/FD Client/Server";
+			sourceTree = "<group>";
+		};
+		A6866B6823CAA10A00ACD94C /* pidinfo */ = {
+			isa = PBXGroup;
+			children = (
+				A6866B6923CAA10A00ACD94C /* pidinfoProtocol.h */,
+				A6866B6A23CAA10A00ACD94C /* pidinfo.h */,
+				A6866B6B23CAA10A00ACD94C /* pidinfo.m */,
+				A6866B6D23CAA10A00ACD94C /* main.m */,
+				A6866B6F23CAA10A00ACD94C /* Info.plist */,
+			);
+			path = pidinfo;
+			sourceTree = "<group>";
+		};
+		A6866B7A23CAA30500ACD94C /* pidinfo */ = {
+			isa = PBXGroup;
+			children = (
+				A6866B7B23CAA31900ACD94C /* iTermPidInfoClient.h */,
+				A6866B7C23CAA31900ACD94C /* iTermPidInfoClient.m */,
+			);
+			name = pidinfo;
 			sourceTree = "<group>";
 		};
 		A686C0D21ADA38CA00906FAE /* Golden Images for Tests */ = {
@@ -10480,6 +10542,7 @@
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
 				A6BF035821E179680097DA86 /* iTermRecordedVariable.h in Headers */,
 				A68400AF1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h in Headers */,
+				A6866B7D23CAA31900ACD94C /* iTermPidInfoClient.h in Headers */,
 				A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */,
 				530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */,
 				A65660D42372A4A600DC6744 /* iTermCache.h in Headers */,
@@ -10749,6 +10812,7 @@
 				874206550564169600CFC3F1 /* Rez */,
 				874206560564169600CFC3F1 /* CopyFiles */,
 				93BD20450FE16DD50059656D /* Update SVN Revision */,
+				A6866B7823CAA10A00ACD94C /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
@@ -10757,6 +10821,7 @@
 				A667195E1DCE36EF000CE608 /* PBXTargetDependency */,
 				A6C763D11B45C55200E3C992 /* PBXTargetDependency */,
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
+				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			productName = "JTerminal (Application)";
@@ -10796,6 +10861,23 @@
 			productName = image_decoder;
 			productReference = A6755F491D729A0500F3726C /* image_decoder */;
 			productType = "com.apple.product-type.tool";
+		};
+		A6866B6623CAA10A00ACD94C /* pidinfo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6866B7323CAA10A00ACD94C /* Build configuration list for PBXNativeTarget "pidinfo" */;
+			buildPhases = (
+				A6866B6323CAA10A00ACD94C /* Sources */,
+				A6866B6423CAA10A00ACD94C /* Frameworks */,
+				A6866B6523CAA10A00ACD94C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = pidinfo;
+			productName = pidinfo;
+			productReference = A6866B6723CAA10A00ACD94C /* pidinfo.xpc */;
+			productType = "com.apple.product-type.xpc-service";
 		};
 		A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */ = {
 			isa = PBXNativeTarget;
@@ -10861,6 +10943,10 @@
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
+					A6866B6623CAA10A00ACD94C = {
+						CreatedOnToolsVersion = 11.3;
+						ProvisioningStyle = Automatic;
+					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
@@ -10896,6 +10982,7 @@
 				A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */,
 				A6755F481D729A0500F3726C /* image_decoder */,
 				A66717851DCE36C3000CE608 /* iTerm2SharedARC */,
+				A6866B6623CAA10A00ACD94C /* pidinfo */,
 			);
 		};
 /* End PBXProject section */
@@ -12186,6 +12273,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6866B6523CAA10A00ACD94C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6C7641A1B45CB2800E3C992 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -12833,6 +12927,7 @@
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
+				A6866B7E23CAA31900ACD94C /* iTermPidInfoClient.m in Sources */,
 				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
 				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,
 				A66F52B62105AC5B00571168 /* iTermStatusBarGitComponent.m in Sources */,
@@ -13065,6 +13160,15 @@
 			files = (
 				A6755F541D73836B00F3726C /* iTermSerializableImage.m in Sources */,
 				A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6866B6323CAA10A00ACD94C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6866B6E23CAA10A00ACD94C /* main.m in Sources */,
+				A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -13462,6 +13566,11 @@
 			isa = PBXTargetDependency;
 			target = A6755F481D729A0500F3726C /* image_decoder */;
 			targetProxy = A6755F551D739E3C00F3726C /* PBXContainerItemProxy */;
+		};
+		A6866B7123CAA10A00ACD94C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A6866B6623CAA10A00ACD94C /* pidinfo */;
+			targetProxy = A6866B7023CAA10A00ACD94C /* PBXContainerItemProxy */;
 		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -14978,6 +15087,249 @@
 			};
 			name = Nightly;
 		};
+		A6866B7423CAA10A00ACD94C /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = pidinfo/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Development;
+		};
+		A6866B7523CAA10A00ACD94C /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = pidinfo/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Deployment;
+		};
+		A6866B7623CAA10A00ACD94C /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = pidinfo/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Beta;
+		};
+		A6866B7723CAA10A00ACD94C /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = pidinfo/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Nightly;
+		};
 		A6C7604C1B45C4CF00E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -15634,6 +15986,17 @@
 				A6755F4F1D729A0500F3726C /* Deployment */,
 				A656E98F1F970C7200158128 /* Beta */,
 				A6755F501D729A0500F3726C /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A6866B7323CAA10A00ACD94C /* Build configuration list for PBXNativeTarget "pidinfo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6866B7423CAA10A00ACD94C /* Development */,
+				A6866B7523CAA10A00ACD94C /* Deployment */,
+				A6866B7623CAA10A00ACD94C /* Beta */,
+				A6866B7723CAA10A00ACD94C /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;

@@ -222,28 +222,29 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     dispatch_async(queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
         [self->_pendingConnections addObject:connection];
-        NSArray<NSNumber *> *pids = [iTermLSOF processIDsWithConnectionFromAddress:address];
-        if (!pids) {
-            XLog(@"Reject connection from unidentifiable process with address %@", address);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
-                                                                    object:nil
-                                                                  userInfo:@{ @"reason": [NSString stringWithFormat:@"Could not get process ID for connection from port %@", @(address.port)] }];
-            });
-            dispatch_async(connection.queue, ^{
-                [connection unauthorized];
-            });
-            return;
-        }
-
-        [self startRequestOnConnection:connection pids:pids completion:^(BOOL ok, NSString *reason) {
-            [self->_pendingConnections removeObject:connection];
-            if (!ok) {
-                XLog(@"Reject unauthenticated process (pids %@): %@", pids, reason);
+        [iTermLSOF getProcessIDsWithConnectionFromAddress:address queue:queue completion:^(NSArray<NSNumber *> *pids) {
+            if (!pids) {
+                XLog(@"Reject connection from unidentifiable process with address %@", address);
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                        object:nil
+                                                                      userInfo:@{ @"reason": [NSString stringWithFormat:@"Could not get process ID for connection from port %@", @(address.port)] }];
+                });
                 dispatch_async(connection.queue, ^{
                     [connection unauthorized];
                 });
+                return;
             }
+
+            [self startRequestOnConnection:connection pids:pids completion:^(BOOL ok, NSString *reason) {
+                [self->_pendingConnections removeObject:connection];
+                if (!ok) {
+                    XLog(@"Reject unauthenticated process (pids %@): %@", pids, reason);
+                    dispatch_async(connection.queue, ^{
+                        [connection unauthorized];
+                    });
+                }
+            }];
         }];
     });
 }

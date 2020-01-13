@@ -558,6 +558,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
                                                              environment:nil
                                                                      pwd:nil
                                                                  options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                          didMakeSession:nil
                                                               completion:nil];
     }
 }

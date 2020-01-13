@@ -178,6 +178,7 @@
 - (void)screenDisinterSession;
 
 - (NSString *)screenCurrentWorkingDirectory;
+- (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion;
 
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;
@@ -242,7 +243,8 @@
 
 - (void)screenLogWorkingDirectoryAtLine:(int)line
                           withDirectory:(NSString *)directory
-                                 pushed:(BOOL)pushed;
+                                 pushed:(BOOL)pushed
+                                 timely:(BOOL)timely;
 
 - (void)screenSuggestShellIntegrationUpgrade;
 - (void)screenDidDetectShell:(NSString *)shell;

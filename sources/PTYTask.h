@@ -154,6 +154,7 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
 
 - (void)registerAsCoprocessOnlyTask;
 - (void)writeToCoprocessOnlyTask:(NSData *)data;
+- (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion;
 
 @end
 

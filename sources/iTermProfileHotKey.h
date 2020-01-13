@@ -79,7 +79,7 @@
 
 @interface iTermProfileHotKey(Internal)
 
-- (void)createWindow;
+- (void)createWindowWithCompletion:(void (^)(void))completion;
 - (void)showHotKeyWindow;
 - (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url;
 - (void)saveHotKeyWindowState;

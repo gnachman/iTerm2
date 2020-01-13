@@ -195,10 +195,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // will be saved in window arrangements).
 - (void)hideAfterOpening;
 
-// Open a new tab with the bookmark given by the guid in
-// [sender representedObject]. Used by menu items in the Bookmarks menu.
-- (void)newSessionInTabAtIndex:(id)sender;
-
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
 
@@ -328,11 +324,21 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.
+// DEPRECATED - use the async version below.
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment
                          synchronous:(BOOL)synchronous
                           completion:(void (^)(BOOL ok))completion;
+
+// Create a tab. Is async so it can fetch the current working directory without blocking the main
+// thread.
+- (void)asyncCreateTabWithProfile:(Profile *)profile
+                      withCommand:(NSString *)command
+                      environment:(NSDictionary *)environment
+                      synchronous:(BOOL)synchronous
+                   didMakeSession:(void (^)(PTYSession *session))didMakeSession
+                       completion:(void (^)(BOOL ok))completion;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;

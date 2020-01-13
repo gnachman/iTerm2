@@ -151,27 +151,14 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
             iTermProfileHotKey *profileHotKey = hotkey;
             if ([profileHotKey loadRestorableStateFromArray:states]) {
-                [profileHotKey createWindow];
-                [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+                [profileHotKey createWindowWithCompletion:^{
+                    [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+                }];
                 count++;
             }
         }
     }
     return count;
-}
-
-- (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState {
-    for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
-        if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
-            iTermProfileHotKey *profileHotKey = hotkey;
-            legacyState = [legacyState dictionaryBySettingObject:profileHotKey.profile[KEY_GUID]
-                                                          forKey:TERMINAL_ARRANGEMENT_PROFILE_GUID];
-            [profileHotKey setLegacyState:legacyState];
-            [profileHotKey createWindow];
-            [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
-            break;
-        }
-    }
 }
 
 - (NSArray *)restorableStates {
@@ -364,8 +351,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 }
 
 - (iTermProfileHotKey *)didCreateWindowController:(PseudoTerminal *)windowController
-                                      withProfile:(Profile *)profile
-                                             show:(BOOL)show {
+                                      withProfile:(Profile *)profile {
     iTermProfileHotKey *profileHotKey = [_hotKeys objectOfClass:[iTermProfileHotKey class]
                                                     passingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
                                                         return [[element profile][KEY_GUID] isEqualToString:profile[KEY_GUID]];
@@ -384,9 +370,6 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             hotkeyWindowType = iTermHotkeyWindowTypeRegular;
         }
         windowController.hotkeyWindowType = hotkeyWindowType;
-        if (show) {
-            [profileHotKey showHotKeyWindow];
-        }
         return profileHotKey;
     } else {
         return nil;
