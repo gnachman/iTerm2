@@ -85,9 +85,11 @@
     reply();
 }
 
+#if ENABLE_VERY_VERBOSE_LOGGING
 static double TimespecToSeconds(struct timespec* ts) {
     return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
 }
+#endif
 
 - (void)reallyGetProcessInfoForProcessID:(NSNumber *)pid
                                   flavor:(NSNumber *)flavor

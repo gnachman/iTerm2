@@ -949,7 +949,6 @@ static BOOL hasBecomeActive = NO;
         if (hotkeyWindowsStates) {
             // We have to create the hotkey window now because we need to attach to servers before
             // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-#warning Make sure the issue above is not a problem. I think it probably will be.
             const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
             if (count > 0) {
                 switch (_untitledFileOpenStatus) {

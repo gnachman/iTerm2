@@ -211,6 +211,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
+@property(nonatomic, readwrite) BOOL isReplacingWindow;
 @end
 
 @implementation PseudoTerminal {
@@ -4786,7 +4787,9 @@ ITERM_WEAKLY_REFERENCEABLE
     self.window.contentView = _contentView;
     self.window.opaque = NO;
     self.window.delegate = self;
+    self.isReplacingWindow = YES;
     [oldWindow close];
+    self.isReplacingWindow = NO;
     return YES;
 }
 

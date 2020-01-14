@@ -156,14 +156,15 @@ static NSString *const kArrangement = @"Arrangement";
                                       completion:nil];
         }
         self.windowController = [windowController weakSelf];
-    } else {
-        [self getWindowControllerFromProfile:[self profile] url:url completion:^(PseudoTerminal *windowController) {
-            self.windowController = [windowController weakSelf];
-            if (completion) {
-                completion();
-            }
-        }];
+        completion();
+        return;
     }
+    [self getWindowControllerFromProfile:[self profile] url:url completion:^(PseudoTerminal *windowController) {
+        self.windowController = [windowController weakSelf];
+        if (completion) {
+            completion();
+        }
+    }];
 }
 
 - (void)setWindowController:(PseudoTerminal<iTermWeakReference> *)windowController {

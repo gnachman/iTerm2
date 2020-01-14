@@ -79,7 +79,6 @@
         result = rc;
         data = [buffer copy];
         if (diagnose) {
-            const CFTimeInterval endTime = CACurrentMediaTime();
             NSLog(@"pidinfo %d Finally completed after %dms", reqid, (int)((endTime-startTime) * 1000));
         }
         dispatch_group_leave(group);

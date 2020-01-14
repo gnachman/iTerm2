@@ -101,6 +101,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic, readonly) Profile *initialProfile;
 @property(nonatomic, readonly) iTermVariableScope<iTermWindowScope> *scope;
 @property(nonatomic, readonly) NSWindowCollectionBehavior desiredWindowCollectionBehavior;
+@property(nonatomic, readonly) BOOL isReplacingWindow;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,

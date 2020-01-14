@@ -859,7 +859,6 @@ static iTermController *gSharedInstance;
     }
     Profile *head = profiles.firstObject;
     NSArray<Profile *> *tail = [profiles subarrayFromIndex:1];
-#warning test this - also where is it called from? Do they care that it's async now?
     [iTermSessionLauncher launchBookmark:head inTerminal:term respectTabbingMode:NO completion:^(PTYSession * _Nonnull session) {
         PseudoTerminal *nextTerm = term;
         if (!term && session) {

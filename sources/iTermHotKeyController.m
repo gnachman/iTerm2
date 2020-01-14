@@ -246,6 +246,10 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             DLog(@"Currently rolling in %@ so not auto-hiding it", hotKeyWindowController);
             continue;
         }
+        if (hotKeyWindowController.isReplacingWindow) {
+            DLog(@"Currently replacing window for %@ so not auto-hiding it", hotKeyWindowController);
+            continue;
+        }
 
         DLog(@"Auto-hiding %@", hotKeyWindowController);
         DLog(@"%@", [NSThread callStackSymbols]);
