@@ -12,9 +12,13 @@
 #include <syslog.h>
 #include <time.h>
 
-//#warning DNS
 //#define ENABLE_RANDOM_WEDGING 1
 //#define ENABLE_VERY_VERBOSE_LOGGING 1
+//#define ENABLE_SLOW_ROOT 1
+
+#if ENABLE_RANDOM_WEDGING || ENABLE_VERY_VERBOSE_LOGGING || ENABLE_SLOW_ROOT
+#warning DO NOT SUBMIT - DEBUG SETTING ENABLED
+#endif
 
 @implementation pidinfo {
     dispatch_queue_t _queue;
@@ -91,6 +95,26 @@ static double TimespecToSeconds(struct timespec* ts) {
 }
 #endif
 
+#if ENABLE_SLOW_ROOT
+- (void)maybeDelayWithFlavor:(int)flavor
+                       reqid:(int)reqid
+                      result:(NSData *)result {
+    if (flavor != PROC_PIDVNODEPATHINFO) {
+        return;
+    }
+    if (result.length != sizeof(struct proc_vnodepathinfo)) {
+        return;
+    }
+    struct proc_vnodepathinfo *vpiPtr = (struct proc_vnodepathinfo *)result.bytes;
+    NSString *rawDir = [NSString stringWithUTF8String:vpiPtr->pvi_cdir.vip_path];
+    if (![rawDir isEqualToString:@"/"]) {
+        return;
+    }
+    syslog(LOG_ERR, "pidinfo %d responding slowly because directory is root.", reqid);
+    [NSThread sleepForTimeInterval:0.25];
+}
+#endif
+
 - (void)reallyGetProcessInfoForProcessID:(NSNumber *)pid
                                   flavor:(NSNumber *)flavor
                                      arg:(NSNumber *)arg
@@ -122,6 +146,13 @@ static double TimespecToSeconds(struct timespec* ts) {
                                 arg.unsignedIntegerValue,
                                 (size.integerValue > 0) ? result.mutableBytes : NULL,
                                 safeLength);
+#if ENABLE_SLOW_ROOT
+    if (rc > 0) {
+        [self maybeDelayWithFlavor:flavor.intValue
+                             reqid:reqid
+                            result:result];
+    }
+#endif
     struct timespec end;
     clock_gettime(CLOCK_MONOTONIC, &end);
 #if ENABLE_VERY_VERBOSE_LOGGING

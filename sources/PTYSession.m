@@ -7842,10 +7842,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self encoding];
 }
 
-- (NSString *)textViewCurrentWorkingDirectory {
-    return [_shell getWorkingDirectory];
-}
-
 - (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion {
     [_shell getWorkingDirectoryWithCompletion:completion];
 }
@@ -9100,8 +9096,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] incrementBadge];
 }
 
-- (NSString *)screenCurrentWorkingDirectory {
-    return [_shell getWorkingDirectory];
+- (void)screenAsyncGetCurrentWorkingDirectory:(void (^)(NSString *dir))completion {
+    [_shell getWorkingDirectoryWithCompletion:completion];
 }
 
 - (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {

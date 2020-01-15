@@ -126,7 +126,6 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewMovePane;
 - (void)textViewSwapPane;
 - (NSStringEncoding)textViewEncoding;
-- (NSString *)textViewCurrentWorkingDirectory;
 - (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion;
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk;

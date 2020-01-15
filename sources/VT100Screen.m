@@ -14,6 +14,7 @@
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
 #import "iTermURLMark.h"
+#import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -171,14 +172,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
     VT100GridSize _initialSize;
 
-    // Each call to setWorkingDirectory:onLine:pushed:generation: takes a monotonically increasing
-    // generation number. Sometimes it will need to perform an async fetch of the working directory.
-    // When that fetch completes, it needs to know if there has been an update to the pwd since
-    // the fetch began. _finishedWorkingDirectoryGeneration is set to the last generation that
-    // was accepted. When the async fetch finishes it should be considered not timely if
-    // _finishedWorkingDirectoryGeneration is greater than the generation of that query.
-    NSInteger _setWorkingDirectoryGeneration;
-    NSInteger _finishedWorkingDirectoryGeneration;
+    iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
+    iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -235,6 +230,8 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
         intervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
+        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
 
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
@@ -264,6 +261,9 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     [_temporaryDoubleBuffer release];
     [_animatedLines release];
     [_copyString release];
+    [_setWorkingDirectoryOrderEnforcer release];
+    [_currentDirectoryDidChangeOrderEnforcer release];
+
     [super dealloc];
 }
 
@@ -2174,29 +2174,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self setWorkingDirectory:workingDirectory
                        onLine:line
                        pushed:pushed
-                   generation:++_setWorkingDirectoryGeneration];
+                        token:[[_setWorkingDirectoryOrderEnforcer newToken] autorelease]];
 }
 
-- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed generation:(NSInteger)generation {
+// nil token means not to fetch working directory asynchronously.
+- (void)setWorkingDirectory:(NSString *)workingDirectory
+                     onLine:(int)line
+                     pushed:(BOOL)pushed
+                      token:(id<iTermOrderedToken>)token {
     // If not timely, record the update but don't consider it the latest update.
-    const BOOL timely = (_finishedWorkingDirectoryGeneration < _setWorkingDirectoryGeneration);
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%d generation:%@ (timely=%@)", self, workingDirectory, line, @(generation), @(timely));
+    // Peek now so we can log but don't commit because we might recurse asynchronously.
+    const BOOL timely = [token peek];
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@ (timely=%@)", self, workingDirectory, line, token, @(timely));
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
-    if (!workingDirectory) {
+    if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
-        DLog(@"%p: Performing async working directory fetch for generation %@", self, @(generation));
+        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
         [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
-            DLog(@"%p: Async update got %@ for generation %@", self, path, @(generation));
+            DLog(@"%p: Async update got %@ for token %@", self, path, token);
             if (path) {
-                [weakSelf setWorkingDirectory:path onLine:line pushed:pushed generation:generation];
+                [weakSelf setWorkingDirectory:path onLine:line pushed:pushed token:token];
             }
         }];
         return;
     }
-    DLog(@"%p: Set finished working directory generation to %@", self, @(generation));
-    if (timely) {
-        _finishedWorkingDirectoryGeneration = generation;
-    }
+    // OK, now commit. It can't have changed since we peeked.
+    const BOOL stillTimely = [token commit];
+    assert(timely == stillTimely);
+
+    DLog(@"%p: Set finished working directory token to %@", self, token);
     if (workingDirectory.length) {
         DLog(@"Changing working directory to %@", workingDirectory);
         workingDirectoryObj.workingDirectory = workingDirectory;
@@ -3805,20 +3811,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self clearBuffer];
 }
 
-- (void)terminalCurrentDirectoryDidChangeTo:(NSString *)value {
+- (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
+    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
+    [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
+
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
-    NSString *dir = value;
-    if (!dir.length) {
-#warning Make this async
-        dir = [delegate_ screenCurrentWorkingDirectory];
-    }
     if (dir.length) {
-        [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
-        BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
-        [self setWorkingDirectory:dir onLine:cursorLine pushed:YES];
-        if (willChange) {
-            [delegate_ screenCurrentDirectoryDidChangeTo:dir];
+        [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
+        return;
+    }
+
+    // Go fetch the working directory and then update it.
+    __weak __typeof(self) weakSelf = self;
+    id<iTermOrderedToken> token = [[_currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
+    DLog(@"Fetching directory asynchronously with token %@", token);
+    [delegate_ screenAsyncGetCurrentWorkingDirectory:^(NSString *dir) {
+        DLog(@"For token %@, the working directory is %@", token, dir);
+        if ([token commit]) {
+            [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
         }
+    }];
+}
+
+- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
+                                   onLine:(int)cursorLine {
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onLine:%@", dir, @(cursorLine));
+    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
+    [self setWorkingDirectory:dir onLine:cursorLine pushed:YES token:nil];
+    if (willChange) {
+        [delegate_ screenCurrentDirectoryDidChangeTo:dir];
     }
 }
 

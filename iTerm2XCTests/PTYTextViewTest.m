@@ -245,10 +245,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewPostTabContentsChangedNotification {
 }
 
-- (NSString *)textViewCurrentWorkingDirectory {
-    return nil;
-}
-
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     return NO;
 }
