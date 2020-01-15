@@ -40,6 +40,7 @@
 #import "iTermMenuBarObserver.h"
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
+#import "iTermOrderEnforcer.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -445,6 +446,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     NSRect _forceFrame;
     NSTimeInterval _forceFrameUntil;
     BOOL _deallocing;
+    iTermOrderEnforcer *_proxyIconOrderEnforcer;
 }
 
 @synthesize scope = _scope;
@@ -677,7 +679,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                        owner:self];
     [_scope setValue:_userVariables forVariableNamed:@"user"];
-
+    _proxyIconOrderEnforcer = [[iTermOrderEnforcer alloc] init];
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
     PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
@@ -1173,6 +1175,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_currentTabTitleTextFieldDelegate release];
     [_methods release];
     [_screenConfigurationAtTimeOfForceFrame release];
+    [_proxyIconOrderEnforcer release];
 
     [super dealloc];
 }
@@ -5898,7 +5901,18 @@ ITERM_WEAKLY_REFERENCEABLE
         self.window.representedURL = self.currentSession.preferredProxyIcon;
         return;
     }
-    self.window.representedURL = self.currentSession.textViewCurrentLocation;
+    __weak __typeof(self) weakSelf = self;
+    PTYSession *session = self.currentSession;
+    id<iTermOrderedToken> token = [[_proxyIconOrderEnforcer newToken] autorelease];
+    [session asyncGetCurrentLocationWithCompletion:^(NSURL *url) {
+        if (weakSelf.currentSession != session) {
+            return;
+        }
+        if (![token commit]) {
+            return;
+        }
+        self.window.representedURL = url;
+    }];
 }
 
 - (void)notifyTmuxOfTabChange {
@@ -10527,7 +10541,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
-- (void)tab:(PTYTab *)tab proxyIconDidChange:(NSURL *)location {
+- (void)tabInvalidateProxyIcon:(PTYTab *)tab {
     if (tab == self.currentTab) {
         [self updateProxyIcon];
     }

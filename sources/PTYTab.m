@@ -5690,19 +5690,19 @@ typedef struct {
 
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
-        [_delegate tab:self proxyIconDidChange:session.textViewCurrentLocation];
+        [_delegate tabInvalidateProxyIcon:self];
     }
 }
 
 - (void)sessionCurrentHostDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
-        [_delegate tab:self proxyIconDidChange:session.textViewCurrentLocation];
+        [_delegate tabInvalidateProxyIcon:self];
     }
 }
 
 - (void)sessionProxyIconDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
-        [_delegate tab:self proxyIconDidChange:session.preferredProxyIcon];
+        [_delegate tabInvalidateProxyIcon:self];
     }
 }
 

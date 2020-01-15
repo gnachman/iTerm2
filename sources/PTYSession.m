@@ -7846,10 +7846,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_shell getWorkingDirectoryWithCompletion:completion];
 }
 
-#warning TODO: Make this async
+// NOTE: This will not fetch the current directory if it's not already known to avoid blocking
+// the main thread. Don't use this unless you have to be synchronous.
+// Use asyncGetCurrentLocatioNWithCompletion instead.
 - (NSURL *)textViewCurrentLocation {
     VT100RemoteHost *host = [self currentHost];
-    NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
+    NSString *path = _lastDirectory;
+    NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
+    components.host = host.hostname;
+    components.user = host.username;
+    components.path = path;
+    components.scheme = @"file";
+    return [components URL];
+}
+
+- (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion {
+    if (_lastDirectory) {
+        completion([self urlForHost:self.currentHost path:_lastDirectory]);
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
+        completion([weakSelf urlForHost:weakSelf.currentHost path:pwd]);
+    }];
+}
+
+- (NSURL *)urlForHost:(VT100RemoteHost *)host path:(NSString *)path {
     NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
     components.host = host.hostname;
     components.user = host.username;

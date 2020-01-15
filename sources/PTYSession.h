@@ -836,6 +836,7 @@ typedef enum {
 - (void)didUpdatePromptLocation;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
+- (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion;
 
 #pragma mark - API
 
