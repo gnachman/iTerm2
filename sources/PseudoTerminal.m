@@ -7321,7 +7321,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     NSString *guid = [SplitPanel showPanelWithParent:self isVertical:vertical];
     if (guid) {
-        [self splitVertically:vertical withBookmarkGuid:guid synchronous:NO];
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            return;
+        }
+        [self asyncSplitVertically:vertical
+                            before:NO
+                           profile:profile
+                     targetSession:[self currentSession]
+                       synchronous:NO
+                        completion:nil
+                             ready:nil];
     }
 }
 
@@ -7689,28 +7699,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return index;
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                    withProfile:(Profile *)profile
-                    synchronous:(BOOL)synchronous {
-    return [self splitVertically:isVertical
-                    withBookmark:profile
-                   targetSession:[self currentSession]
-                     synchronous:synchronous];
-}
-
-- (PTYSession *)splitVertically:(BOOL)isVertical
-               withBookmarkGuid:(NSString *)guid
-                    synchronous:(BOOL)synchronous {
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    if (profile) {
-        return [self splitVertically:isVertical
-                         withProfile:profile
-                         synchronous:synchronous];
-    } else {
-        return nil;
-    }
-}
-
 - (void)splitVertically:(BOOL)isVertical
                  before:(BOOL)before
           addingSession:(PTYSession *)newSession
@@ -7794,18 +7782,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return _sessionFactory;
 }
 
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                   withBookmark:(Profile*)theBookmark
-                  targetSession:(PTYSession*)targetSession
-                    synchronous:(BOOL)synchronous {
-    return [self splitVertically:isVertical
-                          before:NO
-                         profile:theBookmark
-                   targetSession:targetSession
-                     synchronous:synchronous
-                      completion:nil];
-}
-
 - (void)asyncSplitVertically:(BOOL)isVertical
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
@@ -7844,11 +7820,29 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
 
+    PTYSession *currentSession = [self currentSession];
+    if (currentSession) {
+        [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
+            PTYSession *session = [self splitVertically:isVertical
+                                                 before:before
+                                                profile:theBookmark
+                                          targetSession:targetSession
+                                            synchronous:synchronous
+                                                 oldCWD:oldCWD
+                                             completion:ready];
+            if (completion) {
+                completion(session);
+            }
+        }];
+        return;
+    }
+
     PTYSession *session = [self splitVertically:isVertical
                                          before:before
                                         profile:theBookmark
                                   targetSession:targetSession
                                     synchronous:synchronous
+                                         oldCWD:nil
                                      completion:ready];
     if (completion) {
         completion(session);
@@ -7860,6 +7854,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
                     synchronous:(BOOL)synchronous
+                         oldCWD:(NSString *)oldCWD
                      completion:(void (^)(BOOL))completion {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
@@ -7879,12 +7874,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
         return nil;
-    }
-
-    NSString *oldCWD = nil;
-    /* Get currently selected tabviewitem */
-    if ([self currentSession]) {
-        oldCWD = self.currentSession.currentLocalWorkingDirectoryOrInitialDirectory;
     }
 
     if ([[ProfileModel sessionsInstance] bookmarkWithGuid:theBookmark[KEY_GUID]]) {
@@ -7934,17 +7923,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)splitVertically:(id)sender {
-    [self splitVertically:YES
-             withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]
-              synchronous:NO];
+    [self asyncSplitVertically:YES
+                        before:NO
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                   synchronous:NO
+                    completion:nil
+                         ready:nil];
 }
 
 - (IBAction)splitHorizontally:(id)sender {
-    [self splitVertically:NO
-             withBookmark:[self profileForSplittingCurrentSession]
-            targetSession:[[self currentTab] activeSession]
-              synchronous:NO];
+    [self asyncSplitVertically:NO
+                        before:NO
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                   synchronous:NO
+                    completion:nil
+                         ready:nil];
 }
 
 - (void)tabActiveSessionDidChange {
@@ -10214,23 +10209,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             didMakeSession(newSession);
         }
     }];
-}
-
-- (PTYSession *)createTabWithProfile:(Profile *)profile
-                         withCommand:(NSString *)command
-                         environment:(NSDictionary *)environment
-                         synchronous:(BOOL)synchronous
-                          completion:(void (^)(BOOL ok))completion {
-    assert(profile);
-
-    // WARNING! This calls currentLocalWorkingDirectoryOrInitialDirectory, which is slow and
-    // synchronous.
-    return [self createTabWithProfile:profile
-                          withCommand:command
-                          environment:environment
-                          synchronous:synchronous
-                    previousDirectory:[[self sessionForDirectoryRecycling] currentLocalWorkingDirectoryOrInitialDirectory]
-                           completion:completion];
 }
 
 - (PTYSession *)createTabWithProfile:(Profile *)profile

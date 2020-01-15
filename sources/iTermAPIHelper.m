@@ -1323,7 +1323,7 @@ static iTermAPIHelper *sAPIHelperInstance;
         response.status = ITMGetPromptResponse_Status_SessionNotFound;
         handler(response);
     } else {
-        handler([session handleGetPromptRequest:request]);
+        [session handleGetPromptRequest:request completion:handler];
     }
 }
 

@@ -143,9 +143,17 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
 {
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
-        [terminal splitVertically:NO
-                 withBookmarkGuid:guid
-                      synchronous:NO];
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            continue;
+        }
+        [terminal asyncSplitVertically:NO
+                                before:NO
+                               profile:profile
+                         targetSession:[terminal currentSession]
+                           synchronous:NO
+                            completion:nil
+                                 ready:nil];
     }
 }
 
@@ -153,9 +161,17 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
 {
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
-        [terminal splitVertically:YES
-                 withBookmarkGuid:guid
-                      synchronous:NO];
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            continue;
+        }
+        [terminal asyncSplitVertically:YES
+                                before:NO
+                               profile:profile
+                         targetSession:[terminal currentSession]
+                           synchronous:NO
+                            completion:nil
+                                 ready:nil];
     }
 }
 

@@ -293,14 +293,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
 
-// WARNING! Do not use this for tmux windows. It will always return nil.
-- (PTYSession *)splitVertically:(BOOL)isVertical
-                         before:(BOOL)before
-                        profile:(Profile *)theBookmark
-                  targetSession:(PTYSession *)targetSession
-                    synchronous:(BOOL)synchronous
-                     completion:(void (^)(BOOL))completion;
-
 // Use this if it might be a tmux window. The completion block will always be called eventually.
 // The ready block is called after the session has started, much like the completion block in
 // other session creation calls.
@@ -322,15 +314,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
-
-// Add a new session to this window with the given addressbook entry.
-// The optional command overrides the profile's settings.
-// DEPRECATED - use the async version below.
-- (PTYSession *)createTabWithProfile:(Profile *)profile
-                         withCommand:(NSString *)command
-                         environment:(NSDictionary *)environment
-                         synchronous:(BOOL)synchronous
-                          completion:(void (^)(BOOL ok))completion;
 
 // Create a tab. Is async so it can fetch the current working directory without blocking the main
 // thread.

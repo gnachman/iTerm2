@@ -186,10 +186,13 @@ typedef enum {
         }
         Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane != NO_PANE && terminal != nil) {
-            [terminal splitVertically:(inPane == VERTICAL_PANE)
-                         withBookmark:bookmark
-                        targetSession:[[terminal currentTab] activeSession]
-                          synchronous:NO];
+            [terminal asyncSplitVertically:(inPane == VERTICAL_PANE)
+                                    before:NO
+                                   profile:bookmark
+                             targetSession:[[terminal currentTab] activeSession]
+                               synchronous:NO
+                                completion:nil
+                                     ready:nil];
         } else {
             [iTermSessionLauncher launchBookmark:bookmark
                                       inTerminal:terminal

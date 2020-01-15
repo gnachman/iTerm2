@@ -840,7 +840,8 @@ typedef enum {
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
-- (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
+- (void)handleGetPromptRequest:(ITMGetPromptRequest *)request
+                    completion:(void (^)(ITMGetPromptResponse *response))completion;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey;
 

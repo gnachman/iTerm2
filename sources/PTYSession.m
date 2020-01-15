@@ -7109,16 +7109,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
             [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
             break;
-        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-            [[_delegate realParentWindow] splitVertically:NO
-                                         withBookmarkGuid:keyBindingText
-                                              synchronous:NO];
+        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE: {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            if (!profile) {
+                break;
+            }
+            [[_delegate realParentWindow] asyncSplitVertically:NO
+                                                        before:NO
+                                                       profile:profile
+                                                 targetSession:[[_delegate realParentWindow] currentSession]
+                                                   synchronous:NO
+                                                    completion:nil
+                                                         ready:nil];
             break;
-        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-            [[_delegate realParentWindow] splitVertically:YES
-                                         withBookmarkGuid:keyBindingText
-                                              synchronous:NO];
+        }
+        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE: {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            if (!profile) {
+                break;
+            }
+            [[_delegate realParentWindow] asyncSplitVertically:YES
+                                                        before:NO
+                                                       profile:profile
+                                                 targetSession:[[_delegate realParentWindow] currentSession]
+                                                   synchronous:NO
+                                                    completion:nil
+                                                         ready:nil];
             break;
+        }
         case KEY_ACTION_SET_PROFILE: {
             Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
             if (newProfile) {
@@ -7832,6 +7850,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_shell getWorkingDirectoryWithCompletion:completion];
 }
 
+#warning TODO: Make this async
 - (NSURL *)textViewCurrentLocation {
     VT100RemoteHost *host = [self currentHost];
     NSString *path = _lastDirectory ?: [_shell getWorkingDirectory];
@@ -7890,10 +7909,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         profile = [self profileForSplit];
     }
-    [[_delegate realParentWindow] splitVertically:vertically
-                                     withBookmark:profile
-                                    targetSession:self
-                                      synchronous:NO];
+    [[_delegate realParentWindow] asyncSplitVertically:vertically
+                                                before:NO
+                                               profile:profile
+                                         targetSession:self
+                                           synchronous:NO
+                                            completion:nil
+                                                 ready:nil];
 }
 
 - (void)textViewSelectNextTab
@@ -11413,12 +11435,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return response;
 }
 
-- (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request {
+- (void)handleGetPromptRequest:(ITMGetPromptRequest *)request completion:(void (^)(ITMGetPromptResponse *response))completion {
     VT100ScreenMark *mark = [_screen lastPromptMark];
     ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
     if (!mark) {
         response.status = ITMGetPromptResponse_Status_PromptUnavailable;
-        return response;
+        completion(response);
+        return;
     }
 
     if (mark.promptRange.start.x >= 0) {
@@ -11443,10 +11466,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
     }
 
-    response.workingDirectory = self.currentLocalWorkingDirectory;
     response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
-    return response;
+    [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
+        response.workingDirectory = pwd;
+        completion(response);
+    }];
 }
 
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples

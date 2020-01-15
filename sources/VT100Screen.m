@@ -3809,6 +3809,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
     NSString *dir = value;
     if (!dir.length) {
+#warning Make this async
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
