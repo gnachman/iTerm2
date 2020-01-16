@@ -4897,7 +4897,7 @@ DQ
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tVY-OD-hsd">
                                                 <rect key="frame" x="18" y="20" width="200" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">Native full screen windows animate into their own desktop. Non-native full screen windows quickly expand to fill the window's screen.</string>
+                                                <string key="toolTip">When this is checked.... DOCUMENTATION.</string>
                                                 <buttonCell key="cell" type="check" title="Separate window title per tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="NbC-dp-wjc">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
