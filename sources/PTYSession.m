@@ -229,7 +229,8 @@ static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Arr
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
-static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD = @"Last Directory Is Remote";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY = @"Last Local Directory";  // NSString
+static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD_DEPRECATED = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";  // Dictionary of APS state.
 
@@ -308,7 +309,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic) NSTimeInterval lastResize;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
-@property(nonatomic) BOOL lastDirectoryIsUnsuitableForOldPWD;
+@property(nonatomic, copy) NSString *lastLocalDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
@@ -883,6 +884,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_cursorGuideColor release];
     [_lastDirectory release];
+    [_lastLocalDirectory release];
     [_lastRemoteHost release];
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
@@ -1182,7 +1184,13 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
-            aSession->_lastDirectoryIsUnsuitableForOldPWD = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] boolValue];
+            const BOOL isRemote = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD_DEPRECATED] boolValue];
+            if (isRemote) {
+                aSession.lastLocalDirectory = aSession.lastDirectory;
+            }
+        }
+        if (arrangement[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY]) {
+            aSession.lastLocalDirectory = arrangement[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY];
         }
     }
 
@@ -4448,7 +4456,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (self.lastDirectory) {
             DLog(@"Saving arrangement for %@ with lastDirectory of %@", self, self.lastDirectory);
             result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
-            result[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] = @(self.lastDirectoryIsUnsuitableForOldPWD);
+        }
+        if (self.lastLocalDirectory) {
+            result[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY] = self.lastLocalDirectory;
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
@@ -7842,6 +7852,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self encoding];
 }
 
+// This uses the local directory because it is the last desperate gasp of URL action file finding.
 - (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion {
     [_shell getWorkingDirectoryWithCompletion:completion];
 }
@@ -7861,13 +7872,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion {
-    if (_lastDirectory) {
-        completion([self urlForHost:self.currentHost path:_lastDirectory]);
+    // NOTE: Use local directory here because this becomes the proxy icon, and it's basically
+    // useless when given a remote directory.
+    if (_lastLocalDirectory) {
+        completion([self urlForHost:self.currentHost path:_lastLocalDirectory]);
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
+    [self updateLocalDirectoryWithCompletion:^(NSString *pwd) {
         completion([weakSelf urlForHost:weakSelf.currentHost path:pwd]);
+    }];
+}
+
+- (void)updateLocalDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
+    __weak __typeof(self) weakSelf = self;
+    [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
+        // Don't call setLastDirectory:remote:pushed: because we don't want to update the
+        // path variable if the session is ssh'ed somewhere.
+        weakSelf.lastLocalDirectory = pwd;
+        completion(pwd);
     }];
 }
 
@@ -9118,12 +9141,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] incrementBadge];
 }
 
-- (void)screenAsyncGetCurrentWorkingDirectory:(void (^)(NSString *dir))completion {
-    [_shell getWorkingDirectoryWithCompletion:completion];
-}
-
 - (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
-    [_shell getWorkingDirectoryWithCompletion:completion];
+    [_pwdPoller addOneTimeCompletion:completion];
+    [_pwdPoller poll];
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
@@ -10363,9 +10383,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_directories addObject:lastDirectory];
         [self trimDirectoriesIfNeeded];
     }
-    [_lastDirectory autorelease];
-    _lastDirectory = [lastDirectory copy];
-    _lastDirectoryIsUnsuitableForOldPWD = directoryIsRemote;
+    self.lastDirectory = lastDirectory;
+    if (!directoryIsRemote) {
+        self.lastLocalDirectory = lastDirectory;
+    }
     if (lastDirectory) {
         DLog(@"Set path to %@", lastDirectory);
         self.variablesScope.path = lastDirectory;
@@ -10387,32 +10408,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion {
-    if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
-        DLog(@"Last directory is unsuitable or nil");
+    if (self.lastLocalDirectory == nil) {
+        DLog(@"Last local directory is nil");
         [_shell getWorkingDirectoryWithCompletion:completion];
     } else {
-        DLog(@"Using last directory from shell integration: %@", _lastDirectory);
+        DLog(@"Using last directory from shell integration: %@", self.lastLocalDirectory);
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(_lastDirectory);
+            completion(self.lastLocalDirectory);
         });
     }
 }
 
+// POTENTIALLY SLOW - AVOID CALLING!
 - (NSString *)currentLocalWorkingDirectory {
-    if (_lastDirectoryIsUnsuitableForOldPWD || _lastDirectory == nil) {
-        DLog(@"Last directory is unsuitable or nil");
-        // Ask the kernel what the child's process's working directory is.
-        return [_shell getWorkingDirectory];
-    } else {
+    if (self.lastLocalDirectory != nil) {
         // If a shell integration-provided working directory is available, prefer to use it because
         // it has unresolved symlinks. The path provided by -getWorkingDirectory has expanded symlinks
         // and isn't what the user expects to see. This was raised in issue 3383. My first fix was
         // to expand symlinks on _lastDirectory and use it if it matches what the kernel reports.
         // That was a bad idea because expanding symlinks is slow on network file systems (Issue 4901).
         // Instead, we'll use _lastDirectory if we believe it's on localhost.
+        // Furthermore, getWorkingDirectory is slow and blocking and it would be better never to call
+        // it.
         DLog(@"Using last directory from shell integration: %@", _lastDirectory);
-        return _lastDirectory;
+        return self.lastLocalDirectory;
     }
+    DLog(@"Last directory is unsuitable or nil");
+    // Ask the kernel what the child's process's working directory is.
+    self.lastLocalDirectory = [_shell getWorkingDirectory];
+    return self.lastLocalDirectory;
 }
 
 - (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
@@ -10461,7 +10485,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // know the user is ssh'ed somewhere.
         const BOOL directoryIsRemote = pushed && remoteHost && !remoteHost.isLocalhost;
 
-        // Update lastDirectory, proxy icon, "path" variable.
+        // Update lastDirectory, lastLocalDirectory (maybe), proxy icon, "path" variable.
         [self setLastDirectory:directory remote:directoryIsRemote pushed:pushed];
         if (pushed) {
             self.lastRemoteHost = remoteHost;
@@ -11481,10 +11505,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
-    [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
-        response.workingDirectory = pwd;
-        completion(response);
-    }];
+    response.workingDirectory = [_screen workingDirectoryOnLine:mark.promptRange.end.y] ?: self.lastDirectory;
+    completion(response);
 }
 
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples
@@ -11855,7 +11877,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermWorkingDirectoryPollerDelegate
 
-- (BOOL)workingDirectoryPollerShouldPoll {
+- (BOOL)useLocalDirectoryPollerResult {
     if (_workingDirectoryPollerDisabled) {
         DLog(@"Working directory poller disabled");
         return NO;
@@ -11871,17 +11893,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return YES;
 }
 
+- (BOOL)workingDirectoryPollerShouldPoll {
+    return YES;
+}
+
 - (pid_t)workingDirectoryPollerProcessID {
     return _shell.pid;;
 }
 
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
-    if (_shouldExpectCurrentDirUpdates && ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences]) {
-        return;
-    }
-    if (invalidated) {
-        DLog(@"Not creating a mark because of invalidation");
-        [self setLastDirectory:pwd remote:NO pushed:NO];
+    if (invalidated || ![self useLocalDirectoryPollerResult]) {
+        DLog(@"Not creating a mark. invalidated=%@", @(invalidated));
+        // This is definitely a local directory. It may have been invalidated because we got a push
+        // for a remote directory, but it's still useful to know the local directory for the purposes
+        // of session restoration.
+        self.lastLocalDirectory = pwd;
+
+        // Do not call setLastDirectory:remote:pushed: because there's no sense updating the path
+        // variable for an invalidated update when we might have a better remote working directory.
+        //
+        // Update the proxy icon since it only cares about the local directory.
+        [_delegate sessionCurrentDirectoryDidChange:self];
         return;
     }
 

@@ -177,8 +177,6 @@
 
 - (void)screenDisinterSession;
 
-- (void)screenAsyncGetCurrentWorkingDirectory:(void (^)(NSString *dir))completion;
-
 - (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion;
 
 // Show/hide the cursor.

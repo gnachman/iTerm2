@@ -2177,14 +2177,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                         token:[[_setWorkingDirectoryOrderEnforcer newToken] autorelease]];
 }
 
+// Adds a working directory mark at the given line.
+//
 // nil token means not to fetch working directory asynchronously.
+//
+// pushed means it's a higher confidence update. The directory must be pushed to be remote, but
+// that alone is not sufficient evidence that it is remote. Pushed directories will update the
+// recently used directories and will change the current remote host to the remote host on `line`.
 - (void)setWorkingDirectory:(NSString *)workingDirectory
                      onLine:(int)line
                      pushed:(BOOL)pushed
                       token:(id<iTermOrderedToken>)token {
     // If not timely, record the update but don't consider it the latest update.
     // Peek now so we can log but don't commit because we might recurse asynchronously.
-    const BOOL timely = [token peek];
+    const BOOL timely = !token || [token peek];
     DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@ (timely=%@)", self, workingDirectory, line, token, @(timely));
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
     if (token && !workingDirectory) {
@@ -2199,7 +2205,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return;
     }
     // OK, now commit. It can't have changed since we peeked.
-    const BOOL stillTimely = [token commit];
+    const BOOL stillTimely = !token || [token commit];
     assert(timely == stillTimely);
 
     DLog(@"%p: Set finished working directory token to %@", self, token);
@@ -3825,7 +3831,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     __weak __typeof(self) weakSelf = self;
     id<iTermOrderedToken> token = [[_currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
     DLog(@"Fetching directory asynchronously with token %@", token);
-    [delegate_ screenAsyncGetCurrentWorkingDirectory:^(NSString *dir) {
+    [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
         DLog(@"For token %@, the working directory is %@", token, dir);
         if ([token commit]) {
             [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
