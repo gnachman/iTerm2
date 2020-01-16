@@ -313,12 +313,12 @@ NSString *PID_INFO_NAME = @"name";
 - (void)_run
 {
     while (1) {
-        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         [self _update];
 
         // Rate limit this while loop to avoid eating too much CPU when we're very busy.
         [NSThread sleepForTimeInterval:0.1];
 
+        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         // As long as there's no output, don't update the process cache. Otherwise the CPU usage
         // appears to spike periodically.
         while (![self testAndClearNewOutput]) {
