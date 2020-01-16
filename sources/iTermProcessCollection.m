@@ -9,6 +9,8 @@
 #import "iTermProcessCollection.h"
 #import "NSArray+iTerm.h"
 
+static const int maxDepth = 128;
+
 @implementation iTermProcessInfo {
     NSMutableArray *_children;
     __weak iTermProcessInfo *_deepestForegroundJob;
@@ -57,7 +59,9 @@
         _deepestForegroundJob = self;
         return self;
     }
-
+    if (*levelInOut > maxDepth) {
+      return nil;
+    }
     NSInteger bestLevel = *levelInOut;
     iTermProcessInfo *bestProcessInfo = nil;
     for (iTermProcessInfo *child in _children) {
