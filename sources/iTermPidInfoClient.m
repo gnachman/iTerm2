@@ -10,11 +10,17 @@
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
 #import "pidinfo.h"
+#include <stdatomic.h>
 #import <QuartzCore/QuartzCore.h>
+
+@interface iTermPidInfoClient()
+@property (nonatomic) BOOL ready;
+@end
 
 @implementation iTermPidInfoClient {
     NSXPCConnection *_connectionToService;
     NSTimeInterval _timeout;
+    dispatch_queue_t _localQueue;
 }
 
 + (instancetype)sharedInstance {
@@ -29,17 +35,21 @@
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
+        _localQueue = dispatch_queue_create("com.iterm2.pidinfo", DISPATCH_QUEUE_CONCURRENT);
+
         // Initialize a big timeout because it can take some time to launch the xpc job.
-        _timeout = 10;
+        _timeout = 0.5;
         [self connect];
+        __weak __typeof(self) weakSelf = self;
         [_connectionToService.remoteObjectProxy handshakeWithReply:^{
-            self->_timeout = 0.5;
+            weakSelf.ready = YES;
         }];
     }
     return self;
 }
 
 - (void)didInvalidateConnection {
+    self.ready = NO;
     [self connect];
 }
 
@@ -49,7 +59,7 @@
     [_connectionToService resume];
     __weak __typeof(self) weakSelf;
     _connectionToService.invalidationHandler = ^{
-        NSLog(@"Invalidated");
+        DLog(@"Invalidated");
         [weakSelf didInvalidateConnection];
     };
 }
@@ -61,42 +71,37 @@
     }
 }
 
-- (int)getPidInfoForProcessID:(int)pid
-                       flavor:(int)flavor
-                          arg:(uint64_t)arg
-                       buffer:(void *)callerBuffer
-                   buffersize:(int)bufferSize {
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-    __block NSData *data;
-    __block int result;
-    const CFTimeInterval startTime = CACurrentMediaTime();
-    __block BOOL diagnose = NO;
-    const int reqid = [self nextReqid];
-    [self asyncGetInfoForProcess:pid flavor:flavor arg:arg buffersize:bufferSize reqid:reqid completion:^(int rc, NSData * _Nonnull buffer) {
-        const CFTimeInterval endTime = CACurrentMediaTime();
-//        NSLog(@"pidinfo %d rc=%@ dt=%dms", reqid, @(rc), (int)((endTime-startTime) * 1000));
-        result = rc;
-        data = [buffer copy];
-        if (diagnose) {
-            NSLog(@"pidinfo %d Finally completed after %dms", reqid, (int)((endTime-startTime) * 1000));
-        }
-        dispatch_group_leave(group);
-    }];
-    const int timedOut = dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
-                                                                  (int64_t)(_timeout * NSEC_PER_SEC)));
-    const CFTimeInterval endTime = CACurrentMediaTime();
-    if (timedOut) {
-        diagnose = YES;
-        NSLog(@"pidinfo %d Timed out after %dms", reqid, (int)((endTime-startTime) * 1000));
-        return -4;
-    } else if (result >= 0) {
-//        NSLog(@"pidinfo %d good after %dms", reqid, (int)((endTime-startTime) * 1000));
-        memmove(callerBuffer, data.bytes, MIN(bufferSize, data.length));
-    } else {
-        NSLog(@"pidinfo %d error after %dms", reqid, (int)((endTime-startTime) * 1000));
+- (void)localGetPidInfoForProcessID:(int)pid
+                            flavor:(int)flavor
+                               arg:(uint64_t)arg
+                        buffersize:(int)bufferSize
+                         completion:(void (^)(int rc, NSData *buffer))completion {
+    if (bufferSize > 1024 * 1024 || bufferSize < 0) {
+        completion(-2, [NSData data]);
+        return;
     }
-    return result;
+    NSMutableData *result = [NSMutableData dataWithLength:bufferSize];
+
+    __block atomic_flag finished = ATOMIC_FLAG_INIT;
+    dispatch_async(_localQueue, ^{
+        const int rc = proc_pidinfo(pid,
+                                    flavor,
+                                    arg,
+                                    (bufferSize > 0) ? result.mutableBytes : NULL,
+                                    bufferSize);
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        DLog(@"Completed");
+        completion(rc, result);
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        DLog(@"Timed out");
+        completion(-4, [NSData data]);
+    });
 }
 
 - (void)asyncGetInfoForProcess:(int)pid
@@ -105,6 +110,13 @@
                     buffersize:(int)buffersize
                          reqid:(int)reqid
                     completion:(void (^)(int rc, NSData *buffer))completion {
+    if (!self.ready) {
+        DLog(@"Not ready");
+        [self localGetPidInfoForProcessID:pid flavor:flavor arg:arg buffersize:buffersize completion:completion];
+        return;
+    }
+    DLog(@"Ready");
+    __block atomic_flag finished = ATOMIC_FLAG_INIT;
     [[_connectionToService remoteObjectProxy] getProcessInfoForProcessID:@(pid)
                                                                   flavor:@(flavor)
                                                                      arg:@(arg)
@@ -112,12 +124,23 @@
                                                                    reqid:reqid
                                                                withReply:^(NSNumber *rc, NSData *buffer) {
         // Called on a private queue
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        DLog(@"Completed");
         if (buffer.length != buffersize) {
             completion(-3, [NSData data]);
             return;
         }
         completion(rc.intValue, buffer);
     }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        DLog(@"Timed out");
+        completion(-4, [NSData data]);
+    });
 }
 
 - (void)getMaximumNumberOfFileDescriptorsForProcess:(pid_t)pid
