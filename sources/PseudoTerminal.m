@@ -443,6 +443,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     NSRect _forceFrame;
     NSTimeInterval _forceFrameUntil;
     BOOL _deallocing;
+    BOOL _settingStyleMask;
 }
 
 @synthesize scope = _scope;
@@ -4844,7 +4845,10 @@ ITERM_WEAKLY_REFERENCEABLE
     // all well again.
     [[_contentView retain] autorelease];
     self.window.contentView = [[[NSView alloc] init] autorelease];
+    assert(!_settingStyleMask);
+    _settingStyleMask = YES;
     self.window.styleMask = styleMask;
+    _settingStyleMask = NO;
     self.window.contentView = _contentView;
 }
 
@@ -8516,7 +8520,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
-
+    if (_settingStyleMask) {
+        DLog(@"Prevent re-entrant style mask setting");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self refreshTerminal:nil];
+        });
+        return;
+    }
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
