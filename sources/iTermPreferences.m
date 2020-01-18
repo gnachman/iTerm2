@@ -212,6 +212,9 @@ static NSString *sPreviousVersion;
     // Turn off scroll animations because they screw up the terminal scrolling.
     [userDefaults setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
+    // Turn off accent menu
+    [userDefaults setBool:NO forKey:@"ApplePressAndHoldEnabled"];
+
     // Override smooth scrolling, which breaks various things (such as the
     // assumption, when detectUserScroll is called, that scrolls happen
     // immediately), and generally sucks with a terminal.
