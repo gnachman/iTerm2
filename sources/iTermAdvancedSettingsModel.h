@@ -194,6 +194,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)pathToFTP;
 + (NSString *)pathToTelnet;
 + (BOOL)performDictionaryLookupOnQuickLook;
++ (BOOL)pidinfoXPC;
 + (BOOL)pinEditSession;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (double)pointSizeOfTimeStamp;

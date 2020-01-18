@@ -8,6 +8,7 @@
 #import "iTermPidInfoClient.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
 #import "pidinfo.h"
 #include <stdatomic.h>
@@ -56,6 +57,9 @@
 }
 
 - (void)connect {
+    if (![iTermAdvancedSettingsModel pidinfoXPC]) {
+        return;
+    }
     _connectionToService = [[NSXPCConnection alloc] initWithServiceName:@"com.iterm2.pidinfo"];
     _connectionToService.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
     [_connectionToService resume];
