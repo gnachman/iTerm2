@@ -30,7 +30,10 @@
 #import "DVRIndexEntry.h"
 #include "LineBuffer.h"
 #include <sys/time.h>
-//#define DVRDEBUG
+
+#if DEBUG
+#define DVRDEBUG
+#endif
 
 // Returns a timestamp for the current time.
 static long long now()
@@ -158,7 +161,7 @@ static long long now()
         }
     }
     d[i] = 0;
-    NSLog(@"%@ length %d: \"%s\"", prefix, length, d);
+    NSLog(@"Encoder: %@ length %d: \"%s\"", prefix, length, d);
 #endif
 }
 
@@ -217,7 +220,8 @@ static long long now()
     haveReservation_ = NO;
 
 #ifdef DVRDEBUG
-    NSLog(@"Append frame of type %d starting at %x length %d at index %d", (int)type, dest, length, [buffer_ lastKey]+1);
+    NSLog(@"Encoder: Append frame of type %d starting at %x length %d at index %lld",
+          (int)type, dest, length, [buffer_ lastKey]+1);
 #endif
 
     lastInfo_ = *info;
@@ -266,7 +270,7 @@ static long long now()
             memcpy(scratch + o, frameLine, numChars);
             o += numChars;
 #ifdef DVRDEBUG
-            [self debug:@"diff " buffer:frameLine length:numChars];
+            [self debug:@"Encoder: diff " buffer:frameLine length:numChars];
 #endif
         }
     }
