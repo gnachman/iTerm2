@@ -3335,6 +3335,8 @@
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
 		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
+		A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E21CF92255CA4A0036C49D /* NSMutableAttributedString+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */; };
@@ -3758,6 +3760,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */,
@@ -3771,6 +3774,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */,
@@ -6236,11 +6240,11 @@
 			files = (
 				A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
-				530AB89A20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				A666130F225CFF7200840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
+				530AB89A20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,

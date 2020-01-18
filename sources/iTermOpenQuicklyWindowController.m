@@ -209,7 +209,6 @@
                                   respectTabbingMode:NO
                                              command:nil
                                          makeSession:nil
-                                         synchronous:NO
                                       didMakeSession:nil
                                           completion:nil];
             } else {

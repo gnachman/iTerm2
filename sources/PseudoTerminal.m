@@ -7323,7 +7323,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                             before:NO
                            profile:profile
                      targetSession:[self currentSession]
-                       synchronous:NO
                         completion:nil
                              ready:nil];
     }
@@ -7780,7 +7779,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
                targetSession:(PTYSession *)targetSession
-                 synchronous:(BOOL)synchronous
                   completion:(void (^)(PTYSession *))completion
                        ready:(void (^)(BOOL ok))ready {
     if ([targetSession isTmuxClient]) {
@@ -7821,7 +7819,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                  before:before
                                                 profile:theBookmark
                                           targetSession:targetSession
-                                            synchronous:synchronous
                                                  oldCWD:oldCWD
                                              completion:ready];
             if (completion) {
@@ -7836,7 +7833,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                          before:before
                                         profile:theBookmark
                                   targetSession:targetSession
-                                    synchronous:synchronous
                                          oldCWD:nil
                                      completion:ready];
     if (completion) {
@@ -7848,7 +7844,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
-                    synchronous:(BOOL)synchronous
                          oldCWD:(NSString *)oldCWD
                      completion:(void (^)(BOOL))completion {
     if ([targetSession isTmuxClient]) {
@@ -7905,7 +7900,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                       isUTF8:nil
                                                substitutions:nil
                                             windowController:self
-                                                 synchronous:synchronous
                                                   completion:completion]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
@@ -7922,7 +7916,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         before:NO
                        profile:[self profileForSplittingCurrentSession]
                  targetSession:[[self currentTab] activeSession]
-                   synchronous:NO
                     completion:nil
                          ready:nil];
 }
@@ -7932,7 +7925,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         before:NO
                        profile:[self profileForSplittingCurrentSession]
                  targetSession:[[self currentTab] activeSession]
-                   synchronous:NO
                     completion:nil
                          ready:nil];
 }
@@ -9894,7 +9886,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
             makeSessionCompletion(copyOfTab.activeSession);
         }
-                                 synchronous:NO
                               didMakeSession:nil
                                   completion:nil];
     } else {
@@ -10177,7 +10168,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)asyncCreateTabWithProfile:(Profile *)profile
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment
-                      synchronous:(BOOL)synchronous
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(BOOL ok))completion {
     PTYSession *currentSession = [self sessionForDirectoryRecycling];
@@ -10185,7 +10175,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         PTYSession *newSession = [self createTabWithProfile:profile
                                                 withCommand:command
                                                 environment:environment
-                                                synchronous:synchronous
                                           previousDirectory:nil
                                                  completion:completion];
         if (didMakeSession) {
@@ -10203,7 +10192,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         PTYSession *newSession = [strongSelf createTabWithProfile:profile
                                                       withCommand:command
                                                       environment:environment
-                                                      synchronous:synchronous
                                                 previousDirectory:pwd
                                                        completion:completion];
         if (didMakeSession) {
@@ -10215,7 +10203,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment
-                         synchronous:(BOOL)synchronous
                    previousDirectory:(NSString *)previousDirectory
                           completion:(void (^)(BOOL ok))completion {
     iTermObjectType objectType;
@@ -10251,7 +10238,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                  isUTF8:nil
                                           substitutions:nil
                                        windowController:self
-                                            synchronous:synchronous
                                              completion:completion];
 
     // On Lion, a window that can join all spaces can't go fullscreen.

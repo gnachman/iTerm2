@@ -244,10 +244,9 @@ static void HandleSigChld(int n) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
-           synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion {
-    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@ synchronous:%@",
-         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8),  @(synchronous));
+    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
+         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // We want to run
@@ -263,7 +262,6 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
-                       synchronous:synchronous
                         completion:completion];
     } else {
         [self reallyLaunchWithPath:progpath
@@ -273,7 +271,6 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
-                       synchronous:synchronous
                         completion:completion];
     }
 }
@@ -654,10 +651,9 @@ static void HandleSigChld(int n) {
                     gridSize:(VT100GridSize)gridSize
                     viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
-                 synchronous:(BOOL)synchronous
                   completion:(void (^)(void))completion {
-    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@ synchronous:%@",
-         progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8), @(synchronous));
+    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
+         progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
 
     iTermTTYState ttyState;
     iTermTTYStateInit(&ttyState, gridSize, viewSize, isUTF8);
@@ -703,7 +699,6 @@ static void HandleSigChld(int n) {
                                     argv:argv
                               initialPwd:initialPwd
                               newEnviron:newEnviron
-                             synchronous:synchronous
                                     task:self
                               completion:
      ^(iTermJobManagerForkAndExecStatus status) {

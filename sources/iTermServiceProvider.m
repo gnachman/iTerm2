@@ -55,13 +55,11 @@
         [term asyncCreateTabWithProfile:profile
                             withCommand:nil
                             environment:nil
-                            synchronous:NO
                          didMakeSession:^(PTYSession *session) {
             makeSessionCompletion(session);
         }
                              completion:nil];
     }
-                             synchronous:NO
                           didMakeSession:nil
                               completion:nil];
     return pseudoTerminal;

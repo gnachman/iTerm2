@@ -151,7 +151,6 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
                                 before:NO
                                profile:profile
                          targetSession:[terminal currentSession]
-                           synchronous:NO
                             completion:nil
                                  ready:nil];
     }
@@ -169,7 +168,6 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
                                 before:NO
                                profile:profile
                          targetSession:[terminal currentSession]
-                           synchronous:NO
                             completion:nil
                                  ready:nil];
     }

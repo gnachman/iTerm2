@@ -67,7 +67,6 @@ NS_ASSUME_NONNULL_BEGIN
     respectTabbingMode:(BOOL)respectTabbingMode
                command:(nullable NSString *)command
            makeSession:(void (^ _Nullable)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
-           synchronous:(BOOL)synchronous
         didMakeSession:(void (^ _Nullable)(PTYSession *))didMakeSession
             completion:(void (^ _Nullable)(BOOL))completion;
 
@@ -83,9 +82,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Launch and call completion block asynchronously.
 - (void)launchWithCompletion:(void (^ _Nullable)(BOOL ok))completion;
-
-// Launch and wait until completion. If makeSession is given, it must complete synchronously.
-- (void)launchAndWait;
 
 @end
 

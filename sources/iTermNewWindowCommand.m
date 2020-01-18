@@ -48,9 +48,10 @@
                           respectTabbingMode:NO
                                      command:command
                                  makeSession:nil
-                                 synchronous:YES
                               didMakeSession:^(PTYSession *session) {
-            [self resumeExecutionWithResult:[iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window]];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                    [self resumeExecutionWithResult:[iTermScriptingWindow scriptingWindowWithWindow:session.delegate.realParentWindow.window]];
+            });
         }
                                   completion:nil];
     }

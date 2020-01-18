@@ -1503,7 +1503,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  isUTF8:isUTF8Arg
                                           substitutions:substitutionsArg
                                        windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
-                                            synchronous:NO
                                              completion:completion];
             };
         }
@@ -1554,7 +1553,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents) {
             startLogging(arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME]);
         } else {
-            [aSession fetchAutoLogFilenameSynchronously:NO completion:startLogging];
+            [aSession fetchAutoLogFilenameWithCompletion:startLogging];
         }
     } else {
         runCommandBlock(finish);
@@ -1958,7 +1957,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)computeArgvForCommand:(NSString *)command
                 substitutions:(NSDictionary *)substitutions
-                  synchronous:(BOOL)synchronous
                    completion:(void (^)(NSArray<NSString *> *))completion {
     NSString *program = [command stringByPerformingSubstitutions:substitutions];
     NSArray *components = [program componentsInShellCommand];
@@ -1974,10 +1972,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)computeEnvironmentForNewJobFromEnvironment:(NSDictionary *)environment
                                      substitutions:(NSDictionary *)substitutions
-                                       synchronous:(BOOL)synchronous
                                         completion:(void (^)(NSDictionary *env))completion {
-    DLog(@"computeEnvironmentForNewJobFromEnvironment:%@ substitutions:%@ synchronous:%@",
-         environment, substitutions, @(synchronous));
+    DLog(@"computeEnvironmentForNewJobFromEnvironment:%@ substitutions:%@",
+         environment, substitutions);
     NSMutableDictionary *env = [[environment mutableCopy] autorelease];
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
@@ -2047,7 +2044,6 @@ ITERM_WEAKLY_REFERENCEABLE
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
-         synchronous:(BOOL)synchronous
           completion:(void (^)(BOOL))completion {
     DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
@@ -2058,14 +2054,13 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
 
-    [self computeArgvForCommand:command substitutions:substitutions synchronous:synchronous completion:^(NSArray<NSString *> *argv) {
+    [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
-        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions synchronous:synchronous completion:^(NSDictionary *env) {
+        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
             @synchronized(self) {
                 _registered = YES;
             }
-            [self fetchAutoLogFilenameSynchronously:synchronous
-                                         completion:^(NSString * _Nonnull autoLogFilename) {
+            [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
                 [[self loggingHelper] setPath:autoLogFilename
                                       enabled:autoLogFilename != nil
                                     plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
@@ -2079,7 +2074,6 @@ ITERM_WEAKLY_REFERENCEABLE
                               gridSize:_screen.size
                               viewSize:_screen.viewSize
                                 isUTF8:isUTF8
-                           synchronous:synchronous
                             completion:^{
                                 [self sendInitialText];
                                 if (completion) {
@@ -2111,7 +2105,6 @@ ITERM_WEAKLY_REFERENCEABLE
                       respectTabbingMode:NO
                                  command:nil
                              makeSession:nil
-                             synchronous:NO
                           didMakeSession:nil
                               completion:nil];
 }
@@ -3000,7 +2993,6 @@ ITERM_WEAKLY_REFERENCEABLE
            customShell:_customShell
                 isUTF8:_isUTF8
          substitutions:_substitutions
-           synchronous:YES
             completion:nil];
     [_naggingController willRecycleSession];
     DLog(@"  replaceTerminatedShellWithNewInstance: return with terminal=%@", _screen.terminal);
@@ -7128,7 +7120,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                         before:NO
                                                        profile:profile
                                                  targetSession:[[_delegate realParentWindow] currentSession]
-                                                   synchronous:NO
                                                     completion:nil
                                                          ready:nil];
             break;
@@ -7142,7 +7133,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                         before:NO
                                                        profile:profile
                                                  targetSession:[[_delegate realParentWindow] currentSession]
-                                                   synchronous:NO
                                                     completion:nil
                                                          ready:nil];
             break;
@@ -7950,7 +7940,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                 before:NO
                                                profile:profile
                                          targetSession:self
-                                           synchronous:NO
                                             completion:nil
                                                  ready:nil];
 }

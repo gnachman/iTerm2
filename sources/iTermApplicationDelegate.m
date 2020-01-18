@@ -1382,7 +1382,6 @@ static BOOL hasBecomeActive = NO;
                               respectTabbingMode:YES
                                          command:nil
                                      makeSession:nil
-                                     synchronous:NO
                                   didMakeSession:nil
                                       completion:nil];
         }

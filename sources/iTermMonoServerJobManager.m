@@ -66,7 +66,6 @@
                            argv:(const char **)argv
                      initialPwd:(const char *)initialPwd
                      newEnviron:(char **)newEnviron
-                    synchronous:(BOOL)synchronous
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
@@ -104,14 +103,12 @@
 
     [self didForkParent:&forkState
                ttyState:ttyStatePtr
-            synchronous:synchronous
                    task:task
              completion:completion];
 }
 
 - (void)didForkParent:(const iTermForkState *)forkStatePtr
              ttyState:(iTermTTYState *)ttyStatePtr
-          synchronous:(BOOL)synchronous
                  task:(id<iTermTask>)task
            completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
@@ -127,27 +124,17 @@
     int connectionFd = forkState.connectionFd;
     int deadmansPipeFd = forkState.deadMansPipe[0];
     // This takes about 200ms on a fast machine so pop off to a background queue to do it.
-    if (!synchronous) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
-                                                                                                 deadmansPipeFd);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self didCompleteHandshakeWithForkState:forkState
-                                               ttyState:ttyState
-                                       serverConnection:serverConnection
-                                                   task:task
-                                             completion:completion];
-            });
-        });
-    } else {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRead(connectionFd,
                                                                                              deadmansPipeFd);
-        [self didCompleteHandshakeWithForkState:forkState
-                                       ttyState:ttyState
-                               serverConnection:serverConnection
-                                           task:task
-                                     completion:completion];
-    }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self didCompleteHandshakeWithForkState:forkState
+                                           ttyState:ttyState
+                                   serverConnection:serverConnection
+                                               task:task
+                                         completion:completion];
+        });
+    });
 }
 
 - (void)didCompleteHandshakeWithForkState:(iTermForkState)state

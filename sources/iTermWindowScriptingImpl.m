@@ -48,9 +48,10 @@
                       respectTabbingMode:NO
                                  command:command
                              makeSession:nil
-                             synchronous:YES
                           didMakeSession:^(PTYSession * _Nonnull session) {
-        [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+        });
     }
                               completion:nil];
     return nil;
@@ -67,6 +68,7 @@
                                              profileName]];
         return nil;
     }
+    [scriptCommand suspendExecution];
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:(PseudoTerminal *)self.ptyDelegate
                                  withURL:nil
@@ -76,9 +78,10 @@
                       respectTabbingMode:NO
                                  command:command
                              makeSession:nil
-                             synchronous:YES
                           didMakeSession:^(PTYSession * _Nonnull session) {
-        [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
+        });
     }
                               completion:nil];
     return nil;

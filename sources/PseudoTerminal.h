@@ -300,7 +300,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
                targetSession:(PTYSession *)targetSession
-                 synchronous:(BOOL)synchronous
                   completion:(void (^)(PTYSession *))completion
                        ready:(void (^)(BOOL ok))ready;
 
@@ -320,7 +319,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)asyncCreateTabWithProfile:(Profile *)profile
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment
-                      synchronous:(BOOL)synchronous
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(BOOL ok))completion;
 

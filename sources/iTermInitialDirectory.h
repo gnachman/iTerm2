@@ -30,7 +30,6 @@ typedef NS_ENUM(NSUInteger, iTermInitialDirectoryMode) {
 
 - (void)evaluateWithOldPWD:(NSString *)oldPWD
                      scope:(iTermVariableScope *)scope
-               synchronous:(BOOL)synchronous
                 completion:(void (^)(NSString *))completion;
 
 @end

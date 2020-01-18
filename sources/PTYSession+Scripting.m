@@ -35,13 +35,17 @@
     // Get the command's arguments:
     NSDictionary *args = [aCommand evaluatedArguments];
 
+    [aCommand suspendExecution];
     [self startProgram:args[@"command"]
            environment:@{}
            customShell:nil
                 isUTF8:[args[@"isUTF8"] boolValue]
          substitutions:nil
-           synchronous:YES
-            completion:nil];
+            completion:^(BOOL ok) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [aCommand resumeExecutionWithResult:nil];
+        });
+    }];
 
     return;
 }
@@ -174,7 +178,6 @@
                                                     before:NO
                                                    profile:profile
                                              targetSession:[[self.delegate realParentWindow] currentSession]
-                                               synchronous:YES
                                                 completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
         completion(session);
@@ -194,7 +197,9 @@
                       command:args[@"command"]
                    completion:^(PTYSession *session) {
             [formerSession activateSessionAndTab];
-            [scriptCommand resumeExecutionWithResult:session];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [scriptCommand resumeExecutionWithResult:session];
+            });
         }];
         return nil;
     } else {
@@ -214,7 +219,9 @@
                   command:args[@"command"]
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
-        [scriptCommand resumeExecutionWithResult:session];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:session];
+        });
     }];
     return nil;
 }
@@ -228,7 +235,9 @@
                   command:args[@"command"]
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
-        [scriptCommand resumeExecutionWithResult:session];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:session];
+        });
     }];
     return nil;
 }
@@ -245,7 +254,9 @@
                       command:args[@"command"]
                    completion:^(PTYSession *session) {
             [formerSession activateSessionAndTab];
-            [scriptCommand resumeExecutionWithResult:session];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [scriptCommand resumeExecutionWithResult:session];
+            });
         }];
         return nil;
     } else {
@@ -264,7 +275,9 @@
               withProfile:[[ProfileModel sharedInstance] defaultBookmark]
                   command:args[@"command"]
                completion:^(PTYSession *session) {
-        [scriptCommand resumeExecutionWithResult:session];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:session];
+        });
         [formerSession activateSessionAndTab];
     }];
     return nil;
@@ -279,7 +292,9 @@
                   command:args[@"command"]
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
-        [scriptCommand resumeExecutionWithResult:session];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:session];
+        });
     }];
     return nil;
 }

@@ -107,10 +107,14 @@
         if (evaluator.error) {
             [self setScriptErrorNumber:2];
             [self setScriptErrorString:evaluator.error.localizedDescription];
-            [weakSelf resumeExecutionWithResult:nil];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf resumeExecutionWithResult:nil];
+            });
             return;
         }
-        [weakSelf resumeExecutionWithResult:[NSString stringWithFormat:@"%@", evaluator.value]];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf resumeExecutionWithResult:[NSString stringWithFormat:@"%@", evaluator.value]];
+        });
     }];
     return nil;
 }

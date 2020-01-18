@@ -63,7 +63,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
                            argv:(const char **)argv
                      initialPwd:(const char *)initialPwd
                      newEnviron:(char **)newEnviron
-                    synchronous:(BOOL)synchronous
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
 
@@ -120,7 +119,6 @@ typedef NS_ENUM(NSUInteger, iTermJobManagerKillingMode) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
-           synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion;
 
 - (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion;

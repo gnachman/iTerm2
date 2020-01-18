@@ -190,7 +190,6 @@ typedef enum {
                                     before:NO
                                    profile:bookmark
                              targetSession:[[terminal currentTab] activeSession]
-                               synchronous:NO
                                 completion:nil
                                      ready:nil];
         } else {

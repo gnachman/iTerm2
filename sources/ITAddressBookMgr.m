@@ -610,7 +610,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     // long and the original commit message was lost.
     //
     // The returned value gets parsed into an argument array using -componentsInShellCommand
-    // by computeArgvForCommand:substitutions:synchronous:completion:.
+    // by computeArgvForCommand:substitutions:completion:.
     userName = [userName stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     userName = [userName stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
     return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",

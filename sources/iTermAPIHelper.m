@@ -2082,7 +2082,6 @@ static iTermAPIHelper *sAPIHelperInstance;
         [term asyncCreateTabWithProfile:profile
                             withCommand:nil
                             environment:nil
-                            synchronous:NO
                          didMakeSession:^(PTYSession *session) { completion(session); }
                              completion:nil];
     };
@@ -2180,7 +2179,6 @@ static iTermAPIHelper *sAPIHelperInstance;
                             before:request.before
                            profile:profile
                      targetSession:session
-                       synchronous:NO
                         completion:^(PTYSession *newSession) {
             if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
                 [response.sessionIdArray addObject:newSession.guid];

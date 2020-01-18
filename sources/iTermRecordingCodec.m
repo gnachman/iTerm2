@@ -100,7 +100,6 @@
         [windowController insertSession:newSession atIndex:0];
         makeSessionCompletion(newSession);
     }
-                             synchronous:NO
                           didMakeSession:nil
                               completion:nil];
 }

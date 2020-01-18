@@ -151,7 +151,6 @@ static NSString *const kArrangement = @"Arrangement";
                               respectTabbingMode:NO
                                          command:nil
                                      makeSession:nil
-                                     synchronous:NO
                                   didMakeSession:nil
                                       completion:nil];
         }
@@ -823,7 +822,6 @@ static NSString *const kArrangement = @"Arrangement";
                       respectTabbingMode:NO
                                  command:nil
                              makeSession:nil
-                             synchronous:NO
                           didMakeSession:^(PTYSession * _Nonnull session) {
         self.birthingWindow = NO;
 

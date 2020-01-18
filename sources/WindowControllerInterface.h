@@ -364,7 +364,6 @@
                       before:(BOOL)before
                      profile:(Profile *)theBookmark
                targetSession:(PTYSession *)targetSession
-                 synchronous:(BOOL)synchronous
                   completion:(void (^)(PTYSession *))completion
                        ready:(void (^)(BOOL ok))ready;
 

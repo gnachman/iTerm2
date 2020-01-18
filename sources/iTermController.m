@@ -1436,7 +1436,6 @@ static iTermController *gSharedInstance;
         [term asyncCreateTabWithProfile:profile
                             withCommand:command
                             environment:environment
-                            synchronous:NO
                          didMakeSession:^(PTYSession *session) {
             if (shortLived) {
                 session.shortLivedSingleUse = YES;
@@ -1471,7 +1470,6 @@ static iTermController *gSharedInstance;
                       respectTabbingMode:NO
                                  command:command
                              makeSession:makeSession
-                             synchronous:NO
                           didMakeSession:^(PTYSession *session) {
         if (bury) {
             [session bury];

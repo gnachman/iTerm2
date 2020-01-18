@@ -19,7 +19,6 @@
 
 @implementation iTermSessionLauncher {
     BOOL _finished;
-    BOOL _synchronous;
     BOOL _haveSetSession;
     BOOL _launched;
     id _keepAlive;  // reference to self so I don't get released before completion.
@@ -38,7 +37,6 @@
              respectTabbingMode:respectTabbingMode
                         command:nil
                     makeSession:nil
-                    synchronous:NO
                  didMakeSession:completion
                      completion:nil];
 }
@@ -52,7 +50,6 @@
     respectTabbingMode:(BOOL)respectTabbingMode
                command:(NSString *)command
            makeSession:(void (^)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
-           synchronous:(BOOL)synchronous
         didMakeSession:(void (^)(PTYSession *))didMakeSession
             completion:(void (^ _Nullable)(BOOL))completion {
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
@@ -66,12 +63,7 @@
         launcher.makeSession = makeSession;
     }
     launcher.didCreateSession = didMakeSession;
-    if (synchronous) {
-        launcher.completion = completion;
-        [launcher launchAndWait];
-    } else {
-        [launcher launchWithCompletion:completion];
-    }
+    [launcher launchWithCompletion:completion];
 }
 
 
@@ -90,18 +82,9 @@
 }
 
 - (void)launchWithCompletion:(void (^ _Nullable)(BOOL ok))completion {
-    [self launchSynchronously:NO completion:completion];
-}
-
-- (void)launchAndWait {
-    [self launchSynchronously:YES completion:nil];
-}
-
-- (void)launchSynchronously:(BOOL)sync completion:(void (^ _Nullable)(BOOL ok))completion {
     assert(!_launched);
     _launched = YES;
 
-    _synchronous = sync;
     _completion = [completion copy];
     [self prepareToLaunch];
 
@@ -220,11 +203,6 @@
         completion(session, NO);
         finished = YES;
     });
-    if (_synchronous) {
-        // If you asked for a synchronous launch but provided an asynchronous session-creation block
-        // you screwed up. Rather than deadlock, die.
-        assert(finished);
-    }
 }
 
 - (void)makeSessionByURLWithProfile:(Profile *)profile
@@ -248,7 +226,6 @@
                                                                              isUTF8:nil
                                                                       substitutions:nil
                                                                    windowController:windowController
-                                                                        synchronous:_synchronous
                                                                          completion:
                      ^(BOOL ok) {
                          DLog(@"launch by url finished with ok=%@", @(ok));
@@ -272,7 +249,6 @@
     [windowController asyncCreateTabWithProfile:profile
                                     withCommand:_command
                                     environment:nil
-                                    synchronous:_synchronous
                                  didMakeSession:^(PTYSession *session) { completion(session, YES); }
                                      completion:^(BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
 }

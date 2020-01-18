@@ -151,11 +151,9 @@
                                                                      isUTF8:nil
                                                               substitutions:nil
                                                            windowController:term
-                                                                synchronous:NO
                                                                  completion:nil];
         makeSessionCompletion(ok ? session : nil);
     }
-                             synchronous:NO
                           didMakeSession:^(PTYSession *aSession) {
         NSLog(@"restored an orphan");
         [aSession showOrphanAnnouncement];
