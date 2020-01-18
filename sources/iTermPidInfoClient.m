@@ -21,6 +21,7 @@
     NSXPCConnection *_connectionToService;
     NSTimeInterval _timeout;
     dispatch_queue_t _localQueue;
+    dispatch_semaphore_t _sema;
 }
 
 + (instancetype)sharedInstance {
@@ -37,6 +38,8 @@
     if (self) {
         // The local queue will be used while waiting for the XPC job to start.
         _localQueue = dispatch_queue_create("com.iterm2.pidinfo", DISPATCH_QUEUE_CONCURRENT);
+        // Don't let more than this many threads get wedged.
+        _sema = dispatch_semaphore_create(32);
         _timeout = 0.5;
         [self connect];
         __weak __typeof(self) weakSelf = self;
@@ -82,12 +85,19 @@
     NSMutableData *result = [NSMutableData dataWithLength:bufferSize];
 
     __block atomic_flag finished = ATOMIC_FLAG_INIT;
+    const long waitResult = dispatch_semaphore_wait(_sema, DISPATCH_TIME_NOW);
+    if (waitResult) {
+        DLog(@"semaphore_wait failed, return error");
+        completion(-5, [NSData data]);
+        return;
+    }
     dispatch_async(_localQueue, ^{
         const int rc = proc_pidinfo(pid,
                                     flavor,
                                     arg,
                                     (bufferSize > 0) ? result.mutableBytes : NULL,
                                     bufferSize);
+        dispatch_semaphore_signal(self->_sema);
         if (atomic_flag_test_and_set(&finished)) {
             return;
         }
