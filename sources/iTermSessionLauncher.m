@@ -12,6 +12,7 @@
 #import "iTermApplication.h"
 #import "iTermController.h"
 #import "iTermSessionFactory.h"
+#import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
 #import "ProfileModel.h"
 #import "PTYSession.h"
@@ -22,6 +23,21 @@
     BOOL _haveSetSession;
     BOOL _launched;
     id _keepAlive;  // reference to self so I don't get released before completion.
+}
+
++ (BOOL)profileIsWellFormed:(Profile *)profile {
+    NSFont *font = [ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]];
+    if (!font) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Couldn’t find the specified font “%@” or the fallback standard fixed-pitch font, Menlo. Please ensure at least one of these is installed.", profile[KEY_NORMAL_FONT]]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Invalid Profile"
+                                    window:nil];
+        return NO;
+    }
+    return YES;
 }
 
 + (void)launchBookmark:(NSDictionary *)bookmarkData

@@ -53,6 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, nonatomic, readonly) Profile *profile;
 @property (readonly, nonatomic, readonly) PseudoTerminal *windowController;
 
++ (BOOL)profileIsWellFormed:(Profile *)profile;
+
 // These class methods are a migration path for legacy code that predates the session launcher.
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a

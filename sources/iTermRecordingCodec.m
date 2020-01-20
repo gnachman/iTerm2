@@ -81,6 +81,10 @@
         return;
     }
 
+    if (![iTermSessionLauncher profileIsWellFormed:dictProfile]) {
+        return;
+    }
+
     [iTermSessionLauncher launchBookmark:dictProfile
                               inTerminal:nil
                                  withURL:nil

@@ -7170,6 +7170,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     // Initialize a new session
     Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
+    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
+        return nil;
+    }
     newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
@@ -7817,6 +7820,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
 
+    if (![iTermSessionLauncher profileIsWellFormed:theBookmark]) {
+        if (ready) {
+            ready(NO);
+        }
+        if (completion) {
+            completion(nil);
+        }
+        return;
+    }
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
         [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
@@ -9327,6 +9339,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     // rows, columns are set to the bookmark defaults. Make sure they'll fit.
 
+    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
+        @throw [NSException exceptionWithName:@"MissingFonts"
+                                       reason:@"No usable font could be found"
+                                     userInfo:nil];
+    }
     NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
                                  horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
                                    verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
@@ -10337,6 +10354,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)addSessionInNewTab:(PTYSession *)object {
+    if (![iTermSessionLauncher profileIsWellFormed:object.profile]) {
+        return;
+    }
     PtyLog(@"PseudoTerminal: -addSessionInNewTab: %p", object);
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
