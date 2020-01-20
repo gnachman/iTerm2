@@ -6039,6 +6039,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    clientName:preferredTmuxClientName
                                                       profile:profile
                                                  profileModel:model];
+
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
@@ -6081,6 +6082,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self printTmuxMessage:@"  C    Run tmux command."];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
+        _tmuxController.initialWindowHint = self.view.window.frame;
         _hideAfterTmuxWindowOpens = YES;
     }
 }

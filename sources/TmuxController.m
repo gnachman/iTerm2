@@ -2325,9 +2325,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     PTYTab *tab = [self window:[windowIndex intValue]];
     NSWindowController<iTermWindowController> * term = [tab realParentWindow];
     NSValue *p = [origins_ objectForKey:windowIndex];
-    if (term && p && ![term anyFullScreen] && term.tabs.count == 1) {
-        [[term window] setFrameOrigin:[p pointValue]];
+    if (term && ![term anyFullScreen] && term.tabs.count == 1) {
+        if (p) {
+            [[term window] setFrameOrigin:[p pointValue]];
+        } else if (!NSEqualRects(NSZeroRect, _initialWindowHint)) {
+            [[term window] setFrameOrigin:_initialWindowHint.origin];
+        }
     }
+    _initialWindowHint = NSZeroRect;
     [self saveAffinities];
     if (pendingWindowOpens_.count == 0) {
         [self sendInitialWindowsOpenedNotificationIfNeeded];
