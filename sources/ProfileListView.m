@@ -673,6 +673,7 @@ const CGFloat kDefaultTagsWidth = 80;
     NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
 
     NSColor *textColor = [self regularTextColor];
+    NSColor *highlightedTextColor = [NSColor blackColor];
     NSColor *tagColor = [self regularTagColor];
     NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
     NSColor *selectedActiveTagColor = [self selectedActiveTagColor];
@@ -685,7 +686,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.mainFont };
     NSDictionary* highlightedNameAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                                 iTermRegularForegroundColor: textColor,
+                                                 iTermRegularForegroundColor: highlightedTextColor,
                                                  NSParagraphStyleAttributeName: paragraphStyle,
                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                  NSFontAttributeName: self.mainFont };
@@ -694,7 +695,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.tagFont };
     NSDictionary* highlightedSmallAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTagColor,
-                                                  iTermRegularForegroundColor: tagColor,
+                                                  iTermRegularForegroundColor: highlightedTextColor,
                                                   NSParagraphStyleAttributeName: paragraphStyle,
                                                   NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                   NSFontAttributeName: self.tagFont };
