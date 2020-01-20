@@ -612,6 +612,7 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
     if (isSpecialKey) {
         // Arrow key, function key, etc.
+        DLog(@"is special key -> bypass pre-cocoa");
         return YES;
     }
 
@@ -624,6 +625,8 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     const BOOL willSendOptionModifiedKey = (isNonEmpty && optionModifiesKey);
     if (willSendOptionModifiedKey) {
         // Meta+key or Esc+ key
+        DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ optionModifiesKey=%@ willSendOptionModifiedKey=%@ -> bypass pre-cocoa",
+             @(isNonEmpty), @(rightAltPressed), @(leftAltPressed), @(leftOptionModifiesKey), @(rightOptionModifiesKey), @(optionModifiesKey), @(willSendOptionModifiedKey));
         return YES;
     }
 
@@ -633,10 +636,12 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
                                               keyCode:event.keyCode
                                        eventModifiers:event.it_modifierFlags]) {
             // Application cursor keys in effect. Don't let cocoa call insertText:.
+            DLog(@"termkey app cursor key -> bypass pre-cocoa");
             return YES;
         }
     }
 
+    DLog(@"Don't bypass pre-cocoa");
     return NO;
 }
 

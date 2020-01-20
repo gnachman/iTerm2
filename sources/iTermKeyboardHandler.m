@@ -171,11 +171,13 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 - (BOOL)shouldSendEventToController:(NSEvent *)event
                             context:(iTermKeyboardHandlerContext)context {
     if (_hadMarkedTextBeforeHandlingKeypressEvent) {
+        DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=YES");
         return NO;
     }
 
     if (context.hasActionableKeyMapping) {
         // Delegate will do something useful
+        DLog(@"context.hasActionableKeyMapping");
         return YES;
     }
 
