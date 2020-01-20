@@ -17,7 +17,7 @@
   (regex "^/usr/share/icu/")
   (literal "/dev/null")
   (literal "/dev/random")
-  (literal "@PATH_TO_EXECUTABLE@")
+  (literal "@APP_ROOT@")
   (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@")
   (regex "^/Library/Preferences/")
   (regex "^/System/Library/CoreServices/SystemAppearance.bundle")
