@@ -9985,6 +9985,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                 username:(NSString *)username
                                     path:(NSString *)path
                                      job:(NSString *)job {
+    if ([iTermProfilePreferences boolForKey:KEY_PREVENT_APS inProfile:self.profile]) {
+        return;
+    }
     [_automaticProfileSwitcher setHostname:hostname username:username path:path job:job];
 }
 

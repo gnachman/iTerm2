@@ -119,7 +119,8 @@ typedef struct {
 // guid in 'bookmark'. The name is preserved if it is different than the
 // original profile's name.
 - (void)setProfilePreservingGuidWithGuid:(NSString *)origGuid
-                             fromProfile:(Profile *)bookmark;
+                             fromProfile:(Profile *)bookmark
+                               overrides:(NSDictionary<NSString *, id> *)overrides;
 
 // Write to user defaults
 - (void)flush;

@@ -27,6 +27,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfileSearchToken.h"
+#import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
 #import "PreferencePanel.h"
@@ -727,7 +728,8 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (void)setProfilePreservingGuidWithGuid:(NSString *)origGuid
-                             fromProfile:(Profile *)bookmark {
+                             fromProfile:(Profile *)bookmark
+                               overrides:(NSDictionary<NSString *, id> *)overrides {
     Profile *origProfile = [self bookmarkWithGuid:origGuid];
     NSString *preDivorceGuid = origProfile[KEY_ORIGINAL_GUID];
     Profile *preDivorceProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:preDivorceGuid];
@@ -748,6 +750,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
     // the new profile.
     dict[KEY_ORIGINAL_GUID] = [[bookmark[KEY_GUID] copy] autorelease];
+    [dict it_mergeFrom:overrides];
     [[ProfileModel sessionsInstance] setBookmark:dict withGuid:origGuid];
     [self postNotificationName:kReloadAllProfiles object:nil userInfo:nil];
 }

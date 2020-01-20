@@ -107,6 +107,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_titleSettingsLabel;
     IBOutlet NSButton *_customTitleHelp;
 
+    IBOutlet NSButton *_preventAutomaticProfileSwitching;
+
     BOOL _profileNameChangePending;
     iTermRateLimitedUpdate *_rateLimit;
     IBOutlet NSTabView *_tabView;
@@ -332,7 +334,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                    displayName:@"URL schemes handled by profile"
                        phrases:@[ @"ssh", @"http", @"https" ]
                            key:nil];
-    
+
+    [self defineControl:_preventAutomaticProfileSwitching
+                    key:KEY_PREVENT_APS
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self updateSelectedTitleComponents];
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
@@ -581,14 +588,22 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 // guid of the profile from which all that data came.n
 - (IBAction)changeProfile:(id)sender {
     NSString *guid = [_profiles selectedGuid];
-    if (guid) {
-        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        Profile *origProfile = [self.delegate profilePreferencesCurrentProfile];
-        NSString* origGuid = origProfile[KEY_GUID];
-        [[ProfileModel sessionsInstance] setProfilePreservingGuidWithGuid:origGuid
-                                                              fromProfile:bookmark];
-        [self reloadProfile];
+    if (!guid) {
+        return;
     }
+    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    Profile *origProfile = [self.delegate profilePreferencesCurrentProfile];
+    NSString* origGuid = origProfile[KEY_GUID];
+    NSDictionary<NSString *, id> *overrides;
+    if ([self boolForKey:KEY_PREVENT_APS]) {
+        overrides = @{ KEY_PREVENT_APS: @YES };
+    } else {
+        overrides = @{};
+    }
+    [[ProfileModel sessionsInstance] setProfilePreservingGuidWithGuid:origGuid
+                                                          fromProfile:bookmark
+                                                            overrides:overrides];
+    [self reloadProfile];
 }
 
 #pragma mark - URL Schemes

@@ -70,6 +70,7 @@
 #define KEY_BADGE_MAX_WIDTH             @"Badge Max Width"
 #define KEY_BADGE_MAX_HEIGHT            @"Badge Max Height"
 #define KEY_BADGE_FONT                  @"Badge Font"
+#define KEY_PREVENT_APS                 @"Prevent Automatic Profile Switching"  // Not in regular prefs, only for divorced prefs.
 
 // Advanced working directory settings
 #define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"
