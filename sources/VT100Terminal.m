@@ -2479,7 +2479,7 @@ static const int kMaxScreenRows = 4096;
             }
             NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
-            if ([delegate_ terminalShouldSendReportForVariable:name]) {
+            if (name && [delegate_ terminalShouldSendReportForVariable:name]) {
                 NSString *encodedValue = @"";
                 if (name) {
                     NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
