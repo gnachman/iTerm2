@@ -65,7 +65,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
 @implementation iTermImageDecoderDriver
 
 - (NSString *)executable {
-    return [[NSBundle bundleForClass:self.class] pathForResource:@"image_decoder" ofType:nil];
+    return [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"image_decoder"];
 }
 
 - (NSString *)sandbox {
@@ -76,6 +76,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
         return nil;
     }
     NSDictionary *subs = @{ @"@PATH_TO_EXECUTABLE@": [[executable stringByDeletingLastPathComponent] stringByEscapingForSandboxLiteral],
+                            @"@APP_ROOT@": [[NSBundle bundleForClass:self.class] bundlePath],
                             @"@EXECUTABLE@": [[executable lastPathComponent] stringByEscapingForSandboxLiteral],
                             @"@HOME_DIRECTORY@": NSHomeDirectory() ?: @"//bogus//" };
     for (NSString *key in subs) {

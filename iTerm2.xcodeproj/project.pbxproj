@@ -2168,6 +2168,7 @@
 		A66F52D92106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DA2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DB2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
+		A6725ADA23D64A87001CA48A /* image_decoder in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6755F491D729A0500F3726C /* image_decoder */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A673A62A23A2096B00869A95 /* iTermNaggingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A673A62823A2096B00869A95 /* iTermNaggingController.h */; };
 		A673A62B23A2096B00869A95 /* iTermNaggingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A673A62923A2096B00869A95 /* iTermNaggingController.m */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
@@ -2184,7 +2185,6 @@
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
 		A6755F541D73836B00F3726C /* iTermSerializableImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F531D73836B00F3726C /* iTermSerializableImage.m */; };
-		A6755F571D739E4F00F3726C /* image_decoder in Resources */ = {isa = PBXBuildFile; fileRef = A6755F491D729A0500F3726C /* image_decoder */; };
 		A67778B41CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */; };
 		A67778B51CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */; };
 		A67778CD1CFFAE8D00DEED78 /* NSApplication+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */; };
@@ -3728,6 +3728,16 @@
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6725AD923D64A57001CA48A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				A6725ADA23D64A87001CA48A /* image_decoder in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10601,6 +10611,7 @@
 				874206550564169600CFC3F1 /* Rez */,
 				874206560564169600CFC3F1 /* CopyFiles */,
 				93BD20450FE16DD50059656D /* Update SVN Revision */,
+				A6725AD923D64A57001CA48A /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -11638,7 +11649,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A631FCA320EF0DFA00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
-				A6755F571D739E4F00F3726C /* image_decoder in Resources */,
 				A6E7AE86214394DD00DE9F3B /* graphic_curl.png in Resources */,
 				A66F52D92106F6F100571168 /* gitup@2x.png in Resources */,
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
