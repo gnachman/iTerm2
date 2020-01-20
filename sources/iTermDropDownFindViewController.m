@@ -211,6 +211,9 @@ static const float kAnimationDuration = 0.2;
          completions:(NSArray *)words  // Dictionary words
  forPartialWordRange:(NSRange)charRange
  indexOfSelectedItem:(NSInteger *)index {
+    DLog(@"completions:forPartialWordRange: existing string is %@, range is %@\n%@",
+         textView.string, NSStringFromRange(charRange), [NSThread callStackSymbols]);
+
     *index = -1;
     return [self.driver completionsForText:[textView string]
                                      range:charRange];
@@ -219,7 +222,9 @@ static const float kAnimationDuration = 0.2;
 - (BOOL)control:(NSControl *)control
        textView:(NSTextView *)textView
     doCommandBySelector:(SEL)commandSelector {
+    DLog(@"doCommandBySelector: %@\n%@", NSStringFromSelector(commandSelector), [NSThread callStackSymbols]);
     if (control != findBarTextField_) {
+        DLog(@"Wrong control. I'm %@ but was sent by %@", findBarTextField_, control);
         return NO;
     }
 
@@ -244,8 +249,10 @@ static const float kAnimationDuration = 0.2;
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification {
+    DLog(@"controlTextDidEndEditing: %@\n%@", aNotification.userInfo, [NSThread callStackSymbols]);
     NSControl *postingObject = [aNotification object];
     if (postingObject != findBarTextField_) {
+        DLog(@"Wrong object. I'm %@, but posting object is %@", self, postingObject);
         return;
     }
 
