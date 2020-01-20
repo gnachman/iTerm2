@@ -5138,6 +5138,7 @@
 		A66F52BA2106F6EF00571168 /* gitup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = gitup.png; path = images/gitup.png; sourceTree = "<group>"; };
 		A66F52BD2106F6EF00571168 /* gitdown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitdown@2x.png"; path = "images/gitdown@2x.png"; sourceTree = "<group>"; };
 		A66F52BF2106F6F000571168 /* gitup@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitup@2x.png"; path = "images/gitup@2x.png"; sourceTree = "<group>"; };
+		A6725ACF23D589CC001CA48A /* image_decoder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = image_decoder.entitlements; sourceTree = "<group>"; };
 		A673A62823A2096B00869A95 /* iTermNaggingController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermNaggingController.h; sourceTree = "<group>"; };
 		A673A62923A2096B00869A95 /* iTermNaggingController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermNaggingController.m; sourceTree = "<group>"; };
 		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
@@ -7991,6 +7992,7 @@
 		A6755F4A1D729A0500F3726C /* image_decoder */ = {
 			isa = PBXGroup;
 			children = (
+				A6725ACF23D589CC001CA48A /* image_decoder.entitlements */,
 				A6755F4B1D729A0500F3726C /* image_decoder.m */,
 				A6755F521D73836B00F3726C /* iTermSerializableImage.h */,
 				A6755F531D73836B00F3726C /* iTermSerializableImage.m */,
@@ -14415,9 +14417,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = image_decoder/image_decoder.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -14674,9 +14678,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = image_decoder/image_decoder.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -14730,9 +14736,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = image_decoder/image_decoder.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -14771,9 +14779,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = image_decoder/image_decoder.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
