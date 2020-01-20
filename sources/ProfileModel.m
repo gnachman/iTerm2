@@ -1063,6 +1063,9 @@ static NSMutableArray<NSString *> *_combinedLog;
     [item setTarget:params->target];
     [item setRepresentedObject:[[[b objectForKey:KEY_GUID] copy] autorelease]];
     [item setTag:tag];
+    if ([b[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        item.toolTip = b[KEY_COMMAND_LINE];
+    }
     [menu insertItem:item atIndex:pos];
     [item release];
 }
