@@ -89,12 +89,15 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return;
     }
 
+    DLog(@"Proceeding");
+
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
 
     NSMutableArray *eventsToHandle = [NSMutableArray array];
     BOOL pointlessly;
     if ([_keyBindingEmulator handlesEvent:event pointlessly:&pointlessly extraEvents:eventsToHandle]) {
+        DLog(@"keyBindingEmulator handles event.");
         if (!pointlessly) {
             DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
             [self.delegate keyboardHandler:self interpretKeyEvents:@[ event ]];

@@ -400,6 +400,7 @@
 }
 
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
+    DLog(@"%@", event);
     const NSEventModifierFlags modifiers = event.it_modifierFlags;
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
     if (isSpecialKey) {
@@ -409,12 +410,20 @@
     }
 
     const BOOL isNonEmpty = [[event charactersIgnoringModifiers] length] > 0;  // Dead keys have length 0
+    DLog(@"unmodchar=%@, length=%@", [event charactersIgnoringModifiers], @([[event charactersIgnoringModifiers] length]));
     const BOOL rightAltPressed = (modifiers & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    DLog(@"rightAltPressed=%@ based on %@ & %@", @(rightAltPressed), @(modifiers), @(NSRightAlternateKeyMask));
     const BOOL leftAltPressed = (modifiers & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
+    DLog(@"leftAltPressed=%@ based on %@ & %@", @(leftAltPressed), @(modifiers), @(NSEventModifierFlagOption));
     const BOOL leftOptionModifiesKey = (leftAltPressed && _configuration.leftOptionKey != OPT_NORMAL);
+    DLog(@"leftOptionModifiesKey=%@ based on %@ && (%@ != %@)", @(leftOptionModifiesKey), @(leftAltPressed), @(_configuration.leftOptionKey), @(OPT_NORMAL));
     const BOOL rightOptionModifiesKey = (rightAltPressed && _configuration.rightOptionKey != OPT_NORMAL);
+    DLog(@"rightOptionModifiesKey=%@ based on %@ && (%@ != %@)", @(rightOptionModifiesKey), @(rightAltPressed), @(_configuration.rightOptionKey), @(OPT_NORMAL));
     const BOOL optionModifiesKey = (leftOptionModifiesKey || rightOptionModifiesKey);
+    DLog(@"optionModifiesKey=%@ based on %@ || %@", @(optionModifiesKey), @(leftOptionModifiesKey), @(rightOptionModifiesKey));
     const BOOL willSendOptionModifiedKey = (isNonEmpty && optionModifiesKey);
+    DLog(@"willSendOptionModikfiedKey=%@ based on %@ && %@", @(willSendOptionModifiedKey), @(isNonEmpty), @(optionModifiesKey));
+
     if (willSendOptionModifiedKey) {
         // Meta+key or Esc+ key
         DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ willSendOptionModifiedKey=%@ -> bypass pre-cocoa",
@@ -427,7 +436,13 @@
         return YES;
     }
 
-    DLog(@"Not bypassing pre-cocoa");
+    DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ willSendOptionModifiedKey=%@ -> NOT bypassing pre-cocoa",
+         @(isNonEmpty),
+         @(rightAltPressed),
+         @(leftAltPressed),
+         @(leftOptionModifiesKey),
+         @(rightOptionModifiesKey),
+         @(willSendOptionModifiedKey));
     return NO;
 }
 
