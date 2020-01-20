@@ -54,6 +54,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel =
 PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility = @"PSMTabBarControlOptionHighVisibility";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar =
     @"PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar";
+PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
+    @"PSMTabBarControlOptionFontSizeOverride";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

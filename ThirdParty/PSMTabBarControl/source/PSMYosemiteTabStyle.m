@@ -496,6 +496,10 @@
 }
 
 - (CGFloat)fontSize {
+    NSNumber *override = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionFontSizeOverride];
+    if (override) {
+        return override.doubleValue;
+    }
     return 11.0;
 }
 
