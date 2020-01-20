@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)naggingControllerAbortDownload;
 - (void)naggingControllerAbortUpload;
 - (void)naggingControllerSetBackgroundImageToFileWithName:(nullable NSString *)filename;
+- (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently;
 @end
 
 @interface iTermNaggingController : NSObject
@@ -58,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying;
 
 - (void)setBackgroundImageToFileWithName:(NSString *)filename;
+- (void)didDetectMouseReportingFrustration;
 
 @end
 

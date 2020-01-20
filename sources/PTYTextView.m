@@ -337,6 +337,8 @@ static const int kDragThreshold = 3;
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
         _keyboardHandler = [[iTermKeyboardHandler alloc] init];
         _keyboardHandler.delegate = self;
+
+        [self arcInit];
     }
     return self;
 }
@@ -414,6 +416,8 @@ static const int kDragThreshold = 3;
     _urlActionHelper.delegate = nil;
     [_urlActionHelper release];
     [_imageBeingClickedOn release];
+    [_mouseReportingFrustrationDetector release];
+
     [super dealloc];
 }
 
@@ -1351,6 +1355,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)keyDown:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }
 
@@ -1365,6 +1370,7 @@ static const int kDragThreshold = 3;
 
 // TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [self reportMouseEvent:event];
 
@@ -1377,8 +1383,8 @@ static const int kDragThreshold = 3;
     [self updateCursor:event action:nil];
 }
 
-- (void)otherMouseUp:(NSEvent *)event
-{
+- (void)otherMouseUp:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
         return;
@@ -1392,8 +1398,8 @@ static const int kDragThreshold = 3;
     [pointer_ mouseUp:event withTouches:_numTouches];
 }
 
-- (void)otherMouseDragged:(NSEvent *)event
-{
+- (void)otherMouseDragged:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [threeFingerTapGestureRecognizer_ mouseDragged];
     if ([self reportMouseEvent:event]) {
@@ -1403,6 +1409,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
         DLog(@"Cancel right mouse down");
@@ -1421,6 +1428,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
         return;
@@ -1435,8 +1443,8 @@ static const int kDragThreshold = 3;
     [super rightMouseUp:event];
 }
 
-- (void)rightMouseDragged:(NSEvent *)event
-{
+- (void)rightMouseDragged:(NSEvent *)event {
+    [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [threeFingerTapGestureRecognizer_ mouseDragged];
     if ([self reportMouseEvent:event]) {
@@ -1871,6 +1879,7 @@ static const int kDragThreshold = 3;
     DLog(@"Set mouseDown=YES.");
     _mouseDown = YES;
 
+    [_mouseReportingFrustrationDetector mouseDown:event reported:[self mouseEventIsReportable:event]];
     if ([self reportMouseEvent:event]) {
         DLog(@"Returning because mouse event reported.");
         [_selection clearSelection];
@@ -2050,6 +2059,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // issue 3766.
     _mouseDragged = NO;
 
+    [_mouseReportingFrustrationDetector mouseUp:event reported:[self mouseEventIsReportable:event]];
     // Send mouse up event to host if xterm mouse reporting is on
     if ([self reportMouseEvent:event]) {
         if (willFollowLink) {
@@ -2224,6 +2234,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
+    [_mouseReportingFrustrationDetector mouseDragged:event reported:[self mouseEventIsReportable:event]];
     if ([self reportMouseEvent:event]) {
         DLog(@"Reported drag");
         _committedToDrag = YES;
@@ -5798,8 +5809,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self convertPoint:[event locationInWindow] fromView:nil];
 }
 
+// Returns YES if the mouse event would be handled, ignoring trivialities like a drag that hasn't
+// changed coordinate since the last drag.
+- (BOOL)mouseEventIsReportable:(NSEvent *)event {
+    return [self handleMouseEvent:event testOnly:YES];
+}
+
 // Returns YES if the mouse event should not be handled natively.
 - (BOOL)reportMouseEvent:(NSEvent *)event {
+    return [self handleMouseEvent:event testOnly:NO];
+}
+
+- (BOOL)handleMouseEvent:(NSEvent *)event testOnly:(BOOL)testOnly {
     NSPoint point = [self pointForEvent:event];
 
     if (![self shouldReportMouseEvent:event at:point]) {
@@ -5817,7 +5838,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                         button:[self mouseReportingButtonNumberForEvent:event]
                                     coordinate:coord
                                         deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]
-                      allowDragBeforeMouseDown:_makingThreeFingerSelection];
+                      allowDragBeforeMouseDown:_makingThreeFingerSelection
+                                      testOnly:testOnly];
 }
 
 #pragma mark - NSDraggingSource

@@ -17,6 +17,7 @@
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermKeyboardHandler.h"
+#import "iTermMouseReportingFrustrationDetector.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 
@@ -43,6 +44,7 @@ NSPopoverDelegate> {
 
     iTermURLActionHelper *_urlActionHelper;
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
+    iTermMouseReportingFrustrationDetector *_mouseReportingFrustrationDetector;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

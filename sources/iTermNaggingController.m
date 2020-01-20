@@ -20,7 +20,10 @@ static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementId
 static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier = @"ThisProfileNoLongerExists";
 static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier = @"Tmux2.2SupplementaryPlaneAnnouncement";
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
+static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
+
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
+static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled = @"NoSyncNeverAskAboutMouseReportingFrustration";
 
 static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetBackgroundImageFile";
 static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
@@ -276,6 +279,34 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
         }
     }
 }
+
+- (void)didDetectMouseReportingFrustration {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled]) {
+        return;
+    }
+    [self.delegate naggingControllerShowMessage:@"Looks like you’re trying to copy to the pasteboard, but mouse reporting has prevented making a selection. Disable mouse reporting?"
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier
+                                        options:@[ @"_Temporarily", @"Permanently" ]
+                                     completion:^(int selection) {
+        [self handleMouseReportingFrustration:selection];
+    }];
+}
+
+- (void)handleMouseReportingFrustration:(int)selection {
+    switch (selection) {
+        case 0: // Temporarily
+            [self.delegate naggingControllerDisableMouseReportingPermanently:NO];
+            break;
+
+        case 1: { // Never
+            [self.delegate naggingControllerDisableMouseReportingPermanently:YES];
+            break;
+        }
+    }
+}
+
 
 #pragma mark - Variable Reporting
 

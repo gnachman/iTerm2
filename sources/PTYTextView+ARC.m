@@ -40,7 +40,13 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 @interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate>
 @end
 
+
 @implementation PTYTextView (ARC)
+
+- (void)arcInit {
+    _mouseReportingFrustrationDetector = [[iTermMouseReportingFrustrationDetector alloc] init];
+    _mouseReportingFrustrationDetector.delegate = self;
+}
 
 #pragma mark - Attributes
 
@@ -712,6 +718,14 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (iTermExpect *)shellIntegrationExpect {
     return [self.delegate textViewExpect];
+}
+
+#pragma mark - iTermMouseReportingFrustrationDetectorDelegate
+
+- (void)mouseReportingFrustrationDetectorDidDetectFrustration:(iTermMouseReportingFrustrationDetector *)sender {
+    if ([self.delegate xtermMouseReporting]) {
+        [self.delegate textViewDidDetectMouseReportingFrustration];
+    }
 }
 
 @end

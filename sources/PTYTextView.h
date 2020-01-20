@@ -139,7 +139,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY
-        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown;
+        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
+                        testOnly:(BOOL)testOnly;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
 - (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand;
@@ -198,6 +199,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (iTermVariableScope *)textViewVariablesScope;
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor;
 - (void)textViewDidUpdateDropTargetVisibility;
+- (void)textViewDidDetectMouseReportingFrustration;
 @end
 
 @interface iTermHighlightedRow : NSObject

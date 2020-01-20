@@ -8062,7 +8062,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY
-        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
+        allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
+                        testOnly:(BOOL)testOnly {
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord));
@@ -8075,12 +8076,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    _reportingMouseDown = YES;
-                    _lastReportedCoord = coord;
-                    [self writeLatin1EncodedData:[_terminal.output mousePress:button
-                                                                withModifiers:modifiers
-                                                                           at:coord]
-                                broadcastAllowed:NO];
+                    if (!testOnly) {
+                        _reportingMouseDown = YES;
+                        _lastReportedCoord = coord;
+                        [self writeLatin1EncodedData:[_terminal.output mousePress:button
+                                                                    withModifiers:modifiers
+                                                                               at:coord]
+                                    broadcastAllowed:NO];
+                    }
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
@@ -8092,6 +8095,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeLeftMouseUp:
         case NSEventTypeRightMouseUp:
         case NSEventTypeOtherMouseUp:
+            if (testOnly) {
+                switch ([_terminal mouseMode]) {
+                    case MOUSE_REPORTING_NORMAL:
+                    case MOUSE_REPORTING_BUTTON_MOTION:
+                    case MOUSE_REPORTING_ALL_MOTION:
+                        return YES;
+
+                    case MOUSE_REPORTING_NONE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
+                        break;
+                }
+                return NO;
+            }
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
@@ -8116,8 +8132,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 
         case NSEventTypeMouseMoved:
-            if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
-                !VT100GridCoordEquals(coord, _lastReportedCoord)) {
+            if ([_terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+                return NO;
+            }
+            if (testOnly) {
+                return YES;
+            }
+            if (!VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
                 [self writeLatin1EncodedData:[_terminal.output mouseMotion:MOUSE_BUTTON_NONE
                                                              withModifiers:modifiers
@@ -8130,6 +8151,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
         case NSEventTypeOtherMouseDragged:
+            if (testOnly) {
+                switch ([_terminal mouseMode]) {
+                    case MOUSE_REPORTING_BUTTON_MOTION:
+                    case MOUSE_REPORTING_ALL_MOTION:
+                    case MOUSE_REPORTING_NORMAL:
+                        return YES;
+
+                    case MOUSE_REPORTING_NONE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
+                        break;
+                }
+                return NO;
+            }
             if ((_reportingMouseDown || allowDragBeforeMouseDown) &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -8159,6 +8193,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
+                    if (testOnly) {
+                        return YES;
+                    }
                     if (deltaY != 0) {
                         int steps;
                         if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
@@ -8507,6 +8544,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (iTermExpect *)textViewExpect {
     return self.expect;
+}
+
+- (void)textViewDidDetectMouseReportingFrustration {
+    [self.naggingController didDetectMouseReportingFrustration];
 }
 
 - (void)bury {
@@ -12283,6 +12324,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerSetBackgroundImageToFileWithName:(NSString *)filename {
     [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename.length ? filename : [NSNull null] }];
+}
+
+- (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently {
+    if (permanently) {
+        if (self.isDivorced) {
+            [self setSessionSpecificProfileValues:@{ KEY_XTERM_MOUSE_REPORTING: @NO}];
+        } else {
+            [iTermProfilePreferences setBool:NO
+                                      forKey:KEY_XTERM_MOUSE_REPORTING
+                                   inProfile:self.profile
+                                       model:[ProfileModel sharedInstance]];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                object:self.profile[KEY_GUID]];
+        }
+    }
+    [self.terminal setMouseMode:MOUSE_REPORTING_NONE];
 }
 
 @end

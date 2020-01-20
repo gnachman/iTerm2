@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "iTermMouseReportingFrustrationDetector.h"
 #import "iTermURLActionHelper.h"
 #import "VT100GridTypes.h"
 
@@ -14,7 +15,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PTYTextView (ARC)<iTermURLActionHelperDelegate>
+@interface PTYTextView (ARC)<
+iTermMouseReportingFrustrationDetectorDelegate,
+iTermURLActionHelperDelegate>
+
+- (void)arcInit;
 
 #pragma mark - Coordinate Space Conversions
 
