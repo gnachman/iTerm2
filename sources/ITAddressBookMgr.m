@@ -35,6 +35,7 @@
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermMigrationHelper.h"
 #import "iTermPreferences.h"
+#import "iTermProfilesMenuController.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
@@ -154,6 +155,8 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             [[ProfileModel sharedInstance] removeAllBookmarks];
         }
 
+        iTermProfilesMenuController *menuController = [[iTermProfilesMenuController alloc] init];
+        [[ProfileModel sharedInstance] setMenuController:menuController];
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
         NSString *originalDefaultGuid = [[prefs objectForKey:KEY_DEFAULT_GUID] copy];
@@ -285,8 +288,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     return [fontDesc fontValue];
 }
 
-- (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid
-{
+- (void)setBookmarks:(NSArray *)newBookmarksArray defaultGuid:(NSString *)guid {
     [[ProfileModel sharedInstance] load:newBookmarksArray];
     if (guid) {
         if ([[ProfileModel sharedInstance] bookmarkWithGuid:guid]) {

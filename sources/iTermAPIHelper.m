@@ -20,6 +20,7 @@
 #import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
 #import "iTermScriptFunctionCall.h"
@@ -729,7 +730,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 - (void)profileDidChange:(NSNotification *)notification {
     NSArray<BookmarkJournalEntry *> *entries = notification.userInfo[@"array"];
     NSSet<NSString *> *guids = [NSSet setWithArray:[entries mapWithBlock:^id(BookmarkJournalEntry *entry) {
-        return entry->guid;
+        return entry.guid;
     }]];
     for (NSString *guid in guids) {
         [_profileChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull request, BOOL * _Nonnull stop) {

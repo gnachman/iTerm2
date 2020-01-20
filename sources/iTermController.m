@@ -34,6 +34,7 @@
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermWebSocketCookieJar.h"
@@ -911,7 +912,7 @@ static iTermController *gSharedInstance;
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt {
-    JournalParams params;
+    iTermProfileModelJournalParams *params = [[[iTermProfileModelJournalParams alloc] init] autorelease];
     params.selector = selector;
     params.openAllSelector = openAllSelector;
     params.alternateSelector = @selector(newSessionInWindowAtIndex:);
@@ -922,12 +923,12 @@ static iTermController *gSharedInstance;
     int N = [bm numberOfBookmarks];
     for (int i = 0; i < N; i++) {
         Profile *b = [bm profileAtIndex:i];
-        [bm addBookmark:b
-                 toMenu:aMenu
-         startingAtItem:startingAt
-               withTags:[b objectForKey:KEY_TAGS]
-                 params:&params
-                  atPos:i];
+        [bm.menuController addBookmark:b
+                                toMenu:aMenu
+                        startingAtItem:startingAt
+                              withTags:[b objectForKey:KEY_TAGS]
+                                params:params
+                                 atPos:i];
     }
 }
 

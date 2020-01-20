@@ -24,6 +24,10 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermProfile.h"
+
+@protocol iTermProfileModelMenuController;
+
 // Notification posted when a stored profile changes.
 extern NSString *const kReloadAddressBookNotification;
 
@@ -36,34 +40,15 @@ extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
-#define Profile NSDictionary
-#define MutableProfile NSMutableDictionary
-
-typedef struct {
-    SEL selector;                  // normal action
-    SEL alternateSelector;         // opt+click
-    SEL openAllSelector;           // open all bookmarks
-    SEL alternateOpenAllSelector;  // opt+open all bookmarks
-    void *target;                  // receiver of selector (actually an __unsafe_unretained id)
-} JournalParams;
-
-@interface ProfileModel : NSObject {
-    NSMutableArray* bookmarks_;
-    NSString* defaultBookmarkGuid_;
-
-    // The journal is an array of actions since the last change notification was
-    // posted.
-    NSMutableArray* journal_;
-    NSUserDefaults* prefs_;
-    BOOL postChanges_;              // should change notifications be posted?
-}
+@interface ProfileModel : NSObject
 
 @property(nonatomic, readonly) NSString *modelName;
+@property(nonatomic, strong) id<iTermProfileModelMenuController> menuController;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-+ (ProfileModel*)sharedInstance;
-+ (ProfileModel*)sessionsInstance;
++ (ProfileModel *)sharedInstance;
++ (ProfileModel *)sessionsInstance;
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid;
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
@@ -110,8 +95,7 @@ typedef struct {
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
 - (NSArray<Profile *> *)bookmarks;
-- (NSArray*)guids;
-- (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
+- (NSArray *)guids;
 - (NSArray *)names;
 - (void)addGuidToDebug:(NSString *)guid;
 
@@ -131,38 +115,7 @@ typedef struct {
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
 
-+ (void)applyJournal:(NSDictionary*)journal
-              toMenu:(NSMenu*)menu
-      startingAtItem:(int)skip
-              params:(JournalParams*)params;
-
-+ (void)applyJournal:(NSDictionary*)journal
-              toMenu:(NSMenu*)menu
-              params:(JournalParams*)params;
-
 - (void)performBlockWithCoalescedNotifications:(void (^)(void))block;
 
 @end
 
-typedef enum {
-    JOURNAL_ADD,
-    JOURNAL_REMOVE,
-    JOURNAL_REMOVE_ALL,
-    JOURNAL_SET_DEFAULT
-} JournalAction;
-
-@interface BookmarkJournalEntry : NSObject {
-  @public
-    JournalAction action;
-    NSString* guid;
-    ProfileModel* model;
-    // Tags before the action was applied.
-    NSArray* tags;
-    int index;  // Index of bookmark
-}
-
-+ (instancetype)journalWithAction:(JournalAction)action
-                         bookmark:(Profile*)bookmark
-                            model:(ProfileModel*)model;
-
-@end

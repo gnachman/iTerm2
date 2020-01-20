@@ -59,6 +59,7 @@
 #import "iTermObject.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
@@ -69,6 +70,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
+#import "iTermProfilesMenuController.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
@@ -1412,7 +1414,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)updateAddressBookMenu:(NSNotification *)aNotification {
     DLog(@"Updating Profile menu");
-    JournalParams params;
+    iTermProfileModelJournalParams *params = [[[iTermProfileModelJournalParams alloc] init] autorelease];
     if ([iTermAdvancedSettingsModel openProfilesInNewWindow]) {
         params.selector = @selector(newSessionInWindowAtIndex:);
         params.alternateSelector = @selector(newSessionInTabAtIndex:);
@@ -1428,10 +1430,10 @@ static BOOL hasBecomeActive = NO;
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = [iTermController sharedInstance];
 
-    [ProfileModel applyJournal:[aNotification userInfo]
-                         toMenu:bookmarkMenu
-                 startingAtItem:5
-                         params:&params];
+    [iTermProfilesMenuController applyJournal:[aNotification userInfo]
+                                       toMenu:bookmarkMenu
+                               startingAtItem:5
+                                       params:params];
 }
 
 #pragma mark - Startup Helpers
