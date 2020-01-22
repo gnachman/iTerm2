@@ -13427,7 +13427,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				OTHER_CFLAGS = "-DBETA=1";
-				OTHER_CODE_SIGN_FLAGS = "--deep";
+				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
@@ -14092,7 +14092,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "-DBETA=1";
-				OTHER_CODE_SIGN_FLAGS = "--deep";
+				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
@@ -14446,6 +14446,7 @@
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -14721,6 +14722,7 @@
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -14765,6 +14767,7 @@
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -14808,6 +14811,7 @@
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -15223,7 +15227,7 @@
 					"-DITERM_DEBUG=1",
 					"-DBETA=1",
 				);
-				OTHER_CODE_SIGN_FLAGS = "--deep";
+				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
@@ -15299,7 +15303,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "";
-				OTHER_CODE_SIGN_FLAGS = "--deep";
+				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
