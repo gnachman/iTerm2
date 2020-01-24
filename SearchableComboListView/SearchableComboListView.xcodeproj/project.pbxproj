@@ -1,0 +1,512 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A6B557FD23DCD19C00F5DF2D /* SearchableComboView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557F523DCD19C00F5DF2D /* SearchableComboView.swift */; };
+		A6B557FE23DCD19C00F5DF2D /* SearchableComboTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557F623DCD19C00F5DF2D /* SearchableComboTableViewController.swift */; };
+		A6B557FF23DCD19C00F5DF2D /* SearchableComboView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6B557F723DCD19C00F5DF2D /* SearchableComboView.xib */; };
+		A6B5580023DCD19C00F5DF2D /* SearchableComboListSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557F823DCD19C00F5DF2D /* SearchableComboListSearchField.swift */; };
+		A6B5580123DCD19C00F5DF2D /* SearchableComboListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557F923DCD19C00F5DF2D /* SearchableComboListViewController.swift */; };
+		A6B5580223DCD19C00F5DF2D /* SearchableComboListView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B557FA23DCD19C00F5DF2D /* SearchableComboListView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A6B5580323DCD19C00F5DF2D /* SearchableComboViewStringAdditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557FB23DCD19C00F5DF2D /* SearchableComboViewStringAdditions.swift */; };
+		A6B5580423DCD19C00F5DF2D /* SearchableComboTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B557FC23DCD19C00F5DF2D /* SearchableComboTableView.swift */; };
+		A6B5580C23DCD1DB00F5DF2D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B5580B23DCD1DB00F5DF2D /* AppDelegate.swift */; };
+		A6B5580E23DCD1DC00F5DF2D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A6B5580D23DCD1DC00F5DF2D /* Assets.xcassets */; };
+		A6B5581123DCD1DC00F5DF2D /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6B5580F23DCD1DC00F5DF2D /* MainMenu.xib */; };
+		A6B5581823DCD1EA00F5DF2D /* SearchableComboListView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6B557EA23DCD15300F5DF2D /* SearchableComboListView.framework */; };
+		A6B5581A23DCD42800F5DF2D /* SearchableComboContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B5581923DCD42800F5DF2D /* SearchableComboContentView.swift */; };
+		A6B5581C23DCD5B900F5DF2D /* SearchableComboVibrantVisualEffectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B5581B23DCD5B900F5DF2D /* SearchableComboVibrantVisualEffectView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A6B557EA23DCD15300F5DF2D /* SearchableComboListView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SearchableComboListView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6B557EE23DCD15300F5DF2D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6B557F523DCD19C00F5DF2D /* SearchableComboView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboView.swift; sourceTree = "<group>"; };
+		A6B557F623DCD19C00F5DF2D /* SearchableComboTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboTableViewController.swift; sourceTree = "<group>"; };
+		A6B557F723DCD19C00F5DF2D /* SearchableComboView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SearchableComboView.xib; sourceTree = "<group>"; };
+		A6B557F823DCD19C00F5DF2D /* SearchableComboListSearchField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboListSearchField.swift; sourceTree = "<group>"; };
+		A6B557F923DCD19C00F5DF2D /* SearchableComboListViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboListViewController.swift; sourceTree = "<group>"; };
+		A6B557FA23DCD19C00F5DF2D /* SearchableComboListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchableComboListView.h; sourceTree = "<group>"; };
+		A6B557FB23DCD19C00F5DF2D /* SearchableComboViewStringAdditions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboViewStringAdditions.swift; sourceTree = "<group>"; };
+		A6B557FC23DCD19C00F5DF2D /* SearchableComboTableView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchableComboTableView.swift; sourceTree = "<group>"; };
+		A6B5580923DCD1DB00F5DF2D /* SearchableComboListViewDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SearchableComboListViewDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6B5580B23DCD1DB00F5DF2D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A6B5580D23DCD1DC00F5DF2D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A6B5581023DCD1DC00F5DF2D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		A6B5581223DCD1DC00F5DF2D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6B5581323DCD1DC00F5DF2D /* SearchableComboViewDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SearchableComboViewDemo.entitlements; sourceTree = "<group>"; };
+		A6B5581923DCD42800F5DF2D /* SearchableComboContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboContentView.swift; sourceTree = "<group>"; };
+		A6B5581B23DCD5B900F5DF2D /* SearchableComboVibrantVisualEffectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboVibrantVisualEffectView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A6B557E723DCD15300F5DF2D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6B5580623DCD1DB00F5DF2D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B5581823DCD1EA00F5DF2D /* SearchableComboListView.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A6B557E023DCD15300F5DF2D = {
+			isa = PBXGroup;
+			children = (
+				A6B557EC23DCD15300F5DF2D /* SearchableComboView */,
+				A6B5580A23DCD1DB00F5DF2D /* SearchableComboViewDemo */,
+				A6B557EB23DCD15300F5DF2D /* Products */,
+				A6B5581723DCD1EA00F5DF2D /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		A6B557EB23DCD15300F5DF2D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A6B557EA23DCD15300F5DF2D /* SearchableComboListView.framework */,
+				A6B5580923DCD1DB00F5DF2D /* SearchableComboListViewDemo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A6B557EC23DCD15300F5DF2D /* SearchableComboView */ = {
+			isa = PBXGroup;
+			children = (
+				A6B557F823DCD19C00F5DF2D /* SearchableComboListSearchField.swift */,
+				A6B557FA23DCD19C00F5DF2D /* SearchableComboListView.h */,
+				A6B557F923DCD19C00F5DF2D /* SearchableComboListViewController.swift */,
+				A6B557FC23DCD19C00F5DF2D /* SearchableComboTableView.swift */,
+				A6B557F623DCD19C00F5DF2D /* SearchableComboTableViewController.swift */,
+				A6B557F523DCD19C00F5DF2D /* SearchableComboView.swift */,
+				A6B557F723DCD19C00F5DF2D /* SearchableComboView.xib */,
+				A6B557FB23DCD19C00F5DF2D /* SearchableComboViewStringAdditions.swift */,
+				A6B557EE23DCD15300F5DF2D /* Info.plist */,
+				A6B5581923DCD42800F5DF2D /* SearchableComboContentView.swift */,
+				A6B5581B23DCD5B900F5DF2D /* SearchableComboVibrantVisualEffectView.swift */,
+			);
+			path = SearchableComboView;
+			sourceTree = "<group>";
+		};
+		A6B5580A23DCD1DB00F5DF2D /* SearchableComboViewDemo */ = {
+			isa = PBXGroup;
+			children = (
+				A6B5580B23DCD1DB00F5DF2D /* AppDelegate.swift */,
+				A6B5580D23DCD1DC00F5DF2D /* Assets.xcassets */,
+				A6B5580F23DCD1DC00F5DF2D /* MainMenu.xib */,
+				A6B5581223DCD1DC00F5DF2D /* Info.plist */,
+				A6B5581323DCD1DC00F5DF2D /* SearchableComboViewDemo.entitlements */,
+			);
+			path = SearchableComboViewDemo;
+			sourceTree = "<group>";
+		};
+		A6B5581723DCD1EA00F5DF2D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		A6B557E523DCD15300F5DF2D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B5580223DCD19C00F5DF2D /* SearchableComboListView.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		A6B557E923DCD15300F5DF2D /* SearchableComboListView */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6B557F223DCD15300F5DF2D /* Build configuration list for PBXNativeTarget "SearchableComboListView" */;
+			buildPhases = (
+				A6B557E523DCD15300F5DF2D /* Headers */,
+				A6B557E623DCD15300F5DF2D /* Sources */,
+				A6B557E723DCD15300F5DF2D /* Frameworks */,
+				A6B557E823DCD15300F5DF2D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SearchableComboListView;
+			productName = SearchableComboView;
+			productReference = A6B557EA23DCD15300F5DF2D /* SearchableComboListView.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		A6B5580823DCD1DB00F5DF2D /* SearchableComboListViewDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6B5581423DCD1DC00F5DF2D /* Build configuration list for PBXNativeTarget "SearchableComboListViewDemo" */;
+			buildPhases = (
+				A6B5580523DCD1DB00F5DF2D /* Sources */,
+				A6B5580623DCD1DB00F5DF2D /* Frameworks */,
+				A6B5580723DCD1DB00F5DF2D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SearchableComboListViewDemo;
+			productName = SearchableComboViewDemo;
+			productReference = A6B5580923DCD1DB00F5DF2D /* SearchableComboListViewDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A6B557E123DCD15300F5DF2D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1130;
+				LastUpgradeCheck = 1130;
+				ORGANIZATIONNAME = "George Nachman";
+				TargetAttributes = {
+					A6B557E923DCD15300F5DF2D = {
+						CreatedOnToolsVersion = 11.3;
+						LastSwiftMigration = 1130;
+					};
+					A6B5580823DCD1DB00F5DF2D = {
+						CreatedOnToolsVersion = 11.3;
+					};
+				};
+			};
+			buildConfigurationList = A6B557E423DCD15300F5DF2D /* Build configuration list for PBXProject "SearchableComboListView" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A6B557E023DCD15300F5DF2D;
+			productRefGroup = A6B557EB23DCD15300F5DF2D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A6B557E923DCD15300F5DF2D /* SearchableComboListView */,
+				A6B5580823DCD1DB00F5DF2D /* SearchableComboListViewDemo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A6B557E823DCD15300F5DF2D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B557FF23DCD19C00F5DF2D /* SearchableComboView.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6B5580723DCD1DB00F5DF2D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B5580E23DCD1DC00F5DF2D /* Assets.xcassets in Resources */,
+				A6B5581123DCD1DC00F5DF2D /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A6B557E623DCD15300F5DF2D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B5580323DCD19C00F5DF2D /* SearchableComboViewStringAdditions.swift in Sources */,
+				A6B557FE23DCD19C00F5DF2D /* SearchableComboTableViewController.swift in Sources */,
+				A6B5580023DCD19C00F5DF2D /* SearchableComboListSearchField.swift in Sources */,
+				A6B5581C23DCD5B900F5DF2D /* SearchableComboVibrantVisualEffectView.swift in Sources */,
+				A6B557FD23DCD19C00F5DF2D /* SearchableComboView.swift in Sources */,
+				A6B5581A23DCD42800F5DF2D /* SearchableComboContentView.swift in Sources */,
+				A6B5580423DCD19C00F5DF2D /* SearchableComboTableView.swift in Sources */,
+				A6B5580123DCD19C00F5DF2D /* SearchableComboListViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6B5580523DCD1DB00F5DF2D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6B5580C23DCD1DB00F5DF2D /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A6B5580F23DCD1DC00F5DF2D /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A6B5581023DCD1DC00F5DF2D /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A6B557F023DCD15300F5DF2D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		A6B557F123DCD15300F5DF2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		A6B557F323DCD15300F5DF2D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = SearchableComboView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A6B557F423DCD15300F5DF2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = SearchableComboView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A6B5581523DCD1DC00F5DF2D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SearchableComboViewDemo/SearchableComboViewDemo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = SearchableComboViewDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboViewDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A6B5581623DCD1DC00F5DF2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SearchableComboViewDemo/SearchableComboViewDemo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = SearchableComboViewDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboViewDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A6B557E423DCD15300F5DF2D /* Build configuration list for PBXProject "SearchableComboListView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6B557F023DCD15300F5DF2D /* Debug */,
+				A6B557F123DCD15300F5DF2D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A6B557F223DCD15300F5DF2D /* Build configuration list for PBXNativeTarget "SearchableComboListView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6B557F323DCD15300F5DF2D /* Debug */,
+				A6B557F423DCD15300F5DF2D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A6B5581423DCD1DC00F5DF2D /* Build configuration list for PBXNativeTarget "SearchableComboListViewDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6B5581523DCD1DC00F5DF2D /* Debug */,
+				A6B5581623DCD1DC00F5DF2D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A6B557E123DCD15300F5DF2D /* Project object */;
+}

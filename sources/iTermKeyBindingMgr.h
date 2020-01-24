@@ -24,9 +24,10 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Cocoa/Cocoa.h>
 #import "iTermTuple.h"
 #import "ProfileModel.h"
+
+#import <Cocoa/Cocoa.h>
 
 // Dictionary key for key binding giving the action (NSNumber). See KEY_ACTION below.
 extern NSString *const iTermKeyBindingDictionaryKeyAction;
