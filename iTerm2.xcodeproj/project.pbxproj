@@ -2220,6 +2220,11 @@
 		A6725AD623D63B7A001CA48A /* iTermProfileModelJournal.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD423D63B7A001CA48A /* iTermProfileModelJournal.h */; };
 		A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */ = {isa = PBXBuildFile; fileRef = A6725AD523D63B7A001CA48A /* iTermProfileModelJournal.m */; };
 		A6725ADA23D64A87001CA48A /* image_decoder in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6755F491D729A0500F3726C /* image_decoder */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A6725AEC23D6DFE5001CA48A /* SearchableComboListView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AEA23D6DFE5001CA48A /* SearchableComboListView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A6725AEF23D6DFE5001CA48A /* SearchableComboListView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6725AE823D6DFE5001CA48A /* SearchableComboListView.framework */; };
+		A6725AF023D6DFE5001CA48A /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6725AE823D6DFE5001CA48A /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6725AF623D6DFF1001CA48A /* SearchableComboView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6725ADC23D6CA47001CA48A /* SearchableComboView.swift */; };
+		A6725AF723D6DFF1001CA48A /* SearchableComboView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6725ADF23D6DA09001CA48A /* SearchableComboView.xib */; };
 		A673A62A23A2096B00869A95 /* iTermNaggingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A673A62823A2096B00869A95 /* iTermNaggingController.h */; };
 		A673A62B23A2096B00869A95 /* iTermNaggingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A673A62923A2096B00869A95 /* iTermNaggingController.m */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
@@ -2768,6 +2773,11 @@
 		A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D027C101CD1867000B0FBFF /* iTermColorPresets.m */; };
 		A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6A77B8D23DADDE7008AACFE /* SearchableComboListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A77B8C23DADDE7008AACFE /* SearchableComboListViewController.swift */; };
+		A6A77B8F23DADE33008AACFE /* SearchableComboListSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A77B8E23DADE33008AACFE /* SearchableComboListSearchField.swift */; };
+		A6A77B9123DADE55008AACFE /* SearchableComboTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A77B9023DADE55008AACFE /* SearchableComboTableViewController.swift */; };
+		A6A77B9323DADE72008AACFE /* SearchableComboTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A77B9223DADE72008AACFE /* SearchableComboTableView.swift */; };
+		A6A77B9523DADED6008AACFE /* SearchableComboViewStringAdditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A77B9423DADED6008AACFE /* SearchableComboViewStringAdditions.swift */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -3708,6 +3718,13 @@
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
 		};
+		A6725AED23D6DFE5001CA48A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A6725AE723D6DFE5001CA48A;
+			remoteInfo = SearchableComboListView;
+		};
 		A6755F551D739E3C00F3726C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -3798,6 +3815,7 @@
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
+				A6725AF023D6DFE5001CA48A /* SearchableComboListView.framework in CopyFiles */,
 				A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5266,6 +5284,12 @@
 		A6725AD423D63B7A001CA48A /* iTermProfileModelJournal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfileModelJournal.h; sourceTree = "<group>"; };
 		A6725AD523D63B7A001CA48A /* iTermProfileModelJournal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProfileModelJournal.m; sourceTree = "<group>"; };
 		A6725AD823D63BC0001CA48A /* iTermProfile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfile.h; sourceTree = "<group>"; };
+		A6725ADB23D6CA46001CA48A /* iTerm2SharedARC-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SharedARC-Bridging-Header.h"; sourceTree = "<group>"; };
+		A6725ADC23D6CA47001CA48A /* SearchableComboView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboView.swift; sourceTree = "<group>"; };
+		A6725ADF23D6DA09001CA48A /* SearchableComboView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SearchableComboView.xib; sourceTree = "<group>"; };
+		A6725AE823D6DFE5001CA48A /* SearchableComboListView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SearchableComboListView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6725AEA23D6DFE5001CA48A /* SearchableComboListView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchableComboListView.h; sourceTree = "<group>"; };
+		A6725AEB23D6DFE5001CA48A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A673A62823A2096B00869A95 /* iTermNaggingController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermNaggingController.h; sourceTree = "<group>"; };
 		A673A62923A2096B00869A95 /* iTermNaggingController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermNaggingController.m; sourceTree = "<group>"; };
 		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
@@ -5721,6 +5745,11 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6A77B8C23DADDE7008AACFE /* SearchableComboListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboListViewController.swift; sourceTree = "<group>"; };
+		A6A77B8E23DADE33008AACFE /* SearchableComboListSearchField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboListSearchField.swift; sourceTree = "<group>"; };
+		A6A77B9023DADE55008AACFE /* SearchableComboTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboTableViewController.swift; sourceTree = "<group>"; };
+		A6A77B9223DADE72008AACFE /* SearchableComboTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboTableView.swift; sourceTree = "<group>"; };
+		A6A77B9423DADED6008AACFE /* SearchableComboViewStringAdditions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchableComboViewStringAdditions.swift; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -6297,6 +6326,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
+				A6725AEF23D6DFE5001CA48A /* SearchableComboListView.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
@@ -6314,6 +6344,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A66719031DCE36C3000CE608 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6725AE523D6DFE5001CA48A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -6375,8 +6412,10 @@
 				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
 				A6755F4A1D729A0500F3726C /* image_decoder */,
 				A6866B6823CAA10A00ACD94C /* pidinfo */,
+				A6725AE923D6DFE5001CA48A /* SearchableComboListView */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
+				A6725ADB23D6CA46001CA48A /* iTerm2SharedARC-Bridging-Header.h */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -6823,6 +6862,7 @@
 				A6755F491D729A0500F3726C /* image_decoder */,
 				A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */,
 				A6866B6723CAA10A00ACD94C /* pidinfo.xpc */,
+				A6725AE823D6DFE5001CA48A /* SearchableComboListView.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -8202,6 +8242,22 @@
 				A663012719D0864C004AF81C /* SCEvents.m */,
 			);
 			name = SCEvents;
+			sourceTree = "<group>";
+		};
+		A6725AE923D6DFE5001CA48A /* SearchableComboListView */ = {
+			isa = PBXGroup;
+			children = (
+				A6725ADC23D6CA47001CA48A /* SearchableComboView.swift */,
+				A6725ADF23D6DA09001CA48A /* SearchableComboView.xib */,
+				A6725AEA23D6DFE5001CA48A /* SearchableComboListView.h */,
+				A6725AEB23D6DFE5001CA48A /* Info.plist */,
+				A6A77B8C23DADDE7008AACFE /* SearchableComboListViewController.swift */,
+				A6A77B8E23DADE33008AACFE /* SearchableComboListSearchField.swift */,
+				A6A77B9023DADE55008AACFE /* SearchableComboTableViewController.swift */,
+				A6A77B9223DADE72008AACFE /* SearchableComboTableView.swift */,
+				A6A77B9423DADED6008AACFE /* SearchableComboViewStringAdditions.swift */,
+			);
+			path = SearchableComboListView;
 			sourceTree = "<group>";
 		};
 		A6755F4A1D729A0500F3726C /* image_decoder */ = {
@@ -10656,6 +10712,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6725AE323D6DFE5001CA48A /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6725AEC23D6DFE5001CA48A /* SearchableComboListView.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6C760461B45C4CF00E3C992 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -10871,6 +10935,7 @@
 				A6C763D11B45C55200E3C992 /* PBXTargetDependency */,
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
+				A6725AEE23D6DFE5001CA48A /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			productName = "JTerminal (Application)";
@@ -10893,6 +10958,24 @@
 			productName = SSKeychain;
 			productReference = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */;
 			productType = "com.apple.product-type.library.static";
+		};
+		A6725AE723D6DFE5001CA48A /* SearchableComboListView */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6725AF123D6DFE5001CA48A /* Build configuration list for PBXNativeTarget "SearchableComboListView" */;
+			buildPhases = (
+				A6725AE323D6DFE5001CA48A /* Headers */,
+				A6725AE423D6DFE5001CA48A /* Sources */,
+				A6725AE523D6DFE5001CA48A /* Frameworks */,
+				A6725AE623D6DFE5001CA48A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SearchableComboListView;
+			productName = SearchableComboListView;
+			productReference = A6725AE823D6DFE5001CA48A /* SearchableComboListView.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		A6755F481D729A0500F3726C /* image_decoder */ = {
 			isa = PBXNativeTarget;
@@ -10991,6 +11074,11 @@
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
+						LastSwiftMigration = 1130;
+					};
+					A6725AE723D6DFE5001CA48A = {
+						CreatedOnToolsVersion = 11.3;
+						ProvisioningStyle = Automatic;
 					};
 					A6866B6623CAA10A00ACD94C = {
 						CreatedOnToolsVersion = 11.3;
@@ -11032,6 +11120,7 @@
 				A6755F481D729A0500F3726C /* image_decoder */,
 				A66717851DCE36C3000CE608 /* iTerm2SharedARC */,
 				A6866B6623CAA10A00ACD94C /* pidinfo */,
+				A6725AE723D6DFE5001CA48A /* SearchableComboListView */,
 			);
 		};
 /* End PBXProject section */
@@ -12321,6 +12410,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6725AE623D6DFE5001CA48A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6725AF723D6DFF1001CA48A /* SearchableComboView.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6866B6523CAA10A00ACD94C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -13206,6 +13303,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6725AE423D6DFE5001CA48A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6A77B9123DADE55008AACFE /* SearchableComboTableViewController.swift in Sources */,
+				A6725AF623D6DFF1001CA48A /* SearchableComboView.swift in Sources */,
+				A6A77B9523DADED6008AACFE /* SearchableComboViewStringAdditions.swift in Sources */,
+				A6A77B8F23DADE33008AACFE /* SearchableComboListSearchField.swift in Sources */,
+				A6A77B8D23DADDE7008AACFE /* SearchableComboListViewController.swift in Sources */,
+				A6A77B9323DADE72008AACFE /* SearchableComboTableView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6755F451D729A0500F3726C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -13614,6 +13724,11 @@
 			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
 			targetProxy = A667195D1DCE36EF000CE608 /* PBXContainerItemProxy */;
 		};
+		A6725AEE23D6DFE5001CA48A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A6725AE723D6DFE5001CA48A /* SearchableComboListView */;
+			targetProxy = A6725AED23D6DFE5001CA48A /* PBXContainerItemProxy */;
+		};
 		A6755F561D739E3C00F3726C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A6755F481D729A0500F3726C /* image_decoder */;
@@ -13716,7 +13831,7 @@
 		1809E7B11665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
@@ -13757,6 +13872,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
@@ -14381,7 +14497,7 @@
 		A656E9891F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
@@ -14421,6 +14537,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
@@ -14667,7 +14784,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty;
+				HEADER_SEARCH_PATHS = (
+					ThirdParty,
+					$PROJECT_DIR,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				"OTHER_CFLAGS[arch=*]" = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -14825,12 +14945,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SharedARC-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
@@ -14882,6 +15006,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -14892,6 +15018,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SharedARC-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
@@ -14939,11 +15068,15 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SharedARC-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
@@ -14990,16 +15123,308 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SharedARC-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
 				);
+			};
+			name = Nightly;
+		};
+		A6725AF223D6DFE5001CA48A /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = SearchableComboListView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Development;
+		};
+		A6725AF323D6DFE5001CA48A /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = SearchableComboListView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Deployment;
+		};
+		A6725AF423D6DFE5001CA48A /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = SearchableComboListView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Beta;
+		};
+		A6725AF523D6DFE5001CA48A /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = SearchableComboListView/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.SearchableComboListView;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
 			};
 			name = Nightly;
 		};
@@ -15448,7 +15873,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty;
+				HEADER_SEARCH_PATHS = (
+					ThirdParty,
+					$PROJECT_DIR,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -15507,7 +15935,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty;
+				HEADER_SEARCH_PATHS = (
+					ThirdParty,
+					$PROJECT_DIR,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = iTerm2Shared;
@@ -15560,7 +15991,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty;
+				HEADER_SEARCH_PATHS = (
+					ThirdParty,
+					$PROJECT_DIR,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -15764,7 +16198,7 @@
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
@@ -15805,6 +16239,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
@@ -15844,7 +16279,7 @@
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
@@ -15884,6 +16319,7 @@
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_VERIFY_BITCODE = NO;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
@@ -16050,6 +16486,17 @@
 				A66719591DCE36C3000CE608 /* Deployment */,
 				A656E9901F970C7200158128 /* Beta */,
 				A667195A1DCE36C3000CE608 /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A6725AF123D6DFE5001CA48A /* Build configuration list for PBXNativeTarget "SearchableComboListView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6725AF223D6DFE5001CA48A /* Development */,
+				A6725AF323D6DFE5001CA48A /* Deployment */,
+				A6725AF423D6DFE5001CA48A /* Beta */,
+				A6725AF523D6DFE5001CA48A /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;

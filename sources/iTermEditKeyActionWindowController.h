@@ -8,9 +8,16 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermVariableHistory.h"
 #import "iTermVariableScope.h"
 
 @class iTermAction;
+
+typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
+    iTermEditKeyActionWindowControllerModeKeyboardShortcut = 0,
+    iTermEditKeyActionWindowControllerModeTouchBarItem,
+    iTermEditKeyActionWindowControllerModeUnbound
+};
 
 @interface iTermEditKeyActionWindowController : NSWindowController
 
@@ -27,17 +34,12 @@
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
-- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context;
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context
+                           mode:(iTermEditKeyActionWindowControllerMode)mode;
 
 // Used by client to remember if this was opened to add a new mapping or edit an existing one.
 @property(nonatomic) BOOL isNewMapping;
 
-typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
-    iTermEditKeyActionWindowControllerModeKeyboardShortcut = 0,
-    iTermEditKeyActionWindowControllerModeTouchBarItem,
-    iTermEditKeyActionWindowControllerModeUnbound
-};
-
-@property(nonatomic) iTermEditKeyActionWindowControllerMode mode;
+@property(nonatomic, readonly) iTermEditKeyActionWindowControllerMode mode;
 
 @end
