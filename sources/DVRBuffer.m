@@ -251,6 +251,16 @@
     return scratch_;
 }
 
+- (ptrdiff_t)offsetOfPointer:(char *)pointer {
+    if (pointer == NULL) {
+        return -1;
+    }
+    if (store_ == NULL) {
+        return -2;
+    }
+    return pointer - store_;
+}
+
 - (long long)capacity
 {
     return capacity_;

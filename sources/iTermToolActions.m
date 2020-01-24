@@ -246,7 +246,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 }
 
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
-    iTermEditKeyActionWindowController *windowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession];
+    iTermEditKeyActionWindowController *windowController =
+    [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
+                                                           mode:iTermEditKeyActionWindowControllerModeUnbound];
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;
@@ -255,7 +257,6 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     }
     windowController.parameterValue = action.parameter;
     windowController.action = action.action;
-    windowController.mode = iTermEditKeyActionWindowControllerModeUnbound;
     [self.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
         [self editActionDidComplete:action];
     }];

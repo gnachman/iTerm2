@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermEditKeyActionWindowController">
             <connections>
-                <outlet property="_actionPopup" destination="GMz-jA-Nhg" id="FTh-b5-yVm"/>
                 <outlet property="_colorPresetsLabel" destination="TtY-N0-xlA" id="WGZ-eQ-7DP"/>
                 <outlet property="_colorPresetsPopup" destination="tld-gp-ZWP" id="pmR-N0-sjS"/>
+                <outlet property="_comboViewContainer" destination="rtR-KB-sUm" id="StD-xL-ZEV"/>
                 <outlet property="_keyboardShortcutLabel" destination="K5J-cS-cKV" id="OHV-3k-HGx"/>
                 <outlet property="_menuToSelectPopup" destination="Lul-IP-GkH" id="LCb-mY-zgC"/>
+                <outlet property="_okButton" destination="loN-RU-1Py" id="GFk-gT-zqx"/>
                 <outlet property="_parameter" destination="7JT-ar-Qef" id="2uA-Zc-mij"/>
                 <outlet property="_parameterLabel" destination="q03-HA-vno" id="4oO-Om-1Ub"/>
                 <outlet property="_pasteSpecialViewContainer" destination="6C1-2g-xev" id="Pck-1A-8hb"/>
@@ -26,20 +27,20 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Set Keyboard Shortcut" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
+        <window title="Set Keyboard Shortcut" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" resizable="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="442" height="157"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <view key="contentView" id="se5-gp-TjO">
                 <rect key="frame" x="0.0" y="0.0" width="442" height="157"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <view id="bKI-jb-USm">
+                    <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bKI-jb-USm">
                         <rect key="frame" x="0.0" y="0.0" width="442" height="157"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
                         <subviews>
-                            <textField verticalHuggingPriority="750" id="K5J-cS-cKV">
+                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5J-cS-cKV">
                                 <rect key="frame" x="17" y="119" width="127" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Keyboard Shortcut:" id="yKb-4m-EJs">
@@ -48,7 +49,7 @@
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField verticalHuggingPriority="750" id="SiS-Fz-x6B">
+                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SiS-Fz-x6B">
                                 <rect key="frame" x="17" y="94" width="127" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Action:" id="GiU-A2-oLi">
@@ -57,173 +58,7 @@
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <popUpButton verticalHuggingPriority="750" id="GMz-jA-Nhg">
-                                <rect key="frame" x="146" y="88" width="279" height="26"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <popUpButtonCell key="cell" type="push" title="Select Action" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="999" inset="2" pullsDown="YES" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="NkH-n8-Fjv">
-                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
-                                    <menu key="menu" title="OtherViews" id="BCW-Et-dPr">
-                                        <items>
-                                            <menuItem title="Select Action" tag="999" hidden="YES" id="GAT-06-TtI"/>
-                                            <menuItem title="Ignore" tag="13" id="1LJ-xG-847"/>
-                                            <menuItem isSeparatorItem="YES" id="VuU-ME-pRd"/>
-                                            <menuItem title="Do Not Remap Modifiers" tag="22" id="1Ky-4L-4JV"/>
-                                            <menuItem title="Remap Modifiers in iTerm2 Only" tag="24" id="bek-yf-XvE"/>
-                                            <menuItem isSeparatorItem="YES" id="9wX-9R-Bay"/>
-                                            <menuItem title="New Window with Profile" tag="26" id="rhK-QX-5hc">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="New Tab with Profile" tag="27" id="yer-8x-Rrr">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="vW0-Pi-EVl"/>
-                                            <menuItem title="Duplicate Tab" tag="61" id="Mfu-F0-x5K">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Move Session to Split Pane" tag="62" id="zLs-mG-pmk">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="Aaz-Cw-Dsa"/>
-                                            <menuItem title="Split Horizontally with Profile" tag="28" id="29Q-kA-i03">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Split Vertically with Profile" tag="29" id="zWO-IV-f1A">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="4fe-wh-9mG"/>
-                                            <menuItem title="Change Profile" tag="37" id="Mwu-nG-lFB">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Load Color Preset" tag="40" id="NOe-hG-2vD">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="xlM-Ek-XsE"/>
-                                            <menuItem title="Start Instant Replay" tag="15" id="ciX-9R-VBU">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="Zt3-jj-Skb"/>
-                                            <menuItem title="Cycle Tabs Forward" tag="32" id="2VY-V4-Nu1"/>
-                                            <menuItem title="Cycle Tabs Backward" tag="39" id="9pi-Go-k3E"/>
-                                            <menuItem title="Next Tab" id="SDw-y6-a1r"/>
-                                            <menuItem title="Previous Tab" tag="2" id="5Hd-lI-i2d"/>
-                                            <menuItem isSeparatorItem="YES" id="RnW-GR-lTX"/>
-                                            <menuItem title="Move Tab Left" tag="33" id="5wC-T7-Nqr"/>
-                                            <menuItem title="Move Tab Right" tag="34" id="BGE-1U-XuD"/>
-                                            <menuItem isSeparatorItem="YES" id="cac-Kj-Tyz"/>
-                                            <menuItem title="Next Window" tag="1" id="Vyn-Fe-bEL"/>
-                                            <menuItem title="Previous Window" tag="3" id="kP7-3M-ZgN"/>
-                                            <menuItem isSeparatorItem="YES" id="JRu-pJ-Ma0"/>
-                                            <menuItem title="Next Pane" tag="30" id="pHE-Ud-5v3"/>
-                                            <menuItem title="Previous Pane" tag="31" id="Z36-1b-EXY"/>
-                                            <menuItem isSeparatorItem="YES" id="KeO-Bs-txv"/>
-                                            <menuItem title="Decrease Height" tag="49" id="EpA-2v-9s0">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Increase Height" tag="50" id="76W-hp-334">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Decrease Width" tag="51" id="TdK-gh-sNx">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Increase Width" tag="52" id="mHj-xJ-MJH">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="xVG-IF-xul"/>
-                                            <menuItem title="Scroll to End" tag="4" id="Mrs-CO-Zqo"/>
-                                            <menuItem title="Scroll to Top" tag="5" id="Gnz-HA-ehs"/>
-                                            <menuItem title="Scroll One Line Down" tag="6" id="i7U-mp-pzT"/>
-                                            <menuItem title="Scroll One Line Up" tag="7" id="EiN-bf-soZ"/>
-                                            <menuItem title="Scroll One Page Down" tag="8" id="Ubz-Ra-sDW"/>
-                                            <menuItem title="Scroll One Page Up" tag="9" id="Zv0-lG-YWl"/>
-                                            <menuItem isSeparatorItem="YES" id="fvC-Ga-wJE"/>
-                                            <menuItem title="Select Split Pane Above" tag="20" id="vSs-10-uDh">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Select Split Pane Below" tag="21" id="DwZ-M0-Hx7">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Select Split Pane On Left" tag="18" id="5o3-Un-MAf">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Select Split Pane On Right" tag="19" id="DNl-nX-yXT">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="Wdb-df-nzr"/>
-                                            <menuItem title="Swap With Split Pane Above" tag="55" id="ode-hA-x73">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Swap With Split Pane Below" tag="56" id="ZY0-cI-XLp">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Swap With Split Pane on Left" tag="53" id="FzR-E6-3aa">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Swap With Split Pane on Right" tag="54" id="FxY-zD-K4z">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="3ly-ho-Okc"/>
-                                            <menuItem title="Send ^H Backspace" tag="16" id="h8d-9v-j74">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Send ^? Backspace" tag="17" id="soB-AH-rEI">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Send Escape Sequence" tag="10" id="wWj-9U-Z2G"/>
-                                            <menuItem title="Send Hex Code" tag="11" id="YXc-hq-7p6"/>
-                                            <menuItem title="Send Text" tag="12" id="ky6-A2-dO2"/>
-                                            <menuItem title="Send Text with &quot;vim&quot; Special Chars" tag="38" id="gkw-IL-5aH"/>
-                                            <menuItem isSeparatorItem="YES" id="rDx-uC-uV7"/>
-                                            <menuItem title="Find Regular Expression…" tag="36" id="cm6-Qm-ZZ2">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Find Again Down" tag="57" id="HpW-sT-CrS">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Find Again Up" tag="58" id="SbI-2u-CFv">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="33m-xl-Tut"/>
-                                            <menuItem title="Undo" tag="44" id="jbm-dN-Ohe">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="kJn-FB-e1e"/>
-                                            <menuItem title="Paste…" tag="41" id="A2O-gZ-DLd">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Paste from Selection…" tag="42" id="6or-vm-lir">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="2kX-33-g8o"/>
-                                            <menuItem title="Toggle Fullscreen" tag="23" id="SzE-61-BL1"/>
-                                            <menuItem title="Toggle Pin Hotkey Window" tag="43" id="foW-Ca-dgS">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem title="Toggle Mouse Reporting" tag="59" id="4wm-MJ-Y2A">
-                                                <modifierMask key="keyEquivalentModifierMask"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="svX-cj-e8M"/>
-                                            <menuItem title="Run Coprocess" tag="35" id="m6l-mc-bhF"/>
-                                            <menuItem isSeparatorItem="YES" id="D8m-Tb-i1k"/>
-                                            <menuItem title="Move Start of Selection Back" tag="47" id="YBg-Ld-iyY"/>
-                                            <menuItem title="Move Start of Selection Forward" tag="48" id="OUd-6i-YQe"/>
-                                            <menuItem title="Move End of Selection Back" tag="45" id="L33-q3-stz"/>
-                                            <menuItem title="Move End of Selection Forward" tag="46" id="xRC-3K-RlB"/>
-                                            <menuItem isSeparatorItem="YES" id="c8c-8I-caf"/>
-                                            <menuItem title="Invoke Script Function…" tag="60" id="haJ-OE-peX">
-                                                <modifierMask key="keyEquivalentModifierMask" shift="YES"/>
-                                            </menuItem>
-                                            <menuItem isSeparatorItem="YES" id="F8k-hs-TuO"/>
-                                            <menuItem title="Select Menu Item..." tag="25" id="diP-BY-3qB"/>
-                                        </items>
-                                    </menu>
-                                </popUpButtonCell>
-                                <connections>
-                                    <action selector="actionChanged:" target="-2" id="9MG-4j-Yei"/>
-                                    <outlet property="nextKeyView" destination="a20-Tf-Nfn" id="0AP-43-Ryr"/>
-                                </connections>
-                            </popUpButton>
-                            <button verticalHuggingPriority="750" id="loN-RU-1Py">
+                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="loN-RU-1Py">
                                 <rect key="frame" x="350" y="12" width="78" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="zMC-Yr-nMr">
@@ -237,7 +72,7 @@ DQ
                                     <action selector="ok:" target="-2" id="31B-Ka-qYl"/>
                                 </connections>
                             </button>
-                            <button verticalHuggingPriority="750" id="rEh-rY-u5S">
+                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rEh-rY-u5S">
                                 <rect key="frame" x="268" y="12" width="82" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="Fhv-Fo-bzd">
@@ -252,7 +87,7 @@ Gw
                                     <outlet property="nextKeyView" destination="loN-RU-1Py" id="GED-58-mTI"/>
                                 </connections>
                             </button>
-                            <textField verticalHuggingPriority="750" id="q03-HA-vno" userLabel="Parameter Label">
+                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q03-HA-vno" userLabel="Parameter Label">
                                 <rect key="frame" x="106" y="48" width="318" height="33"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Esc+" id="WbG-ev-YAV">
@@ -261,55 +96,57 @@ Gw
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField verticalHuggingPriority="750" id="OcE-sI-T64" userLabel="Shortcut Text Field" customClass="iTermShortcutInputView">
+                            <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OcE-sI-T64" userLabel="Shortcut Text Field" customClass="iTermShortcutInputView">
                                 <rect key="frame" x="149" y="119" width="273" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="lcf-pM-rft">
                                     <font key="font" metaFont="system"/>
-                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <outlet property="nextKeyView" destination="GMz-jA-Nhg" id="guP-x7-Cen"/>
                                     <outlet property="shortcutDelegate" destination="-2" id="gNJ-U2-3Ko"/>
                                 </connections>
                             </textField>
-                            <textField verticalHuggingPriority="750" misplaced="YES" id="oHw-49-aB1" userLabel="Touch Bar Label">
+                            <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oHw-49-aB1" userLabel="Touch Bar Label">
                                 <rect key="frame" x="150" y="119" width="273" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Label to show in Touch Bar" drawsBackground="YES" id="mYT-YJ-w7Z">
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Label to show in Touch Bar" drawsBackground="YES" id="mYT-YJ-w7Z">
                                     <font key="font" metaFont="system"/>
-                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
+                                <connections>
+                                    <outlet property="delegate" destination="-2" id="oMf-on-bkf"/>
+                                </connections>
                             </textField>
-                            <textField verticalHuggingPriority="750" id="7JT-ar-Qef" userLabel="Parameter">
+                            <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7JT-ar-Qef" userLabel="Parameter">
                                 <rect key="frame" x="149" y="62" width="273" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="ex: 0x7f" drawsBackground="YES" id="QTL-FQ-Diu">
                                     <font key="font" metaFont="system"/>
-                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <popUpButton hidden="YES" verticalHuggingPriority="750" id="a20-Tf-Nfn" userLabel="Profile popup">
+                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="a20-Tf-Nfn" userLabel="Profile popup">
                                 <rect key="frame" x="146" y="58" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="XwG-yb-SyJ">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
+                                    <font key="font" metaFont="system"/>
                                     <menu key="menu" title="OtherViews" id="8e1-tH-zIt"/>
                                 </popUpButtonCell>
                                 <connections>
                                     <outlet property="nextKeyView" destination="rEh-rY-u5S" id="DN4-rw-W4G"/>
                                 </connections>
                             </popUpButton>
-                            <popUpButton hidden="YES" verticalHuggingPriority="750" id="otv-pU-Wmk" userLabel="Selection movement unit">
+                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="otv-pU-Wmk" userLabel="Selection movement unit">
                                 <rect key="frame" x="146" y="58" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4Hl-iX-9pJ">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
+                                    <font key="font" metaFont="system"/>
                                     <menu key="menu" title="OtherViews" id="Xfc-fg-vql">
                                         <items>
                                             <menuItem title="Move by Character" id="nyw-Fu-OuP">
@@ -331,7 +168,7 @@ Gw
                                     <outlet property="nextKeyView" destination="rEh-rY-u5S" id="2rA-Ji-ce8"/>
                                 </connections>
                             </popUpButton>
-                            <textField hidden="YES" verticalHuggingPriority="750" id="mKz-sR-Rez" userLabel="Profile Label">
+                            <textField hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mKz-sR-Rez" userLabel="Profile Label">
                                 <rect key="frame" x="96" y="64" width="48" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Profile:" id="T00-UT-45K">
@@ -340,7 +177,7 @@ Gw
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField hidden="YES" verticalHuggingPriority="750" id="TtY-N0-xlA" userLabel="Color Preset Label">
+                            <textField hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TtY-N0-xlA" userLabel="Color Preset Label">
                                 <rect key="frame" x="58" y="64" width="85" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Color Preset:" id="gdc-og-Wst">
@@ -349,26 +186,30 @@ Gw
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <popUpButton hidden="YES" verticalHuggingPriority="750" id="Lul-IP-GkH" userLabel="Menu items popup">
+                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Lul-IP-GkH" userLabel="Menu items popup">
                                 <rect key="frame" x="146" y="59" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="1oe-ia-azx">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
+                                    <font key="font" metaFont="system"/>
                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="3Rv-I7-dMV"/>
                                 </popUpButtonCell>
                             </popUpButton>
-                            <popUpButton hidden="YES" verticalHuggingPriority="750" id="tld-gp-ZWP" userLabel="Color presets popup">
+                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tld-gp-ZWP" userLabel="Color presets popup">
                                 <rect key="frame" x="146" y="59" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="Hw8-s8-mNF">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
+                                    <font key="font" metaFont="system"/>
                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="ZT2-C7-qf5"/>
                                 </popUpButtonCell>
                             </popUpButton>
-                            <customView id="6C1-2g-xev">
+                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6C1-2g-xev">
                                 <rect key="frame" x="20" y="-164" width="444" height="248"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            </customView>
+                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rtR-KB-sUm">
+                                <rect key="frame" x="146" y="89" width="279" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>

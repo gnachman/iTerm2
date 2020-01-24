@@ -2821,6 +2821,12 @@
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B540FA224838A100D3AD14 /* NSColor+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B540F8224838A100D3AD14 /* NSColor+PSM.h */; };
 		A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B540F9224838A100D3AD14 /* NSColor+PSM.m */; };
+		A6B5582423DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; };
+		A6B5582523DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; };
+		A6B5582623DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; };
+		A6B5582723DD08F500F5DF2D /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6B5582823DD090400F5DF2D /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6B5582923DD090D00F5DF2D /* SearchableComboListView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6B6A4FD23CEE6E80016B1AE /* iTermOrderEnforcer.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B6A4FB23CEE6E80016B1AE /* iTermOrderEnforcer.h */; };
 		A6B6A4FE23CEE6E80016B1AE /* iTermOrderEnforcer.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B6A4FC23CEE6E80016B1AE /* iTermOrderEnforcer.m */; };
 		A6B70FBB19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
@@ -3766,6 +3772,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6B5582923DD090D00F5DF2D /* SearchableComboListView.framework in CopyFiles */,
 				A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */,
@@ -3780,6 +3787,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6B5582823DD090400F5DF2D /* SearchableComboListView.framework in CopyFiles */,
 				A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */,
@@ -3794,6 +3802,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6B5582723DD08F500F5DF2D /* SearchableComboListView.framework in CopyFiles */,
 				530AB89C20AFF23400D2AA08 /* CoreParse.framework in CopyFiles */,
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
@@ -5765,6 +5774,7 @@
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B540F8224838A100D3AD14 /* NSColor+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColor+PSM.h"; sourceTree = "<group>"; };
 		A6B540F9224838A100D3AD14 /* NSColor+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSColor+PSM.m"; sourceTree = "<group>"; };
+		A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SearchableComboListView.framework; path = SearchableComboListView/SearchableComboListView.framework; sourceTree = "<group>"; };
 		A6B6A4FB23CEE6E80016B1AE /* iTermOrderEnforcer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOrderEnforcer.h; sourceTree = "<group>"; };
 		A6B6A4FC23CEE6E80016B1AE /* iTermOrderEnforcer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOrderEnforcer.m; sourceTree = "<group>"; };
 		A6B70FB919830C37007A4284 /* dead.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = dead.png; path = images/dead.png; sourceTree = "<group>"; };
@@ -6251,6 +6261,7 @@
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
 				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
 				A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
+				A6B5582623DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
 				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
 				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
@@ -6270,6 +6281,7 @@
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				530AB89A20AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
+				A6B5582523DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
@@ -6297,6 +6309,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
+				A6B5582423DD05A300F5DF2D /* SearchableComboListView.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
@@ -7483,6 +7496,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6B5582323DD05A300F5DF2D /* SearchableComboListView.framework */,
 				A6661309225CFF5A00840E89 /* BetterFontPicker.framework */,
 				A67D194E2237045C00BD0D4D /* libsixel.a */,
 				A608CCF2214DE6E8007A7B87 /* XCTest.framework */,
@@ -13734,6 +13748,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13805,6 +13820,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -13875,6 +13891,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -13942,6 +13959,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -14019,6 +14037,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -14098,6 +14117,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -14170,6 +14190,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -14399,6 +14420,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -14481,6 +14503,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -14578,6 +14601,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -14812,6 +14836,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -14863,6 +14888,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -14926,6 +14952,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -14978,6 +15005,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -15782,6 +15810,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -15862,6 +15891,7 @@
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
