@@ -18,6 +18,7 @@
 }
 
 - (void)updateConfigurationWithEvent:(NSEvent *)event {
+    DLog(@"Load configuration for event %@", event);
     _event = event;
     [self.delegate standardKeyMapperWillMapKey:self];
 }
@@ -382,6 +383,10 @@
 }
 
 #pragma mark - iTermKeyMapper
+
+- (void)keyMapperSetEvent:(NSEvent *)event {
+    [self updateConfigurationWithEvent:event];
+}
 
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
     if (event.type != NSEventTypeKeyDown) {

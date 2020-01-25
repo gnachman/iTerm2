@@ -33,6 +33,9 @@ NS_ASSUME_NONNULL_BEGIN
 // event should go through the IME.
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event;
 
+// Prepare to handle this event. Update config from delegate.
+- (void)keyMapperSetEvent:(NSEvent *)event;
+
 @optional
 - (void)setDelegate:(id)delegate;
 

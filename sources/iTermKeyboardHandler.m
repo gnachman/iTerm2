@@ -239,6 +239,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
                    context:(iTermKeyboardHandlerContext)context
               inputContext:(NSTextInputContext *)inputContext {
     const unsigned int modflag = [event it_modifierFlags];
+    [_keyMapper keyMapperSetEvent:event];
 
     // Should we process the event immediately in the delegate?
     if ([self shouldSendEventToController:event context:context]) {

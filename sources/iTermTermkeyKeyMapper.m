@@ -591,6 +591,10 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 
 #pragma mark - iTerm
 
+- (void)keyMapperSetEvent:(NSEvent *)event {
+    [self updateConfigurationWithEvent:event];
+}
+
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
     if (event.type != NSEventTypeKeyDown) {
         return nil;

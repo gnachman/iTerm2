@@ -12,6 +12,9 @@
 
 @implementation iTermRawKeyMapper
 
+- (void)keyMapperSetEvent:(NSEvent *)event {
+}
+
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
     return [self rawKeyStringForEvent:event];
 }
