@@ -174,11 +174,9 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
-static NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 
 static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
-static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -326,6 +324,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
 @property(nonatomic, retain) VT100RemoteHost *currentHost;
+@property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 @end
 
 @implementation PTYSession {
@@ -905,6 +904,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_logging release];
     [_naggingController release];
     [_expect release];
+    [_pasteBracketingOopsieExpectation release];
 
     [super dealloc];
 }
@@ -9946,41 +9946,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)offerToTurnOffBracketedPasteOnHostChange {
-    NSString *title =
-        @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
-    iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:title
-                                                     style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"_Yes", @"Always", @"Never", @"Help" ]
-                                                completion:^(int selection) {
-            switch (selection) {
-                case -2:  // Dismiss programmatically
-                    break;
-
-                case -1: // No
-                    break;
-
-                case 0: // Yes
-                    self.terminal.bracketedPasteMode = NO;
-                    break;
-
-                case 1: // Always
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-                    self.terminal.bracketedPasteMode = NO;
-                    break;
-
-                case 2: // Never
-                    [[NSUserDefaults standardUserDefaults] setBool:NO
-                                                            forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-                    break;
-
-                case 3: // Help
-                    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
-                    break;
-            }
-        }];
-    [self queueAnnouncement:announcement identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
+    [self.naggingController offerToTurnOffBracketedPasteOnHostChange];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
@@ -10880,6 +10846,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)pasteHelperWriteString:(NSString *)string {
     [self writeTask:string];
+    if (_pasteHelper.pasteContext.bytesWritten == 0 &&
+        _pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket &&
+        [_terminal bracketedPasteMode]) {
+        [self watchForPasteBracketingOopsieWithPrefix:[_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4]];
+    }
 }
 
 - (void)pasteHelperKeyDown:(NSEvent *)event {
@@ -12345,6 +12316,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     [self.terminal setMouseMode:MOUSE_REPORTING_NONE];
+}
+
+- (void)naggingControllerDisableBracketedPasteMode {
+    self.terminal.bracketedPasteMode = NO;
 }
 
 @end

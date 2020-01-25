@@ -200,7 +200,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         theString = [temp stringWithBase64EncodingWithLineBreak:@"\r"];
     }
 
-    pasteEvent.string = theString;
+    [pasteEvent setModifiedString:theString];
 }
 
 - (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig {
@@ -322,10 +322,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
     if (pasteEvent.flags & kPasteFlagsBracket) {
         DLog(@"Bracketing string to paste.");
-        NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
-        NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
-        NSArray *components = @[ startBracket, pasteEvent.string, endBracket ];
-        pasteEvent.string = [components componentsJoinedByString:@""];
+        [pasteEvent addPasteBracketing];
     }
 
     DLog(@"String to paste now has length %@", @(pasteEvent.string.length));
@@ -335,28 +332,25 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         return;
     }
 
-    [_buffer appendString:pasteEvent.string];
-    [self pasteWithBytePerCallPrefKey:pasteEvent.chunkKey
-                         defaultValue:pasteEvent.defaultChunkSize
-             delayBetweenCallsPrefKey:pasteEvent.delayKey
-                         defaultValue:pasteEvent.defaultDelay
-                       blockAtNewline:!!(pasteEvent.flags & kPasteFlagsCommands)
-                             isUpload:pasteEvent.isUpload
-                             progress:pasteEvent.progress];
+    [self pasteLiteralEventUnconditionallyImmediately:pasteEvent];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
 // Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
 - (void)pasteSlowly:(NSString *)theString {
     DLog(@"pasteSlowly length=%@", @(theString.length));
-    [_buffer appendString:theString];
-    [self pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
-                         defaultValue:16
-             delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
-                         defaultValue:0.125
-                       blockAtNewline:NO
-                             isUpload:NO
-                             progress:nil];
+    PasteEvent *pasteEvent = [PasteEvent pasteEventWithString:theString
+                                                        flags:0
+                                             defaultChunkSize:16
+                                                     chunkKey:@"SlowPasteBytesPerCall"
+                                                 defaultDelay:0.125
+                                                     delayKey:@"SlowPasteDelayBetweenCalls"
+                                                tabTransform:kTabTransformNone
+                                                 spacesPerTab:4
+                                                        regex:nil
+                                                 substitution:nil];
+
+    [self pasteLiteralEventUnconditionallyImmediately:pasteEvent];
 }
 
 - (void)pasteNormally:(NSString *)aString {
@@ -364,14 +358,18 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     // This is the "normal" way of pasting. It's fast but tends not to
     // outrun a shell's ability to read from its buffer. Why this crazy
     // thing? See bug 1031.
-    [_buffer appendString:aString];
-    [self pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                         defaultValue:iTermQuickPasteBytesPerCallDefaultValue
-             delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                         defaultValue:0.01
-                       blockAtNewline:NO
-                             isUpload:NO
-                             progress:nil];
+    PasteEvent *pasteEvent = [PasteEvent pasteEventWithString:aString
+                                                        flags:0
+                                             defaultChunkSize:iTermQuickPasteBytesPerCallDefaultValue
+                                                     chunkKey:@"QuickPasteBytesPerCall"
+                                                 defaultDelay:0.01
+                                                     delayKey:@"QuickPasteDelayBetweenCalls"
+                                                tabTransform:kTabTransformNone
+                                                 spacesPerTab:4
+                                                        regex:nil
+                                                 substitution:nil];
+
+    [self pasteLiteralEventUnconditionallyImmediately:pasteEvent];
 }
 
 - (NSInteger)normalChunkSize {
@@ -500,29 +498,19 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 }
 
-- (void)pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
-                       defaultValue:(int)bytesPerCallDefault
-           delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                       defaultValue:(float)delayBetweenCallsDefault
-                     blockAtNewline:(BOOL)blockAtNewline
-                           isUpload:(BOOL)isUpload
-                           progress:(void (^)(NSInteger))progress {
+- (void)pasteLiteralEventUnconditionallyImmediately:(PasteEvent *)pasteEvent {
+    [_buffer appendString:pasteEvent.string];
+
     [_pasteContext release];
-    _pasteContext = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
-                                                         defaultValue:bytesPerCallDefault
-                                             delayBetweenCallsPrefKey:delayBetweenCallsKey
-                                                         defaultValue:delayBetweenCallsDefault];
-    _pasteContext.blockAtNewline = blockAtNewline;
-    _pasteContext.isUpload = isUpload;
-    _pasteContext.progress = progress;
+    _pasteContext = [[PasteContext alloc] initWithPasteEvent:pasteEvent];
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     const NSTimeInterval sumOfDelays =
         _pasteContext.delayBetweenCalls * _buffer.length / _pasteContext.bytesPerCall;
     const NSTimeInterval timeSpentWriting = _buffer.length / kPasteBytesPerSecond;
     const NSTimeInterval kMinEstimatedPasteTimeToShowIndicator = 3;
-    if (!isUpload) {
+    if (!pasteEvent.isUpload) {
         if ((sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) ||
-            blockAtNewline) {
+            _pasteContext.blockAtNewline) {
             [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]
                    statusBarViewController:[_delegate pasteHelperStatusBarViewController]];
         }
@@ -600,11 +588,9 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     iTermWarningAction *pasteWithoutNewline =
         [iTermWarningAction warningActionWithLabel:@"Paste Without Newline"
                                              block:^(iTermWarningSelection selection) {
-                                                 NSCharacterSet *newlines = [NSCharacterSet newlineCharacterSet];
-                                                 pasteEvent.string =
-                                                     [pasteEvent.string stringByTrimmingTrailingCharactersFromCharacterSet:newlines];
-                                                 result = YES;
-                                             }];
+            [pasteEvent trimNewlines];
+            result = YES;
+        }];
 
     [actions addObject:paste];
     [actions addObject:cancel];
@@ -663,10 +649,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                tabTransform:kTabTransformNone
                                                spacesPerTab:4
                                                    progress:nil];
-    PasteContext *temporaryContext = [[[PasteContext alloc] initWithBytesPerCallPrefKey:temporaryEvent.chunkKey
-                                                                           defaultValue:temporaryEvent.defaultChunkSize
-                                                               delayBetweenCallsPrefKey:temporaryEvent.delayKey
-                                                                           defaultValue:temporaryEvent.defaultDelay] autorelease];
+    PasteContext *temporaryContext = [[[PasteContext alloc] initWithPasteEvent:temporaryEvent] autorelease];
     [iTermPasteSpecialWindowController showAsPanelInWindow:self.delegate.pasteHelperViewForIndicator.window
                                                  chunkSize:temporaryContext.bytesPerCall
                                         delayBetweenChunks:temporaryContext.delayBetweenCalls

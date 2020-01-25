@@ -186,6 +186,51 @@
     return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
 }
 
+- (NSString *)it_substringToIndex:(NSInteger)index {
+    if (index < 0) {
+        return @"";
+    }
+    if (self.length < index) {
+        return self;
+    }
+    return [self substringToIndex:index];
+}
+
+- (void)enumerateLongCharacters:(void (^)(UTF32Char c, BOOL *stop))block {
+    const NSInteger length = self.length;
+    BOOL expectingLowSurrogate = NO;
+    unichar highSurrogate = 0;
+
+    BOOL stop = NO;
+    for (NSInteger i = 0; !stop && i < length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (IsHighSurrogate(c)) {
+            // If the previous character was also a high surrogate, quitely ignore it.
+            expectingLowSurrogate = YES;
+            highSurrogate = c;
+            continue;
+        }
+        if (IsLowSurrogate(c)) {
+            if (expectingLowSurrogate) {
+                block(DecodeSurrogatePair(highSurrogate, c), &stop);
+                expectingLowSurrogate = NO;
+            }
+            // If the previous character was not a high surrogate, quitely ignore this one.
+            continue;
+        }
+        // Not a surrogate
+        block(c, &stop);
+    }
+}
+
+- (NSString *)it_escapedForRegex {
+    NSMutableString *result = [NSMutableString string];
+    [self enumerateLongCharacters:^(UTF32Char c, BOOL *stop) {
+        [result appendFormat:@"\\U%08x", c];
+    }];
+    return result;
+}
+
 - (NSArray *)componentsInShellCommand {
     return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ @'n': @"\n",
                                                                               @'a': @"\x07",

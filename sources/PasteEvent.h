@@ -50,7 +50,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 
 @interface PasteEvent : NSEvent
 
-@property(nonatomic, copy) NSString *string;
+@property(nonatomic, copy, readonly) NSString *originalString;
+@property(nonatomic, readonly) NSString *string;
 @property(nonatomic, assign) iTermPasteFlags flags;
 @property(nonatomic, assign) int defaultChunkSize;
 @property(nonatomic, copy) NSString *chunkKey;
@@ -78,5 +79,9 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
                         spacesPerTab:(int)spacePerTab
                                regex:(NSString *)regex
                         substitution:(NSString *)substitution;
+
+- (void)setModifiedString:(NSString *)modifiedString;
+- (void)addPasteBracketing;
+- (void)trimNewlines;
 
 @end

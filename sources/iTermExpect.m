@@ -135,4 +135,13 @@
     [_expectations removeObject:expectation];
 }
 
+- (void)setTimeout:(NSTimeInterval)timeout forExpectation:(iTermExpectation *)expectation {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!expectation.hasCompleted) {
+            [weakSelf cancelExpectation:expectation];
+        }
+    });
+}
+
 @end

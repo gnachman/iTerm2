@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class PasteEvent;
+
 @interface PasteContext : NSObject
 
 @property(nonatomic, assign) int bytesPerCall;
@@ -17,11 +19,9 @@
 @property(nonatomic, assign) BOOL isUpload;
 @property(nonatomic, copy) void (^progress)(NSInteger);
 @property(nonatomic, assign) NSInteger bytesWritten;
+@property(nonatomic, readonly) PasteEvent *pasteEvent;
 
-- (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
-                     defaultValue:(int)bytesPerCallDefault
-         delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                     defaultValue:(float)delayBetweenCallsDefault;
+- (instancetype)initWithPasteEvent:(PasteEvent *)pasteEvent;
 
 - (void)updateValues;
 

@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchAutoLogFilenameWithCompletion:(void (^)(NSString *filename))completion;
 - (void)setTermIDIfPossible;
+- (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix;
 
 @end
 

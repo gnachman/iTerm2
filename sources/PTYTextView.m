@@ -3073,8 +3073,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[PasteboardHistory sharedInstance] save:[copyAttributedString string]];
 }
 
-- (void)paste:(id)sender
-{
+- (void)paste:(id)sender {
     DLog(@"Checking if delegate %@ can paste", _delegate);
     if ([_delegate respondsToSelector:@selector(paste:)]) {
         DLog(@"Calling paste on delegate.");

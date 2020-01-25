@@ -8,6 +8,7 @@
 
 #import "PasteContext.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "PasteEvent.h"
 
 @interface PasteContext ()
 @property(nonatomic, copy) NSString *bytesPerCallKey;
@@ -16,27 +17,35 @@
 
 @implementation PasteContext
 
+- (instancetype)initWithPasteEvent:(PasteEvent *)pasteEvent {
+    self = [self initWithBytesPerCallPrefKey:pasteEvent.chunkKey
+                                defaultValue:pasteEvent.defaultChunkSize
+                    delayBetweenCallsPrefKey:pasteEvent.delayKey
+                                defaultValue:pasteEvent.defaultDelay
+                                  pasteEvent:pasteEvent];
+    if (self) {
+        self.blockAtNewline = !!(pasteEvent.flags & kPasteFlagsCommands);
+        self.isUpload = pasteEvent.isUpload;
+        self.progress = pasteEvent.progress;
+    }
+    return self;
+}
+
 - (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault
          delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                      defaultValue:(float)delayBetweenCallsDefault
-{
+                                 pasteEvent:(PasteEvent *)pasteEvent {
     self = [super init];
     if (self) {
         _bytesPerCallKey = [bytesPerCallKey copy];
         _bytesPerCall = bytesPerCallDefault;
         _delayBetweenCallsKey = [delayBetweenCallsKey copy];
         _delayBetweenCalls = delayBetweenCallsDefault;
+        _pasteEvent = pasteEvent;
         [self updateValues];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_progress release];
-    [_bytesPerCallKey release];
-    [_delayBetweenCallsKey release];
-    [super dealloc];
 }
 
 - (void)updateValues {

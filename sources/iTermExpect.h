@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL hasCompleted;
 @property (nullable, nonatomic, strong, readonly) iTermExpectation *successor;
 @property (nonatomic, readonly) iTermExpectation *lastExpectation;  // self or successor
+
 - (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups;
+
 @end
 
 @interface iTermExpect : NSObject
@@ -29,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
                                    completion:(void (^)(NSArray<NSString *> *captureGroups))completion;
 
 - (void)cancelExpectation:(iTermExpectation *)expectation;
+- (void)setTimeout:(NSTimeInterval)timeout forExpectation:(iTermExpectation *)expectation;
 
 @end
 

@@ -8,7 +8,11 @@
 
 #import "PasteEvent.h"
 
-@implementation PasteEvent
+#import "NSStringITerm.h"
+
+@implementation PasteEvent {
+    NSString *_modifiedString;
+}
 
 + (PasteEvent *)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags
@@ -20,8 +24,8 @@
                         spacesPerTab:(int)spacesPerTab
                                regex:(NSString *)regex
                         substitution:(NSString *)substitution {
-    PasteEvent *pasteEvent = [[[PasteEvent alloc] init] autorelease];
-    pasteEvent.string = string;
+    PasteEvent *pasteEvent = [[PasteEvent alloc] init];
+    pasteEvent->_originalString = [string copy];
     pasteEvent.flags = flags;
     pasteEvent.chunkKey = chunkKey;
     pasteEvent.defaultChunkSize = defaultChunkSize;
@@ -34,14 +38,24 @@
     return pasteEvent;
 }
 
-- (void)dealloc {
-    [_string release];
-    [_chunkKey release];
-    [_delayKey release];
-    [_regex release];
-    [_substitution release];
-    [_progress release];
-    [super dealloc];
+- (NSString *)string {
+    return _modifiedString ?: _originalString;
+}
+
+- (void)setModifiedString:(NSString *)modifiedString {
+    _modifiedString = [modifiedString copy];
+}
+
+- (void)addPasteBracketing {
+    NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
+    NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
+    NSArray *components = @[ startBracket, self.string, endBracket ];
+    [self setModifiedString:[components componentsJoinedByString:@""]];
+}
+
+- (void)trimNewlines {
+    NSCharacterSet *newlines = [NSCharacterSet newlineCharacterSet];
+    [self setModifiedString:[self.string stringByTrimmingTrailingCharactersFromCharacterSet:newlines]];
 }
 
 @end

@@ -16,6 +16,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
+@class PasteContext;
 
 @protocol iTermPasteHelperDelegate <NSObject>
 
@@ -56,6 +57,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 @property(nonatomic, readonly) BOOL isPasting;
 @property(nonatomic, readonly) BOOL dropDownPasteViewIsVisible;
 @property(nonatomic, readonly) BOOL isWaitingForPrompt;
+@property(nonatomic, readonly) PasteContext *pasteContext;
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 

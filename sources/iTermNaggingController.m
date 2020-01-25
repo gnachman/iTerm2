@@ -21,6 +21,8 @@ static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier
 static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifier = @"Tmux2.2SupplementaryPlaneAnnouncement";
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
 static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
+static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
+NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled = @"NoSyncNeverAskAboutMouseReportingFrustration";
@@ -305,6 +307,45 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
             break;
         }
     }
+}
+
+- (void)offerToTurnOffBracketedPasteOnHostChange {
+    NSString *title;
+    title = @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+
+    [self.delegate naggingControllerShowMessage:title
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier
+                                        options:@[ @"_Yes", @"Always", @"Never", @"Help" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // No
+                break;
+
+            case 0: // Yes
+                [self.delegate naggingControllerDisableBracketedPasteMode];
+                break;
+
+            case 1: // Always
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                [self.delegate naggingControllerDisableBracketedPasteMode];
+                break;
+
+            case 2: // Never
+                [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                        forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                break;
+
+            case 3: // Help
+                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
+                break;
+        }
+    }];
 }
 
 
