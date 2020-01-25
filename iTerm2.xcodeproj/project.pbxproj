@@ -1249,6 +1249,7 @@
 		534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690271C94FF0000B7E4E9 /* overflowImagePressed.png */; };
 		5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */; };
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
+		534B6C6723DC139C0031FED2 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
 		5357E41E22682B2100FE5A55 /* CPParser+Cache.h in Headers */ = {isa = PBXBuildFile; fileRef = 5357E41C22682B2100FE5A55 /* CPParser+Cache.h */; };
 		5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */ = {isa = PBXBuildFile; fileRef = 5357E41D22682B2100FE5A55 /* CPParser+Cache.m */; };
 		535B3BB92228DC5500D6D410 /* iTermAlertBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 535B3BB72228DC5500D6D410 /* iTermAlertBuiltInFunction.h */; };
@@ -2979,7 +2980,6 @@
 		A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
 		A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
 		A6C762A71B45C52B00E3C992 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
-		A6C762A81B45C52B00E3C992 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
 		A6C762A91B45C52B00E3C992 /* PTYTab+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655C819AD2B1A001C460B /* PTYTab+Scripting.m */; };
 		A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */; };
 		A6C762AB1B45C52B00E3C992 /* FutureMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */; };
@@ -12868,6 +12868,7 @@
 				53E9DFE7220D53230070C9C0 /* Trigger.m in Sources */,
 				A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */,
 				A63011BA20E83000008114B7 /* iTermStatusBarKnobTextViewController.m in Sources */,
+				534B6C6723DC139C0031FED2 /* PTYSession+Scripting.m in Sources */,
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
@@ -13237,7 +13238,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6C763221B45C52B00E3C992 /* iTermWarning.m in Sources */,
-				A6C762A81B45C52B00E3C992 /* PTYSession+Scripting.m in Sources */,
 				A6C762C31B45C52B00E3C992 /* NSView+RecursiveDescription.m in Sources */,
 				A6C763611B45C52B00E3C992 /* PopupModel.m in Sources */,
 				A6C762F51B45C52B00E3C992 /* GlobalSearch.m in Sources */,

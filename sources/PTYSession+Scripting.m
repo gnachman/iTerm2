@@ -18,10 +18,10 @@
     }
     id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
 
-    return [[[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
-                                                        containerSpecifier:[self.delegate objectSpecifier]
-                                                                       key:@"sessions"
-                                                                  uniqueID:self.guid] autorelease];
+    return [[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                       containerSpecifier:[self.delegate objectSpecifier]
+                                                                      key:@"sessions"
+                                                                 uniqueID:self.guid];
 }
 
 // Handlers for supported commands:
@@ -167,22 +167,25 @@
     PTYSession *formerSession = [self activateSessionAndTab];
     if (command) {
         // Create a modified profile to run "command".
-        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        NSMutableDictionary *temp = [profile mutableCopy];
         temp[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomValue;
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
     }
     // NOTE: This will return nil for tmux tabs. I could fix it by using the async version of the
     // split function, but this is Applescript and I hate it.
+    __block PTYSession *theSession = nil;
     [[self.delegate realParentWindow] asyncSplitVertically:vertically
                                                     before:NO
                                                    profile:profile
                                              targetSession:[[self.delegate realParentWindow] currentSession]
                                                 completion:^(PTYSession *session) {
-        [formerSession activateSessionAndTab];
-        completion(session);
+        theSession = session;
     }
-                                                     ready:nil];
+                                                     ready:^(BOOL ok) {
+                                                         [formerSession activateSessionAndTab];
+                                                         completion(theSession);
+                                                     }];
 }
 
 - (id)handleSplitVertically:(NSScriptCommand *)scriptCommand {
@@ -198,7 +201,7 @@
                    completion:^(PTYSession *session) {
             [formerSession activateSessionAndTab];
             dispatch_async(dispatch_get_main_queue(), ^{
-                [scriptCommand resumeExecutionWithResult:session];
+                [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
             });
         }];
         return nil;
@@ -220,7 +223,7 @@
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [scriptCommand resumeExecutionWithResult:session];
+            [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
         });
     }];
     return nil;
@@ -236,7 +239,7 @@
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [scriptCommand resumeExecutionWithResult:session];
+            [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
         });
     }];
     return nil;
@@ -255,7 +258,7 @@
                    completion:^(PTYSession *session) {
             [formerSession activateSessionAndTab];
             dispatch_async(dispatch_get_main_queue(), ^{
-                [scriptCommand resumeExecutionWithResult:session];
+                [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
             });
         }];
         return nil;
@@ -276,7 +279,7 @@
                   command:args[@"command"]
                completion:^(PTYSession *session) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [scriptCommand resumeExecutionWithResult:session];
+            [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
         });
         [formerSession activateSessionAndTab];
     }];
@@ -293,7 +296,7 @@
                completion:^(PTYSession *session) {
         [formerSession activateSessionAndTab];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [scriptCommand resumeExecutionWithResult:session];
+            [scriptCommand resumeExecutionWithResult:session.objectSpecifier ? session : nil];
         });
     }];
     return nil;
