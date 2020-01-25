@@ -29,6 +29,10 @@
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
     }
     return self;
 }
@@ -90,6 +94,17 @@
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     DLog(@"Save mouse location");
     _savedMouseLocation = [NSEvent mouseLocation];
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    if (![iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
+        return;
+    }
+    const NSPoint mouseLocation = [NSEvent mouseLocation];
+    NSView *view = [NSView viewAtScreenCoordinate:mouseLocation];
+    if ([view conformsToProtocol:@protocol(iTermFocusFollowsMouseFocusReceiver)]) {
+        [view.window makeFirstResponder:view];
+    }
 }
 
 @end
