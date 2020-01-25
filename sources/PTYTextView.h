@@ -4,6 +4,7 @@
 #import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermFindDriver.h"
+#import "iTermFocusFollowsMouseController.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
@@ -210,6 +211,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 @interface PTYTextView : NSView <
   iTermColorMapDelegate,
+  iTermFocusFollowsMouseFocusReceiver,
   iTermIndicatorsHelperDelegate,
   iTermSemanticHistoryControllerDelegate,
   iTermTextDrawingHelperDelegate,
@@ -589,11 +591,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                   cursorCoord:(VT100GridCoord)cursorCoord;
 
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)cursorCoord;
-
-// For focus follows mouse. Allows a new split pane to become focused even though the mouse pointer
-// is elsewhere. Records the mouse position. Refuses first responder as long as the mouse doesn't
-// move.
-- (void)refuseFirstResponderAtCurrentMouseLocation;
 
 // Undoes -refuseFirstResponderAtCurrentMouseLocation.
 - (void)resetMouseLocationToRefuseFirstResponderAt;

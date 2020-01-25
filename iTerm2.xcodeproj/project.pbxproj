@@ -1317,6 +1317,8 @@
 		5376CB3E220D2E4300FE7476 /* git.sb in Resources */ = {isa = PBXBuildFile; fileRef = 5376CB3B220D2E4300FE7476 /* git.sb */; };
 		5378FA40224DAE4700CA2B2D /* iTermPreferencesSearch.h in Headers */ = {isa = PBXBuildFile; fileRef = 5378FA3E224DAE4700CA2B2D /* iTermPreferencesSearch.h */; };
 		5378FA41224DAE4700CA2B2D /* iTermPreferencesSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = 5378FA3F224DAE4700CA2B2D /* iTermPreferencesSearch.m */; };
+		5379C59723DBE9F100314F23 /* iTermFocusFollowsMouseController.h in Headers */ = {isa = PBXBuildFile; fileRef = 5379C59523DBE9F100314F23 /* iTermFocusFollowsMouseController.h */; };
+		5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5379C59623DBE9F100314F23 /* iTermFocusFollowsMouseController.m */; };
 		537A1FB822168DF800FBEE5A /* MinimalFindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 537A1FB722168DF800FBEE5A /* MinimalFindView.xib */; };
 		537A1FB922168DF800FBEE5A /* MinimalFindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 537A1FB722168DF800FBEE5A /* MinimalFindView.xib */; };
 		537A1FBA22168DF800FBEE5A /* MinimalFindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 537A1FB722168DF800FBEE5A /* MinimalFindView.xib */; };
@@ -4507,6 +4509,8 @@
 		5378FA3D224DA9F200CA2B2D /* iTermSearchableViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchableViewController.h; sourceTree = "<group>"; };
 		5378FA3E224DAE4700CA2B2D /* iTermPreferencesSearch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPreferencesSearch.h; sourceTree = "<group>"; };
 		5378FA3F224DAE4700CA2B2D /* iTermPreferencesSearch.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPreferencesSearch.m; sourceTree = "<group>"; };
+		5379C59523DBE9F100314F23 /* iTermFocusFollowsMouseController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFocusFollowsMouseController.h; sourceTree = "<group>"; };
+		5379C59623DBE9F100314F23 /* iTermFocusFollowsMouseController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFocusFollowsMouseController.m; sourceTree = "<group>"; };
 		537A1FB722168DF800FBEE5A /* MinimalFindView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MinimalFindView.xib; path = Interfaces/MinimalFindView.xib; sourceTree = "<group>"; };
 		537A1FBB22169B2200FBEE5A /* MinimalPasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MinimalPasteView.xib; path = Interfaces/MinimalPasteView.xib; sourceTree = "<group>"; };
 		537BFDC320FFA5A40098C91F /* iTermStatusBarJobComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarJobComponent.h; sourceTree = "<group>"; };
@@ -8935,6 +8939,8 @@
 				A6B6A4FC23CEE6E80016B1AE /* iTermOrderEnforcer.m */,
 				A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */,
 				A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */,
+				5379C59523DBE9F100314F23 /* iTermFocusFollowsMouseController.h */,
+				5379C59623DBE9F100314F23 /* iTermFocusFollowsMouseController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10622,6 +10628,7 @@
 				A66F52B52105AC5B00571168 /* iTermStatusBarGitComponent.h in Headers */,
 				A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */,
 				A618FFC12243E91900B8FD88 /* iTermToolActions.h in Headers */,
+				5379C59723DBE9F100314F23 /* iTermFocusFollowsMouseController.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
 				A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */,
 				531E71F72229A69C00915960 /* iTermExpressionParser+Private.h in Headers */,
@@ -13071,6 +13078,7 @@
 				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
+				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
 				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,

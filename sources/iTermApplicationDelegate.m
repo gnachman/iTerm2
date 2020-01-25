@@ -213,8 +213,6 @@ static BOOL hasBecomeActive = NO;
 
     NSArray<NSDictionary *> *_buriedSessionsState;
 
-    // Location of mouse when the app became inactive.
-    NSPoint _savedMouseLocation;
     iTermScriptsMenuController *_scriptsMenuController;
     enum {
         iTermUntitledFileOpenUnsafe,
@@ -226,6 +224,8 @@ static BOOL hasBecomeActive = NO;
     
     BOOL _disableTermination;
     iTermVariables *_userVariables;
+
+    iTermFocusFollowsMouseController *_focusFollowsMouseController;
 }
 
 - (instancetype)init {
@@ -295,6 +295,7 @@ static BOOL hasBecomeActive = NO;
 
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
+        _focusFollowsMouseController = [[iTermFocusFollowsMouseController alloc] init];
     }
 
     return self;
@@ -304,6 +305,7 @@ static BOOL hasBecomeActive = NO;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
+    [_focusFollowsMouseController release];
     [super dealloc];
 }
 
@@ -984,7 +986,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
-    _savedMouseLocation = [NSEvent mouseLocation];
 }
 
 - (void)applicationWillHide:(NSNotification *)aNotification {
@@ -995,43 +996,8 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
-
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        const NSPoint mouseLocation = [NSEvent mouseLocation];
-        if ([iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
-            DLog(@"Using aggressive FFM");
-            // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
-            // is under the cursor make it first responder.
-            if (!NSEqualPoints(mouseLocation, _savedMouseLocation)) {
-                // Dispatch async because when you cmd-tab into iTerm2 the windows are briefly
-                // out of order. Looks like an OS bug to me. They fix themselves right away,
-                // and a dispatch async seems to give it enough time to right itself before
-                // we iterate front to back.
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self selectWindowAtScreenCoordinate:mouseLocation];
-                });
-            }
-        } else {
-            DLog(@"Using non-aggressive FFM");
-            NSView *view = [NSView viewAtScreenCoordinate:mouseLocation];
-            [[PTYTextView castFrom:view] refuseFirstResponderAtCurrentMouseLocation];
-        }
-    }
     [self hideStuckToolTips];
     iTermPreciseTimerClearLogs();
-}
-
-- (void)selectWindowAtScreenCoordinate:(NSPoint)mousePoint {
-    NSView *view = [NSView viewAtScreenCoordinate:mousePoint];
-    NSWindow *window = view.window;
-    if (view) {
-        DLog(@"Will activate %@", window.title);
-        [window makeKeyAndOrderFront:nil];
-        if ([view isKindOfClass:[PTYTextView class]]) {
-            [window makeFirstResponder:view];
-        }
-        return;
-    }
 }
 
 - (NSString *)effectiveTheme {
