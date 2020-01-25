@@ -1898,7 +1898,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     size.height = rows * lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2;
     DLog(@"    size for content is %@", NSStringFromSize(size));
     BOOL hasScrollbar = [term scrollbarShouldBeVisible];
-    DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@", term, @(hasScrollbar), @([term scrollerStyle]));
+    DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@, NSScroller.preferredScrollerStyle=%@", term, @(hasScrollbar), @([term scrollerStyle]), @([NSScroller preferredScrollerStyle]));
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:size
                        horizontalScrollerClass:nil

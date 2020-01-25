@@ -53,6 +53,7 @@
 
 // rdar://45295749/
 - (void)dismemberForScrollerStyle:(NSScrollerStyle)scrollerStyle NS_AVAILABLE_MAC(10_14) {
+    DLog(@"Begin dismembering the scroll bar");
     NSView *reparent = nil;
     NSInteger index = NSNotFound;
 
@@ -88,6 +89,7 @@
 }
 
 - (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
+    DLog(@"%@: set scroller style to %@ from\n%@", self, @(scrollerStyle), [NSThread callStackSymbols]);
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             [self dismemberForScrollerStyle:scrollerStyle];
