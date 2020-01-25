@@ -1245,10 +1245,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         // Blue link text.
         rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink]);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (selected) {
-        // Selected text.
-        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText]);
-        caches->havePreviousCharacterAttributes = NO;
     } else if (_configuration->_reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
                 (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {

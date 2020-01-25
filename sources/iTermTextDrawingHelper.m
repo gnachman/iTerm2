@@ -1891,10 +1891,6 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
         // Blue link text.
         rawColor = [context->colorMap colorForKey:kColorMapLink];
         context->havePreviousCharacterAttributes = NO;
-    } else if (context->hasSelectedText) {
-        // Selected text.
-        rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
-        context->havePreviousCharacterAttributes = NO;
     } else if (context->reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
                 (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
