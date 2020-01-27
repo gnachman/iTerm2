@@ -64,6 +64,8 @@ typedef enum {
 - (BOOL)reserve:(long long)length;
 - (char*)scratch;
 
+- (ptrdiff_t)offsetOfPointer:(char *)pointer;
+
 // Allocate a block. Returns the assigned key. You must have called -[reserve] first.
 // length may less than reserved amount.
 - (long long)allocateBlock:(long long)length;

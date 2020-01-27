@@ -220,8 +220,8 @@ static long long now()
     haveReservation_ = NO;
 
 #ifdef DVRDEBUG
-    NSLog(@"Encoder: Append frame of type %d starting at %x length %d at index %lld",
-          (int)type, dest, length, [buffer_ lastKey]+1);
+    NSLog(@"Encoder: Append frame of type %d starting at offset %d length %d at index %lld",
+          (int)type, (int)[buffer_ offsetOfPointer:dest], length, [buffer_ lastKey]+1);
 #endif
 
     lastInfo_ = *info;

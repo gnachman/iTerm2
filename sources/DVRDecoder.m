@@ -305,7 +305,7 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
                 break;
 
             default:
-                NSLog(@"Unexpected block type %d", (int)diff[i]);
+                NSLog(@"Unexpected block type %d", (int)diff[i-1]);
                 assert(0);
         }
     }
