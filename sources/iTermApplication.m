@@ -438,6 +438,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         point = [event.window convertPointToScreen:point];
     }
     NSView *current = [NSView viewAtScreenCoordinate:point];
+    if (current.window != event.window) {
+        return;
+    }
     while (current) {
         if ([current respondsToSelector:@selector(it_wantsScrollWheelMomentumEvents)] &&
             [current it_wantsScrollWheelMomentumEvents]) {
