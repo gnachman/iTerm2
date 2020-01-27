@@ -7822,10 +7822,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     if (![iTermSessionLauncher profileIsWellFormed:theBookmark]) {
         if (ready) {
-            ready(NO);
+            ready(nil, NO);
         }
         if (completion) {
-            completion(nil);
+            completion(nil, NO);
         }
         return;
     }

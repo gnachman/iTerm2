@@ -174,17 +174,14 @@
     }
     // NOTE: This will return nil for tmux tabs. I could fix it by using the async version of the
     // split function, but this is Applescript and I hate it.
-    __block PTYSession *theSession = nil;
     [[self.delegate realParentWindow] asyncSplitVertically:vertically
                                                     before:NO
                                                    profile:profile
                                              targetSession:[[self.delegate realParentWindow] currentSession]
-                                                completion:^(PTYSession *session, BOOL ok) {
-        theSession = session;
-    }
-                                                     ready:^(BOOL ok) {
+                                                completion:nil
+                                                     ready:^(PTYSession *session, BOOL ok) {
                                                          [formerSession activateSessionAndTab];
-                                                         completion(theSession);
+                                                         completion(session);
                                                      }];
 }
 
