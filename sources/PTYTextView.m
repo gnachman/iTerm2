@@ -905,6 +905,18 @@ static const int kDragThreshold = 3;
     NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
 }
 
+// See WebCore's FrameSelectionMac.mm for the inspiration.
+- (CGRect)accessibilityConvertScreenRect:(CGRect)bounds {
+    NSArray *screens = [NSScreen screens];
+    if ([screens count]) {
+        CGFloat screenHeight = NSHeight([(NSScreen *)[screens objectAtIndex:0] frame]);
+        NSRect rect = bounds;
+        rect.origin.y = (screenHeight - (bounds.origin.y + bounds.size.height));
+        return rect;
+    }
+    return CGRectZero;
+}
+
 // Update accessibility, to be called periodically.
 - (void)refreshAccessibility {
     NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
@@ -918,15 +930,14 @@ static const int kDragThreshold = 3;
         _lastAccessibilityCursorX = [_dataSource cursorX];
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
-            CGRect viewRect = NSRectToCGRect(
+            const CGRect viewRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
-            CGRect selectedRect = NSRectToCGRect(
+            const CGRect selectionRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self cursorFrame] toView:nil]]);
-            viewRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
-                                 (viewRect.origin.y + viewRect.size.height));
-            selectedRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
-                                     (selectedRect.origin.y + selectedRect.size.height));
-            UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+            viewRect = [self accessibilityConvertScreenRect:viewRect];
+            selectionRect = [self accessibilityConvertScreenRect:selectionRect];
+
+            UAZoomChangeFocus(&viewRect, &selectionRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
 }
