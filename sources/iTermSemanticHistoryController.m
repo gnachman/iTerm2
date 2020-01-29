@@ -200,6 +200,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return executable;
 }
 
+- (NSString *)intelliJIDEALauncherInApplicationBundle:(NSBundle *)bundle {
+    DLog(@"Trying to find IntelliJ IDEA launcher in %@", bundle.bundlePath);
+    return [[[[bundle.bundleURL URLByAppendingPathComponent:@"Contents"] URLByAppendingPathComponent:@"MacOS"] URLByAppendingPathComponent:@"idea"] path];
+}
+
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
     NSBundle *bundle = [self applicationBundleWithIdentifier:bundleIdentifier];
     if (!bundle) {
@@ -273,6 +278,27 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 }
 
+- (void)launchIntelliJIDEAWithArguments:(NSArray<NSString *> *)args path:(NSString *)path {
+    NSBundle *bundle = [self applicationBundleWithIdentifier:kIntelliJIDEAIdentifier];
+    if (!bundle) {
+        DLog(@"Failed to find IDEA bundle");
+        return;
+    }
+    NSString *launcher = [self intelliJIDEALauncherInApplicationBundle:bundle];
+    if (!launcher) {
+        DLog(@"Failed to find launcher in %@", bundle);
+        if (path) {
+            DLog(@"Launch idea with path %@", path);
+            [self launchAppWithBundleIdentifier:kIntelliJIDEAIdentifier
+                                           path:path];
+        }
+        return;
+    }
+    [self launchTaskWithPath:launcher
+                   arguments:args
+                  completion:nil];
+}
+
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -308,80 +334,101 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kTextmateIdentifier,
               kTextmate2Identifier,
               kBBEditIdentifier,
-              kEmacsAppIdentifier];
+              kEmacsAppIdentifier,
+              kIntelliJIDEAIdentifier ];
 }
 
 - (void)openFile:(NSString *)path
     inEditorWithBundleId:(NSString *)identifier
           lineNumber:(NSString *)lineNumber
         columnNumber:(NSString *)columnNumber {
-    if (identifier) {
-        DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
-        if ([identifier isEqualToString:kAtomIdentifier]) {
-            if (lineNumber != nil) {
-                path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
-            }
-            if (columnNumber != nil) {
-                path = [path stringByAppendingFormat:@":%@", columnNumber];
-            }
-            [self launchAtomWithPath:path];
-        } else if ([identifier isEqualToString:kVSCodeIdentifier]) {
-            if (lineNumber != nil) {
-                path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
-            }
-            if (columnNumber != nil) {
-                path = [path stringByAppendingFormat:@":%@", columnNumber];
-            }
-            [self launchVSCodeWithPath:path];
-        } else if ([identifier isEqualToString:kSublimeText2Identifier] ||
-                   [identifier isEqualToString:kSublimeText3Identifier]) {
-            if (lineNumber != nil) {
-                path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
-            }
-            if (columnNumber != nil) {
-                path = [path stringByAppendingFormat:@":%@", columnNumber];
-            }
-            NSString *bundleId;
-            if ([identifier isEqualToString:kSublimeText3Identifier]) {
-                bundleId = kSublimeText3Identifier;
-            } else {
-                bundleId = kSublimeText2Identifier;
-            }
+    if (!identifier) {
+        return;
+    }
+    DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
+    if ([identifier isEqualToString:kAtomIdentifier]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+        if (columnNumber != nil) {
+            path = [path stringByAppendingFormat:@":%@", columnNumber];
+        }
+        [self launchAtomWithPath:path];
+        return;
+    }
+    if ([identifier isEqualToString:kVSCodeIdentifier]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+        if (columnNumber != nil) {
+            path = [path stringByAppendingFormat:@":%@", columnNumber];
+        }
+        [self launchVSCodeWithPath:path];
+        return;
+    }
+    if ([identifier isEqualToString:kSublimeText2Identifier] ||
+        [identifier isEqualToString:kSublimeText3Identifier]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+        if (columnNumber != nil) {
+            path = [path stringByAppendingFormat:@":%@", columnNumber];
+        }
+        NSString *bundleId;
+        if ([identifier isEqualToString:kSublimeText3Identifier]) {
+            bundleId = kSublimeText3Identifier;
+        } else {
+            bundleId = kSublimeText2Identifier;
+        }
 
-            [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
-        } else if ([identifier isEqualToString:kEmacsAppIdentifier]) {
-            NSMutableArray *args = [NSMutableArray array];
-            if (path) {
-                [args addObject:path];
-                if (lineNumber) {
-                    if (columnNumber) {
-                        [args insertObject:[NSString stringWithFormat:@"+%@:%@", lineNumber, columnNumber] atIndex:0];
-                    } else {
-                        [args insertObject:[NSString stringWithFormat:@"+%@", lineNumber] atIndex:0];
-                    }
+        [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
+        return;
+    }
+    if ([identifier isEqualToString:kEmacsAppIdentifier]) {
+        NSMutableArray *args = [NSMutableArray array];
+        if (path) {
+            [args addObject:path];
+            if (lineNumber) {
+                if (columnNumber) {
+                    [args insertObject:[NSString stringWithFormat:@"+%@:%@", lineNumber, columnNumber] atIndex:0];
+                } else {
+                    [args insertObject:[NSString stringWithFormat:@"+%@", lineNumber] atIndex:0];
                 }
             }
-            [self launchEmacsWithArguments:args];
-        } else {
-            path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
-            NSURL *url = nil;
-            NSString *editorIdentifier = identifier;
-            if (lineNumber) {
-                url = [NSURL URLWithString:[NSString stringWithFormat:
-                                            @"%@://open?url=file://%@&line=%@",
-                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
-                                            path, lineNumber]];
-            } else {
-                url = [NSURL URLWithString:[NSString stringWithFormat:
-                                            @"%@://open?url=file://%@",
-                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
-                                            path]];
-            }
-            DLog(@"Open url %@", url);
-            // BBEdit and TextMate share a URL scheme, so this disambiguates.
-            [self openURL:url editorIdentifier:editorIdentifier];
         }
+        [self launchEmacsWithArguments:args];
+        return;
     }
+    if ([identifier isEqualToString:kIntelliJIDEAIdentifier]) {
+        NSArray<NSString *> *args = @[];
+        if (path) {
+            if (lineNumber) {
+                args = @[ @"--line", lineNumber, path ];
+            } else {
+                args = @[ path ];
+            }
+        }
+        [self launchIntelliJIDEAWithArguments:args path:path];
+        return;
+    }
+
+    path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+    NSURL *url = nil;
+    NSString *editorIdentifier = identifier;
+    if (lineNumber) {
+        url = [NSURL URLWithString:[NSString stringWithFormat:
+                                    @"%@://open?url=file://%@&line=%@",
+                                    [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
+                                    path, lineNumber]];
+    } else {
+        url = [NSURL URLWithString:[NSString stringWithFormat:
+                                    @"%@://open?url=file://%@",
+                                    [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
+                                    path]];
+    }
+    DLog(@"Open url %@", url);
+    // BBEdit and TextMate share a URL scheme, so this disambiguates.
+    [self openURL:url editorIdentifier:editorIdentifier];
 }
 
 - (void)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber columnNumber:(NSString *)columnNumber {
