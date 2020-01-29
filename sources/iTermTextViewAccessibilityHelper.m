@@ -176,8 +176,14 @@
 
 - (NSString *)stringForRange:(NSRange)range {
     const NSInteger length = _allText.length;
+    if (range.location == NSNotFound) {
+        return nil;
+    }
+    if (length == 0) {
+        return @"";
+    }
     NSInteger min = MAX(0, MIN(range.location, length - 1));
-    NSInteger max = MAX(NSMaxRange(range), length);
+    NSInteger max = MAX(NSMaxRange(range), length - 1);
     return [_allText substringWithRange:NSMakeRange(min, max - min)];
 }
 
