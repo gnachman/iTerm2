@@ -930,9 +930,9 @@ static const int kDragThreshold = 3;
         _lastAccessibilityCursorX = [_dataSource cursorX];
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
-            const CGRect viewRect = NSRectToCGRect(
+            CGRect viewRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
-            const CGRect selectionRect = NSRectToCGRect(
+            CGRect selectionRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self cursorFrame] toView:nil]]);
             viewRect = [self accessibilityConvertScreenRect:viewRect];
             selectionRect = [self accessibilityConvertScreenRect:selectionRect];
