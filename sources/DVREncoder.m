@@ -191,12 +191,18 @@ static long long now()
               cleanLines:(NSIndexSet *)cleanLines
                     info:(DVRFrameInfo *)info {
     char* scratch = [buffer_ scratch];
+#ifdef DVRDEBUG
+    NSLog(@"Compute diff…");
+#endif
     int diffBytes = [self _computeDiff:frameLines
                                 length:length
                             cleanLines:cleanLines
                                   dest:scratch
                                maxSize:reservation_];
     if (diffBytes < 0) {
+#ifdef DVRDEBUG
+        NSLog(@"Abandon diff and append a key frame instead");
+#endif
         // Diff ended up being larger than a key frame would be.
         [self _appendKeyFrame:frameLines length:length info:info];
         return;
@@ -227,6 +233,9 @@ static long long now()
     lastInfo_ = *info;
 
     long long key = [buffer_ allocateBlock:length];
+#ifdef DVRDEBUG
+    NSLog(@"Commit frame with key %@", @(key));
+#endif
     DVRIndexEntry* entry = [buffer_ entryForKey:key];
     entry->info = *info;
     entry->info.timestamp = now();
@@ -246,6 +255,9 @@ static long long now()
 
     int o = 0;
 
+#ifdef DVRDEBUG
+    NSLog(@"Computing diff");
+#endif
     const int numLines = [frameLines count];
     const int numChars = numLines > 0 ? frameLines[0].length : 0;
     for (int y = 0; y < numLines; y++) {
@@ -254,6 +266,9 @@ static long long now()
                 // Diff is too big.
                 return -1;
             }
+#ifdef DVRDEBUG
+            NSLog(@"Append samesequence at offset %@, address %p. No data is appended for samesequence.", @(o), scratch+o);
+#endif
             scratch[o++] = kSameSequence;
             memcpy(scratch + o, &numChars, sizeof(numChars));
             o += sizeof(numChars);
@@ -262,6 +277,9 @@ static long long now()
                 // Diff is too big.
                 return -1;
             }
+#ifdef DVRDEBUG
+            NSLog(@"Append diffsequence at offset %@ of length %@", @(o), @(numChars));
+#endif
             scratch[o++] = kDiffSequence;
             memcpy(scratch + o, &numChars, sizeof(numChars));
             o += sizeof(numChars);
@@ -274,6 +292,9 @@ static long long now()
 #endif
         }
     }
+#ifdef DVRDEBUG
+    NSLog(@"Done computing diff");
+#endif
     return o;
 }
 
