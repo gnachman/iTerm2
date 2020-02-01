@@ -31,9 +31,9 @@
 #include "LineBuffer.h"
 #include <sys/time.h>
 
-#if DEBUG
-#define DVRDEBUG
-#endif
+//#if DEBUG
+//#define DVRDEBUG
+//#endif
 
 // Returns a timestamp for the current time.
 static long long now()

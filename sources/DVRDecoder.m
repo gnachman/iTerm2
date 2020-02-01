@@ -33,9 +33,9 @@
 #import "iTermMalloc.h"
 #import "LineBuffer.h"
 
-#if DEBUG
-#define DVRDEBUG 1
-#endif
+//#if DEBUG
+//#define DVRDEBUG 1
+//#endif
 
 @implementation DVRDecoder {
     // Circular buffer not owned by us.
