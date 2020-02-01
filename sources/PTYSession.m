@@ -1873,6 +1873,35 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermPromptOnCloseReason profileAlwaysPrompts:_profile];
 }
 
+- (NSSet<NSString *> *)jobsToIgnore {
+    NSArray<NSString *> *builtInJobsToIgnore = @[ @"login", @"iTerm2" ];
+    return [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObjectsFromArray:builtInJobsToIgnore]];
+}
+
+// A trivial process is one that's always running, like the user's shell. This
+// is used to decide if there should be a "document edited" indicator in the
+// window's close button.
+- (BOOL)processIsTrivial:(iTermProcessInfo *)info {
+    NSSet<NSString *> *ignoredNames = [self jobsToIgnore];
+    if ([ignoredNames containsObject:info.name]) {
+        return YES;
+    }
+    if ([info.commandLine hasPrefix:@"-"]) {
+        return YES;
+    }
+    if (!self.program) {
+        return NO;
+    }
+    NSString *const programType = [self programType];
+    if ([programType isEqualToString:kProgramTypeShellLauncher] ||
+        [programType isEqualToString:kProgramTypeCustomShell]) {
+        return info.parentProcessID == _shell.pid;
+    } else if ([programType isEqualToString:kProgramTypeCommand]) {
+        return info.processID == _shell.pid;
+    }
+    return NO;
+}
+
 - (BOOL)hasNontrivialJob {
     DLog(@"Checking for a nontrivial job...");
     pid_t thePid = [_shell pid];
@@ -1881,15 +1910,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     // iTerm2 --launch_shell could be a child job temporarily.
-    NSArray<NSString *> *builtInJobsToIgnore = @[ @"login", @"iTerm2" ];
-    NSSet<NSString *> *ignoredNames = [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObjectsFromArray:builtInJobsToIgnore]];
-    DLog(@"Ignoring %@", ignoredNames);
+    DLog(@"Ignoring %@", [self jobsToIgnore]);
     __block BOOL result = NO;
     [info enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
-        if ([ignoredNames containsObject:info.name]) {
-            return;
-        }
-        if ([info.commandLine hasPrefix:@"-"]) {
+        if ([self processIsTrivial:info]) {
             return;
         }
         DLog(@"Process with name %@ and command line %@ is nontrivial", info.name, info.commandLine);
@@ -4394,6 +4418,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self arrangementWithContents:NO];
 }
 
+- (NSString *)programType {
+    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommandWithCustomShell:self.customShell]]) {
+        if (self.customShell.length) {
+            return kProgramTypeCustomShell;
+        }
+        return kProgramTypeShellLauncher;
+    }
+    return kProgramTypeCommand;
+}
+
 - (NSDictionary *)arrangementWithContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
@@ -4403,18 +4437,20 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
-    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommandWithCustomShell:self.customShell]]) {
+    
+    NSString *const programType = [self programType];
+    if ([programType isEqualToString:kProgramTypeCustomShell]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).
         // I don't want to use a magic string, so setting program to an empty dict.
-        if (self.customShell.length) {
-            NSDictionary *dict = @{ kProgramType: kProgramTypeCustomShell };
-            dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
-            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
-        } else {
-            NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
-            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
-        }
-    } else if (self.program) {
+        assert(self.customShell.length);
+        NSDictionary *dict = @{ kProgramType: kProgramTypeCustomShell };
+        dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
+        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
+    } else if ([programType isEqualToString:kProgramTypeShellLauncher]) {
+        NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
+        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
+    } else if ([programType isEqualToString:kProgramTypeCommand] &&
+               self.program) {
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };
     }
