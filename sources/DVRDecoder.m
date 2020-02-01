@@ -204,12 +204,12 @@
             return;
         }
 #ifdef DVRDEBUG
-        [self debug:[NSString stringWithFormat:@"After applying diff of %d:", j] buffer:frame_ length:length_];
+        [self debug:[NSString stringWithFormat:@"After applying diff of %lld:", j] buffer:frame_ length:length_];
 #endif
     }
     key_ = j;
 #ifdef DVRDEBUG
-    NSLog(@"end seek to %d", i);
+    NSLog(@"end seek to %lld", key);
 #endif
 }
 
@@ -253,13 +253,16 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
 - (BOOL)_loadDiffFrameWithKey:(long long)key
 {
 #ifdef DVRDEBUG
-    NSLog(@"Load diff frame at index %lld", key);
+    NSLog(@"Load diff frame with key %lld", key);
 #endif
     DVRIndexEntry* entry = [buffer_ entryForKey:key];
     info_ = entry->info;
     char* diff = [buffer_ blockForKey:key];
     int o = 0;
     for (int i = 0; i < entry->frameLength; ) {
+#ifdef DVRDEBUG
+        NSLog(@"Checking line at offset %d, address %p. type=%d", i, diff+i, (int)diff[i]);
+#endif
         int n;
         switch (diff[i++]) {
             case kSameSequence:
@@ -268,11 +271,13 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
                     return NO;
                 }
 #ifdef DVRDEBUG
-                NSLog(@"%d bytes of sameness at offset %d", n, o);
+                NSLog(@"%d bytes of sameness at offset %d", n, i);
 #endif
                 if (!SafeIncr(n, o, &o)) {
                     return NO;
                 }
+                // Don't advance i because there's nothing saved in the buffer
+                // at this location since it's a SameSequence.
                 break;
 
             case kDiffSequence:
@@ -291,7 +296,7 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
 #ifdef DVRDEBUG
                 NSLog(@"%d bytes of difference at offset %d", n, o);
 #endif
-                if (!SafeIncr(n, o, &o) || !SafeIncr(n, o, &i)) {
+                if (!SafeIncr(n, o, &o) || !SafeIncr(n, i, &i)) {
                     return NO;
                 }
                 break;
