@@ -33,6 +33,10 @@ NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidC
     return self;
 }
 
+- (NSString *)description {
+    return [controllers_ description];
+}
+
 - (TmuxController *)controllerForClient:(NSString *)client
 {
     return [controllers_ objectForKey:client];

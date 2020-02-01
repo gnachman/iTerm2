@@ -31,6 +31,10 @@
     [super dealloc];
 }
 
+- (NSString *)debugDescription {
+    return [records_ description];
+}
+
 - (NSString *)valueInRecord:(NSArray *)record forField:(NSString *)fieldName
 {
     if (!map_) {

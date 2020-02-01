@@ -8,6 +8,7 @@
 
 #import "TmuxDashboardController.h"
 
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermInitialDirectory.h"
 #import "iTermNotificationCenter.h"
@@ -49,6 +50,7 @@
     if (self) {
         [self window];
 
+        DLog(@"dashboard: Initialize with tmux controller %@", self.tmuxController);
         [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
         [self reloadWindows];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -98,6 +100,7 @@
 
 - (void)windowDidLoad
 {
+    DLog(@"dashboard: windowDidLoad");
     [super windowDidLoad];
     [self tmuxControllerRegistryDidChange:nil];
     if ([connectionsButton_ numberOfItems] > 0) {
@@ -212,6 +215,7 @@
 }
 
 - (void)setWindows:(TSVDocument *)doc forSession:(NSNumber *)sessionNumber {
+    DLog(@"dashboard: setWindows:%@ forSession:%@", doc, sessionNumber);
     if ([sessionNumber isEqual:[sessionsTable_ selectedSessionNumber]]) {
         NSMutableArray *windows = [NSMutableArray array];
         for (NSArray *record in doc.records) {
@@ -341,6 +345,7 @@
 }
 
 - (void)tmuxControllerRegistryDidChange:(NSNotification *)notification {
+    DLog(@"dashboard: tmuxControllerRegistryDidChange");
     NSString *previousSelection = [[self currentClient] copy];
     [connectionsButton_.menu cancelTracking];
     [connectionsButton_.cell dismissPopUp];
@@ -355,6 +360,8 @@
 }
 
 - (TmuxController *)tmuxController {
+    DLog(@"dashboard: Looking for tmux controller for current client, %@", self.currentClient);
+    DLog(@"dashboard: Registry: %@", [TmuxControllerRegistry sharedInstance]);
     return [[TmuxControllerRegistry sharedInstance] controllerForClient:[self currentClient]];  // TODO: track the current client when multiples are supported
 }
 
@@ -364,6 +371,7 @@
 
 
 - (IBAction)connectionSelectionDidChange:(id)sender {
+    DLog(@"dashboard: connectionSelectionDidChange controller=%@", [self tmuxController]);
     [sessionsTable_ setSessionObjects:[[self tmuxController] sessionObjects]];
     [self reloadWindows];
 }
