@@ -19,6 +19,8 @@ static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory
 
 static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging = @"NoSyncEnableAutomaticProfileSwitchingLogging";
 
+static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks = @"RequireAuthenticationAfterScreenLocks";
+
 @implementation iTermUserDefaults
 
 static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
@@ -120,6 +122,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setEnableAutomaticProfileSwitchingLogging:(BOOL)enableAutomaticProfileSwitchingLogging {
     [[NSUserDefaults standardUserDefaults] setBool:enableAutomaticProfileSwitchingLogging
                                             forKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+}
+
++ (BOOL)requireAuthenticationAfterScreenLocks {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
+}
+
++ (void)setRequireAuthenticationAfterScreenLocks:(BOOL)requireAuthenticationAfterScreenLocks {
+    [[NSUserDefaults standardUserDefaults] setBool:requireAuthenticationAfterScreenLocks
+                                            forKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
 }
 
 @end

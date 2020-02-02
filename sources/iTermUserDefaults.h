@@ -27,6 +27,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 
 @property (class, nonatomic, readonly) iTermAppleWindowTabbingMode appleWindowTabbingMode;
 @property (class, nonatomic) BOOL haveBeenWarnedAboutTabDockSetting;
+@property (class, nonatomic) BOOL requireAuthenticationAfterScreenLocks;
 
 @end
 

@@ -13,6 +13,8 @@
 #import "iTermApplication.h"
 #import "iTermSearchField.h"
 #import "iTermSystemVersion.h"
+#import "iTermUserDefaults.h"
+#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
@@ -222,6 +224,14 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 - (void)awakeFromNib {
+    [[NSDistributedNotificationCenter defaultCenter] addObserver:[self class]
+                                                        selector:@selector(screenDidLock:)
+                                                            name:@"com.apple.screenIsLocked"
+                                                          object:nil];
+    [[NSDistributedNotificationCenter defaultCenter] addObserver:self
+                                                        selector:@selector(screenDidLock:)
+                                                            name:@"com.apple.screenIsLocked"
+                                                          object:nil];
     _broadcastButton.state = NSOffState;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self reloadAccounts];
@@ -395,7 +405,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             [alert layout];
             [[alert window] makeFirstResponder:newPassword];
 
-            if ([alert runModal] == NSAlertFirstButtonReturn) {
+            if ([self runModal:alert] == NSAlertFirstButtonReturn) {
                 [[self keychain] setPassword:newPassword.stringValue
                                   forService:kServiceName
                                      account:_entries[row].combinedAccountNameUserName];
@@ -472,7 +482,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             [alert addButtonWithTitle:@"OK"];
             [alert addButtonWithTitle:@"Copy"];
 
-            if ([alert runModal] == NSAlertSecondButtonReturn) {
+            if ([self runModal:alert] == NSAlertSecondButtonReturn) {
                 NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
                 [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
                 [pasteboard setString:password forType:NSStringPboardType];
@@ -485,6 +495,40 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
     [pasteboard setString:[self selectedPassword] forType:NSStringPboardType];
+}
+
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
+        menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSOnState : NSOffState;
+    }
+
+    return YES;
+}
+
+- (IBAction)toggleRequireAuthenticationAfterScreenLocks:(id)sender {
+    [iTermUserDefaults setRequireAuthenticationAfterScreenLocks:![iTermUserDefaults requireAuthenticationAfterScreenLocks]];
+}
+
+// Gotta have this so that validateMenuItem will get called.
+- (IBAction)settingsMenu:(id)sender {
+}
+
+#pragma mark - Notifications
+
++ (void)screenDidLock:(NSNotification *)notification {
+    if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
+        sAuthenticated = NO;
+    }
+}
+
+- (void)screenDidLock:(NSNotification *)notification {
+    if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
+        for (NSWindow *sheet in [self.window.sheets copy]) {
+            [self.window endSheet:sheet];
+        }
+        [self closeCurrentSession:nil];
+    }
 }
 
 #pragma mark - Private
@@ -598,12 +642,20 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@", error];
             [alert addButtonWithTitle:@"OK"];
-            [alert runModal];
+            [self runModal:alert];
         });
         return nil;
     } else {
         DLog(@"selectedPassword: return nonnil password");
         return password ?: @"";
+    }
+}
+
+- (NSModalResponse)runModal:(NSAlert *)alert {
+    if (self.windowLoaded && self.window.isVisible) {
+        return [alert runSheetModalForWindow:self.window];
+    } else {
+        return [alert runModal];
     }
 }
 
