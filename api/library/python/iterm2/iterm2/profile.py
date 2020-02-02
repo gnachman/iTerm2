@@ -109,7 +109,7 @@ class LocalWriteOnlyProfile:
     def __init__(self, values=None):
         if not values:
             values = {}
-        self.__values = values
+        self.__values = {}
         for key, value in values.items():
             self.__values[key] = json.dumps(value)
 
