@@ -25,6 +25,15 @@
     return [self mainScreen];
 }
 
++ (NSScreen *)screenWithFrame:(NSRect)frame {
+    for (NSScreen *screen in self.screens) {
+        if (NSEqualRects(frame, screen.frame)) {
+            return screen;
+        }
+    }
+    return nil;
+}
+
 - (NSRect)visibleFrameIgnoringHiddenDock {
   NSRect visibleFrame = [self visibleFrame];
   NSRect actualFrame = [self frame];
@@ -54,6 +63,26 @@
   }
 
   return visibleFrameIgnoringHiddenDock;
+}
+
+- (BOOL)hasDock {
+    const NSRect frame = self.frame;
+    const NSRect visibleFrame = self.visibleFrame;
+
+    const CGFloat leftInset = NSMinX(visibleFrame) - NSMinX(frame);
+    if (leftInset > 0) {
+        return YES;
+    }
+    const CGFloat bottomInset = NSMinY(visibleFrame) - NSMinY(frame);
+    if (bottomInset > 0) {
+        return YES;
+    }
+    const CGFloat rightInset = NSMaxX(frame) - NSMaxX(visibleFrame);
+    if (rightInset > 0) {
+        return YES;
+    }
+
+    return NO;
 }
 
 - (NSRect)frameExceptMenuBar {

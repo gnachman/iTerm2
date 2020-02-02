@@ -429,8 +429,8 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
             // dock stays up. Looks like the OS doesn't respect the window's
             // presentation option when switching from a fullscreen app, so we have
             // to toggle it after the switch is complete.
-            [term showMenuBar];
-            [term hideMenuBar];
+            [[iTermPresentationController sharedInstance] forceShowMenuBarAndDock];
+            [[iTermPresentationController sharedInstance] update];
         }
     }
 }

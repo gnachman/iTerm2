@@ -722,7 +722,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         // If you create a window with a minimize button and the menu bar is hidden then the
         // minimize button is disabled. Currently the only window type with a miniaturize button
         // is NORMAL.
-        [self showMenuBar];
+        [[iTermPresentationController sharedInstance] forceShowMenuBarAndDock];
     }
     // Force the nib to load
     [self window];
@@ -930,7 +930,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     [_scope setValue:@(number_ + 1) forVariableNamed:@"number"];
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-        [self hideMenuBar];
+        [[iTermPresentationController sharedInstance] update];
     }
 
     // Update the collection behavior.
@@ -1448,7 +1448,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             [[term window] makeKeyAndOrderFront:nil];
-            [term hideMenuBar];
+            [[iTermPresentationController sharedInstance] update];
             break;
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
@@ -3330,7 +3330,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // If a fullscreen window is closing, hide the menu bar unless it's only fullscreen because it's
     // mid-toggle in which case it's really the window that's replacing us that is fullscreen.
     if (_fullScreen && !togglingFullScreen_) {
-        [self showMenuBar];
+        [[iTermPresentationController sharedInstance] update];
     }
 
     // Save frame position for last window
@@ -3435,7 +3435,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // - This is a regular (non-hotkey) fullscreen window
             // - It's a fullscreen hotkey window that's getting rolled in (but its alpha is 0)
             // - It's a fullscreen hotkey window that's already visible (e.g., switching back from settings dialog)
-            [self hideMenuBar];
+            [[iTermPresentationController sharedInstance] update];
         }
     }
 
@@ -3882,7 +3882,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (_fullScreen) {
         [_contentView.tabBarControl setFlashing:NO];
-        [self showMenuBar];
+        [[iTermPresentationController sharedInstance] update];
     }
     // update the cursor
     [[[self currentSession] textview] refresh];
@@ -4838,7 +4838,7 @@ ITERM_WEAKLY_REFERENCEABLE
         self.windowType = self.savedWindowType;
         [self safelySetStyleMask:[self styleMask]];
     }
-    [self showMenuBar];
+    [[iTermPresentationController sharedInstance] update];
 
     // This will be close but probably not quite right because tweaking to the decoration size
     // happens later.
@@ -4944,7 +4944,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_fullScreen) {
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [self fitTabsToWindow];
-        [self hideMenuBar];
+        [[iTermPresentationController sharedInstance] update];
     }
 
     // The toolbelt may try to become the first responder.
@@ -8587,12 +8587,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         if ([[self window] isKeyWindow]) {
             // This is only used when changing broadcast mode; otherwise, the kRefreshTerminalNotification
             // notif is never posted when this window is key.
-            if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
-                [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
-                [self hideMenuBar];
-            } else {
-                [self showMenuBarHideDock];
-            }
+            [[iTermPresentationController sharedInstance] update];
         }
         [self.window setFrame:[self traditionalFullScreenFrame] display:YES];
     }
@@ -8917,59 +8912,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
         [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
     }
-}
-
-- (void)hideMenuBar {
-    DLog(@"hideMenuBar called from\n%@", [NSThread callStackSymbols]);
-    NSScreen* menubarScreen = nil;
-    NSScreen* currentScreen = nil;
-
-    if ([[NSScreen screens] count] == 0) {
-        return;
-    }
-
-    menubarScreen = [[NSScreen screens] objectAtIndex:0];
-    currentScreen = [[self window] screen];
-    if (!currentScreen) {
-        currentScreen = [NSScreen mainScreen];
-    }
-
-    // If screens have separate spaces then all screens have a menu bar.
-    if (currentScreen == menubarScreen || [NSScreen screensHaveSeparateSpaces]) {
-        NSApplicationPresentationOptions flags = 0;
-        if (currentScreen == menubarScreen) {
-            DLog(@"Set flag to auto-hide dock");
-            flags = NSApplicationPresentationAutoHideDock;
-        }
-        if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
-            [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
-            DLog(@"Set flag to auto-hide menu bar");
-            flags |= NSApplicationPresentationAutoHideMenuBar;
-        }
-        NSApplicationPresentationOptions presentationOptions =
-            [[NSApplication sharedApplication] presentationOptions];
-        presentationOptions |= flags;
-        [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
-
-    }
-}
-
-- (void)showMenuBarHideDock {
-    DLog(@"showMenuBarHideDock called from\n%@", [NSThread callStackSymbols]);
-    NSApplicationPresentationOptions presentationOptions =
-        [[NSApplication sharedApplication] presentationOptions];
-    presentationOptions |= NSApplicationPresentationAutoHideDock;
-    presentationOptions &= ~NSApplicationPresentationAutoHideMenuBar;
-    [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
-}
-
-- (void)showMenuBar {
-    DLog(@"showMenuBar called from\n%@", [NSThread callStackSymbols]);
-    int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
-    NSApplicationPresentationOptions presentationOptions =
-        [[NSApplication sharedApplication] presentationOptions];
-    presentationOptions &= ~flags;
-    [[NSApplication sharedApplication] setPresentationOptions:presentationOptions];
 }
 
 - (void)setFrameSize:(NSSize)newSize
@@ -10883,5 +10825,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return response;
 }
 
+#pragma mark - iTermPresentationControllerManagedWindowController
+
+- (BOOL)presentationControllerManagedWindowControllerIsFullScreen:(out BOOL *)lionFullScreen {
+    if (![self anyFullScreen]) {
+        *lionFullScreen = NO;
+        return NO;
+    }
+    *lionFullScreen = [self lionFullScreen];
+    return YES;
+}
+
+- (NSWindow *)presentationControllerManagedWindowControllerWindow {
+    return self.window;
+}
 
 @end

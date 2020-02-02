@@ -12,11 +12,13 @@
 
 // Returns the screen that includes the mouse pointer.
 + (NSScreen *)screenWithCursor;
++ (NSScreen *)screenWithFrame:(NSRect)frame;
 
 // Returns the visible frame modified to not include the 4 pixel boundary given to a hidden dock.
 // Kind of a gross hack since the magic 4 pixel number could change in the future.
 - (NSRect)visibleFrameIgnoringHiddenDock;
 
 - (NSRect)frameExceptMenuBar;
+- (BOOL)hasDock;
 
 @end

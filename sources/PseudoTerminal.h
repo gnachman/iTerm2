@@ -7,6 +7,7 @@
 #import "iTermBroadcastInputHelper.h"
 #import "iTermController.h"
 #import "iTermInstantReplayWindowController.h"
+#import "iTermPresentationController.h"
 #import "iTermPopupWindowController.h"
 #import "iTermToolbeltView.h"
 #import "iTermWeakReference.h"
@@ -47,6 +48,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // or window-initiated).
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
+  iTermPresentationControllerManagedWindowController,
   iTermSubscribable,
   iTermWeaklyReferenceable,
   iTermWindowController,
@@ -302,11 +304,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                targetSession:(PTYSession *)targetSession
                   completion:(void (^)(PTYSession *))completion
                        ready:(void (^)(BOOL ok))ready;
-
-// Change visibility of menu bar (but only if it should be changed--may do
-// nothing if the menu bar is on a different screen, for example).
-- (void)hideMenuBar;
-- (void)showMenuBar;
 
 // Cause every session in this window to reload its bookmark.
 - (void)reloadBookmarks;

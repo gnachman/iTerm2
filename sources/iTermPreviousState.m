@@ -2,6 +2,7 @@
 
 #import "DebugLogging.h"
 #import "iTermController.h"
+#import "iTermPresentationController.h"
 #import "PseudoTerminal.h"
 
 @implementation iTermPreviousState
@@ -67,9 +68,9 @@
     if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];
         if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
-            [currentTerm hideMenuBar];
+            [[iTermPresentationController sharedInstance] update];
         } else {
-            [currentTerm showMenuBar];
+            [[iTermPresentationController sharedInstance] forceShowMenuBarAndDock];
         }
     }
     return result;

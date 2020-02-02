@@ -34,6 +34,7 @@
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
+#import "iTermPresentationController.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
@@ -80,7 +81,7 @@
 // Pref keys
 static iTermController *gSharedInstance;
 
-@interface iTermController()<iTermSetCurrentTerminalHelperDelegate>
+@interface iTermController()<iTermSetCurrentTerminalHelperDelegate, iTermPresentationControllerDelegate>
 @end
 
 @implementation iTermController {
@@ -149,6 +150,7 @@ static iTermController *gSharedInstance;
                                                  selector:@selector(windowDidExitFullScreen:)
                                                      name:NSWindowDidExitFullScreenNotification
                                                    object:nil];
+        [[iTermPresentationController sharedInstance] setDelegate:self];
     }
 
     return (self);
@@ -1492,7 +1494,7 @@ static iTermController *gSharedInstance;
     if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront:self];
         if ([thePseudoTerminal fullScreen]) {
-            [thePseudoTerminal hideMenuBar];
+            [[iTermPresentationController sharedInstance] update];
         }
     }
 
@@ -1500,6 +1502,12 @@ static iTermController *gSharedInstance;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
                                                         object:thePseudoTerminal
                                                       userInfo:nil];
+}
+
+#pragma mark - iTermPresentationControllerDelegate
+
+- (NSArray<id<iTermPresentationControllerManagedWindowController>> *)presentationControllerManagedWindows {
+    return _terminalWindows;
 }
 
 @end
