@@ -306,6 +306,7 @@ static BOOL hasBecomeActive = NO;
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
     [_focusFollowsMouseController release];
+    [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     [super dealloc];
 }
 
@@ -1031,11 +1032,16 @@ static BOOL hasBecomeActive = NO;
 
         case TAB_STYLE_COMPACT:
         case TAB_STYLE_AUTOMATIC: {
-            NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
-            if ([systemMode isEqual:@"Dark"]) {
-                dark = YES;
+            if (@available(macOS 10.14, *)) {
+                NSAppearanceName appearance = [NSApp.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+                *([appearance isEqualToString:NSAppearanceNameDarkAqua] ? &dark : &light) = YES;
             } else {
-                light = YES;
+                NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
+                if ([systemMode isEqual:@"Dark"]) {
+                    dark = YES;
+                } else {
+                    light = YES;
+                }
             }
             break;
         }
@@ -1079,8 +1085,7 @@ static BOOL hasBecomeActive = NO;
                                        forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
         });
     };
-    [[NSUserDefaults standardUserDefaults] it_addObserverForKey:@"AppleInterfaceStyle"
-                                                          block:themeDidChange];
+    [NSApp addObserver:self forKeyPath:@"effectiveAppearance" options:NSKeyValueObservingOptionNew context:nil];
     [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                           block:themeDidChange];
 
@@ -1400,6 +1405,15 @@ static BOOL hasBecomeActive = NO;
                                        toMenu:bookmarkMenu
                                startingAtItem:5
                                        params:params];
+}
+
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:@"effectiveAppearance"]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
+                                       forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
+        });
+    }
 }
 
 #pragma mark - Startup Helpers
