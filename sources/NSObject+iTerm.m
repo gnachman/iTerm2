@@ -15,11 +15,109 @@
 @implementation iTermDelayedPerform
 @end
 
+@interface NSNumber(Approximate)
+@end
+
+@implementation NSNumber(Approximate)
+
+- (BOOL)isApproximatelyEqual:(id)obj epsilon:(double)epsilon {
+    if (self == obj) {
+        return YES;
+    }
+    if ([self isEqual:obj]) {
+        return YES;
+    }
+    NSNumber *other = [NSNumber castFrom:obj];
+    if (!other) {
+        return NO;
+    }
+    return fabs(self.doubleValue - other.doubleValue) < epsilon;
+}
+
+@end
+
+@interface NSDictionary(Approximate)
+@end
+
+@implementation NSDictionary(Approximate)
+
+- (BOOL)isApproximatelyEqual:(id)obj epsilon:(double)epsilon {
+    if (self == obj) {
+        return YES;
+    }
+    if ([self isEqual:obj]) {
+        return YES;
+    }
+    NSDictionary *other = [NSDictionary castFrom:obj];
+    if (!other) {
+        return NO;
+    }
+    if (self.count != other.count) {
+        return NO;
+    }
+    for (NSString *key in self.allKeys) {
+        id myValue = self[key];
+        id otherValue = other[key];
+        if (!otherValue) {
+            return NO;
+        }
+        if (![NSObject object:myValue isApproximatelyEqualToObject:otherValue epsilon:epsilon]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+@end
+
+@interface NSArray(Approximate)
+@end
+
+@implementation NSArray(Approximate)
+
+- (BOOL)isApproximatelyEqual:(id)obj epsilon:(double)epsilon {
+    if (self == obj) {
+        return YES;
+    }
+    if ([self isEqual:obj]) {
+        return YES;
+    }
+    NSArray *other = [NSArray castFrom:obj];
+    if (!other) {
+        return NO;
+    }
+    if (self.count != other.count) {
+        return NO;
+    }
+    const NSInteger count = self.count;
+    for (NSInteger i = 0; i < count; i++) {
+        if (![NSObject object:self[i] isApproximatelyEqualToObject:other[i] epsilon:epsilon]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+@end
+
 @implementation NSObject (iTerm)
 
 + (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b {
     if (a == b) {
         return YES;
+    }
+    return [a isEqual:b];
+}
+
++ (BOOL)object:(__kindof NSObject *)a isApproximatelyEqualToObject:(__kindof NSObject *)b epsilon:(double)epsilon {
+    if (a == b) {
+        return YES;
+    }
+    if ([a respondsToSelector:@selector(isApproximatelyEqual:epsilon:)]) {
+        return [a isApproximatelyEqual:b epsilon:epsilon];
+    }
+    if ([b respondsToSelector:@selector(isApproximatelyEqual:epsilon:)]) {
+        return [b isApproximatelyEqual:a epsilon:epsilon];
     }
     return [a isEqual:b];
 }

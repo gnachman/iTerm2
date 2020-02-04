@@ -256,10 +256,26 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 }
 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
-    _configuration = [_configuration dictionaryBySettingObject:knobValues
-                                                        forKey:iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSMutableSet<NSString *> *keys = [NSMutableSet setWithArray:[knobValues allKeys]];
+    for (NSString *key in _configuration.allKeys) {
+        [keys addObject:key];
+    }
+    NSDictionary *replacement = [_configuration dictionaryBySettingObject:knobValues
+                                                                   forKey:iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSMutableSet<NSString *> *updatedKeys = [NSMutableSet set];
+    NSDictionary *replacementKnobs = replacement[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSDictionary *originalKnobs = _configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    for (NSString *key in keys) {
+        // The color picker tends to slightly perturb values during colorspace conversion so use
+        // a fuzzy comparison for floating point values.
+        if (![NSObject object:originalKnobs[key] isApproximatelyEqualToObject:replacementKnobs[key] epsilon:0.0001]) {
+            [updatedKeys addObject:key];
+        }
+    }
+    _configuration = replacement;
     [self statusBarComponentUpdate];
-    [self.delegate statusBarComponentKnobsDidChange:self];
+    [self.delegate statusBarComponentKnobsDidChange:self
+                                        updatedKeys:updatedKeys];
 }
 
 - (NSDictionary *)statusBarComponentKnobValues {

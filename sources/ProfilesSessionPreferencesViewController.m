@@ -12,6 +12,7 @@
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermTheme.h"
 #import "iTermWarning.h"
+#import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -344,7 +345,7 @@
     const BOOL dark = [[colorDict colorValue] perceivedBrightness] < 0.5;
     _statusBarSetupViewController =
         [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary
-                                                             darkBackground:dark
+                                                             darkBackground:[NSAppearance it_decorationsAreDarkWithTerminalBackgroundColorIsDark:dark]
                                                                allowRainbow:[self allowRainbow]];
     _statusBarSetupViewController.defaultTextColor = [[iTermTheme sharedInstance] statusBarTextColorForEffectiveAppearance:[self appearanceForCurrentTheme]
                                                                                                                   colorMap:[self colorMap]

@@ -128,8 +128,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 
 #pragma mark - iTermStatusBarComponentDelegate
 
-- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component {
-    [self.delegate itermStatusBarSetupElementDidChange:self];
+- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component
+                             updatedKeys:(NSSet<NSString *> *)updatedKeys {
+    [self.delegate itermStatusBarSetupElementDidChange:self updatedKeys:updatedKeys];
 }
 
 - (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component {

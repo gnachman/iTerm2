@@ -8,6 +8,7 @@
 #import "iTermStatusBarViewController.h"
 
 #import "DebugLogging.h"
+#import "iTermStatusBarAutoRainbowController.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarLayout.h"
@@ -38,11 +39,15 @@ const CGFloat iTermStatusBarHeight = 21;
 
 @end
 
+@interface iTermStatusBarViewController()<iTermStatusBarAutoRainbowControllerDelegate>
+@end
+
 @implementation iTermStatusBarViewController {
     NSMutableArray<iTermStatusBarContainerView *> *_containerViews;
     NSArray<iTermStatusBarContainerView *> *_visibleContainerViews;
     NSInteger _updating;
     BOOL _makeSearchControllerFirstResponder;
+    iTermStatusBarAutoRainbowController *_autoRainbowController;
 }
 
 - (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
@@ -51,6 +56,8 @@ const CGFloat iTermStatusBarHeight = 21;
     if (self) {
         _scope = scope;
         _layout = layout;
+        _autoRainbowController = [[iTermStatusBarAutoRainbowController alloc] initWithStyle:layout.advancedConfiguration.autoRainbowStyle];
+        _autoRainbowController.delegate = self;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(unreadCountDidChange:)
                                                      name:iTermStatusBarUnreadCountDidChange
@@ -182,6 +189,7 @@ const CGFloat iTermStatusBarHeight = 21;
         [self.searchViewController open];
         _makeSearchControllerFirstResponder = NO;
     }
+    [self updateAutoRainbowColorsIfNeeded];
     DLog(@"--- end status bar layout ---");
 }
 
@@ -284,6 +292,7 @@ const CGFloat iTermStatusBarHeight = 21;
     }
     [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
     [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
+    _autoRainbowController.darkBackground = [self.delegate statusBarHasDarkBackground];
     [self.delegate statusBarDidUpdate];
 }
 
@@ -305,7 +314,7 @@ const CGFloat iTermStatusBarHeight = 21;
     return NO;
 }
 
-- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component {
+- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component updatedKeys:(NSSet<NSString *> *)updatedKeys {
     // Shouldn't happen since this is not the setup UI
 }
 
@@ -390,6 +399,25 @@ const CGFloat iTermStatusBarHeight = 21;
                                                                                                                sessionID:sessionID]];
     }];
 }
+
+#pragma mark - iTermStatusBarAutoRainbowControllerDelegate
+
+- (void)autoRainbowControllerDidInvalidateColors:(iTermStatusBarAutoRainbowController *)controller {
+    [self updateAutoRainbowColorsIfNeeded];
+}
+
+- (void)updateAutoRainbowColorsIfNeeded {
+    if (_autoRainbowController.style == iTermStatusBarAutoRainbowStyleDisabled) {
+        return;
+    }
+    [_autoRainbowController enumerateColorsWithCount:_visibleContainerViews.count block:^(NSInteger i, NSColor * _Nonnull color) {
+        id<iTermStatusBarComponent> component = _visibleContainerViews[i].component;
+        NSMutableDictionary *knobValues = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] mutableCopy];
+        knobValues[iTermStatusBarSharedTextColorKey] = [color dictionaryValue];
+        [component statusBarComponentSetKnobValues:knobValues];
+    }];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

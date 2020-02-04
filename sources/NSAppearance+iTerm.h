@@ -19,6 +19,15 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)it_appearanceForCurrentTheme;
 + (void)it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:(void (^)(void))block;
 
+typedef NS_OPTIONS(NSUInteger, iTermAppearanceOptions) {
+    iTermAppearanceOptionsDark = 1 << 0,
+    iTermAppearanceOptionsHighContrast = 1 << 1,
+    iTermAppearanceOptionsMinimal = 1 << 2
+};
+
++ (iTermAppearanceOptions)it_appearanceOptions;
++ (BOOL)it_decorationsAreDarkWithTerminalBackgroundColorIsDark:(BOOL)darkBackground;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -100,6 +100,7 @@
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSAlert+iTerm.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
@@ -11722,6 +11723,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                         colorMap:_colorMap
                                                                         tabStyle:[self.view.window.ptyWindow it_tabStyle]
                                                                    mainAndActive:(self.view.window.isMainWindow && NSApp.isActive)];
+}
+
+- (BOOL)statusBarHasDarkBackground {
+    if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        NSColor *color = self.view.window.ptyWindow.it_terminalWindowDecorationControlColor;
+        return [color isDark];
+    }
+    // This is called early in the appearance change process and subviews of the contentview aren't
+    // up to date yet.
+    return self.view.window.contentView.effectiveAppearance.it_isDark;
 }
 
 - (NSColor *)statusBarDefaultTextColor {

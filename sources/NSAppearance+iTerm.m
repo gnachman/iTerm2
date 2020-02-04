@@ -105,4 +105,48 @@
     return TAB_STYLE_LIGHT;
 }
 
++ (iTermAppearanceOptions)it_appearanceOptions {
+    iTermAppearanceOptions options = 0;
+
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_DARK:
+            options |= iTermAppearanceOptionsDark;
+            break;
+
+        case TAB_STYLE_LIGHT:
+            break;
+
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            options |= iTermAppearanceOptionsDark;
+            options |= iTermAppearanceOptionsHighContrast;
+            break;
+
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            options |= iTermAppearanceOptionsHighContrast;
+            break;
+
+        case TAB_STYLE_MINIMAL:
+            options |= iTermAppearanceOptionsMinimal;
+            // fall through
+
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_AUTOMATIC: {
+            NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
+            if ([systemMode isEqual:@"Dark"]) {
+                options |= iTermAppearanceOptionsDark;
+            }
+            break;
+        }
+    }
+    return options;
+}
+
++ (BOOL)it_decorationsAreDarkWithTerminalBackgroundColorIsDark:(BOOL)darkBackground {
+    const iTermAppearanceOptions options = [self it_appearanceOptions];
+    if (options & iTermAppearanceOptionsMinimal) {
+        return darkBackground;
+    }
+    return !!(options & iTermAppearanceOptionsDark);
+}
+
 @end

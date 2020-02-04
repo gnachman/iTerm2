@@ -25,7 +25,8 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 @class iTermVariableScope;
 
 @protocol iTermStatusBarComponentDelegate<NSObject>
-- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component
+                             updatedKeys:(NSSet<NSString *> *)updatedKeys;
 - (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component;
 - (NSColor *)statusBarComponentDefaultTextColor;

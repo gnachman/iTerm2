@@ -45,6 +45,10 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 @interface NSObject (iTerm)
 
 + (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b;
+
+// Supports NSArray, NSDictionary, and NSNumber.
++ (BOOL)object:(__kindof NSObject *)a isApproximatelyEqualToObject:(__kindof NSObject *)b epsilon:(double)epsilon;
+
 + (instancetype)castFrom:(id)object;
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;

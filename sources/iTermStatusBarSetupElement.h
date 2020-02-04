@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermStatusBarSetupElementDelegate<NSObject>
 
-- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element;
+- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element
+                                updatedKeys:(NSSet<NSString *> *)updatedKeys;
 
 @end
 

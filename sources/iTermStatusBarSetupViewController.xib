@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarSetupViewController">
             <connections>
                 <outlet property="_advancedPanel" destination="E9x-dQ-Z2f" id="Xcc-8G-LRz"/>
-                <outlet property="_autoRainbow" destination="SxK-ao-7Z2" id="mQo-b7-5CR"/>
+                <outlet property="_autoRainbow" destination="Tij-LB-yvq" id="aN7-ZI-ThP"/>
                 <outlet property="_backgroundColorWell" destination="o9w-yb-zqg" id="7GT-fU-v4b"/>
                 <outlet property="_collectionView" destination="jZn-RM-fbW" id="01b-Q8-r0D"/>
                 <outlet property="_defaultTextColorWell" destination="pvQ-Cs-gi6" id="sRX-Cp-7Gc"/>
@@ -154,7 +154,7 @@ Gw
                     <rect key="frame" x="18" y="468" width="444" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Drag a component from the menu to Active Components to add it to your status bar." id="0yl-ll-bce">
-                        <font key="font" metaFont="miniSystem"/>
+                        <font key="font" metaFont="label" size="9"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -170,17 +170,6 @@ Gw
                         <action selector="advanced:" target="-2" id="032-Lm-XfB"/>
                     </connections>
                 </button>
-                <button hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SxK-ao-7Z2">
-                    <rect key="frame" x="188" y="13" width="149" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="push" title="🌈 Auto-Rainbow" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zvK-FU-ixt">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="autoRainbow:" target="-2" id="2Ld-HZ-XnU"/>
-                    </connections>
-                </button>
                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TC7-Tj-VXP">
                     <rect key="frame" x="618" y="16" width="25" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
@@ -192,6 +181,35 @@ Gw
                         <action selector="help:" target="-2" id="e1i-u9-eIx"/>
                     </connections>
                 </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kNF-aD-3q2">
+                    <rect key="frame" x="188" y="23" width="116" height="16"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="🌈 Auto-Rainbow:" id="HTz-sS-eZA">
+                        <font key="font" usesAppearanceFont="YES"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tij-LB-yvq">
+                    <rect key="frame" x="308" y="17" width="147" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Disabled" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="dl4-IN-dSo" id="fA5-eD-8oG">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <menu key="menu" id="L7b-DA-yf7">
+                            <items>
+                                <menuItem title="Disabled" id="dl4-IN-dSo"/>
+                                <menuItem isSeparatorItem="YES" id="H9D-cg-zt9"/>
+                                <menuItem title="Light Colors" tag="1" id="pjM-aG-lDH"/>
+                                <menuItem title="Dark Colors" tag="2" id="jgD-En-XDb"/>
+                                <menuItem title="Automatic" tag="3" id="Fy4-yN-EYh"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="autoRainbow:" target="-2" id="vtE-TN-nxB"/>
+                    </connections>
+                </popUpButton>
             </subviews>
             <point key="canvasLocation" x="362" y="155.5"/>
         </customView>
@@ -205,7 +223,7 @@ Gw
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="E9x-dQ-Z2f" customClass="iTermStatusBarAdvancedConfigurationPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="272" y="176" width="424" height="204"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <view key="contentView" id="lY3-r0-LxD">
                 <rect key="frame" x="0.0" y="0.0" width="424" height="204"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -281,7 +299,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="Change" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="jOE-EE-nKA">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="smallSystem"/>
+                                    <font key="font" metaFont="controlContent" size="11"/>
                                 </buttonCell>
                                 <connections>
                                     <action selector="openFontPanel:" target="-2" id="8P1-c7-61G"/>

@@ -68,6 +68,7 @@
     NSMutableArray<iTermStatusBarSetupElement *> *_elements;
     NSIndexPath *_draggingIndexPath;
     IBOutlet NSButton *_configureButton;
+    BOOL _updatingAutoRainbowColors;
 }
 
 - (void)awakeFromNib {
@@ -111,22 +112,7 @@
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView deleteItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
-    [self didChange];
-}
-
-- (void)autoRainbowWithDarkBackground:(BOOL)darkBackground {
-    __block CGFloat h = 0;
-    const CGFloat s = darkBackground ? 0.3 : 0.5;
-    const CGFloat b = darkBackground ? 0.9 : 0.5;
-    const CGFloat stride = 1.0 / _elements.count;
-    [_elements enumerateObjectsUsingBlock:^(iTermStatusBarSetupElement * _Nonnull element, NSUInteger idx, BOOL * _Nonnull stop) {
-        id<iTermStatusBarComponent> component = element.component;
-        NSMutableDictionary *knobValues = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] mutableCopy];
-        knobValues[iTermStatusBarSharedTextColorKey] = [[NSColor colorWithHue:h saturation:s brightness:b alpha:1] dictionaryValue];
-        [component statusBarComponentSetKnobValues:knobValues];
-        h += stride;
-    }];
-    [self didChange];
+    [self didChange:YES];
 }
 
 - (NSCollectionView *)collectionView {
@@ -138,11 +124,28 @@
     [self.collectionView reloadData];
 }
 
+- (void)updateAutoRainbowColors {
+    if (_updatingAutoRainbowColors) {
+        return;
+    }
+    iTermStatusBarAutoRainbowController *controller = [[iTermStatusBarAutoRainbowController alloc] initWithStyle:_advancedConfiguration.autoRainbowStyle];
+    controller.darkBackground = self.darkBackground;
+    _updatingAutoRainbowColors = YES;
+    [controller enumerateColorsWithCount:_elements.count block:^(NSInteger i, NSColor *color) {
+        id<iTermStatusBarComponent> component = _elements[i].component;
+        NSMutableDictionary *knobValues = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] mutableCopy];
+        knobValues[iTermStatusBarSharedTextColorKey] = [color dictionaryValue];
+        [component statusBarComponentSetKnobValues:knobValues];
+    }];
+    _updatingAutoRainbowColors = NO;
+}
+
 - (void)setAdvancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration {
     _advancedConfiguration = advancedConfiguration;
     iTermStatusBarLayout *temporaryLayout = [[iTermStatusBarLayout alloc] initWithDictionary:[self layoutDictionary] scope:nil];
     [self loadElementsFromLayout:temporaryLayout];
-    [self didChange];
+    [self updateAutoRainbowColors];
+    [self didChange:YES];
 }
 
 - (void)loadElementsFromLayout:(iTermStatusBarLayout *)layout {
@@ -153,6 +156,7 @@
         [self->_elements addObject:element];
     }];
     [self.collectionView reloadData];
+    [self updateAutoRainbowColors];
 }
 
 - (void)setLayout:(iTermStatusBarLayout *)layout {
@@ -189,7 +193,10 @@
     }
 }
 
-- (void)didChange {
+- (void)didChange:(BOOL)updateAutoRainbow {
+    if (updateAutoRainbow) {
+        [self updateAutoRainbowColors];
+    }
     if (self.onChange) {
         self.onChange();
     }
@@ -354,7 +361,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     @catch (NSException *exception) {
         return NO;
     }
-    [self didChange];
+    [self didChange:YES];
     return YES;
 }
 
@@ -366,7 +373,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     [indexPaths enumerateObjectsUsingBlock:^(NSIndexPath * _Nonnull indexPath, BOOL * _Nonnull stop) {
         [[collectionView itemAtIndexPath:indexPath] setHighlightState:highlightState];
     }];
-    [self didChange];
+    [self didChange:NO];
 }
 
 - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldSelectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
@@ -399,18 +406,37 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
 
 #pragma mark - iTermStatusBarSetupElementDelegate
 
-- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element {
+- (BOOL)keysContainsTextColor:(NSSet<NSString *> *)keys {
+    for (NSString *key in keys) {
+        if ([key isEqualToString:iTermStatusBarSharedTextColorKey]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)disableAutoRainbow {
+    iTermStatusBarAdvancedConfiguration *config = [self.advancedConfiguration copy];
+    config.autoRainbowStyle = iTermStatusBarAutoRainbowStyleDisabled;
+    self.advancedConfiguration = config;
+}
+
+- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element
+                                updatedKeys:(NSSet<NSString *> *)updatedKeys {
     NSInteger index = [_elements indexOfObject:element];
     if (index == NSNotFound) {
         return;
     }
-
+    if (!_updatingAutoRainbowColors &&
+        [self keysContainsTextColor:updatedKeys]) {
+        [self disableAutoRainbow];
+    }
     [self.collectionView.animator performBatchUpdates:
      ^{
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
-    [self didChange];
+    [self didChange:YES];
 }
 
 #pragma mark - Actions

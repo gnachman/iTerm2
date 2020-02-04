@@ -66,10 +66,10 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet CPKColorWell *_separatorColorWell;
     IBOutlet CPKColorWell *_backgroundColorWell;
     IBOutlet CPKColorWell *_defaultTextColorWell;
-    IBOutlet NSButton *_autoRainbow;
     IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
     IBOutlet NSButton *_tightPacking;
+    IBOutlet NSPopUpButton *_autoRainbow;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
     BOOL _darkBackground;
@@ -148,8 +148,13 @@ NS_ASSUME_NONNULL_BEGIN
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;
 
+    [_autoRainbow selectItemWithTag:_layout.advancedConfiguration.autoRainbowStyle];
+
+    _destinationViewController.darkBackground = _darkBackground;
     _destinationViewController.advancedConfiguration = _layout.advancedConfiguration;
+
     [_destinationViewController setLayout:_layout];
+
     __weak __typeof(self) weakSelf = self;
     _destinationViewController.onChange = ^{
         [weakSelf apply];
@@ -168,7 +173,6 @@ NS_ASSUME_NONNULL_BEGIN
                         color:_layout.advancedConfiguration.defaultTextColor
                  alphaAllowed:NO];
     [self initializeTightPacking];
-    _autoRainbow.hidden = !_allowRainbow;
 
     [super awakeFromNib];
 }
@@ -275,6 +279,14 @@ NS_ASSUME_NONNULL_BEGIN
     if (self.applyBlock) {
         self.applyBlock(self.layoutDictionary);
     }
+    const NSInteger tag = _destinationViewController.advancedConfiguration.autoRainbowStyle;
+    [_autoRainbow selectItemWithTag:tag];
+    const NSInteger index = [_autoRainbow indexOfItemWithTag:tag];
+    if (index != NSNotFound) {
+        _autoRainbow.title = [_autoRainbow.menu.itemArray[index] title];
+    } else {
+        _autoRainbow.title = _autoRainbow.menu.itemArray.firstObject.title;
+    }
 }
 
 - (IBAction)cancel:(id)sender {
@@ -289,7 +301,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (IBAction)autoRainbow:(id)sender {
-    [_destinationViewController autoRainbowWithDarkBackground:_darkBackground];
+    NSPopUpButton *control = sender;
+    iTermStatusBarAdvancedConfiguration *config = [_destinationViewController.advancedConfiguration copy];
+    config.autoRainbowStyle = control.selectedTag;
+    _destinationViewController.advancedConfiguration = config;
 }
 
 - (IBAction)advancedOK:(id)sender {
@@ -325,6 +340,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)configureStatusBarComponentWithIdentifier:(NSString *)identifier {
     [_destinationViewController configureStatusBarComponentWithIdentifier:identifier];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(autoRainbow:)) {
+        menuItem.state = (_destinationViewController.advancedConfiguration.autoRainbowStyle == menuItem.tag);
+    }
+    return YES;
 }
 
 #pragma mark - NSCollectionViewDataSource

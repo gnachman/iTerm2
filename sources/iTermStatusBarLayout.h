@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermStatusBarAutoRainbowController.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
 
@@ -23,12 +24,13 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 
 @end
 
-@interface iTermStatusBarAdvancedConfiguration : NSObject<NSSecureCoding>
+@interface iTermStatusBarAdvancedConfiguration : NSObject<NSCopying, NSSecureCoding>
 @property (nullable, nonatomic, strong) NSColor *separatorColor;
 @property (nullable, nonatomic, strong) NSColor *backgroundColor;
 @property (nullable, nonatomic, strong) NSColor *defaultTextColor;
 @property (nullable, nonatomic, strong) NSFont *font;
 @property (nonatomic) iTermStatusBarLayoutAlgorithmSetting layoutAlgorithm;
+@property (nonatomic) iTermStatusBarAutoRainbowStyle autoRainbowStyle;
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
 + (NSFont *)defaultFont;

@@ -32,6 +32,9 @@ extern const CGFloat iTermStatusBarHeight;
 - (void)statusBarDisable;
 - (void)statusBarPerformAction:(iTermAction *)action;
 - (void)statusBarRevealActionsTool;
+
+// Takes into account theme, dark/light mode (if relevant), and advanced config background color.
+- (BOOL)statusBarHasDarkBackground;
 @end
 
 @protocol iTermStatusBarContainer<NSObject>
