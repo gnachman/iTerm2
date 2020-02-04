@@ -73,6 +73,7 @@ const CGFloat progressIndicatorHeight = 6;
 
     [self sanityCheckSiblings];
     self.drawPending = NO;
+    BOOL drawBackground = YES;
     if ([[self enclosingMenuItem] isHighlighted]) {
         self.lastDrawnHighlighted = YES;
         [[NSColor selectedMenuItemColor] set];
@@ -84,17 +85,23 @@ const CGFloat progressIndicatorHeight = 6;
         }
     } else {
         self.lastDrawnHighlighted = NO;
-        if (@available(macOS 10.14, *)) {
+        if (@available(macOS 10.15, *)) {
             textColor = [NSColor textColor];
             grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
             [[NSColor clearColor] set];
+        } else if (@available(macOS 10.14, *)) {
+            textColor = [NSColor textColor];
+            grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
+            drawBackground = NO;
         } else {
             textColor = [NSColor blackColor];
             grayColor = [NSColor grayColor];
             [[NSColor whiteColor] set];
         }
     }
-    NSRectFill(dirtyRect);
+    if (drawBackground) {
+        NSRectFill(dirtyRect);
+    }
 
     NSMutableParagraphStyle *leftAlignStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
