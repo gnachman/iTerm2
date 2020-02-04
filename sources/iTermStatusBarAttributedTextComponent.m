@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
-    const CGFloat maxWidth = self.bounds.size.width - point.x;
+    const CGFloat maxWidth = reallyDraw ? self.bounds.size.width - point.x : INFINITY;
     if (reallyDraw) {
         NSColor *textColor = attrs[NSForegroundColorAttributeName];
         if (!textColor) {
