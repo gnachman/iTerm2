@@ -131,8 +131,7 @@
 
         case TAB_STYLE_COMPACT:
         case TAB_STYLE_AUTOMATIC: {
-            NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
-            if ([systemMode isEqual:@"Dark"]) {
+            if ([NSAppearance it_systemThemeIsDark]) {
                 options |= iTermAppearanceOptionsDark;
             }
             break;
@@ -147,6 +146,17 @@
         return darkBackground;
     }
     return !!(options & iTermAppearanceOptionsDark);
+}
+
++ (BOOL)it_systemThemeIsDark {
+    if (@available(macOS 10.14, *)) {
+        NSAppearanceName appearance =
+            [NSApp.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+        return [appearance isEqualToString:NSAppearanceNameDarkAqua];
+    } else {
+        NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
+        return [systemMode isEqual:@"Dark"];
+    }
 }
 
 @end

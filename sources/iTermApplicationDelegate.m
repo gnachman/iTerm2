@@ -46,17 +46,16 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermFullScreenWindowManager.h"
+#import "iTermGlobalScopeController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchExperienceController.h"
 #import "iTermLaunchServices.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermLSOF.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
-#import "iTermObject.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfileModelJournal.h"
@@ -91,7 +90,6 @@
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
 #import "iTermUserDefaults.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import "MovePaneController.h"
@@ -153,7 +151,7 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate, iTermObject>
+@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -224,9 +222,9 @@ static BOOL hasBecomeActive = NO;
     } _untitledFileOpenStatus;
     
     BOOL _disableTermination;
-    iTermVariables *_userVariables;
 
     iTermFocusFollowsMouseController *_focusFollowsMouseController;
+    iTermGlobalScopeController *_globalScopeController;
 }
 
 - (instancetype)init {
@@ -307,6 +305,7 @@ static BOOL hasBecomeActive = NO;
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
     [_focusFollowsMouseController release];
+    [_globalScopeController release];
     [super dealloc];
 }
 
@@ -1001,24 +1000,6 @@ static BOOL hasBecomeActive = NO;
     iTermPreciseTimerClearLogs();
 }
 
-- (NSString *)effectiveTheme {
-    iTermAppearanceOptions options = [NSAppearance it_appearanceOptions];
-
-    NSMutableArray *array = [NSMutableArray array];
-    if (options & iTermAppearanceOptionsDark) {
-        [array addObject:@"dark"];
-    } else {
-        [array addObject:@"light"];
-    }
-    if (options & iTermAppearanceOptionsHighContrast) {
-        [array addObject:@"highContrast"];
-    }
-    if (options & iTermAppearanceOptionsMinimal) {
-        [array addObject:@"minimal"];
-    }
-    return [array componentsJoinedByString:@" "];
-}
-
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
@@ -1031,26 +1012,7 @@ static BOOL hasBecomeActive = NO;
         DLog(@"applicationWillFinishLaunching:");
     }
 
-    [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
-    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
-                                                       owner:self];
-    [[iTermVariableScope globalsScope] setValue:_userVariables forVariableNamed:@"user"];
-    [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
-                               forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
-    void (^themeDidChange)(id _Nonnull) = ^(id _Nonnull newValue) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
-                                       forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
-        });
-    };
-    [[NSUserDefaults standardUserDefaults] it_addObserverForKey:@"AppleInterfaceStyle"
-                                                          block:themeDidChange];
-    [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
-                                                          block:themeDidChange];
-
-    [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString *name) {
-        [[iTermVariableScope globalsScope] setValue:name forVariableNamed:iTermVariableKeyApplicationLocalhostName];
-    }];
+    _globalScopeController = [[iTermGlobalScopeController alloc] init];
 
     [PTYSession registerBuiltInFunctions];
     [PTYTab registerBuiltInFunctions];
@@ -2299,16 +2261,6 @@ static BOOL hasBecomeActive = NO;
 
 - (void)windowDidChangeKeyStatus:(NSNotification *)notification {
     DLog(@"%@:\n%@", notification.name, [NSThread callStackSymbols]);
-}
-
-#pragma mark - iTermObject
-
-- (iTermBuiltInFunctions *)objectMethodRegistry {
-    return nil;
-}
-
-- (iTermVariableScope *)objectScope {
-    return [iTermVariableScope globalsScope];
 }
 
 @end
