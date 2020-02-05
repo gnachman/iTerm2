@@ -74,6 +74,8 @@ NS_ASSUME_NONNULL_BEGIN
                 .height = self.bounds.size.height - point.y
             }
         };
+        DLog(@"Draw “%@” in rect %@ with baseline offset %@ point %@ attrs=%@",
+             string, NSStringFromRect(rect), @(_baselineOffset), NSStringFromPoint(point), attrs);
         [string drawInRect:rect withAttributes:attrs];
     }
     *width = [self retinaRound:MIN(maxWidth, [string sizeWithAttributes:attrs].width)];
@@ -129,6 +131,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                 NSFont *font = attrs[NSFontAttributeName];
                                                 if (font) {
                                                     self->_baselineOffset = -font.descender;
+                                                    DLog(@"Set baseline offset to %@ for font %@", @(self->_baselineOffset), font);
                                                     *stop = YES;
                                                 }
                                             }];
