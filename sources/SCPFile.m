@@ -489,7 +489,7 @@ static NSError *SCPFileError(NSString *description) {
                 quarantined = YES;
             }
         }
-        __block NSError *error;
+        __block NSError *error = nil;
         __block NSString *finalDestination = nil;
         if (ok) {
             error = nil;
@@ -509,7 +509,6 @@ static NSError *SCPFileError(NSString *description) {
             [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
             self.destination = finalDestination;
         } else {
-            NSError *error = nil;
             const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:tempfile error:&error];
             if (quarantineError && (!ok || error)) {
                 dispatch_sync(dispatch_get_main_queue(), ^{
