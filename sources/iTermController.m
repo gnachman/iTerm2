@@ -465,7 +465,9 @@ static iTermController *gSharedInstance;
     }
     if (shouldDelay) {
         DLog(@"Trying again in .25 sec");
-        [self performSelector:_cmd withObject:terminalArrangement afterDelay:0.25];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self tryOpenArrangement:terminalArrangement named:arrangementName asTabsInWindow:term];
+        });
     } else {
         DLog(@"Opening it.");
         PseudoTerminal *term = [PseudoTerminal terminalWithArrangement:terminalArrangement
