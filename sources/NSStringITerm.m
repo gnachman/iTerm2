@@ -1106,7 +1106,7 @@ int decode_utf8_char(const unsigned char *datap,
     NSFont *aFont;
 
     if ([self length] == 0) {
-        return ([NSFont userFixedPitchFontOfSize:0.0]);
+        return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
 
     sscanf([self UTF8String], "%127s %g", utf8FontName, &fontSize);
@@ -1116,7 +1116,7 @@ int decode_utf8_char(const unsigned char *datap,
 
     aFont = [NSFont fontWithName:[NSString stringWithFormat:@"%s", utf8FontName] size:fontSize];
     if (aFont == nil) {
-        return ([NSFont userFixedPitchFontOfSize:0.0]);
+        return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
 
     return aFont;

@@ -74,6 +74,7 @@
 
 + (id)fontSizeEstimatorForFont:(NSFont *)aFont
 {
+    assert(aFont != nil);
     FontSizeEstimator* fse = [[[FontSizeEstimator alloc] init] autorelease];
     if (fse) {
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
