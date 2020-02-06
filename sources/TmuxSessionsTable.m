@@ -56,7 +56,9 @@ extern NSString *kWindowPasteboardType;
 
 - (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)sessions
 {
-    DLog(@"ashboard: setSessionObjects:%@", sessions);
+    DLog(@"dashboard: setSessionObjects:%@", sessions);
+    // Reload in case a cell is being edited. Otherwise NSTableView asks for its row.
+    [tableView_ reloadData];
     [_model removeAllObjects];
     [_model addObjectsFromArray:sessions];
     [tableView_ reloadData];
