@@ -246,11 +246,16 @@
 
 - (void)removeNamelessHosts {
     // Remove empty hosts
-    NSArray *hosts = [self boundHosts];
-    for (NSInteger i = hosts.count - 1; i >= 0; i--) {
-        if (![hosts[i] length]) {
-            [self removeBoundHostOnRow:i];
-            hosts = [self boundHosts];
+    BOOL done = NO;
+    while (!done) {
+        done = YES;
+        NSArray *hosts = [self boundHosts];
+        for (NSInteger i = 0; i < hosts.count; i++) {
+            if (![hosts[i] length]) {
+                [self removeBoundHostOnRow:i];
+                done = NO;
+                break;
+            }
         }
     }
 }
