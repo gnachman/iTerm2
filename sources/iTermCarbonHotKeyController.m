@@ -202,7 +202,6 @@
                            target:(id)target
                          selector:(SEL)selector
                          userData:(NSDictionary *)userData {
-    assert(!_suspended);
     DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
 
     EventHotKeyRef eventHotKey = NULL;
@@ -214,13 +213,15 @@
     EventHotKeyID hotKeyID;
     if (!existingHotKey) {
         hotKeyID = [self nextHotKeyID];
-        if (RegisterEventHotKey((UInt32)shortcut.keyCode,
-                                carbonModifiers,
-                                hotKeyID,
-                                GetEventDispatcherTarget(),
-                                0,
-                                &eventHotKey)) {
-            return nil;
+        if (!_suspended) {
+            if (RegisterEventHotKey((UInt32)shortcut.keyCode,
+                                    carbonModifiers,
+                                    hotKeyID,
+                                    GetEventDispatcherTarget(),
+                                    0,
+                                    &eventHotKey)) {
+                return nil;
+            }
         }
     } else {
         hotKeyID = existingHotKey.hotKeyID;
@@ -234,14 +235,23 @@
                                                              target:target
                                                            selector:selector] autorelease];
     DLog(@"Register %@", hotkey);
-    [_hotKeys addObject:hotkey];
+    if (_suspended) {
+        DLog(@"NOTE: Add to suspended list");
+        [_suspendedHotKeys addObject:hotkey];
+    } else {
+        [_hotKeys addObject:hotkey];
+    }
     DLog(@"Hotkeys are now:\n%@", _hotKeys);
     return hotkey;
 }
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
-    assert(!_suspended);
     DLog(@"Unregister %@", hotKey);
+    if (_suspended) {
+        DLog(@"Remove from suspended list %@", _suspendedHotKeys);
+        [_suspendedHotKeys removeObject:hotKey];
+        return;
+    }
     // Get the count before removing hotKey because that could free it.
     NSUInteger count = [[self hotKeysWithID:hotKey.hotKeyID] count];
     EventHotKeyRef eventHotKey = hotKey.eventHotKey;
@@ -268,7 +278,7 @@
 - (NSArray<iTermHotKey *> *)hotKeysWithKeyCode:(NSUInteger)keyCode
                                      modifiers:(NSEventModifierFlags)modifiers {
     NSMutableArray<iTermHotKey *> *result = [NSMutableArray array];
-    for (iTermHotKey *hotkey in _hotKeys) {
+    for (iTermHotKey *hotkey in _suspended ? _suspendedHotKeys : _hotKeys) {
         if (hotkey.shortcut.keyCode == keyCode && hotkey.shortcut.modifiers == modifiers) {
             [result addObject:hotkey];
         }
