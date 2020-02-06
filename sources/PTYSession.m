@@ -3183,6 +3183,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
         if ([ITAddressBookMgr shortcutIdentifier:identifier title:title matchesItem:item]) {
+            if (item.hasSubmenu) {
+                return YES;
+            }
             [NSApp sendAction:[item action]
                            to:[item target]
                          from:item];
