@@ -55,7 +55,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
-    [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    // Not safe to call this from dealloc because can very indirectly try to retain this object.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+    });
     [restoreState_ release];
     [super dealloc];
 
