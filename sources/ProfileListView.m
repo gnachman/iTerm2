@@ -744,7 +744,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                   NSParagraphStyleAttributeName: paragraphStyle,
                                   iTermSelectedActiveForegroundColor: selectedActiveTextColor,
                                   iTermRegularForegroundColor: textColor };
-    return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+    return [[[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes] autorelease];
 }
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
