@@ -132,7 +132,9 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     prefs.javaScriptEnabled = YES;
     prefs.javaScriptCanOpenWindowsAutomatically = NO;
     if (@available(macOS 10.13, *)) {
-        [prefs _setWebSecurityEnabled:NO];
+        if ([prefs respondsToSelector:@selector(_setWebSecurityEnabled:)]) {
+            [prefs _setWebSecurityEnabled:NO];
+        }
     };
     @try {
         // oh ffs, you have to do this to get the web inspector to show up
