@@ -27,6 +27,7 @@ typedef NS_ENUM(NSUInteger, iTermWebViewErrorCode) {
 - (iTermVariableScope *)itermWebViewScriptScopeForUserContentController:(WKUserContentController *)userContentController;
 - (void)itermWebViewJavascriptError:(NSString *)errorText;
 - (void)itermWebViewWillExecuteJavascript:(NSString *)javascript;
+- (BOOL)itermWebViewShouldAllowInvocation;
 @end
 
 @interface iTermWebViewWrapperViewController : NSViewController
