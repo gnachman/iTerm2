@@ -395,6 +395,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     XLog(@"Unexpected javascript execution: %@", javascript);
 }
 
+- (BOOL)itermWebViewShouldAllowInvocation {
+    return YES;
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

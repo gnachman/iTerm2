@@ -27,10 +27,6 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
 @property(nonatomic, copy) NSURL *backupURL;
 @end
 
-@interface WKPreferences(Private)
-- (void)_setWebSecurityEnabled:(BOOL)enabled;
-@end
-
 @implementation iTermWebViewWrapperViewController
 
 - (instancetype)initWithWebView:(WKWebView *)webView backupURL:(NSURL *)backupURL {
@@ -131,11 +127,6 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     prefs.javaEnabled = NO;
     prefs.javaScriptEnabled = YES;
     prefs.javaScriptCanOpenWindowsAutomatically = NO;
-    if (@available(macOS 10.13, *)) {
-        if ([prefs respondsToSelector:@selector(_setWebSecurityEnabled:)]) {
-            [prefs _setWebSecurityEnabled:NO];
-        }
-    };
     @try {
         // oh ffs, you have to do this to get the web inspector to show up
         [prefs setValue:@YES forKey:@"developerExtrasEnabled"];
@@ -183,15 +174,18 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:@"iterm2Invoke"]) {
+        __weak id<iTermWebViewDelegate> delegate = [userContentController it_associatedObjectForKey:&iTermWebViewFactoryUserControllerDelegateKey];
+        if (![delegate itermWebViewShouldAllowInvocation]) {
+            return;
+        }
         NSDictionary *dict = [NSDictionary castFrom:message.body];
-        NSString *invocation = dict[@"invocation"];
+        NSString *invocation = [NSString castFrom:dict[@"invocation"]];
         WKWebView *webview = [userContentController it_associatedObjectForKey:&iTermWebViewFactoryUserControllerWebviewKey];
         if (!webview) {
             assert(NO);
             return;
         }
 
-        __weak id<iTermWebViewDelegate> delegate = [userContentController it_associatedObjectForKey:&iTermWebViewFactoryUserControllerDelegateKey];
         if (!invocation) {
             [self sendReturnValue:nil forMessage:dict toWebview:webview completion:nil];
             [delegate itermWebViewScriptInvocation:nil
