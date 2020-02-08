@@ -755,7 +755,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                                    x > 0 ? &line[x - 1] : NULL,
                                                                                    line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                                    _configuration->_blinkingItemsVisible,
-                                                                                   _configuration->_blinkAllowed);
+                                                                                   _configuration->_blinkAllowed,
+                                                                                   NO /* preferSpeedToFullLigatureSupport */);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             !line[x].complexChar &&
                                             line[x].code > 127 &&

@@ -345,7 +345,8 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
                                                          const screen_char_t *const predecessor,
                                                          BOOL isStringifiable,
                                                          BOOL blinkingItemsVisible,
-                                                         BOOL blinkAllowed) {
+                                                         BOOL blinkAllowed,
+                                                         BOOL preferSpeedToFullLigatureSupport) {
     const unichar code = c->code;
     if (c->image) {
         return YES;
@@ -356,7 +357,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
             code == TAB_FILLER ||
             code < ' ') {
             return NO;
-        } else if (_preferSpeedToFullLigatureSupport &&
+        } else if (preferSpeedToFullLigatureSupport &&
                    code == ' ' &&
                    !c->underline &&
                    !c->strikethrough &&

@@ -2237,7 +2237,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                                                         i > indexRange.location ? &predecessor : NULL,
                                                                         charAsString != nil,
                                                                         _blinkingItemsVisible,
-                                                                        _blinkAllowed);
+                                                                        _blinkAllowed,
+                                                                        _preferSpeedToFullLigatureSupport);
         predecessor = c;
         if (!drawable) {
             if ((characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) ||
