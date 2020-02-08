@@ -687,6 +687,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)windowDidResize:(NSWindowController<iTermWindowController> *)term {
+    if (term.closing) {
+        return;
+    }
     if (_variableWindowSize) {
         [self variableSizeWindowDidResize:term];
         return;

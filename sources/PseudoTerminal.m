@@ -3310,6 +3310,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
+    _closing = YES;
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
         iTermProfileHotKey *hotKey =

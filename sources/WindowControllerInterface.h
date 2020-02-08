@@ -101,6 +101,7 @@
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
 @property(nonatomic, readonly) NSArray *tabs;
 @property(nonatomic, readonly) BOOL windowIsResizing;
+@property(nonatomic, readonly) BOOL closing;
 
 #pragma mark - Basics
 
