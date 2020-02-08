@@ -33,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 // event should go through the IME.
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event;
 
+// Return YES to route events with NSEventModifierFlagCommand to the pre-cocoa mapping phase.
+// Return NO to stop handling the event immediately.
+- (BOOL)keyMapperAcceptsEventsWithCommandModifier;
+
 @optional
 - (void)setDelegate:(id)delegate;
 

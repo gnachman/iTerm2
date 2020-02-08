@@ -23,7 +23,9 @@
 
     NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
     const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
-    const BOOL shiftPressed = (modifiers & (NSEventModifierFlagShift | NSEventModifierFlagControl)) == NSEventModifierFlagShift;
+    const BOOL shiftPressed = (modifiers & (NSEventModifierFlagShift |
+                                            NSEventModifierFlagControl |
+                                            NSEventModifierFlagCommand)) == NSEventModifierFlagShift;
     if (shiftPressed && characterIgnoringModifiers == 25) {
         // Shift-tab sends CSI Z, aka "backtab"
         NSString *string = [NSString stringWithFormat:@"%c[Z", 27];
@@ -41,9 +43,13 @@
         return [self termkeySequenceForEvent];
     }
 
-    const BOOL onlyControlPressed = (modifiers & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption)) == NSEventModifierFlagControl;
-    if (!onlyControlPressed) {
-        DLog(@"Not only-control-pressed");
+    const BOOL onlyControlPressed = (modifiers & (NSEventModifierFlagControl |
+                                                  NSEventModifierFlagCommand |
+                                                  NSEventModifierFlagOption |
+                                                  NSEventModifierFlagCommand)) == NSEventModifierFlagControl;
+    const BOOL commandPressed = !!(modifiers & NSEventModifierFlagCommand);
+    if (!(onlyControlPressed || commandPressed)) {
+        DLog(@"Command was not pressed, and neither was only-control");
         return nil;
     }
 
@@ -119,6 +125,7 @@
     const int shiftMask = 1;
     const int optionMask = 2;
     const int controlMask = 4;
+    const int metaMask = 8;
     int csiModifiers = 0;
     if (eventModifiers & NSEventModifierFlagShift) {
         csiModifiers |= shiftMask;
@@ -128,6 +135,9 @@
     }
     if (eventModifiers & NSEventModifierFlagControl) {
         csiModifiers |= controlMask;
+    }
+    if (eventModifiers & NSEventModifierFlagCommand) {
+        csiModifiers |= metaMask;
     }
     return csiModifiers + 1;
 }
@@ -310,7 +320,8 @@
                                    eventModifiers:(NSEventModifierFlags)eventModifiers {
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
-                                                        NSEventModifierFlagShift);
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
     if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagOption) {
         // Prefer to use esc+ for these, per LeoNerd in email.
         return nil;
@@ -498,6 +509,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand |
                                                         maybeFunction);
 
     // Special and very special keys
@@ -518,6 +530,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     // Modified unicode - control
     const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
                                                                NSEventModifierFlagOption |
+                                                               NSEventModifierFlagCommand |
                                                                maybeFunction);
     if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagControl) {
         NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint shiftPressed:!!(eventModifiers & NSEventModifierFlagShift)];
@@ -605,6 +618,10 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     }
     [self updateConfigurationWithEvent:event];
     return [self postCocoaData];
+}
+
+- (BOOL)keyMapperAcceptsEventsWithCommandModifier {
+    return YES;
 }
 
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {

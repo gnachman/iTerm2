@@ -247,11 +247,13 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 
     DLog(@"Test for command key");
 
-    if (modflag & NSEventModifierFlagCommand) {
-        // You pressed cmd+something but it's not handled by the delegate. Going further would
-        // send the unmodified key to the terminal which doesn't make sense.
-        DLog(@"PTYTextView keyDown You pressed cmd+something");
-        return;
+    if (![_keyMapper keyMapperAcceptsEventsWithCommandModifier]) {
+        if (modflag & NSEventModifierFlagCommand) {
+            // You pressed cmd+something but it's not handled by the delegate. Going further would
+            // send the unmodified key to the terminal which doesn't make sense.
+            DLog(@"PTYTextView keyDown You pressed cmd+something");
+            return;
+        }
     }
 
     // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the

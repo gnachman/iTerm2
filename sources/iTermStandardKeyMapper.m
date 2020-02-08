@@ -422,4 +422,8 @@
     return NO;
 }
 
+- (BOOL)keyMapperAcceptsEventsWithCommandModifier {
+    return NO;
+}
+
 @end

@@ -27,6 +27,10 @@
     return NO;
 }
 
+- (BOOL)keyMapperAcceptsEventsWithCommandModifier {
+    return YES;
+}
+
 #pragma mark - Private
 static BOOL HasBits(NSUInteger value, NSUInteger required) {
     return ((value & required) == required);
