@@ -356,7 +356,8 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
             code == TAB_FILLER ||
             code < ' ') {
             return NO;
-        } else if (code == ' ' &&
+        } else if (_preferSpeedToFullLigatureSupport &&
+                   code == ' ' &&
                    !c->underline &&
                    !c->strikethrough &&
                    !c->urlCode) {
