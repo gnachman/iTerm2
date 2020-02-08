@@ -448,8 +448,9 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         NSString *schemeRegex = @"^[a-z]+://";
         // Hostname with two components
         NSString *hostnameRegex = @"(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
+        NSString *portRegex = @"(:[1-9][0-9]{0,4})?";
         NSString *pathRegex = @"/";
-        NSString *urlRegex = [NSString stringWithFormat:@"%@%@%@", schemeRegex, hostnameRegex, pathRegex];
+        NSString *urlRegex = [NSString stringWithFormat:@"%@%@%@%@", schemeRegex, hostnameRegex, portRegex, pathRegex];
         if ([stringWithoutNearbyPunctuation rangeOfRegex:urlRegex].location != NSNotFound) {
             DLog(@"LGTM, using %@ with range %@ and prefix %d", stringWithoutNearbyPunctuation, NSStringFromRange(rangeWithoutNearbyPunctuation), prefixChars);
             return [self urlActionForString:stringWithoutNearbyPunctuation
