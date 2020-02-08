@@ -1849,6 +1849,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)closeTerminalWindow:(id)sender {
+    [self killOrHideTmuxWindow];Clo
     [self close];
 }
 
@@ -3252,54 +3253,58 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (shouldClose) {
-        int n = 0;
-        for (PTYTab *aTab in [self tabs]) {
-            if ([aTab isTmuxTab]) {
-                n++;
-            }
-        }
-        NSString *title = nil;
-        if (n == 1) {
-            title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n\n"
-                    @"Hidden windows may be restored from the tmux dashboard.";
-        } else if (n > 1) {
-            title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n\n"
-                    @"Hidden windows may be restored from the tmux dashboard.";
-        }
-        if (title) {
-            iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
-                                        identifier:@"ClosingTmuxWindowKillsTmuxWindows"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable
-                                            window:self.window];
-            // If there are tmux tabs, tell the tmux server to kill/hide the
-            // window, but go ahead and close the window anyway because there
-            // might be non-tmux tabs as well. This is a rare instance of
-            // performing an action on a tmux object without waiting for the
-            // server to tell us to do it.
-
-            BOOL doTmuxDetach = NO;
-
-            for (PTYTab *aTab in [self tabs]) {
-                if ([aTab isTmuxTab]) {
-                    if (selection == kiTermWarningSelection1) {
-                        doTmuxDetach = YES;
-                    } else if (selection == kiTermWarningSelection2) {
-                        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
-                    } else {
-                        [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
-                    }
-                }
-            }
-
-            if (doTmuxDetach) {
-                 PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
-                 [[aSession tmuxController] requestDetach];
-             }
-        }
+        [self killOrHideTmuxWindow];
     }
     return shouldClose;
+}
+
+- (void)killOrHideTmuxWindow {
+    int n = 0;
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab isTmuxTab]) {
+            n++;
+        }
+    }
+    NSString *title = nil;
+    if (n == 1) {
+        title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n\n"
+                @"Hidden windows may be restored from the tmux dashboard.";
+    } else if (n > 1) {
+        title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n\n"
+                @"Hidden windows may be restored from the tmux dashboard.";
+    }
+    if (title) {
+        iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:title
+                                       actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
+                                    identifier:@"ClosingTmuxWindowKillsTmuxWindows"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:self.window];
+        // If there are tmux tabs, tell the tmux server to kill/hide the
+        // window, but go ahead and close the window anyway because there
+        // might be non-tmux tabs as well. This is a rare instance of
+        // performing an action on a tmux object without waiting for the
+        // server to tell us to do it.
+
+        BOOL doTmuxDetach = NO;
+
+        for (PTYTab *aTab in [self tabs]) {
+            if ([aTab isTmuxTab]) {
+                if (selection == kiTermWarningSelection1) {
+                    doTmuxDetach = YES;
+                } else if (selection == kiTermWarningSelection2) {
+                    [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+                } else {
+                    [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
+                }
+            }
+        }
+
+        if (doTmuxDetach) {
+             PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
+             [[aSession tmuxController] requestDetach];
+         }
+    }
 }
 
 - (void)closeInstantReplayWindow {
@@ -9965,8 +9970,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 // Close this window.
-- (IBAction)closeWindow:(id)sender
-{
+- (IBAction)closeWindow:(id)sender {
     [[self window] performClose:sender];
 }
 
