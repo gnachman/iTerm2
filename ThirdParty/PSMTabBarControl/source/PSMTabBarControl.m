@@ -91,7 +91,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
     BOOL _closeClicked;
 
     // iTerm2 additions
-    int _modifier;
+    NSUInteger _modifier;
     BOOL _hasCloseButton;
 }
 
@@ -2210,7 +2210,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
 }
 
 - (void)modifierChanged:(NSNotification *)aNotification {
-    int mask = ([[[aNotification userInfo] objectForKey:kPSMTabModifierKey] intValue]);
+    NSUInteger mask = ([[[aNotification userInfo] objectForKey:kPSMTabModifierKey] unsignedIntegerValue]);
+    if (mask == NSUIntegerMax) {
+        mask = 0;
+    }
     [self setModifier:mask];
 }
 
@@ -2231,7 +2234,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
     return str;
 }
 
-- (void)setModifier:(int)mask {
+- (void)setModifier:(NSUInteger)mask {
     _modifier = mask;
     NSString *str = [self _modifierString];
 
