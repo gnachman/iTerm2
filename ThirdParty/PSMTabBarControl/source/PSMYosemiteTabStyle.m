@@ -348,10 +348,11 @@
     [nf setFormat:@"0"];
     [nf setHasThousandSeparators:YES];
     NSString *contents = [nf stringFromNumber:[NSNumber numberWithInt:[cell count]]];
-    if ([cell count] < 9) {
-        contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
-    } else if ([cell isLast]) {
-        contents = [NSString stringWithFormat:@"%@9", [cell modifierString]];
+    NSString *const modifierString = [cell modifierString];
+    if (modifierString.length > 0 && [cell count] < 9) {
+        contents = [NSString stringWithFormat:@"%@%@", modifierString, contents];
+    } else if (modifierString.length > 0 && [cell isLast]) {
+        contents = [NSString stringWithFormat:@"%@9", modifierString];
     } else {
         contents = @"";
     }

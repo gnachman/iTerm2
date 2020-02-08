@@ -151,8 +151,11 @@ typedef struct {
         _stoplightHotbox.hidden = YES;
         _stoplightHotbox.delegate = self;
         
-        int theModifier =
+        NSUInteger theModifier =
             [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]];
+        if (theModifier == NSUIntegerMax) {
+            theModifier = 0;
+        }
         [_tabBarControl setModifier:theModifier];
         _tabBarControl.insets = [self.delegate tabBarInsets];
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
