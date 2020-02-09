@@ -64,6 +64,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 - (void)setBackgroundImageToFileWithName:(NSString *)filename;
 - (void)didDetectMouseReportingFrustration;
 
+- (void)offerToTurnOffBracketedPasteOnHostChange;
+
 @end
 
 NS_ASSUME_NONNULL_END
