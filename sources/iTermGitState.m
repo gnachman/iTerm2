@@ -29,6 +29,22 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
               iTermGitStateVariableNameGitDeletes ];
 }
 
+@interface NSString(GitState)
+@property (nonatomic, readonly) BOOL gitDirtyBoolValue;
+@end
+
+@implementation NSString(GitState)
+- (BOOL)gitDirtyBoolValue {
+    if ([self isEqualToString:@"dirty"]) {
+        return YES;
+    }
+    if ([self isEqualToString:@"clean"]) {
+        return NO;
+    }
+    return [self boolValue];
+}
+@end
+
 @implementation iTermGitState {
     NSTimeInterval _creationTime;
 }
@@ -46,7 +62,7 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
         _branch = [scope valueForVariableName:iTermGitStateVariableNameGitBranch];
         _pushArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPushCount];
         _pullArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPullCount];
-        _dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] boolValue];
+        _dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] gitDirtyBoolValue];
         _adds = [[scope valueForVariableName:iTermGitStateVariableNameGitAdds] integerValue];
         _deletes = [[scope valueForVariableName:iTermGitStateVariableNameGitDeletes] integerValue];
         _creationTime = [NSDate it_timeSinceBoot];
