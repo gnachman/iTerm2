@@ -1128,7 +1128,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
-    // Release all our sessions
+    // Release all our sessions.
+    if (_contentView.tabBarControl.delegate == self) {
+        _contentView.tabBarControl.delegate = nil;
+    }
     NSTabViewItem *aTabViewItem;
     while ([_contentView.tabView numberOfTabViewItems])  {
         aTabViewItem = [_contentView.tabView tabViewItemAtIndex:0];
