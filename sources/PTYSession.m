@@ -791,6 +791,9 @@ static const NSUInteger kMaxHosts = 100;
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    if (_textview.delegate == self) {
+        _textview.delegate = nil;
+    }
     [_view release];
     [_logging stop];
     if (@available(macOS 10.11, *)) {

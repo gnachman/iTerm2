@@ -77,6 +77,12 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [_textView.colorMap setColor:[NSColor redColor] forKey:kColorMapForeground];
     _textView.delegate = self;
     _textView.dataSource = self;
+    NSFont *font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [_textView setFont:font
+          nonAsciiFont:font
+     horizontalSpacing:1
+       verticalSpacing:1];
+    _textView.useBoldFont = YES;
     _methodsCalled = [[NSMutableDictionary alloc] init];
 }
 
@@ -2634,8 +2640,12 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     const int kBoldLength = [@"bold" length];
     XCTAssertEqual(range.location, kRegularLength);
     XCTAssertEqual(range.length, kBoldLength);
-    XCTAssertEqualObjects(boldAttributes[NSFontAttributeName],
-                          [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]);
+
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSFont *regularFont = [[selectedAttributedText attributesAtIndex:0 effectiveRange:nil] objectForKey:NSFontAttributeName];
+    NSFont *boldFont = boldAttributes[NSFontAttributeName];
+    XCTAssertGreaterThan([fontManager weightOfFont:boldFont],
+                         [fontManager weightOfFont:regularFont]);
 }
 
 #pragma mark - PTYTextViewDelegate
@@ -2759,6 +2769,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor {
     return NO;
 }
+
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
+    return NO;
+}
+
 
 - (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
     return [NSFont systemFontOfSize:[NSFont systemFontSize]];
