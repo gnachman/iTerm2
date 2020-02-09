@@ -402,8 +402,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         case iTermShellIntegrationShellUnknown:
             assert(NO);
     }
-    [strings addObject:@"bash --noprofile --norc\n"];
-    [strings addObject:@"PS1='>> '; PS2='> '\n"];
+    NSArray<NSString *> *parts = [[[self launchBashString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@"\n"];
+    parts = [parts mapWithBlock:^id(NSString *anObject) {
+        return [anObject stringByAppendingString:@"\n"];
+    }];
+    [strings addObjectsFromArray:parts];
     [self sendText:[strings componentsJoinedByString:@""] reallySend:reallySend];
     NSString *joined = [strings componentsJoinedByString:@""];
     [strings removeAllObjects];
@@ -428,7 +431,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                            reallySend:reallySend
                            afterRegex:@"^>> "
                           expectation:expectation]];
-    [strings addObject:[self sendText:@"exit\n"
+    [strings addObject:[self sendText:self.exitBashString
                            reallySend:reallySend
                            afterRegex:@"^>> "
                           expectation:expectation
@@ -441,9 +444,20 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return joined;
 }
 
+- (NSString *)launchBashString {
+    return @"bash --noprofile --norc\nINPUTRC='/dev/null' bash --noprofile --norc\n PS1='>> '; PS2='> '\n";
+}
+
+- (NSString *)exitBashString {
+    return @"exit\nexit\n";
+}
+
 - (NSString *)switchToBash:(BOOL)reallySend
                expectation:(inout iTermExpectation **)expectation {
-    return [self sendText:@"bash --noprofile --norc\nPS1='>> '; PS2='> '\n" reallySend:reallySend afterRegex:@"." expectation:expectation];
+    return [self sendText:self.launchBashString
+               reallySend:reallySend
+               afterRegex:@"."
+              expectation:expectation];
 }
 
 - (NSString *)catString:(NSString *)string
@@ -464,7 +478,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                           afterRegex:@"."
                             expectation:expectation]];
-    [result appendString:[self sendText:@"exit\n"
+    [result appendString:[self sendText:self.exitBashString
                              reallySend:reallySend
                           afterRegex:@"> EOF"
                             expectation:expectation]];
@@ -484,7 +498,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"^>> "
                             expectation:&expectation]];
-    [result appendString:[self sendText:@"exit\n"
+    [result appendString:[self sendText:self.exitBashString
                              reallySend:reallySend
                           afterRegex:@"^>> "
                             expectation:&expectation
@@ -516,7 +530,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
-    [result appendString:[self sendText:@"base64 -D <<'EOF'| tar xfz -\n"
+    [result appendString:[self sendText:@"base64 --decode <<'EOF'| tar xfz -\n"
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
@@ -535,7 +549,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"."
                             expectation:expectation]];
-    [result appendString:[self sendText:@"exit\n"
+    [result appendString:[self sendText:self.exitBashString
                              reallySend:reallySend
                           afterRegex:@"> EOF"
                             expectation:expectation

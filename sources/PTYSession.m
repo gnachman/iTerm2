@@ -8673,7 +8673,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     event.defaultDelay = 0.02;
     event.chunkKey = @"";
     event.delayKey = @"";
-    event.flags = event.flags | kPasteFlagsDisableWarnings;
+    event.flags = kPasteFlagsDisableWarnings;
     [_pasteHelper tryToPasteEvent:event];
 }
 
