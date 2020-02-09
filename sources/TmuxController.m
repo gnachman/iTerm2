@@ -809,7 +809,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                              responseTarget:self
                                            responseSelector:@selector(handleResizeWindowResponse:)
                                              responseObject:nil
-                                                      flags:0];
+                                                      flags:kTmuxGatewayCommandShouldTolerateErrors];
         return dict;
     }];
 }
