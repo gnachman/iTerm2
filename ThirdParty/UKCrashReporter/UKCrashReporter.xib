@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment version="101100" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="UKCrashReporter">
+            <connections>
+                <outlet property="crashLogField" destination="18" id="31"/>
+                <outlet property="discardButton" destination="27" id="60"/>
+                <outlet property="explanationField" destination="8" id="35"/>
+                <outlet property="informationField" destination="20" id="30"/>
+                <outlet property="progressIndicator" destination="46" id="47"/>
+                <outlet property="remindButton" destination="25" id="59"/>
+                <outlet property="reportWindow" destination="5" id="29"/>
+                <outlet property="sendButton" destination="23" id="58"/>
+                <outlet property="switchTabView" destination="10" id="82"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" customClass="NSObject"/>
+        <window title="Crash Reporter" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="UKCrashReporter" animationBehavior="default" id="5" customClass="UKCrashReporterWindow">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="99" y="336" width="592" height="562"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <view key="contentView" id="6">
+                <rect key="frame" x="0.0" y="0.0" width="592" height="562"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8">
+                        <rect key="frame" x="17" y="457" width="558" height="85"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="84">
+                            <font key="font" metaFont="system"/>
+                            <string key="title">It appears that %%APPNAME crashed the last time it was used. Do you want to send a crash log to the developers?
+
+Crash logs from Apple are not sent to other developers, so this is the only way the developers of %%APPNAME can find out about and fix this crash.</string>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="10">
+                        <rect key="frame" x="13" y="55" width="566" height="388"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <tabViewItems>
+                            <tabViewItem label="Description" identifier="1" id="11">
+                                <view key="view" ambiguous="YES" id="14">
+                                    <rect key="frame" x="10" y="33" width="546" height="342"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <scrollView fixedFrame="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="19">
+                                            <rect key="frame" x="17" y="17" width="512" height="322"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <clipView key="contentView" ambiguous="YES" id="t9x-7R-LQm">
+                                                <rect key="frame" x="1" y="1" width="495" height="320"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <subviews>
+                                                    <textView ambiguous="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" continuousSpellChecking="YES" quoteSubstitution="YES" linkDetection="YES" dashSubstitution="YES" textReplacement="YES" spellingCorrection="YES" grammarChecking="YES" smartInsertDelete="YES" id="20">
+                                                        <rect key="frame" x="0.0" y="0.0" width="495" height="320"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        <size key="minSize" width="495" height="320"/>
+                                                        <size key="maxSize" width="512" height="10000000"/>
+                                                        <attributedString key="textStorage">
+                                                            <fragment>
+                                                                <string key="content">Hi, I'm %%LONGUSERNAME!
+
+I was doing the following at the time of the crash:
+
+- Step One
+- Step Two
+- ...
+
+My E-Mail address is %%EMAILADDRESS, in case you want to get back to me.
+</string>
+                                                                <attributes>
+                                                                    <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                                    <font key="NSFont" size="12" name="LucidaGrande"/>
+                                                                    <paragraphStyle key="NSParagraphStyle" alignment="justified" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0" allowsDefaultTighteningForTruncation="NO">
+                                                                        <tabStops>
+                                                                            <textTab alignment="left" location="0.0">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="56">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="112">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="168">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="224">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="280">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="336">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="392">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="448">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="504">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="560">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="616">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="672">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="728">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="784">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="840">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="896">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="952">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1008">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1064">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1120">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1176">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1232">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1288">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1344">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1400">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1456">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1512">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1568">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1624">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1680">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1736">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                        </tabStops>
+                                                                    </paragraphStyle>
+                                                                </attributes>
+                                                            </fragment>
+                                                        </attributedString>
+                                                        <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                    </textView>
+                                                </subviews>
+                                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            </clipView>
+                                            <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="90">
+                                                <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                            <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="89">
+                                                <rect key="frame" x="496" y="1" width="15" height="320"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                        </scrollView>
+                                    </subviews>
+                                </view>
+                            </tabViewItem>
+                            <tabViewItem label="Crash Log" identifier="de.zathras.ukcrashreporter.crashlog-tab" id="12">
+                                <view key="view" id="13">
+                                    <rect key="frame" x="10" y="33" width="546" height="342"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <scrollView fixedFrame="YES" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="15">
+                                            <rect key="frame" x="17" y="17" width="512" height="271"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <clipView key="contentView" ambiguous="YES" id="tbY-ci-pzg">
+                                                <rect key="frame" x="1" y="1" width="510" height="269"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                                <subviews>
+                                                    <textView ambiguous="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" continuousSpellChecking="YES" allowsUndo="YES" quoteSubstitution="YES" linkDetection="YES" dashSubstitution="YES" textReplacement="YES" spellingCorrection="YES" grammarChecking="YES" smartInsertDelete="YES" id="18">
+                                                        <rect key="frame" x="0.0" y="0.0" width="510" height="269"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        <size key="minSize" width="510" height="269"/>
+                                                        <size key="maxSize" width="512" height="10000000"/>
+                                                        <attributedString key="textStorage">
+                                                            <fragment>
+                                                                <string key="content">No Crash Log information could be extracted.
+================================================================================</string>
+                                                                <attributes>
+                                                                    <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                                    <font key="NSFont" size="10" name="Monaco"/>
+                                                                    <paragraphStyle key="NSParagraphStyle" alignment="justified" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0" allowsDefaultTighteningForTruncation="NO">
+                                                                        <tabStops>
+                                                                            <textTab alignment="left" location="0.0">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="56">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="112">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="168">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="224">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="280">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="336">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="392">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="448">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="504">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="560">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="616">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="672">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="728">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="784">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="840">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="896">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="952">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1008">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1064">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1120">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1176">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1232">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1288">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1344">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1400">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1456">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1512">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1568">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1624">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1680">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                            <textTab alignment="left" location="1736">
+                                                                                <options/>
+                                                                            </textTab>
+                                                                        </tabStops>
+                                                                    </paragraphStyle>
+                                                                </attributes>
+                                                            </fragment>
+                                                        </attributedString>
+                                                        <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                    </textView>
+                                                </subviews>
+                                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            </clipView>
+                                            <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="92">
+                                                <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                            <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="91">
+                                                <rect key="frame" x="496" y="1" width="15" height="269"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                        </scrollView>
+                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="70">
+                                            <rect key="frame" x="17" y="296" width="434" height="43"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="85">
+                                                <font key="font" metaFont="controlContent" size="11"/>
+                                                <string key="title">You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your preferences are transmitted.</string>
+                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </subviews>
+                                </view>
+                            </tabViewItem>
+                        </tabViewItems>
+                    </tabView>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="23">
+                        <rect key="frame" x="489" y="12" width="89" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Send" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="86">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="sendCrashReport:" target="-2" id="34"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="25">
+                        <rect key="frame" x="107" y="12" width="157" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Remind Me Later" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="87">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="remindMeLater:" target="-2" id="33"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="27">
+                        <rect key="frame" x="14" y="12" width="93" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Discard" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="88">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="discardCrashReport:" target="-2" id="32"/>
+                        </connections>
+                    </button>
+                    <progressIndicator wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" minValue="16" maxValue="100" doubleValue="16" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="46">
+                        <rect key="frame" x="472" y="21" width="16" height="16"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    </progressIndicator>
+                </subviews>
+            </view>
+            <point key="canvasLocation" x="139" y="147"/>
+        </window>
+    </objects>
+</document>

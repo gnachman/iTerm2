@@ -13,6 +13,16 @@
 #import "UKCrashReporter.h"
 #import "UKSystemInfo.h"
 
+@interface UKCrashReporterWindow: NSWindow
+@end
+
+@implementation UKCrashReporterWindow
+
+- (void)closeCurrentSession:(id)sender {
+    [self performClose:sender];
+}
+
+@end
 
 NSString*    UKCrashReporterFindTenFiveCrashReportPath( NSString* appName, NSArray *folders );
 
