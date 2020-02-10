@@ -92,7 +92,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonProcessAnalyzerResult) {
             return nil;
         }
 
-        NSArray<NSString *> *pythonNames = @[ @"python", @"python3.6", @"python3.7", @"python3", @"Python" ];
+        NSArray<NSString *> *pythonNames = @[ @"python", @"python3.6", @"python3.7", @"python3.8", @"python3", @"Python" ];
         if (![pythonNames containsObject:maybePython]) {
             _result = iTermPythonProcessAnalyzerResultNotPython;
             return self;
