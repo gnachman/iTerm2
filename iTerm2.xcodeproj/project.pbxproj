@@ -1916,6 +1916,8 @@
 		A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
+		A64F07CC23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h in Headers */ = {isa = PBXBuildFile; fileRef = A64F07CA23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h */; };
+		A64F07CD23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m in Sources */ = {isa = PBXBuildFile; fileRef = A64F07CB23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m */; };
 		A653B6CE20AD3C4100B481F1 /* iTermSessionNameController.h in Headers */ = {isa = PBXBuildFile; fileRef = A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */; };
 		A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */ = {isa = PBXBuildFile; fileRef = A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */; };
 		A653F03123AB32F800D7979A /* iTermShellIntegrationWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F02E23AB32F800D7979A /* iTermShellIntegrationWindowController.h */; };
@@ -5124,6 +5126,8 @@
 		A64AE5162084128500D02F06 /* NSThread+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSThread+iTerm.m"; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
+		A64F07CA23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRoundedCornerImageCreator.h; sourceTree = "<group>"; };
+		A64F07CB23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRoundedCornerImageCreator.m; sourceTree = "<group>"; };
 		A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionNameController.h; sourceTree = "<group>"; };
 		A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionNameController.m; sourceTree = "<group>"; };
 		A653F02E23AB32F800D7979A /* iTermShellIntegrationWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationWindowController.h; sourceTree = "<group>"; };
@@ -8974,6 +8978,8 @@
 				A63493DF23E661B60047C31B /* iTermPresentationController.m */,
 				A63493E623E945BA0047C31B /* iTermGlobalScopeController.h */,
 				A63493E723E945BA0047C31B /* iTermGlobalScopeController.m */,
+				A64F07CA23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h */,
+				A64F07CB23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10513,6 +10519,7 @@
 				A666D5F0221A1EF100D6184A /* iTermVariableScope+Window.h in Headers */,
 				53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */,
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
+				A64F07CC23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h in Headers */,
 				A66719331DCE36C3000CE608 /* iTermWebSocketFrame.h in Headers */,
 				A66719341DCE36C3000CE608 /* iTermQuickLookController.h in Headers */,
 				532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */,
@@ -13251,6 +13258,7 @@
 				A6E74AE02383AA1D0089004A /* iTermTTYState.m in Sources */,
 				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
+				A64F07CD23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
 				A695CA80213DAA8500486440 /* iTermLocalHostNameGuesser.m in Sources */,

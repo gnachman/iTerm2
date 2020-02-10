@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 
 #import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PTYTabView.h"
@@ -20,6 +21,7 @@
 #import "iTermFakeWindowTitleLabel.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermPreferences.h"
+#import "iTermRoundedCornerImageCreator.h"
 #import "iTermWindowSizeView.h"
 #import "iTermStandardWindowButtonsView.h"
 #import "iTermStatusBarViewController.h"
@@ -30,6 +32,8 @@
 #import "NSAppearance+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYTabView.h"
+
+static const CGFloat iTermWindowBorderRadius = 10.0;
 
 const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
@@ -93,10 +97,16 @@ typedef struct {
     iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
 
     iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
-    iTermLayerBackedSolidColorView *_topBorderView NS_AVAILABLE_MAC(10_14);
-    iTermLayerBackedSolidColorView *_rightBorderView NS_AVAILABLE_MAC(10_14);
-    iTermLayerBackedSolidColorView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
-    iTermLayerBackedSolidColorView *_leftBorderView NS_AVAILABLE_MAC(10_14);
+    
+    NSImageView *_topLeftCornerRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_topRightCornerRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomLeftCornerRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomRightCornerRoundImageView NS_AVAILABLE_MAC(10_14);
+    
+    NSView *_leftBorderView NS_AVAILABLE_MAC(10_14);
+    NSView *_rightBorderView NS_AVAILABLE_MAC(10_14);
+    NSView *_topBorderView NS_AVAILABLE_MAC(10_14);
+    NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -210,6 +220,54 @@ typedef struct {
         _windowTitleLabel.hidden = YES;
         _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
+        
+        if (@available(macOS 10.14, *)) {
+            NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.5];
+            {
+                iTermRoundedCornerImageCreator *creator = [[iTermRoundedCornerImageCreator alloc] initWithColor:borderColor
+                                                                                                           size:NSMakeSize(10, 10)
+                                                                                                         radius:iTermWindowBorderRadius
+                                                                                                strokeThickness:1];
+                NSImage *topLeftCornerImage = [creator topLeft];
+                NSImage *topRightCornerImage = [creator topRight];
+                NSImage *bottomLeftCornerImage = [creator bottomLeft];
+                NSImage *bottomRightCornerImage = [creator bottomRight];
+                
+                _topLeftCornerRoundImageView = [NSImageView imageViewWithImage:topLeftCornerImage];
+                _topRightCornerRoundImageView = [NSImageView imageViewWithImage:topRightCornerImage];
+                _bottomLeftCornerRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerImage];
+                _bottomRightCornerRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerImage];
+
+                _topLeftCornerRoundImageView.hidden = YES;
+                _topRightCornerRoundImageView.hidden = YES;
+                _bottomLeftCornerRoundImageView.hidden = YES;
+                _bottomRightCornerRoundImageView.hidden = YES;
+
+                [self addSubview:_topLeftCornerRoundImageView];
+                [self addSubview:_topRightCornerRoundImageView];
+                [self addSubview:_bottomLeftCornerRoundImageView];
+                [self addSubview:_bottomRightCornerRoundImageView];
+            }
+            {
+                _leftBorderView = [[NSView alloc] init];
+                _leftBorderView.wantsLayer = YES;
+                _leftBorderView.layer.backgroundColor = borderColor.CGColor;
+                _rightBorderView = [[NSView alloc] init];
+                _rightBorderView.wantsLayer = YES;
+                _rightBorderView.layer.backgroundColor = borderColor.CGColor;
+                _topBorderView = [[NSView alloc] init];
+                _topBorderView.wantsLayer = YES;
+                _topBorderView.layer.backgroundColor = borderColor.CGColor;
+                _bottomBorderView = [[NSView alloc] init];
+                _bottomBorderView.wantsLayer = YES;
+                _bottomBorderView.layer.backgroundColor = borderColor.CGColor;
+                
+                [self addSubview:_leftBorderView];
+                [self addSubview:_rightBorderView];
+                [self addSubview:_topBorderView];
+                [self addSubview:_bottomBorderView];
+            }
+        }
     }
     return self;
 }
@@ -513,38 +571,6 @@ typedef struct {
             [backgroundColor set];
             NSRectFill(self.frameForTitleBackgroundView);
         }
-
-        NSBezierPath *path = [NSBezierPath bezierPath];
-        static CGFloat inset = 0.5;
-        const CGFloat left = inset;
-        const CGFloat bottom = inset;
-        const CGFloat top = self.frame.size.height - inset;
-        const CGFloat right = self.frame.size.width - inset;
-
-        const BOOL haveLeft = self.delegate.haveLeftBorder;
-        const BOOL haveTop = self.delegate.haveTopBorder;
-        const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
-        const BOOL haveBottom = self.delegate.haveBottomBorder;
-
-        if (haveLeft) {
-            [path moveToPoint:NSMakePoint(left, bottom)];
-            [path lineToPoint:NSMakePoint(left, top)];
-        }
-        if (haveTop) {
-            [path moveToPoint:NSMakePoint(left, top)];
-            [path lineToPoint:NSMakePoint(right, top)];
-        }
-        if (haveRight) {
-            [path moveToPoint:NSMakePoint(right, top)];
-            [path lineToPoint:NSMakePoint(right, bottom)];
-        }
-        if (haveBottom) {
-            [path moveToPoint:NSMakePoint(right, bottom)];
-            [path lineToPoint:NSMakePoint(left, bottom)];
-        }
-        [[NSColor colorWithWhite:0.5 alpha:1] set];
-        [path stroke];
-
         return;
     }
 
@@ -573,7 +599,6 @@ typedef struct {
 }
 
 - (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14) {
-#warning TODO: Test on 10.15
     const BOOL haveLayer = _useMetal;
     const BOOL wantsTitleBackgroundView = haveLayer && [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (wantsTitleBackgroundView) {
@@ -590,67 +615,69 @@ typedef struct {
         [_titleBackgroundView removeFromSuperview];
     }
 
-    const BOOL wantsLeftBorder = haveLayer && self.delegate.haveLeftBorder;
-    const BOOL wantsTopBorder = haveLayer && self.delegate.haveTopBorder;
-    const BOOL wantsRightBorder = haveLayer && self.delegate.haveRightBorderRegardlessOfScrollBar;
-    const BOOL wantsBottomBorder = haveLayer && self.delegate.haveBottomBorder;
+    const BOOL haveLeft = self.delegate.haveLeftBorder;
+    const BOOL haveTop = self.delegate.haveTopBorder;
+    const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
+    const BOOL haveBottom = self.delegate.haveBottomBorder;
 
-    if (wantsLeftBorder) {
-        const NSRect frame = [self frameForLeftBorderView];
-        if (!_leftBorderView) {
-            _leftBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
-            _leftBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
-            _leftBorderView.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
-        }
-        _leftBorderView.frame = frame;
-        if (_leftBorderView.superview != self) {
-            [self addSubview:_leftBorderView];
-        }
-    } else {
-        [_leftBorderView removeFromSuperview];
+    const CGFloat radius = iTermWindowBorderRadius;
+    {
+        const CGFloat top = self.bounds.size.height - radius;
+        const CGFloat right = self.bounds.size.width - radius;
+        const CGFloat bottom = 0;
+        
+        _topLeftCornerRoundImageView.frame = NSMakeRect(0, top, radius, radius);
+        _topRightCornerRoundImageView.frame = NSMakeRect(right, top, radius, radius);
+        _bottomLeftCornerRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
+        _bottomRightCornerRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
+        
+        _topLeftCornerSquareImageView.frame = NSMakeRect(0, top, radius, radius);
+        _topRightCornerSquareImageView.frame = NSMakeRect(right, top, radius, radius);
+        _bottomLeftCornerSquareImageView.frame = NSMakeRect(0, bottom, radius, radius);
+        _bottomRightCornerSquareImageView.frame = NSMakeRect(right, bottom, radius, radius);
     }
-    if (wantsTopBorder) {
-        const NSRect frame = [self frameForTopBorderView];
-        if (!_topBorderView) {
-            _topBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
-            _topBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
-            _topBorderView.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
-        }
-        _topBorderView.frame = frame;
-        if (_topBorderView.superview != self) {
-            [self addSubview:_topBorderView];
-        }
-    } else {
-        [_topBorderView removeFromSuperview];
+    
+    {
+        _leftBorderView.hidden = !haveLeft;
+        _rightBorderView.hidden = !haveRight;
+        _topBorderView.hidden = !haveTop;
+        _bottomBorderView.hidden = !haveBottom;
+
+        const CGFloat topInset = haveTop ? radius : 0;
+        const CGFloat bottomInset = haveBottom ? radius : 0;
+        const CGFloat leftInset = haveLeft ? radius : 0;
+        const CGFloat rightInset = haveRight ? radius : 0;
+        
+        _leftBorderView.frame = NSMakeRect(0,
+                                         bottomInset,
+                                         1,
+                                         self.bounds.size.height - topInset - bottomInset);
+        
+        _rightBorderView.frame = NSMakeRect(self.bounds.size.width - 1,
+                                          bottomInset,
+                                          1,
+                                          self.bounds.size.height - topInset - bottomInset);
+        _bottomBorderView.frame = NSMakeRect(leftInset,
+                                            0,
+                                            self.bounds.size.width - leftInset - rightInset,
+                                            1);
+        
+        _topBorderView.frame = NSMakeRect(leftInset,
+                                         self.bounds.size.height - 1,
+                                         self.bounds.size.width - leftInset - rightInset,
+                                         1);
     }
-    if (wantsRightBorder) {
-        const NSRect frame = [self frameForRightBorderView];
-        if (!_rightBorderView) {
-            _rightBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
-            _rightBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
-            _rightBorderView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
-        }
-        _rightBorderView.frame = frame;
-        if (_rightBorderView.superview != self) {
-            [self addSubview:_rightBorderView];
-        }
-    } else {
-        [_rightBorderView removeFromSuperview];
-    }
-    if (wantsBottomBorder) {
-        const NSRect frame = [self frameForBottomBorderView];
-        if (!_bottomBorderView) {
-            _bottomBorderView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:frame];
-            _bottomBorderView.color = [NSColor colorWithWhite:0.5 alpha:1];
-            _bottomBorderView.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
-        }
-        _bottomBorderView.frame = frame;
-        if (_bottomBorderView.superview != self) {
-            [self addSubview:_bottomBorderView];
-        }
-    } else {
-        [_bottomBorderView removeFromSuperview];
-    }
+    
+    
+    _bottomLeftCornerRoundImageView.hidden = !(haveLeft && haveBottom);
+    _bottomRightCornerRoundImageView.hidden = !(haveRight && haveBottom);
+    _topLeftCornerRoundImageView.hidden = !(haveLeft && haveTop);
+    _topRightCornerRoundImageView.hidden = !(haveRight && haveTop);
+    
+    _bottomLeftCornerSquareImageView.hidden = YES;
+    _bottomRightCornerSquareImageView.hidden = YES;
+    _topLeftCornerSquareImageView.hidden = YES;
+    _topRightCornerSquareImageView.hidden = YES;
 }
 
 - (void)setUseMetal:(BOOL)useMetal {

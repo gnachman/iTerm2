@@ -44,7 +44,7 @@
     }];
 }
 
-+ (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^)(void))block {
++ (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block {
     NSImage *image = [[NSImage alloc] initWithSize:size];
     [image it_drawWithBlock:block];
     return image;
