@@ -13,6 +13,7 @@
 @interface iTermHTTPConnection : NSObject
 
 @property (nonatomic, readonly) dispatch_queue_t queue;
+@property (nonatomic, readonly) iTermSocketAddress *clientAddress;
 
 - (instancetype)initWithFileDescriptor:(int)fd clientAddress:(iTermSocketAddress *)address;
 

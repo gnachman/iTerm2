@@ -15,7 +15,6 @@
 @implementation iTermHTTPConnection {
     int _fd;  // @synchronized(_fdSync)
     NSObject *_fdSync;
-    iTermSocketAddress *_clientAddress;
     NSURLRequest *_request;
     NSTimeInterval _deadline;
     NSMutableData *_buffer;
