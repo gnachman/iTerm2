@@ -216,6 +216,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return result;
 
 }
+
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     DLog(@"Accepted connection");
     dispatch_queue_t queue = _queue;
@@ -223,7 +224,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
         [self->_pendingConnections addObject:connection];
         [iTermLSOF getProcessIDsWithConnectionFromAddress:address queue:queue completion:^(NSArray<NSNumber *> *pids) {
-            if (!pids) {
+            if (!pids.count) {
                 XLog(@"Reject connection from unidentifiable process with address %@", address);
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
