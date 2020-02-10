@@ -630,11 +630,6 @@ typedef struct {
         _topRightCornerRoundImageView.frame = NSMakeRect(right, top, radius, radius);
         _bottomLeftCornerRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
         _bottomRightCornerRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
-        
-        _topLeftCornerSquareImageView.frame = NSMakeRect(0, top, radius, radius);
-        _topRightCornerSquareImageView.frame = NSMakeRect(right, top, radius, radius);
-        _bottomLeftCornerSquareImageView.frame = NSMakeRect(0, bottom, radius, radius);
-        _bottomRightCornerSquareImageView.frame = NSMakeRect(right, bottom, radius, radius);
     }
     
     {
@@ -673,11 +668,6 @@ typedef struct {
     _bottomRightCornerRoundImageView.hidden = !(haveRight && haveBottom);
     _topLeftCornerRoundImageView.hidden = !(haveLeft && haveTop);
     _topRightCornerRoundImageView.hidden = !(haveRight && haveTop);
-    
-    _bottomLeftCornerSquareImageView.hidden = YES;
-    _bottomRightCornerSquareImageView.hidden = YES;
-    _topLeftCornerSquareImageView.hidden = YES;
-    _topRightCornerSquareImageView.hidden = YES;
 }
 
 - (void)setUseMetal:(BOOL)useMetal {

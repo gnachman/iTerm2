@@ -300,7 +300,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
-
+    if (@available(macOS 10.15, *)) {
+        _showWindowBorder.title = @"Show border around translucent windows";
+        [_showWindowBorder sizeToFit];
+    }
     info = [self defineControl:_hideScrollbar
                            key:kPreferenceKeyHideScrollbar
                    relatedView:nil

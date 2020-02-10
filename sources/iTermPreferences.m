@@ -445,6 +445,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
                   kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
                   kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
+                  kPreferenceKeyShowWindowBorder: BLOCK(computedShowWindowBorder)
                   };
     }
     return dict;
@@ -637,6 +638,21 @@ static NSString *sPreviousVersion;
     } else {
         return @(TAB_STYLE_LIGHT);
     }
+}
+
++ (NSNumber *)computedShowWindowBorder {
+        NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowWindowBorder];
+    if (value) {
+        return value;
+    }
+
+    if (@available(macOS 10.15, *)) {
+        return @YES;
+    }
+
+    // Off by default on 10.14 and earlier because there was no window border back then.
+    return @NO;
 }
 
 + (NSNumber *)computedTabsHaveCloseButton {
