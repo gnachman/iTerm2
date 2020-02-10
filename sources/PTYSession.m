@@ -10962,7 +10962,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
-    [self setProfile:savedProfile.originalProfile preservingName:NO adjustWindow:NO];
+    Profile *underlyingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:savedProfile.originalProfile[KEY_GUID]];
+    Profile *replacementProfile = underlyingProfile ?: savedProfile.originalProfile;
+    [self setProfile:replacementProfile preservingName:NO adjustWindow:NO];
     if (savedProfile.isDivorced) {
         NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
         for (NSString *key in savedProfile.overriddenFields) {
