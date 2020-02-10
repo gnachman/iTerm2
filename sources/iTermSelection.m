@@ -380,6 +380,7 @@ static VT100GridWindowedRange VT100GridWindowedRangeClampedToWidth(const VT100Gr
     DLog(@"Begin new selection. coord=%@, extend=%d", VT100GridCoordDescription(coord), extend);
     _live = YES;
     _extend = NO;
+    _haveClearedColumnWindow = NO;
     _selectionMode = mode;
     _range = [self rangeForCurrentModeAtCoord:coord
                         includeParentheticals:YES
@@ -437,6 +438,41 @@ static VT100GridWindowedRange VT100GridWindowedRangeClampedToWidth(const VT100Gr
     _extend = NO;
     _live = NO;
 
+    [_delegate selectionDidChange:[[self retain] autorelease]];
+}
+
+- (void)clearColumnWindowForLiveSelection {
+    if (!self.haveLiveSelection) {
+        return;
+    }
+    const int width = [self width];
+    const VT100GridRange newRange = VT100GridRangeMake(0, width);
+    if (VT100GridRangeEqualsRange(_initialRange.columnWindow, newRange)) {
+        return;
+    }
+    _haveClearedColumnWindow = YES;
+    _initialRange.columnWindow = newRange;
+    _range.columnWindow = newRange;
+    switch (_selectionMode) {
+        case kiTermSelectionModeLine:
+        case kiTermSelectionModeWholeLine:
+            _initialRange.coordRange.start.x = 0;
+            _initialRange.coordRange.end.x = width;
+            if (_range.coordRange.end.y > _range.coordRange.start.y) {
+                _range.coordRange.start.x = 0;
+                _range.coordRange.end.x = width;
+            } else {
+                _range.coordRange.end.x = 0;
+                _range.coordRange.start.x = width;
+            }
+            break;
+
+        case kiTermSelectionModeCharacter:
+        case kiTermSelectionModeWord:
+        case kiTermSelectionModeSmart:
+        case kiTermSelectionModeBox:
+            break;
+    }
     [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 

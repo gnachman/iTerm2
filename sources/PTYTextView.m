@@ -5510,6 +5510,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (y >= [_dataSource numberOfLines]) {
         y = [_dataSource numberOfLines] - 1;
     }
+    const BOOL hasColumnWindow = (_selection.liveRange.columnWindow.location > 0 ||
+                                  _selection.liveRange.columnWindow.length < width);
+    if (hasColumnWindow &&
+        !VT100GridRangeContains(_selection.liveRange.columnWindow, x)) {
+        DLog(@"Mouse has wandered outside columnn window %@", VT100GridRangeDescription(_selection.liveRange.columnWindow));
+        [_selection clearColumnWindowForLiveSelection];
+    }
     const BOOL result = [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
     DLog(@"moveSelectionEndpoint. selection=%@", _selection);
     return result;
@@ -5600,6 +5607,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermSelectionDelegate
 
+- (BOOL)liveSelectionRespectsSoftBoundaries {
+    if (_selection.haveClearedColumnWindow) {
+        return NO;
+    }
+    return [[iTermController sharedInstance] selectionRespectsSoftBoundaries];
+}
+
 - (void)selectionDidChange:(iTermSelection *)selection {
     DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
@@ -5633,7 +5647,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self getWordForX:coord.x
                     y:coord.y
                 range:&range
-      respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+      respectDividers:[self liveSelectionRespectsSoftBoundaries]];
     return range;
 }
 
@@ -5644,14 +5658,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                   to:&range
                     ignoringNewlines:NO
                       actionRequired:NO
-                     respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+                     respectDividers:[self liveSelectionRespectsSoftBoundaries]];
     return range;
 }
 
 - (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    BOOL respectDividers = [[iTermController sharedInstance] selectionRespectsSoftBoundaries];
-    if (respectDividers) {
+    if ([self liveSelectionRespectsSoftBoundaries]) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
     return [extractor rangeForWrappedLineEncompassing:coord
@@ -5664,8 +5677,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
-    BOOL respectDividers = [[iTermController sharedInstance] selectionRespectsSoftBoundaries];
-    if (respectDividers) {
+    if ([self liveSelectionRespectsSoftBoundaries]) {
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
         [extractor restrictToLogicalWindowIncludingCoord:coord];
         return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(extractor.logicalWindow.location,

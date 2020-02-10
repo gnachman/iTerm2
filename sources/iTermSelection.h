@@ -119,6 +119,9 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Range from the earliest point to the latest point of all selection ranges.
 @property(nonatomic, readonly) VT100GridCoordRange spanningRange;
 
+// Has clearColumnWindowForLiveSelection been called?
+@property(nonatomic, readonly) BOOL haveClearedColumnWindow;
+
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;
 
@@ -141,6 +144,9 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 // End live selection.
 - (void)endLiveSelection;
+
+// Convert the live selection to not use a column window.
+- (void)clearColumnWindowForLiveSelection;
 
 // Remove selection.
 - (void)clearSelection;
