@@ -350,13 +350,39 @@
     [connectionsButton_.menu cancelTracking];
     [connectionsButton_.cell dismissPopUp];
     [connectionsButton_ removeAllItems];
-    [connectionsButton_ addItemsWithTitles:[[TmuxControllerRegistry sharedInstance] clientNames]];
-    if (previousSelection && [connectionsButton_ itemWithTitle:previousSelection]) {
-        [connectionsButton_ selectItemWithTitle:previousSelection];
+
+    // Get a load of this! Nonbreaking spaces are converted to regular spaces in menu item
+    // titles, which means they do not round trip. So we use the identifier to find the connection
+    // by name.
+    [[[TmuxControllerRegistry sharedInstance] clientNames] enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:obj action:nil keyEquivalent:@""];
+        item.identifier = obj;
+        [connectionsButton_.menu addItem:item];
+    }];
+    if (previousSelection && [self haveConnection:previousSelection]) {
+        [self selectConnection:previousSelection];
     } else if ([connectionsButton_ numberOfItems] > 0) {
         [connectionsButton_ selectItemAtIndex:0];
     }
     [self connectionSelectionDidChange:nil];
+}
+
+- (BOOL)haveConnection:(NSString *)identifier {
+    for (NSMenuItem *item in connectionsButton_.menu.itemArray) {
+        if ([item.identifier isEqualToString:identifier]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)selectConnection:(NSString *)identifier {
+    for (NSMenuItem *item in connectionsButton_.menu.itemArray) {
+        if ([item.identifier isEqualToString:identifier]) {
+            [connectionsButton_ selectItem:item];
+            return;
+        }
+    }
 }
 
 - (TmuxController *)tmuxController {
@@ -366,7 +392,7 @@
 }
 
 - (NSString *)currentClient {
-    return [[connectionsButton_ selectedItem] title];
+    return [[connectionsButton_ selectedItem] identifier];
 }
 
 
