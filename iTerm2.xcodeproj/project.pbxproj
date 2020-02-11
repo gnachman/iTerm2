@@ -1831,6 +1831,9 @@
 		A63493EB23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */ = {isa = PBXBuildFile; fileRef = A63493EA23F0A3EE0047C31B /* UKCrashReporter.xib */; };
 		A63493EC23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */ = {isa = PBXBuildFile; fileRef = A63493EA23F0A3EE0047C31B /* UKCrashReporter.xib */; };
 		A63493ED23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */ = {isa = PBXBuildFile; fileRef = A63493EA23F0A3EE0047C31B /* UKCrashReporter.xib */; };
+		A63493F823F2685A0047C31B /* iTermPromise.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493F623F2685A0047C31B /* iTermPromise.h */; };
+		A63493F923F2685A0047C31B /* iTermPromise.m in Sources */ = {isa = PBXBuildFile; fileRef = A63493F723F2685A0047C31B /* iTermPromise.m */; };
+		A63493FE23F277020047C31B /* iTermPromiseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A63493FA23F2741D0047C31B /* iTermPromiseTests.m */; };
 		A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
 		A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
 		A635029A229B5F620042B779 /* YosemiteAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6350297229B5F620042B779 /* YosemiteAddTab.png */; };
@@ -5027,6 +5030,9 @@
 		A63493E623E945BA0047C31B /* iTermGlobalScopeController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalScopeController.h; sourceTree = "<group>"; };
 		A63493E723E945BA0047C31B /* iTermGlobalScopeController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalScopeController.m; sourceTree = "<group>"; };
 		A63493EA23F0A3EE0047C31B /* UKCrashReporter.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = UKCrashReporter.xib; sourceTree = "<group>"; };
+		A63493F623F2685A0047C31B /* iTermPromise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPromise.h; sourceTree = "<group>"; };
+		A63493F723F2685A0047C31B /* iTermPromise.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPromise.m; sourceTree = "<group>"; };
+		A63493FA23F2741D0047C31B /* iTermPromiseTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPromiseTests.m; sourceTree = "<group>"; };
 		A6350297229B5F620042B779 /* YosemiteAddTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = YosemiteAddTab.png; path = images/YosemiteAddTab.png; sourceTree = SOURCE_ROOT; };
 		A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "YosemiteAddTab@2x.png"; path = "images/YosemiteAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -8980,6 +8986,8 @@
 				A63493E723E945BA0047C31B /* iTermGlobalScopeController.m */,
 				A64F07CA23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h */,
 				A64F07CB23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m */,
+				A63493F623F2685A0047C31B /* iTermPromise.h */,
+				A63493F723F2685A0047C31B /* iTermPromise.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9312,6 +9320,7 @@
 				A65660DA2372AA5100DC6744 /* iTermDoublyLinkedListTests.m */,
 				A65660DC2372ADEA00DC6744 /* iTermCacheTests.m */,
 				A6F22AC12396374500C5D1A9 /* iTermSyntheticConfParserTests.m */,
+				A63493FA23F2741D0047C31B /* iTermPromiseTests.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -10556,6 +10565,7 @@
 				A61ED2A920E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h in Headers */,
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
+				A63493F823F2685A0047C31B /* iTermPromise.h in Headers */,
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
 				A6F718CE2266E71E0053488E /* iTermUserDefaults.h in Headers */,
 				A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */,
@@ -12940,6 +12950,7 @@
 				53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */,
 				53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */,
 				A69C93452121140100531438 /* iTermStatusBarLargeComposerViewController.m in Sources */,
+				A63493F923F2685A0047C31B /* iTermPromise.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
@@ -13608,6 +13619,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A608CCFF214DE7C1007A7B87 /* PTYSessionTest.m in Sources */,
+				A63493FE23F277020047C31B /* iTermPromiseTests.m in Sources */,
 				A608CCFA214DE7C1007A7B87 /* iTermIntervalTreeTest.m in Sources */,
 				A608CCF6214DE7C1007A7B87 /* iTermFindOnPageHelperTest.m in Sources */,
 				C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */,
