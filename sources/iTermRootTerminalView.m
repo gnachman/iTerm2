@@ -33,7 +33,7 @@
 #import "NSTextField+iTerm.h"
 #import "PTYTabView.h"
 
-static const CGFloat iTermWindowBorderRadius = 10.0;
+static const CGFloat iTermWindowBorderRadius = 10;
 
 const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
@@ -225,7 +225,7 @@ typedef struct {
             NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.5];
             {
                 iTermRoundedCornerImageCreator *creator = [[iTermRoundedCornerImageCreator alloc] initWithColor:borderColor
-                                                                                                           size:NSMakeSize(10, 10)
+                                                                                                           size:NSMakeSize(iTermWindowBorderRadius, iTermWindowBorderRadius)
                                                                                                          radius:iTermWindowBorderRadius
                                                                                                 strokeThickness:1];
                 NSImage *topLeftCornerImage = [creator topLeft];

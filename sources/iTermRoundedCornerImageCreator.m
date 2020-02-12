@@ -68,13 +68,16 @@
         NSRectFill(NSMakeRect(0, 0, _radius, _radius));
         NSBezierPath *path = [[NSBezierPath alloc] init];
         [path moveToPoint:start];
-        if (_radius == 0) {
-            [path lineToPoint:controls];
-            [path lineToPoint:end];
-        } else {
-            [path curveToPoint:end controlPoint1:controls controlPoint2:controls];
-        }
+        [path curveToPoint:end controlPoint1:controls controlPoint2:controls];
+
+        [path lineToPoint:controls];
+        [path lineToPoint:start];
         [_color set];
+        [path fill];
+
+        path = [[NSBezierPath alloc] init];
+        [path moveToPoint:start];
+        [path curveToPoint:end controlPoint1:controls controlPoint2:controls];
         [path stroke];
     }];
 }
