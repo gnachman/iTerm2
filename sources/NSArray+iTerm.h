@@ -77,6 +77,7 @@
 // For N=1 element:    @"element1"
 // For N=0 elements:   @""
 - (NSString *)componentsJoinedWithOxfordComma;
+- (NSString *)componentsJoinedWithOxfordCommaAndConjunction:(NSString *)conjunction;
 
 - (NSArray *)intersectArray:(NSArray *)other;
 
