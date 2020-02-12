@@ -109,10 +109,10 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
         if (!self.fileHandle) {
             self->_enabled = NO;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log."
+                [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log"
                                                                                  detail:self.path
                                                                callbackNotificationName:iTermLoggingHelperErrorNotificationName
-                                                           callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: _profileGUID ?: @"" }];
+                                                           callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: self->_profileGUID ?: @"" }];
             });
         }
     });
