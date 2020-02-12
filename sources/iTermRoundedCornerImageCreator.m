@@ -23,7 +23,8 @@
         _size = size;
         _radius = radius;
         _strokeThickness = strokeThickness;
-        _inset = strokeThickness / 2.0;
+        // I don't know why this rounding looks perfect but it does (at least on a retina display).
+        _inset = floor(strokeThickness) / 2;
     }
     return self;
 }

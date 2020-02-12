@@ -9094,18 +9094,20 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         decorationSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
     }
 
-    // Add 1px border
-    if ([self haveLeftBorder]) {
-        ++decorationSize.width;
-    }
-    if ([self haveRightBorder]) {
-        ++decorationSize.width;
-    }
-    if ([self haveBottomBorder]) {
-        ++decorationSize.height;
-    }
-    if ([self haveTopBorder] && ![self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
-        ++decorationSize.height;
+    if (@available(macOS 10.15, *)) {} else {
+        // Add 1px border
+        if ([self haveLeftBorder]) {
+            ++decorationSize.width;
+        }
+        if ([self haveRightBorder]) {
+            ++decorationSize.width;
+        }
+        if ([self haveBottomBorder]) {
+            ++decorationSize.height;
+        }
+        if ([self haveTopBorder] && ![self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
+            ++decorationSize.height;
+        }
     }
     if (self.divisionViewShouldBeVisible) {
         ++decorationSize.height;

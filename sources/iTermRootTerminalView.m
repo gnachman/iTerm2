@@ -33,7 +33,7 @@
 #import "NSTextField+iTerm.h"
 #import "PTYTabView.h"
 
-static const CGFloat iTermWindowBorderRadius = 10;
+static const CGFloat iTermWindowBorderRadius = 12;
 
 const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
@@ -222,12 +222,12 @@ typedef struct {
         [self addSubview:_windowTitleLabel];
         
         if (@available(macOS 10.14, *)) {
-            NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.5];
+            NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
             {
                 iTermRoundedCornerImageCreator *creator = [[iTermRoundedCornerImageCreator alloc] initWithColor:borderColor
                                                                                                            size:NSMakeSize(iTermWindowBorderRadius, iTermWindowBorderRadius)
                                                                                                          radius:iTermWindowBorderRadius
-                                                                                                strokeThickness:1];
+                                                                                                strokeThickness:0.5];
                 NSImage *topLeftCornerImage = [creator topLeft];
                 NSImage *topRightCornerImage = [creator topRight];
                 NSImage *bottomLeftCornerImage = [creator bottomLeft];
@@ -642,25 +642,26 @@ typedef struct {
         const CGFloat bottomInset = haveBottom ? radius : 0;
         const CGFloat leftInset = haveLeft ? radius : 0;
         const CGFloat rightInset = haveRight ? radius : 0;
-        
+
+        const CGFloat thickness = 0.5;
         _leftBorderView.frame = NSMakeRect(0,
                                          bottomInset,
-                                         1,
+                                         thickness,
                                          self.bounds.size.height - topInset - bottomInset);
         
-        _rightBorderView.frame = NSMakeRect(self.bounds.size.width - 1,
+        _rightBorderView.frame = NSMakeRect(self.bounds.size.width - thickness,
                                           bottomInset,
-                                          1,
+                                          thickness,
                                           self.bounds.size.height - topInset - bottomInset);
         _bottomBorderView.frame = NSMakeRect(leftInset,
                                             0,
                                             self.bounds.size.width - leftInset - rightInset,
-                                            1);
+                                            thickness);
         
         _topBorderView.frame = NSMakeRect(leftInset,
-                                         self.bounds.size.height - 1,
+                                         self.bounds.size.height - thickness,
                                          self.bounds.size.width - leftInset - rightInset,
-                                         1);
+                                         thickness);
     }
     
     
@@ -903,9 +904,9 @@ typedef struct {
 
 - (NSRect)toolbeltFrameInWindow:(NSWindow *)thisWindow {
     CGFloat width = floor(_toolbeltWidth);
-    CGFloat top = [_delegate haveTopBorder] ? 1 : 0;
-    CGFloat bottom = [_delegate haveBottomBorder] ? 1 : 0;
-    CGFloat right = [_delegate haveRightBorder] ? 1 : 0;
+    CGFloat top = [self topBorderInset];
+    CGFloat bottom = [self bottomBorderInset];
+    CGFloat right = [self rightBorderInset];
     NSRect toolbeltFrame = NSMakeRect(self.bounds.size.width - width - right,
                                       bottom,
                                       width,
@@ -983,12 +984,7 @@ typedef struct {
     } else {
         width = _delegate.window.frame.size.width;
     }
-    if ([_delegate haveLeftBorder]) {
-        --width;
-    }
-    if ([_delegate haveRightBorder]) {
-        --width;
-    }
+    width -= [self leftBorderInset] + [self rightBorderInset];
     return width;
 }
 
@@ -1037,6 +1033,34 @@ typedef struct {
             [self.delegate rootTerminalViewShouldLeaveEmptyAreaAtTop]);
 }
 
+- (CGFloat)leftBorderInset {
+    if (@available(macOS 10.15, *)) {
+        return 0;
+    }
+    return [_delegate haveLeftBorder] ? 1 : 0;
+}
+
+- (CGFloat)rightBorderInset {
+    if (@available(macOS 10.15, *)) {
+        return 0;
+    }
+    return [_delegate haveRightBorder] ? 1 : 0;
+}
+
+- (CGFloat)bottomBorderInset {
+    if (@available(macOS 10.15, *)) {
+        return 0;
+    }
+    return [_delegate haveBottomBorder] ? 1 : 0;
+}
+
+- (CGFloat)topBorderInset {
+    if (@available(macOS 10.15, *)) {
+        return 0;
+    }
+    return [_delegate haveTopBorder] ? 1 : 0;
+}
+
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.hidden = YES;
@@ -1048,22 +1072,20 @@ typedef struct {
 
     [self removeLeftTabBarDragHandle];
     iTermDecorationHeights decorationHeights = {
-        .bottom = [_delegate haveBottomBorder] ? 1 : 0,
+        .bottom = [self bottomBorderInset],
         .top = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0
     };
-    if ([_delegate haveTopBorder]) {
-        decorationHeights.top++;
-    }
+    decorationHeights.top += [self topBorderInset];
     if ([self shouldLeaveEmptyAreaAtTop]) {
         decorationHeights.top += _tabBarControl.height;
     }
-    const NSRect frame = NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
+    const NSRect frame = NSMakeRect([self leftBorderInset],
                                     decorationHeights.bottom,
                                     [self tabviewWidth],
                                     [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
     [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
     NSRect tabViewFrame =
-        NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
+        NSMakeRect([self leftBorderInset],
                    decorationHeights.bottom,
                    [self tabviewWidth],
                    [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
@@ -1088,7 +1110,7 @@ typedef struct {
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
     [self removeLeftTabBarDragHandle];
     iTermDecorationHeights decorationHeights = {
-        .bottom = _delegate.haveBottomBorder ? 1 : 0,
+        .bottom = [self bottomBorderInset],
         .top = 0
     };
     if (!_tabBarControlOnLoan) {
@@ -1096,20 +1118,20 @@ typedef struct {
             decorationHeights.top += _tabBarControl.height;
         }
     }
-    if (_delegate.haveTopBorder && ![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
-        decorationHeights.top += 1;
+    if (![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
+        decorationHeights.top += [self topBorderInset];
     }
     if (_delegate.divisionViewShouldBeVisible) {
         decorationHeights.top += kDivisionViewHeight;
     }
-    const NSRect frame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+    const NSRect frame = NSMakeRect([self leftBorderInset],
                                     decorationHeights.bottom,
                                     [self tabviewWidth],
                                     [[thisWindow contentView] frame].size.height - decorationHeights.bottom - decorationHeights.top);
     iTermDecorationHeights temp = decorationHeights;
     [self layoutStatusBar:&temp window:thisWindow frame:frame];
 
-    NSRect tabViewFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+    NSRect tabViewFrame = NSMakeRect([self leftBorderInset],
                                      temp.bottom,
                                      [self tabviewWidth],
                                      [[thisWindow contentView] frame].size.height - temp.bottom - temp.top);
@@ -1150,8 +1172,8 @@ typedef struct {
     DLog(@"repositionWidgets - putting tabs at bottom");
     [self removeLeftTabBarDragHandle];
     // setup aRect to make room for the tabs at the bottom.
-    NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
-                                    _delegate.haveBottomBorder ? 1 : 0,
+    NSRect tabBarFrame = NSMakeRect([self leftBorderInset],
+                                    [self bottomBorderInset],
                                     [self tabviewWidth],
                                     _tabBarControl.height);
     self.tabBarControl.insets = [self.delegate tabBarInsets];
@@ -1161,9 +1183,7 @@ typedef struct {
         .top = 0,
         .bottom = tabBarFrame.origin.y
     };
-    if (_delegate.haveTopBorder) {
-        decorationHeights.top += 1;
-    }
+    decorationHeights.top += [self topBorderInset];
     if (_delegate.divisionViewShouldBeVisible) {
         decorationHeights.top += kDivisionViewHeight;
     }
@@ -1239,16 +1259,12 @@ typedef struct {
         .top = 0,
         .bottom = 0
     };
-    if (_delegate.haveBottomBorder) {
-        decorationHeights.bottom += 1;
-    }
-    if (_delegate.haveTopBorder) {
-        decorationHeights.top += 1;
-    }
+    decorationHeights.bottom += [self bottomBorderInset];
+    decorationHeights.top += [self topBorderInset];
     if (_delegate.divisionViewShouldBeVisible) {
         decorationHeights.top += kDivisionViewHeight;
     }
-    NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+    NSRect tabBarFrame = NSMakeRect([self leftBorderInset],
                                     decorationHeights.bottom,
                                     _leftTabBarWidth,
                                     [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
@@ -1256,11 +1272,8 @@ typedef struct {
     [self setTabBarFrame:tabBarFrame];
     [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
 
-    CGFloat widthAdjustment = 0;
     // Can't have a left border.
-    if (_delegate.haveRightBorder) {
-        widthAdjustment += 1;
-    }
+    CGFloat widthAdjustment = [self rightBorderInset];
     CGFloat xOffset = 0;
     if (self.tabBarControl.flashing) {
         xOffset = -NSMaxX(tabBarFrame);
