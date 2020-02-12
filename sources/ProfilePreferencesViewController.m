@@ -312,6 +312,16 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
+- (void)openToProfileWithGuid:(NSString *)guid {
+    self.scope = nil;
+    [_profilesListView reloadData];
+    if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
+        [self reloadProfileInProfileViewControllers];
+    } else {
+        [self selectGuid:guid];
+    }
+}
+
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
                         scope:(iTermVariableScope<iTermSessionScope> *)scope {

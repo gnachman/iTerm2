@@ -8,8 +8,13 @@
 #import "iTermLoggingHelper.h"
 
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationController.h"
+#import "PreferencePanel.h"
+
+NSString *const iTermLoggingHelperErrorNotificationName = @"SessionLogWriteFailed";
+NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 @interface iTermLoggingHelper()
 @property (nullable, nonatomic, strong) NSFileHandle *fileHandle;
@@ -18,10 +23,25 @@
 @implementation iTermLoggingHelper {
     // File handle can only be accessed on this queue.
     dispatch_queue_t _queue;
+    NSString *_profileGUID;
+}
+
++ (void)observeNotificationsWithHandler:(void (^)(NSString * _Nonnull))handler {
+    [[NSNotificationCenter defaultCenter] addObserverForName:iTermLoggingHelperErrorNotificationName
+                                                      object:nil
+                                                       queue:nil
+                                                  usingBlock:^(NSNotification * _Nonnull notification) {
+        NSString *guid = notification.userInfo[iTermLoggingHelperErrorNotificationGUIDKey];
+        if (!guid) {
+            return;
+        }
+        handler(guid);
+    }];
 }
 
 - (instancetype)initWithRawLogger:(id<iTermLogging>)rawLogger
-                      plainLogger:(id<iTermLogging>)plainLogger {
+                      plainLogger:(id<iTermLogging>)plainLogger
+                      profileGUID:(NSString *)profileGUID {
     self = [super init];
     if (self) {
         _path = nil;
@@ -31,6 +51,7 @@
         _plainLogger = plainLogger;
         _appending = [iTermAdvancedSettingsModel autologAppends];
         _queue = dispatch_queue_create("com.iterm2.logging", DISPATCH_QUEUE_SERIAL);
+        _profileGUID = [profileGUID copy];
     }
     return self;
 }
@@ -88,7 +109,10 @@
         if (!self.fileHandle) {
             self->_enabled = NO;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [[iTermNotificationController sharedInstance] notify:[NSString stringWithFormat:@"Couldn’t log to %@", self.path]];
+                [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log."
+                                                                                 detail:self.path
+                                                               callbackNotificationName:iTermLoggingHelperErrorNotificationName
+                                                           callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: _profileGUID ?: @"" }];
             });
         }
     });

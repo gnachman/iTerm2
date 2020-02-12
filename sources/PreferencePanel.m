@@ -490,6 +490,18 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                              scope:scope];
 }
 
+- (void)openToProfileWithGuid:(NSString *)guid
+                          key:(NSString *)key {
+    _tmux = NO;
+    _profilesViewController.tmuxSession = NO;
+    _profilesViewController.scope = nil;
+    [self window];
+    [self selectProfilesTab];
+    [self run];
+    [_profilesViewController openToProfileWithGuid:guid];
+    [self openToPreferenceWithKey:key];
+}
+
 - (void)openToPreferenceWithKey:(NSString *)key {
     [self window];
     [self buildSearchEngineIfNeeded];

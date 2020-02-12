@@ -115,6 +115,10 @@ void LoadPrefsFromCustomFolder(void);
 andEditComponentWithIdentifier:(NSString *)identifier
                          tmux:(BOOL)tmux
                         scope:(iTermVariableScope<iTermSessionScope> *)scope;
+
+- (void)openToProfileWithGuid:(NSString *)guid
+                          key:(NSString *)key;
+
 - (void)openToPreferenceWithKey:(NSString *)key;
 
 @end

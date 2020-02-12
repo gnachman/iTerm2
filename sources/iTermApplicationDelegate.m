@@ -52,6 +52,7 @@
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchExperienceController.h"
 #import "iTermLaunchServices.h"
+#import "iTermLoggingHelper.h"
 #import "iTermLSOF.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
@@ -1045,6 +1046,10 @@ static BOOL hasBecomeActive = NO;
                                   block:^(id before, id after) {
                                       [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
                                   }];
+    [iTermLoggingHelper observeNotificationsWithHandler:^(NSString * _Nonnull guid) {
+        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid
+                                                            key:KEY_AUTOLOG];
+    }];
     [self openUntitledFileBecameSafe];
 }
 

@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper;
 @end
 
+extern NSString *const iTermLoggingHelperErrorNotificationName;
+extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
+
 @interface iTermLoggingHelper : NSObject
 
 @property (nullable, nonatomic, readonly) NSString *path;
@@ -25,8 +28,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, weak) id<iTermLogging> plainLogger;
 @property (nonatomic, readonly) BOOL appending;
 
++ (void)observeNotificationsWithHandler:(void (^)(NSString *guid))handler;
+
 - (instancetype)initWithRawLogger:(id<iTermLogging>)rawLogger
-                      plainLogger:(id<iTermLogging>)plainLogger NS_DESIGNATED_INITIALIZER;
+                      plainLogger:(id<iTermLogging>)plainLogger
+                      profileGUID:(NSString *)profileGUID NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

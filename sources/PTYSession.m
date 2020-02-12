@@ -1570,7 +1570,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_logging) {
         return _logging;
     }
-    _logging = [[iTermLoggingHelper alloc] initWithRawLogger:_shell plainLogger:self];
+    _logging = [[iTermLoggingHelper alloc] initWithRawLogger:_shell
+                                                 plainLogger:self
+                                                 profileGUID:self.profile[KEY_GUID]];
     return _logging;
 }
 
