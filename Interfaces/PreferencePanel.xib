@@ -1250,7 +1250,6 @@ DQ
                 <outlet property="_promptOnQuit" destination="4757" id="apf-8s-46r"/>
                 <outlet property="_pushToCustomFolder" destination="5620" id="o2m-78-Wc6"/>
                 <outlet property="_quitWhenAllWindowsClosed" destination="1950" id="g5I-3X-QQe"/>
-                <outlet property="_resetAPIPermissions" destination="CSq-DY-RdL" id="4x3-6P-OIB"/>
                 <outlet property="_savePasteHistory" destination="5056" id="BPO-mF-vKm"/>
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_separateWindowTitlePerTab" destination="tVY-OD-hsd" id="ODW-a6-e20"/>
@@ -4683,17 +4682,6 @@ DQ
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
-                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CSq-DY-RdL">
-                                                <rect key="frame" x="160" y="41" width="173" height="28"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="push" title="Permissions…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YAb-ch-98q">
-                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu" size="11"/>
-                                                </buttonCell>
-                                                <connections>
-                                                    <action selector="editAPIPermissions:" target="9Se-ld-UJa" id="CZA-vE-3Z4"/>
-                                                </connections>
-                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>

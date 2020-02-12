@@ -10,7 +10,7 @@
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermAPIAuthorizationController.h"
+#import "iTermProcessInspector.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermColorPresets.h"
@@ -1171,104 +1171,54 @@ static iTermAPIHelper *sAPIHelperInstance;
     return nil;
 }
 
-- (BOOL)askUserToGrantAuthForController:(iTermAPIAuthorizationController *)controller
-                      isReauthorization:(BOOL)reauth
-                               remember:(out BOOL *)remember {
-    NSAlert *alert = [[NSAlert alloc] init];
-    if (reauth) {
-        alert.messageText = @"Reauthorize API Access";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” has API access, which grants it permission to see and control your activity. Would you like it to continue?",
-                                 controller.humanReadableName];
-    } else {
-        alert.messageText = @"API Access Request";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?",
-                                 controller.humanReadableName, controller.humanReadableName];
-    }
-
-    iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                           prompt:@"Full Command"
-                                                                          message:controller.fullCommandOrBundleID ?: @"Unknown application"];
-    accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
-    accessory.textView.selectable = YES;
-    accessory.requestLayout = ^{
-        [alert layout];
-    };
-    alert.accessoryView = accessory;
-
-    [alert addButtonWithTitle:@"Deny"];
-    [alert addButtonWithTitle:@"Allow"];
-    if (!reauth) {
-        // Reauth is always persistent so don't show the button.
-        alert.suppressionButton.title = @"Remember my selection";
-        alert.showsSuppressionButton = YES;
-    }
-    NSModalResponse response = [alert runModal];
-    *remember = (alert.suppressionButton.state == NSOnState);
-    return (response == NSAlertSecondButtonReturn);
-}
-
-- (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {
-    if (pids.count == 1) {
-        return [NSString stringWithFormat:@"PID %@", pids[0]];
-    }
-    return [NSString stringWithFormat:@"one of these PIDs: %@", [pids componentsJoinedByString:@", "]];
-}
-
-- (NSDictionary *)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
-                                preauthorized:(BOOL)preauthorized
-                                       reason:(out NSString *__autoreleasing *)reason
-                                  displayName:(out NSString *__autoreleasing *)displayName {
-    iTermAPIAuthorizationController *controller = [[iTermAPIAuthorizationController alloc] initWithProcessIDs:pids];
-    *reason = [controller identificationFailureReason];
-    if (*reason) {
-        return nil;
-    }
-    *displayName = controller.humanReadableName;
+- (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
+                      preauthorized:(BOOL)preauthorized
+                             reason:(out NSString *__autoreleasing *)reason
+                        displayName:(out NSString *__autoreleasing *)displayName {
+    iTermProcessInspector *controller = [[iTermProcessInspector alloc] initWithProcessIDs:pids];
+    *displayName = controller.humanReadableName ?: @"Unknown";
 
     if (preauthorized) {
         *reason = @"Script launched by user action";
-        return controller.identity;
+        return YES;
     }
 
-
-    BOOL reauth = NO;
-    switch (controller.setting) {
-        case iTermAPIAuthorizationSettingPermanentlyDenied:
-            // Access permanently disallowed.
-            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@",
-                       controller.fullCommandOrBundleID];
-            return nil;
-
-        case iTermAPIAuthorizationSettingRecentConsent:
-            // No need to reauth, allow it.
-            *reason = [NSString stringWithFormat:@"Allowing continued API access to %@, name %@, bundle ID %@. User gave consent recently.",
-                       [self formatPIDs:pids], controller.humanReadableName, controller.fullCommandOrBundleID];
-            return controller.identity;
-
-        case iTermAPIAuthorizationSettingExpiredConsent:
-            // It's been a month since API access was confirmed. Request it again.
-            reauth = YES;
-            break;
-
-        case iTermAPIAuthorizationSettingUnknown:
-            break;
+    if (pids.count == 0) {
+        *reason = @"Could not find process ID of peer";
+        return NO;
     }
 
-    BOOL remember = NO;
-    BOOL allow = [self askUserToGrantAuthForController:controller isReauthorization:reauth remember:&remember];
-
-    if (reauth || remember) {
-        [controller setAllowed:allow];
+    NSString *message;
+    if (pids.count == 1) {
+        const pid_t pid = pids.firstObject.intValue;
+        message = [NSString stringWithFormat:@"Process ID %@ is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?", @(pid)];
     } else {
-        [controller removeSetting];
+      message = [NSString stringWithFormat:@"A process is trying to use the iTerm2 API. The process ID is one of: %@. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?",
+                 [pids componentsJoinedWithOxfordCommaAndConjunction:@"or"]];
     }
 
-    if (allow) {
-        *reason = [NSString stringWithFormat:@"User accepted connection by %@", controller.fullCommandOrBundleID];
-        return controller.identity;
-    } else {
-        *reason = [NSString stringWithFormat:@"User rejected connection attempt by %@", controller.fullCommandOrBundleID];
-        return nil;
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK", @"Cancel", @"More Info" ]
+                             accessory:nil
+                            identifier:@"NoSyncAllowPythonAPI"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Allow Python API Usage?"
+                                window:nil];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            *reason = @"Allowed by user";
+            return YES;
+        case kiTermWarningSelection1:
+            *reason = @"Denied by user";
+            return NO;
+        case kiTermWarningSelection2:
+            *reason = @"Denied by user";
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-security-model"]];
+            return NO;
+        default:
+            *reason = @"Internal error";
+            return NO;
     }
 }
 
@@ -1842,7 +1792,6 @@ static iTermAPIHelper *sAPIHelperInstance;
 }
 
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
-                 peerIdentity:(NSDictionary *)peerIdentity
                       handler:(void (^)(ITMRegisterToolResponse *))handler {
     ITMRegisterToolResponse *response = [[ITMRegisterToolResponse alloc] init];
     if (!request.hasName || !request.hasIdentifier || !request.hasURL) {

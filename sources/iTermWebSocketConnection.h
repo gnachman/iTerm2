@@ -23,7 +23,6 @@ extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
 @interface iTermWebSocketConnection : NSObject
 @property(nonatomic, weak) id<iTermWebSocketConnectionDelegate> delegate;
 @property(nonatomic, weak) dispatch_queue_t delegateQueue;
-@property(nonatomic, copy) NSDictionary *peerIdentity;
 @property(nonatomic, copy) NSString *displayName;
 @property(nonatomic, readonly) BOOL preauthorized;
 @property(nonatomic, readonly) id key;

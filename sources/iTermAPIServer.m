@@ -319,11 +319,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         dispatch_async(dispatch_get_main_queue(), ^{
             NSString *reason = nil;
             NSString *displayName = nil;
-            NSDictionary *identity = [self.delegate apiServerAuthorizeProcesses:pids
-                                                                  preauthorized:webSocketConnection.preauthorized
-                                                                         reason:&reason
-                                                                    displayName:&displayName];
-            if (identity) {
+            const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
+                                                         preauthorized:webSocketConnection.preauthorized
+                                                                reason:&reason
+                                                           displayName:&displayName];
+            if (ok) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
                                                                     object:webSocketConnection.key
                                                                   userInfo:@{ @"reason": reason ?: [NSNull null],
@@ -333,7 +333,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                 dispatch_async(self->_queue, ^{
                     DLog(@"Upgrading request to websocket");
                     webSocketConnection.displayName = displayName;
-                    webSocketConnection.peerIdentity = identity;
                     webSocketConnection.delegate = self;
                     webSocketConnection.delegateQueue = self->_queue;
                     self->_connections[webSocketConnection.guid] = webSocketConnection;
@@ -543,7 +542,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerRegisterTool:request.registerToolRequest
-                        peerIdentity:webSocketConnection.peerIdentity
                              handler:^(ITMRegisterToolResponse *registerToolResponse) {
                                  assert(!handled);
                                  handled = YES;

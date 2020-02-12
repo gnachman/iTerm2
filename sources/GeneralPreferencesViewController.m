@@ -8,9 +8,7 @@
 
 #import "GeneralPreferencesViewController.h"
 
-#import "iTermAPIAuthorizationController.h"
 #import "iTermAPIHelper.h"
-#import "iTermAPIPermissionsWindowController.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNotificationCenter.h"
@@ -62,7 +60,6 @@ enum {
     iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
 
     IBOutlet NSButton *_enableAPI;
-    IBOutlet NSButton *_resetAPIPermissions;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -125,8 +122,6 @@ enum {
     IBOutlet NSButton *_useTmuxStatusBar;
 
     IBOutlet NSTabView *_tabView;
-
-    iTermAPIPermissionsWindowController *_apiPermissionsWindowController;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -255,11 +250,9 @@ enum {
                                                       __typeof(self) strongSelf = weakSelf;
                                                       if (strongSelf) {
                                                           strongSelf->_enableAPI.state = NSOnState;
-                                                          [strongSelf updateAPIEnabled];
                                                       }
                                                   }
                                               }];
-    [self updateAPIEnabled];
 
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
     [_advancedGPUWindowController window];
@@ -485,7 +478,6 @@ enum {
     } else {
         [iTermAPIHelper setEnabled:NO];
     }
-    [self updateAPIEnabled];
     if (enabled && ![iTermAPIHelper isEnabled]) {
         _enableAPI.state = NSOffState;
         return NO;
@@ -493,17 +485,7 @@ enum {
     return YES;
 }
 
-- (void)updateAPIEnabled {
-    _resetAPIPermissions.enabled = [iTermAPIHelper isEnabled];
-}
-
 #pragma mark - Actions
-
-- (IBAction)editAPIPermissions:(id)sender {
-    _apiPermissionsWindowController = [[iTermAPIPermissionsWindowController alloc] initWithWindowNibName:@"iTermAPIPermissionsWindowController"];
-    [self.view.window beginSheet:_apiPermissionsWindowController.window
-               completionHandler:^(NSModalResponse returnCode) {}];
-}
 
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];

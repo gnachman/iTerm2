@@ -216,16 +216,20 @@
 }
 
 - (NSString *)componentsJoinedWithOxfordComma {
+    return [self componentsJoinedWithOxfordCommaAndConjunction:@"and"];
+}
+
+- (NSString *)componentsJoinedWithOxfordCommaAndConjunction:(NSString *)conjunction {
     if (self.count == 0) {
         return @"";
     } else if (self.count == 1) {
         return [self firstObject];
     } else if (self.count == 2) {
-        return [self componentsJoinedByString:@" and "];
+        return [self componentsJoinedByString:[NSString stringWithFormat:@" %@ ", conjunction]];
     } else {
         NSArray *allButLastArray = [self subarrayWithRange:NSMakeRange(0, self.count - 1)];
         NSString *allButLastString = [allButLastArray componentsJoinedByString:@", "];
-        NSString *result = [NSString stringWithFormat:@"%@, and %@", allButLastString, self.lastObject];
+        NSString *result = [NSString stringWithFormat:@"%@, %@ %@", allButLastString, conjunction, self.lastObject];
         return result;
     }
 }
