@@ -75,7 +75,8 @@
                              @"Secure Input",
                              @"moveToApplicationsFolderAlertSuppress",
                              @"iTerm Version",
-                             @"CGFontRenderingFontSmoothingDisabled" ];
+                             @"CGFontRenderingFontSmoothingDisabled",
+                             @"ApplePressAndHoldEnabled" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
             ![key hasPrefix:@"SU"] &&
