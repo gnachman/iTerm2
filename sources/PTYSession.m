@@ -8950,9 +8950,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _screen.trackCursorLineMovement = NO;
 }
 
-- (void)screenDidAppendStringToCurrentLine:(NSString *)string {
+- (void)screenDidAppendStringToCurrentLine:(NSString *)string
+                               isPlainText:(BOOL)plainText {
     [self appendStringToTriggerLine:string];
-    if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
+    if (plainText && _logging.enabled && _logging.plainText && !self.isTmuxGateway) {
         [_logging logData:[string dataUsingEncoding:_terminal.encoding]];
     }
 }
@@ -8962,7 +8963,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
                                                      length:asciiData->length
                                                    encoding:NSASCIIStringEncoding] autorelease];
-        [self screenDidAppendStringToCurrentLine:string];
+        [self screenDidAppendStringToCurrentLine:string isPlainText:YES];
     } else {
         if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
             [_logging logData:[NSData dataWithBytesNoCopy:asciiData->buffer

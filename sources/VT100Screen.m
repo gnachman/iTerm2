@@ -2718,7 +2718,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // else display string on screen
         [self appendStringAtCursor:string];
     }
-    [delegate_ screenDidAppendStringToCurrentLine:string];
+    [delegate_ screenDidAppendStringToCurrentLine:string
+                                      isPlainText:YES];
 }
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
@@ -2736,7 +2737,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRingBell {
-    [delegate_ screenDidAppendStringToCurrentLine:@"\a"];
+    [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
     [self activateBell];
 }
 
@@ -4953,7 +4954,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars length:length shouldFree:NO];
-            [delegate_ screenDidAppendStringToCurrentLine:string];
+            [delegate_ screenDidAppendStringToCurrentLine:string
+                                              isPlainText:(_lastCharacter.complexChar ||
+                                                           _lastCharacter.code >= ' ')];
         }
     }
 }

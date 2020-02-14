@@ -35,7 +35,8 @@
 - (BOOL)screenAllowTitleSetting;
 
 // Called after text was added to the current line. Can be used to check triggers.
-- (void)screenDidAppendStringToCurrentLine:(NSString *)string;
+- (void)screenDidAppendStringToCurrentLine:(NSString *)string
+                               isPlainText:(BOOL)plainText;
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 
 // Change the cursor's appearance.
