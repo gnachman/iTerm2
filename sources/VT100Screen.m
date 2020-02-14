@@ -71,9 +71,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
 NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 
-// Wait this long between calls to NSBeep().
-static const double kInterBellQuietPeriod = 0.1;
-
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 @interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
@@ -1416,27 +1413,30 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
 
 }
 
+- (BOOL)shouldQuellBell {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const NSTimeInterval interval = now - lastBell_;
+    const BOOL result = interval < [iTermAdvancedSettingsModel bellRateLimit];
+    if (!result) {
+        lastBell_ = now;
+    }
+    return result;
+}
+
 - (void)activateBell {
     if ([delegate_ screenShouldIgnoreBellWhichIsAudible:audibleBell_ visible:flashBell_]) {
         return;
     }
-    if (audibleBell_) {
-        // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
-        // bells from blocking the terminal indefinitely. The small delay we insert between
-        // bells allows us to swallow up the vast majority of ^G characters when you cat a
-        // binary file.
-        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        NSTimeInterval interval = now - lastBell_;
-        if (interval > kInterBellQuietPeriod) {
+    if (![self shouldQuellBell]) {
+        if (audibleBell_) {
             NSBeep();
-            lastBell_ = now;
         }
-    }
-    if (showBellIndicator_) {
-        [delegate_ screenShowBellIndicator];
-    }
-    if (flashBell_) {
-        [delegate_ screenFlashImage:kiTermIndicatorBell];
+        if (showBellIndicator_) {
+            [delegate_ screenShowBellIndicator];
+        }
+        if (flashBell_) {
+            [delegate_ screenFlashImage:kiTermIndicatorBell];
+        }
     }
     [delegate_ screenIncrementBadge];
 }
