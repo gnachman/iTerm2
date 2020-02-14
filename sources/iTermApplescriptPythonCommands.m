@@ -24,28 +24,30 @@
         [self setScriptErrorString:@"No script name was specified"];
         return nil;
     }
+    NSString *args = self.evaluatedArguments[@"arguments"];
+
     NSArray<NSString *> *relativeFilenames = [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] allScripts];
     for (NSString *relativeFilename in relativeFilenames) {
         if ([relativeFilename isEqualToString:scriptName]) {
-            [self launchPythonScript:relativeFilename];
+            [self launchPythonScript:relativeFilename arguments:args];
             return nil;
         }
     }
     for (NSString *relativeFilename in relativeFilenames) {
         if ([relativeFilename.stringByDeletingPathExtension isEqualToString:scriptName]) {
-            [self launchPythonScript:relativeFilename];
+            [self launchPythonScript:relativeFilename arguments:args];
             return nil;
         }
     }
     for (NSString *relativeFilename in relativeFilenames) {
         if ([relativeFilename.lastPathComponent isEqualToString:scriptName]) {
-            [self launchPythonScript:relativeFilename];
+            [self launchPythonScript:relativeFilename arguments:args];
             return nil;
         }
     }
     for (NSString *relativeFilename in relativeFilenames) {
         if ([relativeFilename.lastPathComponent.stringByDeletingPathExtension isEqualToString:scriptName]) {
-            [self launchPythonScript:relativeFilename];
+            [self launchPythonScript:relativeFilename arguments:args];
             return nil;
         }
     }
@@ -55,8 +57,9 @@
     return nil;
 }
 
-- (void)launchPythonScript:(NSString *)script {
+- (void)launchPythonScript:(NSString *)script arguments:(NSString *)arguments {
     [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithRelativePath:script
+                                                                                                arguments:arguments
                                                                                        explicitUserAction:NO];
 }
 

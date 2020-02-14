@@ -30,8 +30,14 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 @implementation iTermAPIScriptLauncher
 
 + (void)launchScript:(NSString *)filename
+           arguments:(NSString *)arguments
   explicitUserAction:(BOOL)explicitUserAction {
-    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupCfgPath:nil explicitUserAction:explicitUserAction];
+    [self launchScript:filename
+              fullPath:filename
+             arguments:arguments
+        withVirtualEnv:nil
+          setupCfgPath:nil
+    explicitUserAction:explicitUserAction];
 }
 
 + (NSString *)pythonVersionForScript:(NSString *)path {
@@ -46,6 +52,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
+           arguments:(NSString *)arguments
       withVirtualEnv:(NSString *)virtualenv
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction {
@@ -56,6 +63,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         // downloading wouldn't affect it anyway.
         [self reallyLaunchScript:filename
                         fullPath:fullPath
+                       arguments:arguments
                   withVirtualEnv:virtualenv
                    pythonVersion:pythonVersion
               explicitUserAction:explicitUserAction];
@@ -74,6 +82,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
              case iTermPythonRuntimeDownloaderStatusDownloaded:
                  [self reallyLaunchScript:filename
                                  fullPath:fullPath
+                                arguments:arguments
                            withVirtualEnv:virtualenv
                             pythonVersion:pythonVersion
                        explicitUserAction:explicitUserAction];
@@ -131,6 +140,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (void)reallyLaunchScript:(NSString *)filename
                   fullPath:(NSString *)fullPath
+                 arguments:(NSString *)arguments
             withVirtualEnv:(NSString *)virtualenv
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
@@ -158,6 +168,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                       ^{
                                           [iTermAPIScriptLauncher reallyLaunchScript:filename
                                                                             fullPath:fullPath
+                                                                           arguments:arguments
                                                                       withVirtualEnv:virtualenv
                                                                        pythonVersion:pythonVersion
                                                                   explicitUserAction:explicitUserAction];
@@ -166,7 +177,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
 
     @try {
-        [self tryLaunchScript:filename historyEntry:entry key:key withVirtualEnv:virtualenv pythonVersion:pythonVersion];
+        [self tryLaunchScript:filename
+                    arguments:arguments
+                 historyEntry:entry
+                          key:key
+               withVirtualEnv:virtualenv
+                pythonVersion:pythonVersion];
     }
     @catch (NSException *e) {
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
@@ -177,6 +193,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 // THROWS
 + (void)tryLaunchScript:(NSString *)filename
+              arguments:(NSString *)arguments
            historyEntry:(iTermScriptHistoryEntry *)entry
                     key:(NSString *)key
          withVirtualEnv:(NSString *)virtualenv
@@ -193,7 +210,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     } else {
         task.launchPath = @"/bin/bash";
     }
-    task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
+    task.arguments = [self argumentsToRunScript:filename
+                                      arguments:arguments
+                                 withVirtualEnv:virtualenv
+                                  pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
     task.environment = [self environmentFromEnvironment:task.environment shell:[iTermOpenDirectory userShell] cookie:cookie key:key];
 
@@ -224,6 +244,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 }
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename
+                        arguments:(NSString *)arguments
                    withVirtualEnv:(NSString *)providedVirtualEnv
                     pythonVersion:(NSString *)pythonVersion {
     NSString *wrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
@@ -233,7 +254,11 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
                          [virtualEnv stringWithEscapedShellCharactersExceptTabAndNewline],
                          [filename stringWithEscapedShellCharactersExceptTabAndNewline]];
-    return @[ @"-c", command ];
+    if (arguments.length > 0) {
+        command = [command stringByAppendingFormat:@" %@", arguments];
+    }
+    NSArray<NSString *> *result = @[ @"-c", command ];
+    return result;
 }
 
 + (void)waitForTask:(NSTask *)task readFromPipe:(NSPipe *)pipe historyEntry:(iTermScriptHistoryEntry *)entry {

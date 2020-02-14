@@ -406,6 +406,7 @@ NS_ASSUME_NONNULL_BEGIN
         }
         if (response == NSAlertSecondButtonReturn) {
             [self launchScriptWithAbsolutePath:location.path
+                                     arguments:@""
                             explicitUserAction:YES];
         }
     }
@@ -456,7 +457,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (entry) {
         [entry kill];
     } else {
-        [self launchScriptWithAbsolutePath:fullPath explicitUserAction:YES];
+        [self launchScriptWithAbsolutePath:fullPath
+                                 arguments:@""
+                        explicitUserAction:YES];
     }
 }
 
@@ -468,13 +471,18 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)launchScriptWithRelativePath:(NSString *)path
+                           arguments:(NSString *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:path];
-    [self launchScriptWithAbsolutePath:fullPath explicitUserAction:explicitUserAction];
+    [self launchScriptWithAbsolutePath:fullPath
+                             arguments:arguments
+                    explicitUserAction:explicitUserAction];
 }
 
 // NOTE: This logic needs to be kept in sync with -couldLaunchScriptWithAbsolutePath
-- (void)launchScriptWithAbsolutePath:(NSString *)fullPath explicitUserAction:(BOOL)explicitUserAction {
+- (void)launchScriptWithAbsolutePath:(NSString *)fullPath
+                           arguments:(NSString *)arguments
+                  explicitUserAction:(BOOL)explicitUserAction {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
@@ -485,6 +493,7 @@ NS_ASSUME_NONNULL_BEGIN
         NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
         [iTermAPIScriptLauncher launchScript:mainPyPath
                                     fullPath:fullPath
+                                   arguments:arguments
                               withVirtualEnv:venv
                                 setupCfgPath:[fullPath stringByAppendingPathComponent:@"setup.cfg"]
                           explicitUserAction:explicitUserAction];
@@ -497,6 +506,7 @@ NS_ASSUME_NONNULL_BEGIN
             return;
         }
         [iTermAPIScriptLauncher launchScript:fullPath
+                                   arguments:arguments
                           explicitUserAction:explicitUserAction];
         return;
     }
@@ -1019,7 +1029,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runAutoLaunchScript:(NSString *)path {
-    [self launchScriptWithAbsolutePath:path explicitUserAction:NO];
+    [self launchScriptWithAbsolutePath:path arguments:@"" explicitUserAction:NO];
 }
 
 - (void)runLegacyAutoLaunchScripts {

@@ -11,10 +11,12 @@
 
 // Launches an API script. Reads its output and waits for it to terminate.
 + (void)launchScript:(NSString *)filename
+           arguments:(NSString *)arguments
   explicitUserAction:(BOOL)explicitUserAction;
 
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
+           arguments:(NSString *)arguments
       withVirtualEnv:(NSString *)virtualenv
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction;

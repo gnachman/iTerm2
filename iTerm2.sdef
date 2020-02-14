@@ -314,6 +314,10 @@
         <direct-parameter description="The script’s name">
             <type type="text"/>
         </direct-parameter>
+        <parameter name="arguments" code="Asar" type="text" optional="yes"
+          description="Arguments to pass to script">
+          <cocoa key="arguments"/>
+        </parameter>
     </command>
 
     <command name="invoke API expression" code="Itrmiaex"

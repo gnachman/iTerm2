@@ -1277,6 +1277,10 @@
 		5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207421433F00003C58FD /* iTermGitPollWorker.m */; };
 		5365207921433F7A003C58FD /* iTermGitPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = 5365207721433F7A003C58FD /* iTermGitPoller.h */; };
 		5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207821433F7A003C58FD /* iTermGitPoller.m */; };
+		536EF5B823F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
+		536EF5B923F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
+		536EF5BA23F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
+		536EF5BB23F6688000B81875 /* it2run in CopyFiles */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */; };
 		5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676321C9D2710088D0F3 /* SIGPolicy.m */; };
 		5370678421C9D2780088D0F3 /* SIGTrust.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676421C9D2720088D0F3 /* SIGTrust.h */; };
@@ -3831,6 +3835,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
+				536EF5BB23F6688000B81875 /* it2run in CopyFiles */,
 				A6725ADA23D64A87001CA48A /* image_decoder in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4489,6 +4494,7 @@
 		5365207421433F00003C58FD /* iTermGitPollWorker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitPollWorker.m; sourceTree = "<group>"; };
 		5365207721433F7A003C58FD /* iTermGitPoller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitPoller.h; sourceTree = "<group>"; };
 		5365207821433F7A003C58FD /* iTermGitPoller.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitPoller.m; sourceTree = "<group>"; };
+		536EF5B723F6684D00B81875 /* it2run */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
 		5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveChunk.h; path = SignedArchive/SIGArchiveChunk.h; sourceTree = "<group>"; };
 		5370676321C9D2710088D0F3 /* SIGPolicy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGPolicy.m; path = SignedArchive/SIGPolicy.m; sourceTree = "<group>"; };
 		5370676421C9D2720088D0F3 /* SIGTrust.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGTrust.h; path = SignedArchive/SIGTrust.h; sourceTree = "<group>"; };
@@ -6920,6 +6926,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				536EF5B723F6684D00B81875 /* it2run */,
 				530098522259AAEF00A69348 /* keyclick.m4a */,
 				A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */,
 				A6FE8D14209541BC00B5C648 /* rsa_pub.pem */,
@@ -11171,6 +11178,7 @@
 				A67F6149214395870093940A /* graphic_less@2x.png in Resources */,
 				53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				5376CB3E220D2E4300FE7476 /* git.sb in Resources */,
+				536EF5BA23F6684D00B81875 /* it2run in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
@@ -11834,6 +11842,7 @@
 				1D44CFA61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				A67F617F214395A70093940A /* graphic_perl.png in Resources */,
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
+				536EF5B923F6684D00B81875 /* it2run in Resources */,
 				1D44CF891CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-test256Colors.png in Resources */,
 				A65D7CB221E1EBCB00E3D81C /* StopStatusIcon.png in Resources */,
 				A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */,
@@ -12202,6 +12211,7 @@
 				A629F57A23AF2DD900C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
+				536EF5B823F6684D00B81875 /* it2run in Resources */,
 				A67F618D214395A70093940A /* graphic_nodejs@2x.png in Resources */,
 				A6F7A749213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,

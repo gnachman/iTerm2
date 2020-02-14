@@ -82,6 +82,25 @@ The `iterm2.run_forever` or `iterm2.run_until_complete` call will block until
 it is able to make a connection, so you don't need to add any logic that waits
 for the launch to complete. Just try to connect right away.
 
+When you run a script from the command line on iTerm2 version 3.3.9 or later you will
+be prompted for permission. This is a security measure to ensure that scripts not launched
+by iTerm2 are not being run without your knowledge. The purpose is to prevent untrusted
+code, such as Javascript that's able to escape a web browser's sandbox, from silently
+gaining access to your terminal.
+
+To circumvent the dialog, use the `it2run` script provided in
+`iTerm.app/Contents/MacOS/it2run` to launch it. The `it2run` script uses
+`osascript` to ask iTerm2 to launch your Python script. macOS will ask for a
+one-time grant of permission for `osascript` to control iTerm2.
+
+If you wish to pass command line arguments to the script launched by `it2run`,
+you must put them together into a single argument separated by spaces. For
+example:
+
+```
+/Applications/iTerm.app/Contents/MacOS/it2run myscript.py "firstarg secondarg thirdarg"
+```
+
 
 Auto-Run Scripts
 ----------------
