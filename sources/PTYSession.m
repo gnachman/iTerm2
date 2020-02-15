@@ -5137,8 +5137,10 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *guid = [bookmark objectForKey:KEY_GUID];
     if (self.isDivorced) {
         ITAssertWithMessage([[ProfileModel sessionsInstance] bookmarkWithGuid:guid] != nil,
-                            @"I am divorced with guid %@ but the sessions instance has no such guid. Log:\n%@\n\nModel log:\n%@",
-                            guid, _divorceDecree, [[ProfileModel sessionsInstance] debugHistoryForGuid:guid]);
+                            @"I am divorced with guid %@ but the sessions instance has no such guid. Log:\n%@\n\nModel log:\n%@\nEnd.",
+                            guid,
+                            _divorceDecree,
+                            [[[[ProfileModel sessionsInstance] debugHistoryForGuid:guid] componentsJoinedByString:@"\n"] it_compressedString]);
         return guid;
     }
     [self setIsDivorced:YES withDecree:@"PLACEHOLDER DECREE"];

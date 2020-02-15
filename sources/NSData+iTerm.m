@@ -14,6 +14,7 @@
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 #import <CommonCrypto/CommonDigest.h>
+#import "zlib.h"
 
 @implementation NSData (iTerm)
 
@@ -239,4 +240,70 @@
     }
     return result;
 }
+
+- (NSData *)it_compressedData {
+
+    if (self.length == 0) {
+        return self;
+    }
+
+    z_stream stream = {
+        .next_in = (Bytef *)self.bytes,
+        .avail_in = self.length,
+        .total_in = 0,
+
+        .next_out = Z_NULL,
+        .avail_out = 0,
+        .total_out = 0,
+
+        .msg = Z_NULL,
+        .state = Z_NULL,
+
+        .zalloc = Z_NULL,
+        .zfree = Z_NULL,
+        .opaque = Z_NULL,
+
+        .data_type = 0,
+        .adler = 0,
+        .reserved = 0
+    };
+
+    const int initError = deflateInit2(&stream,
+                                       Z_DEFAULT_COMPRESSION,  // level: medium compression (6/9)
+                                       Z_DEFLATED,             // method: this is the only option
+                                       (15 + 16),              // windowBits: max compression plus gzip headers.
+                                       8,                      // memLevel: use lots of memory and be fast.
+                                       Z_DEFAULT_STRATEGY);    // stragegy: normal strategy
+    if (initError != Z_OK) {
+        DLog(@"deflateInit2 failed with error %@", @(initError));
+        return nil;
+    }
+
+    // The docs say to create a destination that is 1% larger plus 12 bytes.
+    NSMutableData *compressedData = [NSMutableData dataWithLength:ceil(self.length * 1.01) + 12];
+
+    int deflateStatus;
+    do {
+        stream.next_out = compressedData.mutableBytes + stream.total_out;
+        uLong avail_out = compressedData.length - stream.total_out;
+        if (avail_out == 0) {
+            // Shouldn't happen.
+            compressedData.length = compressedData.length * 2;
+            avail_out = compressedData.length - stream.total_out;
+        }
+        stream.avail_out = avail_out;
+        deflateStatus = deflate(&stream, Z_FINISH);
+    } while (deflateStatus == Z_OK);
+
+    deflateEnd(&stream);
+
+    if (deflateStatus != Z_STREAM_END) {
+        DLog(@"deflate failed with %@", @(deflateStatus));
+        return nil;
+    }
+
+    compressedData.length = stream.total_out;
+    return compressedData;
+}
+
 @end

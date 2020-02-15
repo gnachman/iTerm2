@@ -311,6 +311,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)it_unescapedTmuxWindowName;
 - (NSString *)it_substringToIndex:(NSInteger)index;
 - (NSString *)it_escapedForRegex;
+- (NSString *)it_compressedString;
 @end
 
 @interface NSMutableString (iTerm)

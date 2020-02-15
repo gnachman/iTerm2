@@ -238,6 +238,12 @@
                                                                               @'r': @"\r" } ];
 }
 
+- (NSString *)it_compressedString {
+    NSData *data = [self dataUsingEncoding:NSUTF8StringEncoding];
+    data = [data it_compressedData];
+    return [data base64EncodedStringWithOptions:0];
+}
+
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters {
     NSDictionary *escapes = @{ @'n': @('\n'),
                                @'a': @('\x07'),
