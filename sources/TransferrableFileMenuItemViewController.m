@@ -54,7 +54,8 @@ static const CGFloat kCollapsedHeight = 51;
                 status == kTransferrableFileStatusTransferring);
     }
     if ([menuItem action] == @selector(showInFinder:)) {
-        if ([NSURL fileURLWithPath:self.transferrableFile.localPath] == nil) {
+        if (self.transferrableFile.localPath == nil ||
+            [NSURL fileURLWithPath:self.transferrableFile.localPath] == nil) {
             return NO;
         }
         return (status == kTransferrableFileStatusFinishedSuccessfully);
