@@ -77,6 +77,10 @@ extern NSString *kWindowPasteboardType;
     [self updateEnabledStateOfButtons];
 }
 
+- (void)endEditing {
+    [tableView_ reloadData];
+}
+
 - (IBAction)addSession:(id)sender
 {
     DLog(@"dashboard: Add session");

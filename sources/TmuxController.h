@@ -18,6 +18,8 @@
 @class PseudoTerminal;
 @class EquivalenceClassSet;
 
+// Posted just before sessions change (names, addition, deletion)
+extern NSString *const kTmuxControllerSessionsWillChange;
 // Posted when sessions change (names, addition, deletion)
 extern NSString *const kTmuxControllerSessionsDidChange;
 // Posted after detaching

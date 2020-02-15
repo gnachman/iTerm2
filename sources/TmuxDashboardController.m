@@ -62,6 +62,10 @@
                                                      name:kTmuxControllerSessionsDidChange
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxControllerSessionsWillChange:)
+                                                     name:kTmuxControllerSessionsWillChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(tmuxControllerWindowsDidChange:)
                                                      name:kTmuxControllerWindowsChangeNotification
                                                    object:nil];
@@ -304,6 +308,10 @@
 
 - (void)tmuxControllerDetached:(NSNotification *)notification {
     [sessionsTable_ setSessionObjects:@[]];
+}
+
+- (void)tmuxControllerSessionsWillChange:(NSNotification *)notification {
+    [sessionsTable_ endEditing];
 }
 
 - (void)tmuxControllerSessionsDidChange:(NSNotification *)notification {

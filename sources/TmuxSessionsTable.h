@@ -39,5 +39,6 @@
 
 - (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)names;
 - (void)selectSessionNumber:(int)number;
+- (void)endEditing;
 
 @end

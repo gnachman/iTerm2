@@ -33,6 +33,7 @@
 #import "TmuxWindowOpener.h"
 #import "TSVParser.h"
 
+NSString *const kTmuxControllerSessionsWillChange = @"kTmuxControllerSessionsWillChange";
 NSString *const kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *const kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
 NSString *const kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
@@ -2169,6 +2170,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)listSessionsResponse:(NSString *)result
 {
     DLog(@"%@ got list-session response:\n%@", self, result);
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionsWillChange
+                                                        object:nil];
     self.sessionObjects = [[result componentsSeparatedByRegex:@"\n"] mapWithBlock:^iTermTmuxSessionObject *(NSString *line) {
         const NSInteger space = [line rangeOfString:@" "].location;
         if (space == NSNotFound) {
