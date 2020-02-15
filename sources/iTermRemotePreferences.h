@@ -27,6 +27,6 @@
 
 // If remote prefs are in use load a fresh copy of them (perhaps downloading from the network) and
 // overwrite local user defaults. If something goes wrong a modal alert will be presented.
-- (void)copyRemotePrefsToLocalUserDefaults;
+- (void)copyRemotePrefsToLocalUserDefaultsPreserving:(NSArray<NSString *> *)preservedKeys;
 
 @end

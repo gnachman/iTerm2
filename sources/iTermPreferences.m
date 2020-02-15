@@ -199,64 +199,69 @@ static NSString *sPreviousVersion;
     [[NSUserDefaults standardUserDefaults] setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
 }
 
++ (NSDictionary *)systemPreferenceOverrides {
+    return @{
+        // Force antialiasing to be allowed on small font sizes
+        @"AppleAntiAliasingThreshold": @1,
+        @"AppleSmoothFixedFontsSizeThreshold": @1,
+
+        // Turn off high sierra's native tabs
+        @"AppleWindowTabbingMode": @"manual",
+
+        // Turn off scroll animations because they screw up the terminal scrolling.
+        @"AppleScrollAnimationEnabled": @0,
+
+        // Turn off accent menu
+        @"ApplePressAndHoldEnabled": @NO,
+
+        // Override smooth scrolling, which breaks various things (such as the
+        // assumption, when detectUserScroll is called, that scrolls happen
+        // immediately), and generally sucks with a terminal.
+        @"NSScrollAnimationEnabled": @NO,
+
+        // Disable under-titlebar mirror view.
+
+        // OS 10.10 has a spiffy feature where it finds a scrollview that is
+        // adjacent to the title bar and then does some magic to makes the
+        // scrollview's content show up with "vibrancy" (i.e., blur) under the
+        // title bar. The way it does this is to create an "NSScrollViewMirrorView"
+        // in the title bar's view hierarchy, under a view whose class is
+        // NSTitlebarContainerView. Unfortunately there is no way to turn
+        // this off. You can move the scroll view at least two points away from the
+        // title bar, but that looks terrible. Terminal.app went so far as to stop
+        // using scroll views! Trying to replace NSScrollView with my custom
+        // implementation seems fraught with peril. Trying to hide the mirror view
+        // doesn't work because it only becomes visible once the scroll view is
+        // taller than the window's content view (I think that is new in 10.10.3).
+        // I tried swizzling addSubview: in NSTitlebarContainerView to hide
+        // mirror views when they get added, but it caused some performance problems
+        // I can't reproduce (see issue 3499).
+        //
+        // Another option, which seems more fragile, is to override
+        // -[PTYScrollView _makeUnderTitlebarView] and have it return nil. That works
+        // in testing but could break things pretty badly.
+        //
+        // I found this undocumented setting while disassembling the caller to _makeUnderTitlebarView,
+        // and it seems to work.
+        //
+        // See issue 3244 for details.
+        @"NSScrollViewShouldScrollUnderTitlebar": @NO
+    };
+}
+
 + (void)initializeUserDefaults {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-
-    // Force antialiasing to be allowed on small font sizes
-    [userDefaults setInteger:1 forKey:@"AppleAntiAliasingThreshold"];
-    [userDefaults setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
-
-    // Turn off high sierra's native tabs
-    [userDefaults setObject:@"manual" forKey:@"AppleWindowTabbingMode"];
-
-    // Turn off scroll animations because they screw up the terminal scrolling.
-    [userDefaults setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
-
-    // Turn off accent menu
-    [userDefaults setBool:NO forKey:@"ApplePressAndHoldEnabled"];
-
-    // Override smooth scrolling, which breaks various things (such as the
-    // assumption, when detectUserScroll is called, that scrolls happen
-    // immediately), and generally sucks with a terminal.
-    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"NSScrollAnimationEnabled"];
+    [[self systemPreferenceOverrides] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [userDefaults setObject:obj forKey:key];
+    }];
 
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *const thisVersion = infoDictionary[@"CFBundleVersion"];
     [self initializeAppVersionBeforeThisLaunch:thisVersion];
     [self initializeAllAppVersionsUsedOnThisMachine:thisVersion];
 
-    
-    // Disable under-titlebar mirror view.
-
-    // OS 10.10 has a spiffy feature where it finds a scrollview that is
-    // adjacent to the title bar and then does some magic to makes the
-    // scrollview's content show up with "vibrancy" (i.e., blur) under the
-    // title bar. The way it does this is to create an "NSScrollViewMirrorView"
-    // in the title bar's view hierarchy, under a view whose class is
-    // NSTitlebarContainerView. Unfortunately there is no way to turn
-    // this off. You can move the scroll view at least two points away from the
-    // title bar, but that looks terrible. Terminal.app went so far as to stop
-    // using scroll views! Trying to replace NSScrollView with my custom
-    // implementation seems fraught with peril. Trying to hide the mirror view
-    // doesn't work because it only becomes visible once the scroll view is
-    // taller than the window's content view (I think that is new in 10.10.3).
-    // I tried swizzling addSubview: in NSTitlebarContainerView to hide
-    // mirror views when they get added, but it caused some performance problems
-    // I can't reproduce (see issue 3499).
-    //
-    // Another option, which seems more fragile, is to override
-    // -[PTYScrollView _makeUnderTitlebarView] and have it return nil. That works
-    // in testing but could break things pretty badly.
-    //
-    // I found this undocumented setting while disassembling the caller to _makeUnderTitlebarView,
-    // and it seems to work.
-    //
-    // See issue 3244 for details.
-    [[NSUserDefaults standardUserDefaults] setBool:NO
-                                            forKey:@"NSScrollViewShouldScrollUnderTitlebar"];
-
     // Load prefs from remote.
-    [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
+    [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaultsPreserving:self.systemPreferenceOverrides.allKeys];
 }
 
 #pragma mark - Default values

@@ -13,6 +13,7 @@
 
 @interface iTermRemotePreferences ()
 @property(nonatomic, copy) NSDictionary *savedRemotePrefs;
+@property(nonatomic, copy) NSArray<NSString *> *preservedKeys;
 @end
 
 @implementation iTermRemotePreferences {
@@ -68,13 +69,15 @@
            base, [[NSBundle mainBundle] bundleIdentifier]];
 }
 
-- (BOOL)preferenceKeyIsSyncable:(NSString *)key
-{
+- (BOOL)preferenceKeyIsSyncable:(NSString *)key {
+    if ([self.preservedKeys containsObject:key]) {
+        return NO;
+    }
     NSArray *exemptKeys = @[ kPreferenceKeyLoadPrefsFromCustomFolder,
                              kPreferenceKeyCustomFolder,
                              @"Secure Input",
                              @"moveToApplicationsFolderAlertSuppress",
-                             @"iTerm Version",
+                             kPreferenceKeyAppVersion,
                              @"CGFontRenderingFontSmoothingDisabled" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
@@ -233,7 +236,7 @@
     }
 }
 
-- (void)copyRemotePrefsToLocalUserDefaults {
+- (void)copyRemotePrefsToLocalUserDefaultsPreserving:(NSArray<NSString *> *)preservedKeys {
     if (_haveTriedToLoadRemotePrefs) {
         return;
     }
@@ -244,6 +247,7 @@
     }
     NSDictionary *remotePrefs = [self freshCopyOfRemotePreferences];
     self.savedRemotePrefs = remotePrefs;
+    self.preservedKeys = preservedKeys;
 
     if (![remotePrefs count]) {
         return;
