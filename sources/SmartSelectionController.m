@@ -150,7 +150,12 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 - (IBAction)removeRule:(id)sender {
     assert(tableView_.selectedRow >= 0);
-    [self setRule:nil forRow:[tableView_ selectedRow]];
+    const NSInteger row = tableView_.selectedRow;
+    if (row < 0) {
+        return;
+    }
+    [tableView_ reloadData];
+    [self setRule:nil forRow:row];
 }
 
 - (IBAction)loadDefaults:(id)sender {
