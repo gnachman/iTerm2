@@ -93,12 +93,11 @@ To circumvent the dialog, use the `it2run` script provided in
 `osascript` to ask iTerm2 to launch your Python script. macOS will ask for a
 one-time grant of permission for `osascript` to control iTerm2.
 
-If you wish to pass command line arguments to the script launched by `it2run`,
-you must put them together into a single argument separated by spaces. For
-example:
+You may also pass command line arguments to it2run that get forwarded to the script.
+For example:
 
 ```
-/Applications/iTerm.app/Contents/MacOS/it2run myscript.py "firstarg secondarg thirdarg"
+/Applications/iTerm.app/Contents/MacOS/it2run myscript.py firstarg secondarg thirdarg
 ```
 
 
