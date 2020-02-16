@@ -44,7 +44,7 @@
     IBOutlet NSPopUpButton *_colorPresetsPopup;
     IBOutlet NSView *_pasteSpecialViewContainer;
     IBOutlet NSButton *_okButton;
-    
+
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
     iTermFunctionCallTextFieldDelegate *_labelDelegate;
@@ -132,7 +132,7 @@
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Resize Pane" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Decrease Height" tag:KEY_ACTION_DECREASE_HEIGHT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Increase Height" tag:KEY_ACTION_DECREASE_HEIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Increase Height" tag:KEY_ACTION_INCREASE_HEIGHT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Decrease Width" tag:KEY_ACTION_DECREASE_WIDTH],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Increase Width" tag:KEY_ACTION_INCREASE_WIDTH],
         ]],
@@ -643,7 +643,6 @@
                 self.parameterValue = [[_menuToSelectPopup selectedItem] title];
             }
             break;
-
 
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
