@@ -9,6 +9,7 @@
 
 #include "iTermFileDescriptorServerShared.h"
 
+#include <Carbon/Carbon.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -903,6 +904,35 @@ static int Initialize(char *path) {
 }
 
 static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int writeFD, int readFD) {
+    // TODO: Consider calling daemon() or its equivalent pthread_spawn at this point.
+
+    // Use GetCurrentProcess() to force a connection to the window server. This gets us killed on
+    // log out. Child process become broken because their Aqua namespace session has disappeared.
+    // For example, `whoami` will print a number instead of a name. Better to die than live less
+    // than your best life.
+    //
+    // For more on these mysteries see:
+    // Technical Note TN2083 - Daemons and Agents
+    //   http://mirror.informatimago.com/next/developer.apple.com/technotes/tn2005/tn2083.html
+    //
+    // There is also an informative comment in shell_launcher.c.
+    //
+    // The approach taken in shell_launcher.c, to move the process from the Aqua per-session
+    // namespace to the per-user namespace was clever but had a lot of unintended consequences.
+    // For example, it broke PAM hacks that let you use touch ID for sudo. It broke launching
+    // Cocoa apps from the command line (sometimes! Not for me, but for the guy next to me at work).
+    // The costs of "random things don't work sometimes" is higher than the benefit of sessions
+    // surviving log out-log in.
+    //
+    // GetCurrentProcess() is deprecated, and Apple wants you to use
+    // [NSRunningApplication currentApplication], instead. I don't want to take on the overhead of
+    // the obj-c runtime, so I'll keep using this deprecated API until it actually breaks.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ProcessSerialNumber psn;
+    GetCurrentProcess(&psn);
+#pragma clang diagnostic pop
+
     SetRunningServer();
     // syslog raises sigpipe when the parent job dies on 10.12.
 //    signal(SIGPIPE, SIG_IGN);
