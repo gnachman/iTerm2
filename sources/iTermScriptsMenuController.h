@@ -35,11 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)newPythonScript;
 
 - (void)launchScriptWithRelativePath:(NSString *)path
-                           arguments:(NSString *)arguments
+                           arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction;
 
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
-                           arguments:(NSString *)arguments
+                           arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction;
 - (BOOL)couldLaunchScriptWithAbsolutePath:(NSString *)fullPath;
 

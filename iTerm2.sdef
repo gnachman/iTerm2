@@ -314,9 +314,10 @@
         <direct-parameter description="The script’s name">
             <type type="text"/>
         </direct-parameter>
-        <parameter name="arguments" code="Asar" type="text" optional="yes"
+        <parameter name="arguments" code="Asar" optional="yes"
           description="Arguments to pass to script">
           <cocoa key="arguments"/>
+          <type type="text" list="yes"/>
         </parameter>
     </command>
 

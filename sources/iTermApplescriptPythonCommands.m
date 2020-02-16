@@ -24,7 +24,7 @@
         [self setScriptErrorString:@"No script name was specified"];
         return nil;
     }
-    NSString *args = self.evaluatedArguments[@"arguments"];
+    NSArray<NSString *> *args = self.evaluatedArguments[@"arguments"];
 
     NSArray<NSString *> *relativeFilenames = [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] allScripts];
     for (NSString *relativeFilename in relativeFilenames) {
@@ -57,7 +57,7 @@
     return nil;
 }
 
-- (void)launchPythonScript:(NSString *)script arguments:(NSString *)arguments {
+- (void)launchPythonScript:(NSString *)script arguments:(NSArray<NSString *> *)arguments {
     [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithRelativePath:script
                                                                                                 arguments:arguments
                                                                                        explicitUserAction:NO];

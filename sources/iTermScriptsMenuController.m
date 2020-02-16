@@ -406,7 +406,7 @@ NS_ASSUME_NONNULL_BEGIN
         }
         if (response == NSAlertSecondButtonReturn) {
             [self launchScriptWithAbsolutePath:location.path
-                                     arguments:@""
+                                     arguments:@[]
                             explicitUserAction:YES];
         }
     }
@@ -458,7 +458,7 @@ NS_ASSUME_NONNULL_BEGIN
         [entry kill];
     } else {
         [self launchScriptWithAbsolutePath:fullPath
-                                 arguments:@""
+                                 arguments:@[]
                         explicitUserAction:YES];
     }
 }
@@ -471,7 +471,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)launchScriptWithRelativePath:(NSString *)path
-                           arguments:(NSString *)arguments
+                           arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:path];
     [self launchScriptWithAbsolutePath:fullPath
@@ -481,7 +481,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // NOTE: This logic needs to be kept in sync with -couldLaunchScriptWithAbsolutePath
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
-                           arguments:(NSString *)arguments
+                           arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
@@ -1029,7 +1029,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runAutoLaunchScript:(NSString *)path {
-    [self launchScriptWithAbsolutePath:path arguments:@"" explicitUserAction:NO];
+    [self launchScriptWithAbsolutePath:path arguments:@[] explicitUserAction:NO];
 }
 
 - (void)runLegacyAutoLaunchScripts {

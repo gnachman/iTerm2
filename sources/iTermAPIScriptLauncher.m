@@ -30,7 +30,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 @implementation iTermAPIScriptLauncher
 
 + (void)launchScript:(NSString *)filename
-           arguments:(NSString *)arguments
+           arguments:(NSArray<NSString *> *)arguments
   explicitUserAction:(BOOL)explicitUserAction {
     [self launchScript:filename
               fullPath:filename
@@ -52,7 +52,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
-           arguments:(NSString *)arguments
+           arguments:(NSArray<NSString *> *)arguments
       withVirtualEnv:(NSString *)virtualenv
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction {
@@ -140,7 +140,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (void)reallyLaunchScript:(NSString *)filename
                   fullPath:(NSString *)fullPath
-                 arguments:(NSString *)arguments
+                 arguments:(NSArray<NSString *> *)arguments
             withVirtualEnv:(NSString *)virtualenv
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
@@ -193,7 +193,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 // THROWS
 + (void)tryLaunchScript:(NSString *)filename
-              arguments:(NSString *)arguments
+              arguments:(NSArray<NSString *> *)arguments
            historyEntry:(iTermScriptHistoryEntry *)entry
                     key:(NSString *)key
          withVirtualEnv:(NSString *)virtualenv
@@ -244,7 +244,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 }
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename
-                        arguments:(NSString *)arguments
+                        arguments:(NSArray<NSString *> *)arguments
                    withVirtualEnv:(NSString *)providedVirtualEnv
                     pythonVersion:(NSString *)pythonVersion {
     NSString *wrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
@@ -254,8 +254,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
                          [virtualEnv stringWithEscapedShellCharactersExceptTabAndNewline],
                          [filename stringWithEscapedShellCharactersExceptTabAndNewline]];
-    if (arguments.length > 0) {
-        command = [command stringByAppendingFormat:@" %@", arguments];
+    if (arguments.count > 0) {
+        NSArray<NSString *> *escapedArguments = [arguments mapWithBlock:^id(NSString *anObject) {
+            return [anObject stringWithEscapedShellCharactersIncludingNewlines:YES];
+        }];
+        NSString *joinedArguments = [escapedArguments componentsJoinedByString:@" "];
+        command = [command stringByAppendingFormat:@" %@", joinedArguments];
     }
     NSArray<NSString *> *result = @[ @"-c", command ];
     return result;

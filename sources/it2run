@@ -1,12 +1,12 @@
 #!/usr/bin/env osascript
 on run argv
 	tell application "iTerm2"
-		if number of items in argv is 1 then
+                if number of items in argv is 0 then
+			log "Usage: it2run MyScript.py [arg1 [arg2...]]"
+                else if number of items in argv is 1 then
 			launch API script named (item 1 of argv)
-		else if number of items in argv is 2 then
-			launch API script named (item 1 of argv) arguments (item 2 of argv)
-		else
-			log "Usage: it2run MyScript.py ['arg1 arg2...']"
+                else
+			launch API script named (item 1 of argv) arguments (items 2 through -1 of argv)
 		end if
 	end tell
 end run
