@@ -8,11 +8,17 @@
 
 #import "WindowArrangements.h"
 #import "iTermApplicationDelegate.h"
+#import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
+static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrangementWillChangeNotification";
+
+@interface WindowArrangements()<NSTextFieldDelegate>
+@end
 
 @implementation WindowArrangements {
     IBOutlet NSTableColumn *defaultColumn_;
@@ -23,62 +29,57 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     IBOutlet NSButton *defaultButton_;
 }
 
-+ (WindowArrangements *)sharedInstance
-{
++ (WindowArrangements *)sharedInstance {
     return [[PreferencePanel sharedInstance] arrangements];
 }
 
-- (void)updateActionsEnabled
-{
-    [deleteButton_ setEnabled:([WindowArrangements count] > 0) && ([tableView_ selectedRow] >= 0)];
-    [defaultButton_ setEnabled:([WindowArrangements count] > 0) && ([tableView_ selectedRow] >= 0)];
+- (void)updateActionsEnabled {
+    [deleteButton_ setEnabled:([WindowArrangements count] > 0) && ([tableView_ numberOfSelectedRows] > 0)];
+    [defaultButton_ setEnabled:([WindowArrangements count] > 0) && ([tableView_ numberOfSelectedRows] == 1)];
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)awakeFromNib
-{
+- (void)awakeFromNib {
     [self updateActionsEnabled];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateTableView:)
                                                  name:kSavedArrangementDidChangeNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(pushUndo)
+                                                 name:kSavedArrangementWillChangeNotification
+                                               object:nil];
 }
 
-+ (BOOL)hasWindowArrangement:(NSString *)name
-{
++ (BOOL)hasWindowArrangement:(NSString *)name {
     NSDictionary *arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
     return [arrangements objectForKey:name] != nil;
 }
 
-+ (int)count
-{
++ (int)count {
     NSDictionary *arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
     return [arrangements count];
 }
 
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     int n = [WindowArrangements count];
     return n;
 }
 
-+ (NSDictionary *)arrangements
-{
++ (NSDictionary *)arrangements {
     return [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
 }
 
-+ (void)postChangeNotification
-{
++ (void)postChangeNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:kSavedArrangementDidChangeNotification
                                                         object:nil
                                                       userInfo:nil];
 }
 
-+ (void)setArrangement:(NSArray *)arrangement withName:(NSString *)name
-{
++ (void)setArrangement:(NSArray *)arrangement withName:(NSString *)name {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSavedArrangementWillChangeNotification
+                                                        object:nil
+                                                      userInfo:nil];
+
     NSMutableDictionary *arrangements = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
     [arrangements setObject:arrangement forKey:name];
     @try {
@@ -98,57 +99,50 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     [WindowArrangements postChangeNotification];
 }
 
-- (NSString *)nameAtIndex:(int)rowIndex
-{
+- (NSString *)nameAtIndex:(NSUInteger)rowIndex {
     NSArray *keys = [WindowArrangements allNames];
-    return [keys objectAtIndex:rowIndex];
+    return keys[rowIndex];
 }
 
-- (void)updatePreviewView
-{
-    int rowIndex = [tableView_ selectedRow];
-    if (rowIndex >= 0) {
+- (void)updatePreviewView {
+    NSIndexSet *selection = tableView_.selectedRowIndexes;
+    if (selection.count == 1) {
+        const NSUInteger rowIndex = selection.firstIndex;
         [previewView_ setArrangement:[WindowArrangements arrangementWithName:[self nameAtIndex:rowIndex]]];
-    } else {
-        [previewView_ setArrangement:nil];
+        [previewView_ setNeedsDisplay:YES];
+        return;
     }
-
+    [previewView_ setArrangement:nil];
     [previewView_ setNeedsDisplay:YES];
 }
 
-- (void)updateTableView:(id)sender
-{
+- (void)updateTableView:(id)sender {
     [tableView_ reloadData];
     [self updateActionsEnabled];
     [self updatePreviewView];
 }
 
-+ (void)makeDefaultArrangement:(NSString *)name
-{
++ (void)makeDefaultArrangement:(NSString *)name {
     [[NSUserDefaults standardUserDefaults] setObject:name forKey:DEFAULT_ARRANGEMENT_KEY];
     [WindowArrangements postChangeNotification];
 }
 
-+ (NSString *)defaultArrangementName
-{
++ (NSString *)defaultArrangementName {
     return [[NSUserDefaults standardUserDefaults] objectForKey:DEFAULT_ARRANGEMENT_KEY];
 }
 
-- (NSArray *)defaultArrangement
-{
+- (NSArray *)defaultArrangement {
     return [[WindowArrangements arrangements] objectForKey:[WindowArrangements defaultArrangementName]];
 }
 
-+ (NSArray *)arrangementWithName:(NSString *)name
-{
++ (NSArray *)arrangementWithName:(NSString *)name {
     if (!name) {
         name = [WindowArrangements defaultArrangementName];
     }
     return [[WindowArrangements arrangements] objectForKey:name];
 }
 
-+ (NSArray *)allNames
-{
++ (NSArray *)allNames {
     NSArray *keys = [[WindowArrangements arrangements] allKeys];
     return [keys sortedArrayUsingSelector:@selector(compare:)];
 }
@@ -219,19 +213,83 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     return name;
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    NSString *key = [self nameAtIndex:rowIndex];
-    if (aTableColumn == defaultColumn_) {
-        if ([key isEqualToString:[WindowArrangements defaultArrangementName]]) {
-            return @"✓";
-        } else {
-            return @"";
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    if ([tableColumn.identifier isEqualToString:@"default"]) {
+        static NSString *const identifier = @"WindowArrangementDefaultIdentifier";
+        NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+        if (result == nil) {
+            result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+            result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
         }
-    } else {
-        return key;
+        NSString *key = [self nameAtIndex:row];
+        if ([key isEqualToString:[WindowArrangements defaultArrangementName]]) {
+            result.stringValue = @"★";
+        } else {
+            result.stringValue = @"";
+        }
+        result.editable = NO;
+        return result;
+    }
+
+    static NSString *const identifier = @"WindowArrangementTitleIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    }
+
+    NSString *value = [self nameAtIndex:row];
+    result.stringValue = value;
+    result.delegate = self;
+    result.editable = YES;
+    return result;
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    const NSUInteger row = [tableView_ selectedRow];
+    NSTextField *textField = obj.object;
+    NSString *newName = textField.stringValue;
+    NSString *oldName = [self nameAtIndex:row];
+    if ([oldName isEqual:newName]) {
+        return;
+    }
+    const BOOL wasDefault = [oldName isEqualToString:[WindowArrangements defaultArrangementName]];
+    NSMutableDictionary *dict = [[[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] mutableCopy];
+    NSDictionary *value = [dict[oldName] copy];
+    if (dict[newName]) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Replace Arrangement?";
+        alert.informativeText = [NSString stringWithFormat:@"An arrangement named “%@” already exists. Would you like to replace it?", newName];
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
+        if ([alert runSheetModalForWindow:self.view.window] == NSAlertSecondButtonReturn) {
+            textField.stringValue = oldName;
+            return;
+        }
+        [dict removeObjectForKey:oldName];
+    }
+    [self pushUndo];
+    [dict removeObjectForKey:oldName];
+    dict[newName] = value;
+    [[NSUserDefaults standardUserDefaults] setObject:dict forKey:WINDOW_ARRANGEMENTS];
+    if (wasDefault) {
+        [[NSUserDefaults standardUserDefaults] setObject:newName forKey:DEFAULT_ARRANGEMENT_KEY];
+    }
+    [tableView_ reloadData];
+    [WindowArrangements postChangeNotification];
+
+    // Select row again
+    NSUInteger index = [self indexOfRowNamed:newName];
+    if (index != NSNotFound) {
+        [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
+                byExtendingSelection:NO];
     }
 }
+
+- (NSUInteger)indexOfRowNamed:(NSString *)name {
+    return [WindowArrangements.allNames indexOfObject:name];
+}
+
 
 - (IBAction)setDefault:(id)sender
 {
@@ -244,8 +302,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     [tableView_ reloadData];
 }
 
-- (void)setDefaultIfNeededAtRow:(int)rowid
-{
+- (void)setDefaultIfNeededAtRow:(int)rowid {
     if ([WindowArrangements count] > 0) {
         if ([WindowArrangements arrangementWithName:[WindowArrangements defaultArrangementName]] == nil) {
             int newDefault = rowid;
@@ -257,27 +314,56 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     }
 }
 
-- (IBAction)deleteSelectedArrangement:(id)sender
-{
-    int rowid = [tableView_ selectedRow];
-    if (rowid < 0) {
+- (IBAction)deleteSelectedArrangement:(id)sender {
+    NSIndexSet *rows = tableView_.selectedRowIndexes;
+    if (rows.count == 0) {
         return;
     }
-
+    [self pushUndo];
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    [rows enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        [names addObject:[self nameAtIndex:idx]];
+    }];
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
-    [temp removeObjectForKey:[self nameAtIndex:rowid]];
+    [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [temp removeObjectForKey:obj];
+    }];
     [[NSUserDefaults standardUserDefaults] setObject:temp forKey:WINDOW_ARRANGEMENTS];
-
-    [self setDefaultIfNeededAtRow:rowid];
+    [self setDefaultIfNeededAtRow:rows.firstIndex];
 
     [tableView_ reloadData];
     [WindowArrangements postChangeNotification];
 }
 
+- (void)keyDown:(NSEvent *)event {
+    const unichar key = [[event charactersIgnoringModifiers] characterAtIndex:0];
+    if (key == NSDeleteCharacter) {
+        [self deleteSelectedArrangement:nil];
+    } else {
+        [super keyDown:event];
+    }
+}
+
+- (void)setArrangements:(NSDictionary *)saved {
+    [self pushUndo];
+
+    NSString *defaultArrangementName = [NSString castFrom:saved[@"default"]];
+    NSDictionary *arrangements = [NSDictionary castFrom:saved[@"arrangements"]];
+    [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+    [[NSUserDefaults standardUserDefaults] setObject:defaultArrangementName forKey:DEFAULT_ARRANGEMENT_KEY];
+    [WindowArrangements postChangeNotification];
+}
+
+- (void)pushUndo {
+    [[self undoManager] registerUndoWithTarget:self
+                                      selector:@selector(setArrangements:)
+                                        object:@{ @"default": [WindowArrangements defaultArrangementName] ?: [NSNull null],
+                                                  @"arrangements": [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] ?: @{} }];
+}
+
 #pragma mark Delegate methods
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
-{
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
     [self updatePreviewView];
     [self updateActionsEnabled];
 }
