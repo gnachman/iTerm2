@@ -19,9 +19,9 @@
             </dict>  
         </dict> 
 	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
+	<string>AppIcon-Beta</string>
 	<key>CFBundleIconName</key>
-	<string>AppIcon</string>
+	<string>AppIcon-Beta</string>
         <key>NSHumanReadableCopyright</key>
         <string>GPL v2</string>
         <key>CFBundleDevelopmentRegion</key>
