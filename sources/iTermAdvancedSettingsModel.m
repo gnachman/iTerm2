@@ -543,7 +543,7 @@ DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin 
 DEFINE_BOOL(killSessionsOnLogout, NO, SECTION_EXPERIMENTAL @"Kill sessions on logout.\nA possible fix for issue 4147.");
 DEFINE_BOOL(useExperimentalFontMetrics, NO, SECTION_EXPERIMENTAL @"Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
 DEFINE_BOOL(fastForegroundJobUpdates, NO, SECTION_EXPERIMENTAL @"Enable low-latency updates of the current foreground job");
-DEFINE_BOOL(pidinfoXPC, NO, SECTION_EXPERIMENTAL @"Call proc_pidinfo from an XPC service.\nThis makes current directory detection more reliable in the presence of flaky network mounts. You must restart iTerm2 after changing this setting.");
+DEFINE_BOOL(pidinfoXPC, YES, SECTION_EXPERIMENTAL @"Call proc_pidinfo from an XPC service.\nThis makes current directory detection more reliable in the presence of flaky network mounts. You must restart iTerm2 after changing this setting.");
 
 // Experiments currently under test
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, YES, SECTION_EXPERIMENTAL @"Allow variable window sizes in tmux integration.\nRequres tmux version 2.9 or later.");
