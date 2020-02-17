@@ -56,6 +56,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
         _initialDirectory = [[NSString alloc] initWithUTF8String:report->pwd];
         _hasTerminated = report->terminated;
         _fd = report->fd;
+        assert(_fd >= 0);
+        fcntl(_fd, F_SETFL, O_NONBLOCK);
         _tty = [NSString stringWithUTF8String:report->tty] ?: @"";
         _haveWaited = NO;
     }
