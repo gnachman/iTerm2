@@ -132,6 +132,11 @@
                                                NO,
                                                initialPwd,
                                                newEnviron);
+    const int fd = self.fd;
+    if (fd >= 0) {
+        fcntl(self.fd, F_SETFL, O_NONBLOCK);
+    }
+
     // If you get here you're the parent.
     _serverPid = forkState.pid;
 
