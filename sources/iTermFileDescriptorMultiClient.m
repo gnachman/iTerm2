@@ -426,7 +426,7 @@ done:
 
 - (BOOL)launch {
     assert(_readFD < 0);
-    NSString *executable = [[NSBundle bundleForClass:[self class]] pathForResource:@"iTermServer" ofType:nil];
+    NSString *executable = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
     assert(executable);
     iTermForkState forkState = [self launchWithSocketPath:_socketPath executable:executable];
     if (forkState.pid < 0) {

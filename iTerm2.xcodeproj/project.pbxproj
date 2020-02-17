@@ -1280,7 +1280,6 @@
 		536EF5B823F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
 		536EF5B923F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
 		536EF5BA23F6684D00B81875 /* it2run in Resources */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; };
-		536EF5BB23F6688000B81875 /* it2run in CopyFiles */ = {isa = PBXBuildFile; fileRef = 536EF5B723F6684D00B81875 /* it2run */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */; };
 		5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676321C9D2710088D0F3 /* SIGPolicy.m */; };
 		5370678421C9D2780088D0F3 /* SIGTrust.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676421C9D2720088D0F3 /* SIGTrust.h */; };
@@ -1902,6 +1901,7 @@
 		A63B9D5B234EE4ED002EEF30 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
+		A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */ = {isa = PBXBuildFile; fileRef = A663197822FF349700C502BD /* iTermServer */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */; };
 		A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
@@ -1936,7 +1936,6 @@
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
 		A64F07CC23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h in Headers */ = {isa = PBXBuildFile; fileRef = A64F07CA23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.h */; };
 		A64F07CD23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m in Sources */ = {isa = PBXBuildFile; fileRef = A64F07CB23F0D9FE006D37A1 /* iTermRoundedCornerImageCreator.m */; };
-		A64FCD50238DDF36001D8199 /* iTermServer in Resources */ = {isa = PBXBuildFile; fileRef = A663197822FF349700C502BD /* iTermServer */; };
 		A64FCD53238DDFEE001D8199 /* iTermTTYState.c in Sources */ = {isa = PBXBuildFile; fileRef = A6E74ADE2383AA1D0089004A /* iTermTTYState.c */; };
 		A64FCD54238DE6EF001D8199 /* iTermClientServerProtocol.c in Sources */ = {isa = PBXBuildFile; fileRef = 53E282CD22EA9D98007CBA30 /* iTermClientServerProtocol.c */; };
 		A64FCD55238DE702001D8199 /* iTermPosixTTYReplacements.c in Sources */ = {isa = PBXBuildFile; fileRef = 53E282D522EAAD36007CBA30 /* iTermPosixTTYReplacements.c */; };
@@ -3863,22 +3862,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A663197622FF349700C502BD /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 		A6725AD923D64A57001CA48A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				536EF5BB23F6688000B81875 /* it2run in CopyFiles */,
+				A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */,
 				A6725ADA23D64A87001CA48A /* image_decoder in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5143,6 +5133,7 @@
 		A63E230C2143953700609D6A /* graphic_go.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_go.png; path = "hyper-tab-icons-plus/png/graphic_go.png"; sourceTree = "<group>"; };
 		A63E230D2143953700609D6A /* graphic_grunt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_grunt@2x.png"; path = "hyper-tab-icons-plus/png/graphic_grunt@2x.png"; sourceTree = "<group>"; };
 		A63E230E2143953700609D6A /* graphic_go@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_go@2x.png"; path = "hyper-tab-icons-plus/png/graphic_go@2x.png"; sourceTree = "<group>"; };
+		A63F2A3A23FA5951008DDEA4 /* it2run */ = {isa = PBXFileReference; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
 		A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionPicker.h; sourceTree = "<group>"; };
 		A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionPicker.m; sourceTree = "<group>"; };
 		A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StopStatusIcon.png; path = images/StopStatusIcon.png; sourceTree = "<group>"; };
@@ -6479,6 +6470,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
 				A6889E84213274E600ABB237 /* iTerm2.entitlements */,
@@ -11050,7 +11042,6 @@
 			buildPhases = (
 				A663197422FF349700C502BD /* Sources */,
 				A663197522FF349700C502BD /* Frameworks */,
-				A663197622FF349700C502BD /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -12129,7 +12120,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A64FCD50238DDF36001D8199 /* iTermServer in Resources */,
+				536EF5B823F6684D00B81875 /* it2run in Resources */,
 				A631FCA320EF0DFA00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
 				A6E7AE86214394DD00DE9F3B /* graphic_curl.png in Resources */,
 				A66F52D92106F6F100571168 /* gitup@2x.png in Resources */,
@@ -12334,7 +12325,6 @@
 				A629F57A23AF2DD900C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
-				536EF5B823F6684D00B81875 /* it2run in Resources */,
 				A67F618D214395A70093940A /* graphic_nodejs@2x.png in Resources */,
 				A6F7A749213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,
