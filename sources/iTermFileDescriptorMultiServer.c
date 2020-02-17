@@ -933,6 +933,9 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
     GetCurrentProcess(&psn);
 #pragma clang diagnostic pop
 
+    // Do this to remove the dock icon.
+    TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+
     SetRunningServer();
     // syslog raises sigpipe when the parent job dies on 10.12.
 //    signal(SIGPIPE, SIG_IGN);
