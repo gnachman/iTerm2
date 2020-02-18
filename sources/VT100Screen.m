@@ -4559,7 +4559,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
-    VT100ScreenMark *mark = self.lastCommandMark;
+    VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         mark.code = returnCode;
@@ -4571,7 +4571,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         DLog(@"No last command mark found.");
     }
-    [delegate_ screenCommandDidExitWithCode:returnCode];
+    [delegate_ screenCommandDidExitWithCode:returnCode mark:mark];
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

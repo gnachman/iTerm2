@@ -9024,6 +9024,7 @@ typedef struct ITMPromptNotificationCommandEnd__storage_ {
 @dynamic prompt;
 @dynamic commandStart;
 @dynamic commandEnd;
+@dynamic hasUniquePromptId, uniquePromptId;
 
 typedef struct ITMPromptNotification__storage_ {
   uint32_t _has_storage_[2];
@@ -9031,6 +9032,7 @@ typedef struct ITMPromptNotification__storage_ {
   ITMPromptNotificationPrompt *prompt;
   ITMPromptNotificationCommandStart *commandStart;
   ITMPromptNotificationCommandEnd *commandEnd;
+  NSString *uniquePromptId;
 } ITMPromptNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -9074,6 +9076,15 @@ typedef struct ITMPromptNotification__storage_ {
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, commandEnd),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "uniquePromptId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMPromptNotification_FieldNumber_UniquePromptId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, uniquePromptId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -9798,6 +9809,7 @@ typedef struct ITMGetPromptRequest__storage_ {
 @dynamic hasCommand, command;
 @dynamic hasPromptState, promptState;
 @dynamic hasExitStatus, exitStatus;
+@dynamic hasUniquePromptId, uniquePromptId;
 
 typedef struct ITMGetPromptResponse__storage_ {
   uint32_t _has_storage_[1];
@@ -9809,6 +9821,7 @@ typedef struct ITMGetPromptResponse__storage_ {
   ITMCoordRange *outputRange;
   NSString *workingDirectory;
   NSString *command;
+  NSString *uniquePromptId;
 } ITMGetPromptResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -9888,6 +9901,15 @@ typedef struct ITMGetPromptResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, exitStatus),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "uniquePromptId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPromptResponse_FieldNumber_UniquePromptId,
+        .hasIndex = 8,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, uniquePromptId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =

@@ -3908,6 +3908,7 @@ typedef GPB_ENUM(ITMPromptNotification_FieldNumber) {
   ITMPromptNotification_FieldNumber_Prompt = 2,
   ITMPromptNotification_FieldNumber_CommandStart = 3,
   ITMPromptNotification_FieldNumber_CommandEnd = 4,
+  ITMPromptNotification_FieldNumber_UniquePromptId = 5,
 };
 
 typedef GPB_ENUM(ITMPromptNotification_Event_OneOfCase) {
@@ -3930,6 +3931,10 @@ typedef GPB_ENUM(ITMPromptNotification_Event_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotificationCommandStart *commandStart;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMPromptNotificationCommandEnd *commandEnd;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniquePromptId;
+/** Test to see if @c uniquePromptId has been set. */
+@property(nonatomic, readwrite) BOOL hasUniquePromptId;
 
 @end
 
@@ -4205,6 +4210,7 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
   ITMGetPromptResponse_FieldNumber_Command = 6,
   ITMGetPromptResponse_FieldNumber_PromptState = 7,
   ITMGetPromptResponse_FieldNumber_ExitStatus = 9,
+  ITMGetPromptResponse_FieldNumber_UniquePromptId = 10,
 };
 
 /**
@@ -4242,6 +4248,10 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 @property(nonatomic, readwrite) uint32_t exitStatus;
 
 @property(nonatomic, readwrite) BOOL hasExitStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniquePromptId;
+/** Test to see if @c uniquePromptId has been set. */
+@property(nonatomic, readwrite) BOOL hasUniquePromptId;
+
 @end
 
 #pragma mark - ITMGetProfilePropertyRequest

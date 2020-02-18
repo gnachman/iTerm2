@@ -65,6 +65,16 @@ class Prompt:
             return PromptState.UNKNOWN
         return PromptState(self.__proto.prompt_state)
 
+    @property
+    def unique_id(self) -> typing.Optional[str]:
+        """Returns the unique ID of this command prompt.
+
+        Will be None if not available because the version of iTerm2 is too
+        old to report it."""
+        if self.__proto.HasField("unique_prompt_id"):
+            return self.__proto.unique_prompt_id
+        return None
+
 async def async_get_last_prompt(
         connection: iterm2.connection.Connection,
         session_id: str) -> typing.Union[None, Prompt]:
@@ -160,27 +170,40 @@ class PromptMonitor:
         return self
 
     async def async_get(
-            self) -> typing.Tuple['PromptMonitor.Mode', typing.Any]:
+            self,
+            include_id: bool = False) -> typing.Union[
+                typing.Tuple['PromptMonitor.Mode', typing.Any],
+                typing.Tuple['PromptMonitor.Mode', typing.Any, typing.Optional[str]]]:
         """Blocks until a new shell prompt is received.
 
         Note: Older versions of the runtime that do not support modes other
         than PROMPT always return None.
 
+        :param include_id: If True, return a triple where the last value is the
+            prompt's unique ID if available or None otherwise.
+
         :returns: A tuple of (PROMPT,None), (COMMAND_START,Str), or
             (COMMAND_END,Int) where the Str gives the command being run and the
             Int gives the exit status of the command."""
+        triple = await self._async_get()
+        if include_id:
+            return triple
+        return (triple[0], triple[1])
+
+    async def _async_get(self) -> typing.Tuple['PromptMonitor.Mode', typing.Any]:
         message = await self.__queue.get()
         if not iterm2.capabilities.supports_prompt_monitor_modes(
                 self.connection):
-            return (PromptMonitor.Mode.PROMPT, None)
+            return (PromptMonitor.Mode.PROMPT, None, None)
         which = message.WhichOneof('event')
         if which == 'prompt' or which is None:
-            return (PromptMonitor.Mode.PROMPT, None)
+            return (PromptMonitor.Mode.PROMPT, None, message.unique_prompt_id)
         if which == 'command_start':
             return (PromptMonitor.Mode.COMMAND_START,
-                    message.command_start.command)
+                    message.command_start.command, message.unique_prompt_id)
         if which == 'command_end':
-            return (PromptMonitor.Mode.COMMAND_END, message.command_end.status)
+            return (PromptMonitor.Mode.COMMAND_END, message.command_end.status,
+                message.unique_prompt_id)
         raise iterm2.rpc.RPCException(
             f'Unexpected oneof in prompt notification: {message}')
 

@@ -1031,6 +1031,7 @@ message PromptNotification {
     PromptNotificationCommandStart command_start = 3;
     PromptNotificationCommandEnd command_end = 4;
   }
+  optional string unique_prompt_id = 5;
 }
 
 message LocationChangeNotification {
@@ -1166,6 +1167,8 @@ message GetPromptResponse {
 
   // Exit status. Equivalent to shell's $? variable. Only set if state is FINISHED.
   optional uint32 exit_status = 9;
+
+  optional string unique_prompt_id = 10;
 }
 
 message GetProfilePropertyRequest {

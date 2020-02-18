@@ -236,7 +236,7 @@
 // FinalTerm stuff
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range;
-- (void)screenCommandDidExitWithCode:(int)code;
+- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark;
 - (BOOL)screenShouldPlacePromptAtFirstColumn;
 
 - (NSString *)screenProfileName;

@@ -9421,6 +9421,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
             notification.promptNotification.session = self.guid;
             notification.promptNotification.prompt.placeholder = @"";
+            if (mark) {
+                notification.promptNotification.uniquePromptId = mark.guid;
+            }
             [[iTermAPIHelper sharedInstance] postAPINotification:notification
                                                  toConnectionKey:key];
         }
@@ -10209,17 +10212,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
+    VT100ScreenMark *mark = nil;
     if (command) {
         NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
+            mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
             mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
             mark.outputStart = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,
                                                      _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow);
+            [[mark retain] autorelease];
             [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
                                                               onHost:[_screen remoteHostOnLine:range.end.y]
                                                          inDirectory:[_screen workingDirectoryOnLine:range.end.y]
@@ -10243,19 +10248,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
             notification.promptNotification.session = self.guid;
             notification.promptNotification.commandStart.command = command;
+            if (mark) {
+                notification.promptNotification.uniquePromptId = mark.guid;
+            }
             [[iTermAPIHelper sharedInstance] postAPINotification:notification
                                                  toConnectionKey:key];
         }
     }];
 }
 
-- (void)screenCommandDidExitWithCode:(int)code {
+- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
             ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
             notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
             notification.promptNotification.session = self.guid;
             notification.promptNotification.commandEnd.status = code;
+            if (maybeMark) {
+                notification.promptNotification.uniquePromptId = maybeMark.guid;
+            }
             [[iTermAPIHelper sharedInstance] postAPINotification:notification
                                                  toConnectionKey:key];
         }
@@ -11600,6 +11611,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         response.promptState = ITMGetPromptResponse_State_Editing;
     }
+    response.uniquePromptId = mark.guid;
     completion(response);
 }
 
