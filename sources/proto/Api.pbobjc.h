@@ -822,6 +822,21 @@ GPBEnumDescriptor *ITMGetPromptResponse_State_EnumDescriptor(void);
  **/
 BOOL ITMGetPromptResponse_State_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMListPromptsResponse_Status
+
+typedef GPB_ENUM(ITMListPromptsResponse_Status) {
+  ITMListPromptsResponse_Status_Ok = 0,
+  ITMListPromptsResponse_Status_SessionNotFound = 1,
+};
+
+GPBEnumDescriptor *ITMListPromptsResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMListPromptsResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMGetProfilePropertyResponse_Status
 
 typedef GPB_ENUM(ITMGetProfilePropertyResponse_Status) {
@@ -1186,7 +1201,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_FieldNumber_CloseResponse = 131,
   ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse = 132,
-  ITMServerOriginatedMessage_FieldNumber_ListPromptResponse = 133,
+  ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse = 133,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1226,7 +1241,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_Submessage_OneOfCase_CloseResponse = 131,
   ITMServerOriginatedMessage_Submessage_OneOfCase_InvokeFunctionResponse = 132,
-  ITMServerOriginatedMessage_Submessage_OneOfCase_ListPromptResponse = 133,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ListPromptsResponse = 133,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1311,7 +1326,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionResponse *invokeFunctionResponse;
 
-@property(nonatomic, readwrite, strong, null_resettable) ITMListPromptsResponse *listPromptResponse;
+@property(nonatomic, readwrite, strong, null_resettable) ITMListPromptsResponse *listPromptsResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -4273,16 +4288,24 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 #pragma mark - ITMListPromptsRequest
 
 typedef GPB_ENUM(ITMListPromptsRequest_FieldNumber) {
-  ITMListPromptsRequest_FieldNumber_FirstUniqueId = 1,
-  ITMListPromptsRequest_FieldNumber_LastUniqueId = 2,
+  ITMListPromptsRequest_FieldNumber_Session = 1,
+  ITMListPromptsRequest_FieldNumber_FirstUniqueId = 2,
+  ITMListPromptsRequest_FieldNumber_LastUniqueId = 3,
 };
 
 @interface ITMListPromptsRequest : GPBMessage
 
+/** Must name a specific session. "all" not allowed. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/** If unspecified, start at oldest. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *firstUniqueId;
 /** Test to see if @c firstUniqueId has been set. */
 @property(nonatomic, readwrite) BOOL hasFirstUniqueId;
 
+/** If unspecified, end at newest. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *lastUniqueId;
 /** Test to see if @c lastUniqueId has been set. */
 @property(nonatomic, readwrite) BOOL hasLastUniqueId;
@@ -4292,11 +4315,16 @@ typedef GPB_ENUM(ITMListPromptsRequest_FieldNumber) {
 #pragma mark - ITMListPromptsResponse
 
 typedef GPB_ENUM(ITMListPromptsResponse_FieldNumber) {
-  ITMListPromptsResponse_FieldNumber_UniquePromptIdArray = 1,
+  ITMListPromptsResponse_FieldNumber_Status = 1,
+  ITMListPromptsResponse_FieldNumber_UniquePromptIdArray = 2,
 };
 
 @interface ITMListPromptsResponse : GPBMessage
 
+@property(nonatomic, readwrite) ITMListPromptsResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+/** Chronological list of prompt IDs, suitable for GetPromptRequest.unique_prompt_id. */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *uniquePromptIdArray;
 /** The number of items in @c uniquePromptIdArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger uniquePromptIdArray_Count;

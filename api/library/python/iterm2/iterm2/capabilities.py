@@ -69,3 +69,16 @@ def check_supports_get_default_profile(connection):
             "This version of iTerm2 is too old to get the " +
             "default profile from a Python script. You should upgrade " +
             "to run this script.")
+
+def supports_prompt_id(connection):
+    """Can you list prompts or get a prompt by ID?"""
+    min_ver = (1, 5)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_prompt_id(connection):
+    """Die if you can't list prompts."""
+    if not supports_prompt_id(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to fetch a list of " +
+            "prompts or get a prompt by ID from a Python script. " +
+            "You should upgrade to run this script.")

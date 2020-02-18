@@ -45,7 +45,7 @@ from iterm2.profile import (
 
 from iterm2.prompt import (
     Prompt, PromptMonitor, PromptState, async_get_last_prompt,
-    async_get_prompt_by_id)
+    async_list_prompts, async_get_prompt_by_id)
 
 from iterm2.registration import RPC, TitleProviderRPC, StatusBarRPC, Reference
 

@@ -847,6 +847,8 @@ typedef enum {
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request
                     completion:(void (^)(ITMGetPromptResponse *response))completion;
+- (void)handleListPromptsRequest:(ITMListPromptsRequest *)request
+                      completion:(void (^)(ITMListPromptsResponse *response))completion;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey;
 

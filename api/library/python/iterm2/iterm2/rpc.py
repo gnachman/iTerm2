@@ -242,6 +242,28 @@ async def async_get_prompt(
     return await _async_call(connection, request)
 
 
+async def async_list_prompts(
+    connection, session, first, last):
+    """
+    Fetches a list of prompts in a session.
+
+    connection: A connected iterm2.Connection.
+    session: Session ID
+    first: First prompt ID or None
+    lats: Last prompt ID or none
+
+    Returns: iterm2.api_pb2.ServerOriginatedMessage
+    """
+    request = _alloc_request()
+    request.list_prompts_request.SetInParent()
+    request.list_prompts_request.session = session
+    if first:
+        request.list_prompts_request.first_unique_id = first
+    if last:
+        request.list_prompts_request.last_unique_id = last
+    return await _async_call(connection, request)
+
+
 async def async_start_transaction(connection):
     """
     Begins a transaction, locking iTerm2 until the transaction ends. Be careful

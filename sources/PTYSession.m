@@ -11569,6 +11569,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return response;
 }
 
+- (void)handleListPromptsRequest:(ITMListPromptsRequest *)request completion:(void (^)(ITMListPromptsResponse *))completion {
+    ITMListPromptsResponse *response = [[[ITMListPromptsResponse alloc] init] autorelease];
+    [_screen enumeratePromptsFrom:request.hasFirstUniqueId ? request.firstUniqueId : nil
+                               to:request.hasLastUniqueId ? request.lastUniqueId : nil
+                            block:^(VT100ScreenMark *mark) {
+        [response.uniquePromptIdArray addObject:mark.guid];
+    }];
+    completion(response);
+}
+
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request completion:(void (^)(ITMGetPromptResponse *response))completion {
     VT100ScreenMark *mark;
     if (request.hasUniquePromptId) {

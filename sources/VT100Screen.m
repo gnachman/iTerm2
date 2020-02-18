@@ -2457,6 +2457,36 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return nil;
 }
 
+- (void)enumeratePromptsFrom:(NSString *)maybeFirst
+                          to:(NSString *)maybeLast
+                       block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    BOOL foundFirst = (maybeFirst == nil);
+    while (objects) {
+        for (id obj in objects) {
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+            if (!screenMark) {
+                continue;
+            }
+            if (!screenMark.isPrompt) {
+                continue;
+            }
+            if (!foundFirst) {
+                if (![screenMark.guid isEqualToString:maybeFirst]) {
+                    continue;
+                }
+                foundFirst = YES;
+            }
+            block(screenMark);
+            if (maybeLast && [screenMark.guid isEqualToString:maybeLast]) {
+                return;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+}
+
 - (VT100ScreenMark *)lastMark {
     return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }

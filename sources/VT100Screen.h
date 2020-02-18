@@ -190,7 +190,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
-
+- (void)enumeratePromptsFrom:(NSString *)maybeFirst
+                          to:(NSString *)maybeLast
+                       block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block;
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
 - (NSArray *)lastMarksOrNotes;
 - (NSArray *)firstMarksOrNotes;

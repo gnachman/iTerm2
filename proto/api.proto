@@ -94,7 +94,7 @@ message ServerOriginatedMessage {
     SetBroadcastDomainsResponse set_broadcast_domains_response = 130;
     CloseResponse close_response = 131;
     InvokeFunctionResponse invoke_function_response = 132;
-    ListPromptsResponse list_prompt_response = 133;
+    ListPromptsResponse list_prompts_response = 133;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
@@ -1177,12 +1177,25 @@ message GetPromptResponse {
 }
 
 message ListPromptsRequest {
-  optional string first_unique_id = 1;
-  optional string last_unique_id = 2;
+  // Must name a specific session. "all" not allowed.
+  optional string session = 1;
+
+  // If unspecified, start at oldest.
+  optional string first_unique_id = 2;
+  // If unspecified, end at newest.
+  optional string last_unique_id = 3;
 }
 
 message ListPromptsResponse {
-  repeated string unique_prompt_id = 1;
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  // Chronological list of prompt IDs, suitable for GetPromptRequest.unique_prompt_id.
+  repeated string unique_prompt_id = 2;
 }
 
 message GetProfilePropertyRequest {

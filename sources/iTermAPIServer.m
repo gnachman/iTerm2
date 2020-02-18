@@ -521,6 +521,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleListPromptsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerListPrompts:request.listPromptsRequest handler:^(ITMListPromptsResponse *listPromptsResponse) {
+        assert(!handled);
+        handled = YES;
+        response.listPromptsResponse = listPromptsResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 - (void)handleNotificationRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
@@ -978,6 +991,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_GetPromptRequest:
             [self handleGetPromptRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_ListPromptsRequest:
+            [self handleListPromptsRequest:request connection:webSocketConnection];
             break;
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest:

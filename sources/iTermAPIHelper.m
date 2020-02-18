@@ -1278,6 +1278,18 @@ static iTermAPIHelper *sAPIHelperInstance;
     }
 }
 
+- (void)apiServerListPrompts:(ITMListPromptsRequest *)request
+                     handler:(void (^)(ITMListPromptsResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
+    if (!session) {
+        ITMListPromptsResponse *response = [[ITMListPromptsResponse alloc] init];
+        response.status = ITMListPromptsResponse_Status_SessionNotFound;
+        handler(response);
+    } else {
+        [session handleListPromptsRequest:request completion:handler];
+    }
+}
+
 - (BOOL)rpcNotificationRequestIsValid:(ITMNotificationRequest *)request
                         connectionKey:(NSString *)connectionKey {
     if (request.argumentsOneOfCase != ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest) {

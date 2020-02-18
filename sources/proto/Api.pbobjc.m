@@ -737,7 +737,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic setBroadcastDomainsResponse;
 @dynamic closeResponse;
 @dynamic invokeFunctionResponse;
-@dynamic listPromptResponse;
+@dynamic listPromptsResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -776,7 +776,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
   ITMCloseResponse *closeResponse;
   ITMInvokeFunctionResponse *invokeFunctionResponse;
-  ITMListPromptsResponse *listPromptResponse;
+  ITMListPromptsResponse *listPromptsResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -1103,11 +1103,11 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
-        .name = "listPromptResponse",
+        .name = "listPromptsResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMListPromptsResponse),
-        .number = ITMServerOriginatedMessage_FieldNumber_ListPromptResponse,
+        .number = ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse,
         .hasIndex = -1,
-        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listPromptResponse),
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listPromptsResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -10040,11 +10040,13 @@ BOOL ITMGetPromptResponse_State_IsValidValue(int32_t value__) {
 
 @implementation ITMListPromptsRequest
 
+@dynamic hasSession, session;
 @dynamic hasFirstUniqueId, firstUniqueId;
 @dynamic hasLastUniqueId, lastUniqueId;
 
 typedef struct ITMListPromptsRequest__storage_ {
   uint32_t _has_storage_[1];
+  NSString *session;
   NSString *firstUniqueId;
   NSString *lastUniqueId;
 } ITMListPromptsRequest__storage_;
@@ -10056,10 +10058,19 @@ typedef struct ITMListPromptsRequest__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListPromptsRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
         .name = "firstUniqueId",
         .dataTypeSpecific.className = NULL,
         .number = ITMListPromptsRequest_FieldNumber_FirstUniqueId,
-        .hasIndex = 0,
+        .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, firstUniqueId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
@@ -10068,7 +10079,7 @@ typedef struct ITMListPromptsRequest__storage_ {
         .name = "lastUniqueId",
         .dataTypeSpecific.className = NULL,
         .number = ITMListPromptsRequest_FieldNumber_LastUniqueId,
-        .hasIndex = 1,
+        .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, lastUniqueId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
@@ -10094,10 +10105,12 @@ typedef struct ITMListPromptsRequest__storage_ {
 
 @implementation ITMListPromptsResponse
 
+@dynamic hasStatus, status;
 @dynamic uniquePromptIdArray, uniquePromptIdArray_Count;
 
 typedef struct ITMListPromptsResponse__storage_ {
   uint32_t _has_storage_[1];
+  ITMListPromptsResponse_Status status;
   NSMutableArray *uniquePromptIdArray;
 } ITMListPromptsResponse__storage_;
 
@@ -10107,6 +10120,15 @@ typedef struct ITMListPromptsResponse__storage_ {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMListPromptsResponse_Status_EnumDescriptor,
+        .number = ITMListPromptsResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMListPromptsResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
       {
         .name = "uniquePromptIdArray",
         .dataTypeSpecific.className = NULL,
@@ -10132,6 +10154,40 @@ typedef struct ITMListPromptsResponse__storage_ {
 }
 
 @end
+
+#pragma mark - Enum ITMListPromptsResponse_Status
+
+GPBEnumDescriptor *ITMListPromptsResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000";
+    static const int32_t values[] = {
+        ITMListPromptsResponse_Status_Ok,
+        ITMListPromptsResponse_Status_SessionNotFound,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMListPromptsResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMListPromptsResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMListPromptsResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMListPromptsResponse_Status_Ok:
+    case ITMListPromptsResponse_Status_SessionNotFound:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMGetProfilePropertyRequest
 

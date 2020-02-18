@@ -115,6 +115,7 @@ async def async_get_prompt_by_id(
 
     :throws: :class:`RPCException` if something goes wrong.
     """
+    iterm2.capabilities.check_supports_prompt_id(connection)
     response = await iterm2.rpc.async_get_prompt(
         connection, session_id, prompt_unique_id)
     status = response.get_prompt_response.status
@@ -124,6 +125,35 @@ async def async_get_prompt_by_id(
     if status == iterm2.api_pb2.GetPromptResponse.Status.Value(
             "PROMPT_UNAVAILABLE"):
         return None
+    raise iterm2.rpc.RPCException(
+        iterm2.api_pb2.GetPromptResponse.Status.Name(status))
+
+async def async_list_prompts(
+    connection: iterm2.connection.Connection,
+    session_id: str,
+    first: typing.Optional[str] = None,
+    last: typing.Optional[str] = None) -> typing.Optional[Prompt]:
+    """
+    Fetches a list of prompt unique IDs in a session.
+
+    :param connection: The connection to iTerm2.
+    :param session_id: The Session ID the prompt belongs to.
+    :param first: If not None, list no prompts before the one with
+         this unique ID.
+    :param last: If not None, list no prompts after the one with
+         this unique ID.
+    :returns: List of prompt IDs.
+
+    :throws: :class:`RPCException` if something goes wrong.
+    """
+    iterm2.capabilities.check_supports_prompt_id(connection)
+    response = await iterm2.rpc.async_list_prompts(
+        connection, session_id, first, last)
+    status = response.list_prompts_response.status
+    # pylint: disable=no-member
+    if status == iterm2.api_pb2.ListPromptsResponse.Status.Value("OK"):
+        return response.list_prompts_response.unique_prompt_id
+
     raise iterm2.rpc.RPCException(
         iterm2.api_pb2.GetPromptResponse.Status.Name(status))
 
