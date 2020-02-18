@@ -9,6 +9,13 @@ import iterm2.connection
 import iterm2.notifications
 import iterm2.rpc
 
+class PromptState(enum.Enum):
+    """Describes the states that a command prompt can take."""
+    UNKNOWN = -1  #: This version of iTerm2 does not report prompt state (you should upgrade)
+    EDITING = 0  #: User is editing the command at the prompt
+    RUNNING = 1  #: The last entered command is still executing, and has not finished yet.
+    FINISHED = 3  #: The last entered command has finished but there hasn't been a new prompt yet (rare).
+
 
 class Prompt:
     """Describes a command prompt.
@@ -51,6 +58,12 @@ class Prompt:
         """Returns the command entered at the prompt."""
         return self.__proto.command
 
+    @property
+    def state(self) -> PromptState:
+        """Returns the state of this command prompt."""
+        if not self.__proto.HasField("prompt_state"):
+            return PromptState.UNKNOWN
+        return PromptState(self.__proto.prompt_state)
 
 async def async_get_last_prompt(
         connection: iterm2.connection.Connection,

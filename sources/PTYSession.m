@@ -11592,6 +11592,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
     response.workingDirectory = [_screen workingDirectoryOnLine:mark.promptRange.end.y] ?: self.lastDirectory;
+    if (mark.hasCode) {
+        response.promptState = ITMGetPromptResponse_State_Finished;
+        response.exitStatus = mark.code;
+    } else if (mark.outputStart.x >= 0) {
+        response.promptState = ITMGetPromptResponse_State_Running;
+    } else {
+        response.promptState = ITMGetPromptResponse_State_Editing;
+    }
     completion(response);
 }
 

@@ -799,6 +799,27 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMGetPromptResponse_State
+
+typedef GPB_ENUM(ITMGetPromptResponse_State) {
+  /** Command hasn't been started yet */
+  ITMGetPromptResponse_State_Editing = 0,
+
+  /** Command is currently running */
+  ITMGetPromptResponse_State_Running = 1,
+
+  /** Command has finished. */
+  ITMGetPromptResponse_State_Finished = 2,
+};
+
+GPBEnumDescriptor *ITMGetPromptResponse_State_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMGetPromptResponse_State_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMGetProfilePropertyResponse_Status
 
 typedef GPB_ENUM(ITMGetProfilePropertyResponse_Status) {
@@ -4182,6 +4203,8 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
   ITMGetPromptResponse_FieldNumber_OutputRange = 4,
   ITMGetPromptResponse_FieldNumber_WorkingDirectory = 5,
   ITMGetPromptResponse_FieldNumber_Command = 6,
+  ITMGetPromptResponse_FieldNumber_PromptState = 7,
+  ITMGetPromptResponse_FieldNumber_ExitStatus = 9,
 };
 
 /**
@@ -4212,6 +4235,13 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 /** Test to see if @c command has been set. */
 @property(nonatomic, readwrite) BOOL hasCommand;
 
+@property(nonatomic, readwrite) ITMGetPromptResponse_State promptState;
+
+@property(nonatomic, readwrite) BOOL hasPromptState;
+/** Exit status. Equivalent to shell's $? variable. Only set if state is FINISHED. */
+@property(nonatomic, readwrite) uint32_t exitStatus;
+
+@property(nonatomic, readwrite) BOOL hasExitStatus;
 @end
 
 #pragma mark - ITMGetProfilePropertyRequest

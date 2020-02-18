@@ -158,10 +158,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // base64 value to copy to pasteboard, being built up bit by bit.
     NSMutableString *_copyString;
 
-    // Valid while at the command prompt only. GIves the range of the current prompt. Meaningful
-    // only if the end is not equal to the start.
-    VT100GridAbsCoordRange _currentPromptRange;
-
     // For REP
     screen_char_t _lastCharacter;
     BOOL _lastCharacterIsDoubleWidth;
@@ -1682,6 +1678,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                              inContext:context];
 
     [self popScrollbackLines:linesPushed];
+}
+
+- (VT100GridAbsCoord)commandStartCoord {
+    return VT100GridAbsCoordMake(commandStartX_, commandStartY_);
 }
 
 #pragma mark - PTYTextViewDataSource

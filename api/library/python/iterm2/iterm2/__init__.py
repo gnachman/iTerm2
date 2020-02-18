@@ -43,7 +43,8 @@ from iterm2.profile import (
     CharacterEncoding, OptionKeySends, InitialWorkingDirectory, IconMode,
     TitleComponents)
 
-from iterm2.prompt import Prompt, PromptMonitor, async_get_last_prompt
+from iterm2.prompt import (
+    Prompt, PromptMonitor, PromptState, async_get_last_prompt)
 
 from iterm2.registration import RPC, TitleProviderRPC, StatusBarRPC, Reference
 

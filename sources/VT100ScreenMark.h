@@ -29,6 +29,7 @@
 
 // Return code of command on the line for this mark.
 @property(nonatomic, assign) int code;
+@property(nonatomic, readonly) BOOL hasCode;
 
 // Command for this mark.
 @property(nonatomic, copy) NSString *command;

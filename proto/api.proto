@@ -1156,6 +1156,16 @@ message GetPromptResponse {
 
   optional string working_directory = 5;
   optional string command = 6;
+
+  enum State {
+    EDITING = 0;  // Command hasn't been started yet
+    RUNNING = 1;  // Command is currently running
+    FINISHED = 2;  // Command has finished.
+  }
+  optional State prompt_state = 7;
+
+  // Exit status. Equivalent to shell's $? variable. Only set if state is FINISHED.
+  optional uint32 exit_status = 9;
 }
 
 message GetProfilePropertyRequest {

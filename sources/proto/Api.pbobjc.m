@@ -9796,10 +9796,14 @@ typedef struct ITMGetPromptRequest__storage_ {
 @dynamic hasOutputRange, outputRange;
 @dynamic hasWorkingDirectory, workingDirectory;
 @dynamic hasCommand, command;
+@dynamic hasPromptState, promptState;
+@dynamic hasExitStatus, exitStatus;
 
 typedef struct ITMGetPromptResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMGetPromptResponse_Status status;
+  ITMGetPromptResponse_State promptState;
+  uint32_t exitStatus;
   ITMCoordRange *promptRange;
   ITMCoordRange *commandRange;
   ITMCoordRange *outputRange;
@@ -9867,6 +9871,24 @@ typedef struct ITMGetPromptResponse__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
+      {
+        .name = "promptState",
+        .dataTypeSpecific.enumDescFunc = ITMGetPromptResponse_State_EnumDescriptor,
+        .number = ITMGetPromptResponse_FieldNumber_PromptState,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, promptState),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "exitStatus",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPromptResponse_FieldNumber_ExitStatus,
+        .hasIndex = 7,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, exitStatus),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMGetPromptResponse class]
@@ -9917,6 +9939,42 @@ BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value__) {
     case ITMGetPromptResponse_Status_SessionNotFound:
     case ITMGetPromptResponse_Status_RequestMalformed:
     case ITMGetPromptResponse_Status_PromptUnavailable:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - Enum ITMGetPromptResponse_State
+
+GPBEnumDescriptor *ITMGetPromptResponse_State_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Editing\000Running\000Finished\000";
+    static const int32_t values[] = {
+        ITMGetPromptResponse_State_Editing,
+        ITMGetPromptResponse_State_Running,
+        ITMGetPromptResponse_State_Finished,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMGetPromptResponse_State)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMGetPromptResponse_State_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMGetPromptResponse_State_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMGetPromptResponse_State_Editing:
+    case ITMGetPromptResponse_State_Running:
+    case ITMGetPromptResponse_State_Finished:
       return YES;
     default:
       return NO;

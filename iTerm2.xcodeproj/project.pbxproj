@@ -5134,6 +5134,22 @@
 		A63E230D2143953700609D6A /* graphic_grunt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_grunt@2x.png"; path = "hyper-tab-icons-plus/png/graphic_grunt@2x.png"; sourceTree = "<group>"; };
 		A63E230E2143953700609D6A /* graphic_go@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_go@2x.png"; path = "hyper-tab-icons-plus/png/graphic_go@2x.png"; sourceTree = "<group>"; };
 		A63F2A3A23FA5951008DDEA4 /* it2run */ = {isa = PBXFileReference; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
+		A63F2A3B23FB8191008DDEA4 /* keyboard.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = keyboard.py; sourceTree = "<group>"; };
+		A63F2A3C23FB8191008DDEA4 /* arrangement.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = arrangement.py; sourceTree = "<group>"; };
+		A63F2A3D23FB8191008DDEA4 /* mainmenu.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = mainmenu.py; sourceTree = "<group>"; };
+		A63F2A3E23FB8192008DDEA4 /* color.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = color.py; sourceTree = "<group>"; };
+		A63F2A3F23FB8192008DDEA4 /* prompt.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = prompt.py; sourceTree = "<group>"; };
+		A63F2A4023FB8192008DDEA4 /* capabilities.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = capabilities.py; sourceTree = "<group>"; };
+		A63F2A4123FB8192008DDEA4 /* colorpresets.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = colorpresets.py; sourceTree = "<group>"; };
+		A63F2A4223FB8192008DDEA4 /* selection.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = selection.py; sourceTree = "<group>"; };
+		A63F2A4323FB8193008DDEA4 /* screen.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = screen.py; sourceTree = "<group>"; };
+		A63F2A4423FB8193008DDEA4 /* focus.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = focus.py; sourceTree = "<group>"; };
+		A63F2A4523FB8193008DDEA4 /* alert.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = alert.py; sourceTree = "<group>"; };
+		A63F2A4623FB8193008DDEA4 /* registration.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = registration.py; sourceTree = "<group>"; };
+		A63F2A4723FB8194008DDEA4 /* variables.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = variables.py; sourceTree = "<group>"; };
+		A63F2A4823FB8194008DDEA4 /* customcontrol.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = customcontrol.py; sourceTree = "<group>"; };
+		A63F2A4923FB8194008DDEA4 /* lifecycle.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = lifecycle.py; sourceTree = "<group>"; };
+		A63F2A4A23FB8194008DDEA4 /* broadcast.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = broadcast.py; sourceTree = "<group>"; };
 		A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionPicker.h; sourceTree = "<group>"; };
 		A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionPicker.m; sourceTree = "<group>"; };
 		A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StopStatusIcon.png; path = images/StopStatusIcon.png; sourceTree = "<group>"; };
@@ -7761,23 +7777,39 @@
 		530AB86B20AE85DF00D2AA08 /* iterm2 */ = {
 			isa = PBXGroup;
 			children = (
-				A68A4C8A2128ED1200424F8A /* preferences.py */,
-				A68A4C8B2128ED1300424F8A /* statusbar.py */,
-				A68A4C892128ED1200424F8A /* tmux.py */,
-				530AB86C20AE85DF00D2AA08 /* window.py */,
-				530AB86D20AE85DF00D2AA08 /* _version.py */,
-				530AB86E20AE85DF00D2AA08 /* util.py */,
-				530AB86F20AE85DF00D2AA08 /* transaction.py */,
-				530AB87020AE85DF00D2AA08 /* profile.py */,
-				530AB87120AE85DF00D2AA08 /* session.py */,
 				530AB87220AE85DF00D2AA08 /* __init__.py */,
+				530AB86D20AE85DF00D2AA08 /* _version.py */,
+				A63F2A4523FB8193008DDEA4 /* alert.py */,
 				530AB87320AE85DF00D2AA08 /* api_pb2.py */,
-				530AB88420AE85DF00D2AA08 /* connection.py */,
-				530AB88520AE85DF00D2AA08 /* rpc.py */,
 				530AB88620AE85DF00D2AA08 /* app.py */,
+				A63F2A3C23FB8191008DDEA4 /* arrangement.py */,
+				A63F2A4A23FB8194008DDEA4 /* broadcast.py */,
+				A63F2A4023FB8192008DDEA4 /* capabilities.py */,
+				A63F2A3E23FB8192008DDEA4 /* color.py */,
+				A63F2A4123FB8192008DDEA4 /* colorpresets.py */,
+				530AB88420AE85DF00D2AA08 /* connection.py */,
+				A63F2A4823FB8194008DDEA4 /* customcontrol.py */,
+				A63F2A4423FB8193008DDEA4 /* focus.py */,
+				A63F2A3B23FB8191008DDEA4 /* keyboard.py */,
+				A63F2A4923FB8194008DDEA4 /* lifecycle.py */,
+				A63F2A3D23FB8191008DDEA4 /* mainmenu.py */,
 				530AB88720AE85DF00D2AA08 /* notifications.py */,
+				A68A4C8A2128ED1200424F8A /* preferences.py */,
+				530AB87020AE85DF00D2AA08 /* profile.py */,
+				A63F2A3F23FB8192008DDEA4 /* prompt.py */,
+				A63F2A4623FB8193008DDEA4 /* registration.py */,
+				530AB88520AE85DF00D2AA08 /* rpc.py */,
+				A63F2A4323FB8193008DDEA4 /* screen.py */,
+				A63F2A4223FB8192008DDEA4 /* selection.py */,
+				530AB87120AE85DF00D2AA08 /* session.py */,
+				A68A4C8B2128ED1300424F8A /* statusbar.py */,
 				530AB88820AE85DF00D2AA08 /* tab.py */,
+				A68A4C892128ED1200424F8A /* tmux.py */,
 				530AB88920AE85DF00D2AA08 /* tool.py */,
+				530AB86F20AE85DF00D2AA08 /* transaction.py */,
+				530AB86E20AE85DF00D2AA08 /* util.py */,
+				A63F2A4723FB8194008DDEA4 /* variables.py */,
+				530AB86C20AE85DF00D2AA08 /* window.py */,
 			);
 			path = iterm2;
 			sourceTree = "<group>";

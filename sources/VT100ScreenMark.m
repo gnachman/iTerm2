@@ -17,6 +17,7 @@ static NSString *const kMarkGuidKey = @"Guid";
 static NSString *const kMarkCapturedOutputKey = @"Captured Output";
 static NSString *const kMarkCommandKey = @"Command";
 static NSString *const kMarkCodeKey = @"Code";
+static NSString *const kMarkHasCode = @"Has Code";
 static NSString *const kMarkStartDateKey = @"Start Date";
 static NSString *const kMarkEndDateKey = @"End Date";
 static NSString *const kMarkSessionGuidKey = @"Session Guid";
@@ -58,6 +59,11 @@ static NSString *const kMarkOutputStart = @"Output Start";
     self = [super initWithDictionary:dict];
     if (self) {
         _code = [dict[kMarkCodeKey] intValue];
+        _hasCode = [dict[kMarkHasCode] boolValue];
+        if (_code && !_hasCode) {
+            // Not so great way of migrating old marks. Misses those with a value of 0 :(
+            _hasCode = YES;
+        }
         _isPrompt = [dict[kScreenMarkIsPrompt] boolValue];
         if ([dict[kMarkGuidKey] isKindOfClass:[NSString class]]) {
             _guid = [dict[kMarkGuidKey] copy];
@@ -132,6 +138,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     dict[kScreenMarkIsPrompt] = @(_isPrompt);
     dict[kMarkGuidKey] = self.guid;
     dict[kMarkCapturedOutputKey] = [self capturedOutputDictionaries];
+    dict[kMarkHasCode] = @(_hasCode);
     dict[kMarkCodeKey] = @(_code);
     dict[kMarkCommandKey] = _command ?: [NSNull null];
     dict[kMarkStartDateKey] = @([self.startDate timeIntervalSinceReferenceDate]);
@@ -169,6 +176,11 @@ static NSString *const kMarkOutputStart = @"Output Start";
     [_command autorelease];
     _command = [command copy];
     self.startDate = [NSDate date];
+}
+
+- (void)setCode:(int)code {
+    _code = code;
+    _hasCode = YES;
 }
 
 @end
