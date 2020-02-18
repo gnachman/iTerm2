@@ -4758,7 +4758,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-#if BETA
     if (@available(macOS 10.14, *)) {
         if (@available(macOS 10.16, *)) {
             // TODO
@@ -4767,7 +4766,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [view setHidden:YES];
         }
     }
-#endif
     
     [self updateVariables];
     return myWindow;
