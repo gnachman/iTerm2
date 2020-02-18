@@ -225,7 +225,7 @@
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
 
 // Add a session to the tab view.
-- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
+- (PTYTab *)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
 
 // Resize window to be just large enough to fit the largest tab without
 // changing session sizes.

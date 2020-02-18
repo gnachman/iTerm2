@@ -126,6 +126,8 @@
 #define KEY_WINDOW_TYPE            @"Window Type"
 #define KEY_USE_CUSTOM_WINDOW_TITLE           @"Use Custom Window Title"
 #define KEY_CUSTOM_WINDOW_TITLE               @"Custom Window Title"
+#define KEY_USE_CUSTOM_TAB_TITLE   @"Use Custom Tab Title"
+#define KEY_CUSTOM_TAB_TITLE       @"Custom Tab Title"
 #define KEY_SCREEN                 @"Screen"
 #define KEY_SPACE                  @"Space"  // integer, iTermProfileSpaceSetting
 #define KEY_NORMAL_FONT            @"Normal Font"

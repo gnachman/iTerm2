@@ -177,7 +177,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_NON_ASCII_FONT, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION,
                              KEY_SHORTCUT, KEY_ICON_PATH, KEY_CUSTOM_COMMAND, KEY_COMMAND_LINE,
                              KEY_INITIAL_TEXT, KEY_CUSTOM_DIRECTORY, KEY_WORKING_DIRECTORY,
-                             KEY_CUSTOM_WINDOW_TITLE, KEY_HOTKEY_CHARACTERS, KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS,
+                             KEY_CUSTOM_WINDOW_TITLE, KEY_CUSTOM_TAB_TITLE,
+                             KEY_HOTKEY_CHARACTERS, KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS,
                              KEY_LOGDIR, KEY_TERMINAL_TYPE, KEY_TITLE_FUNC, KEY_GUID,
                              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
@@ -227,7 +228,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_HOTKEY_FLOAT, KEY_HOTKEY_DOCK_CLICK_ACTION,
                              KEY_HOTKEY_MODIFIER_ACTIVATION, KEY_HOTKEY_ACTIVATE_WITH_MODIFIER,
                              KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB, KEY_SCREEN, KEY_SET_LOCALE_VARS, KEY_SPACE,
-                             KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE,
+                             KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
                              KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
                              KEY_PREVENT_APS ];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS ];
@@ -369,6 +370,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_WINDOW_TYPE: @(WINDOW_TYPE_NORMAL),
                   KEY_USE_CUSTOM_WINDOW_TITLE: @NO,
                   KEY_CUSTOM_WINDOW_TITLE: @"",
+                  KEY_USE_CUSTOM_TAB_TITLE: @NO,
+                  KEY_CUSTOM_TAB_TITLE: @"",
                   KEY_SCREEN: @-1,
                   KEY_SPACE: @(iTermProfileOpenInCurrentSpace),
                   KEY_DISABLE_WINDOW_RESIZING: @NO,

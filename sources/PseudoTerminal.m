@@ -9461,26 +9461,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 // Add a session to the tab view.
-- (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
-{
+- (PTYTab *)insertSession:(PTYSession *)aSession atIndex:(int)anIndex {
     PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
 
     if (aSession == nil) {
-        return;
+        return nil;
     }
 
-    if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
-        // create a new tab
-        PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession
-                                          parentWindow:self];
-        [aSession setIgnoreResizeNotifications:YES];
-        if ([self numberOfTabs] == 0) {
-            [aTab setReportIdealSizeAsCurrent:YES];
-        }
-        [self insertTab:aTab atIndex:anIndex];
-        [aTab setReportIdealSizeAsCurrent:NO];
-        [aTab release];
+    if ([[self allSessions] indexOfObject:aSession] != NSNotFound) {
+        return [self tabForSession:aSession];
     }
+    // create a new tab
+    PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession
+                                      parentWindow:self];
+    [aSession setIgnoreResizeNotifications:YES];
+    if ([self numberOfTabs] == 0) {
+        [aTab setReportIdealSizeAsCurrent:YES];
+    }
+    [self insertTab:aTab atIndex:anIndex];
+    [aTab setReportIdealSizeAsCurrent:NO];
+    [aTab release];
+    return aTab;
 }
 
 - (NSString *)undecoratedWindowTitle {
@@ -10311,21 +10312,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (void)addSessionInNewTab:(PTYSession *)object {
-    if (![iTermSessionLauncher profileIsWellFormed:object.profile]) {
+- (void)addSessionInNewTab:(PTYSession *)session {
+    if (![iTermSessionLauncher profileIsWellFormed:session.profile]) {
         return;
     }
-    PtyLog(@"PseudoTerminal: -addSessionInNewTab: %p", object);
+    PtyLog(@"PseudoTerminal: -addSessionInNewTab: %p", session);
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
-    [self setupSession:object withSize:nil];
+    [self setupSession:session withSize:nil];
     tabViewItemsBeingAdded--;
-    if ([object screen]) {  // screen initialized ok
+    if ([session screen]) {  // screen initialized ok
+        PTYTab *tab = nil;
         if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
-            [self insertSession:object atIndex:[_contentView.tabView numberOfTabViewItems]];
+            tab = [self insertSession:session atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
-            [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
+            tab = [self insertSession:session atIndex:[self indexOfTab:[self currentTab]] + 1];
+        }
+        if (!tab.tmuxTab &&
+            [iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_TAB_TITLE inProfile:session.profile]) {
+            [tab setTitleOverride:[iTermProfilePreferences stringForKey:KEY_CUSTOM_TAB_TITLE
+                                                               inProfile:session.profile]];
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
