@@ -459,6 +459,14 @@ class LocalWriteOnlyProfile:
         :param value: A bool"""
         return self._simple_set("Sync Title", value)
 
+    def set_use_built_in_powerline_glyphs(self, value: bool):
+        """
+        Sets whether powerline glyphs should be drawn by iTerm2 or left to the
+        font.
+
+        :param value: A bool"""
+        return self._simple_set("Draw Powerline Glyphs", value)
+
     def set_disable_window_resizing(self, value: bool):
         """
         Sets whether the terminal can resize the window with an escape
@@ -1362,6 +1370,14 @@ class WriteOnlyProfile:
 
         :param value: A bool"""
         return await self._async_simple_set("Sync Title", value)
+
+    async def async_set_use_built_in_powerline_glyphs(self, value: bool):
+      """
+      Sets whether powerline glyphs should be drawn by iTerm2 or left to the
+      font.
+
+      :param value: A bool"""
+      return await self._async_simple_set("Draw Powerline Glyphs", value)
 
     async def async_set_disable_window_resizing(self, value: bool):
         """
@@ -2363,6 +2379,15 @@ class Profile(WriteOnlyProfile):
 
         :returns: A bool"""
         return self._simple_get("Sync Title")
+
+    @property
+    def use_built_in_powerline_glyphs(self):
+        """
+        Returns whether iTerm2 will draw powerline glyphs, or if they
+        will be left to the font.
+
+        :returns: A bool"""
+        return bool(self._simple_get("Draw Powerline Glyphs"))
 
     @property
     def disable_window_resizing(self):
