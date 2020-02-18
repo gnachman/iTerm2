@@ -48,6 +48,7 @@ message ClientOriginatedMessage {
     SetBroadcastDomainsRequest set_broadcast_domains_request = 130;
     CloseRequest close_request = 131;
     InvokeFunctionRequest invoke_function_request = 132;
+    ListPromptsRequest list_prompts_request = 133;
   }
 }
 
@@ -93,6 +94,7 @@ message ServerOriginatedMessage {
     SetBroadcastDomainsResponse set_broadcast_domains_response = 130;
     CloseResponse close_response = 131;
     InvokeFunctionResponse invoke_function_response = 132;
+    ListPromptsResponse list_prompt_response = 133;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
@@ -1138,6 +1140,9 @@ message GetBufferResponse {
 message GetPromptRequest {
   // See documentation on session IDs. "all" not accepted.
   optional string session = 1;
+
+  // If given return this ID instead of the last one.
+  optional string unique_prompt_id = 2;
 }
 
 // Responds with metadata about the current shell prompt, if possible.
@@ -1169,6 +1174,15 @@ message GetPromptResponse {
   optional uint32 exit_status = 9;
 
   optional string unique_prompt_id = 10;
+}
+
+message ListPromptsRequest {
+  optional string first_unique_id = 1;
+  optional string last_unique_id = 2;
+}
+
+message ListPromptsResponse {
+  repeated string unique_prompt_id = 1;
 }
 
 message GetProfilePropertyRequest {

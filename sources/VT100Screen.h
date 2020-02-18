@@ -184,6 +184,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (VT100ScreenMark *)lastMark;
 - (VT100ScreenMark *)lastPromptMark;
 - (VT100RemoteHost *)lastRemoteHost;
+- (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid;
 - (BOOL)markIsValid:(iTermMark *)mark;
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine

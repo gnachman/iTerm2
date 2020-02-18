@@ -100,6 +100,32 @@ async def async_get_last_prompt(
     raise iterm2.rpc.RPCException(
         iterm2.api_pb2.GetPromptResponse.Status.Name(status))
 
+async def async_get_prompt_by_id(
+        connection: iterm2.connection.Connection,
+        session_id: str,
+        prompt_unique_id: str) -> typing.Optional[Prompt]:
+    """
+    Fetches a Prompt by its unique ID.
+
+    :param connection: The connection to iTerm2.
+    :param session_id: The Session ID the prompt belongs to.
+    :param prompt_unique_id: The unique ID of the prompt.
+
+    :returns: The prompt if one exists or else `None`.
+
+    :throws: :class:`RPCException` if something goes wrong.
+    """
+    response = await iterm2.rpc.async_get_prompt(
+        connection, session_id, prompt_unique_id)
+    status = response.get_prompt_response.status
+    # pylint: disable=no-member
+    if status == iterm2.api_pb2.GetPromptResponse.Status.Value("OK"):
+        return Prompt(response.get_prompt_response)
+    if status == iterm2.api_pb2.GetPromptResponse.Status.Value(
+            "PROMPT_UNAVAILABLE"):
+        return None
+    raise iterm2.rpc.RPCException(
+        iterm2.api_pb2.GetPromptResponse.Status.Name(status))
 
 class PromptMonitor:
     """

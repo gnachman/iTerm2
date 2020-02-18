@@ -2436,6 +2436,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
+- (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid {
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+            if (!screenMark) {
+                continue;
+            }
+            if (!screenMark.isPrompt) {
+                continue;
+            }
+            if ([screenMark.guid isEqualToString:guid]) {
+                return screenMark;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
+}
+
 - (VT100ScreenMark *)lastMark {
     return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }

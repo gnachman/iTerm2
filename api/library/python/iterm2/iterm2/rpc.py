@@ -222,12 +222,14 @@ async def async_get_screen_contents(
     return await _async_call(connection, request)
 
 
-async def async_get_prompt(connection, session=None):
+async def async_get_prompt(
+    connection, session=None, prompt_id=None):
     """
     Gets info about the last prompt in a session
 
     connection: A connected iterm2.Connection.
     session: Session ID
+    prompt_id: Optional prompt ID
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
@@ -235,6 +237,8 @@ async def async_get_prompt(connection, session=None):
     request.get_prompt_request.SetInParent()
     if session is not None:
         request.get_prompt_request.session = session
+    if prompt_id:
+        request.get_prompt_request.unique_prompt_id = prompt_id
     return await _async_call(connection, request)
 
 

@@ -11570,7 +11570,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request completion:(void (^)(ITMGetPromptResponse *response))completion {
-    VT100ScreenMark *mark = [_screen lastPromptMark];
+    VT100ScreenMark *mark;
+    if (request.hasUniquePromptId) {
+        mark = [_screen promptMarkWithGUID:request.uniquePromptId];
+    } else {
+        mark = [_screen lastPromptMark];
+    }
     ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
     if (!mark) {
         response.status = ITMGetPromptResponse_Status_PromptUnavailable;
