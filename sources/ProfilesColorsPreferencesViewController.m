@@ -489,17 +489,21 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)menu:(NSMenu *)menu willHighlightItem:(nullable NSMenuItem *)item {
     if (item.action == @selector(loadColorPreset:)) {
         [self removeTimer];
-        __weak __typeof(self) weakSelf = self;
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.4 repeats:NO block:^(NSTimer * _Nonnull timer) {
-            [weakSelf loadColorPresetWithName:item.title];
-            [weakSelf removeTimer];
-        }];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.4 target:self selector:@selector(previewColors:) userInfo:item repeats:NO];
         [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     } else {
+        [self removeTimer];
         [self restoreColors];
     }
 }
 
+- (void)previewColors:(NSTimer *)timer {
+    NSMenuItem *item = timer.userInfo;
+    if (_timer) {
+        [self loadColorPresetWithName:item.title];
+    }
+    [self removeTimer];
+}
 - (void)removeTimer {
     [_timer invalidate];
     _timer = nil;
