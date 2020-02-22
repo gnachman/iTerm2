@@ -2847,6 +2847,10 @@
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
+		A6AFE93023FCFF8C00D489C7 /* iTermRestorableStateController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AFE92E23FCFF8C00D489C7 /* iTermRestorableStateController.h */; };
+		A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AFE92F23FCFF8C00D489C7 /* iTermRestorableStateController.m */; };
+		A6AFE93423FE537700D489C7 /* iTermRestorableStateRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AFE93223FE537700D489C7 /* iTermRestorableStateRecord.h */; };
+		A6AFE93523FE537700D489C7 /* iTermRestorableStateRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AFE93323FE537700D489C7 /* iTermRestorableStateRecord.m */; };
 		A6B147602133395500D0814F /* iTermStatusBarLayout+tmux.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B1475E2133395500D0814F /* iTermStatusBarLayout+tmux.h */; };
 		A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B1475F2133395500D0814F /* iTermStatusBarLayout+tmux.m */; };
 		A6B1476421334D3900D0814F /* iTermTmuxStatusBarMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B1476221334D3900D0814F /* iTermTmuxStatusBarMonitor.h */; };
@@ -5858,6 +5862,10 @@
 		A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnnouncementView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6AFE92E23FCFF8C00D489C7 /* iTermRestorableStateController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRestorableStateController.h; sourceTree = "<group>"; };
+		A6AFE92F23FCFF8C00D489C7 /* iTermRestorableStateController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableStateController.m; sourceTree = "<group>"; };
+		A6AFE93223FE537700D489C7 /* iTermRestorableStateRecord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRestorableStateRecord.h; sourceTree = "<group>"; };
+		A6AFE93323FE537700D489C7 /* iTermRestorableStateRecord.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableStateRecord.m; sourceTree = "<group>"; };
 		A6B1475E2133395500D0814F /* iTermStatusBarLayout+tmux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermStatusBarLayout+tmux.h"; sourceTree = "<group>"; };
 		A6B1475F2133395500D0814F /* iTermStatusBarLayout+tmux.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermStatusBarLayout+tmux.m"; sourceTree = "<group>"; };
 		A6B1476221334D3900D0814F /* iTermTmuxStatusBarMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxStatusBarMonitor.h; sourceTree = "<group>"; };
@@ -6509,6 +6517,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6AFE92923FCFF5C00D489C7 /* StateRestoration */,
 				A6866B7A23CAA30500ACD94C /* pidinfo */,
 				A629F59423AFF47300C2F16B /* Shell Integration Installer */,
 				A67D19762238D4DD00BD0D4D /* Notifications */,
@@ -9329,6 +9338,17 @@
 			name = "hyper-tab-icons-plus";
 			sourceTree = "<group>";
 		};
+		A6AFE92923FCFF5C00D489C7 /* StateRestoration */ = {
+			isa = PBXGroup;
+			children = (
+				A6AFE92E23FCFF8C00D489C7 /* iTermRestorableStateController.h */,
+				A6AFE92F23FCFF8C00D489C7 /* iTermRestorableStateController.m */,
+				A6AFE93223FE537700D489C7 /* iTermRestorableStateRecord.h */,
+				A6AFE93323FE537700D489C7 /* iTermRestorableStateRecord.m */,
+			);
+			name = StateRestoration;
+			sourceTree = "<group>";
+		};
 		A6B413FE211A488D00D28207 /* CompactWindowStyle */ = {
 			isa = PBXGroup;
 			children = (
@@ -10545,6 +10565,7 @@
 				530AB8AF20B201AB00D2AA08 /* iTermFunctionCallSuggester.h in Headers */,
 				A69CCB11211B55FB008ADA71 /* iTermMenuBarObserver.h in Headers */,
 				A6F22ACC2398D3C900C5D1A9 /* iTermLoggingHelper.h in Headers */,
+				A6AFE93423FE537700D489C7 /* iTermRestorableStateRecord.h in Headers */,
 				A60C034E20881E5F00FE2F1F /* iTermAPIHelper.h in Headers */,
 				A667191F1DCE36C3000CE608 /* PSMDarkHighContrastTabStyle.h in Headers */,
 				A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */,
@@ -10569,6 +10590,7 @@
 				A66719211DCE36C3000CE608 /* iTermHTTPConnection.h in Headers */,
 				A6B147602133395500D0814F /* iTermStatusBarLayout+tmux.h in Headers */,
 				A66719221DCE36C3000CE608 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
+				A6AFE93023FCFF8C00D489C7 /* iTermRestorableStateController.h in Headers */,
 				53A96ED02322040C00AEA8E0 /* iTermOpenDirectory.h in Headers */,
 				A65FF3C120F18547008BD0AE /* iTermMiniSearchFieldViewController.h in Headers */,
 				A6614C74210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h in Headers */,
@@ -13173,6 +13195,7 @@
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				A63493E923E945BA0047C31B /* iTermGlobalScopeController.m in Sources */,
 				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
+				A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
 				A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */,
 				A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */,
@@ -13241,6 +13264,7 @@
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
 				534B6C6923DC20120031FED2 /* PasteEvent.m in Sources */,
+				A6AFE93523FE537700D489C7 /* iTermRestorableStateRecord.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A6F718B6226438FC0053488E /* iTermInitialDirectory+Tmux.m in Sources */,
 				A6180D7121A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.m in Sources */,

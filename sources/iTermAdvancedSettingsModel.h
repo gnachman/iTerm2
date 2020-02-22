@@ -285,6 +285,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)underlineHyperlinks;
 + (double)updateScreenParamsDelay;
 + (BOOL)useCustomTabBarFontSize;
++ (BOOL)useRestorableStateController;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;
 + (BOOL)useAdaptiveFrameRate;

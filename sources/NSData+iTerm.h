@@ -43,4 +43,14 @@
 - (NSString *)it_hexEncoded;
 - (NSData *)it_compressedData;
 
+- (NSData *)aesCBCEncryptedDataWithPCKS7PaddingAndKey:(NSData *)key
+                                                   iv:(NSData *)iv;
+
+- (NSData *)decryptedAESCBCDataWithPCKS7PaddingAndKey:(NSData *)key
+                                                   iv:(NSData *)iv;
+
++ (NSData *)randomAESKey;
+
+- (void)writeReadOnlyToURL:(NSURL *)url;
+
 @end

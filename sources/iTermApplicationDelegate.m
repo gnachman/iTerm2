@@ -61,6 +61,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermPythonRuntimeDownloader.h"
+#import "iTermRestorableStateController.h"
 #import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
 #import "iTermSessionFactory.h"
@@ -153,7 +154,10 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermOrphanServerAdopterDelegate, iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <
+    iTermOrphanServerAdopterDelegate,
+    iTermPasswordManagerDelegate,
+    iTermRestorableStateControllerDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -227,6 +231,7 @@ static BOOL hasBecomeActive = NO;
 
     iTermFocusFollowsMouseController *_focusFollowsMouseController;
     iTermGlobalScopeController *_globalScopeController;
+    iTermRestorableStateController *_restorableStateController;
 }
 
 - (instancetype)init {
@@ -236,6 +241,10 @@ static BOOL hasBecomeActive = NO;
             _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
         } else {
             _untitledFileOpenStatus = iTermUntitledFileOpenDisallowed;
+        }
+        if ([iTermAdvancedSettingsModel useRestorableStateController]) {
+            _restorableStateController = [[iTermRestorableStateController alloc] init];
+            _restorableStateController.delegate = self;
         }
         // Add ourselves as an observer for notifications.
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -813,6 +822,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
+    [_restorableStateController saveRestorableState];
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
     TurnOffDebugLoggingSilently();
@@ -988,6 +998,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
+    [_restorableStateController saveRestorableState];
 }
 
 - (void)applicationWillHide:(NSNotification *)aNotification {
@@ -1052,6 +1063,7 @@ static BOOL hasBecomeActive = NO;
                                                             key:KEY_AUTOLOG];
     }];
     [self openUntitledFileBecameSafe];
+    [_restorableStateController restoreWindows];
 }
 
 
@@ -2312,6 +2324,65 @@ static BOOL hasBecomeActive = NO;
         completion(session);
     }
                               completion:nil];
+}
+
+#pragma mark - iTermRestorableStateControllerDelegate
+
+- (NSArray<NSWindow *> *)restorableStateControllerWindows:(iTermRestorableStateController *)restorableStateController {
+    // For inscrutable reasons, traditional full screen windows in minimal and compact
+    // themes do not enjoy window restoration. It's probably because of the wacky hijinx
+    // with NSWindow subclasses and such. At any rate, this is a baby step toward replacing
+    // more of the OS's window restoration with something reliable.
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return @[];
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_MINIMAL:
+            break;
+    }
+
+    return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
+        if (!term.fullScreen) {
+            return nil;
+        }
+        if (term.lionFullScreen) {
+            return nil;
+        }
+        if (![term getAndResetRestorableState]) {
+            return nil;
+        }
+        return term.window;
+    }];
+}
+
+- (BOOL)restorableStateController:(iTermRestorableStateController *)restorableStateController
+           windowNeedsRestoration:(NSWindow *)window {
+    return YES;
+}
+
+- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
+                 restoreWithCoder:(NSCoder *)coder
+                       identifier:(NSString *)identifier
+                       completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
+    [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
+                                                  state:coder
+                                      completionHandler:completion];
+}
+
+- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
+                  encodeWithCoder:(NSCoder *)coder
+                           window:(NSWindow *)window {
+    PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
+    if (!term) {
+        return;
+    }
+    [term window:window willEncodeRestorableState:coder];
+    [window encodeRestorableStateWithCoder:coder];
 }
 
 @end

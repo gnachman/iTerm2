@@ -448,6 +448,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
     BOOL _settingStyleMask;
+    BOOL _restorableStateInvalid;
 }
 
 @synthesize scope = _scope;
@@ -4218,9 +4219,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return proposedFrameSize;
 }
 
-- (void)invalidateRestorableState
-{
+- (void)invalidateRestorableState {
     [[self window] invalidateRestorableState];
+    _restorableStateInvalid = YES;
+}
+
+- (BOOL)getAndResetRestorableState {
+    const BOOL result = _restorableStateInvalid;
+    _restorableStateInvalid = NO;
+    return result;
 }
 
 - (NSArray *)uniqueTmuxControllers
