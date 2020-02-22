@@ -442,10 +442,16 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
-    DLog(@"setFrame:%@ display:%@ from\n%@",
-         NSStringFromRect(frameRect), @(flag),
+    DLog(@"setFrame:%@ display:%@ maxy=%@ from\n%@",
+         NSStringFromRect(frameRect), @(flag), @(NSMaxY(frameRect)),
          [NSThread callStackSymbols]);
     [super setFrame:frameRect display:flag];
+}
+
+- (void)setFrameOrigin:(NSPoint)point {
+    DLog(@"Set frame origin to %@", NSStringFromPoint(point));
+    [super setFrameOrigin:point];
+    DLog(@"Frame maxy=%@ now", @(NSMaxY(self.frame)));
 }
 
 #if ENABLE_COMPACT_WINDOW_HACK

@@ -369,6 +369,7 @@ static int OctalValue(const char *bytes) {
         DLog(@"Parse tree: %@", parseTree);
         [self decorateParseTree:parseTree];
         DLog(@"Decorated parse tree: %@", parseTree);
+        NSValue *windowPos = nil;
         if (tabToUpdate_) {
             DLog(@"Updating existing tab");
             [tabToUpdate_ setTmuxLayout:parseTree
@@ -389,10 +390,7 @@ static int OctalValue(const char *bytes) {
 
                 // Check if we know the position for the window
                 NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
-                NSValue *windowPos = [self.controller positionForWindowWithPanes:panes windowID:windowIndex_];
-                if (windowPos) {
-                    [[term window] setFrameOrigin:[windowPos pointValue]];
-                }
+                windowPos = [[[self.controller positionForWindowWithPanes:panes windowID:windowIndex_] retain] autorelease];
 
                 // This is to handle the case where we couldn't create a window as
                 // large as we were asked to (for instance, if the gateway is full-
@@ -407,6 +405,10 @@ static int OctalValue(const char *bytes) {
                 BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowOptionStyleValueFullScreen];
                 BOOL isFullScreen = [term anyFullScreen];
                 if (wantFullScreen && !isFullScreen) {
+                    if (windowPos) {
+                        [[term window] setFrameOrigin:[windowPos pointValue]];
+                        windowPos = nil;
+                    }
                     if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
                         [[iTermController sharedInstance] makeTerminalWindowFullScreen:term];
                     } else {
@@ -420,6 +422,11 @@ static int OctalValue(const char *bytes) {
         if (self.target) {
             [self.target performSelector:self.selector
                               withObject:self];
+        }
+        if (windowPos) {
+            // Do this after calling the completion selector because it may affect the window's
+            // frame (e.g., when burying a session and that causes the number of tabs to change).
+            [[term window] setFrameOrigin:[windowPos pointValue]];
         }
         if (isNewWindow) {
             [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];

@@ -8069,7 +8069,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     NSRect frame = [[self window] frame];
-    DLog(@"Pre-adjustment frame: %@", NSStringFromRect(frame));
+    DLog(@"Original frame: %@ maxy=%@", NSStringFromRect(frame), @(NSMaxY(frame)));
 
     if (_contentView.shouldShowToolbelt) {
         winSize.width += floor(_contentView.toolbeltWidth);
@@ -8093,6 +8093,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     winSize.height = MIN(winSize.height, maxFrameSize.height);
 
     CGFloat heightChange = winSize.height - [[self window] frame].size.height;
+    DLog(@"Existing height is %@. heightChange is %@", @([[self window] frame].size.height), @(heightChange));
     frame.size = winSize;
     frame.origin.y -= heightChange;
 
