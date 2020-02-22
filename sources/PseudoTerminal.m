@@ -8895,6 +8895,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // Full screen is special w/r/t the tab bar.
         return YES;
     }
+    if (@available(macOS 10.15, *)) {
+        if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_COMPACT) {
+            // Window has a clear background color (see
+            // -setMojaveBackgroundColor:). Show the visual effect view in the
+            // tabbar backing so it's not see-through.
+            return NO;
+        }
+    }
     if (![self useTransparency]) {
         // Opaque windows have a window background behind the fake title bar.
         return YES;
