@@ -403,9 +403,11 @@
 // oldest start time. This relies on undocumented APIs, but short of forking
 // ps, I can't see another way to do it.
 + (pid_t)pidOfFirstChildOf:(pid_t)parentPid {
+    DLog(@"Want to find first child of process %@", @(parentPid));
     int numBytes;
     numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     if (numBytes <= 0) {
+        DLog(@"PROC_ALL_PIDS failed");
         return -1;
     }
 
@@ -418,11 +420,12 @@
     assert(pids[magicIndex] == PID_MAGIC);
     if (numBytes <= 0) {
         free(pids);
+        DLog(@"Second PROC_ALL_PIDS failed");
         return -1;
     }
 
     int numPids = numBytes / sizeof(int);
-
+    DLog(@"numPids=%@", @(numPids));
     long long oldestTime = 0;
     pid_t oldestPid = -1;
     for (int i = 0; i < numPids; ++i) {
@@ -445,13 +448,15 @@
             }
         }
     }
-
+    DLog(@"Done get info for all pids. Oldest is %@", @(oldestPid));
+    
     assert(pids[magicIndex] == PID_MAGIC);
     free(pids);
     return oldestPid;
 }
 
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid {
+    DLog(@"Want working directory of process %@ - SYNCHRONOUS METHOD!", @(pid));
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -466,6 +471,7 @@
     }];
     dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
                                              0.5 * NSEC_PER_SEC));
+    DLog(@"Result is %@", result);
     return result;
 }
 
@@ -482,16 +488,23 @@
                            canFallBack:(BOOL)canFallBack
                                  queue:(dispatch_queue_t)queue
                                  block:(void (^)(NSString *pwd))block {
+    DLog(@"Want working directory of %@", @(pid));
     [[iTermPidInfoClient sharedInstance] getWorkingDirectoryOfProcessWithID:pid
                                                                       queue:queue
                                                                  completion:^(NSString *rawDir) {
+        if (!rawDir) {
+            DLog(@"Failed to get working directory of %@", @(pid));
+        }
         if (!rawDir && canFallBack) {
+            DLog(@"Will attempt fallback");
             pid_t childPid = [self pidOfFirstChildOf:pid];
             if (childPid <= 0) {
+                DLog(@"Failed to get first child. Giving up.");
                 block(nil);
                 return;
             }
             // pid might be owned by root. Try again with its eldest child.
+            DLog(@"Try again with eldest child");
             [self asyncWorkingDirectoryOfProcess:childPid
                                      canFallBack:NO
                                            queue:queue
@@ -499,6 +512,7 @@
             return;
         }
         if (!rawDir) {
+            DLog(@"Failing");
             block(nil);
             return;
         }
