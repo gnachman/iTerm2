@@ -26,5 +26,6 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
                                  queue:(dispatch_queue_t)queue
                                  block:(void (^)(NSString *pwd))block;
 + (pid_t)pidOfFirstChildOf:(pid_t)parentPid;
++ (NSDate *)startTimeForProcess:(pid_t)pid;
 
 @end
