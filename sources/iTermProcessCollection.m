@@ -34,6 +34,7 @@
     BOOL _initialized;
     NSNumber *_testValueForForegroundJob;
     BOOL _computingTreeString;
+    NSDate *_startTime;
 }
 
 - (instancetype)initWithPid:(pid_t)processID
@@ -97,6 +98,13 @@
 
 - (void)addChildWithProcessID:(pid_t)pid {
     [_childProcessIDs addIndex:pid];
+}
+
+- (NSDate *)startTime {
+    if (!_startTime) {
+        _startTime = [iTermLSOF startTimeForProcess:self.processID];
+    }
+    return _startTime;
 }
 
 - (iTermProcessInfo *)deepestForegroundJob {

@@ -18,6 +18,7 @@
 @property(nonatomic, weak, readonly) iTermProcessInfo *parent;
 @property(nonatomic, readonly) BOOL isForegroundJob;
 @property(nonatomic, readonly) NSArray<iTermProcessInfo *> *sortedChildren;
+@property(nonatomic, readonly) NSDate *startTime;
 
 @property(nonatomic, weak, readonly) iTermProcessInfo *deepestForegroundJob;
 @property(nonatomic, readonly) NSArray<iTermProcessInfo *> *flattenedTree;

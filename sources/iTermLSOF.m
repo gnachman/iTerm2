@@ -11,8 +11,10 @@
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
 #import "iTermPidInfoClient.h"
+#import "iTermProcessCache.h"
 #import "iTermSocketAddress.h"
 #import "iTermSyntheticConfParser.h"
+#import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #include <arpa/inet.h>
 #include <libproc.h>
@@ -404,55 +406,42 @@
 // ps, I can't see another way to do it.
 + (pid_t)pidOfFirstChildOf:(pid_t)parentPid {
     DLog(@"Want to find first child of process %@", @(parentPid));
-    int numBytes;
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (numBytes <= 0) {
-        DLog(@"PROC_ALL_PIDS failed");
+    iTermProcessInfo *parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
+    if (!parentInfo) {
+        DLog(@"Forcing a synchronous update of the process cache");
+        [[iTermProcessCache sharedInstance] updateSynchronously];
+        parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
+    }
+    if (!parentInfo) {
+        DLog(@"No parent with pid %@", @(parentPid));
         return -1;
     }
-
-    int* pids = (int*) iTermMalloc(numBytes + sizeof(int));
-    // Save a magic int at the end to be sure that the buffer isn't overrun.
-    const int PID_MAGIC = 0xdeadbeef;
-    int magicIndex = numBytes/sizeof(int);
-    pids[magicIndex] = PID_MAGIC;
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
-    assert(pids[magicIndex] == PID_MAGIC);
-    if (numBytes <= 0) {
-        free(pids);
-        DLog(@"Second PROC_ALL_PIDS failed");
+    iTermProcessInfo *firstChild = [parentInfo.children minWithBlock:^NSComparisonResult(iTermProcessInfo *obj1, iTermProcessInfo *obj2) {
+        return [obj1.startTime compare:obj2.startTime];
+    }];
+    if (!firstChild) {
+        DLog(@"Process is childless");
         return -1;
     }
+    return firstChild.processID;
+}
 
-    int numPids = numBytes / sizeof(int);
-    DLog(@"numPids=%@", @(numPids));
-    long long oldestTime = 0;
-    pid_t oldestPid = -1;
-    for (int i = 0; i < numPids; ++i) {
-        struct proc_taskallinfo taskAllInfo;
-        int rc = proc_pidinfo(pids[i],
-                              PROC_PIDTASKALLINFO,
-                              0,
-                              &taskAllInfo,
-                              sizeof(taskAllInfo));
-        if (rc <= 0) {
-            continue;
-        }
-
-        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
-        if (ppid == parentPid) {
-            long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
-            if (birthday < oldestTime || oldestTime == 0) {
-                oldestTime = birthday;
-                oldestPid = pids[i];
-            }
-        }
++ (NSDate *)startTimeForProcess:(pid_t)pid {
+    DLog(@"Want start time for %@", @(pid));
+    struct proc_taskallinfo taskAllInfo;
+    const int rc = proc_pidinfo(pid,
+                                PROC_PIDTASKALLINFO,
+                                0,
+                                &taskAllInfo,
+                                sizeof(taskAllInfo));
+    if (rc <= 0) {
+        DLog(@"Failed to get task all info");
+        return nil;
     }
-    DLog(@"Done get info for all pids. Oldest is %@", @(oldestPid));
-    
-    assert(pids[magicIndex] == PID_MAGIC);
-    free(pids);
-    return oldestPid;
+
+    double birthday = taskAllInfo.pbsd.pbi_start_tvsec;
+    birthday += taskAllInfo.pbsd.pbi_start_tvusec / 1000000.0;
+    return [NSDate dateWithTimeIntervalSince1970:birthday];
 }
 
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid {
