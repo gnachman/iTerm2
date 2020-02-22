@@ -176,6 +176,7 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)getWorkingDirectory {
+    DLog(@"Want working directory of %@ - SYNCHRONOUS", @(self.pid));
     if (self.pid == -1) {
         DLog(@"Want to use the kernel to get the working directory but pid = -1");
         return nil;
@@ -184,6 +185,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
+    DLog(@"Want working directory of %@ - async", @(self.pid));
     if (self.pid == -1) {
         DLog(@"Want to use the kernel to get the working directory but pid = -1");
         completion(nil);
@@ -892,12 +894,6 @@ static void HandleSigChld(int n) {
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
 
     iTermSetTerminalSize(self.fd, _desiredSize);
-}
-
-#pragma mark Process Tree
-
-- (pid_t)getFirstChildOfPid:(pid_t)parentPid {
-    return [iTermLSOF pidOfFirstChildOf:parentPid];
 }
 
 #pragma mark - Notifications

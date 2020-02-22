@@ -4468,6 +4468,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSDictionary *)arrangementWithContents:(BOOL)includeContents {
+    DLog(@"Construct arrangement for session %@", self);
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
@@ -7955,6 +7956,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)updateLocalDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
+    DLog(@"Update local directory of %@", self);
     __weak __typeof(self) weakSelf = self;
     [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
         // Don't call setLastDirectory:remote:pushed: because we don't want to update the
@@ -10499,10 +10501,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion {
+    DLog(@"Current local working directory requestd for %@", self);
     if (_lastLocalDirectory) {
+        DLog(@"Using cached value %@", _lastLocalDirectory);
         completion(_lastLocalDirectory);
         return;
     }
+    DLog(@"No cached value");
     __weak __typeof(self) weakSelf = self;
     [self updateLocalDirectoryWithCompletion:^(NSString *pwd) {
         completion(weakSelf.lastLocalDirectory);
@@ -10511,6 +10516,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // POTENTIALLY SLOW - AVOID CALLING!
 - (NSString *)currentLocalWorkingDirectory {
+    DLog(@"Warning! Slow currentLocalWorkingDirectory called");
     if (self.lastLocalDirectory != nil) {
         // If a shell integration-provided working directory is available, prefer to use it because
         // it has unresolved symlinks. The path provided by -getWorkingDirectory has expanded symlinks

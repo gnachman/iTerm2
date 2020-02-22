@@ -5898,6 +5898,7 @@ ITERM_WEAKLY_REFERENCEABLE
     __weak __typeof(self) weakSelf = self;
     PTYSession *session = self.currentSession;
     id<iTermOrderedToken> token = [[_proxyIconOrderEnforcer newToken] autorelease];
+    DLog(@"Getting current location async for prixy icon");
     [session asyncGetCurrentLocationWithCompletion:^(NSURL *url) {
         if (weakSelf.currentSession != session) {
             return;
