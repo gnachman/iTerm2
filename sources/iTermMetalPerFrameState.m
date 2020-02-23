@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAlphaBlendingHelper.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
@@ -147,14 +148,14 @@ typedef struct {
                        glue:(id<iTermMetalPerFrameStateDelegate>)glue {
     iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
 
-    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView];
+    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView glue:glue];
     [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
     [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
     [self loadBlinkingCursorWithTextView:textView glue:glue];
     [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
-    [self loadBackgroundImageWithTextView:textView];
+    [self loadBackgroundImageWithGlue:glue];
     [self loadMarkedTextWithDrawingHelper:drawingHelper];
     [self loadIndicatorsFromTextView:textView];
     [self loadHighlightedRowsFromTextView:textView];
@@ -317,8 +318,8 @@ typedef struct {
     }
 }
 
-- (void)loadBackgroundImageWithTextView:(PTYTextView *)textView {
-    _backgroundImage = [textView.delegate textViewBackgroundImage];
+- (void)loadBackgroundImageWithGlue:(id<iTermMetalPerFrameStateDelegate>)glue {
+    _backgroundImage = [glue backgroundImage];
 }
 
 // Replace screen contents with input method editor.
@@ -359,6 +360,10 @@ typedef struct {
 
 - (CGFloat)transparencyAlpha {
     return _configuration->_transparencyAlpha;
+}
+
+- (CGFloat)blend {
+    return _configuration->_backgroundImageBlend;
 }
 
 - (BOOL)hasBackgroundImage {
@@ -625,9 +630,19 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 - (vector_float4)processedDefaultBackgroundColor {
     float alpha;
     if (iTermTextIsMonochrome()) {
-        alpha = _backgroundImage ? 1 - _configuration->_backgroundImageBlending : _configuration->_transparencyAlpha;
+        if (_backgroundImage) {
+            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
+                                              _configuration->_backgroundImageBlend);
+        } else {
+            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha, 0);
+        }
     } else {
-        alpha = _backgroundImage ? 1 - _configuration->_backgroundImageBlending : 1;
+        // Can assume transparencyAlpha is 1
+        if (@available(macOS 10.14, *)) {
+            alpha = iTermAlphaValueForTopView(0, _configuration->_backgroundImageBlend);
+        } else {
+            alpha = _backgroundImage ? 1 - _configuration->_backgroundColorAlpha : 1;
+        }
     }
     return simd_make_float4((float)_configuration->_processedDefaultBackgroundColor.redComponent,
                             (float)_configuration->_processedDefaultBackgroundColor.greenComponent,
@@ -737,7 +752,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundRLE[previousRLE].count++;
             unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
         } else {
-            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
+            BOOL enableBlending = YES;
+            if (@available(macOS 10.14, *)) {
+                enableBlending = NO;
+            }
+            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
+                                                                      enableBlending:enableBlending];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
             backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
@@ -939,7 +959,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
-- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey {
+- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey
+                                        enableBlending:(BOOL)enableBlending {
     vector_float4 color = { 0, 0, 0, 0 };
     CGFloat alpha = _configuration->_transparencyAlpha;
     if (colorKey->selected) {
@@ -958,7 +979,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .isMatch = NO,
             .image = NO
         };
-        return [self unprocessedColorForBackgroundColorKey:&temp];
+        return [self unprocessedColorForBackgroundColorKey:&temp
+                                            enableBlending:enableBlending];
     } else if (colorKey->isMatch) {
         color = (vector_float4){ 1, 1, 0, 1 };
     } else {
@@ -992,7 +1014,18 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         }
 
         if (defaultBackground && _backgroundImage) {
-            alpha = 1 - _configuration->_backgroundImageBlending;
+            if (enableBlending) {
+                // Legacy
+                alpha = 1 - _configuration->_backgroundImageBlend;
+            } else {
+                // 10.14+
+                alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
+                                                  _configuration->_backgroundImageBlend);
+            }
+        } else if (!_configuration->_reverseVideo && defaultBackground && !enableBlending) {
+            // 10.14+
+            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
+                                              _configuration->_backgroundImageBlend);
         }
     }
     color.w = alpha;

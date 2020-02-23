@@ -10,6 +10,7 @@
 #import "PTYTextView.h"
 #import "VT100Terminal.h"
 #import "iTermController.h"
+#import "iTermMetalPerFrameState.h"
 #import "iTermTextDrawingHelper.h"
 
 static vector_float4 VectorForColor(NSColor *color) {
@@ -19,7 +20,8 @@ static vector_float4 VectorForColor(NSColor *color) {
 @implementation iTermMetalPerFrameStateConfiguration
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
-                             textView:(PTYTextView *)textView {
+                             textView:(PTYTextView *)textView
+                                 glue:(id<iTermMetalPerFrameStateDelegate>)glue {
     _cellSize = drawingHelper.cellSize;
     _cellSizeWithoutSpacing = drawingHelper.cellSizeWithoutSpacing;
     _scale = textView.window.backingScaleFactor;
@@ -61,8 +63,8 @@ static vector_float4 VectorForColor(NSColor *color) {
     _cursorGuideColor = drawingHelper.cursorGuideColor;
 
     // Background image
-    _backgroundImageBlending = textView.blend;
-    _backgroundImageMode = textView.delegate.backgroundImageMode;
+    _backgroundImageBlend = [glue backgroundImageBlend];
+    _backgroundImageMode = [glue backroundImageMode];
     
     _edgeInsets = textView.delegate.textViewEdgeInsets;
     _edgeInsets.left++;

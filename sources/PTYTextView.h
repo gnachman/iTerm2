@@ -173,6 +173,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChange;
+- (void)textViewProcessedBackgroundColorDidChange;
 
 // Describes the current user, host, and path.
 - (NSURL *)textViewCurrentLocation;
@@ -204,7 +205,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
 - (void)textViewFindOnPageLocationsDidChange;
-
+- (CGFloat)textViewBlend;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -331,9 +332,6 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 // Is this view in the key window?
 @property(nonatomic, readonly) BOOL isInKeyWindow;
-
-// Blending level for background color over background image
-@property(nonatomic, assign) float blend;
 
 // Used by tests to modify drawing helper. Called within -drawRect:.
 typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);

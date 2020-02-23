@@ -247,6 +247,14 @@ typedef enum {
 - (void)sessionDidSetWindowTitle:(NSString *)title;
 - (void)sessionJobDidChange:(PTYSession *)session;
 - (void)sessionRevealActionsTool;
+- (void)session:(PTYSession *)session
+setBackgroundImage:(NSImage *)image
+           mode:(iTermBackgroundImageMode)imageMode
+backgroundColor:(NSColor *)backgroundColor;
+- (NSImage *)sessionBackgroundImage;
+- (iTermBackgroundImageMode)sessionBackgroundImageMode;
+- (CGFloat)sessionBlend;
+- (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
 
 @end
 
@@ -371,13 +379,15 @@ typedef enum {
 
 @property(nonatomic, assign) iTermBackgroundImageMode backgroundImageMode;
 
+// Blend level as specified in this session's profile.
+@property(nonatomic, readonly) CGFloat desiredBlend;
+
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
 @property(nonatomic, retain) NSImage *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
-@property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 @property(nonatomic, assign) BOOL asciiLigatures;
@@ -516,6 +526,7 @@ typedef enum {
 @property(nonatomic) BOOL overrideGlobalDisableMetalWhenIdleSetting;
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
 @property(nonatomic, readonly) NSColor *textColorForStatusBar;
+@property(nonatomic, readonly) NSColor *processedBackgroundColor;
 @property(nonatomic, readonly) NSImage *tabGraphic;
 @property(nonatomic, readonly) iTermStatusBarViewController *statusBarViewController;
 @property(nonatomic, readonly) BOOL shouldShowTabGraphic;
@@ -641,6 +652,9 @@ typedef enum {
                forceEncoding:(BOOL)forceEncoding;
 
 - (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast;
+
+- (void)updateViewBackgroundImage;
+- (void)invalidateBlend;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

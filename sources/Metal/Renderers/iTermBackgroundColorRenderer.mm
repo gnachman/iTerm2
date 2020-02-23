@@ -17,10 +17,11 @@
 
 - (BOOL)shouldPremultiply {
     if (@available(macOS 10.14, *)) {
-        return YES;
-    } else {
-        return NO;
+        if (self.configuration.hasBackgroundImage) {
+            return iTermTextIsMonochrome();
+        }
     }
+    return NO;
 }
 
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles

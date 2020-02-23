@@ -34,6 +34,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermBackgroundColorView;
 @class iTermFindDriver;
 @class iTermMetalDriver;
 @protocol iTermSearchResultsMinimapViewDelegate;
@@ -175,10 +176,18 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) NSSize internalDecorationSize;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, strong) NSImage *image;
+@property(nonatomic) iTermBackgroundImageMode imageMode;
+@property(nonatomic, strong) iTermBackgroundColorView *backgroundColorView NS_AVAILABLE_MAC(10_14);
+
+- (void)setTerminalBackgroundColor:(NSColor *)color;
 
 - (void)showFindUI;
 - (void)findViewDidHide;
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
+- (void)didChangeMetalViewAlpha;
+- (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
+                       blend:(CGFloat)blend;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

@@ -53,4 +53,13 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabDidSetWindowTitle:(PTYTab *)tab to:(NSString *)title;
 - (void)tabHasNontrivialJobDidChange:(PTYTab *)tab;
 - (void)tabRevealActionsTool:(PTYTab *)tab;
+- (void)tab:(PTYTab *)tab
+setBackgroundImage:(NSImage *)image
+       mode:(iTermBackgroundImageMode)imageMode
+backgroundColor:(NSColor *)backgroundColor;
+- (NSImage *)tabBackgroundImage;
+- (iTermBackgroundImageMode)tabBackgroundImageMode;
+- (CGFloat)tabBlend;
+- (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab;
+
 @end

@@ -31,6 +31,7 @@
 #import "iTermFindPasteboard.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermImageView.h"
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermHotKeyController.h"
@@ -4479,12 +4480,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView invalidateAutomaticTabBarBackingHiding];
 }
 
-- (BOOL)anySessionInCurrentTabHasTransparency {
-    return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return session.textview.transparencyAlpha < 1;
-    }];
-}
-
 - (IBAction)toggleUseTransparency:(id)sender
 {
     useTransparency_ = !useTransparency_;
@@ -5128,6 +5123,14 @@ ITERM_WEAKLY_REFERENCEABLE
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
             shouldEnableShadow = NO;
         }
+        if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+            [CATransaction begin];
+            [CATransaction setDisableActions:YES];
+            const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
+            self.contentView.backgroundImage.transparency = transparency;
+            self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;
+            [CATransaction commit];
+        }
     } else {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyPreMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
@@ -5140,7 +5143,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:(NSWindow *)window {
-    const BOOL haveTransparency = [self anySessionInCurrentTabHasTransparency];
+    const BOOL haveTransparency = [self anyPaneIsTransparent];
     DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
     window.hasShadow = !haveTransparency;
 }
@@ -5988,6 +5991,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateForTransparency:self.ptyWindow];
     [self updateDocumentEdited];
     [[iTermFindPasteboard sharedInstance] updateObservers];
+    [self updateBackgroundImage];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -6864,9 +6868,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)anyPaneIsTransparent {
-    return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return session.textview.transparencyAlpha < 1;
-    }];
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage] || self.currentSession.backgroundImage == nil) {
+        // Panes can have separate transparency settings
+        return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+            return session.textview.transparencyAlpha < 1;
+        }];
+    }
+
+    // All panes share a transparency setting
+    return self.currentSession.textview.transparencyAlpha < 1;
 }
 
 - (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
@@ -8161,6 +8171,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_contentView layoutIfStatusBarChanged];
     [self updateToolbeltAppearance];
     [[iTermFindPasteboard sharedInstance] updateObservers];
+    for (PTYSession *session in self.currentTab.sessions) {
+        [session updateViewBackgroundImage];
+    }
 }
 
 - (void)fitWindowToTabs {
@@ -8793,6 +8806,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateTabBarStyle];
     [self safelySetStyleMask:self.styleMask];
     [self updateProxyIcon];
+    [self updateForTransparency:self.ptyWindow];
 
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
@@ -8897,7 +8911,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return NO;
 }
 
-- (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor {
+- (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor NS_AVAILABLE_MAC(10_14) {
     // This is for the fake title bar and for the status bar background color.
     return [[iTermTheme sharedInstance] tabBarBackgroundColorForTabColor:ignoreTabColor ? nil : self.currentSession.tabColor
                                                                    style:_contentView.tabBarControl.style];
@@ -10959,6 +10973,73 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if (![iTermToolbeltView shouldShowTool:kActionsToolName]) {
         [iTermToolbeltView toggleShouldShowTool:kActionsToolName];
+    }
+}
+
+- (void)updateBackgroundImage {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [self setSharedBackgroundImage:self.currentSession.backgroundImage
+                                  mode:self.currentSession.backgroundImageMode
+                       backgroundColor:self.currentSession.processedBackgroundColor];
+    }
+}
+
+- (void)tab:(PTYTab *)tab
+setBackgroundImage:(NSImage *)image
+       mode:(iTermBackgroundImageMode)imageMode
+backgroundColor:(NSColor *)backgroundColor {
+    if (tab != self.currentTab) {
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [self setSharedBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
+    }
+}
+
+- (void)setSharedBackgroundImage:(NSImage *)image
+                            mode:(iTermBackgroundImageMode)imageMode
+                 backgroundColor:(NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+    _contentView.backgroundImage.image = image;
+    _contentView.backgroundImage.contentMode = imageMode;
+    _contentView.backgroundImage.backgroundColor = backgroundColor;
+    _contentView.backgroundImage.hidden = (image == nil);
+    for (PTYSession *session in self.allSessions) {
+        [session.view setNeedsDisplay:YES];
+    }
+}
+
+- (NSImage *)tabBackgroundImage {
+    return self.currentSession.backgroundImage;
+}
+
+- (iTermBackgroundImageMode)tabBackgroundImageMode {
+    return self.currentSession.backgroundImageMode;
+}
+
+- (CGFloat)tabBlend {
+    return self.currentSession.desiredBlend;
+}
+
+- (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return;
+    }
+    if (!tab.activeSession.backgroundImage) {
+        return;
+    }
+    if (tab == self.currentTab) {
+        // Update background color views
+        for (PTYSession *session in tab.sessions) {
+            [session invalidateBlend];
+        }
+        // Update top-level image view
+        [self updateForTransparency:self.ptyWindow];
     }
 }
 

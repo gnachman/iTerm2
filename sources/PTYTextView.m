@@ -1254,7 +1254,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     _drawingHelper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
     _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
     _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
-    
+    _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
+
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
         [_drawingHelper createTimestampDrawingHelper];
@@ -4787,6 +4788,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         [self recomputeBadgeLabel];
         [_delegate textViewBackgroundColorDidChange];
+        [_delegate textViewProcessedBackgroundColorDidChange];
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {
@@ -4798,11 +4800,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)colorMap:(iTermColorMap *)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
+    [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];
 }
 
 - (void)colorMap:(iTermColorMap *)colorMap
     mutingAmountDidChangeTo:(double)mutingAmount {
+    [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];
 }
 

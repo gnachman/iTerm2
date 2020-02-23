@@ -486,7 +486,12 @@ typedef struct iTermTextColorContext {
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
                                  _cellSize.height * rows);
-        NSColor *color = [self unprocessedColorForBackgroundRun:run];
+        BOOL enableBlending = YES;
+        if (@available(macOS 10.14, *)) {
+            enableBlending = NO;
+        }
+        NSColor *color = [self unprocessedColorForBackgroundRun:run
+                                                 enableBlending:enableBlending];
         // The unprocessed color is needed for minimum contrast computation for text color.
         box.unprocessedBackgroundColor = color;
         color = [_colorMap processedBackgroundColorForBackgroundColor:color];
@@ -506,7 +511,8 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run {
+- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run
+                               enableBlending:(BOOL)enableBlending {
     NSColor *color;
     CGFloat alpha = _transparencyAlpha;
     if (run->selected) {
@@ -547,7 +553,13 @@ typedef struct iTermTextColorContext {
         }
 
         if (defaultBackground && _hasBackgroundImage) {
-            alpha = 1 - _blend;
+            if (enableBlending) {
+                alpha = 1 - _blend;
+            } else {
+                alpha = 0;
+            }
+        } else if (!_reverseVideo && defaultBackground && !enableBlending) {
+            alpha = 0;
         }
     }
 
@@ -1866,7 +1878,8 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
     if (c->faint && colorRun && !context->backgroundColor) {
-        context->backgroundColor = [self unprocessedColorForBackgroundRun:colorRun];
+        context->backgroundColor = [self unprocessedColorForBackgroundRun:colorRun
+                                                           enableBlending:YES];
     }
     const BOOL needsProcessing = context->backgroundColor && (context->minimumContrast > 0.001 ||
                                                               context->dimmingAmount > 0.001 ||

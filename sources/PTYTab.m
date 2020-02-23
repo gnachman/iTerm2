@@ -764,6 +764,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     if (changed) {
         [[self realParentWindow] tabActiveSessionDidChange];
+        [self.delegate tab:self
+        setBackgroundImage:self.activeSession.backgroundImage
+                      mode:self.activeSession.backgroundImageMode
+           backgroundColor:self.activeSession.processedBackgroundColor];
     }
 
     [[self realParentWindow] updateTabColors];
@@ -5855,6 +5859,34 @@ typedef struct {
 
 - (void)sessionRevealActionsTool {
     [self.delegate tabRevealActionsTool:self];
+}
+
+- (NSImage *)sessionBackgroundImage {
+    return [self.delegate tabBackgroundImage];
+}
+
+- (iTermBackgroundImageMode)sessionBackgroundImageMode {
+    return [self.delegate tabBackgroundImageMode];
+}
+
+- (CGFloat)sessionBlend {
+    return [self.delegate tabBlend];
+}
+
+- (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
+    }
+}
+
+- (void)session:(PTYSession *)session
+setBackgroundImage:(NSImage *)image
+           mode:(iTermBackgroundImageMode)imageMode
+backgroundColor:(NSColor *)backgroundColor {
+    if (session != self.activeSession) {
+        return;
+    }
+    [self.delegate tab:self setBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
 }
 
 #pragma mark - iTermObject

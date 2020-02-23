@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface NSImage (iTerm)
-
+- (CGImageRef)CGImage;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
 
 // Creates an image context and runs block. Do drawing into the current

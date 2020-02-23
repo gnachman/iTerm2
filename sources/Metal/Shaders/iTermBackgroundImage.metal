@@ -55,6 +55,7 @@ iTermBackgroundImageWithAlphaClampFragmentShader(iTermBackgroundImageVertexFunct
     
     float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     colorSample.w = *alpha;
+    colorSample.xyz *= *alpha;
     return colorSample;
 }
 
@@ -68,7 +69,7 @@ iTermBackgroundImageWithAlphaRepeatFragmentShader(iTermBackgroundImageVertexFunc
     
     float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     colorSample.w = *alpha;
-    colorSample.xyz *= colorSample.w;
+    colorSample.xyz *= *alpha;
     return colorSample;
 }
 

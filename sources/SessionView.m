@@ -3,10 +3,12 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermBackgroundColorView.h"
 #import "iTermDropDownFindViewController.h"
 #import "iTermFindDriver.h"
 #import "iTermFindPasteboard.h"
 #import "iTermGenericStatusBarContainer.h"
+#import "iTermImageView.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
@@ -119,6 +121,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermFindDriver *_permanentStatusBarFindDriver;
     iTermFindDriver *_temporaryStatusBarFindDriver;
     iTermGenericStatusBarContainer *_genericStatusBarContainer;
+    iTermImageView *_imageView NS_AVAILABLE_MAC(10_14);
 }
 
 + (double)titleHeight {
@@ -141,6 +144,21 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
         lastResizeDate_ = [NSDate date];
         _announcements = [[NSMutableArray alloc] init];
+
+        if (@available(macOS 10.14, *)) {
+            _imageView = [[iTermImageView alloc] init];
+            _imageView.hidden = YES;
+            _imageView.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height);
+            _imageView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            [self addSubview:_imageView];
+
+            _backgroundColorView = [[iTermBackgroundColorView alloc] init];
+            _backgroundColorView.layer = [[CALayer alloc] init];
+            _backgroundColorView.wantsLayer = YES;
+            _backgroundColorView.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height);
+            _backgroundColorView.layer.actions = @{@"backgroundColor": [NSNull null]};
+            [self addSubview:_backgroundColorView];
+        }
 
         // Set up find view
         _dropDownFindViewController = [self newDropDownFindView];
@@ -167,7 +185,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
 
         _scrollview.contentView.copiesOnScroll = NO;
-
+        
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
 
@@ -195,6 +213,61 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
     }
     return self;
+}
+
+- (void)setImage:(NSImage *)image {
+    if (@available(macOS 10.14, *)) {
+        if (image) {
+            _imageView.image = image;
+        }
+        _imageView.hidden = (image == nil);
+    }
+}
+
+- (NSImage *)image {
+    if (@available(macOS 10.14, *)) {
+        if (_imageView.hidden) {
+            return nil;
+        }
+        return _imageView.image;
+    }
+    return nil;
+}
+
+- (void)setImageMode:(iTermBackgroundImageMode)imageMode {
+    if (@available(macOS 10.14, *)) {
+        _imageMode = imageMode;
+        _imageView.contentMode = imageMode;
+    }
+}
+
+- (void)setTerminalBackgroundColor:(NSColor *)color {
+    if (@available(macOS 10.14, *)) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        _imageView.backgroundColor = color;
+        if (color && _metalView.alphaValue < 1) {
+            DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
+            _backgroundColorView.backgroundColor = color;
+            _backgroundColorView.hidden = NO;
+        } else {
+            _backgroundColorView.hidden = YES;
+        }
+        [CATransaction commit];
+    }
+}
+
+- (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
+                       blend:(CGFloat)blend {
+    if (@available(macOS 10.14, *)) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        _backgroundColorView.transparency = 1 - transparencyAlpha;
+        _backgroundColorView.blend = blend;
+        _imageView.transparency = 1 - transparencyAlpha;
+        _imageView.blend = blend;
+        [CATransaction commit];
+    }
 }
 
 - (NSRect)frameForScroller NS_AVAILABLE_MAC(10_14) {
@@ -438,7 +511,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
-    [self insertSubview:_metalView atIndex:0];
+    if (@available(macOS 10.14, *)) {
+        // Image view and background color view go under it.
+        [self insertSubview:_metalView atIndex:2];
+    } else {
+        [self insertSubview:_metalView atIndex:0];
+    }
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
@@ -453,6 +531,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
+    [self metalViewVisibilityDidChange];
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
@@ -462,6 +541,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _driver = nil;
     _metalClipView.useMetal = NO;
     _metalClipView.metalView = nil;
+    [self metalViewVisibilityDidChange];
 }
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
@@ -470,6 +550,25 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
         [_scrollview setNeedsDisplay:YES];
+    }
+}
+
+- (void)didChangeMetalViewAlpha {
+    [self metalViewVisibilityDidChange];
+}
+
+- (void)metalViewVisibilityDidChange {
+    if (@available(macOS 10.14, *)) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        if (_metalView.alphaValue == 0) {
+            _imageView.hidden = (_imageView.image == nil);
+            _backgroundColorView.hidden = NO;
+        } else {
+            _imageView.hidden = YES;
+            _backgroundColorView.hidden = YES;
+        }
+        [CATransaction commit];
     }
 }
 
@@ -535,6 +634,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (self.showBottomStatusBar) {
             [self updateBottomStatusBarFrame];
         }
+        if (@available(macOS 10.14, *)) {
+            [CATransaction begin];
+            [CATransaction setDisableActions:YES];
+            _imageView.frame = self.bounds;
+            _backgroundColorView.frame = self.bounds;
+            [CATransaction commit];
+        }
     } else {
         DLog(@"Keep everything top aligned.");
         // Don't resize anything but do keep it all top-aligned.
@@ -563,6 +669,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                           0,
                                                           self.frame.size.width,
                                                           _genericStatusBarContainer.frame.size.height);
+        }
+        if (@available(macOS 10.14, *)) {
+            NSRect frame = _imageView.frame;
+            frame.origin.x = 0;
+            frame.origin.y = self.bounds.size.height - frame.size.height;
+            [CATransaction begin];
+            [CATransaction setDisableActions:YES];
+            _imageView.frame = frame;
+            _backgroundColorView.frame = frame;
+            [CATransaction commit];
         }
     }
 
@@ -599,7 +715,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    NSRect frame = _scrollview.contentView.frame;
+    NSRect frame;
+    if (@available(macOS 10.14, *)) {
+        frame = self.bounds;
+    } else {
+        frame = _scrollview.contentView.frame;
+    }
     if (self.showBottomStatusBar) {
         frame.origin.y += iTermStatusBarHeight;
     }
@@ -618,6 +739,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
     _delegate = delegate;
     [_delegate sessionViewDimmingAmountDidChange:[self adjustedDimmingAmount]];
+    [self updateLayout];
 }
 
 - (void)_dimShadeToDimmingAmount:(float)newDimmingAmount {

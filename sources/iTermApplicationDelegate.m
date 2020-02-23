@@ -2082,6 +2082,9 @@ static BOOL hasBecomeActive = NO;
             return @"the current session has no window (this shouldn't happen).";
         case iTermMetalUnavailableReasonDropTargetsVisible:
             return @"secure copy drop targets are visible.";
+        case iTermMetalUnavailableReasonSharedBackgroundImage:
+#warning TODO: Try to relax this restriction. Also make sure to update metal availability when it changes.
+            return @"background images are not per-pane";
     }
 
     return @"of an internal error. Please file a bug report!";
