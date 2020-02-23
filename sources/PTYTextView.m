@@ -5723,6 +5723,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         [self recomputeBadgeLabel];
         [_delegate textViewBackgroundColorDidChange];
+        [_delegate textViewProcessedBackgroundColorDidChange];
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {
@@ -5734,11 +5735,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)colorMap:(iTermColorMap *)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
+    [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];
 }
 
 - (void)colorMap:(iTermColorMap *)colorMap
     mutingAmountDidChangeTo:(double)mutingAmount {
+    [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];
 }
 

@@ -10,6 +10,7 @@
 #import "SolidColorView.h"
 #import "VT100GridTypes.h"
 
+@class iTermImageView;
 @class iTermRootTerminalView;
 @class iTermStatusBarViewController;
 @class iTermTabBarControlView;
@@ -97,6 +98,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic) BOOL useMetal;
 @property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
+@property(nonatomic, readonly) iTermImageView *backgroundImage NS_AVAILABLE_MAC(10_14);
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color

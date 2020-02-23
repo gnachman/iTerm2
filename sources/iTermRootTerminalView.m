@@ -20,6 +20,7 @@
 #import "iTermDragHandleView.h"
 #import "iTermFakeWindowTitleLabel.h"
 #import "iTermGenericStatusBarContainer.h"
+#import "iTermImageView.h"
 #import "iTermPreferences.h"
 #import "iTermRoundedCornerImageCreator.h"
 #import "iTermWindowSizeView.h"
@@ -107,6 +108,8 @@ typedef struct {
     NSView *_rightBorderView NS_AVAILABLE_MAC(10_14);
     NSView *_topBorderView NS_AVAILABLE_MAC(10_14);
     NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
+    
+    iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -121,6 +124,14 @@ typedef struct {
         _leftTabBarPreferredWidth = round([iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth]);
         [self setLeftTabBarWidthFromPreferredWidth];
 
+        if (@available(macOS 10.14, *)) {
+            _backgroundImage = [[iTermImageView alloc] init];
+            _backgroundImage.frame = self.bounds;
+            _backgroundImage.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            _backgroundImage.hidden = YES;
+            [self addSubview:_backgroundImage];
+        }
+        
         // Create the tab view.
         self.tabView = [[PTYTabView alloc] initWithFrame:self.bounds];
         if (@available(macOS 10.14, *)) {
@@ -1360,6 +1371,9 @@ typedef struct {
         self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
     }
 
+    if (@available(macOS 10.14, *)) {
+        _backgroundImage.frame = self.bounds;
+    }
     [self layoutWindowPaneDecorations];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is

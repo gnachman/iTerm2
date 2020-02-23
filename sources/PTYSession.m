@@ -4173,6 +4173,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [newView updateTitleFrame];
     [_view setFindDriverDelegate:self];
+    [self updateViewBackgroundImage];
 }
 
 - (NSStringEncoding)encoding
@@ -4193,10 +4194,14 @@ ITERM_WEAKLY_REFERENCEABLE
     _backgroundImageMode = mode;
     [_backgroundDrawingHelper invalidate];
     [self setBackgroundImagePath:_backgroundImagePath];
+    if (@available(macOS 10.14, *)) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+            self.view.imageMode = mode;
+        }
+    }
 }
 
-- (void)setBackgroundImagePath:(NSString *)imageFilePath
-{
+- (void)setBackgroundImagePath:(NSString *)imageFilePath {
     if ([imageFilePath length]) {
         if ([imageFilePath isAbsolutePath] == NO) {
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
@@ -4215,6 +4220,66 @@ ITERM_WEAKLY_REFERENCEABLE
     _patternedImage = nil;
 
     [_textview setNeedsDisplay:YES];
+}
+
+- (NSImage *)effectiveBackgroundImage {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return _backgroundImage;
+    } else {
+        return [self.delegate sessionBackgroundImage];
+    }
+}
+
+- (iTermBackgroundImageMode)effectiveBackgroundImageMode {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return _backgroundImageMode;
+    } else {
+        return [self.delegate sessionBackgroundImageMode];
+    }
+}
+
+- (BOOL)shouldDrawBackgroundImageManually {
+    if (@available(macOS 10.14, *)) {
+        return NO;
+    }
+    if ([self effectiveBackgroundImage] == nil) {
+        return YES;
+    }
+    return YES;
+}
+
+- (void)updateViewBackgroundImage {
+    if (@available(macOS 10.14, *)) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+            self.view.image = _backgroundImage;
+            [self.view setImageMode:_backgroundImageMode];
+            if (_backgroundImage) {
+                [self.view setTerminalBackgroundColor:[[self processedBackgroundColor] colorWithAlphaComponent:1.0 - _textview.blend]];
+            } else {
+                [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+            }
+            return;
+        }
+        self.view.image = nil;
+        if ([self effectiveBackgroundImage]) {
+            [self.view setTerminalBackgroundColor:[[self processedBackgroundColor] colorWithAlphaComponent:1.0 - _textview.blend]];
+        } else {
+            [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+        }
+        [self.delegate session:self
+            setBackgroundImage:_backgroundImage
+                          mode:_backgroundImageMode
+               backgroundColor:[self processedBackgroundColor]];
+        return;
+    }
+    
+    self.view.image = nil;
+}
+
+- (void)setBackgroundImage:(NSImage *)backgroundImage {
+    [_backgroundImage autorelease];
+    _backgroundImage = [backgroundImage retain];
+    [self updateViewBackgroundImage];
 }
 
 - (void)setSmartCursorColor:(BOOL)value {
@@ -4236,6 +4301,12 @@ ITERM_WEAKLY_REFERENCEABLE
         dispatch_async(dispatch_get_main_queue(), ^{
             if (_view.window && _delegate.realParentWindow && _textview) {
                 [_delegate sessionTransparencyDidChange];
+                if (@available(macOS 10.14, *)) {
+                    if (@available(macOS 10.14, *)) {
+                        [self.view setTransparencyAlpha:_textview.transparencyAlpha
+                                                  blend:_textview.blend];
+                    }
+                }
             }
         });
     }
@@ -4254,6 +4325,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_textview setTransparency:transparency];
     [self useTransparencyDidChange];
+    if (@available(macOS 10.14, *)) {
+        [self.view setTransparencyAlpha:_textview.transparencyAlpha
+                                  blend:_textview.blend];
+    }
     [self.view setNeedsDisplay:YES];
 }
 
@@ -4263,6 +4338,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
+    if (@available(macOS 10.14, *)) {
+        [self.view setTransparencyAlpha:_textview.transparencyAlpha
+                                  blend:_textview.blend];
+    }
 }
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
@@ -5359,6 +5438,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark iTermMetalGlueDelegate
 
+- (NSImage *)metalGlueBackgroundImage {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return _backgroundImage;
+    } else {
+        return [self.delegate sessionBackgroundImage];
+    }
+}
+
+- (iTermBackgroundImageMode)metalGlueBackgroundImageMode {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return _backgroundImageMode;
+    } else {
+        return [self.delegate sessionBackgroundImageMode];
+    }
+}
+
+- (CGFloat)metalGlueBackgroundImageBlend {
+    return [_textview blend];
+}
+
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
     if (_view.useMetal) {
         if (redrawAsap) {
@@ -5745,6 +5844,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)setMetalViewAlphaValue:(CGFloat)alphaValue {
     _view.metalView.alphaValue = alphaValue;
+    [_view didChangeMetalViewAlpha];
     [self.delegate sessionDidChangeMetalViewAlphaValue:self to:alphaValue];
 }
 
@@ -7788,7 +7888,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewHasBackgroundImage {
-    return _backgroundImage != nil;
+    return self.effectiveBackgroundImage != nil;
 }
 
 // Lots of different views need to draw the background image.
@@ -7808,6 +7908,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground {
+    if (!self.shouldDrawBackgroundImageManually) {
+        return;
+    }
     if (!_backgroundDrawingHelper) {
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
         _backgroundDrawingHelper.delegate = self;
@@ -7844,21 +7947,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         return CGRectMake(0, 0, 1, 1);
     }
-    NSView *container = [self.delegate sessionContainerView:self];
-    const NSRect sessionViewFrameInContainer = [container convertRect:self.view.bounds fromView:self.view];
-    NSRect viewRect = [self.view insetRect:sessionViewFrameInContainer
-                                   flipped:YES
-                    includeBottomStatusBar:YES];
-    BOOL includeBottomStatusBar = YES;
+    NSRect viewRect;
+    NSRect containerBounds;
     if (@available(macOS 10.14, *)) {
-        includeBottomStatusBar = ![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane];
+        NSView *container = self.view.window.contentView;
+        viewRect = [self.view.metalView.superview convertRect:self.view.metalView.frame
+                                                       toView:container];
+        containerBounds = container.bounds;
+        // Flip it
+        viewRect.origin.y = containerBounds.size.height - viewRect.origin.y - viewRect.size.height;
+    } else {
+        NSView *container = [self.delegate sessionContainerView:self];
+        const NSRect sessionViewFrameInContainer = [container convertRect:self.view.bounds fromView:self.view];
+        viewRect = [self.view insetRect:sessionViewFrameInContainer
+                                flipped:YES
+                 includeBottomStatusBar:YES];
+        BOOL includeBottomStatusBar = YES;
+        if (@available(macOS 10.14, *)) {
+            includeBottomStatusBar = ![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane];
+        }
+        containerBounds = [self.view insetRect:container.bounds
+                                       flipped:YES
+                        includeBottomStatusBar:includeBottomStatusBar];
+        viewRect.origin.x -= containerBounds.origin.x;
+        viewRect.origin.y -= containerBounds.origin.y;
     }
-    NSRect containerBounds = [self.view insetRect:container.bounds
-                                          flipped:YES
-                           includeBottomStatusBar:includeBottomStatusBar];
-    viewRect.origin.x -= containerBounds.origin.x;
-    viewRect.origin.y -= containerBounds.origin.y;
-
     return CGRectMake(viewRect.origin.x / containerBounds.size.width,
                       viewRect.origin.y / containerBounds.size.height,
                       viewRect.size.width / containerBounds.size.width,
@@ -8467,6 +8580,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionUpdateMetalAllowed];
     [_statusBarViewController updateColors];
     [self.view setNeedsDisplay:YES];
+}
+
+- (void)textViewProcessedBackgroundColorDidChange {
+    [self updateViewBackgroundImage];
 }
 
 - (void)textViewBurySession {
@@ -11782,7 +11899,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSImage *)backgroundDrawingHelperImage {
-    return _backgroundImage;
+    return [self effectiveBackgroundImage];
 }
 
 - (BOOL)backgroundDrawingHelperUseTransparency {
@@ -11794,7 +11911,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode {
-    return _backgroundImageMode;
+    return [self effectiveBackgroundImageMode];
 }
 
 - (NSColor *)backgroundDrawingHelperDefaultBackgroundColor {

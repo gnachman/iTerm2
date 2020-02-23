@@ -38,6 +38,10 @@ typedef struct {
     const float alpha = [self.delegate backgroundDrawingHelperUseTransparency] ? (1.0 - [self.delegate backgroundDrawingHelperTransparency]) : 1.0;
     if (!draws.image) {
         [[[self.delegate backgroundDrawingHelperDefaultBackgroundColor] colorWithAlphaComponent:alpha] set];
+        [[NSColor colorWithRed:arc4random_uniform(255) / 255.0
+                         green:arc4random_uniform(255) / 255.0
+                          blue:arc4random_uniform(255) / 255.0
+                         alpha:1] set];
         NSRectFillUsingOperation(draws.solidBackgroundColorRect, NSCompositingOperationCopy);
         return;
     }

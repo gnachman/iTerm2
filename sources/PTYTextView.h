@@ -172,6 +172,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChange;
+- (void)textViewProcessedBackgroundColorDidChange;
 
 // Describes the current user, host, and path.
 - (NSURL *)textViewCurrentLocation;

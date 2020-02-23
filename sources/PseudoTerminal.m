@@ -30,6 +30,7 @@
 #import "iTermFindDriver.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermImageView.h"
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermHotKeyController.h"
@@ -5068,6 +5069,12 @@ ITERM_WEAKLY_REFERENCEABLE
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
             shouldEnableShadow = NO;
         }
+        if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+            [CATransaction begin];
+            [CATransaction setDisableActions:YES];
+            self.contentView.backgroundImage.alphaValue = self.currentSession.textview.transparencyAlpha;
+            [CATransaction commit];
+        }
     } else {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyPreMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
@@ -7987,6 +7994,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
     [self updateToolbeltAppearance];
+    for (PTYSession *session in self.currentTab.sessions) {
+        [session updateViewBackgroundImage];
+    }
 }
 
 - (void)fitWindowToTabs {
@@ -10752,6 +10762,33 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [iTermToolbeltView toggleShouldShowTool:kActionsToolName];
     }
 }
+
+- (void)tab:(PTYTab *)tab
+setBackgroundImage:(NSImage *)image
+       mode:(iTermBackgroundImageMode)imageMode
+backgroundColor:(NSColor *)backgroundColor {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        _contentView.backgroundImage.image = image;
+        _contentView.backgroundImage.contentMode = imageMode;
+        _contentView.backgroundImage.backgroundColor = backgroundColor;
+        _contentView.backgroundImage.hidden = (image == nil);
+        for (PTYSession *session in self.allSessions) {
+            [session.view setNeedsDisplay:YES];
+        }
+    }
+}
+
+- (NSImage *)tabBackgroundImage {
+    return self.currentSession.backgroundImage;
+}
+
+- (iTermBackgroundImageMode)tabBackgroundImageMode {
+    return self.currentSession.backgroundImageMode;
+}
+
 
 #pragma mark - PSMMinimalTabStyleDelegate
 

@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermColorMap;
+@protocol iTermMetalPerFrameStateDelegate;
 @class iTermTextDrawingHelper;
 @class NSColor;
 @class PTYFontInfo;
@@ -81,7 +82,8 @@ NS_ASSUME_NONNULL_BEGIN
 };
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
-                             textView:(PTYTextView *)textView;
+                             textView:(PTYTextView *)textView
+                                 glue:(id<iTermMetalPerFrameStateDelegate>)glue;
 
 @end
 

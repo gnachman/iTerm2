@@ -147,14 +147,14 @@ typedef struct {
                        glue:(id<iTermMetalPerFrameStateDelegate>)glue {
     iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
 
-    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView];
+    [_configuration loadSettingsWithDrawingHelper:drawingHelper textView:textView glue:glue];
     [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
     [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
     [self loadBlinkingCursorWithTextView:textView glue:glue];
     [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
-    [self loadBackgroundImageWithTextView:textView];
+    [self loadBackgroundImageWithGlue:glue];
     [self loadMarkedTextWithDrawingHelper:drawingHelper];
     [self loadIndicatorsFromTextView:textView];
     [self loadHighlightedRowsFromTextView:textView];
@@ -317,8 +317,8 @@ typedef struct {
     }
 }
 
-- (void)loadBackgroundImageWithTextView:(PTYTextView *)textView {
-    _backgroundImage = [textView.delegate textViewBackgroundImage];
+- (void)loadBackgroundImageWithGlue:(id<iTermMetalPerFrameStateDelegate>)glue {
+    _backgroundImage = [glue backgroundImage];
 }
 
 // Replace screen contents with input method editor.
