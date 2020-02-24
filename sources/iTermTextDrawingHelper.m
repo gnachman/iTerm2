@@ -558,6 +558,8 @@ typedef struct iTermTextColorContext {
             } else {
                 alpha = 0;
             }
+        } else if (!_reverseVideo && defaultBackground && !enableBlending) {
+            alpha = 0;
         }
     }
 

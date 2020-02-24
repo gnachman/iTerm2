@@ -576,12 +576,6 @@ typedef struct {
 
 - (void)drawRect:(NSRect)dirtyRect {
     if (@available(macOS 10.14, *)) {
-        if ([_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
-            // Draw background color for fake title bar.
-            NSColor *const backgroundColor = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
-            [backgroundColor set];
-            NSRectFill(self.frameForTitleBackgroundView);
-        }
         return;
     }
 
@@ -610,8 +604,7 @@ typedef struct {
 }
 
 - (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14) {
-    const BOOL haveLayer = _useMetal;
-    const BOOL wantsTitleBackgroundView = haveLayer && [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
+    const BOOL wantsTitleBackgroundView = [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (wantsTitleBackgroundView) {
         if (!_titleBackgroundView) {
             _titleBackgroundView = [[iTermLayerBackedSolidColorView alloc] initWithFrame:self.frameForTitleBackgroundView];
@@ -620,7 +613,7 @@ typedef struct {
         _titleBackgroundView.color = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
         _titleBackgroundView.frame = self.frameForTitleBackgroundView;
         if (_titleBackgroundView.superview != self) {
-            [self insertSubview:_titleBackgroundView atIndex:0];
+            [self insertSubview:_titleBackgroundView atIndex:1];
         }
     } else {
         [_titleBackgroundView removeFromSuperview];
