@@ -482,7 +482,14 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                 return nil;
             }
             DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
-            NSString *defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@":"];
+            NSString *defaultScheme;
+            if ([self stringIsSingleDomainWord:[self hostnameInSchemelessPossibleURL:stringWithoutNearbyPunctuation]]) {
+                DLog(@"Use http because it's a single word");
+                defaultScheme = @"http:";
+            } else {
+                defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@":"];
+                DLog(@"Use default scheme of %@", defaultScheme);
+            }
             stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
         } else {
             DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
@@ -498,6 +505,33 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 
     return nil;
+}
+
+- (NSString *)hostnameInSchemelessPossibleURL:(NSString *)url {
+    const NSInteger index = [url rangeOfString:@"/"].location;
+    if (index == NSNotFound) {
+        return url;
+    }
+    return [url substringToIndex:index];
+}
+
+- (BOOL)stringIsSingleDomainWord:(NSString *)string {
+    static NSCharacterSet *nonAlnum;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSCharacterSet *lowercase = [NSCharacterSet characterSetWithRange:NSMakeRange('a', 26)];
+        NSCharacterSet *uppercase = [NSCharacterSet characterSetWithRange:NSMakeRange('A', 26)];
+        NSCharacterSet *digits = [NSCharacterSet characterSetWithRange:NSMakeRange('0', 10)];
+        NSMutableCharacterSet *temp = [[NSMutableCharacterSet alloc] init];
+        [temp formUnionWithCharacterSet:lowercase];
+        [temp formUnionWithCharacterSet:uppercase];
+        [temp formUnionWithCharacterSet:digits];
+        [temp invert];
+        nonAlnum = temp;
+    });
+    return (string.length > 0 &&
+            !isdigit([string characterAtIndex:0]) &&
+            [string rangeOfCharacterFromSet:nonAlnum].location == NSNotFound);
 }
 
 - (URLAction *)urlActionForString:(NSString *)string
