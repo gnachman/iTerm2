@@ -245,6 +245,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     for (int i = 0; i < n; i++) {
         screen_char_t continuation;
         ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
+        if (!line) {
+            [s appendFormat:@"(nil)"];
+            continue;
+        }
         [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
