@@ -1,26 +1,21 @@
 //
-//  iTermImageView.h
+//  iTermBackgroundColorView.h
 //  iTerm2SharedARC
 //
-//  Created by George Nachman on 2/22/20.
+//  Created by George Nachman on 2/24/20.
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ITAddressBookMgr.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 NS_CLASS_AVAILABLE_MAC(10_14)
-@interface iTermImageView : NSView
-
-@property (nonatomic, strong) NSImage *image;
-@property (nonatomic) iTermBackgroundImageMode contentMode;
+@interface iTermBackgroundColorView: NSView
 @property (nonatomic, strong) NSColor *backgroundColor;
 @property (nonatomic) CGFloat blend;
 @property (nonatomic) CGFloat transparency;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
-
 @end
 
 NS_ASSUME_NONNULL_END

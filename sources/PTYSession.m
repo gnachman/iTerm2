@@ -1644,7 +1644,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
-    [self setBlend:theBlend];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
@@ -3607,8 +3606,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setProfile:temp];
 }
 
-- (void)sessionProfileDidChange
-{
+- (void)sessionProfileDidChange {
     if (!self.isDivorced) {
         return;
     }
@@ -3749,7 +3747,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
-    [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR inProfile:aDict]];
 
     // bold
@@ -4222,6 +4219,25 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setNeedsDisplay:YES];
 }
 
+- (CGFloat)effectiveBlend {
+    if (!self.effectiveBackgroundImage) {
+        return 0;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return self.desiredBlend;
+    } else {
+        if (self.backgroundImage) {
+            return self.desiredBlend;
+        }
+        // I don't have a background image so inherit the blend setting of the active session.
+        return [self.delegate sessionBlend];
+    }
+}
+
+- (CGFloat)desiredBlend {
+    return [iTermProfilePreferences floatForKey:KEY_BLEND inProfile:self.profile];
+}
+
 - (NSImage *)effectiveBackgroundImage {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         return _backgroundImage;
@@ -4253,19 +4269,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
             self.view.image = _backgroundImage;
             [self.view setImageMode:_backgroundImageMode];
-            if (_backgroundImage) {
-                [self.view setTerminalBackgroundColor:[[self processedBackgroundColor] colorWithAlphaComponent:1.0 - _textview.blend]];
-            } else {
-                [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
-            }
+            [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
             return;
         }
         self.view.image = nil;
-        if ([self effectiveBackgroundImage]) {
-            [self.view setTerminalBackgroundColor:[[self processedBackgroundColor] colorWithAlphaComponent:1.0 - _textview.blend]];
-        } else {
-            [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
-        }
+        [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+        [self invalidateBlend];
         [self.delegate session:self
             setBackgroundImage:_backgroundImage
                           mode:_backgroundImageMode
@@ -4301,12 +4310,7 @@ ITERM_WEAKLY_REFERENCEABLE
         dispatch_async(dispatch_get_main_queue(), ^{
             if (_view.window && _delegate.realParentWindow && _textview) {
                 [_delegate sessionTransparencyDidChange];
-                if (@available(macOS 10.14, *)) {
-                    if (@available(macOS 10.14, *)) {
-                        [self.view setTransparencyAlpha:_textview.transparencyAlpha
-                                                  blend:_textview.blend];
-                    }
-                }
+                [self invalidateBlend];
             }
         });
     }
@@ -4317,30 +4321,22 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_textview transparency];
 }
 
-- (void)setTransparency:(float)transparency
-{
+- (void)setTransparency:(float)transparency {
     // Limit transparency because fully transparent windows can't be clicked on.
     if (transparency > 0.9) {
         transparency = 0.9;
     }
     [_textview setTransparency:transparency];
     [self useTransparencyDidChange];
-    if (@available(macOS 10.14, *)) {
-        [self.view setTransparencyAlpha:_textview.transparencyAlpha
-                                  blend:_textview.blend];
-    }
+    [self invalidateBlend];
+}
+
+- (void)invalidateBlend {
+    [_textview setNeedsDisplay:YES];
     [self.view setNeedsDisplay:YES];
-}
-
-- (float)blend {
-    return [_textview blend];
-}
-
-- (void)setBlend:(float)blendVal {
-    [_textview setBlend:blendVal];
     if (@available(macOS 10.14, *)) {
         [self.view setTransparencyAlpha:_textview.transparencyAlpha
-                                  blend:_textview.blend];
+                                  blend:self.effectiveBlend];
     }
 }
 
@@ -4527,8 +4523,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_profile release];
     _profile = [mutableProfile retain];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+    [self invalidateBlend];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
+    [_delegate sessionDidUpdatePreferencesFromProfile:self];
     [_nameController setNeedsUpdate];
 }
 
@@ -8753,6 +8751,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.naggingController didDetectMouseReportingFrustration];
 }
 
+- (CGFloat)textViewBlend {
+    return [self effectiveBlend];
+}
+
 - (void)bury {
     if (self.isTmuxClient) {
         if (!self.delegate) {
@@ -11919,7 +11921,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (CGFloat)backgroundDrawingHelperBlending {
-    return _textview.blend;
+    return self.effectiveBlend;
 }
 
 #pragma mark - iTermStatusBarViewControllerDelegate

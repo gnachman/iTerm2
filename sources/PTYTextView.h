@@ -202,6 +202,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor;
 - (void)textViewDidUpdateDropTargetVisibility;
 - (void)textViewDidDetectMouseReportingFrustration;
+- (CGFloat)textViewBlend;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -328,9 +329,6 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 // Is this view in the key window?
 @property(nonatomic, readonly) BOOL isInKeyWindow;
-
-// Blending level for background color over background image
-@property(nonatomic, assign) float blend;
 
 // Used by tests to modify drawing helper. Called within -drawRect:.
 typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);

@@ -34,6 +34,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermBackgroundColorView;
 @class iTermFindDriver;
 @class iTermMetalDriver;
 @class PTYSession;
@@ -173,7 +174,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, strong) NSImage *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
-@property(nonatomic, strong) NSView *backgroundColorView NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, strong) iTermBackgroundColorView *backgroundColorView NS_AVAILABLE_MAC(10_14);
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

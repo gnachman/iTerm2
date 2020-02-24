@@ -252,6 +252,8 @@ setBackgroundImage:(NSImage *)image
 backgroundColor:(NSColor *)backgroundColor;
 - (NSImage *)sessionBackgroundImage;
 - (iTermBackgroundImageMode)sessionBackgroundImageMode;
+- (CGFloat)sessionBlend;
+- (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
 
 @end
 
@@ -375,13 +377,15 @@ backgroundColor:(NSColor *)backgroundColor;
 
 @property(nonatomic, assign) iTermBackgroundImageMode backgroundImageMode;
 
+// Blend level as specified in this session's profile.
+@property(nonatomic, readonly) CGFloat desiredBlend;
+
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
 @property(nonatomic, retain) NSImage *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
-@property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 @property(nonatomic, assign) BOOL asciiLigatures;
@@ -647,6 +651,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast;
 
 - (void)updateViewBackgroundImage;
+- (void)invalidateBlend;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

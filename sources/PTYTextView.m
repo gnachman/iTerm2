@@ -1181,7 +1181,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
     _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
     _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
-    
+    _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
+
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {
         [_drawingHelper createTimestampDrawingHelper];
@@ -4484,15 +4485,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
     _drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor = value;
-    [self setNeedsDisplay:YES];
-}
-
-- (float)blend {
-    return _drawingHelper.blend;
-}
-
-- (void)setBlend:(float)fVal {
-    _drawingHelper.blend = MIN(MAX(0.05, fVal), 1);
     [self setNeedsDisplay:YES];
 }
 

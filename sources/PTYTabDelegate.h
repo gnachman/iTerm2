@@ -59,4 +59,7 @@ setBackgroundImage:(NSImage *)image
 backgroundColor:(NSColor *)backgroundColor;
 - (NSImage *)tabBackgroundImage;
 - (iTermBackgroundImageMode)tabBackgroundImageMode;
+- (CGFloat)tabBlend;
+- (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab;
+
 @end

@@ -5869,6 +5869,16 @@ typedef struct {
     return [self.delegate tabBackgroundImageMode];
 }
 
+- (CGFloat)sessionBlend {
+    return [self.delegate tabBlend];
+}
+
+- (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
+    }
+}
+
 - (void)session:(PTYSession *)session
 setBackgroundImage:(NSImage *)image
            mode:(iTermBackgroundImageMode)imageMode

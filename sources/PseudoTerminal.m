@@ -5072,7 +5072,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
             [CATransaction begin];
             [CATransaction setDisableActions:YES];
-            self.contentView.backgroundImage.alphaValue = self.currentSession.textview.transparencyAlpha;
+            const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
+            self.contentView.backgroundImage.transparency = transparency;
+            self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;
             [CATransaction commit];
         }
     } else {
@@ -10789,6 +10791,26 @@ backgroundColor:(NSColor *)backgroundColor {
     return self.currentSession.backgroundImageMode;
 }
 
+- (CGFloat)tabBlend {
+    return self.currentSession.desiredBlend;
+}
+
+- (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return;
+    }
+    if (!tab.activeSession.backgroundImage) {
+        return;
+    }
+    if (tab == self.currentTab) {
+        // Update background color views
+        for (PTYSession *session in tab.sessions) {
+            [session invalidateBlend];
+        }
+        // Update top-level image view
+        [self updateForTransparency:self.ptyWindow];
+    }
+}
 
 #pragma mark - PSMMinimalTabStyleDelegate
 

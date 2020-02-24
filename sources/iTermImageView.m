@@ -7,6 +7,7 @@
 
 #import "iTermImageView.h"
 
+#import "iTermAlphaBlendingHelper.h"
 #import "NSImage+iTerm.h"
 
 #import <QuartzCore/QuartzCore.h>
@@ -25,6 +26,24 @@
                                @"contentsGravity": [NSNull null] };
     }
     return self;
+}
+
+- (void)setBlend:(CGFloat)blend {
+    _blend = blend;
+    [self updateAlpha];
+}
+
+- (void)setTransparency:(CGFloat)transparency {
+    _transparency = transparency;
+    [self updateAlpha];
+}
+
+- (CGFloat)desiredAlpha {
+    return iTermAlphaValueForBottomView(_transparency, _blend);
+}
+
+- (void)updateAlpha {
+    [super setAlphaValue:self.desiredAlpha];
 }
 
 - (void)setImage:(NSImage *)image {

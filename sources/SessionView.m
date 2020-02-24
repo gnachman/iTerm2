@@ -3,6 +3,7 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermBackgroundColorView.h"
 #import "iTermDropDownFindViewController.h"
 #import "iTermFindDriver.h"
 #import "iTermGenericStatusBarContainer.h"
@@ -42,16 +43,18 @@ static NSDate* lastResizeDate_;
 
 NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewWasSelectedForInspectionNotification";
 
-@interface iTermBackgroundColorView: NSView
-@end
-
-@implementation iTermBackgroundColorView
-@end
-
 @interface iTermMTKView : MTKView
 @end
 
 @implementation iTermMTKView
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    DLog(@"set alpha = %@\n%@", @(alphaValue), [NSThread callStackSymbols]);
+    [super setAlphaValue:alphaValue];
+}
+- (void)setHidden:(BOOL)hidden {
+    DLog(@"set hidden = %@\n%@", @(hidden), [NSThread callStackSymbols]);
+    [super setHidden:hidden];
+}
 @end
 
 @interface iTermHoverContainerView : NSView
@@ -241,7 +244,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction setDisableActions:YES];
         _imageView.backgroundColor = color;
         if (color) {
-            _backgroundColorView.layer.backgroundColor = color.CGColor;
+            DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
+            _backgroundColorView.backgroundColor = color;
             _backgroundColorView.hidden = NO;
         } else {
             _backgroundColorView.hidden = YES;
@@ -252,15 +256,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
                        blend:(CGFloat)blend {
-    if (@available(macOS 10.15, *)) {
+    if (@available(macOS 10.14, *)) {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
-        if (transparencyAlpha < 1) {
-            self.backgroundColorView.alphaValue = 1.0 - blend;
-        } else {
-            self.backgroundColorView.alphaValue = 1;
-        }
-        _imageView.alphaValue = transparencyAlpha;
+        _backgroundColorView.transparency = 1 - transparencyAlpha;
+        _backgroundColorView.blend = blend;
+        _imageView.transparency = 1 - transparencyAlpha;
+        _imageView.blend = blend;
         [CATransaction commit];
     }
 }
@@ -524,6 +526,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
+    [self metalViewVisibilityDidChange];
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
@@ -533,6 +536,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _driver = nil;
     _metalClipView.useMetal = NO;
     _metalClipView.metalView = nil;
+    [self metalViewVisibilityDidChange];
 }
 
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11) {
@@ -545,6 +549,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)didChangeMetalViewAlpha {
+    [self metalViewVisibilityDidChange];
+}
+
+- (void)metalViewVisibilityDidChange {
     if (@available(macOS 10.14, *)) {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
