@@ -3336,6 +3336,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
+    DLog(@"terminalSetWindowTitle:", title);
+    
     if ([delegate_ screenAllowTitleSetting]) {
         [delegate_ screenSetWindowTitle:title];
     }
@@ -3803,6 +3805,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
+    DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
+    
     if (![iTermAdvancedSettingsModel acceptOSC7]) {
         return;
     }

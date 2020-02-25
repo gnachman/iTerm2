@@ -140,6 +140,12 @@ static double TimespecToSeconds(struct timespec* ts) {
                                 arg.unsignedIntegerValue,
                                 (size.integerValue > 0) ? result.mutableBytes : NULL,
                                 safeLength);
+    if (rc <= 0) {
+        const int copyOfErrno = errno;
+        NSString *message = [NSString stringWithFormat:@"proc_pidinfo flavor=%@ pid=%@ arg=%@ size=%@ returned %@ with errno %@",
+                             flavor, pid, arg, size, @(rc), @(copyOfErrno)];
+        syslog(LOG_WARNING, "%s", message.UTF8String);
+    }
 #if ENABLE_SLOW_ROOT
     if (rc > 0) {
         [self maybeDelayWithFlavor:flavor.intValue

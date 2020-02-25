@@ -7,6 +7,8 @@
 //
 
 #import "SetDirectoryTrigger.h"
+
+#import "DebugLogging.h"
 #import "PTYSession.h"
 #import "VT100Screen.h"
 
@@ -38,11 +40,12 @@
                                               scope:aSession.variablesScope
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *currentDirectory) {
-                                             if (currentDirectory.length) {
-                                                 [aSession didUpdateCurrentDirectory];
-                                                 [aSession.screen terminalCurrentDirectoryDidChangeTo:currentDirectory];
-                                             }
-                                         }];
+        DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
+        if (currentDirectory.length) {
+            [aSession didUpdateCurrentDirectory];
+            [aSession.screen terminalCurrentDirectoryDidChangeTo:currentDirectory];
+        }
+    }];
     return YES;
 }
 

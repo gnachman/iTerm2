@@ -5900,12 +5900,16 @@ ITERM_WEAKLY_REFERENCEABLE
     id<iTermOrderedToken> token = [[_proxyIconOrderEnforcer newToken] autorelease];
     DLog(@"Getting current location async for prixy icon");
     [session asyncGetCurrentLocationWithCompletion:^(NSURL *url) {
+        DLog(@"Got updated local pwd for proxy icon for %@: %@", session, url);
         if (weakSelf.currentSession != session) {
+            DLog(@"Current session changed, ignore it");
             return;
         }
         if (![token commit]) {
+            DLog(@"Out of order result, ignore it");
             return;
         }
+        DLog(@"Assign to representedURL");
         self.window.representedURL = url;
     }];
 }
@@ -7851,6 +7855,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
         [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
+            DLog(@"Get local pwd so I can split: %@", oldCWD);
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
                                                 profile:theBookmark
@@ -10179,6 +10184,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     __weak __typeof(self) weakSelf = self;
     [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *pwd) {
+        DLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {
             return;

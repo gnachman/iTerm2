@@ -67,6 +67,7 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 }
 
 - (void)poll {
+    DLog(@"Poll");
     [self pollForWorkingDirectory];
 }
 
@@ -77,6 +78,7 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 #pragma mark - Private
 
 - (void)pollIfNeeded {
+    DLog(@"pollIfNeeded. wantsPoll=%@", @(_wantsPoll));
     if (_wantsPoll) {
         _wantsPoll = NO;
         [self pollForWorkingDirectory];
@@ -98,9 +100,8 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 }
 
 - (void)pollForWorkingDirectory {
-    DLog(@"polling");
+    DLog(@"pollForWorkingDirectory");
     _okToPollForWorkingDirectoryChange = NO;
-    DLog(@"polling");
     if (_tmuxOptionMonitor) {
         [_tmuxOptionMonitor updateOnce];
         return;
@@ -123,11 +124,13 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 }
 
 - (void)setDirectory:(NSString *)directory generation:(NSInteger)generation {
+    DLog(@"setDirectory:%@ generation:%@", directory, @(generation));
     [self didInferWorkingDirectory:directory valid:generation == _generation];
     [self pollIfNeeded];
 }
 
 - (void)didInferWorkingDirectory:(NSString *)pwd valid:(BOOL)valid {
+    DLog(@"didInferWorkingDirectory:%@ valid:%@", pwd, @(valid));
     if (pwd) {
         _haveFoundInitialDirectory = YES;
     }

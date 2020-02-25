@@ -921,6 +921,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didFinishInitialization {
+    DLog(@"didFinishInitialization");
     [_pwdPoller poll];
     if ([self.variablesScope valueForVariableName:iTermVariableKeySessionUsername] == nil) {
         [self.variablesScope setValue:NSUserName() forVariableNamed:iTermVariableKeySessionUsername];
@@ -6035,6 +6036,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller {
+    DLog(@"replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller");
     _pwdPoller.delegate = nil;
     [_pwdPoller release];
 
@@ -7951,6 +7953,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // useless when given a remote directory.
     __weak __typeof(self) weakSelf = self;
     [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
+        DLog(@"Finished with %@ for %@", pwd, weakSelf);
         completion([weakSelf urlForHost:weakSelf.currentHost path:pwd]);
     }];
 }
@@ -7961,6 +7964,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
         // Don't call setLastDirectory:remote:pushed: because we don't want to update the
         // path variable if the session is ssh'ed somewhere.
+        DLog(@"getWorkingDirectoryWithCompletion for %@ finished with %@", weakSelf, pwd);
         weakSelf.lastLocalDirectory = pwd;
         completion(pwd);
     }];
@@ -9255,6 +9259,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    DLog(@"screenGetWorkingDirectoryWithCompletion");
     [_pwdPoller addOneTimeCompletion:completion];
     [_pwdPoller poll];
 }
@@ -10492,6 +10497,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSString *envPwd = self.environment[@"PWD"];
     DLog(@"asyncCurrentLocalWorkingDirectoryOrInitialDirectory environment[pwd]=%@", envPwd);
     [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
+        DLog(@"asyncCurrentLocalWorkingDirectory finished with %@", pwd);
         if (!pwd) {
             completion(envPwd);
             return;
@@ -10510,6 +10516,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"No cached value");
     __weak __typeof(self) weakSelf = self;
     [self updateLocalDirectoryWithCompletion:^(NSString *pwd) {
+        DLog(@"updateLocalDirectory for %@ finished with %@", weakSelf, pwd);
         completion(weakSelf.lastLocalDirectory);
     }];
 }
@@ -12039,6 +12046,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
+    DLog(@"workingDirectoryPollerDidFindWorkingDirectory:%@ invalidated:%@", pwd, @(invalidated));
     if (invalidated || ![self useLocalDirectoryPollerResult]) {
         DLog(@"Not creating a mark. invalidated=%@", @(invalidated));
         // This is definitely a local directory. It may have been invalidated because we got a push

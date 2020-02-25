@@ -138,9 +138,10 @@
                                                                withReply:^(NSNumber *rc, NSData *buffer) {
         // Called on a private queue
         if (atomic_flag_test_and_set(&finished)) {
+            DLog(@"Return early because already timed out for pid %@", @(pid));
             return;
         }
-        DLog(@"Completed");
+        DLog(@"Completed with rc=%@", rc);
         if (buffer.length != buffersize) {
             completion(-3, [NSData data]);
             return;
@@ -164,6 +165,7 @@
                       buffersize:sizeof(struct proc_taskallinfo)
                            reqid:[self nextReqid]
                       completion:^(int rc, NSData * _Nonnull buffer) {
+        DLog(@"get task info for pid %@ finished with rc %@", @(pid), @(rc));
         struct proc_taskallinfo tai;
         if (rc <= 0 || buffer.length != sizeof(tai)) {
             completion(0);
@@ -187,6 +189,7 @@
     }
     struct proc_fdinfo *fds = iTermMalloc(maxSize);
     [self asyncGetInfoForProcess:pid flavor:PROC_PIDLISTFDS arg:0 buffersize:maxSize reqid:[self nextReqid] completion:^(int rc, NSData * _Nonnull buffer) {
+        DLog(@"list fds finished with rc %@", @(rc));
         if (rc <= 0) {
             free(fds);
             dispatch_async(queue, ^{
@@ -205,6 +208,7 @@
                                queue:(dispatch_queue_t)queue
                           completion:(void (^)(int count, struct proc_fdinfo *fds))completion {
     [self getMaximumNumberOfFileDescriptorsForProcess:pid completion:^(size_t count) {
+        DLog(@"getMaximumNumberOfFileDescriptorsForProcess finished for %@ with %@", @(pid), @(count));
         if (count == 0) {
             dispatch_async(queue, ^{
                 completion(0, NULL);
@@ -219,6 +223,7 @@
                                 queue:(dispatch_queue_t)queue
                            completion:(void (^)(int count))completion {
     [self asyncGetInfoForProcess:pid flavor:PROC_PIDLISTFILEPORTS arg:0 buffersize:0 reqid:[self nextReqid] completion:^(int rc, NSData * _Nonnull buffer) {
+        DLog(@"Get number of file ports for pid %@ finished with rc %@", @(pid), @(rc));
         if (rc <= 0) {
             dispatch_async(queue, ^{
                 completion(0);
@@ -235,6 +240,7 @@
                     queue:(dispatch_queue_t)queue
                completion:(void (^)(int count, struct proc_fileportinfo *fds))completion {
     [self getNumberOfFilePortsInProcess:pid queue:queue completion:^(int count) {
+        DLog(@"getNumberOfFilePortsInProcess:%@ finished with count=%@", @(pid), @(count));
         const int size = count * sizeof(struct proc_fileportinfo);
         if (size <= 0) {
             dispatch_async(queue, ^{
@@ -248,6 +254,7 @@
                           buffersize:size
                                reqid:[self nextReqid]
                           completion:^(int rc, NSData * _Nonnull buffer) {
+            DLog(@"List file ports for pid %@ finished with rc %@", @(pid), @(rc));
             if (rc <= 0) {
                 dispatch_async(queue, ^{
                     completion(0, NULL);
@@ -272,6 +279,7 @@
                       buffersize:sizeof(struct proc_vnodepathinfo)
                            reqid:[self nextReqid]
                       completion:^(int ret, NSData * _Nonnull buffer) {
+        DLog(@"Get path info for pid %@ finished with rc %@", @(pid), @(ret));
         if (ret <= 0) {
             // An error occurred
             DLog(@"Failed with error %d", ret);

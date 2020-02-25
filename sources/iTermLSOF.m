@@ -141,6 +141,7 @@
         }];
     }];
     dispatch_group_notify(group, queue, ^{
+        DLog(@"Get process IDs finished with results: %@", results);
         completion(results);
     });
 }
@@ -185,6 +186,7 @@
                                        length:(int)count
                                        ofType:(int)fdType
                                         block:(void(^)(struct socket_fdinfo *, BOOL *))block {
+    DLog(@"enumerate file descriptors in pid %@ count=%@", @(pid), @(count));
     BOOL stop = NO;
     for (int j = 0; j < count; j++) {
         struct proc_fdinfo *fdinfo = &fds[j];
@@ -214,6 +216,7 @@
     dispatch_group_enter(group);
     [[iTermPidInfoClient sharedInstance] getPortsInProcess:pid queue:queue completion:^(int count,
                                                                                         struct proc_fileportinfo * _Nonnull filePortInfoArray) {
+        DLog(@"Found %@ ports in %@ filePortInfoArray=%p", @(count), @(pid), filePortInfoArray);
         if (filePortInfoArray) {
             [self enumerateFileDescriptorsInfoInProcess:pid
                                   withFilePortInfoArray:filePortInfoArray
@@ -225,8 +228,11 @@
             return;
         }
 
+        DLog(@"getting file descriptors...");
         [[iTermPidInfoClient sharedInstance] getFileDescriptorsForProcess:pid queue:queue completion:^(int count, struct proc_fdinfo * _Nonnull fds) {
+            DLog(@"getFileDescriptorsForProcess %@ finished with count=%@ fds=%p", @(pid), @(count), fds);
             if (!fds) {
+                DLog(@"FAILED to get file descriptors for %@", @(pid));
                 dispatch_group_leave(group);
                 return;
             }
@@ -455,6 +461,7 @@
     dispatch_group_enter(group);
     __block NSString *result = nil;
     [self asyncWorkingDirectoryOfProcess:pid queue:queue block:^(NSString *pwd) {
+        DLog(@"Get result for pid: %@", @(pid), pwd);
         result = pwd;
         dispatch_group_leave(group);
     }];
@@ -481,6 +488,7 @@
     [[iTermPidInfoClient sharedInstance] getWorkingDirectoryOfProcessWithID:pid
                                                                       queue:queue
                                                                  completion:^(NSString *rawDir) {
+        DLog(@"getWorkingDirectoyrOfProcessWithID:%@ returned %@", @(pid), rawDir);
         if (!rawDir) {
             DLog(@"Failed to get working directory of %@", @(pid));
         }

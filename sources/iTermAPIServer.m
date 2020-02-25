@@ -230,16 +230,20 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // run on _queue
 - (void)reallyDidAcceptConnection:(iTermHTTPConnection *)connection
                           retries:(NSInteger)retries {
+    DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
     dispatch_queue_t queue = _queue;
     [iTermLSOF getProcessIDsWithConnectionFromAddress:connection.clientAddress
                                                 queue:queue
                                            completion:^(NSArray<NSNumber *> *pids) {
         if (!pids.count) {
+            DLog(@"Failed to get process IDs for the connection. retries=%@", @(retries));
             if (retries > 0) {
                 // There seems to be a race where the kernel doesn't always
                 // report that a process ID has a file descriptor matching this
                 // address. Wait a bit and try again. Issue 8684.
+                DLog(@"Will try again in .25 sec");
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), queue, ^{
+                    DLog(@"Trying again");
                     [self reallyDidAcceptConnection:connection
                                             retries:retries - 1];
                 });
@@ -271,6 +275,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 // _queue
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection pids:(NSArray<NSNumber *> *)pids completion:(void (^)(BOOL, NSString *))completion {
+    DLog(@"startRequest for pids %@", pids);
     dispatch_async(connection.queue, ^{
         NSURLRequest *request = [connection readRequest];
         dispatch_async(self->_queue, ^{
