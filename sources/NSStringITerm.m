@@ -2224,6 +2224,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (NSString *)stringByAppendingPathComponents:(NSArray<NSString *> *)pathComponents {
+    NSString *result = self;
+    for (NSString *component in pathComponents) {
+        result = [result stringByAppendingPathComponent:component];
+    }
+    return result;
+}
+        
 - (NSArray<NSString *> *)it_normalizedTokens {
     NSMutableArray<NSString *> *tokens = [NSMutableArray array];
     [self enumerateSubstringsInRange:NSMakeRange(0, self.length)

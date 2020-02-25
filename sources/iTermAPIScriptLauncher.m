@@ -215,7 +215,17 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                  withVirtualEnv:virtualenv
                                   pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
-    task.environment = [self environmentFromEnvironment:task.environment shell:[iTermOpenDirectory userShell] cookie:cookie key:key];
+    NSString *standardEnv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+    NSString *searchPath = [iTermPythonRuntimeDownloader.sharedInstance pathToStandardPyenvWithVersion:pythonVersion
+                                        creatingSymlinkIfNeeded:NO];
+    NSString *path = [searchPath stringByAppendingPathComponent:@"versions"];
+    NSString *standardPythonVersion = [[iTermPythonRuntimeDownloader bestPythonVersionAt:path] it_twoPartVersionNumber];
+    task.environment = [self environmentFromEnvironment:task.environment
+                                                  shell:[iTermOpenDirectory userShell]
+                                                 cookie:cookie
+                                                    key:key
+                                             virtualenv:virtualenv ?: standardEnv
+                                          pythonVersion:pythonVersion ?: standardPythonVersion];
 
     NSPipe *pipe = [[NSPipe alloc] init];
     [task setStandardOutput:pipe];
@@ -230,7 +240,9 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (NSDictionary *)environmentFromEnvironment:(NSDictionary *)initialEnvironment
                                        shell:(NSString *)shell
                                       cookie:(NSString *)cookie
-                                         key:(NSString *)key {
+                                         key:(NSString *)key
+                                  virtualenv:(NSString *)virtualenv
+                               pythonVersion:(NSString *)pythonVersion {
     NSMutableDictionary *environment = [initialEnvironment ?: @{} mutableCopy];
 
     environment[@"ITERM2_COOKIE"] = cookie;
@@ -240,6 +252,25 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         environment[@"SHELL"] = shell;
     }
     environment[@"PYTHONIOENCODING"] = @"utf-8";
+    
+    // OpenSSL bakes in the directory where you compiled it so it can find root certs.
+    // That works great if you happen to be me, but it seems that most people aren't.
+    // Luckily it lets you set some environment variables to find cert stores.
+    NSString *version = [[virtualenv stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    environment[@"SSL_CERT_FILE"] = [version stringByAppendingPathComponents:@[
+        @"lib",
+        [NSString stringWithFormat:@"python%@", pythonVersion],
+        @"site-packages",
+        @"pip",
+        @"_vendor",
+        @"certifi",
+        @"cacert.pem"
+    ]];
+    environment[@"SSL_CERT_DIR"] = [version stringByAppendingPathComponents:@[
+        @"openssl",
+        @"ssl",
+        @"certs"
+    ]];
     return environment;
 }
 
