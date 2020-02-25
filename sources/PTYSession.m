@@ -12054,6 +12054,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
 
+    if (!pwd) {
+        DLog(@"nil result. Don't create a mark");
+        return;
+    }
+
     // Updates the mark
     DLog(@"Will create a mark");
     [self.screen setWorkingDirectory:pwd
