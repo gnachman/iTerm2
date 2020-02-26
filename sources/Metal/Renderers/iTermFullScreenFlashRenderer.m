@@ -23,6 +23,13 @@
             error:NULL];
 }
 
+- (vector_float4)premultipliedColor {
+    return simd_make_float4(_color.x * _color.w,
+                            _color.y * _color.w,
+                            _color.z * _color.w,
+                            _color.w);
+}
+
 @end
 
 @implementation iTermFullScreenFlashRenderer {
@@ -36,7 +43,7 @@
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermFullScreenFlashVertexShader"
                                                fragmentFunctionName:@"iTermFullScreenFlashFragmentShader"
-                                                           blending:[[iTermMetalBlending alloc] init]
+                                                           blending:[iTermMetalBlending premultipliedCompositing]
                                                 transientStateClass:[iTermFullScreenFlashRendererTransientState class]];
         _colorBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
     }
@@ -54,11 +61,11 @@
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermFullScreenFlashRendererTransientState *tState = transientState;
-    if (tState.color.w > 0) {
+    const vector_float4 color = tState.premultipliedColor;
+    if (color.w > 0) {
         CGSize size = CGSizeMake(transientState.configuration.viewportSize.x,
                                  transientState.configuration.viewportSize.y);
         id<MTLBuffer> vertexBuffer = [_metalRenderer newQuadOfSize:size poolContext:tState.poolContext];
-        vector_float4 color = simd_make_float4(tState.color.x, tState.color.y, tState.color.z, tState.color.w);
         id<MTLBuffer> colorBuffer = [_colorBufferPool requestBufferFromContext:tState.poolContext
                                                                      withBytes:&color
                                                                 checkIfChanged:YES];
