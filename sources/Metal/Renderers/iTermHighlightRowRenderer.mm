@@ -10,6 +10,7 @@
 
 namespace iTerm2 {
     struct Highlight {
+        // premultiplied
         vector_float4 color;
         int row;
     };
@@ -42,7 +43,10 @@ namespace iTerm2 {
 
 - (void)setOpacity:(CGFloat)opacity color:(vector_float3)color row:(int)row {
     iTerm2::Highlight h = {
-        .color = simd_make_float4(color.x, color.y, color.z, opacity),
+        .color = simd_make_float4(color.x * opacity,
+                                  color.y * opacity,
+                                  color.z * opacity,
+                                  opacity),
         .row = row
     };
     _highlights.push_back(h);
@@ -67,7 +71,7 @@ namespace iTerm2 {
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermHighlightRowVertexShader"
                                                   fragmentFunctionName:@"iTermHighlightRowFragmentShader"
-                                                              blending:[[iTermMetalBlending alloc] init]
+                                                              blending:[iTermMetalBlending compositeSourceOver]
                                                         piuElementSize:0
                                                    transientStateClass:[iTermHighlightRowRendererTransientState class]];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
