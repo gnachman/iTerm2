@@ -142,7 +142,7 @@ typedef struct {
             _tabBarBacking = [[iTermTabBarBacking alloc] init];
             _tabBarBacking.hidesWhenTabBarHidden = [delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
             _tabBarBacking.autoresizesSubviews = YES;
-            _tabBarBacking.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+            _tabBarBacking.blendingMode = NSVisualEffectBlendingModeBehindWindow;
             _tabBarBacking.material = NSVisualEffectMaterialTitlebar;
             _tabBarBacking.state = NSVisualEffectStateActive;
         }
