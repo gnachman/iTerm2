@@ -5314,12 +5314,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)setNeedsDisplayOnLine:(int)y inRange:(VT100GridRange)range {
     NSRect dirtyRect;
-    const int x = range.location;
+    const BOOL allowPartialLineRedraw = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+    const int x = allowPartialLineRedraw ? range.location : 0;
     const int maxX = range.location + range.length;
 
     dirtyRect.origin.x = [iTermAdvancedSettingsModel terminalMargin] + x * _charWidth;
     dirtyRect.origin.y = y * _lineHeight;
-    dirtyRect.size.width = (maxX - x) * _charWidth;
+    dirtyRect.size.width = allowPartialLineRedraw ? (maxX - x) * _charWidth : _dataSource.width;
     dirtyRect.size.height = _lineHeight;
 
     if (_drawingHelper.showTimestamps) {

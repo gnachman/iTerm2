@@ -2202,9 +2202,22 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     BOOL previousDrawable = YES;
     screen_char_t predecessor = { 0 };
 
+    // Only defined if not preferring speed to full ligature support.
+    BOOL lastWasNull = NO;
+    
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
+        if (!_preferSpeedToFullLigatureSupport) {
+            if (c.code == 0) {
+                if (!lastWasNull) {
+                    c.code = ' ';
+                }
+                lastWasNull = YES;
+            } else {
+                lastWasNull = NO;
+            }
+        }
         const unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
