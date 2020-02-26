@@ -303,7 +303,9 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         queues = [NSMutableArray array];
     });
     dispatch_queue_t q = dispatch_queue_create("com.iterm2.script-launcher", NULL);
-    [queues addObject:q];
+    @synchronized(queues) {
+        [queues addObject:q];
+    }
     dispatch_async(q, ^{
         NSFileHandle *readHandle = [pipe fileHandleForReading];
         NSData *inData = [readHandle availableData];
@@ -339,7 +341,9 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             }
             [entry stopRunning];
         });
-        [queues removeObject:q];
+        @synchronized(queues) {
+            [queues removeObject:q];
+        }
     });
 }
 
