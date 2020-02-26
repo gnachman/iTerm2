@@ -143,7 +143,7 @@ static CGFloat DegreesToRadians(double radians) {
         
         NSBitmapImageRep *rep = image.bitmapImageRep;
         NSData *data = [rep representationUsingType:NSPNGFileType
-                                         properties:@{ NSImageInterlaced: @NO,
+                                         properties:@{ NSImageInterlaced: @0,
                                                        NSImageCompressionFactor: @1 }];
         CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef)data);
         CGImageRef cgImage = CGImageCreateWithPNGDataProvider(provider,
