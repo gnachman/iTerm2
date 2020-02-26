@@ -6961,6 +6961,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             // No action
             return NO;
 
+        case KEY_ACTION_IGNORE:
+            return YES;
+
         case KEY_ACTION_MOVE_TAB_LEFT:
         case KEY_ACTION_MOVE_TAB_RIGHT:
         case KEY_ACTION_NEXT_MRU_TAB:
@@ -6984,7 +6987,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
-        case KEY_ACTION_IGNORE:
         case KEY_ACTION_IR_FORWARD:
         case KEY_ACTION_IR_BACKWARD:
         case KEY_ACTION_SELECT_PANE_LEFT:
