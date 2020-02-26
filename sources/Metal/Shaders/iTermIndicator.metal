@@ -36,6 +36,7 @@ iTermIndicatorFragmentShader(iTermIndicatorVertexFunctionOutput in [[stage_in]],
 
     float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     colorSample.w *= *alpha;
+    colorSample.xyz *= colorSample.w;
     return colorSample;
 }
 
