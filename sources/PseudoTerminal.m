@@ -10650,8 +10650,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)updateDocumentEdited {
+    if ([iTermAdvancedSettingsModel disableDocumentedEditedIndicator]) {
+        self.window.documentEdited = NO;
+        return;
+    }
     self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return ![[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue] && session.hasNontrivialJob;
+        if ([[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+            return NO;
+        }
+        return session.hasNontrivialJob;
     }];
 }
 

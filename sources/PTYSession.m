@@ -1942,15 +1942,19 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)hasNontrivialJob {
     DLog(@"Checking for a nontrivial job...");
     pid_t thePid = [_shell pid];
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
-    if (!info) {
+    iTermProcessInfo *rootInfo = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
+    if (!rootInfo) {
         return NO;
     }
     // iTerm2 --launch_shell could be a child job temporarily.
-    DLog(@"Ignoring %@", [self jobsToIgnore]);
+    NSSet<NSString *> *jobToIgnore = [self jobsToIgnore];
+    DLog(@"Ignoring %@", jobToIgnore);
     __block BOOL result = NO;
-    [info enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
+    [rootInfo enumerateTree:^(iTermProcessInfo *info, BOOL *stop) {
         if ([self processIsTrivial:info]) {
+            return;
+        }
+        if ([jobToIgnore containsObject:info.name]) {
             return;
         }
         DLog(@"Process with name %@ and command line %@ is nontrivial", info.name, info.commandLine);
