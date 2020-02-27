@@ -511,22 +511,23 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     if ([[fullPath pathExtension] isEqualToString:@"scpt"]) {
-        NSAppleScript *script;
-        NSDictionary *errorInfo = nil;
         NSURL *aURL = [NSURL fileURLWithPath:fullPath];
 
         // Make sure our script suite registry is loaded
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
-
-        script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
-        if (script) {
-            [script executeAndReturnError:&errorInfo];
-            if (errorInfo) {
-                [self showAlertForScript:fullPath error:errorInfo];
-            }
-        } else {
-            [self showAlertForScript:fullPath error:errorInfo];
+        NSError *error = nil;
+        NSUserAppleScriptTask *script = [[NSUserAppleScriptTask alloc] initWithURL:aURL error:&error];
+        if (!script) {
+            [self showAlertForScript:fullPath error:error];
+            return;
         }
+        [script executeWithAppleEvent:nil completionHandler:^(NSAppleEventDescriptor * _Nullable result, NSError * _Nullable error) {
+            if (error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self showAlertForScript:fullPath error:error];
+                });
+            }
+        }];
         return;
     }
     if ([[NSFileManager defaultManager] itemIsDirectory:fullPath]) {
@@ -976,17 +977,11 @@ NS_ASSUME_NONNULL_BEGIN
     [scriptMenu addItem:altItem];
 }
 
-- (void)showAlertForScript:(NSString *)fullPath error:(NSDictionary *)errorInfo {
-    NSValue *range = errorInfo[NSAppleScriptErrorRange];
-    NSString *location = @"Location of error not known.";
-    if (range) {
-        location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
-                    (int)[range rangeValue].location];
-    }
+- (void)showAlertForScript:(NSString *)fullPath error:(NSError *)error {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Problem running script";
-    alert.informativeText = [NSString stringWithFormat:@"The script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
-                             fullPath, errorInfo[NSAppleScriptErrorMessage], location];
+    alert.informativeText = [NSString stringWithFormat:@"The script at “%@” failed:\n\n%@",
+                             fullPath, error.localizedFailureReason];
     [alert runModal];
 }
 
