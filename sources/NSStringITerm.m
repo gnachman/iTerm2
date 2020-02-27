@@ -142,6 +142,12 @@
     return [NSString stringWithString:aMutableString];
 }
 
+- (NSString *)stringEscapedForBash {
+    NSMutableString *aMutableString = [[NSMutableString alloc] initWithString:self];
+    [aMutableString escapeShellCharactersForBash];
+    return [NSString stringWithString:aMutableString];
+}
+
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSMutableString *aMutableString = [[NSMutableString alloc] initWithString:self];
     [aMutableString escapeShellCharactersIncludingNewlines:includingNewlines];
@@ -2272,6 +2278,11 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [self escapeCharacters:charsToEscape];
 }
 
+- (void)escapeShellCharactersForBash {
+    [self escapeShellCharactersWithSingleQuotesIncludingNewlines:YES
+                                                         forBash:YES];
+}
+        
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     if ([iTermAdvancedSettingsModel escapeWithQuotes]) {
         [self escapeShellCharactersWithSingleQuotesIncludingNewlines:includingNewlines];
@@ -2281,6 +2292,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)escapeShellCharactersWithSingleQuotesIncludingNewlines:(BOOL)includingNewlines {
+    return [self escapeShellCharactersWithSingleQuotesIncludingNewlines:includingNewlines
+                                                                forBash:NO];
+}
+        
+- (void)escapeShellCharactersWithSingleQuotesIncludingNewlines:(BOOL)includingNewlines
+                                                       forBash:(BOOL)forBash {
     // Only need to escape single quote and backslash in a single-quoted string
     NSMutableString *charsToEscape = [@"\\'" mutableCopy];
     NSMutableCharacterSet *charsToSearch = [NSMutableCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
@@ -2289,8 +2306,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         [charsToSearch addCharactersInString:@"\r\n"];
     }
     if ([self rangeOfCharacterFromSet:charsToSearch].location != NSNotFound) {
-        [self escapeCharacters:charsToEscape];
-        [self insertString:@"'" atIndex:0];
+        [self escapeCharacters:charsToEscape forBash:forBash];
+        if (forBash) {
+            [self insertString:@"$'" atIndex:0];
+        } else {
+            [self insertString:@"'" atIndex:0];
+        }
         [self appendString:@"'"];
     }
 }
@@ -2304,9 +2325,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)escapeCharacters:(NSString *)charsToEscape {
+    [self escapeCharacters:charsToEscape forBash:NO];
+}
+
+- (void)escapeCharacters:(NSString *)charsToEscape forBash:(BOOL)forBash {
     for (int i = 0; i < [charsToEscape length]; i++) {
         NSString *before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
         NSString *after = [@"\\" stringByAppendingString:before];
+        if (forBash & [before isEqualToString:@"'"]) {
+            after = @"\\x27";
+        }
         [self replaceOccurrencesOfString:before
                               withString:after
                                  options:0

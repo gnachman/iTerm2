@@ -77,6 +77,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSUInteger)numberOfLines;
 // May use single quotes by user preference. Only safe to use with user's default shell.
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
+
+// foo' -> $'foo\\x27'
+// Suitable for use as bash -c 'escaped string'
+- (NSString *)stringEscapedForBash;
+
 // Always uses backslash.
 - (NSString *)stringWithBackslashEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
 - (NSString *)stringWithEscapedShellCharactersExceptTabAndNewline;
@@ -323,6 +328,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (void)escapeShellCharactersIncludingNewlines:(BOOL)includingNewlines;
 - (void)escapeShellCharactersWithBackslashIncludingNewlines:(BOOL)includingNewlines;
 - (void)escapeShellCharactersExceptTabAndNewline;
+
+// foo' -> $'foo\\x27'
+- (void)escapeShellCharactersForBash;
 
 // Convenience method to append a single character.
 - (void)appendCharacter:(unichar)c;
