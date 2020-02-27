@@ -318,10 +318,10 @@
                                               lineNumber:(NSString *)lineNumber
                                             columnNumber:(NSString *)columnNumber {
     return
-    @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-       kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-       kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
-       kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @"",
+    @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringEscapedForBash] ?: @"",
+       kSemanticHistorySuffixSubstitutionKey: [suffix stringEscapedForBash] ?: @"",
+       kSemanticHistoryPathSubstitutionKey: [path stringEscapedForBash] ?: @"",
+       kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringEscapedForBash] ?: @"",
        kSemanticHistoryLineNumberKey: lineNumber ?: @"",
        kSemanticHistoryColumnNumberKey: columnNumber ?: @""
        };
