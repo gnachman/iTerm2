@@ -26,6 +26,7 @@
     IBOutlet NSTextField *_answerBackStringLabel;
     IBOutlet NSButton *_xtermMouseReporting;
     IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
+    IBOutlet NSButton *_xtermMouseReportingAllowClicksAndDrags;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowPasteBracketing;
     IBOutlet NSButton *_disablePrinting;
@@ -124,10 +125,16 @@
             return;
         }
         [strongSelf->_xtermMouseReportingAllowMouseWheel setEnabled:[strongSelf boolForKey:KEY_XTERM_MOUSE_REPORTING]];
+        [strongSelf->_xtermMouseReportingAllowClicksAndDrags setEnabled:[strongSelf boolForKey:KEY_XTERM_MOUSE_REPORTING]];
     };
 
     [self defineControl:_xtermMouseReportingAllowMouseWheel
                     key:KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_xtermMouseReportingAllowClicksAndDrags
+                    key:KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

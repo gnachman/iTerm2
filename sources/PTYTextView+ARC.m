@@ -375,6 +375,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return [[self delegate] xtermMouseReportingAllowMouseWheel];
 }
 
+- (BOOL)xtermMouseReportingAllowClicksAndDrags {
+    return [[self delegate] xtermMouseReportingAllowClicksAndDrags];
+}
+
 // If mouse reports are sent to the delegate, will it use them? Use with -xtermMouseReporting, which
 // understands Option to turn off reporting.
 - (BOOL)terminalWantsMouseReports {

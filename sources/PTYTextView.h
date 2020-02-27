@@ -55,6 +55,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
+- (BOOL)xtermMouseReportingAllowClicksAndDrags;
 - (BOOL)isPasting;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;

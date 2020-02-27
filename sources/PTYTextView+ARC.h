@@ -73,6 +73,7 @@ iTermURLActionHelperDelegate>
 
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
+- (BOOL)xtermMouseReportingAllowClicksAndDrags;
 - (BOOL)terminalWantsMouseReports;
 
 #pragma mark - Quicklook

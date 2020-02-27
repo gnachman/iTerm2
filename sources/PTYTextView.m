@@ -5791,6 +5791,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
         return NO;
     }
+    if (!self.xtermMouseReportingAllowClicksAndDrags) {
+        if (event.type == NSEventTypeLeftMouseDown ||
+            event.type == NSEventTypeLeftMouseUp ||
+            event.type == NSEventTypeLeftMouseDragged ||
+            event.type == NSEventTypeRightMouseDown ||
+            event.type == NSEventTypeRightMouseUp ||
+            event.type == NSEventTypeRightMouseDragged ||
+            event.type == NSEventTypeOtherMouseDown ||
+            event.type == NSEventTypeOtherMouseUp ||
+            event.type == NSEventTypeOtherMouseDragged) {
+            return NO;
+        }
+    }
     if (event.type == NSEventTypeScrollWheel) {
         return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
     } else {

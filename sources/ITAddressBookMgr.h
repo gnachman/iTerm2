@@ -174,6 +174,7 @@
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL @"Mouse Reporting allow mouse wheel"
+#define KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS @"Mouse Reporting allow clicks and drags"
 #define KEY_UNICODE_VERSION                   @"Unicode Version"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
