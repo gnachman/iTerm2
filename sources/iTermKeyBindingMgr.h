@@ -137,6 +137,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
 
 // Remove an item from the bookmark's keymappings by index.
 + (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark;
++ (void)removeAllMappingsInProfile:(MutableProfile *)profile;
 
 + (NSDictionary *)dictionaryByRemovingTouchBarItem:(NSString *)key fromDictionary:(NSDictionary *)dictionary;
 
@@ -171,7 +172,10 @@ typedef NS_ENUM(int, KEY_ACTION) {
 
 // Load a set of preset keymappings from GlobalKeyMap.plist into the global
 // keymappings, removing all previous mappings.
-+ (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
++ (void)removeAllGlobalKeyMappings;
++ (void)setGlobalKeyMappingsToPreset:(NSString *)presetName byReplacingAll:(BOOL)replaceAll;
++ (NSSet<NSString *> *)keysInGlobalPreset:(NSString *)presetName;
++ (NSSet<NSString *> *)keysInGlobalMapping;
 
 + (NSArray *)sortedGlobalKeyCombinations;
 + (NSArray *)sortedKeyCombinationsForProfile:(Profile *)profile;

@@ -444,6 +444,20 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     return [iTermKeyBindingMgr globalTouchBarMap];
 }
 
+- (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeys:(NSSet<NSString *> *)keysThatWillChange {
+    NSSet<NSString *> *keysInGlobalMapping = [iTermKeyBindingMgr keysInGlobalMapping];
+    if (![keysInGlobalMapping isSubsetOfSet:keysThatWillChange]) {
+        NSNumber *n = [viewController removeBeforeLoading:@"importing mappings"];
+        if (!n) {
+            return NO;
+        }
+        if (n.boolValue) {
+            [iTermKeyBindingMgr removeAllGlobalKeyMappings];
+        }
+    }
+    return YES;
+}
+
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
       didChangeKey:(NSString *)theKey
     isTouchBarItem:(BOOL)isTouchBarItem
@@ -505,10 +519,44 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
   loadPresetsNamed:(NSString *)presetName {
-    [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName];
+
+    NSSet<NSString *> *keysThatWillChange = [iTermKeyBindingMgr keysInGlobalPreset:presetName];
+    NSSet<NSString *> *keysInGlobalMapping = [iTermKeyBindingMgr keysInGlobalMapping];
+    BOOL replaceAll = YES;
+    if (![keysInGlobalMapping isSubsetOfSet:keysThatWillChange]) {
+        NSNumber *n = [viewController removeBeforeLoading:@"loading preset"];
+        if (!n) {
+            return;
+        }
+        replaceAll = n.boolValue;
+    }
+
+    [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName byReplacingAll:replaceAll];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (NSNumber *)removeBeforeLoading:(NSString *)thing {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Remove all key mappings before loading %@?", thing]
+                               actions:@[ @"Keep", @"Remove", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"RemoveExistingGlobalKeyMappingsBeforeLoading"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Load Preset"
+                                window:self.view.window];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return @NO;
+        case kiTermWarningSelection1:
+            return @YES;
+        case kiTermWarningSelection2:
+            return nil;
+        default:
+            assert(NO);
+    }
+    return nil;
 }
 
 - (NSTabView *)tabView {

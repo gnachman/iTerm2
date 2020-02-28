@@ -12,6 +12,7 @@
 #import "iTermEditKeyActionWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermPreferencesBaseViewController.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
@@ -373,6 +374,12 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
     NSDictionary *dict = [NSDictionary castFrom:decoded];
     NSDictionary *keymappings = [NSDictionary castFrom:dict[INTERCHANGE_KEY_MAPPING_DICT]];
+    NSSet<NSString *> *keysThatWillChange = [NSSet setWithArray:keymappings.allKeys];
+
+    if (![self.delegate keyMapping:self shouldImportKeys:keysThatWillChange]) {
+        return;
+    }
+
     for (NSString *key in keymappings) {
         if (![key isKindOfClass:[NSString class]]) {
             continue;
@@ -419,6 +426,28 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                             label:label
                        isAddition:YES];
     }
+}
+
+- (NSNumber *)removeBeforeLoading:(NSString *)thing {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Remove all key mappings before %@?", thing]
+                               actions:@[ @"Keep", @"Remove", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"RemoveExistingGlobalKeyMappingsBeforeLoading"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Load Preset"
+                                window:self.view.window];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return @NO;
+        case kiTermWarningSelection1:
+            return @YES;
+        case kiTermWarningSelection2:
+            return nil;
+        default:
+            assert(NO);
+    }
+    return nil;
 }
 
 - (void)exportMenuItem:(id)sender {

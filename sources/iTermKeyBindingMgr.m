@@ -684,8 +684,7 @@ exit:
 + (void)_loadGlobalKeyMap {
     globalKeyMap = [[NSUserDefaults standardUserDefaults] objectForKey:@"GlobalKeyMap"];
     if (!globalKeyMap) {
-        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];
-        globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+        globalKeyMap = self.defaultGlobalKeyMap;
     }
     [globalKeyMap retain];
 }
@@ -782,6 +781,10 @@ exit:
                  forKey:KEY_KEYBOARD_MAP];
 }
 
++ (void)removeAllMappingsInProfile:(MutableProfile *)profile {
+    profile[KEY_KEYBOARD_MAP] = @{};
+}
+
 + (void)removeTouchBarItemWithKey:(NSString *)key inMutableProfile:(MutableProfile *)profile {
     NSDictionary *map = profile[KEY_TOUCHBAR_MAP];
     map = [self dictionaryByRemovingTouchBarItem:key fromDictionary:map];
@@ -792,10 +795,41 @@ exit:
     return @[ kFactoryDefaultsGlobalPreset ];
 }
 
-+ (void)setGlobalKeyMappingsToPreset:(NSString*)presetName
-{
++ (NSDictionary *)defaultGlobalKeyMap {
+    NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];
+    return [NSDictionary dictionaryWithContentsOfFile:plistFile];
+}
+
++ (NSSet<NSString *> *)keysInGlobalPreset:(NSString *)presetName {
+    return [NSSet setWithArray:self.defaultGlobalKeyMap.allKeys];
+}
+
++ (NSSet<NSString *> *)keysInGlobalMapping {
+    return [NSSet setWithArray:[[self globalKeyMap] allKeys]];
+}
+
++ (void)removeAllGlobalKeyMappings {
+    if (globalKeyMap) {
+        [globalKeyMap release];
+        globalKeyMap = [[NSDictionary alloc] init];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:@{} forKey:@"GlobalKeyMap"];
+}
+
++ (void)setGlobalKeyMappingsToPreset:(NSString *)presetName byReplacingAll:(BOOL)replaceAll {
     assert([presetName isEqualToString:kFactoryDefaultsGlobalPreset]);
     if (globalKeyMap) {
+        if (!replaceAll) {
+            NSMutableDictionary *temp = [[globalKeyMap mutableCopy] autorelease];
+            [self.defaultGlobalKeyMap enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+                temp[key] = obj;
+            }];
+            [globalKeyMap autorelease];
+            globalKeyMap = [temp retain];
+            [[NSUserDefaults standardUserDefaults] setObject:globalKeyMap forKey:@"GlobalKeyMap"];
+            return;
+        }
+
         [globalKeyMap release];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"GlobalKeyMap"];
     }

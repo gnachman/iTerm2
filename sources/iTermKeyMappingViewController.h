@@ -42,6 +42,8 @@
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
     loadPresetsNamed:(NSString *)presetName;
 
+- (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeys:(NSSet<NSString *> *)keys;
+
 @end
 
 @interface iTermKeyMappingViewController : NSViewController <
@@ -56,5 +58,6 @@
 
 - (void)hideAddTouchBarItem;
 - (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc;
+- (NSNumber *)removeBeforeLoading:(NSString *)thing;
 
 @end
