@@ -1300,6 +1300,9 @@ exit:
             action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
             action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
             action == KEY_ACTION_SET_PROFILE) {
+            if (![keyMap isKindOfClass:[NSDictionary class]]) {
+                return;
+            }
             NSString *referencedGuid = keyMap[iTermKeyBindingDictionaryKeyParameter];
             if ([referencedGuid isEqualToString:guid]) {
                 theKey = [[key copy] autorelease];
