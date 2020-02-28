@@ -8642,7 +8642,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.naggingController didDetectMouseReportingFrustration];
 }
 
+- (BOOL)textViewCanBury {
+    return !_synthetic;
+}
+
 - (void)bury {
+    if (_synthetic) {
+        DLog(@"Attempt to bury while synthetic");
+        return;
+    }
     if (self.isTmuxClient) {
         if (!self.delegate) {
             return;

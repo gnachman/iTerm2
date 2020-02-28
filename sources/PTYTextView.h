@@ -201,6 +201,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor;
 - (void)textViewDidUpdateDropTargetVisibility;
 - (void)textViewDidDetectMouseReportingFrustration;
+- (BOOL)textViewCanBury;
+
 @end
 
 @interface iTermHighlightedRow : NSObject
