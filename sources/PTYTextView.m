@@ -3450,7 +3450,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSSavePanel* panel = [NSSavePanel savePanel];
 
     NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
-    [panel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs"];
+    [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs" savePanel:panel];
     panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
     panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
     panel.allowsOtherFileTypes = NO;
@@ -4069,7 +4069,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Show the save panel. The first time it's done set the path, and from then on the save panel
     // will remember the last path you used.tmp
-    [aSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:"];
+    [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
     if ([aSavePanel runModal] == NSFileHandlingPanelOKButton) {
         if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
