@@ -44,7 +44,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
             NSString *path = [self downloadsDirectory];
             if (path) {
                 NSURL *url = [NSURL fileURLWithPath:path];
-                [panel setDirectoryURL:url onceForID:@"TerminalFile"];
+                [panel setDirectoryURL:url onceForID:@"TerminalFile" savePanel:panel];
             }
             panel.nameFieldStringValue = @"";
 
