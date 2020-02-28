@@ -453,10 +453,36 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
 
-    NSMutableDictionary *dict = [profile mutableCopy];
-
-    [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:dict];
-    [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
+    NSSet<NSString *> *keysThatWillChange = [iTermKeyBindingMgr keysInKeyMappingPresetWithName:presetName];
+    NSSet<NSString *> *keysInProfile = [iTermKeyBindingMgr keysInKeyMappingsInProfile:profile];
+    BOOL replaceAll = YES;
+    if (![keysInProfile isSubsetOfSet:keysThatWillChange]) {
+        const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"Remove all key mappings in this profile before loading preset?"
+                                   actions:@[ @"Keep", @"Remove", @"Cancel" ]
+                                 accessory:nil
+                                identifier:@"RemoveExistingKeyMappingsBeforeLoadingPreset"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Load Preset"
+                                    window:self.view.window];
+        switch (selection) {
+            case kiTermWarningSelection0:
+                replaceAll = NO;
+                break;
+            case kiTermWarningSelection1:
+                replaceAll = YES;
+                break;
+            case kiTermWarningSelection2:
+                return;
+            default:
+                assert(NO);
+        }
+    }
+    Profile *updatedProfile = [iTermKeyBindingMgr profileByLoadingPresetNamed:presetName
+                                                                  intoProfile:profile
+                                                               byReplacingAll:replaceAll];
+    [[self.delegate profilePreferencesCurrentModel] setBookmark:updatedProfile
+                                                       withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];

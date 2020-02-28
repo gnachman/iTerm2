@@ -163,7 +163,11 @@ typedef NS_ENUM(int, KEY_ACTION) {
 
 // Load a set of preset keymappings from PresetKeyMappings.plist into the
 // specified bookmarks, removing all of its previous mappings.
-+ (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;
++ (Profile *)profileByLoadingPresetNamed:(NSString *)presetName
+                             intoProfile:(Profile *)sourceProfile
+                          byReplacingAll:(BOOL)replaceAll;
++ (NSSet<NSString *> *)keysInKeyMappingPresetWithName:(NSString *)presetName;
++ (NSSet<NSString *> *)keysInKeyMappingsInProfile:(Profile *)sourceProfile;
 
 // Load a set of preset keymappings from GlobalKeyMap.plist into the global
 // keymappings, removing all previous mappings.

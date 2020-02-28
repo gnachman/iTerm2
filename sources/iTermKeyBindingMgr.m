@@ -81,6 +81,7 @@
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYTextView.h"   // For selection movement units
 #import <Carbon/Carbon.h>
@@ -812,16 +813,28 @@ exit:
     return [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
 }
 
-+ (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark {
-    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
++ (Profile *)profileByLoadingPresetNamed:(NSString *)presetName
+                             intoProfile:(Profile *)sourceProfile
+                          byReplacingAll:(BOOL)replaceAll {
+    NSDictionary *presetsDict = [self builtInPresetKeyMappings];
+    NSDictionary *preset = presetsDict[presetName];
+    if (replaceAll) {
+        return [sourceProfile dictionaryBySettingObject:preset forKey:KEY_KEYBOARD_MAP];
+    }
+    NSDictionary *sourceMap = sourceProfile[KEY_KEYBOARD_MAP] ?: @{};
+    NSDictionary *updated = [sourceMap dictionaryByMergingDictionary:preset];
+    return [sourceProfile dictionaryBySettingObject:updated forKey:KEY_KEYBOARD_MAP];
+}
 
-    [km removeAllObjects];
-    NSDictionary* presetsDict = [self builtInPresetKeyMappings];
++ (NSSet<NSString *> *)keysInKeyMappingPresetWithName:(NSString *)presetName {
+    NSDictionary *presetsDict = [self builtInPresetKeyMappings];
+    NSDictionary *preset = presetsDict[presetName];
+    return [NSSet setWithArray:preset.allKeys];
+}
 
-    NSDictionary* settings = [presetsDict objectForKey:presetName];
-    [km setDictionary:settings];
-
-    [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
++ (NSSet<NSString *> *)keysInKeyMappingsInProfile:(Profile *)sourceProfile {
+    NSDictionary *keyMapping = sourceProfile[KEY_KEYBOARD_MAP];
+    return [NSSet setWithArray:keyMapping.allKeys];
 }
 
 + (NSArray *)presetKeyMappingsNames {
