@@ -421,21 +421,23 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-         removeKey:(NSString *)keyCombo
-    isTouchBarItem:(BOOL)isTouchBarItem {
+ removeKeyMappings:(NSSet<NSString *> *)keyCombos
+     touchBarItems:(NSSet<NSString *> *)touchBarItems {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
 
     NSMutableDictionary *dict = [profile mutableCopy];
-    if (isTouchBarItem) {
-        [iTermKeyBindingMgr removeTouchBarItemWithKey:keyCombo inMutableProfile:dict];
-    } else {
+    [keyCombos enumerateObjectsUsingBlock:^(NSString * _Nonnull keyCombo, BOOL * _Nonnull stop) {
         NSUInteger index =
-            [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:profile] indexOfObject:keyCombo];
+            [[iTermKeyBindingMgr sortedKeyCombinationsForProfile:dict] indexOfObject:keyCombo];
         assert(index != NSNotFound);
 
         [iTermKeyBindingMgr removeMappingAtIndex:index inBookmark:dict];
-    }
+    }];
+    [touchBarItems enumerateObjectsUsingBlock:^(NSString * _Nonnull key, BOOL * _Nonnull stop) {
+        [iTermKeyBindingMgr removeTouchBarItemWithKey:key inMutableProfile:dict];
+    }];
+
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];

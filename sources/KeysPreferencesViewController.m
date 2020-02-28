@@ -482,16 +482,18 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-         removeKey:(NSString *)key
-    isTouchBarItem:(BOOL)isTouchBarItem {
-    if (isTouchBarItem) {
-        [iTermKeyBindingMgr removeTouchBarItem:key];
-    } else {
+ removeKeyMappings:(NSSet<NSString *> *)keyCombos
+     touchBarItems:(NSSet<NSString *> *)touchBarItems {
+    [keyCombos enumerateObjectsUsingBlock:^(NSString * _Nonnull key, BOOL * _Nonnull stop) {
         NSUInteger index = [[iTermKeyBindingMgr sortedGlobalKeyCombinations] indexOfObject:key];
         assert(index != NSNotFound);
         [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:index
                                                                         inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
-    }
+    }];
+    [touchBarItems enumerateObjectsUsingBlock:^(NSString * _Nonnull key, BOOL * _Nonnull stop) {
+        [iTermKeyBindingMgr removeTouchBarItem:key];
+    }];
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];

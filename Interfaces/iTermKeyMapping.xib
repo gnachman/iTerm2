@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -28,14 +28,14 @@
             <rect key="frame" x="0.0" y="0.0" width="525" height="279"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <scrollView horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="IMN-ot-Emh">
+                <scrollView fixedFrame="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IMN-ot-Emh">
                     <rect key="frame" x="0.0" y="33" width="525" height="246"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                    <clipView key="contentView" id="0Ig-8x-G8g">
+                    <clipView key="contentView" ambiguous="YES" id="0Ig-8x-G8g">
                         <rect key="frame" x="1" y="0.0" width="523" height="245"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="9am-Ja-chV" id="ba5-LU-f2s">
+                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" autosaveName="KeyBingingTable" headerView="9am-Ja-chV" id="ba5-LU-f2s">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
@@ -93,7 +93,7 @@
                         <outlet property="nextKeyView" destination="D4A-qx-BsH" id="0Lx-JL-HpM"/>
                     </connections>
                 </scrollView>
-                <button id="D4A-qx-BsH">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D4A-qx-BsH">
                     <rect key="frame" x="0.0" y="3" width="21" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="jzp-Du-pvI">
@@ -105,19 +105,22 @@
                         <outlet property="nextKeyView" destination="csN-Fw-hKk" id="65i-8U-0aS"/>
                     </connections>
                 </button>
-                <button id="csN-Fw-hKk">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="csN-Fw-hKk">
                     <rect key="frame" x="20" y="3" width="20" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="h8l-hr-iTp">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+CA
+</string>
                     </buttonCell>
                     <connections>
                         <action selector="removeMapping:" target="-2" id="Hyq-qp-lRB"/>
                         <outlet property="nextKeyView" destination="G8O-KW-SKT" id="S2f-cY-YqI"/>
                     </connections>
                 </button>
-                <popUpButton id="G8O-KW-SKT">
+                <popUpButton fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G8O-KW-SKT">
                     <rect key="frame" x="39" y="3" width="144" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <popUpButtonCell key="cell" type="square" title="Presets…" bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="0rv-a0-ans" id="Tmb-OS-Cqe">
@@ -135,7 +138,7 @@
                         <action selector="loadPresets:" target="-2" id="vvS-N2-cM0"/>
                     </connections>
                 </popUpButton>
-                <button id="mE2-Fe-MAY">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mE2-Fe-MAY">
                     <rect key="frame" x="394" y="3" width="131" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" title="Add Touch Bar Item" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="2Vc-Od-Zym">
@@ -147,7 +150,7 @@
                         <outlet property="nextKeyView" destination="csN-Fw-hKk" id="pDo-gD-8zm"/>
                     </connections>
                 </button>
-                <button id="j8M-h4-JJ5">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j8M-h4-JJ5">
                     <rect key="frame" x="264" y="3" width="131" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" title="Touch Bar Mitigations" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" borderStyle="border" inset="2" id="j1Y-sT-5wz">
@@ -166,12 +169,12 @@
             <windowStyleMask key="styleMask" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="167" y="107" width="276" height="135"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="vOR-jf-pJQ">
                 <rect key="frame" x="0.0" y="0.0" width="276" height="135"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <button verticalHuggingPriority="750" id="qMI-f8-C8U">
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qMI-f8-C8U">
                         <rect key="frame" x="18" y="99" width="238" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Haptic feedback when pressing esc" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="T2e-te-qXU">
@@ -182,7 +185,7 @@
                             <action selector="hapticFeedbackToggled:" target="-2" id="nVj-Rt-f1b"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" id="3GM-j0-23l">
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3GM-j0-23l">
                         <rect key="frame" x="18" y="79" width="146" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Key click for esc key" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ziz-Lx-Vmu">
@@ -193,7 +196,7 @@
                             <action selector="soundForEscToggled:" target="-2" id="fTE-Di-jGL"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" id="qxR-eD-9hV">
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qxR-eD-9hV">
                         <rect key="frame" x="18" y="59" width="165" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Visual esc key indicator" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jDm-YT-6t1">
@@ -204,7 +207,7 @@
                             <action selector="visualIndicatorForEscToggled:" target="-2" id="x63-uK-6mM"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" id="Og2-ad-nCU">
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Og2-ad-nCU">
                         <rect key="frame" x="179" y="13" width="81" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="vfN-hY-QgP">

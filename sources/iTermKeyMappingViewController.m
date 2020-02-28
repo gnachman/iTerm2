@@ -213,14 +213,9 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 #pragma mark - NSTableViewDelegate
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
-{
-    int rowIndex = [_tableView selectedRow];
-    if (rowIndex >= 0) {
-        [_removeMappingButton setEnabled:YES];
-    } else {
-        [_removeMappingButton setEnabled:NO];
-    }
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+    const NSUInteger numberSelected = _tableView.selectedRowIndexes.count;
+    _removeMappingButton.enabled = (numberSelected > 0);
 }
 
 #pragma mark - Actions
@@ -246,25 +241,37 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     [self presentEditActionSheet:editActionWindowController];
 }
 
-- (IBAction)removeMapping:(id)sender
-{
-    NSInteger row = [_tableView selectedRow];
-    if (row < 0) {
-        NSBeep();
+- (IBAction)removeMapping:(id)sender {
+    if (_tableView.selectedRowIndexes.count == 0) {
         return;
     }
-    NSArray *sortedKeys = [_delegate keyMappingSortedKeys:self];
-    if (row < sortedKeys.count) {
-        [_delegate keyMapping:self removeKey:sortedKeys[row] isTouchBarItem:NO];
-    } else {
-        row -= sortedKeys.count;
-        sortedKeys = [_delegate keyMappingSortedTouchBarKeys:self];
-        [_delegate keyMapping:self removeKey:sortedKeys[row] isTouchBarItem:YES];
-    }
-    [_tableView reloadData];
+    NSIndexSet *indexes = [_tableView.selectedRowIndexes copy];
+    NSMutableSet<NSString *> *regularKeys = [NSMutableSet set];
+    NSMutableSet<NSString *> *touchBarKeys = [NSMutableSet set];
+    NSArray *sortedRegularKeys = [_delegate keyMappingSortedKeys:self];
+    NSArray *sortedTouchBarKeys = [_delegate keyMappingSortedTouchBarKeys:self];
+
+    [indexes enumerateIndexesUsingBlock:^(NSUInteger row, BOOL * _Nonnull stop) {
+        if (row < sortedRegularKeys.count) {
+            [regularKeys addObject:sortedRegularKeys[row]];
+        } else {
+            [touchBarKeys addObject:sortedTouchBarKeys[row - sortedRegularKeys.count]];
+        }
+    }];
+    [_tableView beginUpdates];
+    [_delegate keyMapping:self removeKeyMappings:regularKeys touchBarItems:touchBarKeys];
+    [_tableView removeRowsAtIndexes:_tableView.selectedRowIndexes withAnimation:YES];
+    [_tableView endUpdates];
+    [_tableView selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
 }
 
 - (void)doubleClick:(id)sender {
+    NSInteger row = [_tableView clickedRow];
+    if (row < 0) {
+        return;
+    }
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+
     int rowIndex = [_tableView selectedRow];
     if (rowIndex < 0) {
         [self addNewMapping:sender];
