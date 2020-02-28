@@ -7824,6 +7824,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         NSRect contentRect = self.view.contentRect;
+        if (contentRect.size.width == 0 ||
+            contentRect.size.height == 0) {
+            return;
+        }
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:self.view
                                                   dirtyRect:dirtyRect
