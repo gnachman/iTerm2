@@ -398,6 +398,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (void)openMenuWithView:(NSView *)view {
     NSView *containingView = view.superview;
+    if (!containingView.window) {
+        return;
+    }
     if (_session) {
         NSMenu *menu = [[NSMenu alloc] init];
         NSString *actionName = [_status stringByReplacingOccurrencesOfString:@"…" withString:@""];
