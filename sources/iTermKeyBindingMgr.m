@@ -360,6 +360,10 @@ exit:
     int action;
     NSString *auxText;
 
+    if (keyInfo != nil && ![keyInfo isKindOfClass:[NSDictionary class]]) {
+        return @"🐞 Bug!";
+    }
+
     action = [[keyInfo objectForKey:iTermKeyBindingDictionaryKeyAction] intValue];
     auxText = [keyInfo objectForKey:iTermKeyBindingDictionaryKeyParameter];
 

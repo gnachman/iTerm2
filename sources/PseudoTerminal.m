@@ -448,6 +448,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
     BOOL _settingStyleMask;
+    BOOL _inWindowDidMove;
 }
 
 @synthesize scope = _scope;
@@ -4371,6 +4372,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowDidMove:(NSNotification *)notification {
     DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
+    if (_inWindowDidMove) {
+        DLog(@"WARNING! Reentrant call to windowDidMove. Return early.");
+        return;
+    }
+    _inWindowDidMove = YES;
     if (self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
         [self canonicalizeWindowFrame];
     }
@@ -4384,6 +4390,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     _windowIsMoving = NO;
     [self updateVariables];
+    _inWindowDidMove = NO;
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
