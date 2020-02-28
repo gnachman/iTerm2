@@ -8704,6 +8704,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_exited) {
         return;
     }
+    if (![text isKindOfClass:[NSString class]]) {
+        DLog(@"text not a string: %@", text);
+        return;
+    }
     if ([text length] > 0) {
         NSString *temp = text;
         temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
