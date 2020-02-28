@@ -3168,7 +3168,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action]==@selector(restartTextViewSession:)) {
         return [_delegate isRestartable];
     } else if ([item action]==@selector(bury:)) {
-        return YES;
+        return [_delegate textViewCanBury];
     }
 
     if ([item action]==@selector(mail:) ||
