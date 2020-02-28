@@ -56,6 +56,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredDrawBottomLineForHorizont
     @"PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar";
 PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
     @"PSMTabBarControlOptionFontSizeOverride";
+PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence = @"PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

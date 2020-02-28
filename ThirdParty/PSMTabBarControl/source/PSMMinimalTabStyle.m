@@ -180,7 +180,8 @@
         NSColor *outerColor;
         NSColor *innerColor;
         const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        const CGFloat alpha = keyMainAndActive ? 0.75 : 0.5;
+        CGFloat prominence = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence] doubleValue];
+        const CGFloat alpha = (keyMainAndActive ? 0.75 : 0.5) * prominence;
         const BOOL tabBarColorIsDark = self.backgroundIsDark;
         if (tabColorIsDark != tabBarColorIsDark) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];

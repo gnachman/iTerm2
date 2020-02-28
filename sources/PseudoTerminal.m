@@ -6915,6 +6915,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel highVisibility]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar]) {
         return @([iTermAdvancedSettingsModel drawBottomLineForHorizontalTabBar]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence]) {
+        return @([iTermAdvancedSettingsModel minimalSelectedTabUnderlineProminence]);
     } else if ([option isEqualToString:PSMTabBarControlOptionFontSizeOverride]) {
         if (![iTermAdvancedSettingsModel useCustomTabBarFontSize]) {
             return nil;

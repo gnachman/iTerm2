@@ -229,6 +229,7 @@ DEFINE_BOOL(drawBottomLineForHorizontalTabBar, YES, SECTION_TABS @"Draw bottom l
 DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?");
 DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advance setting “Custom tab label font size”.");
 DEFINE_FLOAT(customTabBarFontSize, 11.0, SECTION_TABS @"Custom tab label font size\nFor this to take effect, turn on “Use custom font size for tab labels?”.");
+DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence of selected tab underline indicator in Minimal theme when there is at least one colored tab.");
 
 #pragma mark Mouse
 

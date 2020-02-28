@@ -52,6 +52,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimumSpaceForLabel;  //
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility;  // NSNumber boolean
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar;  // NSNumber boolean
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride;  // NSNumber double
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence;  // NSNumber double in 0-1
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>
