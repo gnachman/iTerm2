@@ -162,12 +162,6 @@
         NSRect containingFrame = cell.frame;
         const BOOL isHorizontal = bar.orientation == PSMTabBarHorizontalOrientation;
         if (isHorizontal) {
-            if (bar.cells.lastObject == cell && bar.stretchCellsToFit) {
-                containingFrame = NSMakeRect(NSMinX(cell.frame),
-                                             0,
-                                             bar.frame.size.width - NSMinX(cell.frame),
-                                             bar.height);
-            }
             if (bar.cells.firstObject == cell && self.treatLeftInsetAsPartOfFirstTab) {
                 containingFrame = NSMakeRect(0, 0, NSMaxX(containingFrame), NSHeight(containingFrame));
             }
