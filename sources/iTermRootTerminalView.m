@@ -699,7 +699,10 @@ typedef struct {
 }
 
 - (void)viewDidChangeEffectiveAppearance {
-    [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
+    // This can be called from within -[NSWindow setStyleMask:]
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
+    });
 }
 
 - (void)windowTitleDidChangeTo:(NSString *)title {
