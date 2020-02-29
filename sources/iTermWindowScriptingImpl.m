@@ -48,12 +48,12 @@
                       respectTabbingMode:NO
                                  command:command
                              makeSession:nil
-                          didMakeSession:^(PTYSession * _Nonnull session) {
+                          didMakeSession:nil
+                              completion:^(PTYSession *session, BOOL ok) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
         });
-    }
-                              completion:nil];
+    }];
     return nil;
 }
 
@@ -78,12 +78,12 @@
                       respectTabbingMode:NO
                                  command:command
                              makeSession:nil
-                          didMakeSession:^(PTYSession * _Nonnull session) {
+                          didMakeSession:nil
+                              completion:^(PTYSession *session, BOOL ok) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [scriptCommand resumeExecutionWithResult:[self.ptyDelegate tabForSession:session]];
         });
-    }
-                              completion:nil];
+    }];
     return nil;
 }
 
