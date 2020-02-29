@@ -7505,6 +7505,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"PTYSession keyDown not short-circuted by special handler");
 
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
+    DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
         [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES];
     }

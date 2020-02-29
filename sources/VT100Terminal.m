@@ -254,6 +254,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setTermType:(NSString *)termtype {
+    DLog(@"setTermType:%@", termtype);
     [_termType autorelease];
     _termType = [termtype copy];
 
@@ -266,7 +267,7 @@ static const int kMaxScreenRows = 4096;
     // fix this disaster.
     setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
     if (r != 1) {
-        NSLog(@"Terminal type %s is not defined.", [_termType UTF8String]);
+        DLog(@"Terminal type %s is not defined.", [_termType UTF8String]);
     }
     _output.termTypeIsValid = (r == 1);
     if ([termtype isEqualToString:@"VT100"]) {
