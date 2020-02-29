@@ -2869,9 +2869,9 @@ ITERM_WEAKLY_REFERENCEABLE
     screen_char_t savedFgColor = [_terminal foregroundColorCode];
     screen_char_t savedBgColor = [_terminal backgroundColorCode];
     // This color matches the color used in BrokenPipeDivider.png.
-    [_terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:248.0/255.0
-                                                                 green:79.0/255.0
-                                                                  blue:27.0/255.0
+    [_terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
+                                                                 green:83.0/255.0
+                                                                  blue:246.0/255.0
                                                                  alpha:1]];
     [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
@@ -2983,7 +2983,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.tmuxMode == TMUX_GATEWAY) {
         [self forceTmuxDetach];
     }
-    [self appendBrokenPipeMessage:@"Broken Pipe"];
+    [self appendBrokenPipeMessage:@"Session Ended"];
     switch (self.endAction) {
         case iTermSessionEndActionClose:
             if ([_delegate sessionShouldAutoClose:self]) {
@@ -3007,7 +3007,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self isRestartable]) {
         [self queueRestartSessionAnnouncement];
     }
-    [self updateDisplayBecause:@"broken pipe"];
+    [self updateDisplayBecause:@"session ended"];
 }
 
 - (void)queueRestartSessionAnnouncement {
