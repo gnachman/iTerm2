@@ -1,4 +1,6 @@
 #import "VT100Output.h"
+
+#import "DebugLogging.h"
 #include <term.h>
 
 // Indexes into _keyStrings.
@@ -123,6 +125,7 @@ typedef enum {
 }
 
 - (void)setTermTypeIsValid:(BOOL)termTypeIsValid {
+    DLog(@"setTermTypeIsValid:%@ cur_term=%p", @(termTypeIsValid), cur_term);
     if (termTypeIsValid && cur_term) {
         char *key_names[] = {
             key_left, key_right, key_up, key_down,
@@ -146,6 +149,7 @@ typedef enum {
                 free(_keyStrings[i]);
             }
             _keyStrings[i] = key_names[i] ? strdup(key_names[i]) : NULL;
+            DLog(@"Set key string %d (%s) to %s", i, key_names[i], _keyStrings[i]);
         }
     } else {
         for (int i = 0; i < TERMINFO_KEYS; i ++) {
@@ -289,8 +293,8 @@ typedef enum {
 
 // Reference: http://www.utexas.edu/cc/faqs/unix/VT200-function-keys.html
 // http://www.cs.utk.edu/~shuford/terminal/misc_old_terminals_news.txt
-- (NSData *)keyFunction:(int)no
-{
+- (NSData *)keyFunction:(int)no {
+    DLog(@"keyFunction:%@", @(no));
     char str[256];
     int len;
 
