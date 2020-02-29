@@ -29,6 +29,7 @@
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    DLog(@"ring bell trigger firing");
     [aSession.screen activateBell];
     return YES;
 }

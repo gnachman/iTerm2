@@ -1416,21 +1416,34 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     if (!result) {
         lastBell_ = now;
     }
+    DLog(@"quell=%@", @(result));
     return result;
 }
 
+- (void)setAudibleBell:(BOOL)audibleBell {
+    DLog(@"%@ set audible bell=%@\n%@", self, @(audibleBell), [NSThread callStackSymbols]);
+    audibleBell_ = audibleBell;
+}
+
 - (void)activateBell {
+    DLog(@"activateBell %@", self);
     if ([delegate_ screenShouldIgnoreBellWhichIsAudible:audibleBell_ visible:flashBell_]) {
+        DLog(@"Ignoring bell");
         return;
     }
+    DLog(@"Bell not ignored");
     if (![self shouldQuellBell]) {
+        DLog(@"Not quelled");
         if (audibleBell_) {
+            DLog(@"audible: beep");
             NSBeep();
         }
         if (showBellIndicator_) {
+            DLog(@"show bell indicator");
             [delegate_ screenShowBellIndicator];
         }
         if (flashBell_) {
+            DLog(@"flash");
             [delegate_ screenFlashImage:kiTermIndicatorBell];
         }
     }
@@ -2788,6 +2801,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRingBell {
+    DLog(@"terminalRingBell");
     [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
     [self activateBell];
 }

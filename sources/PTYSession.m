@@ -10326,12 +10326,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now < _ignoreBellUntil) {
+        DLog(@"squelch bell because ignored temporarily");
         return YES;
     }
 
     // Only sample every X seconds.
     static const NSTimeInterval kMaximumTimeBetweenSamples = 0.01;
     if (now < _lastBell + kMaximumTimeBetweenSamples) {
+        DLog(@"don't ignore bell because the last one was less than 10ms ago");
         return NO;
     }
     _lastBell = now;
@@ -10370,6 +10372,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [[NSUserDefaults standardUserDefaults] boolForKey:kSilenceAnnoyingBellAutomatically]) {
         // Silence automatically
         _ignoreBellUntil = now + 60;
+        DLog(@"squelch bell: silence automatically");
         return YES;
     }
 
@@ -10466,6 +10469,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self queueAnnouncement:announcement identifier:identifier];
         }
     }
+    DLog(@"Not squelching");
     return NO;
 }
 
