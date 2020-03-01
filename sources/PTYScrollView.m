@@ -29,6 +29,7 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermScrollAccumulator.h"
+#import "NSEvent+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 #import "PTYScrollView.h"
@@ -233,15 +234,23 @@
 //
 // We HAVE to call super when the scroll bars are not hidden because otherwise
 // you get issue 6637.
-- (void)scrollWheel:(NSEvent *)theEvent {
+- (void)scrollWheel:(NSEvent *)event {
     if (self.hasVerticalScroller) {
-        [super scrollWheel:theEvent];
+        if ([iTermAdvancedSettingsModel fixMouseWheel]) {
+            NSEvent *fixed = [event eventByRoundingScrollWheelClicksAwayFromZero];
+            DLog(@"Fix mouse wheel. %@", fixed);
+            [super scrollWheel:fixed];
+        } else {
+            DLog(@"Use default mouse wheel behavior %@", event);
+            [super scrollWheel:event];
+        }
     } else {
+        DLog(@"Scroll bar invisible so use accumulator %@", event);
         NSRect scrollRect;
 
         scrollRect = [self documentVisibleRect];
 
-        CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
+        CGFloat amount = [self accumulateVerticalScrollFromEvent:event];
         scrollRect.origin.y -= amount * self.verticalLineScroll;
         [[self documentView] scrollRectToVisible:scrollRect];
 

@@ -114,6 +114,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 // Regular expression for finding URLs for Edit>Find>Find URLs
 + (NSString *)findUrlsRegex;
++ (BOOL)fixMouseWheel;
 + (NSString *)fontsForGenerousRounding;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
 + (BOOL)focusReportingEnabled;

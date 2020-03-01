@@ -21,4 +21,6 @@
 // seems to have broken at some point. See issue 7780.
 @property (nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
 
+- (NSEvent *)eventByRoundingScrollWheelClicksAwayFromZero;
+
 @end

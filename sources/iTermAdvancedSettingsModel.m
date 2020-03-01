@@ -579,6 +579,7 @@ DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2
 DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll view for better GPU performance?\nThis was a dangerous hack that was necessary in 10.14 for performance but seems not to be needed in 10.15. This setting only affects macOS 10.15 and later.");
 DEFINE_BOOL(multiserver, NO, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
 DEFINE_BOOL(useRestorableStateController, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis enables restoring full screen windows in the Compact and Minimal themes.");
+DEFINE_BOOL(fixMouseWheel, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Mouse wheel always scrolls when scroll bars are visible");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

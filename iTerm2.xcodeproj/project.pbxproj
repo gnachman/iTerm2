@@ -2263,6 +2263,7 @@
 		A66F52D92106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DA2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DB2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
+		A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
 		A6725AD223D639C2001CA48A /* iTermProfilesMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD023D639C2001CA48A /* iTermProfilesMenuController.h */; };
 		A6725AD323D639C2001CA48A /* iTermProfilesMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6725AD123D639C2001CA48A /* iTermProfilesMenuController.m */; };
 		A6725AD623D63B7A001CA48A /* iTermProfileModelJournal.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD423D63B7A001CA48A /* iTermProfileModelJournal.h */; };
@@ -3045,7 +3046,6 @@
 		A6C762B11B45C52B00E3C992 /* NSData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */; };
 		A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
 		A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
-		A6C762B51B45C52B00E3C992 /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
 		A6C762B71B45C52B00E3C992 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
 		A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
@@ -13134,6 +13134,7 @@
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
+				A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */,
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
 				535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */,
 				A6A4866F20B67A1600493302 /* iTermSemanticHistoryPrefsController.m in Sources */,
@@ -13819,7 +13820,6 @@
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
 				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,
 				A6FEA2711CF2C8EE00376F28 /* iTermProfileHotKey.m in Sources */,
-				A6C762B51B45C52B00E3C992 /* NSEvent+iTerm.m in Sources */,
 				A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
