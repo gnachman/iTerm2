@@ -4898,6 +4898,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
+    if (@available(macOS 10.14, *)) {
+        [self updateTabBarControlIsTitlebarAccessory];
+    }
+
     PtyLog(@"toggleFullScreenMode - allocate new terminal");
 }
 
@@ -5146,6 +5150,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return _fullScreen;
 }
 
+- (BOOL)tabBarShouldBeVisibleEvenWhenOnLoan {
+    if (@available(macOS 10.14, *)) {
+        if (togglingLionFullScreen_ || [self lionFullScreen]) {
+            return YES;
+        }
+    }
+    return _contentView.tabBarShouldBeVisibleEvenWhenOnLoan;
+}
+
 - (BOOL)tabBarShouldBeVisible {
     if (@available(macOS 10.14, *)) {
         if (togglingLionFullScreen_ || [self lionFullScreen]) {
@@ -5366,6 +5379,10 @@ ITERM_WEAKLY_REFERENCEABLE
             return [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen];
         }
     }
+    if (!self.tabBarShouldBeVisibleEvenWhenOnLoan) {
+        DLog(@"NO - tab bar should not be visible");
+        return NO;
+    }
     switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
@@ -5388,7 +5405,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             break;
     }
-    switch (self.windowType) {
+    switch (exitingLionFullscreen_ ? self.savedWindowType : self.windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -8137,12 +8154,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self fitWindowToTabsExcludingTmuxTabs:excludeTmux preservingHeight:NO];
 }
 
-- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
-    _windowNeedsInitialSize = NO;
-    if (togglingFullScreen_) {
-        return;
-    }
-
+- (NSSize)sizeOfLargestTabExcludingTmux:(BOOL)excludeTmux {
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
     PtyLog(@"fitWindowToTabs.......");
@@ -8169,6 +8181,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             maxTabSize.height = tabSize.height;
         }
     }
+    return maxTabSize;
+}
+
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
+    [self fitWindowToTabsExcludingTmuxTabs:excludeTmux
+                          preservingHeight:preserveHeight
+                          sizeOfLargestTab:[self sizeOfLargestTabExcludingTmux:excludeTmux]];
+}
+
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
+                        preservingHeight:(BOOL)preserveHeight
+                        sizeOfLargestTab:(NSSize)maxTabSize {
+    _windowNeedsInitialSize = NO;
+    if (togglingFullScreen_) {
+        return;
+    }
+
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
         // all tabs are tmux tabs.
         return;
@@ -8738,6 +8767,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
+    // Save the size of the largest tab before adding or removing tabbar accessories. We want to
+    // preserve the tab size when we update the window size below. Modifying the title bar
+    // accessories synchronously changes the tabs' sizes, causing the window not to resize when
+    // the tab bar shows or hides.
+    const NSSize tabSizeBeforeUpdatingTitleBarAccessories = [self sizeOfLargestTabExcludingTmux:NO];
+
     [self updateTabBarStyle];
     [self safelySetStyleMask:self.styleMask];
     [self updateProxyIcon];
@@ -8752,7 +8787,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self.window setFrame:[self traditionalFullScreenFrame] display:YES];
     }
 
-    [self fitWindowToTabs];
+    [self fitWindowToTabsExcludingTmuxTabs:NO
+                          preservingHeight:NO
+                          sizeOfLargestTab:tabSizeBeforeUpdatingTitleBarAccessories];
 
     // If tab style or position changed.
     [self repositionWidgets];
@@ -9225,6 +9262,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             self.currentSession.statusBarViewController != nil);
 }
 
+- (BOOL)tabBarIsVisibleInTitleBarAccessory {
+    if (@available(macOS 10.14, *)) {
+        return _contentView.tabBarControlOnLoan;
+    }
+    return NO;
+}
+
 // Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize {
     NSSize decorationSize = NSZeroSize;
@@ -9234,7 +9278,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_BottomTab:
-                decorationSize.height += _contentView.tabBarControl.height;
+                if (![self tabBarIsVisibleInTitleBarAccessory]) {
+                    decorationSize.height += _contentView.tabBarControl.height;
+                }
                 break;
             case PSMTab_LeftTab:
                 if (self.tabs.count == 1 && self.tabs.firstObject.reportIdeal) {

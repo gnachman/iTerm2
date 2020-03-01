@@ -88,6 +88,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;
+@property(nonatomic, readonly) BOOL tabBarShouldBeVisibleEvenWhenOnLoan;
 
 @property(nonatomic, readonly) CGFloat tabviewWidth;
 
