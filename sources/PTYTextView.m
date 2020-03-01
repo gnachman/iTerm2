@@ -9,7 +9,6 @@
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
-#import "iTermAltScreenMouseScrollInferrer.h"
 #import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -63,6 +62,7 @@
 #import "PointerController.h"
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
+#import "PTYMouseHandler.h"
 #import "PTYNoteView.h"
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
@@ -91,14 +91,6 @@
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 
-static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
-static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
-static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
-
-// Minimum distance that the mouse must move before a cmd+drag will be
-// recognized as a drag.
-static const int kDragThreshold = 3;
-
 @implementation iTermHighlightedRow
 
 - (instancetype)initWithAbsoluteLineNumber:(long long)row success:(BOOL)success {
@@ -113,6 +105,8 @@ static const int kDragThreshold = 3;
 
 @end
 
+@interface PTYTextView(MouseHandler)<PTYMouseHandlerDelegate>
+@end
 
 @implementation PTYTextView {
     // -refresh does not want to be reentrant.
@@ -125,13 +119,6 @@ static const int kDragThreshold = 3;
     // NSTextInputClient support
 
     NSDictionary *_markedTextAttributes;
-
-    BOOL _mouseDown;
-    BOOL _mouseDragged;
-    BOOL _mouseDownOnSelection;
-    BOOL _mouseDownOnImage;
-    iTermImageInfo *_imageBeingClickedOn;
-    NSEvent *_mouseDownEvent;
 
     // blinking cursor
     NSTimeInterval _timeOfLastBlink;
@@ -147,23 +134,6 @@ static const int kDragThreshold = 3;
     int _lastAccessibiltyAbsoluteCursorY;
 
     BOOL _changedSinceLastExpose;
-
-    // Works around an apparent OS bug where we get drag events without a mousedown.
-    BOOL dragOk_;
-
-    // Saves the monotonically increasing event number of a first-mouse click, which disallows
-    // selection.
-    NSInteger _firstMouseEventNumber;
-
-    // Number of fingers currently down (only valid if three finger click
-    // emulates middle button)
-    int _numTouches;
-
-    // If true, ignore the next mouse up because it's due to a three finger
-    // mouseDown.
-    BOOL _mouseDownIsThreeFingerClick;
-
-    PointerController *pointer_;
 
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
@@ -182,9 +152,6 @@ static const int kDragThreshold = 3;
 
     iTermSelection *_oldSelection;
 
-    // The most recent mouse-down was a "first mouse" (activated the window).
-    BOOL _mouseDownWasFirstMouse;
-
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
 
@@ -197,22 +164,12 @@ static const int kDragThreshold = 3;
 
     NSPoint _mouseLocationToRefuseFirstResponderAt;
 
-    // Detects when the user is trying to scroll in alt screen with the scroll wheel.
-    iTermAltScreenMouseScrollInferrer *_altScreenMouseScrollInferrer;
-
     NSMutableArray<iTermHighlightedRow *> *_highlightedRows;
 
     // Used to report scroll wheel mouse events.
     iTermScrollAccumulator *_scrollAccumulator;
 
-    BOOL _haveSeenScrollWheelEvent;
     iTermRateLimitedUpdate *_shadowRateLimit;
-
-    // Work around an embarassing macOS bug. Issue 8350.
-    BOOL _makingThreeFingerSelection;
-
-    // Last mouse down was on already-selected text?
-    BOOL _lastMouseDownOnSelectedText;
 }
 
 
@@ -260,7 +217,6 @@ static const int kDragThreshold = 3;
         _colorMap.delegate = self;
 
         _drawingHelper.colorMap = colorMap;
-        _firstMouseEventNumber = -1;
 
         [self updateMarkedTextAttributes];
         _drawingHelper.cursorVisible = YES;
@@ -297,13 +253,10 @@ static const int kDragThreshold = 3;
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
-        _semanticHistoryDragged = NO;
 
         _urlActionHelper = [[iTermURLActionHelper alloc] initWithSemanticHistoryController:_semanticHistoryController];
         _urlActionHelper.delegate = self;
 
-        pointer_ = [[PointerController alloc] init];
-        pointer_.delegate = self;
         _primaryFont = [[PTYFontInfo alloc] init];
         _secondaryFont = [[PTYFontInfo alloc] init];
 
@@ -330,15 +283,18 @@ static const int kDragThreshold = 3;
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _badgeLabel.delegate = self;
 
-        _altScreenMouseScrollInferrer = [[iTermAltScreenMouseScrollInferrer alloc] init];
-        _altScreenMouseScrollInferrer.delegate = self;
         [self refuseFirstResponderAtCurrentMouseLocation];
 
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
         _keyboardHandler = [[iTermKeyboardHandler alloc] init];
         _keyboardHandler.delegate = self;
 
-        [self arcInit];
+        _mouseHandler =
+        [[PTYMouseHandler alloc] initWithSelectionScrollHelper:_selectionScrollHelper
+                               threeFingerTapGestureRecognizer:threeFingerTapGestureRecognizer_
+                                     pointerControllerDelegate:self
+                     mouseReportingFrustrationDetectorDelegate:self];
+        _mouseHandler.mouseDelegate = self;
     }
     return self;
 }
@@ -364,12 +320,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)dealloc {
+    [_mouseHandler release];
     [_selection release];
     [_oldSelection release];
     [_smartSelectionRules release];
-
-    [_mouseDownEvent release];
-    _mouseDownEvent = nil;
 
     [self removeAllTrackingAreas];
     if ([self isFindingCursor]) {
@@ -388,7 +342,6 @@ static const int kDragThreshold = 3;
 
     [_semanticHistoryController release];
 
-    [pointer_ release];
     [cursor_ release];
     [threeFingerTapGestureRecognizer_ disconnectTarget];
     [threeFingerTapGestureRecognizer_ release];
@@ -407,7 +360,6 @@ static const int kDragThreshold = 3;
     [_quickLookController close];
     [_quickLookController release];
     [_savedSelectedText release];
-    [_altScreenMouseScrollInferrer release];
     [_highlightedRows release];
     [_scrollAccumulator release];
     [_shadowRateLimit release];
@@ -415,8 +367,6 @@ static const int kDragThreshold = 3;
     [_keyboardHandler release];
     _urlActionHelper.delegate = nil;
     [_urlActionHelper release];
-    [_imageBeingClickedOn release];
-    [_mouseReportingFrustrationDetector release];
 
     [super dealloc];
 }
@@ -464,46 +414,44 @@ static const int kDragThreshold = 3;
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
     NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
 
-    int saved = _numTouches;
-    _numTouches = 3;
-    if (isDown) {
-        DLog(@"Emulate three finger click down");
-        [self mouseDown:fakeEvent];
-        DLog(@"Returned from mouseDown");
-    } else {
-        DLog(@"Emulate three finger click up");
-        [self mouseUp:fakeEvent];
-        DLog(@"Returned from mouseDown");
-    }
-    DLog(@"Restore numTouches to saved value of %d", saved);
-    _numTouches = saved;
+    [_mouseHandler performBlockWithThreeTouches:^{
+        if (isDown) {
+            DLog(@"Emulate three finger click down");
+            [self mouseDown:fakeEvent];
+            DLog(@"Returned from mouseDown");
+        } else {
+            DLog(@"Emulate three finger click up");
+            [self mouseUp:fakeEvent];
+            DLog(@"Returned from mouseDown");
+        }
+    }];
 }
 
 - (void)threeFingerTap:(NSEvent *)ev {
-    if (![pointer_ threeFingerTap:ev]) {
+    if (![_mouseHandler threeFingerTap:ev]) {
         [self sendFakeThreeFingerClickDown:YES basedOnEvent:ev];
         [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
     }
 }
 
 - (void)touchesBeganWithEvent:(NSEvent *)ev {
-    _numTouches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
-                                           inView:self] count];
+    _mouseHandler.numTouches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
+                                                  inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
-    DLog(@"%@ Begin touch. numTouches_ -> %d", self, _numTouches);
+    DLog(@"%@ Begin touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)ev {
-    _numTouches = [[ev touchesMatchingPhase:NSTouchPhaseStationary
-                                     inView:self] count];
+    _mouseHandler.numTouches = [[ev touchesMatchingPhase:NSTouchPhaseStationary
+                                                  inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
-    DLog(@"%@ End touch. numTouches_ -> %d", self, _numTouches);
+    DLog(@"%@ End touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
 }
 
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
-    _numTouches = 0;
+    _mouseHandler.numTouches = 0;
     [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
-    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, _numTouches);
+    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
 }
 
 - (void)refuseFirstResponderAtCurrentMouseLocation {
@@ -518,9 +466,9 @@ static const int kDragThreshold = 3;
 
 - (BOOL)resignFirstResponder {
     DLog(@"resign first responder: reset numTouches to 0");
-    _numTouches = 0;
+    _mouseHandler.numTouches = 0;
     if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_altScreenMouseScrollInferrer firstResponderDidChange];
+        [_mouseHandler didResignFirstResponder];
         [self removeUnderline];
         [self placeFindCursorOnAutoHide];
         [_delegate textViewDidResignFirstResponder];
@@ -534,7 +482,7 @@ static const int kDragThreshold = 3;
 
 - (BOOL)becomeFirstResponder {
     if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_altScreenMouseScrollInferrer firstResponderDidChange];
+        [_mouseHandler didBecomeFirstResponder];
         [_delegate textViewDidBecomeFirstResponder];
         DLog(@"becomeFirstResponder %@", self);
         DLog(@"%@", [NSThread callStackSymbols]);
@@ -1366,7 +1314,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)keyDown:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector keyDown:event];
+    [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }
 
@@ -1379,137 +1327,36 @@ static const int kDragThreshold = 3;
     return _keyboardHandler.keyIsARepeat;
 }
 
-// TODO: disable other, right mouse for inactive panes
-- (void)otherMouseDown:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    [self reportMouseEvent:event];
-
-    [pointer_ mouseDown:event
-            withTouches:_numTouches
-           ignoreOption:[self terminalWantsMouseReports]];
-}
-
 - (void)updateCursor:(NSEvent *)event {
     [self updateCursor:event action:nil];
 }
 
-- (void)otherMouseUp:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
+- (void)otherMouseDown:(NSEvent *)event {
+    [_mouseHandler otherMouseDown:event];
+}
 
-    if (!_mouseDownIsThreeFingerClick) {
-        DLog(@"Sending third button press up to super");
-        [super otherMouseUp:event];
-    }
-    DLog(@"Sending third button press up to pointer controller");
-    [pointer_ mouseUp:event withTouches:_numTouches];
+- (void)otherMouseUp:(NSEvent *)event {
+    [_mouseHandler otherMouseUp:event
+                    superCaller:^{ [super otherMouseUp:event]; }];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    [threeFingerTapGestureRecognizer_ mouseDragged];
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
-    [super otherMouseDragged:event];
+    [_mouseHandler otherMouseDragged:event
+                         superCaller:^{ [super otherMouseDragged:event]; }];
 }
 
-- (void)rightMouseDown:(NSEvent*)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
-        DLog(@"Cancel right mouse down");
-        return;
-    }
-    if ([pointer_ mouseDown:event
-                withTouches:_numTouches
-               ignoreOption:[self terminalWantsMouseReports]]) {
-        return;
-    }
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
-
-    [super rightMouseDown:event];
+- (void)rightMouseDown:(NSEvent *)event {
+    [_mouseHandler rightMouseDown:event
+                      superCaller:^{ [super otherMouseDragged:event]; }];
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
-        return;
-    }
-
-    if ([pointer_ mouseUp:event withTouches:_numTouches]) {
-        return;
-    }
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
-    [super rightMouseUp:event];
+    [_mouseHandler rightMouseUp:event superCaller:^{ [super rightMouseUp:event]; }];
 }
 
 - (void)rightMouseDragged:(NSEvent *)event {
-    [_mouseReportingFrustrationDetector otherMouseEvent];
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    [threeFingerTapGestureRecognizer_ mouseDragged];
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
-    [super rightMouseDragged:event];
-}
-
-- (BOOL)scrollWheelShouldSendDataForEvent:(NSEvent *)event at:(NSPoint)point {
-    NSRect liveRect = [self liveRect];
-    if (!NSPointInRect(point, liveRect)) {
-        return NO;
-    }
-    if (event.type != NSEventTypeScrollWheel) {
-        return NO;
-    }
-    if (![self.dataSource showingAlternateScreen]) {
-        return NO;
-    }
-    if ([self shouldReportMouseEvent:event at:point] &&
-        [[_dataSource terminal] mouseMode] != MOUSE_REPORTING_NONE) {
-        // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
-        return NO;
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagOption) {
-        // Hold alt to disable sending arrow keys.
-        return NO;
-    }
-    BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
-    NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
-    NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
-
-    if (alternateMouseScroll || upString.length || downString.length) {
-        return YES;
-    } else {
-        [_altScreenMouseScrollInferrer scrollWheel:event];
-        return NO;
-    }
-}
-
-- (NSString *)stringToSendForScrollEvent:(NSEvent *)event deltaY:(CGFloat)deltaY forceLatin1:(BOOL *)forceLatin1 {
-    const BOOL down = (deltaY < 0);
-
-    if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
-        *forceLatin1 = YES;
-        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:event.it_modifierFlags] :
-                              [_dataSource.terminal.output keyArrowUp:event.it_modifierFlags];
-        return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
-    } else {
-        *forceLatin1 = NO;
-        NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
-                                  [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
-        return [string stringByExpandingVimSpecialCharacters];
-    }
+    [_mouseHandler rightMouseDragged:event
+                         superCaller:^{ [super rightMouseDragged:event]; }];
 }
 
 - (void)jiggle {
@@ -1526,60 +1373,12 @@ static const int kDragThreshold = 3;
     [self scrollWheel:event];
 }
 
- - (void)scrollWheel:(NSEvent *)event {
+- (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
-    if ([self scrollWheelImpl:event]) {
+    const NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+    if ([_mouseHandler scrollWheel:event pointInView:point]) {
         [super scrollWheel:event];
     }
-}
-
-- (BOOL)scrollWheelImpl:(NSEvent *)event {
-    [threeFingerTapGestureRecognizer_ scrollWheel];
-    
-    if (!_haveSeenScrollWheelEvent) {
-        // Work around a weird bug. Commit 9e4b97b18fac24bea6147c296b65687f0523ad83 caused it.
-        // When you restore a window and have an inline scroller (but not a legacy scroller!) then
-        // it will be at the top, even though we're scrolled to the bottom. You can either jiggle
-        // it after a delay to fix it, or after thousands of dispatch_async calls, or here. None of
-        // these make any sense, nor does the bug itself. I get the feeling that a giant rats' nest
-        // of insanity underlies scroll wheels on macOS.
-        _haveSeenScrollWheelEvent = YES;
-        [self jiggle];
-    }
-    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-    if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
-        DLog(@"Scroll wheel sending data");
-
-        PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
-        CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
-        BOOL forceLatin1 = NO;
-        NSString *stringToSend = [self stringToSendForScrollEvent:event deltaY:deltaY forceLatin1:&forceLatin1];
-        if (stringToSend) {
-            for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                if (forceLatin1) {
-                    [_delegate writeStringWithLatin1Encoding:stringToSend];
-                } else {
-                    [_delegate writeTask:stringToSend];
-                }
-            }
-            [self deselect];
-        }
-    } else if (![self reportMouseEvent:event]) {
-        if (_selection.live) {
-            // Scroll via wheel while selecting. This is even possible with the trackpad by using
-            // three fingers as described in issue 8538.
-            const NSPoint locationInTextView = [self locationInTextViewFromEvent:event];
-            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-            const int x = clickPoint.x;
-            const int y = clickPoint.y;
-            DLog(@"Update live selection during SCROLL");
-            if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
-                _committedToDrag = YES;
-            }
-        }
-        return YES;
-    }
-    return NO;
 }
 
 - (BOOL)hasUnderline {
@@ -1606,9 +1405,8 @@ static const int kDragThreshold = 3;
     [super flagsChanged:theEvent];
 }
 
-- (void)swipeWithEvent:(NSEvent *)event
-{
-    [pointer_ swipeWithEvent:event];
+- (void)swipeWithEvent:(NSEvent *)event {
+    [_mouseHandler swipeWithEvent:event];
 }
 
 // Uses an undocumented/deprecated API to receive key presses even when inactive.
@@ -1718,486 +1516,25 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
-        return;
-    }
-    DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, _numTouches);
-    if ([self mouseDownImpl:event]) {
-        [super mouseDown:event];
-    }
+    [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }
 
-// Emulates a third mouse button event (up or down, based on 'isDown').
-// Requires a real mouse event 'event' to build off of. This has the side
-// effect of setting mouseDownIsThreeFingerClick_, which (when set) indicates
-// that the current mouse-down state is "special" and disables certain actions
-// such as dragging.
-// The NSEvent method for creating an event can't be used because it doesn't let you set the
-// buttonNumber field.
-- (void)emulateThirdButtonPressDown:(BOOL)isDown withEvent:(NSEvent *)event {
-    if (isDown) {
-        _mouseDownIsThreeFingerClick = isDown;
-        DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
-    }
-
-    NSEvent *fakeEvent = [event eventWithButtonNumber:2];
-
-    int saved = _numTouches;
-    _numTouches = 1;
-    if (isDown) {
-        DLog(@"Emulate third button press down");
-        [self otherMouseDown:fakeEvent];
-    } else {
-        DLog(@"Emulate third button press up");
-        [self otherMouseUp:fakeEvent];
-    }
-    _numTouches = saved;
-    if (!isDown) {
-        _mouseDownIsThreeFingerClick = isDown;
-        DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=NO");
-    }
+- (BOOL)mouseDownImpl:(NSEvent *)event {
+    return [_mouseHandler mouseDownImpl:event];
 }
 
 - (void)pressureChangeWithEvent:(NSEvent *)event {
-    [pointer_ pressureChangeWithEvent:event];
-}
-
-// Returns yes if [super mouseDown:event] should be run by caller.
-- (BOOL)mouseDownImpl:(NSEvent*)event {
-    DLog(@"mouseDownImpl: called");
-    _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
-    _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
-    const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
-    BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
-    const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
-    const BOOL ctrlPressed = ([event it_modifierFlags] & NSEventModifierFlagControl) != 0;
-    if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
-        // Dump view hierarchy
-        NSBeep();
-        [[iTermController sharedInstance] dumpViewHierarchy];
-        return NO;
-    }
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (frontTextView != self &&
-        !cmdPressed &&
-        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        // Clicking in an inactive pane with focus follows mouse makes it active.
-        // Because of how FFM works, this would only happen if another app were key.
-        // See issue 3163.
-        DLog(@"Click on inactive pane with focus follows mouse");
-        _mouseDownWasFirstMouse = YES;
-        [[self window] makeFirstResponder:self];
-        return NO;
-    }
-    if (_mouseDownWasFirstMouse &&
-        !cmdPressed &&
-        ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
-        // A click in an inactive window without cmd pressed by default just brings the window
-        // to the fore and takes no additional action. If you enable alwaysAcceptFirstMouse then
-        // it is treated like a normal click (issue 3236). Returning here prevents mouseDown=YES
-        // which keeps -mouseUp from doing anything such as changing first responder.
-        DLog(@"returning because this was a first-mouse event.");
-        return NO;
-    }
-    if (_numTouches == 3 && _makingThreeFingerSelection) {
-        DLog(@"Ignore mouse down because you're making a three finger selection");
-        return NO;
-    }
-    [pointer_ notifyLeftMouseDown];
-    _mouseDownIsThreeFingerClick = NO;
-    DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
-    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        [_delegate textViewBeginDrag];
-        DLog(@"Returning because of drag starting");
-        return NO;
-    }
-    if (_numTouches == 3) {
-        // NOTE! If you turn on the following setting:
-        //   System Preferences > Accessibility > Mouse & Trackpad > Trackpad Options... > Enable dragging > three finger drag
-        // Then a three-finger drag gets translated into mouseDown:…mouseDragged:…mouseUp:.
-        // Prior to commit 96323ddf8 we didn't track touch-up/touch-down unless necessary, so that
-        // feature worked unless you had a mouse gesture that caused touch tracking to be enabled.
-        // In issue 8321 it was revealed that touch tracking breaks three-finger drag. The solution
-        // is to not return early if we detect a three-finger down but don't have a pointer action
-        // for it. Then it proceeds to behave like before commit 96323ddf8. Otherwise, it'll just
-        // watch for the actions that three-finger touches can cause.
-        BOOL shouldReturnEarly = YES;
-        if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
-            [self emulateThirdButtonPressDown:YES withEvent:event];
-        } else {
-            // Perform user-defined gesture action, if any
-            shouldReturnEarly = [pointer_ mouseDown:event
-                                        withTouches:_numTouches
-                                       ignoreOption:[self terminalWantsMouseReports]];
-            DLog(@"Set mouseDown=YES because of 3 finger mouseDown (not emulating middle)");
-            _mouseDown = YES;
-        }
-        DLog(@"Returning because of 3-finger click.");
-        if (shouldReturnEarly) {
-            return NO;
-        }
-    }
-    if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseDown:event
-                withTouches:_numTouches
-               ignoreOption:[self terminalWantsMouseReports]];
-        DLog(@"Returning because emulating right click.");
-        return NO;
-    }
-
-    dragOk_ = YES;
-    _committedToDrag = NO;
-    if (cmdPressed) {
-        if (frontTextView != self) {
-            if ([NSApp keyWindow] != [self window]) {
-                // A cmd-click in in inactive window makes the pane active.
-                DLog(@"Cmd-click in inactive window");
-                _mouseDownWasFirstMouse = YES;
-                [[self window] makeFirstResponder:self];
-                DLog(@"Returning because of cmd-click in inactive window.");
-                return NO;
-            }
-        } else if ([NSApp keyWindow] != [self window]) {
-            // A cmd-click in an active session in a non-key window acts like a click without cmd.
-            // This can be changed in advanced settings so cmd-click will still invoke semantic
-            // history even for non-key windows.
-            DLog(@"Cmd-click in active session in non-key window");
-            cmdPressed = [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory];
-        }
-    }
-    if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        DLog(@"Returning because of drag modifiers.");
-        return YES;
-    }
-
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-    if ([self coordinateIsInMutableArea:VT100GridCoordMake(x, y)] &&
-        [self reportMouseDrags]) {
-        [_selectionScrollHelper disableUntilMouseUp];
-    }
-    if (_numTouches <= 1) {
-        for (NSView *view in [self subviews]) {
-            if ([view isKindOfClass:[PTYNoteView class]]) {
-                PTYNoteView *noteView = (PTYNoteView *)view;
-                [noteView.delegate.noteViewController setNoteHidden:YES];
-            }
-        }
-    }
-
-    DLog(@"Set mouseDown=YES.");
-    _mouseDown = YES;
-
-    [_mouseReportingFrustrationDetector mouseDown:event reported:[self mouseEventIsReportable:event]];
-    if ([self reportMouseEvent:event]) {
-        DLog(@"Returning because mouse event reported.");
-        [_selection clearSelection];
-        return NO;
-    }
-
-    iTermImageInfo *const imageBeingClickedOn = [self imageInfoAtCoord:VT100GridCoordMake(x, y)];
-    const BOOL mouseDownOnSelection = [_selection containsCoord:VT100GridCoordMake(x, y)];
-    _lastMouseDownOnSelectedText = mouseDownOnSelection;
-
-    if (!_mouseDownWasFirstMouse) {
-        // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
-        // because drags are ignored for those.
-        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
-
-        if (event.clickCount == 1 && !cmdPressed && !shiftPressed && !imageBeingClickedOn && !mouseDownOnSelection) {
-            [_selection clearSelection];
-        }
-    }
-
-    [_mouseDownEvent autorelease];
-    _mouseDownEvent = [event retain];
-    _mouseDragged = NO;
-    _mouseDownOnSelection = NO;
-    _mouseDownOnImage = NO;
-
-    int clickCount = [event clickCount];
-    DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
-    const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
-    if (isExtension && [_selection hasSelection]) {
-        if (!_selection.live) {
-            [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
-        }
-    } else if (clickCount < 2) {
-        // single click
-        iTermSelectionMode mode;
-        if ((event.it_modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
-            mode = kiTermSelectionModeBox;
-        } else {
-            mode = kiTermSelectionModeCharacter;
-        }
-
-        if (imageBeingClickedOn) {
-            [_imageBeingClickedOn autorelease];
-            _imageBeingClickedOn = [imageBeingClickedOn retain];
-            _mouseDownOnImage = YES;
-            _selection.appending = NO;
-        } else if (mouseDownOnSelection) {
-            // not holding down shift key but there is an existing selection.
-            // Possibly a drag coming up (if a cmd-drag follows)
-            DLog(@"mouse down on selection, returning");
-            _mouseDownOnSelection = YES;
-            _selection.appending = NO;
-            return YES;
-        } else {
-            // start a new selection
-            [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                    mode:mode
-                                  resume:NO
-                                  append:(cmdPressed && !altPressed)];
-            _selection.resumable = YES;
-        }
-    } else if ([self shouldSelectWordWithClicks:clickCount]) {
-        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                mode:kiTermSelectionModeWord
-                              resume:YES
-                              append:_selection.appending];
-    } else if (clickCount == 3) {
-        BOOL wholeLines =
-            [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
-        iTermSelectionMode mode =
-            wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
-
-        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                mode:mode
-                              resume:YES
-                              append:_selection.appending];
-    } else if ([self shouldSmartSelectWithClicks:clickCount]) {
-        [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                mode:kiTermSelectionModeSmart
-                              resume:YES
-                              append:_selection.appending];
-    }
-
-    DLog(@"Mouse down. selection set to %@", _selection);
-    [_delegate refresh];
-
-    DLog(@"Reached end of mouseDownImpl.");
-    return NO;
-}
-
-- (BOOL)shouldSelectWordWithClicks:(int)clickCount {
-    if ([iTermPreferences boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection]) {
-        return clickCount == 4;
-    } else {
-        return clickCount == 2;
-    }
-}
-
-- (BOOL)shouldSmartSelectWithClicks:(int)clickCount {
-    if ([iTermPreferences boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection]) {
-        return clickCount == 2;
-    } else {
-        return clickCount == 4;
-    }
-}
-
-static double Square(double n) {
-    return n * n;
-}
-
-static double EuclideanDistance(NSPoint p1, NSPoint p2) {
-    return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
+    [_mouseHandler pressureChangeWithEvent:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
-    _makingThreeFingerSelection = NO;
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
-        return;
-    }
-    int numTouches = _numTouches;
-    _numTouches = 0;
-    _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
-    if (_mouseDownIsThreeFingerClick) {
-        [self emulateThirdButtonPressDown:NO withEvent:event];
-        DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
-        [_selection endLiveSelection];
-        return;
-    } else if (numTouches == 3 && mouseDown) {
-        // Three finger tap is valid but not emulating middle button
-        [pointer_ mouseUp:event withTouches:numTouches];
-        _mouseDown = NO;
-        DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
-        // We don't want a three finger tap followed by a scrollwheel to make a selection.
-        [_selection endLiveSelection];
-        return;
-    }
-    dragOk_ = NO;
-    _semanticHistoryDragged = NO;
-    if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseUp:event withTouches:numTouches];
-        DLog(@"Returning from mouseUp because we'e emulating a right click.");
-        [_selection endLiveSelection];
-        return;
-    }
-    const BOOL cmdActuallyPressed = (([event it_modifierFlags] & NSEventModifierFlagCommand) != 0);
-    // Make an exception to the first-mouse rule when cmd-click is set to always invoke
-    // semantic history.
-    const BOOL cmdPressed = cmdActuallyPressed && (!_mouseDownWasFirstMouse ||
-                                                   [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
-    if (mouseDown == NO) {
-        DLog(@"Returning from mouseUp because the mouse was never down.");
-        [_selection endLiveSelection];
-        return;
-    }
-    DLog(@"Set mouseDown=NO");
-    _mouseDown = NO;
-    _mouseDownOnSelection = NO;
-
-    [_selectionScrollHelper mouseUp];
-    const BOOL mouseDragged = (_mouseDragged && _committedToDrag);
-    _committedToDrag = NO;
-
-    BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
-                                   !mouseDragged &&
-                                   !([event it_modifierFlags] & NSEventModifierFlagShift));
-    BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
-                                 !mouseDragged &&
-                                 ([event it_modifierFlags] & NSEventModifierFlagShift));
-    BOOL willFollowLink = (isUnshiftedSingleClick &&
-                           cmdPressed &&
-                           [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
-
-    // Reset _mouseDragged; it won't be needed again and we don't want it to get stuck like in
-    // issue 3766.
-    _mouseDragged = NO;
-
-    [_mouseReportingFrustrationDetector mouseUp:event reported:[self mouseEventIsReportable:event]];
-    // Send mouse up event to host if xterm mouse reporting is on
-    if ([self reportMouseEvent:event]) {
-        if (willFollowLink) {
-            // This is a special case. Cmd-click is treated like alt-click at the protocol
-            // level (because we use alt to disable mouse reporting, unfortunately). Few
-            // apps interpret alt-clicks specially, and we really want to handle cmd-click
-            // on links even when mouse reporting is on. Link following has to be done on
-            // mouse up to allow the user to drag links and to cancel accidental clicks (by
-            // doing mouseUp far away from mouseDown). So we report the cmd-click as an
-            // alt-click and then open the link. Note that cmd-alt-click isn't handled here
-            // because you won't get here if alt is pressed. Note that openTargetWithEvent:
-            // may not do anything if the pointer isn't over a clickable string.
-            [_urlActionHelper openTargetWithEvent:event inBackground:NO];
-        }
-        DLog(@"Returning from mouseUp because the mouse event was reported.");
-        [_selection endLiveSelection];
-        return;
-    }
-
-    // Unlock auto scrolling as the user as finished selecting text
-    if (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
-        [_dataSource numberOfLines]) {
-        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
-    }
-
-    if (!cmdActuallyPressed) {
-        // Make ourselves the first responder except on cmd-click. A cmd-click on a non-key window
-        // gets treated as a click that doesn't raise the window. A cmd-click in an inactive pane
-        // in the key window shouldn't make it first responder, but still gets treated as cmd-click.
-        //
-        // We use cmdActuallyPressed instead of cmdPressed because on first-mouse cmdPressed gets
-        // unset so this function generally behaves like it got a plain click (this is the exception).
-        [[self window] makeFirstResponder:self];
-    }
-
-    const BOOL wasSelecting = _selection.live;
-    [_selection endLiveSelection];
-    if (isUnshiftedSingleClick) {
-        // Just a click in the window.
-        DLog(@"is a click in the window");
-
-        BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
-        if (altPressed &&
-            [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
-            !_mouseDownWasFirstMouse) {
-            // This moves the cursor, but not if mouse reporting is on for button clicks.
-            // It's also off for first mouse because of issue 2943 (alt-click to activate an app
-            // is used to order-back all of the previously active app's windows).
-            VT100Terminal *terminal = [_dataSource terminal];
-            switch ([terminal mouseMode]) {
-                case MOUSE_REPORTING_NORMAL:
-                case MOUSE_REPORTING_BUTTON_MOTION:
-                case MOUSE_REPORTING_ALL_MOTION:
-                    // Reporting mouse clicks. The remote app gets preference.
-                    break;
-
-                default: {
-                    // Not reporting mouse clicks, so we'll move the cursor since the remote app
-                    // can't.
-                    VT100GridCoord coord = [self coordForPointInWindow:[event locationInWindow]];
-                    BOOL verticalOk;
-                    if (!cmdPressed &&
-                        [_delegate textViewShouldPlaceCursorAt:coord verticalOk:&verticalOk]) {
-                        [self placeCursorOnCurrentLineWithEvent:event verticalOk:verticalOk];
-                    }
-                    break;
-                }
-            }
-        }
-
-        if (willFollowLink) {
-            [_urlActionHelper openTargetWithEvent:event inBackground:altPressed];
-        } else {
-            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-            [_findOnPageHelper setStartPoint:VT100GridAbsCoordMake(clickPoint.x,
-                                                                   [_dataSource totalScrollbackOverflow] + clickPoint.y)];
-        }
-        if (_delegate.textViewPasswordInput && !altPressed && !cmdPressed) {
-            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-            VT100GridCoord clickCoord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-            VT100GridCoord cursorCoord = VT100GridCoordMake([_dataSource cursorX] - 1,
-                                                            [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1);
-            if (VT100GridCoordEquals(clickCoord, cursorCoord)) {
-                [_delegate textViewDidSelectPasswordPrompt];
-            }
-        }
-    } else if (isShiftedSingleClick && _findOnPageHelper.haveFindCursor && ![_selection hasSelection]) {
-        VT100GridAbsCoord absCursor = [_findOnPageHelper findCursorAbsCoord];
-        VT100GridCoord cursor = VT100GridCoordMake(absCursor.x,
-                                                   absCursor.y - [_dataSource totalScrollbackOverflow]);
-        [_selection beginSelectionAt:cursor
-                                mode:kiTermSelectionModeCharacter
-                              resume:NO
-                              append:NO];
-        NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-        [_selection moveSelectionEndpointTo:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
-        [_selection endLiveSelection];
-
-        [_findOnPageHelper resetFindCursor];
-    }
-
-    DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([_selection hasSelection]), _delegate, @(wasSelecting));
-    if ([_selection hasSelection] &&
-        event.clickCount == 1 &&
-        !wasSelecting &&
-        _lastMouseDownOnSelectedText) {
-        // Click on selection. When the mouse-down was on the selection we delay clearing it until
-        // mouse-up so you have the chance to drag it.
-        [_selection clearSelection];
-    }
-    if ([_selection hasSelection] && _delegate && wasSelecting) {
-        // if we want to copy our selection, do so
-        DLog(@"selection copies text=%@", @([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]));
-        if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
-            [self copySelectionAccordingToUserPreferences];
-        }
-    }
-
-    DLog(@"Mouse up. selection=%@", _selection);
-
-    [_delegate refresh];
+    [_mouseHandler mouseUp:event];
 }
 
 - (void)mouseMoved:(NSEvent *)event {
     [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
-    [self reportMouseEvent:event];
+    [_mouseHandler mouseMoved:event];
 }
 
 - (NSPoint)locationInTextViewFromEvent:(NSEvent *)event {
@@ -2212,148 +1549,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
-    DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
-    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    [threeFingerTapGestureRecognizer_ mouseDragged];
-    const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
-    _makingThreeFingerSelection = (_numTouches == 3);
-    if (_mouseDownIsThreeFingerClick) {
-        DLog(@"is three finger click");
-        return;
-    }
-    // Prevent accidental dragging while dragging semantic history item.
-    BOOL dragThresholdMet = NO;
-    const NSPoint locationInWindow = [event locationInWindow];
-    const NSPoint locationInTextView = [self locationInTextViewFromEvent:event];
-
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-
-    NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
-    if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
-        dragThresholdMet = YES;
-        _committedToDrag = YES;
-    }
-    if ([event eventNumber] == _firstMouseEventNumber) {
-        // We accept first mouse for the purposes of focusing or dragging a
-        // split pane but not for making a selection.
-        return;
-    }
-    if (!dragOk_ && !_makingThreeFingerSelection) {
-        DLog(@"drag not ok");
-        return;
-    }
-
-    [_mouseReportingFrustrationDetector mouseDragged:event reported:[self mouseEventIsReportable:event]];
-    if ([self reportMouseEvent:event]) {
-        DLog(@"Reported drag");
-        _committedToDrag = YES;
-        return;
-    }
-    DLog(@"Did not report drag");
-    [self removeUnderline];
-
-    BOOL pressingCmdOnly = ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand;
-    if (!pressingCmdOnly || dragThresholdMet) {
-        DLog(@"mousedragged = yes");
-        _mouseDragged = YES;
-    }
-
-
-    // It's ok to drag if Cmd is not required to be pressed or Cmd is pressed.
-    BOOL okToDrag = (![iTermAdvancedSettingsModel requireCmdForDraggingText] ||
-                     ([event it_modifierFlags] & NSEventModifierFlagCommand));
-    if (okToDrag) {
-        if (_mouseDownOnImage && dragThresholdMet) {
-            _committedToDrag = YES;
-            [self _dragImage:_imageBeingClickedOn forEvent:event];
-        } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
-            DLog(@"drag and drop a selection");
-            // Drag and drop a selection
-            NSString *theSelectedText = [self selectedText];
-            if ([theSelectedText length] > 0) {
-                _committedToDrag = YES;
-                [self _dragText:theSelectedText forEvent:event];
-                DLog(@"Mouse drag. selection=%@", _selection);
-                return;
-            }
-        }
-    }
-
-    if (pressingCmdOnly && !dragThresholdMet) {
-        // If you're holding cmd (but not opt) then you're either trying to click on a link and
-        // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
-        // the threshold is met.
-        DLog(@"drag during cmd click");
-        return;
-    }
-    if (_mouseDownOnSelection == YES &&
-        ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand) &&
-        !dragThresholdMet) {
-        // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
-        // selection from changing.
-        DLog(@"too-short drag of rect region");
-        return;
-    }
-
-    if (![_selection hasSelection] && pressingCmdOnly && _semanticHistoryDragged == NO) {
-        [self handleSemanticHistoryItemDragWithEvent:event coord:VT100GridCoordMake(x, y)];
-        return;
-    }
-
-    [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
-
-    if (!wasMakingThreeFingerSelection && _makingThreeFingerSelection && ![self shouldReportMouseEvent:event at:[self pointForEvent:event]]) {
-        DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
-        const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
-        const BOOL isExtension = ([_selection hasSelection] && shiftPressed);
-        const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
-        const BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
-        if (isExtension && [_selection hasSelection]) {
-            if (!_selection.live) {
-                DLog(@"Begin extending");
-                [_selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
-            }
-        } else {
-            iTermSelectionMode mode;
-            if ((event.it_modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
-                mode = kiTermSelectionModeBox;
-            } else {
-                mode = kiTermSelectionModeCharacter;
-            }
-
-            DLog(@"Begin selection");
-            [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                    mode:mode
-                                  resume:NO
-                                  append:(cmdPressed && !altPressed)];
-            _selection.resumable = YES;
-        }
-    } else {
-        DLog(@"Update live selection during drag");
-        if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
-            _committedToDrag = YES;
-        }
-    }
+    [_mouseHandler mouseDragged:event];
 }
 
 - (BOOL)coordinateIsInMutableArea:(VT100GridCoord)coord {
     return coord.y >= self.dataSource.numberOfScrollbackLines;
-}
-
-- (BOOL)reportMouseDrags {
-    switch (_dataSource.terminal.mouseMode) {
-        case MOUSE_REPORTING_NORMAL:
-        case MOUSE_REPORTING_BUTTON_MOTION:
-        case MOUSE_REPORTING_ALL_MOTION:
-            return YES;
-
-        case MOUSE_REPORTING_NONE:
-        case MOUSE_REPORTING_HIGHLIGHT:
-            break;
-    }
-    return NO;
 }
 
 #pragma mark PointerControllerDelegate
@@ -2760,8 +1960,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)deselect
-{
+- (void)deselect {
     [_selection endLiveSelection];
     [_selection clearSelection];
 }
@@ -4316,8 +3515,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent {
-    _firstMouseEventNumber = [theEvent eventNumber];
-    return YES;
+    return [_mouseHandler acceptsFirstMouse:theEvent];
 }
 
 - (BOOL)findInProgress {
@@ -5100,7 +4298,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
     DLog(@"applicationDidResignActive: reset _numTouches to 0");
-    _numTouches = 0;
+    _mouseHandler.numTouches = 0;
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
@@ -5763,119 +4961,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return rect;
 }
 
-- (BOOL)trackpadThreeFingerDragEnabled {
-    static NSUserDefaults *ud;
-    if (!ud) {
-        ud = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.driver.AppleBluetoothMultitouch.trackpad"];
-    }
-    return [ud boolForKey:@"TrackpadThreeFingerDrag"];
-}
-
-- (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
-    NSRect liveRect = [self liveRect];
-    if (!NSPointInRect(point, liveRect)) {
-        return NO;
-    }
-    if (event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) {
-        if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
-            return NO;
-        }
-        if (event.buttonNumber == 0 && _numTouches > 1) {
-            // When three-finger tap emulates middle click then buttonNumber will be 2. Middle clicks are reportable.
-            if (_numTouches != 3 || ![self trackpadThreeFingerDragEnabled]) {
-                DLog(@"Num touches is %@ so not reporting it", @(_numTouches));
-                return NO;
-            }
-        }
-    }
-    if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
-        return NO;
-    }
-    if (!self.xtermMouseReportingAllowClicksAndDrags) {
-        if (event.type == NSEventTypeLeftMouseDown ||
-            event.type == NSEventTypeLeftMouseUp ||
-            event.type == NSEventTypeLeftMouseDragged ||
-            event.type == NSEventTypeRightMouseDown ||
-            event.type == NSEventTypeRightMouseUp ||
-            event.type == NSEventTypeRightMouseDragged ||
-            event.type == NSEventTypeOtherMouseDown ||
-            event.type == NSEventTypeOtherMouseUp ||
-            event.type == NSEventTypeOtherMouseDragged) {
-            return NO;
-        }
-    }
-    if (event.type == NSEventTypeScrollWheel) {
-        return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
-    } else {
-        PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-        return (frontTextView == self && [self xtermMouseReporting]);
-    }
-}
-
-- (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
-    switch (event.type) {
-        case NSEventTypeLeftMouseDragged:
-        case NSEventTypeLeftMouseDown:
-        case NSEventTypeLeftMouseUp:
-            return MOUSE_BUTTON_LEFT;
-
-        case NSEventTypeRightMouseDown:
-        case NSEventTypeRightMouseUp:
-        case NSEventTypeRightMouseDragged:
-            return MOUSE_BUTTON_RIGHT;
-
-        case NSEventTypeOtherMouseDown:
-        case NSEventTypeOtherMouseUp:
-        case NSEventTypeOtherMouseDragged:
-            return MOUSE_BUTTON_MIDDLE;
-
-        case NSEventTypeScrollWheel:
-            if ([event scrollingDeltaY] > 0) {
-                return MOUSE_BUTTON_SCROLLDOWN;
-            } else {
-                return MOUSE_BUTTON_SCROLLUP;
-            }
-
-        default:
-            return MOUSE_BUTTON_NONE;
-    }
-}
-
 - (NSPoint)pointForEvent:(NSEvent *)event {
     return [self convertPoint:[event locationInWindow] fromView:nil];
-}
-
-// Returns YES if the mouse event would be handled, ignoring trivialities like a drag that hasn't
-// changed coordinate since the last drag.
-- (BOOL)mouseEventIsReportable:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:YES];
-}
-
-// Returns YES if the mouse event should not be handled natively.
-- (BOOL)reportMouseEvent:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:NO];
-}
-
-- (BOOL)handleMouseEvent:(NSEvent *)event testOnly:(BOOL)testOnly {
-    NSPoint point = [self pointForEvent:event];
-
-    if (![self shouldReportMouseEvent:event at:point]) {
-        return NO;
-    }
-
-    NSRect liveRect = [self liveRect];
-    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / _charWidth,
-                                              (point.y - liveRect.origin.y) / _lineHeight);
-    coord.x = MAX(0, coord.x);
-    coord.y = MAX(0, coord.y);
-
-    return [_delegate textViewReportMouseEvent:event.type
-                                     modifiers:event.it_modifierFlags
-                                        button:[self mouseReportingButtonNumberForEvent:event]
-                                    coordinate:coord
-                                        deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]
-                      allowDragBeforeMouseDown:_makingThreeFingerSelection
-                                      testOnly:testOnly];
 }
 
 #pragma mark - NSDraggingSource
@@ -5889,7 +4976,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)selectionScrollWillStart {
     PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
     scroller.userScroll = YES;
-    _committedToDrag = YES;
+    [_mouseHandler selectionScrollWillStart];
 }
 
 #pragma mark - Color
@@ -6320,12 +5407,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.savedSelectedText = nil;
 }
 
-#pragma mark - iTermAltScreenMouseScrollInferrerDelegate
-
-- (void)altScreenMouseScrollInferrerDidInferScrollingIntent:(BOOL)isTrying {
-    [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
-}
-
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverDidClose:(NSNotification *)notification {
@@ -6339,7 +5420,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
     shouldHandleKeyDown:(NSEvent *)event {
-    [_altScreenMouseScrollInferrer keyDown:event];
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
         return NO;
     }
@@ -6434,3 +5514,290 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 @end
 
+@implementation PTYTextView(MouseHandler)
+
+- (BOOL)mouseHandlerViewHasFocus:(PTYMouseHandler *)handler {
+    return [[iTermController sharedInstance] frontTextView] == self;
+}
+
+- (void)mouseHandlerMakeFirstResponder:(PTYMouseHandler *)handler {
+    [[self window] makeFirstResponder:self];
+}
+
+- (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler {
+    [_delegate textViewBeginDrag];
+}
+
+- (BOOL)mouseHandlerIsInKeyWindow:(PTYMouseHandler *)handler {
+    return ([NSApp keyWindow] == [self window]);
+}
+
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+                    clickPoint:(NSEvent *)event
+                 allowOverflow:(BOOL)allowRightMarginOverflow {
+    const NSPoint temp =
+    [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
+    return VT100GridCoordMake(temp.x, temp.y);
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+      coordIsMutable:(VT100GridCoord)coord {
+    return [self coordinateIsInMutableArea:coord];
+}
+
+- (MouseMode)mouseHandlerMouseMode:(PTYMouseHandler *)handler {
+    return _dataSource.terminal.mouseMode;
+}
+
+- (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler {
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            PTYNoteView *noteView = (PTYNoteView *)view;
+            [noteView.delegate.noteViewController setNoteHidden:YES];
+        }
+    }
+}
+
+- (iTermSelection *)mouseHandlerCurrentSelection:(PTYMouseHandler *)handler {
+    return _selection;
+}
+
+- (iTermImageInfo *)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord {
+    return [self imageInfoAtCoord:coord];
+}
+
+- (BOOL)mouseHandlerReportingAllowed:(PTYMouseHandler *)handler {
+    return [self.delegate xtermMouseReporting];
+}
+
+- (void)mouseHandlerLockScrolling:(PTYMouseHandler *)handler {
+    // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
+    // because drags are ignored for those.
+    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+}
+
+- (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler {
+    [_delegate refresh];
+}
+
+- (void)mouseHandlerDidInferScrollingIntent:(PTYMouseHandler *)handler trying:(BOOL)trying {
+    [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:trying];
+}
+
+- (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
+                           inBackground:(BOOL)inBackground {
+    [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
+}
+
+- (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {
+    return (([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight ==
+            [_dataSource numberOfLines]);
+}
+
+- (void)mouseHandlerUnlockScrolling:(PTYMouseHandler *)handler {
+    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
+}
+
+- (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point {
+    return [self coordForPointInWindow:point];
+}
+
+- (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point {
+    NSRect liveRect = [self liveRect];
+    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / _charWidth,
+                                              (point.y - liveRect.origin.y) / _lineHeight);
+    coord.x = MAX(0, coord.x);
+    coord.y = MAX(0, coord.y);
+    return coord;
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)point {
+    const NSRect liveRect = [self liveRect];
+    return NSPointInRect(point, liveRect);
+}
+
+- (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord
+                             forEvent:(NSEvent *)event {
+    BOOL verticalOk;
+    if ([_delegate textViewShouldPlaceCursorAt:coord verticalOk:&verticalOk]) {
+        [self placeCursorOnCurrentLineWithEvent:event verticalOk:verticalOk];
+    }
+}
+
+- (void)mouseHandlerSetFindOnPageCursorCoord:(VT100GridCoord)clickPoint {
+    VT100GridAbsCoord absCoord =
+    VT100GridAbsCoordMake(clickPoint.x,
+                          [_dataSource totalScrollbackOverflow] + clickPoint.y);
+    [_findOnPageHelper setStartPoint:absCoord];
+}
+
+- (BOOL)mouseHandlerAtPasswordPrompt:(PTYMouseHandler *)handler {
+    return _delegate.textViewPasswordInput;
+}
+
+- (VT100GridCoord)mouseHandlerCursorCoord:(PTYMouseHandler *)handler {
+    return VT100GridCoordMake([_dataSource cursorX] - 1,
+                              [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1);
+}
+
+- (void)mouseHandlerOpenPasswordManager:(PTYMouseHandler *)handler {
+    [_delegate textViewDidSelectPasswordPrompt];
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+ getFindOnPageCursor:(VT100GridCoord *)coord {
+    if (!_findOnPageHelper.haveFindCursor) {
+        return NO;
+    }
+    const VT100GridAbsCoord findOnPageCursor = [_findOnPageHelper findCursorAbsCoord];
+    *coord = VT100GridCoordMake(findOnPageCursor.x,
+                                findOnPageCursor.y -
+                                [_dataSource totalScrollbackOverflow]);
+    return YES;
+}
+
+- (void)mouseHandlerResetFindOnPageCursor:(PTYMouseHandler *)handler {
+    [_findOnPageHelper resetFindCursor];
+}
+
+- (BOOL)mouseHandlerIsValid:(PTYMouseHandler *)handler {
+    return _delegate != nil;
+}
+
+- (void)mouseHandlerCopy:(PTYMouseHandler *)handler {
+    [self copySelectionAccordingToUserPreferences];
+}
+
+- (NSPoint)mouseHandler:(PTYMouseHandler *)handler
+      viewCoordForEvent:(NSEvent *)event
+                clipped:(BOOL)clipped {
+    if (!clipped) {
+        return [self pointForEvent:event];
+    }
+    return [self locationInTextViewFromEvent:event];
+}
+
+- (void)mouseHandler:(PTYMouseHandler *)handler sendFakeOtherMouseUp:(NSEvent *)event {
+    [self otherMouseUp:event];
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+    reportMouseEvent:(NSEventType)eventType
+           modifiers:(NSUInteger)modifiers
+              button:(MouseButtonNumber)button
+          coordinate:(VT100GridCoord)coord
+              event:(NSEvent *)event
+allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
+            testOnly:(BOOL)testOnly {
+    const CGFloat deltaY =
+    [_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll];
+    return [_delegate textViewReportMouseEvent:eventType
+                                     modifiers:modifiers
+                                        button:button
+                                    coordinate:coord
+                                        deltaY:deltaY
+                      allowDragBeforeMouseDown:allowDragBeforeMouseDown
+                                      testOnly:testOnly];
+}
+
+- (BOOL)mouseHandlerViewIsFirstResponder:(PTYMouseHandler *)mouseHandler {
+    return self.window.firstResponder == self;
+}
+
+- (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler {
+    return self.xtermMouseReportingAllowClicksAndDrags;
+}
+
+- (BOOL)mouseHandlerShouldReportScroll:(PTYMouseHandler *)mouseHandler {
+    return [self xtermMouseReportingAllowMouseWheel];
+}
+
+- (void)mouseHandlerJiggle:(PTYMouseHandler *)mouseHandler {
+    [self jiggle];
+}
+
+- (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateVerticalScrollFromEvent:(NSEvent *)event {
+    PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
+    return [scrollView accumulateVerticalScrollFromEvent:event];
+}
+
+- (void)mouseHandler:(PTYMouseHandler *)handler
+          sendString:(NSString *)stringToSend
+              latin1:(BOOL)forceLatin1 {
+    if (forceLatin1) {
+        [_delegate writeStringWithLatin1Encoding:stringToSend];
+    } else {
+        [_delegate writeTask:stringToSend];
+    }
+}
+
+- (void)mouseHandlerRemoveSelection:(PTYMouseHandler *)mouseHandler {
+    [self deselect];
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)mouseHandler moveSelectionToPointInEvent:(NSEvent *)event {
+    const NSPoint locationInTextView = [self locationInTextViewFromEvent:event];
+    const NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+    const int x = clickPoint.x;
+    const int y = clickPoint.y;
+    DLog(@"Update live selection during SCROLL");
+    return [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)mouseHandler moveSelectionToGridCoord:(VT100GridCoord)coord
+           viewCoord:(NSPoint)locationInTextView {
+    return [self moveSelectionEndpointToX:coord.x
+                                        Y:coord.y
+                       locationInTextView:locationInTextView];
+}
+
+- (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
+               stringForUp:(BOOL)up  // if NO, then down
+                     flags:(NSEventModifierFlags)flags
+                    latin1:(out BOOL *)forceLatin1 {
+    const BOOL down = !up;
+
+    if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
+        *forceLatin1 = YES;
+        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:flags] :
+                              [_dataSource.terminal.output keyArrowUp:flags];
+        return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
+    } else {
+        *forceLatin1 = NO;
+        NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
+                                  [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
+        return [string stringByExpandingVimSpecialCharacters];
+    }
+}
+
+- (BOOL)mouseHandlerShowingAlternateScreen:(PTYMouseHandler *)mouseHandler {
+    return [self.dataSource showingAlternateScreen];
+}
+
+- (void)mouseHandlerWillDrag:(PTYMouseHandler *)mouseHandler {
+    [self removeUnderline];
+}
+
+- (void)mouseHandler:(PTYMouseHandler *)mouseHandler
+           dragImage:(iTermImageInfo *)image
+            forEvent:(NSEvent *)event {
+    [self _dragImage:image forEvent:event];
+}
+
+- (NSString *)mouseHandlerSelectedText:(PTYMouseHandler *)mouseHandler {
+    return [self selectedText];
+}
+
+- (void)mouseHandler:(PTYMouseHandler *)mouseHandler
+            dragText:(NSString *)text
+            forEvent:(NSEvent *)event {
+    [self _dragText:text forEvent:event];
+}
+
+- (void)mouseHandler:(PTYMouseHandler *)mouseHandler
+dragSemanticHistoryWithEvent:(NSEvent *)event
+               coord:(VT100GridCoord)coord {
+    [self handleSemanticHistoryItemDragWithEvent:event coord:coord];
+}
+
+@end

@@ -7,7 +7,6 @@
 
 #import "PTYTextView.h"
 
-#import "iTermAltScreenMouseScrollInferrer.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermFindCursorView.h"
@@ -17,15 +16,14 @@
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermKeyboardHandler.h"
-#import "iTermMouseReportingFrustrationDetector.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
+@class PTYMouseHandler;
 
 @interface PTYTextView () <
-iTermAltScreenMouseScrollInferrerDelegate,
 iTermBadgeLabelDelegate,
 iTermTextViewAccessibilityHelperDelegate,
 iTermFindCursorViewDelegate,
@@ -37,14 +35,9 @@ NSDraggingSource,
 NSMenuDelegate,
 NSPopoverDelegate> {
     NSCursor *cursor_;
-
-    // Flag to make sure a Semantic History drag check is only one once per drag
-    BOOL _semanticHistoryDragged;
-    BOOL _committedToDrag;
-
+    PTYMouseHandler *_mouseHandler;
     iTermURLActionHelper *_urlActionHelper;
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
-    iTermMouseReportingFrustrationDetector *_mouseReportingFrustrationDetector;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

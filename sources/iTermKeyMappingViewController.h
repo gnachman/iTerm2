@@ -30,10 +30,6 @@
         isAddition:(BOOL)addition;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-         removeKey:(NSString *)keyCombo
-    isTouchBarItem:(BOOL)isTouchBarItem;
-
-- (void)keyMapping:(iTermKeyMappingViewController *)viewController
  removeKeyMappings:(NSSet<NSString *> *)keyCombos
      touchBarItems:(NSSet<NSString *> *)touchBarItems;
 

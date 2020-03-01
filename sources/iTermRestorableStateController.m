@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static const NSUInteger iTermRestorableStateControllerAESKeySize = 16;
 static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"NoSyncRestoreWindowsCount";
 
 @implementation iTermRestorableStateController {

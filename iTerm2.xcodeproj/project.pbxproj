@@ -2818,6 +2818,8 @@
 		A6A4868020B6817900493302 /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
 		A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D027C101CD1867000B0FBFF /* iTermColorPresets.m */; };
 		A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
+		A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */; };
+		A6A4B2A2240B67A400184EAC /* PTYMouseHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
@@ -5834,6 +5836,8 @@
 		A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesAdvancedPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
+		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
+		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -8302,6 +8306,8 @@
 				A6352255238CA38A00FED5BC /* iTermMultiServerJobManager.m */,
 				A67F5DE423947A2700D18028 /* iTermMultiServerConnection.h */,
 				A67F5DE523947A2700D18028 /* iTermMultiServerConnection.m */,
+				A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */,
+				A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10863,6 +10869,7 @@
 				A6F718C12265AF1D0053488E /* iTermPathFinder.h in Headers */,
 				535EA4F120D0CB7A00FC81E0 /* iTermSwiftyString.h in Headers */,
 				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
+				A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */,
 				A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */,
 				A631FC9120EDDBC600EB824F /* iTermFindDriver.h in Headers */,
 			);
@@ -13081,6 +13088,7 @@
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
 				A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
+				A6A4B2A2240B67A400184EAC /* PTYMouseHandler.m in Sources */,
 				537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,

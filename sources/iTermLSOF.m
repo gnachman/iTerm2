@@ -461,7 +461,7 @@
     dispatch_group_enter(group);
     __block NSString *result = nil;
     [self asyncWorkingDirectoryOfProcess:pid queue:queue block:^(NSString *pwd) {
-        DLog(@"Get result for pid: %@", @(pid), pwd);
+        DLog(@"Get result for pid %@: %@", @(pid), pwd);
         result = pwd;
         dispatch_group_leave(group);
     }];
