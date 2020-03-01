@@ -1191,6 +1191,11 @@ ITERM_WEAKLY_REFERENCEABLE
             [self class], self, (int)[self numberOfTabs], [self window]];
 }
 
+- (BOOL)tabBarVisibleOnTopEvenWhenOnLoan {
+    return ([self tabBarShouldBeVisibleEvenWhenOnLoan] &&
+            [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+}
+
 - (BOOL)tabBarVisibleOnTop {
     return ([self tabBarShouldBeVisible] &&
             [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
@@ -1208,7 +1213,7 @@ ITERM_WEAKLY_REFERENCEABLE
             (self.window.styleMask & NSWindowStyleMaskTitled) &&
             ![self titleBarShouldAppearTransparent] &&
             ![self anyFullScreen] &&
-            ![self tabBarVisibleOnTop]);
+            ![self tabBarVisibleOnTopEvenWhenOnLoan]);
 }
 
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar {
@@ -6870,11 +6875,7 @@ ITERM_WEAKLY_REFERENCEABLE
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
             break;
     }
-    if (@available(macOS 10.15, *)) {
-        self.window.backgroundColor = [NSColor clearColor];
-    } else {
-        self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
-    }
+    self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
     self.window.titlebarAppearsTransparent = [self titleBarShouldAppearTransparent];  // Keep it from showing content from other windows behind it. Issue 7108.
 }
 
@@ -9073,14 +9074,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if ([self anyFullScreen]) {
         // Full screen is special w/r/t the tab bar.
         return YES;
-    }
-    if (@available(macOS 10.15, *)) {
-        if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_COMPACT) {
-            // Window has a clear background color (see
-            // -setMojaveBackgroundColor:). Show the visual effect view in the
-            // tabbar backing so it's not see-through.
-            return NO;
-        }
     }
     if (![self useTransparency]) {
         // Opaque windows have a window background behind the fake title bar.
