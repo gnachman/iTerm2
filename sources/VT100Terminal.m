@@ -1,5 +1,6 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
 #import "iTermURLStore.h"
 #import "NSColor+iTerm.h"
@@ -1308,7 +1309,7 @@ static const int kMaxScreenRows = 4096;
         return;
     }
 
-    if ([self.termType containsString:@"screen"]) {
+    if ([iTermAdvancedSettingsModel translateScreenToXterm] && [self.termType containsString:@"screen"]) {
         [token translateFromScreenTerminal];
     }
 

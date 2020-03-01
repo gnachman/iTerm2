@@ -279,6 +279,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)traditionalVisualBell;
 + (NSString *)trailingPunctuationMarks;
++ (BOOL)translateScreenToXterm;
 + (int)triggerRadius;
 + (BOOL)trimWhitespaceOnCopy;
 + (BOOL)typingClearsSelection;
