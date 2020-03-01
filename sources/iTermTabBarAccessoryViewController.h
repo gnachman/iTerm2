@@ -1,5 +1,5 @@
 //
-//  iTermLionFullScreenTabBarViewController.h
+//  iTermTabBarAccessoryViewController.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 10/21/18.
@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NS_CLASS_AVAILABLE_MAC(10_14)
-@interface iTermLionFullScreenTabBarViewController : NSTitlebarAccessoryViewController
+@interface iTermTabBarAccessoryViewController : NSTitlebarAccessoryViewController
 
 - (instancetype)initWithView:(NSView *)view NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithNibName:(nullable NSNibName)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;

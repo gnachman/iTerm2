@@ -1,17 +1,17 @@
 //
-//  iTermLionFullScreenTabBarViewController.m
+//  iTermTabBarAccessoryViewController.m
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 10/21/18.
 //
 
-#import "iTermLionFullScreenTabBarViewController.h"
+#import "iTermTabBarAccessoryViewController.h"
 
-@interface iTermLionFullScreenTabBarViewController ()
+@interface iTermTabBarAccessoryViewController ()
 
 @end
 
-@implementation iTermLionFullScreenTabBarViewController {
+@implementation iTermTabBarAccessoryViewController {
     NSView *_view;
 }
 

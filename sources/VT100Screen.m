@@ -3336,7 +3336,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
-    DLog(@"terminalSetWindowTitle:", title);
+    DLog(@"terminalSetWindowTitle:%@", title);
     
     if ([delegate_ screenAllowTitleSetting]) {
         [delegate_ screenSetWindowTitle:title];

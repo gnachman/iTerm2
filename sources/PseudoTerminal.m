@@ -36,7 +36,6 @@
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyBindingMgr.h"
-#import "iTermLionFullScreenTabBarViewController.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
@@ -59,6 +58,7 @@
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
 #import "iTermSystemVersion.h"
+#import "iTermTabBarAccessoryViewController.h"
 #import "iTermTabBarControlView.h"
 #import "iTermTheme.h"
 #import "iTermToolbeltView.h"
@@ -389,7 +389,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     //
     // Update: This seems to work properly on Mojave. Hurray!
     iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController NS_AVAILABLE_MAC(10_14);
-    iTermLionFullScreenTabBarViewController *_lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14);
+    iTermTabBarAccessoryViewController *_titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14);
     
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
     // out if it's safe to toggle Lion full screen since only one can go at a time.
@@ -1161,7 +1161,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_autoCommandHistorySessionGuid release];
     if (@available(macOS 10.14, *)) {
         [_shortcutAccessoryViewController release];
-        [_lionFullScreenTabBarViewController release];
+        [_titleBarAccessoryTabBarViewController release];
     }
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
@@ -2043,7 +2043,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateFullScreenTabBar:(NSNotification *)notification {
     if ([self anyFullScreen]) {
         if (@available(macOS 10.14, *)) {
-            [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
+            [self updateTabBarControlIsTitlebarAccessory];
         }
         [_contentView.tabBarControl updateFlashing];
         [self repositionWidgets];
@@ -4718,6 +4718,10 @@ ITERM_WEAKLY_REFERENCEABLE
     // For reasons that defy comprehension, you have to do this when switching to full-size content
     // view style mask. Otherwise, you are left with an unusable title bar.
     if (self.window.styleMask & NSWindowStyleMaskTitled) {
+        DLog(@"Remove title bar accessory view controllers to appease appkit");
+        if (@available(macOS 10.14, *)) {
+            [self returnTabBarToContentView];
+        }
         while (self.window.titlebarAccessoryViewControllers.count > 0) {
             [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
         }
@@ -4819,10 +4823,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)willEnterTraditionalFullScreenMode {
+    DLog(@"willEnterTraditionalFullScreenMode");
     oldFrame_ = self.window.frame;
     oldFrameSizeIsBogus_ = NO;
     _savedWindowType = self.windowType;
     if (@available(macOS 10.14, *)) {
+        if (_contentView.tabBarControlOnLoan) {
+            DLog(@"returnTabBarToContentView");
+            [self returnTabBarToContentView];
+        }
         if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
             [_shortcutAccessoryViewController removeFromParentViewController];
         }
@@ -4856,7 +4865,12 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         // NOTE: Setting the style mask causes the presentation options to be
         // changed (menu/dock hidden) because refreshTerminal gets called.
-        self.windowType = self.savedWindowType;
+        iTermWindowType newType = self.savedWindowType;
+        if (newType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+            // Hm, how'd that happen?
+            newType = WINDOW_TYPE_NORMAL;
+        }
+        self.windowType = newType;
         [self safelySetStyleMask:[self styleMask]];
     }
     [[iTermPresentationController sharedInstance] update];
@@ -4889,15 +4903,19 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
     if (@available(macOS 10.14, *)) {
+        DLog(@"addShortcutAccessorViewControllerToTitleBarIfNeeded");
         if (!_shortcutAccessoryViewController) {
+            DLog(@"Don't already have a shortcut accessory view controller");
             return;
         }
-        if ((self.window.styleMask & NSWindowStyleMaskTitled) &&
+        if (self.shouldHaveShortcutAccessory &&
             [self.window.titlebarAccessoryViewControllers containsObject:_shortcutAccessoryViewController]) {
+            DLog(@"Have one and should have one");
             return;
         }
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-            (self.window.styleMask & NSWindowStyleMaskTitled)) {
+            [self shouldHaveShortcutAccessory]) {
+            DLog(@"Need to add one");
             // Explicitly load the view before adding. Otherwise, for some reason, on WINDOW_TYPE_MAXIMIZED windows,
             // the NSWindow miscalculates the size, and ends up resizing the iTermRootTerminalView incorrectly.
             [_shortcutAccessoryViewController view];
@@ -4905,6 +4923,32 @@ ITERM_WEAKLY_REFERENCEABLE
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
             [self updateWindowNumberVisibility:nil];
         }
+    }
+}
+
+- (BOOL)shouldHaveShortcutAccessory {
+    DLog(@"windowType=%@", @(self.windowType));
+
+    switch (iTermThemedWindowType(self.windowType)) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+            
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_NORMAL:
+            return YES;
     }
 }
 
@@ -5267,12 +5311,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView invalidateAutomaticTabBarBackingHiding];
 }
 
-- (NSTitlebarAccessoryViewController *)lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14) {
-    if (!_lionFullScreenTabBarViewController) {
-        _lionFullScreenTabBarViewController = [[iTermLionFullScreenTabBarViewController alloc] initWithView:[_contentView borrowTabBarControl]];
-        _lionFullScreenTabBarViewController.layoutAttribute = NSLayoutAttributeBottom;
+- (NSTitlebarAccessoryViewController *)titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14) {
+    if (!_titleBarAccessoryTabBarViewController) {
+        _titleBarAccessoryTabBarViewController = [[iTermTabBarAccessoryViewController alloc] initWithView:[_contentView borrowTabBarControl]];
+        _titleBarAccessoryTabBarViewController.layoutAttribute = NSLayoutAttributeBottom;
     }
-    return _lionFullScreenTabBarViewController;
+    return _titleBarAccessoryTabBarViewController;
 }
 
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
@@ -5306,11 +5350,80 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
-- (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
-    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
-    if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
-        NSRect frame = _lionFullScreenTabBarViewController.view.superview.bounds;
-        NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
+- (BOOL)tabBarShouldBeAccessory {
+    if (@available(macOS 10.14, *)) { } else {
+        return NO;
+    }
+    if (!(self.window.styleMask & NSWindowStyleMaskTitled)) {
+        // You get an assertion if you try to add an accessory to an untitled window.
+        return NO;
+    }
+    DLog(@"%@", self);
+    if (!exitingLionFullscreen_) {
+        const BOOL assumeFullScreen = (self.lionFullScreen || togglingLionFullScreen_);
+        if (assumeFullScreen) {
+            DLog(@"tabBarShouldBeAccessory - assuing full screen, should=%@", @([self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]));
+            return [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen];
+        }
+    }
+    switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+        case PSMTab_BottomTab:
+            DLog(@"NO - tabs not on top");
+            return NO;
+
+        case PSMTab_TopTab:
+            break;
+    }
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            DLog(@"NO - minimal or compact");
+            return NO;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            break;
+    }
+    switch (self.windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            DLog(@"NO - window type is %@", @(self.windowType));
+            return NO;
+            
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            DLog(@"lion full screen. return %@", @(!exitingLionFullscreen_));
+            return !exitingLionFullscreen_;
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+            DLog(@"YES - normal, accessory, or maximized");
+            return YES;
+    }
+    assert(NO);
+    return YES;
+}
+
+- (void)updateTabBarControlIsTitlebarAccessory NS_AVAILABLE_MAC(10_14) {
+    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
+    if ([self tabBarShouldBeAccessory]) {
+        DLog(@"tab bar should be accessory");
+        NSRect frame = _titleBarAccessoryTabBarViewController.view.superview.bounds;
+        NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         viewController.fullScreenMinHeight = tabBarHeight;
 
@@ -5324,13 +5437,25 @@ ITERM_WEAKLY_REFERENCEABLE
             [self.window addTitlebarAccessoryViewController:viewController];
         }
     } else if (_contentView.tabBarControlOnLoan) {
-        assert(index != NSNotFound);
-        [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
-        [_contentView returnTabBarControlView:(iTermTabBarControlView *)_lionFullScreenTabBarViewController.view];
-        [_lionFullScreenTabBarViewController release];
-        _lionFullScreenTabBarViewController = nil;
-        [_contentView layoutSubviews];
+        DLog(@"tab bar should NOT be accessory, but is on loan.");
+        [self returnTabBarToContentView];
     }
+}
+
+- (void)returnTabBarToContentView NS_AVAILABLE_MAC(10_14) {
+    DLog(@"returnTabBarToContentView %@", self);
+    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
+    if (index == NSNotFound) {
+        assert(!_contentView.tabBarControlOnLoan);
+        return;
+    }
+    assert(_contentView.tabBarControlOnLoan);
+    
+    [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
+    [_contentView returnTabBarControlView:(iTermTabBarControlView *)_titleBarAccessoryTabBarViewController.view];
+    [_titleBarAccessoryTabBarViewController release];
+    _titleBarAccessoryTabBarViewController = nil;
+    [_contentView layoutSubviews];
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
@@ -5342,9 +5467,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self repositionWidgets];
     [_contentView didChangeCompactness];
     if (@available(macOS 10.14, *)) {
-        if (self.window.styleMask & NSWindowStyleMaskTitled) {
-            [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
-        }
+        [self updateTabBarControlIsTitlebarAccessory];
     }
     if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         _savedWindowType = self.windowType;
@@ -5357,7 +5480,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Window did enter lion fullscreen");
 
     if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
+        [self updateTabBarControlIsTitlebarAccessory];
     }
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -5427,6 +5550,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
+    if (@available(macOS 10.14, *)) {
+        [self returnTabBarToContentView];
+    }
     while (self.window.titlebarAccessoryViewControllers.count) {
         [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
     }
@@ -5437,7 +5563,7 @@ ITERM_WEAKLY_REFERENCEABLE
     exitingLionFullscreen_ = YES;
 
     if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
+        [self updateTabBarControlIsTitlebarAccessory];
     } else {
         [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
                                                         savedWindowType:self.savedWindowType
@@ -8612,8 +8738,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
-    [self safelySetStyleMask:self.styleMask];
     [self updateTabBarStyle];
+    [self safelySetStyleMask:self.styleMask];
     [self updateProxyIcon];
 
     // If hiding of menu bar changed.
@@ -8949,7 +9075,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateTabColors];
     [self updateToolbeltAppearance];
     if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
+        [self updateTabBarControlIsTitlebarAccessory];
         self.tabBarControl.insets = [self tabBarInsets];
 
         [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
