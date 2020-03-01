@@ -52,7 +52,7 @@ class Tab:
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
-        self.active_session_id = None
+        self.__active_session_id = None
         self.__tmux_window_id = tmux_window_id
         self.__tmux_connection_id = tmux_connection_id
     # pylint: enable=too-many-arguments
@@ -60,10 +60,17 @@ class Tab:
     def __repr__(self):
         return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.sessions)
 
+    @property
+    def active_session_id(self):
+        return self.__active_session_id
+
+    @active_session_id.setter
+    def active_session_id(self, active_session_id):
+        self.__active_session_id = active_session_id
+
     def update_from(self, other):
         """Copies state from another tab into this one."""
         self.__root = other.root
-        self.active_session_id = other.active_session_id
 
     def update_session(self, session):
         """Replaces references to a session."""
