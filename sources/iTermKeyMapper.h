@@ -36,6 +36,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Prepare to handle this event. Update config from delegate.
 - (void)keyMapperSetEvent:(NSEvent *)event;
 
+// When a keystroke is routed to performKeyEquivalent instead of keyDown, this is called to check
+// if the key mapper is interested in it.
+- (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event;
+
 @optional
 - (void)setDelegate:(id)delegate;
 

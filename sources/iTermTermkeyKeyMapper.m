@@ -649,4 +649,9 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     return NO;
 }
 
+- (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    const BOOL cmdPressed = !!(event.modifierFlags & NSEventModifierFlagCommand);
+    return !cmdPressed;
+}
+
 @end

@@ -595,6 +595,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 // view handles it. It's necessary to setUserScroll in the PTYScroller, or else
 // it scrolls back to the bottom right away. This code handles those two
 // keypresses and scrolls correctly.
+// Addendum: control page up/down seem to be supported because I did not understand
+// macOS very well back in issue 1112. I guess I won't break it.
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
     if (self.window.firstResponder != self) {
         return [super performKeyEquivalent:theEvent];
@@ -604,6 +606,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return [super performKeyEquivalent:theEvent];
     }
     unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+
+    if ([_keyboardHandler performKeyEquivalent:theEvent inputContext:self.inputContext]) {
+        return YES;
+    }
 
     NSUInteger modifiers = [theEvent it_modifierFlags];
     if ((modifiers & NSEventModifierFlagControl) &&

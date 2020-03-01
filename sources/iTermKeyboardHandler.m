@@ -110,6 +110,14 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     }
 }
 
+- (BOOL)performKeyEquivalent:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext {
+    if ([_keyMapper keyMapperWantsKeyEquivalent:event]) {
+        [self keyDown:event inputContext:inputContext];
+        return YES;
+    }
+    return NO;
+}
+
 - (void)flagsChanged:(NSEvent *)event {
     [self.delegate keyboardHandler:self sendEventToController:event];
 }

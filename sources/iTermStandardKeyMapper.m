@@ -27,6 +27,10 @@
     return nil;
 }
 
+- (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    return NO;
+}
+
 #pragma mark - Pre-Cocoa
 
 - (NSString *)preCocoaString {

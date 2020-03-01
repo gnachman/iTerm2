@@ -32,6 +32,10 @@
     return NO;
 }
 
+- (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    return YES;
+}
+
 #pragma mark - Private
 static BOOL HasBits(NSUInteger value, NSUInteger required) {
     return ((value & required) == required);

@@ -64,6 +64,7 @@ typedef struct {
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange;
 - (BOOL)hasMarkedText;
 - (void)flagsChanged:(NSEvent *)event;
+- (BOOL)performKeyEquivalent:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext;
 
 @end
 
