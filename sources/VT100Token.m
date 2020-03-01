@@ -297,7 +297,8 @@
             }
             break;
         case VT100CSI_DECSET:
-        case VT100CSI_DECRST: [self translateDECSETFromScreenTerminal];
+        case VT100CSI_DECRST:
+            [self translateDECSETFromScreenTerminal];
             break;
         default:
             break;
