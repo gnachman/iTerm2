@@ -580,6 +580,7 @@ DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll vie
 DEFINE_BOOL(multiserver, NO, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
 DEFINE_BOOL(useRestorableStateController, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis enables restoring full screen windows in the Compact and Minimal themes.");
 DEFINE_BOOL(fixMouseWheel, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Mouse wheel always scrolls when scroll bars are visible");
+DEFINE_BOOL(oscColorReport16Bits, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Report 16-bit color values to OSC 4 and 10 through 19.\nWorks around a bug in older vim where they could not properly parse 8-bit values.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

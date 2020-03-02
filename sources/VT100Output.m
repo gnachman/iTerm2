@@ -1,6 +1,8 @@
 #import "VT100Output.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+
 #include <term.h>
 
 // Indexes into _keyStrings.
@@ -579,14 +581,26 @@ typedef enum {
 }
 
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix {
-    NSString *string = [NSString stringWithFormat:@"%c]%@%d;rgb:%02x/%02x/%02x%c",
-                        ESC,
-                        prefix,
-                        index,
-                        (int) ([color redComponent] * 255.0),
-                        (int) ([color greenComponent] * 255.0),
-                        (int) ([color blueComponent] * 255.0),
-                        7];
+    NSString *string = nil;
+    if ([iTermAdvancedSettingsModel oscColorReport16Bits]) {
+        string = [NSString stringWithFormat:@"%c]%@%d;rgb:%04x/%04x/%04x%c",
+                  ESC,
+                  prefix,
+                  index,
+                  (int) ([color redComponent] * 65535.0),
+                  (int) ([color greenComponent] * 65535.0),
+                  (int) ([color blueComponent] * 65535.0),
+                  7];
+    } else {
+        string = [NSString stringWithFormat:@"%c]%@%d;rgb:%02x/%02x/%02x%c",
+                  ESC,
+                  prefix,
+                  index,
+                  (int) ([color redComponent] * 255.0),
+                  (int) ([color greenComponent] * 255.0),
+                  (int) ([color blueComponent] * 255.0),
+                  7];
+    }
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 

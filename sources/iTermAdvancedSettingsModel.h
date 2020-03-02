@@ -195,6 +195,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
 + (BOOL)optionIsMetaForSpecialChars;
++ (BOOL)oscColorReport16Bits;
 + (int)pasteHistoryMaxOptions;
 + (NSString *)pathsToIgnore;
 + (NSString *)pathToFTP;
