@@ -41,6 +41,8 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     // Timer period between updates when active (not idle, tab is visible or title bar is changing,
     // etc.)
     NSTimeInterval _activeUpdateCadence;
+
+    CFTimeInterval _lastKeystrokeTime;
 }
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator {
@@ -77,6 +79,23 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 - (void)changeCadenceIfNeeded {
     [self changeCadenceIfNeeded:NO];
+}
+
+- (void)didHandleInput {
+    const NSInteger kThroughputLimit = 1024;
+    const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
+    if (estimatedThroughput < kThroughputLimit && [self lastKeystrokeWasRecent]) {
+        [self updateDisplay];
+    }
+}
+
+- (BOOL)lastKeystrokeWasRecent {
+    const CFTimeInterval diff = CACurrentMediaTime() - _lastKeystrokeTime;
+    return diff < 0.1;
+}
+
+- (void)didHandleKeystroke {
+    _lastKeystrokeTime = CACurrentMediaTime();
 }
 
 - (void)willStartLiveResize {

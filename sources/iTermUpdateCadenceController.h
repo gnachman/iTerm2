@@ -48,5 +48,7 @@ typedef struct {
 
 - (void)willStartLiveResize;
 - (void)liveResizeDidEnd;
+- (void)didHandleInput;
+- (void)didHandleKeystroke;
 
 @end

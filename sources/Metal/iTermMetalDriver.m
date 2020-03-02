@@ -1715,7 +1715,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #if ENABLE_PRIVATE_QUEUE
             [frameData dispatchToQueue:self->_queue forCompletion:completedBlock];
 #else
-            [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
+            [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:completedBlock];
 #endif
         }];
 

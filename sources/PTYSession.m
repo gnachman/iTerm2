@@ -2677,6 +2677,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [_throughputEstimator addByteCount:length];
         }
         [self executeTokens:&vector bytesHandled:length];
+        [_cadenceController didHandleInput];
 
         // Unblock the background thread; if it's ready, it can send the main thread more tokens
         // now.
@@ -6820,6 +6821,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    const BOOL accept = [self shouldAcceptKeyDownEvent:event];
+    if (accept) {
+        [_cadenceController didHandleKeystroke];
+    }
+    return accept;
+}
+
+- (BOOL)shouldAcceptKeyDownEvent:(NSEvent *)event {
     const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
     if (accept) {
