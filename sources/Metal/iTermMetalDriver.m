@@ -130,7 +130,9 @@ typedef struct {
     dispatch_queue_t _queue;
 #endif
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
+#if ENABLE_STATS
     NSArray<iTermHistogram *> *_statHistograms;
+#endif
     int _dropped;
     int _total;
 
@@ -198,11 +200,12 @@ typedef struct {
 
         _fpsMovingAverage = [[MovingAverage alloc] init];
         _fpsMovingAverage.alpha = 0.75;
+#if ENABLE_STATS
         iTermMetalFrameDataStatsBundleInitialize(_stats);
         _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
             return [[iTermHistogram alloc] init];
         }];
-
+#endif
         _maxFramesInFlight = iTermMetalDriverMaximumNumberOfFramesInFlight;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -232,6 +235,7 @@ typedef struct {
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
+#if ENABLE_STATS
 #if ENABLE_PRIVATE_QUEUE
     dispatch_async(_queue, ^{
         iTermMetalFrameDataStatsBundleInitialize(self->_stats);
@@ -242,6 +246,7 @@ typedef struct {
 #else
     iTermMetalFrameDataStatsBundleInitialize(_stats);
 #endif
+#endif  // ENABLE_STATS
 }
 
 - (NSString *)description {
@@ -1686,6 +1691,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 #endif
 
+#if ENABLE_STATS
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
 
         iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
@@ -1699,7 +1705,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
             dispatch_async(self->_queue, scheduledBlock);
         }];
-
+#endif
         __block BOOL completed = NO;
         void (^completedBlock)(void) = [^{
             completed = [self didComplete:completed withFrameData:frameData];
@@ -1765,9 +1771,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     DLog(@"  Recording final stats");
+#if ENABLE_STATS
     [frameData didCompleteWithAggregateStats:_stats
                                   histograms:_statHistograms
                                        owner:_identifier];
+#else
+    [frameData didCompleteWithAggregateStats:nil
+                                  histograms:nil
+                                       owner:_identifier];
+#endif
 
     @synchronized(self) {
         frameData.status = @"retired";

@@ -126,8 +126,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
+#if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 @property (nonatomic, readonly) NSArray<iTermHistogram *> *statHistograms;
+#endif
 @property (nonatomic, strong) id<CAMetalDrawable> destinationDrawable;
 @property (nonatomic, strong) id<MTLTexture> destinationTexture;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
