@@ -15,6 +15,7 @@
 
 static const NSInteger iTermHistogramStringWidth = 20;
 
+#if ENABLE_STATS
 namespace iTerm2 {
     class Sampler {
         std::vector<double> _values;
@@ -167,36 +168,46 @@ namespace iTerm2 {
         }
     };
 }
+#endif
 
 @implementation iTermHistogram {
+#if ENABLE_STATS
     double _sum;
     double _min;
     double _max;
     iTerm2::Sampler *_sampler;
+#endif
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+#if ENABLE_STATS
         _sampler = new iTerm2::Sampler(100);
+#endif
     }
     return self;
 }
 
 - (void)dealloc {
+#if ENABLE_STATS
     delete _sampler;
+#endif
 }
 
 - (void)clear {
+#if ENABLE_STATS
     _sum = 0;
     _min = 0;
     _max = 0;
     _count = 0;
     delete _sampler;
     _sampler = new iTerm2::Sampler(100);
+#endif
 }
 
 - (void)addValue:(double)value {
+#if ENABLE_STATS
     if (_count == 0) {
         _min = _max = value;
     } else {
@@ -206,9 +217,11 @@ namespace iTerm2 {
     _sum += value;
     _count++;
     _sampler->add(value);
+#endif
 }
 
 - (void)mergeFrom:(iTermHistogram *)other {
+#if ENABLE_STATS
     if (other == nil) {
         return;
     }
@@ -217,8 +230,10 @@ namespace iTerm2 {
     _max = MAX(_max, other->_max);
     _count += other->_count;
     _sampler->merge_from(*other->_sampler);
+#endif
 }
 
+#if ENABLE_STATS
 // 3.2.0beta1 had a TON of crashes in dtoa. Somehow I'm producing doubles that are so broken
 // they can't be converted to ASCII.
 static double iTermSaneDouble(const double d) {
@@ -228,8 +243,10 @@ static double iTermSaneDouble(const double d) {
     NSInteger i = d * 1000;
     return static_cast<double>(i) / 1000.0;
 }
+#endif
 
 - (NSString *)stringValue {
+#if ENABLE_STATS
     std::vector<int> buckets = _sampler->get_histogram();
     if (buckets.size() == 0) {
         return @"No events";
@@ -258,9 +275,13 @@ static double iTermSaneDouble(const double d) {
      p50,
      p95];
     return string;
+#else
+    return @"Stats disabled";
+#endif
 }
 
 - (NSString *)sparklines {
+#if ENABLE_STATS
     if (_count == 0) {
         return @"No data";
     }
@@ -277,10 +298,17 @@ static double iTermSaneDouble(const double d) {
             @(_sampler->value_for_percentile(0.5)),
             @(_sampler->value_for_percentile(0.95)),
             @(_sum)];
+#else
+    return @"stats disabled";
+#endif
 }
 
 - (double)valueAtNTile:(double)ntile {
+#if ENABLE_STATS
     return _sampler->value_for_percentile(ntile);
+#else
+    return 0;
+#endif
 }
 
 - (NSString *)floatingPointFormatWithPrecision:(int)precision units:(NSString *)units {
@@ -288,6 +316,7 @@ static double iTermSaneDouble(const double d) {
 }
 
 - (NSString *)sparklineGraphWithPrecision:(int)precision multiplier:(double)multiplier units:(NSString *)units {
+#if ENABLE_STATS
     std::vector<int> buckets = _sampler->get_histogram();
     if (buckets.size() == 0) {
         return @"";
@@ -306,9 +335,14 @@ static double iTermSaneDouble(const double d) {
     [sparklines appendFormat:format, upperBound];
 
     return sparklines;
+#else
+    return @"stats disabled";
+#endif
 }
 
 #pragma mark - Private
+
+#if ENABLE_STATS
 
 - (NSString *)stringForBucket:(int)bucket
                        count:(int)count
@@ -341,4 +375,7 @@ static double iTermSaneDouble(const double d) {
     int index = round(fraction * (characters.count - 1));
     return characters[index];
 }
+
+#endif
+
 @end
