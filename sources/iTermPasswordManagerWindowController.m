@@ -225,11 +225,11 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 - (void)awakeFromNib {
     [[NSDistributedNotificationCenter defaultCenter] addObserver:[self class]
-                                                        selector:@selector(screenDidLock:)
+                                                        selector:@selector(staticScreenDidLock:)
                                                             name:@"com.apple.screenIsLocked"
                                                           object:nil];
     [[NSDistributedNotificationCenter defaultCenter] addObserver:self
-                                                        selector:@selector(screenDidLock:)
+                                                        selector:@selector(instanceScreenDidLock:)
                                                             name:@"com.apple.screenIsLocked"
                                                           object:nil];
     _broadcastButton.state = NSOffState;
@@ -256,6 +256,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     if (_eventMonitor) {
         [NSEvent removeMonitor:_eventMonitor];
     }
+    [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (BOOL)tabShouldSelectTwoFactorField {
@@ -516,13 +517,13 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 #pragma mark - Notifications
 
-+ (void)screenDidLock:(NSNotification *)notification {
++ (void)staticScreenDidLock:(NSNotification *)notification {
     if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
         sAuthenticated = NO;
     }
 }
 
-- (void)screenDidLock:(NSNotification *)notification {
+- (void)instanceScreenDidLock:(NSNotification *)notification {
     if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
         for (NSWindow *sheet in [self.window.sheets copy]) {
             [self.window endSheet:sheet];
