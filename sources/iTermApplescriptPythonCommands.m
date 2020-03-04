@@ -25,7 +25,12 @@
         return nil;
     }
     NSArray<NSString *> *args = self.evaluatedArguments[@"arguments"];
-
+    if ([scriptName hasPrefix:@"/"]) {
+        [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithAbsolutePath:scriptName
+                                                                                                    arguments:args
+                                                                                           explicitUserAction:NO];
+        return nil;
+    }
     NSArray<NSString *> *relativeFilenames = [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] allScripts];
     for (NSString *relativeFilename in relativeFilenames) {
         if ([relativeFilename isEqualToString:scriptName]) {
