@@ -16,6 +16,9 @@
 #import "shell_launcher.h"
 
 int main(int argc, const char *argv[]){
+#if NIGHTLY_BUILD
+    unsetenv("NSZombieEnabled");
+#endif
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
         // Run the user's shell.
         return launch_shell(argc > 2 ? argv[2] : NULL);
@@ -24,6 +27,10 @@ int main(int argc, const char *argv[]){
         return iterm2_server(argc - 2, (char *const *)argv + 2);
     }
 
+#if NIGHTLY_BUILD
+    setenv("NSZombieEnabled", "YES", 1);
+#endif
+    
     // Normal launch of GUI.
     iTermResourceLimitsHelperSaveCurrentLimits();
     signal(SIGPIPE, SIG_IGN);

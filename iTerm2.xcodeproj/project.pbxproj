@@ -14044,7 +14044,10 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
-				OTHER_CFLAGS = "-DBETA=1";
+                                OTHER_CFLAGS = (
+                                        "-DBETA=1",
+                                        "-DNIGHTLY_BUILD=1",
+                                );
 				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
