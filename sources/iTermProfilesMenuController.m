@@ -9,6 +9,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @implementation iTermProfilesMenuController
 
@@ -181,7 +182,7 @@ static id gAltOpenAllRepresentedObject;
                                            keyEquivalent:@""];
     [item setAlternate:isAlternate];
     item.identifier = [self.class identifierForMenuItem:item];
-    NSString *shortcut = [b objectForKey:KEY_SHORTCUT];
+    NSString *shortcut = [NSString castFrom:[b objectForKey:KEY_SHORTCUT]];
     if ([shortcut length]) {
         [item setKeyEquivalent:[shortcut lowercaseString]];
         [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagControl | (isAlternate ? NSEventModifierFlagOption : 0)];
@@ -189,10 +190,11 @@ static id gAltOpenAllRepresentedObject;
         [item setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     }
     [item setTarget:params.target];
-    [item setRepresentedObject:[[b objectForKey:KEY_GUID] copy]];
+    NSString *guid = [NSString castFrom:[b objectForKey:KEY_GUID]] ?: [[NSUUID UUID] UUIDString];
+    [item setRepresentedObject:[guid copy]];
     [item setTag:tag];
-    if ([b[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
-        item.toolTip = b[KEY_COMMAND_LINE];
+    if ([[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        item.toolTip = [NSString castFrom:b[KEY_COMMAND_LINE]] ?: @"";
     }
     [menu insertItem:item atIndex:pos];
 }
@@ -237,7 +239,7 @@ static id gAltOpenAllRepresentedObject;
               startingAtItem:(int)skip
                       params:(iTermProfileModelJournalParams *)params {
     id<iTermProfileModelJournalModel> model = e.model;
-    Profile *b = [model profileWithGuid:e.guid];
+    Profile *b = [NSDictionary castFrom:[model profileWithGuid:e.guid]];
     if (!b) {
         return;
     }
