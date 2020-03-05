@@ -230,6 +230,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)searchCommand;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
++ (BOOL)setCookie;
++ (void)setSetCookie:(BOOL)value;
 + (double)shortLivedSessionDuration;
 + (BOOL)shouldSetLCTerminal;
 + (BOOL)showBlockBoundaries;

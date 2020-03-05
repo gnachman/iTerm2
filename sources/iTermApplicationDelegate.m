@@ -1939,7 +1939,7 @@ static BOOL hasBecomeActive = NO;
         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
-        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
+        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
         NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
                                                                arguments:@[ @"--banner=\\\"\\\"" ]

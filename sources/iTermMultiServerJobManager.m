@@ -240,6 +240,7 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
                   task:(id<iTermTask>)task {
     __block BOOL shouldRegister = NO;
     __block pid_t pid = 0;
+#warning TODO: Make this async. It can hang.
     dispatch_sync(self.queue, ^{
         shouldRegister = [self queueAttachToServer:serverConnection withProcessID:thePid task:task];
         pid = _child.pid;
