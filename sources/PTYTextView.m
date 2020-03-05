@@ -1980,14 +1980,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         _lastAccessibilityCursorX = [_dataSource cursorX];
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
-            CGRect viewRect = NSRectToCGRect(
-                [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
             CGRect selectionRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self cursorFrame] toView:nil]]);
-            viewRect = [self accessibilityConvertScreenRect:viewRect];
             selectionRect = [self accessibilityConvertScreenRect:selectionRect];
-
-            UAZoomChangeFocus(&viewRect, &selectionRect, kUAZoomFocusTypeInsertionPoint);
+            UAZoomChangeFocus(&selectionRect, &selectionRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
 }
