@@ -96,6 +96,7 @@
 #import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermWarning.h"
+#import "iTermWebSocketCookieJar.h"
 #import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -244,6 +245,7 @@ static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Live
 static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to Shell";  // NSString -> NSString (example: example.com -> fish)
 static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type Override";  // NSNumber wrapping ITermCursorType
 static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Name";  // NSString. New as of 12/4/19
+static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";  // NSString.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -328,6 +330,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
 @property(nonatomic, retain) VT100RemoteHost *currentHost;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
+@property(nonatomic, copy) NSString *reusableCookie;
 @end
 
 @implementation PTYSession {
@@ -911,6 +914,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_naggingController release];
     [_expect release];
     [_pasteBracketingOopsieExpectation release];
+    if (_reusableCookie) {
+        [[iTermWebSocketCookieJar sharedInstance] removeCookie:_reusableCookie];
+        [_reusableCookie release];
+    }
 
     [super dealloc];
 }
@@ -1389,6 +1396,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession screenCurrentHostDidChange:lastRemoteHost];
     }
 
+    if (arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]) {
+        [[iTermWebSocketCookieJar sharedInstance] addCookie:arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]];
+    }
+    
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
@@ -2042,7 +2053,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (env[COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil) {
         env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
-
+    if ([iTermAdvancedSettingsModel setCookie]) {
+        self.reusableCookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForReusableCookie];
+        env[@"ITERM2_COOKIE"] = self.reusableCookie;
+    }
     DLog(@"Begin locale logic");
     if (!_profile[KEY_SET_LOCALE_VARS] ||
         [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
@@ -4554,6 +4568,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_logging.enabled) {
         result[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] = _logging.path;
+    }
+    if (_reusableCookie) {
+        result[SESSION_ARRANGEMENT_REUSABLE_COOKIE] = _reusableCookie;
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
         result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;

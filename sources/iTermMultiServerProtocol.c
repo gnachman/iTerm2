@@ -573,7 +573,7 @@ static ssize_t Read(int fd,
 
 int iTermMultiServerRecv(int fd, iTermClientServerProtocolMessage *message) {
     iTermClientServerProtocolMessageInitialize(message);
-
+#warning TODO: This needs a timeout.
     const ssize_t recvStatus = RecvMsg(fd, message);
     // NOTE: a status of 0 is not EOF! You could have zero bytes and a file descriptor, and it would
     // return 0.

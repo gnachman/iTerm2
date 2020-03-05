@@ -214,7 +214,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                       arguments:arguments
                                  withVirtualEnv:virtualenv
                                   pythonVersion:pythonVersion];
-    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCooke];
+    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
     NSString *standardEnv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
     NSString *searchPath = [iTermPythonRuntimeDownloader.sharedInstance pathToStandardPyenvWithVersion:pythonVersion
                                         creatingSymlinkIfNeeded:NO];

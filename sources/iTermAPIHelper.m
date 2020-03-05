@@ -1196,10 +1196,17 @@ static iTermAPIHelper *sAPIHelperInstance;
       message = [NSString stringWithFormat:@"A process is trying to use the iTerm2 API. The process ID is one of: %@. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?",
                  [pids componentsJoinedWithOxfordCommaAndConjunction:@"or"]];
     }
+    if ([iTermAdvancedSettingsModel setCookie]) {
+        message = [NSString stringWithFormat:@"%@\n\nAlthough you have chosen to allow connections automatically, this script has not presented a valid cookie.", message];
+    }
 
+    NSArray<NSString *> *actions = @[ @"OK", @"Cancel", @"More Info" ];
+    if (![iTermAdvancedSettingsModel setCookie]) {
+        actions = [actions arrayByAddingObject:@"Always"];
+    }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK", @"Cancel", @"More Info" ]
+                               actions:actions
                              accessory:nil
                             identifier:@"NoSyncAllowPythonAPI"
                            silenceable:kiTermWarningTypePersistent
@@ -1215,6 +1222,20 @@ static iTermAPIHelper *sAPIHelperInstance;
         case kiTermWarningSelection2:
             *reason = @"Denied by user";
             [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-security-model"]];
+            return NO;
+        case kiTermWarningSelection3:
+            if ([iTermWarning showWarningWithTitle:@"New sessions will contain an environment variable that allows scripts to run without confirmation. Are you sure you want to enable this?"
+                                           actions:@[ @"OK", @"Cancel" ]
+                                         accessory:nil
+                                        identifier:@"NoSyncConfirmAlways"
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:@"Confirm"
+                                            window:nil] == kiTermWarningSelection0) {
+                [iTermAdvancedSettingsModel setSetCookie:YES];
+                *reason = @"Allowed by user";
+                return YES;
+            }
+            *reason = @"Denied by user";
             return NO;
         default:
             *reason = @"Internal error";
