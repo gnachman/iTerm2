@@ -7,6 +7,7 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermASCIITexture.h"
+#import "iTermAlphaBlendingHelper.h"
 #import "iTermBackgroundImageRenderer.h"
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
@@ -1255,7 +1256,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
     vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
-    [tState setColor:color];
+    [tState  setColor:color];
 }
 
 - (void)populateImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1271,7 +1272,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateBackgroundImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermBackgroundImageRendererTransientState *tState =
         [frameData transientStateForRenderer:_backgroundImageRenderer];
-    tState.transparencyAlpha = frameData.perFrameState.transparencyAlpha;
+    tState.computedAlpha = iTermAlphaValueForBottomView(1 - frameData.perFrameState.transparencyAlpha,
+                                                        frameData.perFrameState.blend);
     tState.edgeInsets = frameData.perFrameState.edgeInsets;
 }
 

@@ -63,7 +63,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _cursorGuideColor = drawingHelper.cursorGuideColor;
 
     // Background image
-    _backgroundImageBlending = [glue backgroundImageBlend];
+    _backgroundImageBlend = [glue backgroundImageBlend];
     _backgroundImageMode = [glue backroundImageMode];
     
     _edgeInsets = textView.delegate.textViewEdgeInsets;

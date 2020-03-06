@@ -5453,7 +5453,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (CGFloat)metalGlueBackgroundImageBlend {
-    return [_textview blend];
+    return [self effectiveBlend];
 }
 
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
@@ -5602,7 +5602,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-
+    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonSharedBackgroundImage;
+        }
+        return NO;
+    }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS

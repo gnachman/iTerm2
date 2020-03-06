@@ -243,7 +243,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
         _imageView.backgroundColor = color;
-        if (color) {
+        if (color && _metalView.alphaValue < 1) {
             DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
             _backgroundColorView.backgroundColor = color;
             _backgroundColorView.hidden = NO;

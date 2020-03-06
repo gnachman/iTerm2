@@ -72,7 +72,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSEdgeInsets _edgeInsets;
 
     // Background image
-    CGFloat _backgroundImageBlending;
+    CGFloat _backgroundImageBlend;
+    CGFloat _backgroundColorAlpha;  // See iTermAlphaBlendingHelper.h
     iTermBackgroundImageMode _backgroundImageMode;
 
     // Other

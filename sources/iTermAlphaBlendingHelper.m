@@ -17,6 +17,7 @@ static CGFloat Q(CGFloat l) {
     return 1.0 / (1.0 - l) - 1.0;
 }
 
+// Background color, aka b
 CGFloat iTermAlphaValueForTopView(CGFloat t, CGFloat l) {
     if (l > (1 - iTermAlphaBlendingHelperEpsilon)) {
         // Problem (2)
@@ -28,6 +29,7 @@ CGFloat iTermAlphaValueForTopView(CGFloat t, CGFloat l) {
     return alpha;
 }
 
+// Image, aka a
 CGFloat iTermAlphaValueForBottomView(CGFloat t, CGFloat l) {
     if (l < iTermAlphaBlendingHelperEpsilon) {
         // Problem (3)

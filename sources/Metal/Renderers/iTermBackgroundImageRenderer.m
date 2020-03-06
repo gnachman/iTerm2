@@ -140,7 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
     
     NSDictionary *fragmentBuffers = nil;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    float alpha = tState.transparencyAlpha;
+    float alpha = tState.computedAlpha;
     if (alpha < 1) {
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageWithAlphaRepeatFragmentShader" : @"iTermBackgroundImageWithAlphaClampFragmentShader";
         id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
