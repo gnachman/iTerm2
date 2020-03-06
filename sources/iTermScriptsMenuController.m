@@ -1028,15 +1028,17 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runLegacyAutoLaunchScripts {
-    NSDictionary *errorInfo = [NSDictionary dictionary];
     NSURL *aURL = [NSURL fileURLWithPath:self.legacyAutolaunchScriptPath];
 
     // Make sure our script suite registry is loaded
     [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
 
-    NSAppleScript *autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL:aURL
-                                                                             error:&errorInfo];
-    [autoLaunchScript executeAndReturnError:&errorInfo];
+    NSError *error = nil;
+    NSUserAppleScriptTask *script = [[NSUserAppleScriptTask alloc] initWithURL:aURL error:&error];
+    if (!script) {
+        return;
+    }
+    [script executeWithAppleEvent:nil completionHandler:nil];
 }
 
 #pragma mark - SCEventListenerProtocol
