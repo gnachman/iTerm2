@@ -188,7 +188,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleActivationModifierPress {
+    DLog(@"handleActivationModifierPress");
     if ([self activationModifierPressIsDoubleTap]) {
+        DLog(@"is double tap");
         NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
             if (![anObject.weaklyReferencedObject isKindOfClass:[self class]]) {
                 return nil;
@@ -206,9 +208,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)activationModifierPressedInFlags:(CGEventFlags)flags {
     if (!self.hasModifierActivation) {
+        DLog(@"modifier activation disabled");
         return NO;
     }
     CGEventFlags maskedFlags = (flags & kCGEventHotKeyModifierMask);
+    DLog(@"masked flags are %@", @(maskedFlags));
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:
@@ -227,6 +231,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)cancelDoubleTap {
+    DLog(@"cancelDoubleTap");
     _lastModifierTapTime = 0;
 }
 
@@ -263,13 +268,17 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - iTermEventTapObserver
 
 - (void)eventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+    DLog(@"eventTappedWithType:%@ event:%@", @(type), [NSEvent eventWithCGEvent:event]);
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
+        DLog(@"give up because workspace session is not active");
         return;
     }
 
     if (type == kCGEventFlagsChanged) {
         CGEventFlags flags = CGEventGetFlags(event);
+        DLog(@"Looks like a flags changed even twith flags %@", @(flags));;
         BOOL modifierIsPressed = [self activationModifierPressedInFlags:flags];
+        DLog(@"_modifierWasPressed=%@ modifierIsPressed=%@", @(_modifierWasPressed), @(modifierIsPressed));
         if (!_modifierWasPressed && modifierIsPressed) {
             [self handleActivationModifierPress];
         } else if (_modifierWasPressed && (flags & kCGEventHotKeyModifierMask)) {
