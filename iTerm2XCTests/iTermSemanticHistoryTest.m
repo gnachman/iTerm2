@@ -597,7 +597,7 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    NSString *expectedScript = @"Prefix\\ X\\ Suffix:1;;Prefix;Suffix;/tmp;User Variable";
+    NSString *expectedScript = @"'Prefix X Suffix:1';;Prefix;Suffix;/tmp;User Variable";
     NSString *actualScript = _semanticHistoryController.scriptArguments[1];
     XCTAssertEqualObjects(expectedScript, actualScript);
 }

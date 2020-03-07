@@ -50,7 +50,13 @@
     [[iTermShellHistoryController sharedInstance] eraseDirectoriesForHost:host];
 
     // Create a window and save convenience pointers to its various bits.
-    _session = [iTermSessionLauncher launchBookmark:nil inTerminal:nil respectTabbingMode:NO];
+    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"launch session"];
+
+    [iTermSessionLauncher launchBookmark:nil inTerminal:nil respectTabbingMode:NO completion:^(PTYSession * _Nonnull session) {
+        _session = session;
+        [expectation fulfill];
+    }];
+    [self waitForExpectations:@[expectation] timeout:3600];
     _windowController = (PseudoTerminal *)_session.delegate.realParentWindow;
     _view = (iTermRootTerminalView *)_windowController.window.contentView;
 
@@ -232,9 +238,16 @@
 }
 
 - (void)testCommandHistoryBoldsCommandsForCurrentSession {
-    PTYSession *otherSession = [iTermSessionLauncher launchBookmark:nil
-                                                         inTerminal:_windowController
-                                                 respectTabbingMode:NO];
+    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"launch session"];
+    __block PTYSession *otherSession;
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:_windowController
+                      respectTabbingMode:NO
+                              completion:^(PTYSession * _Nonnull session) {
+        otherSession = session;
+        [expectation fulfill];
+    }];
+    [self waitForExpectations:@[expectation] timeout:3600];
 
     // Set the hostname for both sessions
     [self sendPromptAndStartCommand:@"command 1" toSession:_session];

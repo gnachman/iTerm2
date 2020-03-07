@@ -584,10 +584,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return @"Default";
 }
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory pushed:(BOOL)pushed {
-    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
-}
-
 - (NSRect)screenWindowFrame {
     return NSMakeRect(10, 20, 100, 200);
 }
@@ -932,7 +928,32 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed {
 }
 
+- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark {
+}
 
+
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size promptIfBig:(BOOL *)promptIfBig {
+    return YES;
+}
+
+
+- (void)screenDidTryToUseDECRQCRA {
+}
+
+
+- (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    completion(@"/");
+}
+
+
+- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory pushed:(BOOL)pushed timely:(BOOL)timely {
+    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
+}
+
+
+- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
+    return YES;
+}
 
 #pragma mark - iTermSelectionDelegate
 
@@ -1982,7 +2003,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"ł"]);
 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🖕🏾"]);
+    BOOL lettersHaveSkin = NO;
     if (@available(macOS 10.14, *)) {
+        if (@available(macOS 10.15, *)) { } else {
+            lettersHaveSkin = YES;
+        }
+    }
+    if (lettersHaveSkin) {
         XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g\U0001F3FE"]);  // macOS 10.14 does a silly thing
     } else {
         XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
@@ -3465,7 +3492,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(dirlog_.count == 1);
     NSArray *entry = dirlog_[0];
     XCTAssert([entry[0] intValue] == 4);
-    XCTAssert([entry[1] isKindOfClass:[NSNull class]]);
+    XCTAssertEqualObjects(entry[1], @"/");
 
     // Add some scrollback
     for (int i = 0; i < 10; i++) {
@@ -3476,7 +3503,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(dirlog_.count == 1);
     entry = dirlog_[0];
     XCTAssert([entry[0] intValue] == 14);
-    XCTAssert([entry[1] isKindOfClass:[NSNull class]]);
+    XCTAssertEqualObjects(entry[1], @"/");
 
     // Make sure scrollback overflow is included.
     for (int i = 0; i < 100; i++) {
@@ -3487,7 +3514,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(dirlog_.count == 1);
     entry = dirlog_[0];
     XCTAssert([entry[0] intValue] == 29);  // 20 lines of scrollback + 10th line of display
-    XCTAssert([entry[1] isKindOfClass:[NSNull class]]);
+    XCTAssertEqualObjects(entry[1], @"/");
 
 //    // Test icon title, which is the same, but does not log the pwd.
     [screen terminalSetIconTitle:@"test3"];
