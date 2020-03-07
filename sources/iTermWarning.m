@@ -190,6 +190,33 @@ static BOOL gShowingWarning;
     }
 }
 
++ (void)unsilenceIdentifier:(NSString *)identifier {
+    if (![self identifierIsSilenced:identifier]) {
+        return;
+    }
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
+    [userDefaults removeObjectForKey:theKey];
+}
+
++ (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
+    [userDefaults removeObjectForKey:theKey];
+}
+
++ (void)setIdentifier:(NSString *)identifier permanentSelection:(iTermWarningSelection)selection {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    {
+        NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
+        [userDefaults setBool:YES forKey:theKey];
+    }
+    {
+        NSString *theKey = [self selectionKeyForIdentifier:identifier];
+        return [userDefaults setInteger:selection forKey:theKey];
+    }
+}
+
 - (void)assignKeyEquivalents {
     NSSet<NSString *> *assignedValues = [NSSet set];
     for (iTermWarningAction *action in _warningActions) {

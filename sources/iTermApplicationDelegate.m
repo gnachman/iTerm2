@@ -423,6 +423,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return (tab.sessions.count > 0 && !tab.isMaximized);
+    } else if (menuItem.action == @selector(promptToConvertTabsToSpacesWhenPasting:)) {
+        menuItem.state = [iTermPasteHelper promptToConvertTabsToSpacesWhenPasting] ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }
@@ -1613,6 +1616,10 @@ static BOOL hasBecomeActive = NO;
 }
 
 #pragma mark - Actions
+
+- (IBAction)promptToConvertTabsToSpacesWhenPasting:(id)sender {
+    [iTermPasteHelper togglePromptToConvertTabsToSpacesWhenPasting];
+}
 
 - (IBAction)makeDefaultTerminal:(id)sender {
     [[iTermLaunchServices sharedInstance] makeITermDefaultTerminal];

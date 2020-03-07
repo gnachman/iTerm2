@@ -59,6 +59,9 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 @property(nonatomic, readonly) BOOL isWaitingForPrompt;
 @property(nonatomic, readonly) PasteContext *pasteContext;
 
++ (BOOL)promptToConvertTabsToSpacesWhenPasting;
++ (void)togglePromptToConvertTabsToSpacesWhenPasting;
+
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 
 // This performs all the transformations except for bracketing.

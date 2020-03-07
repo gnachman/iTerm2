@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -416,6 +416,12 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="BeA-rG-dNT"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Prompt to Convert Tabs to Spaces when Pasting" identifier="Paste Special.Warn Before Multi-Line Paste" id="GqP-hQ-yD1">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="promptToConvertTabsToSpacesWhenPasting:" target="201" id="1YE-bw-C1K"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Limit Multi-Line Paste Warning to Shell Prompt" tag="1" identifier="Paste Special.Limit Multi-Line Paste Warning to Shell Prompt" id="L16-T3-OVz">

@@ -52,6 +52,18 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     return controlSet;
 }
 
++ (BOOL)promptToConvertTabsToSpacesWhenPasting {
+    return ![iTermWarning identifierIsSilenced:@"AboutToPasteTabsWithCancel"];
+}
+
++ (void)togglePromptToConvertTabsToSpacesWhenPasting {
+    if (![self promptToConvertTabsToSpacesWhenPasting]) {
+        [iTermWarning unsilenceIdentifier:@"AboutToPasteTabsWithCancel"];
+    } else {
+        [iTermWarning setIdentifier:@"AboutToPasteTabsWithCancel" permanentSelection:kiTermWarningSelection0];
+    }
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
