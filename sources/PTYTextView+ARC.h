@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 iTermMouseReportingFrustrationDetectorDelegate,
 iTermURLActionHelperDelegate>
 
+- (void)initARC;
+
 #pragma mark - Coordinate Space Conversions
 
 - (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;

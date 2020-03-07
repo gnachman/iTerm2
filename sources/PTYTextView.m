@@ -305,6 +305,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                      pointerControllerDelegate:self
                      mouseReportingFrustrationDetectorDelegate:self];
         _mouseHandler.mouseDelegate = self;
+        [self initARC];
     }
     return self;
 }

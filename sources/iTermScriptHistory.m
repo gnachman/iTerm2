@@ -66,6 +66,18 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     return instance;
 }
 
++ (instancetype)smartSelectionAnctionsEntry {
+    static id instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithName:@"Smart Selection Actions"
+                                     fullPath:nil
+                                   identifier:@"__SSA"
+                                     relaunch:nil];
+    });
+    return instance;
+}
+
 - (instancetype)initWithName:(NSString *)name
                     fullPath:(nullable NSString *)fullPath
                   identifier:(NSString *)identifier

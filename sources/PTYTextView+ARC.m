@@ -10,18 +10,23 @@
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
 #import "iTermLocalHostNameGuesser.h"
 #import "iTermMouseCursor.h"
+#import "iTermNotificationController.h"
 #import "iTermPreferences.h"
+#import "iTermScriptConsole.h"
+#import "iTermScriptHistory.h"
 #import "iTermShellIntegrationWindowController.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -37,12 +42,20 @@
 static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
 static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
+static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTYTextViewSmartSelectionActionFailedNotification";
 
 @interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate>
 @end
 
 
 @implementation PTYTextView (ARC)
+
+- (void)initARC {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(smartSelectionActionFailedNotificationSelected:)
+                                                 name:PTYTextViewSmartSelectionActionFailedNotification
+                                               object:nil];
+}
 
 #pragma mark - Coordinate Space Conversions
 
@@ -289,9 +302,48 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 + (void)runCommand:(NSString *)command {
-    @autoreleasepool {
-        system([command UTF8String]);
+    iTermCommandRunner *commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/bin/sh"
+                                                                      withArguments:@[ @"-c", command ]
+                                                                               path:[[NSFileManager defaultManager] currentDirectoryPath]];
+    iTermScriptHistoryEntry *entry =
+    [[iTermScriptHistoryEntry alloc] initWithName:@"Smart Selection Action"
+                                         fullPath:command
+                                       identifier:[[NSUUID UUID] UUIDString]
+                                         relaunch:nil];
+    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    [entry addOutput:[NSString stringWithFormat:@"Run command:\n%@\n", command]];
+    commandRunner.outputHandler = ^(NSData *data) {
+        NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if (!string) {
+            string = [data it_hexEncoded];
+        }
+        [entry addOutput:string];
+    };
+    commandRunner.completion = ^(int status) {
+        if (status) {
+            [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]];
+        }
+        [entry stopRunning];
+        if (status) {
+            [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Smart Selection Action Failed"
+                                                                             detail:[NSString stringWithFormat:@"\nFinished with status %d", status]
+                                                           callbackNotificationName:PTYTextViewSmartSelectionActionFailedNotification
+                                                       callbackNotificationUserInfo:@{ @"identifier": entry.identifier }];
+        }
+    };
+    [commandRunner run];
+}
+
+- (void)smartSelectionActionFailedNotificationSelected:(NSNotification *)notification {
+    NSString *identifier = notification.userInfo[@"identifier"];
+    if (!identifier) {
+        return;
     }
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:identifier];
+    if (!entry) {
+        return;
+    }
+    [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
 }
 
 - (void)contextMenuActionRunCoprocess:(id)sender {

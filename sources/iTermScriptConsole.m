@@ -299,25 +299,25 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                                                                    object:entry
                                                                     queue:nil
                                                                usingBlock:^(NSNotification * _Nonnull note) {
-                                                                   __typeof(self) strongSelf = weakSelf;
-                                                                   if (!strongSelf) {
-                                                                       return;
-                                                                   }
-                                                                   if (note.userInfo) {
-                                                                       NSString *delta = note.userInfo[iTermScriptHistoryEntryDelta];
-                                                                       NSString *property = note.userInfo[iTermScriptHistoryEntryFieldKey];
-                                                                       if ([property isEqualToString:iTermScriptHistoryEntryFieldLogsValue]) {
-                                                                           [strongSelf appendLogs:delta];
-                                                                           [strongSelf scrollLogsToBottomIfNeeded];
-                                                                       } else if ([property isEqualToString:iTermScriptHistoryEntryFieldRPCValue]) {
-                                                                           [strongSelf appendCalls:delta];
-                                                                           [strongSelf scrollCallsToBottomIfNeeded];
-                                                                       }
-                                                                   } else {
-                                                                       [strongSelf->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row]
-                                                                                                         columnIndexes:[NSIndexSet indexSetWithIndex:0]];
-                                                                   }
-                                                               }];
+            __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            if (note.userInfo) {
+                NSString *delta = note.userInfo[iTermScriptHistoryEntryDelta];
+                NSString *property = note.userInfo[iTermScriptHistoryEntryFieldKey];
+                if ([property isEqualToString:iTermScriptHistoryEntryFieldLogsValue]) {
+                    [strongSelf appendLogs:delta];
+                    [strongSelf scrollLogsToBottomIfNeeded];
+                } else if ([property isEqualToString:iTermScriptHistoryEntryFieldRPCValue]) {
+                    [strongSelf appendCalls:delta];
+                    [strongSelf scrollCallsToBottomIfNeeded];
+                }
+            } else {
+                [strongSelf->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row]
+                                                  columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+            }
+        }];
     }
 }
 
