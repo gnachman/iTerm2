@@ -559,7 +559,7 @@ static long long MakeUniqueID(void) {
             [self readLoop];
         });
     }];
-    if (!ok) {
+    if (!ok && _readFD >= 0 && _writeFD >= 0) {
         [self close];
     }
 }
