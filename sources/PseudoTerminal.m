@@ -6406,6 +6406,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self fitTabsToWindow];
             }
         }
+
+        if (@available(macOS 10.14, *)) {
+            // May need to enter or exit being a titlebar accessory if its visibility changed.
+            [self updateTabBarControlIsTitlebarAccessory];
+        }
+
         [self repositionWidgets];
         if (wasDraggedFromAnotherWindow_) {
             wasDraggedFromAnotherWindow_ = NO;
