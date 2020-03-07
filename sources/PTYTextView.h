@@ -206,6 +206,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)textViewCanBury;
 - (void)textViewFindOnPageLocationsDidChange;
 - (CGFloat)textViewBlend;
+- (NSEdgeInsets)textViewExtraMargins;
+
 @end
 
 @interface iTermHighlightedRow : NSObject

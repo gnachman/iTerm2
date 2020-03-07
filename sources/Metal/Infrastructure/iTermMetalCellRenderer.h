@@ -31,11 +31,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
-                  hasBackgroundImage:(BOOL)hasBackgroundImage NS_UNAVAILABLE;
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins NS_UNAVAILABLE;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
@@ -65,6 +67,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) __kindof iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
 @property (nonatomic, strong) id<MTLBuffer> pius;
+
+// NOTE: margins.top affects the bottom margin because flipped.
 @property (nonatomic, readonly) NSEdgeInsets margins;
 
 - (instancetype)init NS_UNAVAILABLE;

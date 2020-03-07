@@ -7923,6 +7923,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
          includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
 }
 
+- (NSEdgeInsets)textViewExtraMargins {
+    if (@available(macOS 10.14, *)) {
+        return self.view.extraMargins;
+    }
+    return NSEdgeInsetsZero;
+}
+
 - (NSImage *)textViewBackgroundImage {
     return _backgroundImage;
 }

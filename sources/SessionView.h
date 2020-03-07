@@ -179,6 +179,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, strong) NSImage *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
 @property(nonatomic, strong) iTermBackgroundColorView *backgroundColorView NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) NSEdgeInsets extraMargins;
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

@@ -498,15 +498,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
 
+        const CGFloat scale = self.mainThreadState->scale;
         CGSize (^rescale)(CGSize) = ^CGSize(CGSize size) {
-            return CGSizeMake(size.width * self.mainThreadState->scale, size.height * self.mainThreadState->scale);
+            return CGSizeMake(size.width * scale, size.height * scale);
         };
         frameData.cellSize = rescale(frameData.perFrameState.cellSize);
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
         frameData.glyphSize = self.mainThreadState->glyphSize;
         
-        frameData.scale = self.mainThreadState->scale;
+        frameData.scale = scale;
         frameData.hasBackgroundImage = frameData.perFrameState.hasBackgroundImage;
+        const NSEdgeInsets pointInsets = frameData.perFrameState.extraMargins;
+        frameData.extraMargins = NSEdgeInsetsMake(pointInsets.top * scale,
+                                                  pointInsets.left * scale,
+                                                  pointInsets.bottom * scale,
+                                                  pointInsets.right * scale);
     }];
     return frameData;
 }

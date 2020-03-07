@@ -63,7 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat scale = tState.configuration.scale;
     const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * scale;
     CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
-                             tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT,
+                             tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT - transientState.configuration.extraMargins.top,
                              scale * size.width,
                              scale * size.height);
     // The destinationRect is clipped to the visible area.

@@ -10,6 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
@@ -17,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
                usingIntermediatePass:(BOOL)usingIntermediatePass {
     self = [super initWithViewportSize:viewportSize
                                  scale:scale
-                    hasBackgroundImage:hasBackgroundImage];
+                    hasBackgroundImage:hasBackgroundImage
+                          extraMargins:extraMargins];
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
@@ -77,11 +79,13 @@ NS_ASSUME_NONNULL_BEGIN
         MARGIN_HEIGHT = 0;
     }
 
-    CGSize usableSize = CGSizeMake(self.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2,
-                                   self.cellConfiguration.viewportSize.y - MARGIN_HEIGHT * 2);
-    return NSEdgeInsetsMake(fmod(usableSize.height, self.cellConfiguration.cellSize.height) + MARGIN_HEIGHT,
+    const NSEdgeInsets extraMargins = self.configuration.extraMargins;
+    const CGSize usableSize =
+    CGSizeMake(self.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2 - extraMargins.left - extraMargins.right,
+               self.cellConfiguration.viewportSize.y - MARGIN_HEIGHT * 2 - extraMargins.top - extraMargins.bottom);
+    return NSEdgeInsetsMake(fmod(usableSize.height, self.cellConfiguration.cellSize.height) + MARGIN_HEIGHT + extraMargins.bottom,
                             MARGIN_WIDTH,
-                            MARGIN_HEIGHT,
+                            MARGIN_HEIGHT + extraMargins.top,
                             fmod(usableSize.width, self.cellConfiguration.cellSize.width) + MARGIN_WIDTH);
 }
 

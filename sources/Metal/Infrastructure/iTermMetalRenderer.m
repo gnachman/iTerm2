@@ -67,12 +67,14 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
-                  hasBackgroundImage:(BOOL)hasBackgroundImage {
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins {
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
         _scale = scale;
         _hasBackgroundImage = hasBackgroundImage;
+        _extraMargins = extraMargins;
     }
     return self;
 }

@@ -112,6 +112,7 @@ typedef struct {
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;  // Row on screen to characters with annotation underline on that row.
     NSArray<iTermHighlightedRow *> *_highlightedRows;
     NSTimeInterval _startTime;
+    NSEdgeInsets _extraMargins;
 }
 @end
 
@@ -186,6 +187,7 @@ typedef struct {
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
     _relativeFrame = textView.delegate.textViewRelativeFrame;
     _containerRect = textView.delegate.textViewContainerRect;
+    _extraMargins = textView.delegate.textViewExtraMargins;
 }
 
 - (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -1250,6 +1252,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                       1 - _relativeFrame.size.height - _relativeFrame.origin.y,
                       _relativeFrame.size.width,
                       _relativeFrame.size.height);
+}
+
+- (NSEdgeInsets)extraMargins {
+    return _extraMargins;
 }
 
 #pragma mark - Color

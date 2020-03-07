@@ -715,16 +715,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    NSRect frame;
     if (@available(macOS 10.14, *)) {
-        frame = self.bounds;
+        _metalView.frame = self.bounds;
     } else {
-        frame = _scrollview.contentView.frame;
+        NSRect frame = _scrollview.contentView.frame;
+        if (self.showBottomStatusBar) {
+            frame.origin.y += iTermStatusBarHeight;
+        }
+        _metalView.frame = [self frameByInsettingForMetal:frame];
     }
-    if (self.showBottomStatusBar) {
-        frame.origin.y += iTermStatusBarHeight;
-    }
-    _metalView.frame = [self frameByInsettingForMetal:frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
@@ -1057,18 +1056,26 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
+- (NSEdgeInsets)extraMargins {
+    NSEdgeInsets insets = NSEdgeInsetsZero;
+    if (_showTitle) {
+        insets.top = kTitleHeight;
+    }
+    if (self.showBottomStatusBar) {
+        insets.bottom = iTermStatusBarHeight;
+    }
+    return insets;
+}
+
 - (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped includeBottomStatusBar:(BOOL)includeBottomStatusBar {
-    CGFloat topInset = 0;
+    CGFloat topInset = self.extraMargins.top;
     CGFloat bottomInset = 0;
 
-    if (_showTitle) {
-        topInset = kTitleHeight;
-    }
     // Most callers don't inset for per-pane status bars because not all panes
     // might have status bars and this function is used to compute the window's
     // inset.
-    if (_showBottomStatusBar && includeBottomStatusBar) {
-        bottomInset = iTermStatusBarHeight;
+    if (includeBottomStatusBar) {
+        bottomInset = self.extraMargins.bottom;
     }
     if (flipped) {
         CGFloat temp;
