@@ -6,6 +6,7 @@
 //
 
 #import "BellTrigger.h"
+#import "DebugLogging.h"
 #import "PTYSession.h"
 #import "VT100Screen.h"
 
