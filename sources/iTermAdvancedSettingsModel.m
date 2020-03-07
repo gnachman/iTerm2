@@ -227,7 +227,7 @@ DEFINE_BOOL(convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme, YES
 DEFINE_BOOL(highVisibility, YES, SECTION_TABS @"High Contrast modes maximize visibility.\nWhen enabled, the dark high-contrast theme emphasizes visibility over beauty.");
 DEFINE_BOOL(drawBottomLineForHorizontalTabBar, YES, SECTION_TABS @"Draw bottom line for horizontal tabbar in Regular, Dark and Light theme?");
 DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?");
-DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advance setting “Custom tab label font size”.");
+DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advanced setting “Custom tab label font size”.");
 DEFINE_FLOAT(customTabBarFontSize, 11.0, SECTION_TABS @"Custom tab label font size\nFor this to take effect, turn on “Use custom font size for tab labels?”.");
 DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence of selected tab underline indicator in Minimal theme when there is at least one colored tab.");
 
