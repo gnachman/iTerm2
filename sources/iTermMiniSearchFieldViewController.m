@@ -12,6 +12,7 @@
 #import "iTermFindDriver+Internal.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -104,6 +105,10 @@
 }
 
 #pragma mark - iTermFindViewController
+
+- (void)countDidChange {
+    [_searchField setNeedsDisplay:YES];
+}
 
 - (BOOL)searchBarIsFirstResponder {
     return [_searchField textFieldIsFirstResponder];
@@ -210,6 +215,14 @@
 
 - (void)focusReportingSearchFieldWillBecomeFirstResponder:(iTermFocusReportingSearchField *)sender {
     [self.driver searchFieldWillBecomeFirstResponder:sender];
+}
+
+- (NSInteger)focusReportingSearchFieldNumberOfResults:(iTermFocusReportingSearchField *)sender {
+    return [self.driver numberOfResults];
+}
+
+- (NSInteger)focusReportingSearchFieldCurrentIndex:(iTermFocusReportingSearchField *)sender {
+    return [self.driver currentIndex];
 }
 
 #pragma mark - NSControl

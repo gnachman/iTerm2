@@ -303,6 +303,14 @@ static NSString *gSearchString;
     scrollToFirstResult:NO];
 }
 
+- (NSInteger)numberOfResults {
+    return [self.delegate findDriverNumberOfSearchResults];
+}
+
+- (NSInteger)currentIndex {
+    return [self.delegate findDriverCurrentIndex];
+}
+
 #pragma mark - Notifications
 
 - (void)loadFindStringFromSharedPasteboard:(NSNotification *)notification {

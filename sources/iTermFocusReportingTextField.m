@@ -6,6 +6,7 @@
 //
 
 #import "iTermFocusReportingTextField.h"
+#import "iTermSearchFieldCell.h"
 #import "PTYWindow.h"
 
 @implementation iTermFocusReportingTextField
@@ -21,6 +22,9 @@
     return result;
 }
 
+@end
+
+@interface iTermFocusReportingSearchField()<iTermSearchFieldControl>
 @end
 
 @implementation iTermFocusReportingSearchField
@@ -51,6 +55,20 @@
         [self.delegate focusReportingSearchFieldWillBecomeFirstResponder:self];
     }
     return result;
+}
+
+#pragma mark - iTermSearchFieldControl
+
+- (BOOL)searchFieldControlHasCounts:(iTermSearchFieldCell *)cell {
+    return ([self.delegate respondsToSelector:@selector(focusReportingSearchFieldNumberOfResults:)] &&
+            [self.delegate respondsToSelector:@selector(focusReportingSearchFieldCurrentIndex:)]);
+}
+
+- (iTermSearchFieldCounts)searchFieldControlGetCounts:(iTermSearchFieldCell *)cell {
+    return (iTermSearchFieldCounts){
+        .currentIndex = [self.delegate focusReportingSearchFieldCurrentIndex:self],
+        .numberOfResults = [self.delegate focusReportingSearchFieldNumberOfResults:self]
+    };
 }
 
 @end

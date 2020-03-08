@@ -22,6 +22,9 @@
 // Update window title, tab colors, and redraw view.
 - (void)screenUpdateDisplay:(BOOL)redraw;
 
+// Redraw the find on page view because search results may have been lost.
+- (void)screenRefreshFindOnPageView;
+
 // Called when the screen's size changes.
 - (void)screenSizeDidChange;
 

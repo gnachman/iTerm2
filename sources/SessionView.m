@@ -294,6 +294,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)loadTemporaryStatusBarFindDriverWithStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
+    NSString *query = self.findDriver.findString ?: @"";
     _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;
     NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
                              iTermStatusBarSearchComponentIsTemporaryKey: @YES };
@@ -303,6 +304,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                                 scope:self.delegate.sessionViewScope];
     _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
     _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
+    _temporaryStatusBarFindDriver.findString = query;
     component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;
     statusBarViewController.temporaryLeftComponent = component;
     [_temporaryStatusBarFindDriver open];

@@ -32,6 +32,7 @@
 #import "iTermExpect.h"
 #import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
+#import "iTermFindOnPageHelper.h"
 #import "iTermGraphicSource.h"
 #import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
@@ -5380,6 +5381,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_view snapshot];
 }
 
+- (NSInteger)findDriverNumberOfSearchResults {
+    return _textview.findOnPageHelper.numberOfSearchResults;
+}
+
+- (NSInteger)findDriverCurrentIndex {
+    return _textview.findOnPageHelper.currentIndex;
+}
+
 #pragma mark - Metal Support
 
 #pragma mark iTermMetalGlueDelegate
@@ -8892,8 +8901,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] setWindowTitle];
 }
 
-- (void)continueTailFind
-{
+- (void)continueTailFind {
     NSMutableArray *results = [NSMutableArray array];
     BOOL more;
     more = [_screen continueFindAllResults:results
@@ -9020,6 +9028,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (redraw) {
         [_textview setNeedsDisplay:YES];
     }
+}
+
+- (void)screenRefreshFindOnPageView {
+    [_view.findDriver.viewController countDidChange];
 }
 
 - (void)screenSizeDidChange {

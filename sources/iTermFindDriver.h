@@ -58,6 +58,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 // The search view became (in)visible.
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender;
 - (void)findViewControllerDidCeaseToBeMandatory:(id<iTermFindViewController>)sender;
+
+- (NSInteger)findDriverNumberOfSearchResults;
+
+- (NSInteger)findDriverCurrentIndex;
+
 @end
 
 @interface iTermFindDriver : NSObject

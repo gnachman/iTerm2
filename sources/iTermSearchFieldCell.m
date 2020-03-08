@@ -7,7 +7,10 @@
 
 #import "iTermSearchFieldCell.h"
 
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSObject+iTerm.h"
 
 static NSSize kFocusRingInset = { 2, 3 };
 const CGFloat kEdgeWidth = 3;
@@ -111,7 +114,113 @@ const CGFloat kEdgeWidth = 3;
         [path stroke];
     }
 
+    NSString *indexAndCountString = self.indexAndCountString;
+    if (indexAndCountString) {
+        NSSize size = self.sizeOfIndexAndCount;
+        NSRect textRect = [super searchTextRectForBounds:controlView.bounds];
+
+        NSRect rect = NSMakeRect(NSMaxX(textRect) - size.width - self.marginForIndexAndCount,
+                                 textRect.origin.y,
+                                 size.width,
+                                 textRect.size.height);
+        [indexAndCountString drawInRect:rect withAttributes:self.attributesForIndexAndCount];
+    }
+    [self updateKeyboardClipViewIfNeeded];
+
     [self drawInteriorWithFrame:originalFrame inView:controlView];
+}
+
+// Work around a macOS bug that prevents updating the text rect while the search field has keyboard focus.
+- (void)updateKeyboardClipViewIfNeeded {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSTextField *textField = [NSTextField castFrom:self.controlView];
+        id cell = textField.cell;
+        if ([cell isKindOfClass:[iTermSearchFieldCell class]]) {
+            [cell reallyUpdateKeyboardClipView:textField];
+        };
+    });
+}
+
+- (void)reallyUpdateKeyboardClipView:(NSTextField *)textField {
+    NSView *keyboardClipView = [self.controlView.subviews objectPassingTest:^BOOL(__kindof NSView *element, NSUInteger index, BOOL *stop) {
+        return [NSStringFromClass([element class]) isEqualToString:@"_NSKeyboardFocusClipView"];
+    }];
+    if (!keyboardClipView) {
+        return;
+    }
+    NSRect desiredFrame = [self searchTextRectForBounds:textField.bounds];
+    NSRect frame = keyboardClipView.frame;
+    BOOL shouldUpdate = NO;
+    if (self.fraction == 1) {
+        shouldUpdate = (frame.size.width != desiredFrame.size.width);
+    } else {
+        // Don't allow the frame to grow until the search is complete.
+        shouldUpdate = (frame.size.width > desiredFrame.size.width);
+    }
+    if (shouldUpdate) {
+        frame.size.width = desiredFrame.size.width;
+        keyboardClipView.frame = frame;
+
+        NSTextView *textView = [NSTextView castFrom:[textField.window fieldEditor:YES forObject:textField]];
+        [textView scrollRangeToVisible:[[[textView selectedRanges] firstObject] rangeValue]];
+        DLog(@"Update keyboard clip view's frame to %@", NSStringFromRect(frame));
+    }
+}
+
+- (NSString *)indexAndCountString {
+    NSTextField *textField = [NSTextField castFrom:self.controlView];
+    if (textField.stringValue.length == 0) {
+        // No query.
+        return nil;
+    }
+    NSView *controlView = self.controlView;
+    if (![controlView conformsToProtocol:@protocol(iTermSearchFieldControl)]) {
+        return nil;
+    }
+    id<iTermSearchFieldControl> control = (id<iTermSearchFieldControl>)controlView;
+    if (![control searchFieldControlHasCounts:self]) {
+        return nil;
+    }
+    const iTermSearchFieldCounts counts = [control searchFieldControlGetCounts:self];
+    if (counts.currentIndex == 0) {
+        if (counts.numberOfResults == 0) {
+            return nil;
+        }
+        return [NSString stringWithFormat:@"%@", @(counts.numberOfResults)];
+    }
+    return [NSString stringWithFormat:@"%@/%@", @(counts.currentIndex), @(counts.numberOfResults)];
+}
+
+- (NSRect)searchTextRectForBounds:(NSRect)rect {
+    NSSize size = [self sizeOfIndexAndCount];
+    NSRect result = [super searchTextRectForBounds:rect];
+    result.size.width -= size.width + self.marginForIndexAndCount * 2;
+    return result;
+}
+
+- (NSSize)sizeOfIndexAndCount {
+    NSString *string = [self indexAndCountString];
+    return [self sizeOfIndexAndCountForString:string];
+}
+
+- (NSSize)sizeOfIndexAndCountForString:(NSString *)string {
+    NSDictionary *attributes = [self attributesForIndexAndCount];
+    NSSize size = [string sizeWithAttributes:attributes];
+    return size;
+}
+
+- (NSDictionary *)attributesForIndexAndCount {
+    NSTextField *textField = [NSTextField castFrom:self.controlView];
+    if (textField.attributedStringValue.length == 0) {
+        return @{};
+    }
+    NSMutableDictionary *attributes = [[textField.attributedStringValue attributesAtIndex:0 effectiveRange:nil] mutableCopy];
+    attributes[NSForegroundColorAttributeName] = [attributes[NSForegroundColorAttributeName] colorWithAlphaComponent:0.5];
+    return attributes;
+}
+
+- (CGFloat)marginForIndexAndCount {
+    return 4;
 }
 
 - (void)drawProgressBarInFrame:(NSRect)cellFrame path:(NSBezierPath *)fieldPath {

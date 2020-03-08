@@ -158,7 +158,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Show a background indicator when in broadcast input mode
     BOOL _showStripesWhenBroadcastingInput;
 
-    iTermFindOnPageHelper *_findOnPageHelper;
     iTermTextViewAccessibilityHelper *_accessibilityHelper;
     iTermBadgeLabel *_badgeLabel;
 
@@ -4395,6 +4394,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 - (void)findOnPageFailed {
     [_selection clearSelection];
     [self setNeedsDisplay:YES];
+}
+
+- (long long)findOnPageOverflowAdjustment {
+    return [_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow];
 }
 
 - (void)resetFindCursor {

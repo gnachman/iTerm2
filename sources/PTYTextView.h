@@ -381,6 +381,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) iTermURLActionHelper *urlActionHelper;
 
 @property (nonatomic, readonly) VT100GridCoord cursorCoord;
+@property (nonatomic, readonly) iTermFindOnPageHelper *findOnPageHelper;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

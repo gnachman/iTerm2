@@ -45,6 +45,8 @@
 // Indicate that the search failed.
 - (void)findOnPageFailed;
 
+- (long long)findOnPageOverflowAdjustment;
+
 @end
 
 @interface iTermFindOnPageHelper : NSObject
@@ -56,6 +58,8 @@
 @property(nonatomic, readonly) VT100GridAbsCoord findCursorAbsCoord;
 @property(nonatomic, readonly) FindContext *copiedContext;
 @property(nonatomic, readonly) NSOrderedSet<SearchResult *> *searchResults;
+@property(nonatomic, readonly) NSInteger numberOfSearchResults;
+@property(nonatomic, readonly) NSInteger currentIndex;
 
 // Begin a new search.
 //

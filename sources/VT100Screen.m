@@ -73,7 +73,10 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
-@interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
+@interface VT100Screen () <
+    iTermTemporaryDoubleBufferedGridControllerDelegate,
+    iTermLineBufferDelegate,
+    iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @end
@@ -1153,8 +1156,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     return 1 + cursorMarkOffset;
 }
 
-- (void)clearScrollbackBuffer
-{
+- (void)clearScrollbackBuffer {
     [linebuffer_ release];
     linebuffer_ = [[LineBuffer alloc] init];
     [linebuffer_ setMaxLines:maxScrollbackLines_];
@@ -1171,6 +1173,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     [self reloadMarkCache];
     self.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
+    [delegate_ screenRefreshFindOnPageView];
 }
 
 - (void)appendScreenChars:(screen_char_t *)line
@@ -1842,9 +1845,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self numberOfLines] - [self height] + currentGrid_.cursorY;
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray*)results
-                     inContext:(FindContext*)context
-{
+- (BOOL)continueFindAllResults:(NSMutableArray *)results
+                     inContext:(FindContext*)context {
     context.hasWrapped = YES;
     NSDate* start = [NSDate date];
     BOOL keepSearching;
@@ -1853,7 +1855,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    toArray:results];
     } while (keepSearching &&
              [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
-
+    if (results.count > 0) {
+        [self.delegate screenRefreshFindOnPageView];
+    }
     return keepSearching;
 }
 
@@ -6032,6 +6036,14 @@ static void SwapInt(int *a, int *b) {
     // I think the update timer was hitting a worst case scenario which made the lag visible.
     // See issue 3537.
     [delegate_ screenUpdateDisplay:YES];
+}
+
+#pragma mark - iTermLineBufferDelegate
+
+- (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
+    if (lineBuffer == linebuffer_) {
+        [delegate_ screenRefreshFindOnPageView];
+    }
 }
 
 @end

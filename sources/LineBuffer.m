@@ -216,6 +216,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if ITERM_DEBUG
     assert(totalDropped == (nl - RawNumLines(self, width)));
 #endif
+    [_delegate lineBufferDidDropLines:self];
     return totalDropped;
 }
 

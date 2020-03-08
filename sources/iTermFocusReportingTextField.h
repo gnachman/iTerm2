@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermFocusReportingSearchFieldDelegate<NSSearchFieldDelegate>
 @optional
 - (void)focusReportingSearchFieldWillBecomeFirstResponder:(iTermFocusReportingSearchField *)sender;
+- (NSInteger)focusReportingSearchFieldNumberOfResults:(iTermFocusReportingSearchField *)sender;
+- (NSInteger)focusReportingSearchFieldCurrentIndex:(iTermFocusReportingSearchField *)sender;
 @end
 
 @interface iTermFocusReportingSearchField : NSSearchField

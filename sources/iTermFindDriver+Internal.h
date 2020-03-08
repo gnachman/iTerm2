@@ -23,5 +23,7 @@
 - (void)doCommandBySelector:(SEL)selector;
 - (void)searchFieldWillBecomeFirstResponder:(NSSearchField *)searchField;
 - (void)eraseSearchHistory;
+- (NSInteger)numberOfResults;
+- (NSInteger)currentIndex;
 
 @end

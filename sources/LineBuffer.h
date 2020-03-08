@@ -34,6 +34,12 @@
 #import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
 
+@class LineBuffer;
+
+@protocol iTermLineBufferDelegate<NSObject>
+- (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer;
+@end
+
 // A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a
 // logical line of text plus color information. Logic is provided for the following major functions:
 //   - If the lines are wrapped onto a screen of some width, find the Nth wrapped line
@@ -49,6 +55,7 @@
 
 // Absolute block number of last block.
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
+@property(nonatomic, weak) id<iTermLineBufferDelegate> delegate;
 
 - (LineBuffer*)initWithBlockSize:(int)bs;
 - (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary;

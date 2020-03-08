@@ -28,5 +28,6 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 - (void)setFrameOrigin:(NSPoint)p;
 - (void)setProgress:(double)progress;
 - (void)deselectFindBarTextField;
+- (void)countDidChange;
 
 @end
