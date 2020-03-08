@@ -278,19 +278,26 @@ NS_ASSUME_NONNULL_BEGIN
                                                          containerRect.origin.y + frame.origin.y * containerRect.size.height,
                                                          frame.size.width * containerRect.size.width,
                                                          frame.size.height * containerRect.size.height);
+            NSRect box1;
+            NSRect box2;
             textureFrame =
             [iTermBackgroundDrawingHelper scaleAspectFitSourceRectForForImageSize:nativeTextureSize
                                                                   destinationRect:containerRect
                                                                         dirtyRect:myFrameInContainer
                                                                          drawRect:&drawRect
-                                                                         boxRect1:nil
-                                                                         boxRect2:nil];
-            quadFrame = drawRect;
-            // Convert the quadFrame to my coordinate system.
-            quadFrame.origin.x = drawRect.origin.x - frame.origin.x * containerRect.size.width - containerRect.origin.x;
-            quadFrame.origin.y = drawRect.origin.y - frame.origin.y * containerRect.size.height - containerRect.origin.y;
-            quadFrame.size.width = drawRect.size.width;
-            quadFrame.size.height = drawRect.size.height;
+                                                                         boxRect1:&box1
+                                                                         boxRect2:&box2];
+
+            // Convert frames into my coordinate system
+            NSRect (^convertRect)(NSRect) = ^NSRect(NSRect drawRect) {
+                return NSMakeRect(drawRect.origin.x - frame.origin.x * containerRect.size.width - containerRect.origin.x,
+                                  drawRect.origin.y - frame.origin.y * containerRect.size.height - containerRect.origin.y,
+                                  drawRect.size.width,
+                                  drawRect.size.height);
+            };
+            quadFrame = convertRect(drawRect);
+            tState.box1 = [self boxBufferWithRect:convertRect(box1) box:1 poolContext:tState.poolContext];
+            tState.box2 = [self boxBufferWithRect:convertRect(box2) box:2 poolContext:tState.poolContext];
             break;
         }
             
