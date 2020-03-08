@@ -242,7 +242,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (@available(macOS 10.14, *)) {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
-        _imageView.backgroundColor = color;
+        _imageView.backgroundColor = [color colorWithAlphaComponent:1];
         if (color && _metalView.alphaValue < 1) {
             DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
             _backgroundColorView.backgroundColor = color;
