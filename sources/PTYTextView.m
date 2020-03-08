@@ -990,6 +990,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     DLog(@"%@ End touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
 }
 
+- (void)touchesMovedWithEvent:(NSEvent *)event {
+    [threeFingerTapGestureRecognizer_ touchesMovedWithEvent:event];
+}
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
     _mouseHandler.numTouches = 0;
     [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];

@@ -17,6 +17,7 @@
     NSView *target_;  // weak reference
     SEL selector_;
     BOOL fired_;  // True if we just faked a three-finger click and future mouse clicks should be ignored.
+    BOOL _moved;
 }
 
 - (instancetype)initWithTarget:(NSView *)target selector:(SEL)selector {
@@ -32,14 +33,14 @@
     firstTouchTime_ = 0;
 }
 
-- (void)touchesBeganWithEvent:(NSEvent *)ev
-{
+- (void)touchesBeganWithEvent:(NSEvent *)ev {
     fired_ = NO;
     DLog(@"fired->NO");
     int touches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
                                      inView:target_] count];
     if (numTouches_ == 0 && touches > 0) {
         DLog(@"Set first touch time");
+        _moved = NO;
         firstTouchTime_ = [NSDate timeIntervalSinceReferenceDate];
     }
     if (numTouches_ < 3 && touches == 3) {
@@ -59,14 +60,18 @@
    numTouches_ = touches;
 }
 
-- (void)touchesEndedWithEvent:(NSEvent *)ev
-{
+- (void)touchesMovedWithEvent:(NSEvent *)event {
+    _moved = YES;
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)ev {
     numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseStationary
                                            inView:target_] count];
     const NSTimeInterval maxTimeForSimulatedThreeFingerTap = 1;
     if (numTouches_ == 0 &&
         firstTouchTime_ &&
         threeTouchTime_ &&
+        !_moved &&
         [NSDate timeIntervalSinceReferenceDate] - firstTouchTime_ < maxTimeForSimulatedThreeFingerTap) {
         DLog(@"Fake a three finger click");
         [target_ performSelector:selector_ withObject:ev];
