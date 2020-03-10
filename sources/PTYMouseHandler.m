@@ -983,13 +983,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return NO;
         }
     }
-    if (event.type == NSEventTypeScrollWheel) {
-        return ([self.mouseDelegate mouseHandlerReportingAllowed:self] &&
-                [self.mouseDelegate mouseHandlerShouldReportScroll:self]);
-    } else {
-        return ([self.mouseDelegate mouseHandlerViewHasFocus:self] &&
-                [self.mouseDelegate mouseHandlerReportingAllowed:self]);
+    if (![self mouseReportingAllowedForEvent:event]) {
+        return NO;
     }
+    if (event.type == NSEventTypeScrollWheel) {
+        return [self.mouseDelegate mouseHandlerShouldReportScroll:self];
+    }
+    return [self.mouseDelegate mouseHandlerViewHasFocus:self];
+}
+
+- (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event {
+    if (![self.mouseDelegate mouseHandlerReportingAllowed:self]) {
+        DLog(@"Delegate says mouse reporting not allowed");
+        return NO;
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagOption) {
+        DLog(@"Not reporting mouse event because you pressed option");
+        return NO;
+    }
+    return YES;
 }
 
 - (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
