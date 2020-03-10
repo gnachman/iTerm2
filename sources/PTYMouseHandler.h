@@ -159,6 +159,7 @@ NS_DESIGNATED_INITIALIZER;
 - (void)keyDown:(NSEvent *)event;
 - (void)selectionScrollWillStart;
 - (void)didDragSemanticHistory;
+- (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event;
 
 @end
 

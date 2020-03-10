@@ -5560,11 +5560,11 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 }
 
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler {
-    return self.xtermMouseReportingAllowClicksAndDrags;
+    return [[self delegate] xtermMouseReportingAllowClicksAndDrags];
 }
 
 - (BOOL)mouseHandlerShouldReportScroll:(PTYMouseHandler *)mouseHandler {
-    return [self xtermMouseReportingAllowMouseWheel];
+    return [[self delegate] xtermMouseReportingAllowMouseWheel];
 }
 
 - (void)mouseHandlerJiggle:(PTYMouseHandler *)mouseHandler {

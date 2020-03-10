@@ -375,7 +375,7 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
         }
     } else if ([self mouseIsOverImageInEvent:event]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
-    } else if ([self xtermMouseReporting] &&
+    } else if ([_mouseHandler mouseReportingAllowedForEvent:event] &&
                [_mouseHandler terminalWantsMouseReports]) {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
     } else {
@@ -398,25 +398,6 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event {
     NSPoint point = [self clickPoint:event allowRightMarginOverflow:NO];
     return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
-}
-
-#pragma mark - Mouse Reporting
-
-// WARNING: This indicates if mouse reporting is a possibility. -terminalWantsMouseReports indicates
-// if the reporting mode would cause any action to be taken if this returns YES. They should be used
-// in conjunction most of the time.
-- (BOOL)xtermMouseReporting {
-    NSEvent *event = [NSApp currentEvent];
-    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event it_modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
-}
-
-- (BOOL)xtermMouseReportingAllowMouseWheel {
-    return [[self delegate] xtermMouseReportingAllowMouseWheel];
-}
-
-- (BOOL)xtermMouseReportingAllowClicksAndDrags {
-    return [[self delegate] xtermMouseReportingAllowClicksAndDrags];
 }
 
 #pragma mark - Quicklook

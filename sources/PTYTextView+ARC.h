@@ -69,11 +69,6 @@ iTermURLActionHelperDelegate>
 - (BOOL)setCursor:(NSCursor *)cursor;
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
 
-#pragma mark - Mouse Reporting
-
-- (BOOL)xtermMouseReporting;
-- (BOOL)xtermMouseReportingAllowMouseWheel;
-- (BOOL)xtermMouseReportingAllowClicksAndDrags;
 
 #pragma mark - Quicklook
 
