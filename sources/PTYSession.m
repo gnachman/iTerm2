@@ -247,6 +247,7 @@ static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to She
 static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type Override";  // NSNumber wrapping ITermCursorType
 static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Name";  // NSString. New as of 12/4/19
 static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";  // NSString.
+static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1291,6 +1292,8 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.view = sessionView;
 
     [sessionView setFindDriverDelegate:aSession];
+    NSMutableSet<NSString *> *keysToPreserveInCaseOfDivorce = [NSMutableSet setWithArray:@[ KEY_GUID, KEY_ORIGINAL_GUID ]];
+
     NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
     if (overrides) {
         NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
@@ -1311,11 +1314,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 theBookmark = [theBookmark dictionaryBySettingObject:tabColorDict forKey:KEY_TAB_COLOR];
                 theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:KEY_USE_TAB_COLOR];
                 needDivorce = YES;
+                [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ KEY_TAB_COLOR, KEY_USE_TAB_COLOR ]];
             }
         } else if ([colorString isEqualToString:iTermTmuxTabColorNone] &&
                    [iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
             // There was no tab color but the tmux profile specifies one. Disable it and divorce.
             theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:KEY_USE_TAB_COLOR];
+            [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ KEY_USE_TAB_COLOR ]];
             needDivorce = YES;
         }
     }
@@ -1334,6 +1339,30 @@ ITERM_WEAKLY_REFERENCEABLE
             theBookmark = [theBookmark dictionaryBySettingObject:originalGuid forKey:KEY_ORIGINAL_GUID];
         }
         theBookmark = [theBookmark dictionaryBySettingObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+        if ([NSArray castFrom:arrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS]]) {
+            DLog(@"Have overridden fields %@", arrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS]);
+            // Use the original profile, but preserve keys that were overridden
+            // at the time the arrangement was saved. Also preserve any keys
+            // that were mutated since the profile was taken from the
+            // arrangement.
+            // This prevents an issue where you save a divorced session in an
+            // arrangement and then modify a non-overridden field in the
+            // underlying profile and that setting doesn't get reflected when
+            // you next restore the arrangement.
+            Profile *underlyingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
+            NSArray<NSString *> *overriddenFields = arrangement[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS];
+
+            if (underlyingProfile) {
+                DLog(@"Underlying profile %@ exists", originalGuid);
+                MutableProfile *replacement = [[underlyingProfile mutableCopy] autorelease];
+                [keysToPreserveInCaseOfDivorce unionSet:[NSSet setWithArray:overriddenFields]];
+                for (NSString *key in keysToPreserveInCaseOfDivorce) {
+                    DLog(@"Preserve %@=%@ from arrangement", key, theBookmark[key]);
+                    replacement[key] = theBookmark[key];
+                }
+                theBookmark = replacement;
+            }
+        }
     }
 
     [[aSession screen] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
@@ -1401,7 +1430,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]) {
         [[iTermWebSocketCookieJar sharedInstance] addCookie:arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]];
     }
-    
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
@@ -4580,6 +4608,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_reusableCookie) {
         result[SESSION_ARRANGEMENT_REUSABLE_COOKIE] = _reusableCookie;
+    }
+    if (_overriddenFields.count > 0) {
+        result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
         result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
