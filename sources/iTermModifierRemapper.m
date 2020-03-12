@@ -92,6 +92,10 @@
 - (void)beginRemappingModifiers {
     DLog(@"Begin remapping modifiers");
     [self.keyDown setRemappingDelegate:self];
+    if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
+        return;
+    }
+
     [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:self];
 
     if (![_keyDown isEnabled]) {
