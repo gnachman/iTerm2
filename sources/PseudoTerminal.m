@@ -6683,6 +6683,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
+    if (@available(macOS 10.14, *)) {
+        [_contentView updateTitleAndBorderViews];
+    }
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
