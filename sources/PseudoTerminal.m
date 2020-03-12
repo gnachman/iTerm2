@@ -8900,8 +8900,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (NSColor *)windowDecorationColor {
+    const BOOL fakeWindowTitleBar = ([self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0 &&
+                            !self.tabBarAlwaysVisible);
     if (self.currentSession.tabColor &&
-        [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0 &&
+        fakeWindowTitleBar &&
         [iTermAdvancedSettingsModel minimalTabStyleTreatLeftInsetAsPartOfFirstTab]) {
         // The window number will be displayed over the tab color.
         // Use text color of first tab when the first tab is selected.
@@ -8911,9 +8913,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // The window number will be displayed over the tabbar color. For non-key windows, use the
     // non-selected tab text color because that more closely matches the titlebar color.
     const BOOL mainAndActive = (self.window.isMainWindow && NSApp.isActive);
-    NSColor *color = [_contentView.tabBarControl.style textColorDefaultSelected:mainAndActive
-                                                                backgroundColor:nil
-                                                     windowIsMainAndAppIsActive:mainAndActive];
+    NSColor *color;
+    color = [_contentView.tabBarControl.style textColorDefaultSelected:mainAndActive
+                                                       backgroundColor:fakeWindowTitleBar ? self.currentSession.tabColor : nil
+                                            windowIsMainAndAppIsActive:mainAndActive];
     if (mainAndActive) {
         return [color colorWithAlphaComponent:0.65];
     }
