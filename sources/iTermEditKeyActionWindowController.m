@@ -8,6 +8,7 @@
 
 #import "iTermEditKeyActionWindowController.h"
 
+#import "DebugLogging.h"
 #import "iTermActionsModel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermPasteSpecialViewController.h"
@@ -620,6 +621,7 @@
             break;
         case iTermEditKeyActionWindowControllerModeTouchBarItem:
             if (!_touchBarLabel.stringValue.length) {
+                DLog(@"Beep: empty touch bar label");
                 NSBeep();
                 return;
             }
@@ -627,6 +629,7 @@
             break;
         case iTermEditKeyActionWindowControllerModeKeyboardShortcut:
             if (!self.currentKeyCombination) {
+                DLog(@"Beep: no key combo");
                 NSBeep();
                 return;
             }

@@ -7275,6 +7275,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![[self currentSession] liveSession]) {
         if (dir > 0) {
             // Can't go forward in time from live view (though that would be nice!)
+            DLog(@"Beep: no time travel allowed");
             NSBeep();
             return;
         }
@@ -7542,6 +7543,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     if (sender == coprocessOkButton_) {
         if ([[[coprocessCommand_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0) {
+            DLog(@"Beep: empty coprocess");
             NSBeep();
             return;
         }
@@ -8062,6 +8064,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
+        DLog(@"Beep: can't split");
         NSBeep();
         return nil;
     }
@@ -10618,6 +10621,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (textView) {
         [textView scrollToSelection];
     } else {
+        DLog(@"Beep: no text view to jump in");
         NSBeep();
     }
 }

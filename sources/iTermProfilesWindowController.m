@@ -174,6 +174,7 @@ typedef enum {
 {
     NSArray* guids = [tableView_ orderedSelectedGuids];
     if (![guids count]) {
+        DLog(@"Beep: no guids");
         NSBeep();
         return;
     }

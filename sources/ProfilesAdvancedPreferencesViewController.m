@@ -8,6 +8,7 @@
 
 #import "ProfilesAdvancedPreferencesViewController.h"
 
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
@@ -280,6 +281,7 @@
    forTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
     if (![anObject length] || [[self boundHosts] containsObject:anObject]) {
+        DLog(@"Beep: Empty APS rule not allwoed");
         NSBeep();
         [self removeBoundHostOnRow:rowIndex];
         return;

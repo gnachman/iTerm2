@@ -1428,6 +1428,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     }
     if (![self shouldQuellBell]) {
         if (audibleBell_) {
+            DLog(@"Beep: ring audible bell");
             NSBeep();
         }
         if (showBellIndicator_) {

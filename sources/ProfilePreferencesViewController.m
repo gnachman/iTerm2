@@ -542,6 +542,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     ProfileModel *model = [_delegate profilePreferencesModel];
 
     if (![ITAddressBookMgr canRemoveProfile:profile fromModel:model]) {
+        DLog(@"Beep: failed to remove profile");
         NSBeep();
     } else if ([self confirmProfileDeletion:profile]) {
         NSString *guid = profile[KEY_GUID];
@@ -680,6 +681,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 {
     Profile* profile = [self selectedProfile];
     if (!profile) {
+        DLog(@"Beep: no profile selected");
         NSBeep();
         return;
     }
@@ -702,6 +704,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     Profile *origProfile = [self selectedProfile];
     NSString* guid = origProfile[KEY_GUID];
     if (!guid) {
+        DLog(@"Beep: no selected profile or guid");
         NSBeep();
         return;
     }
@@ -880,6 +883,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (IBAction)saveProfileAsJSON:(id)sender {
     NSDictionary* profile = [self selectedProfile];
     if (!profile) {
+        DLog(@"Beep: no profile selected");
         NSBeep();
         return;
     }

@@ -7,6 +7,8 @@
 //
 
 #import "iTermExposeTabView.h"
+
+#import "DebugLogging.h"
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
 #import "iTermExpose.h"
@@ -161,6 +163,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
             [[terminal tabView] selectTabViewItemAtIndex:tabIndex_];
         }
     } else {
+        DLog(@"Beep: bogus window or tab index");
         NSBeep();
     }
 }

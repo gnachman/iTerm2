@@ -7,6 +7,8 @@
 //
 
 #import "BulkCopyProfilePreferencesWindowController.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
@@ -64,6 +66,7 @@ typedef enum {
 - (IBAction)performBulkCopy:(id)sender {
     ProfileModel *profileModel = [ProfileModel sharedInstance];
     if (!_sourceGuid || ![profileModel bookmarkWithGuid:_sourceGuid]) {
+        DLog(@"Beep: bulk copy failed");
         NSBeep();
         return;
     }

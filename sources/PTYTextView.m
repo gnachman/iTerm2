@@ -2437,6 +2437,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     VT100ScreenMark *mark = [sender representedObject];
     VT100GridCoordRange range = [_dataSource textViewRangeOfOutputForCommandMark:mark];
     if (range.start.x == -1) {
+        DLog(@"Beep: can't select output");
         NSBeep();
         return;
     }
@@ -2717,6 +2718,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     aSavePanel.nameFieldStringValue = nowStr;
     if ([aSavePanel runModal] == NSFileHandlingPanelOKButton) {
         if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
+            DLog(@"Beep: can't write to %@", aSavePanel.URL);
             NSBeep();
         }
     }

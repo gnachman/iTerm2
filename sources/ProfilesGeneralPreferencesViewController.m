@@ -7,7 +7,9 @@
 //
 
 #import "ProfilesGeneralPreferencesViewController.h"
+
 #import "AdvancedWorkingDirectoryWindowController.h"
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermBadgeConfigurationWindowController.h"
@@ -403,6 +405,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         if (result == NSFileHandlingPanelOKButton) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
             if (![self loadIconWithFilename:url.path]) {
+                DLog(@"Beep: Failed to load icon at %@", url);
                 NSBeep();
             }
         }

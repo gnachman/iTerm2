@@ -125,6 +125,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL ctrlPressed = ([event it_modifierFlags] & NSEventModifierFlagControl) != 0;
     if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
         // Dump view hierarchy
+        DLog(@"Beep: dump view hierarchy");
         NSBeep();
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;

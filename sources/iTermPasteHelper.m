@@ -297,7 +297,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     DLog(@"-[iTermPasteHelper pasteString:flags:");
     DLog(@"length=%@, flags=%@", @(pasteEvent.string.length), @(pasteEvent.flags));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Tried to paste 0-byte string. Beep.");
+        DLog(@"Beep: Tried to paste 0-byte string. Beep.");
         NSBeep();
         return;
     }
@@ -339,7 +339,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
     DLog(@"String to paste now has length %@", @(pasteEvent.string.length));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
+        DLog(@"Beep: Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
         return;
     }

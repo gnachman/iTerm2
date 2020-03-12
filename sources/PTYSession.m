@@ -1000,6 +1000,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             return;
         } else {
+            DLog(@"Beep: Can't go backward when no dvr");
             NSBeep();
             return;
         }
@@ -1007,10 +1008,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (dir > 0) {
         if (![_dvrDecoder next]) {
+            DLog(@"Beep: dvr reached end");
             NSBeep();
         }
     } else {
         if (![_dvrDecoder prev]) {
+            DLog(@"Beep: dvr reached start");
             NSBeep();
         }
     }
@@ -3304,6 +3307,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
     if (![self _recursiveSelectMenuWithSelector:theSelector inMenu:[NSApp mainMenu]]) {
+        DLog(@"Beep: failed to find menu item with selector %@", NSStringFromSelector(theSelector));
         NSBeep();
     }
 }
@@ -3316,6 +3320,7 @@ ITERM_WEAKLY_REFERENCEABLE
         identifier = parts[1];
     }
     if (![self _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]]) {
+        DLog(@"Beep: failed to find menu item with title %@ and identifier %@", title, identifier);
         NSBeep();
     }
 }
@@ -3463,6 +3468,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *workingDirectory = [_screen workingDirectoryOnLine:lineNumber];
     NSString *selection = [_textview selectedText];
     if (!selection.length) {
+        DLog(@"Beep: no selection");
         NSBeep();
         return;
     }
@@ -3514,6 +3520,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
+    DLog(@"Beep: bad url %@", selection);
     NSBeep();
 }
 
@@ -5280,12 +5287,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     Interval *interval = mark.entry.interval;
     if (!interval) {
+        DLog(@"Beep: Can't jump to bad interval");
         NSBeep();
         return;
     }
     VT100GridRange range = [_screen lineNumberRangeOfInterval:interval];
     long long offset = range.location;
     if (offset < 0) {
+        DLog(@"Beep: Can't jump to negative offset");
         NSBeep();  // This really shouldn't ever happen
     } else {
         self.currentMarkOrNotePosition = mark.entry.interval;
@@ -7722,6 +7731,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[_delegate realParentWindow] irNext:self];
         }
     } else {
+        DLog(@"Beep: Unrecongized keystroke in IR");
         NSBeep();
     }
 }

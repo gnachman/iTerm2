@@ -160,7 +160,7 @@
 
     iTermController *controller = [iTermController sharedInstance];
     if (win >= [controller numberOfTerminals]) {
-        DLog(@"bogus window number");
+        DLog(@"Beep: bogus window number");
         NSBeep();
         return;
     }
@@ -168,7 +168,7 @@
     DLog(@"window controller is %@", terminal);
     PTYTabView *tabView = [terminal tabView];
     if (tab >= [tabView numberOfTabViewItems]) {
-        DLog(@"bogus tab");
+        DLog(@"Beep: bogus tab");
         NSBeep();
         return;
     }

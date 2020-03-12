@@ -1,5 +1,6 @@
 #import "PTYSession+Scripting.h"
 
+#import "DebugLogging.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "NSColor+iTerm.h"
@@ -28,6 +29,7 @@
 - (void)handleExecScriptCommand:(NSScriptCommand *)aCommand {
     // if we are already doing something, get out.
     if ([self.shell pid] > 0) {
+        DLog(@"Beep: Can't execute script because there's already a process");
         NSBeep();
         return;
     }

@@ -8,6 +8,8 @@
 
 #import "iTermInstantReplayWindowController.h"
 
+#import "DebugLogging.h"
+
 static const float kAlphaValue = 0.9;
 
 typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
@@ -227,6 +229,7 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
                !cancel) {
         long long end = [_delegate instantReplayCurrentTimestamp];
         if (end < _start) {
+            DLog(@"Beep: end is before start");
             NSBeep();
             return;
         }
