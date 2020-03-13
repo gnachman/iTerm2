@@ -77,4 +77,7 @@ additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths;
 - (NSArray<NSString *> *)it_itemsInDirectory:(NSString *)path;
 - (NSString *)libraryDirectoryFor:(NSString *)app;
 
+- (id)monitorFile:(NSString *)file block:(void (^)(long flags))block;
+- (void)stopMonitoringFileWithToken:(id)token;
+
 @end

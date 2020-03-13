@@ -1156,7 +1156,6 @@
 		1DEF5E70185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
 		1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		1DF121091C344DF100E39F1F /* iTermDynamicProfileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF121071C344DF100E39F1F /* iTermDynamicProfileManager.h */; };
-		1DF1210A1C344DF100E39F1F /* iTermDynamicProfileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF121081C344DF100E39F1F /* iTermDynamicProfileManager.m */; };
 		1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8FEF118F3217100722B35 /* KeysPreferencesViewController.h */; };
@@ -2821,6 +2820,7 @@
 		A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
 		A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */; };
 		A6A4B2A2240B67A400184EAC /* PTYMouseHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */; };
+		A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF121081C344DF100E39F1F /* iTermDynamicProfileManager.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
@@ -13167,6 +13167,7 @@
 				A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
+				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
@@ -13724,7 +13725,6 @@
 				A6CEC1101DCE8146009F4FD2 /* GPBUnknownField.m in Sources */,
 				A6C7635A1B45C52B00E3C992 /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6C7632C1B45C52B00E3C992 /* TemporaryNumberAllocator.m in Sources */,
-				1DF1210A1C344DF100E39F1F /* iTermDynamicProfileManager.m in Sources */,
 				A6C763441B45C52B00E3C992 /* iTermKeyboardNavigatableTableView.m in Sources */,
 				A6C762EB1B45C52B00E3C992 /* AATreeNode.m in Sources */,
 				A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */,
@@ -14044,10 +14044,10 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_COMPILER_FLAGS = "";
-                                OTHER_CFLAGS = (
-                                        "-DBETA=1",
-                                        "-DNIGHTLY_BUILD=1",
-                                );
+				OTHER_CFLAGS = (
+					"-DBETA=1",
+					"-DNIGHTLY_BUILD=1",
+				);
 				OTHER_CODE_SIGN_FLAGS = "--deep --timestamp";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
