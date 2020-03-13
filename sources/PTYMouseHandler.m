@@ -959,12 +959,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
             return NO;
         }
-        if (event.buttonNumber == 0 && _numTouches > 1) {
-            // When three-finger tap emulates middle click then buttonNumber will be 2. Middle clicks are reportable.
-            if (_numTouches != 3 || ![self trackpadThreeFingerDragEnabled]) {
-                DLog(@"Num touches is %@ so not reporting it", @(_numTouches));
-                return NO;
-            }
+        // Three-finger click mousedown should not be reported normally to avoid accidental
+        // reports because what reporting a 3-finger click when not emulating the middle
+        // button is nonsense. It's certainly not something mouse reporting supports.
+        // These are buttonNumber=0, _numTouches=3. Issue 8481.
+        //
+        // However, three-finger mousedown with *three-finger drag enabled* must be reported so
+        // 3-finger drags get reported.
+        //
+        // Three-finger tap emulating middle click has button 2. Middle clicks are reportable.
+        //
+        // A 2-finger mouse-down is reportable because it's necessary for drag reporting to work
+        // with two touches. Issue 8481.
+        if (event.buttonNumber == 0 && _numTouches == 3 && ![self trackpadThreeFingerDragEnabled]) {
+            DLog(@"Three touches on left button up/down, but three-finger drag is disabled, so don't report it.");
+            return NO;
         }
     }
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) &&
