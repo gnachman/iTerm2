@@ -1586,7 +1586,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:self
          responseSelector:@selector(listedWindowsToOpenOne:forWindowIdAndAffinities:)
            responseObject:@[ @(windowId), affinities, profile ]
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)openWindowWithId:(int)windowId
@@ -2198,6 +2198,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)listedWindowsToOpenOne:(NSString *)response
       forWindowIdAndAffinities:(NSArray *)values {
+    if (response == nil) {
+        DLog(@"Listing windows failed. Maybe the window died before we could get to it?");
+        return;
+    }
     NSNumber *windowId = values[0];
     NSSet *affinities = values[1];
     Profile *profile = values[2];
