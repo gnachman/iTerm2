@@ -8,7 +8,9 @@
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
+#import "iTermSearchResultsMinimapView.h"
 #import "iTermPreferences.h"
+#import "iTermSearchResultsMinimapView.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
@@ -80,6 +82,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermAnnouncementDelegate,
     iTermFindDriverDelegate,
     iTermGenericStatusBarContainer,
+    iTermSearchResultsMinimapViewDelegate,
     NSDraggingSource,
     PTYScrollerDelegate,
     SplitSelectionViewDelegate>
@@ -166,6 +169,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
+
+        if (@available(macOS 10.14, *)) {
+            if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+                _searchResultsMinimap = [[iTermSearchResultsMinimapView alloc] init];
+                _searchResultsMinimap.delegate = self;
+                [self addSubviewBelowFindView:_searchResultsMinimap];
+            }
+        }
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
         if (@available(macOS 10.11, *)) {
@@ -1322,6 +1333,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    if (@available(macOS 10.14, *)) {
+        const NSRect scrollerFrame = [self convertRect:_scrollview.verticalScroller.bounds
+                                              fromView:_scrollview.verticalScroller];
+        _searchResultsMinimap.frame = NSInsetRect(scrollerFrame, 0, 2);
+    }
     [_delegate sessionViewScrollViewDidResize];
 }
 
@@ -1544,6 +1560,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate findViewControllerDidCeaseToBeMandatory:sender];
 }
 
+- (NSInteger)findDriverCurrentIndex {
+    return [self.delegate findDriverCurrentIndex];
+}
+
+- (NSInteger)findDriverNumberOfSearchResults {
+    return [self.delegate findDriverNumberOfSearchResults];
+}
+
+
 #pragma mark - iTermGenericStatusBarContainer
 
 - (NSColor *)genericStatusBarContainerBackgroundColor {
@@ -1559,4 +1584,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)didSelectDestinationSession:(PTYSession *)session half:(SplitSessionHalf)half {
     [[NSNotificationCenter defaultCenter] postNotificationName:SessionViewWasSelectedForInspectionNotification object:self];
 }
+
+#pragma mark - iTermSearchResultsMinimapViewDelegate
+
+- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+    return [self.searchResultsMinimapViewDelegate searchResultsMinimapViewLocations:view];
+}
+
+- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+    return [self.searchResultsMinimapViewDelegate searchResultsMinimapViewRangeOfVisibleLines:view];
+}
+
 @end

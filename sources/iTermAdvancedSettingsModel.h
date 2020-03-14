@@ -237,6 +237,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showBlockBoundaries;
 + (BOOL)showHintsInSplitPaneMenuItems;
 + (BOOL)showMetalFPSmeter;
++ (BOOL)showSearchResultsMinimap;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;

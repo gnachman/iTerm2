@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermFindDriver.h"
+#import "iTermSearchResultsMinimapView.h"
 #import "VT100GridTypes.h"
 
 @class FindContext;
@@ -46,10 +47,11 @@
 - (void)findOnPageFailed;
 
 - (long long)findOnPageOverflowAdjustment;
-
+- (NSRange)findOnPageRangeOfVisibleLines;
+- (void)findOnPageLocationsDidChange;
 @end
 
-@interface iTermFindOnPageHelper : NSObject
+@interface iTermFindOnPageHelper : NSObject<iTermSearchResultsMinimapViewDelegate>
 
 @property(nonatomic, readonly) BOOL findInProgress;
 @property(nonatomic, assign) NSView<iTermFindOnPageHelperDelegate> *delegate;

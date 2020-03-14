@@ -75,6 +75,10 @@ typedef struct {
     iTermFindMode _mode;
 
     iTermFindOnPageCachedCounts _cachedCounts;
+
+    NSMutableIndexSet *_locations NS_AVAILABLE_MAC(10_14);
+
+    BOOL _locationsHaveChanged NS_AVAILABLE_MAC(10_14);
 }
 
 - (instancetype)init {
@@ -82,6 +86,7 @@ typedef struct {
     if (self) {
         _highlightMap = [[NSMutableDictionary alloc] init];
         _copiedContext = [[FindContext alloc] init];
+        _locations = [[NSMutableIndexSet alloc] init];
     }
     return self;
 }
@@ -90,7 +95,19 @@ typedef struct {
     [_highlightMap release];
     [_copiedContext release];
     [_selectedResult release];
+    [_locations release];
     [super dealloc];
+}
+
+- (void)locationsDidChange NS_AVAILABLE_MAC(10_14) {
+    if (_locationsHaveChanged) {
+        return;
+    }
+    _locationsHaveChanged = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self->_locationsHaveChanged = NO;
+        [self.delegate findOnPageLocationsDidChange];
+    });
 }
 
 - (BOOL)findInProgress {
@@ -158,6 +175,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastStringSearchedFor = nil;
 
     [_searchResults release];
+    if (@available(macOS 10.14, *)) {
+        [_locations removeAllIndexes];
+        [self locationsDidChange];
+    }
     _searchResults = [[NSMutableOrderedSet alloc] init];
     _cachedCounts.valid = NO;
 
@@ -249,6 +270,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  }
                                              }];
     [_searchResults insertObject:searchResult atIndex:insertionIndex];
+    if (@available(macOS 10.14, *)) {
+        [_locations addIndex:searchResult.absStartY];
+        [self locationsDidChange];
+    }
     _cachedCounts.valid = NO;
 
     // Update highlights.
@@ -465,6 +490,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)removeAllSearchResults {
     [_searchResults removeAllObjects];
+    if (@available(macOS 10.14, *)) {
+        [_locations removeAllIndexes];
+        [self locationsDidChange];
+    }
     _cachedCounts.valid = NO;
 }
 
@@ -472,6 +501,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSRange objectRange = [self rangeOfSearchResultsInRangeOfLines:range];
     if (objectRange.location != NSNotFound && objectRange.length > 0) {
         [_searchResults removeObjectsInRange:objectRange];
+        if (@available(macOS 10.14, *)) {
+            [_locations removeIndexesInRange:range];
+            [self locationsDidChange];
+        }
         _cachedCounts.valid = NO;
     }
 }
@@ -569,6 +602,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         _cachedCounts.index += 1;
     }
+}
+
+#pragma mark - iTermSearchResultsMinimapViewDelegate
+
+- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+    return _locations;
+}
+
+- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+    return [_delegate findOnPageRangeOfVisibleLines];
 }
 
 @end

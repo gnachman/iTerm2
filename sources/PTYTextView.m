@@ -2002,7 +2002,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 
     // Get the number of lines that have disappeared if scrollback buffer is full.
-    int scrollbackOverflow = [_dataSource scrollbackOverflow];
+    const int scrollbackOverflow = [_dataSource scrollbackOverflow];
     [_dataSource resetScrollbackOverflow];
     [_delegate textViewResizeFrameIfNeeded];
     // Perform adjustments if lines were lost from the head of the buffer.
@@ -2040,6 +2040,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Update accessibility.
     if (foundDirty) {
         [self refreshAccessibility];
+    }
+    if (scrollbackOverflow > 0) {
+        // Need to redraw locations of search results.
+        [self.delegate textViewFindOnPageLocationsDidChange];
     }
 
     return foundBlink;
@@ -4431,6 +4435,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         [_findOnPageHelper removeAllSearchResults];
     }
+}
+
+- (NSRange)findOnPageRangeOfVisibleLines {
+    return NSMakeRange(_dataSource.totalScrollbackOverflow, _dataSource.numberOfLines);
+}
+
+- (void)findOnPageLocationsDidChange {
+    [_delegate textViewFindOnPageLocationsDidChange];
 }
 
 #pragma mark - Services

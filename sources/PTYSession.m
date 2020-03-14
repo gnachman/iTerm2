@@ -1675,7 +1675,9 @@ ITERM_WEAKLY_REFERENCEABLE
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
                                           colorMap:_colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
-
+    if (@available(macOS 10.14, *)) {
+        _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
+    }
     if (@available(macOS 10.11, *)) {
         _metalGlue.textView = _textview;
     }
@@ -2419,6 +2421,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    if (@available(macOS 10.14, *)) {
+        if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
+            _view.searchResultsMinimapViewDelegate = nil;
+        }
+    }
     self.textview = nil;
     if (@available(macOS 10.11, *)) {
         _metalGlue.textView = nil;
@@ -4223,9 +4230,17 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setView:(SessionView *)newView {
+    if (@available(macOS 10.14, *)) {
+        if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
+            _view.searchResultsMinimapViewDelegate = nil;
+        }
+    }
     [_view autorelease];
     _view = [newView retain];
     newView.delegate = self;
+    if (@available(macOS 10.14, *)) {
+        newView.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
+    }
     if (@available(macOS 10.11, *)) {
         newView.driver.dataSource = _metalGlue;
     }
@@ -8731,6 +8746,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)textViewCanBury {
     return !_synthetic;
+}
+
+- (void)textViewFindOnPageLocationsDidChange {
+    if (@available(macOS 10.14, *)) {
+        [_view.searchResultsMinimap invalidate];
+    }
 }
 
 - (void)bury {

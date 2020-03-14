@@ -36,6 +36,8 @@
 @class iTermAnnouncementViewController;
 @class iTermFindDriver;
 @class iTermMetalDriver;
+@protocol iTermSearchResultsMinimapViewDelegate;
+@class iTermSearchResultsMinimapView;
 @class PTYSession;
 @class SplitSelectionView;
 @class SessionTitleView;
@@ -158,6 +160,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, weak) id<iTermSessionViewDelegate> delegate;
+@property(nonatomic, readonly) iTermSearchResultsMinimapView *searchResultsMinimap NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
@@ -171,6 +174,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
 @property(nonatomic, readonly) NSSize internalDecorationSize;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
+@property(nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
 
 - (void)showFindUI;
 - (void)findViewDidHide;
