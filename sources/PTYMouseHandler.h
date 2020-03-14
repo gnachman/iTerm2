@@ -98,6 +98,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (void)mouseHandler:(PTYMouseHandler *)mouseHandler
 dragSemanticHistoryWithEvent:(NSEvent *)event
                coord:(VT100GridCoord)coord;
+- (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:(PTYMouseHandler *)sender;
 
 @end
 

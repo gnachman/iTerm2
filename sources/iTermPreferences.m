@@ -128,6 +128,7 @@ NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates"
 NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
 NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
 NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickPerformsSmartSelection";
+NSString *const kPreferenceKeyFocusOnRightOrMiddleClick = @"FocusOnRightOrMiddleClick";
 
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
@@ -363,6 +364,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
+                  kPreferenceKeyFocusOnRightOrMiddleClick: @NO,
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @YES,
                   kPreferenceKeyDoubleClickPerformsSmartSelection: @NO,
 
