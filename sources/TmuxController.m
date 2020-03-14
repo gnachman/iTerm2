@@ -422,19 +422,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     BOOL tooMany = NO;
     if (windowsToOpen.count > [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit]) {
         DLog(@"There are too many windows to open so just show the dashboard");
-        haveHidden = YES;
         tooMany = YES;
         [windowsToOpen removeAllObjects];
     }
-    if (haveHidden) {
-        DLog(@"Hidden windows existing, showing dashboard");
-        [[TmuxDashboardController sharedInstance] showWindow:nil];
-        [[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
-        if (tooMany) {
-            [[iTermNotificationController sharedInstance] notify:@"Too many tmux windows!" withDescription:@"Use the tmux dashboard to select which to open."];
-        } else {
-            [[iTermNotificationController sharedInstance] notify:@"Some tmux windows were hidden." withDescription:@"Use the tmux dashboard to select which to open."];
-        }
+    [[TmuxDashboardController sharedInstance] didAttachWithHiddenWindows:haveHidden tooManyWindows:tooMany];
+    if (tooMany) {
+        [[iTermNotificationController sharedInstance] notify:@"Too many tmux windows!" withDescription:@"Use the tmux dashboard to select which to open."];
+    } else if (haveHidden) {
+        [[iTermNotificationController sharedInstance] notify:@"Some tmux windows were hidden." withDescription:@"Use the tmux dashboard to select which to open."];
     }
     for (NSArray *record in windowsToOpen) {
         DLog(@"Open window %@", record);

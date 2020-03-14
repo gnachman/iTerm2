@@ -13,6 +13,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
 #import "TmuxSessionsTable.h"
@@ -35,6 +36,7 @@
     IBOutlet NSPopUpButton *connectionsButton_;
     IBOutlet NSTextField *setting_;
     IBOutlet NSStepper *stepper_;
+    IBOutlet NSButton *_openDashboardIfHiddenWindows;
 }
 
 + (TmuxDashboardController *)sharedInstance {
@@ -114,6 +116,26 @@
     [windowsTable_ setDelegate:self];
     setting_.integerValue = [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
     stepper_.integerValue = setting_.integerValue;
+    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSOnState : NSOffState;
+}
+
+- (void)didAttachWithHiddenWindows:(BOOL)anyHidden
+                    tooManyWindows:(BOOL)tooMany {
+    DLog(@"anyHidden=%@ tooMany=%@", @(anyHidden), @(tooMany));
+    if (anyHidden && iTermUserDefaults.openTmuxDashboardIfHiddenWindows) {
+        [self show];
+        return;
+    }
+    if (tooMany) {
+        [self show];
+        return;
+    }
+}
+
+- (void)show {
+    DLog(@"Show");
+    [[TmuxDashboardController sharedInstance] showWindow:nil];
+    [[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
 }
 
 - (void)preferenceDidChange:(iTermPreferenceDidChangeNotification *)notification {
@@ -143,6 +165,11 @@
     if ([[self window] isKeyWindow]) {
         [self close];
     }
+}
+
+- (IBAction)toggleOpenDashboardIfHiddenWindows:(id)sender {
+    iTermUserDefaults.openTmuxDashboardIfHiddenWindows = _openDashboardIfHiddenWindows.state == NSOnState;
+    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSOnState : NSOffState;
 }
 
 #pragma mark TmuxSessionsTableProtocol

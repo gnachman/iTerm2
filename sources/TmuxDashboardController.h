@@ -15,5 +15,7 @@
 @interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol>
 
 + (instancetype)sharedInstance;
+- (void)didAttachWithHiddenWindows:(BOOL)anyHidden
+                    tooManyWindows:(BOOL)tooMany;
 
 @end

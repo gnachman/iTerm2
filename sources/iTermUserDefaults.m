@@ -20,6 +20,7 @@ static NSString *const iTermUserDefaultsKeySearchHistory = @"NoSyncSearchHistory
 static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging = @"NoSyncEnableAutomaticProfileSwitchingLogging";
 
 static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks = @"RequireAuthenticationAfterScreenLocks";
+static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"OpenTmuxDashboardIfHiddenWindows";
 
 @implementation iTermUserDefaults
 
@@ -45,17 +46,27 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     return privateUserDefaults;
 }
 
++ (NSUserDefaults *)userDefaults {
+    static NSUserDefaults *userDefaults;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        userDefaults = [NSUserDefaults standardUserDefaults];
+        [userDefaults registerDefaults:@{ iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows: @YES }];
+    });
+    return userDefaults;
+}
+
 + (void)performMigrations {
-    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeySearchHistory];
+    id obj = [self.userDefaults objectForKey:iTermUserDefaultsKeySearchHistory];
     if (!obj) {
         return;
     }
     [self setSearchHistory:obj];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeySearchHistory];
+    [self.userDefaults removeObjectForKey:iTermUserDefaultsKeySearchHistory];
 
-    id maybeSearchHistory = [[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+    id maybeSearchHistory = [self.userDefaults objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
     if (maybeSearchHistory && ![maybeSearchHistory isKindOfClass:[NSNumber class]]) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+        [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
     }
 }
 
@@ -68,7 +79,7 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 }
 
 + (BOOL)secureKeyboardEntry {
-    NSNumber *buggy = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry]];
+    NSNumber *buggy = [NSNumber castFrom:[self.userDefaults objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry]];
     if (buggy) {
         // If the buggy one exists and is a number, then it was your secure keyboard setting as
         // written by version 3.3.0 or 3.3.1. Prefer it because updating the secure keyboard entry
@@ -77,14 +88,14 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
         // (non-buggy) version.
         return [buggy boolValue];
     }
-    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
+    return [self.userDefaults boolForKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
 }
 
 + (void)setSecureKeyboardEntry:(BOOL)secureKeyboardEntry {
     // See comment in +secureKeyboardEntry.
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
-    [[NSUserDefaults standardUserDefaults] setBool:secureKeyboardEntry
-                                            forKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
+    [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+    [self.userDefaults setBool:secureKeyboardEntry
+                        forKey:iTermSecureKeyboardEntryEnabledUserDefaultsKey];
 }
 
 + (iTermAppleWindowTabbingMode)appleWindowTabbingMode {
@@ -108,29 +119,36 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 }
 
 + (BOOL)haveBeenWarnedAboutTabDockSetting {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
+    return [self.userDefaults boolForKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
 }
 
 + (void)setHaveBeenWarnedAboutTabDockSetting:(BOOL)haveBeenWarnedAboutTabDockSetting {
-    [[NSUserDefaults standardUserDefaults] setBool:haveBeenWarnedAboutTabDockSetting forKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
+    [self.userDefaults setBool:haveBeenWarnedAboutTabDockSetting forKey:kPreferenceKeyHaveBeenWarnedAboutTabDockSetting];
 }
 
 + (BOOL)enableAutomaticProfileSwitchingLogging {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
 }
 
 + (void)setEnableAutomaticProfileSwitchingLogging:(BOOL)enableAutomaticProfileSwitchingLogging {
-    [[NSUserDefaults standardUserDefaults] setBool:enableAutomaticProfileSwitchingLogging
-                                            forKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+    [self.userDefaults setBool:enableAutomaticProfileSwitchingLogging
+                        forKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
 }
 
 + (BOOL)requireAuthenticationAfterScreenLocks {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
 }
 
 + (void)setRequireAuthenticationAfterScreenLocks:(BOOL)requireAuthenticationAfterScreenLocks {
-    [[NSUserDefaults standardUserDefaults] setBool:requireAuthenticationAfterScreenLocks
-                                            forKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
+    [self.userDefaults setBool:requireAuthenticationAfterScreenLocks
+                        forKey:iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks];
+}
++ (BOOL)openTmuxDashboardIfHiddenWindows {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows];
 }
 
++ (void)setOpenTmuxDashboardIfHiddenWindows:(BOOL)openTmuxDashboardIfHiddenWindows {
+    [self.userDefaults setBool:openTmuxDashboardIfHiddenWindows
+                        forKey:iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows];
+}
 @end
