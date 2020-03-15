@@ -246,7 +246,10 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {
-    const NSUInteger row = [tableView_ selectedRow];
+    const NSInteger row = [tableView_ selectedRow];
+    if (row < 0) {
+        return;
+    }
     NSTextField *textField = obj.object;
     NSString *newName = textField.stringValue;
     NSString *oldName = [self nameAtIndex:row];
