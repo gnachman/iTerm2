@@ -102,7 +102,7 @@ NSArray<NSString *> *iTermOrphanServerAdopterFindMultiServers(void) {
         });
     }
     for (NSString *path in _pathsOfMultiServers) {
-        [self enqueueAdoptonsOfMultiServerOrphansWithPath:path queue:queue];
+        [self enqueueAdoptionsOfMultiServerOrphansWithPath:path queue:queue];
     }
     if (completion) {
         dispatch_async(queue, ^{
@@ -143,7 +143,7 @@ NSArray<NSString *> *iTermOrphanServerAdopterFindMultiServers(void) {
     }
 }
 
-- (void)enqueueAdoptonsOfMultiServerOrphansWithPath:(NSString *)filename queue:(dispatch_queue_t)queue {
+- (void)enqueueAdoptionsOfMultiServerOrphansWithPath:(NSString *)filename queue:(dispatch_queue_t)queue {
     DLog(@"Try to connect to multiserver at %@", filename);
     NSString *basename = filename.lastPathComponent.stringByDeletingPathExtension;
     NSString *const prefix = @"daemon-";
@@ -154,38 +154,40 @@ NSArray<NSString *> *iTermOrphanServerAdopterFindMultiServers(void) {
     if (![scanner scanInteger:&number]) {
         return;
     }
-    iTermMultiServerConnection *connection = [iTermMultiServerConnection connectionForSocketNumber:number
-                                                                                  createIfPossible:NO];
-    if (connection == nil) {
-        NSLog(@"Failed to connect to %@", filename);
-        return;
-    }
-
-    NSArray<iTermFileDescriptorMultiClientChild *> *children = [connection.unattachedChildren copy];
-    for (iTermFileDescriptorMultiClientChild *child in children) {
-        iTermGeneralServerConnection generalConnection = {
-            .type = iTermGeneralServerConnectionTypeMulti,
-            .multi = {
-                .pid = child.pid,
-                .number = number
+    NSLog(@"iTermOrphanServerAdopter: get connection for multiserver socket %@", @(number));
+    [iTermMultiServerConnection getConnectionForSocketNumber:number
+                                            createIfPossible:NO
+                                                    callback:[iTermThread.main newCallbackWithBlock:^(iTermMainThreadState *state, iTermResult<iTermMultiServerConnection *> *result) {
+        [result handleObject:^(iTermMultiServerConnection * _Nonnull connection) {
+            NSArray<iTermFileDescriptorMultiClientChild *> *children = [connection.unattachedChildren copy];
+            for (iTermFileDescriptorMultiClientChild *child in children) {
+                iTermGeneralServerConnection generalConnection = {
+                    .type = iTermGeneralServerConnectionTypeMulti,
+                    .multi = {
+                        .pid = child.pid,
+                        .number = number
+                    }
+                };
+                dispatch_async(queue, ^{
+                    dispatch_group_t group = dispatch_group_create();
+                    dispatch_group_enter(group);
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
+                                                                          inWindow:self->_window
+                                                                        completion:^(PTYSession *session) {
+                                                                            if (!self->_window) {
+                                                                                self->_window = [[iTermController sharedInstance] terminalWithSession:session];
+                                                                            }
+                                                                            dispatch_group_leave(group);
+                                                                        }];
+                    });
+                    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+                });
             }
-        };
-        dispatch_async(queue, ^{
-            dispatch_group_t group = dispatch_group_create();
-            dispatch_group_enter(group);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
-                                                                  inWindow:self->_window
-                                                                completion:^(PTYSession *session) {
-                                                                    if (!self->_window) {
-                                                                        self->_window = [[iTermController sharedInstance] terminalWithSession:session];
-                                                                    }
-                                                                    dispatch_group_leave(group);
-                                                                }];
-            });
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-        });
-    }
+        } error:^(NSError * _Nonnull error) {
+            XLog(@"Orphan server adopter: Failed to connect to %@", filename);
+        }];
+    }]];
 }
 
 #pragma mark - Properties

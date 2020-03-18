@@ -1760,10 +1760,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier {
-    if ([_shell tryToAttachToMultiserverWithRestorationIdentifier:restorationIdentifier]) {
+    const iTermJobManagerAttachResults results = [_shell tryToAttachToMultiserverWithRestorationIdentifier:restorationIdentifier];
+    if (results & iTermJobManagerAttachResultsRegistered) {
+        DLog(@"Registered");
         @synchronized(self) {
             _registered = YES;
         }
+    }
+    if (results & iTermJobManagerAttachResultsAttached) {
         DLog(@"Success, attached.");
         return YES;
     } else {
@@ -1772,14 +1776,23 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)attachToServer:(iTermGeneralServerConnection)serverConnection {
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
+            completion:(void (^)(void))completion {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
-        [_shell attachToServer:serverConnection];
-        [_shell setSize:_screen.size viewSize:_screen.viewSize];
-        @synchronized(self) {
-            _registered = YES;
-        }
+        [_shell attachToServer:serverConnection completion:^(iTermJobManagerAttachResults results) {
+            [self->_shell setSize:_screen.size viewSize:_screen.viewSize];
+            // TODO: Eliminate _registered. It only exists because weak
+            // pointers didn't exist a decade ago, and it complicates the
+            // lifetime of PTYSession inordinately.
+            if (results & iTermJobManagerAttachResultsRegistered) {
+#warning test this
+                @synchronized(self) {
+                    self->_registered = YES;
+                }
+            }
+            completion();
+        }];
     } else {
         DLog(@"Can't attach to a server when runJobsInServers is off.");
     }

@@ -20,6 +20,8 @@
 #error ITERM_SERVER not defined. Build process is broken.
 #endif
 
+static const char *gMultiServerSocketPath;
+
 // On entry there should be three file descriptors:
 // 0: A socket we can accept() on. listen() was already called on it.
 // 1: A connection we can sendmsg() on. accept() was already called on it.
@@ -36,7 +38,7 @@ static void DLogImpl(const char *func, const char *file, int line, const char *f
     va_list args;
     va_start(args, format);
     char *temp = NULL;
-    asprintf(&temp, "iTermServer(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    asprintf(&temp, "iTermServer(pid=%d, path=%s) %s:%d %s: %s", getpid(), gMultiServerSocketPath, file, line, func, format);
     vsyslog(LOG_DEBUG, temp, args);
     va_end(args);
     free(temp);
@@ -765,6 +767,9 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
 
     int writeFd = initialWriteFd;
     int readFd = initialReadFd;
+    MakeBlocking(writeFd);
+    MakeBlocking(readFd);
+
     do {
         if (writeFd >= 0 && readFd >= 0) {
             SelectLoop(acceptFd, writeFd, readFd);
@@ -785,6 +790,8 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
         }
         DLog("Accept returned a valid file descriptor %d", writeFd);
         readFd = MakeAndSendPipe(writeFd);
+        MakeBlocking(writeFd);
+        MakeBlocking(readFd);
     } while (writeFd >= 0 && readFd >= 0);
     DLog("Returning from MainLoop because of an error.");
 }
@@ -957,6 +964,7 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
 // I'll use.
 int main(int argc, char *argv[]) {
     assert(argc == 2);
+    gMultiServerSocketPath = argv[1];
     iTermFileDescriptorMultiServerRun(argv[1],
                                       iTermMultiServerFileDescriptorAcceptSocket,
                                       iTermMultiServerFileDescriptorInitialWrite,

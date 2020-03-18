@@ -10,81 +10,213 @@
 #import "DebugLogging.h"
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"
+#import "iTermThreadSafety.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
 
-@implementation iTermMultiServerConnection {
-    iTermFileDescriptorMultiClient *_client;
-    BOOL _isPrimary;
-    NSMutableArray<iTermFileDescriptorMultiClientChild *> *_unattachedChildren;
-}
+@class iTermMultiServerConnectionState;
 
-+ (instancetype)existingPrimaryConnection {
-    for (iTermMultiServerConnection *connection in [self.registry allValues]) {
-        if (connection->_isPrimary) {
-            return connection;
-        }
-    };
-    return nil;
-}
+@interface iTermMultiServerConnectionGlobalState: iTermSynchronizedState<iTermMultiServerConnectionState *>
+@property (nonatomic, readonly) NSMutableDictionary<NSNumber *, iTermMultiServerConnection *> *registry;
+@property (nonatomic, readonly) NSMutableDictionary<NSNumber *, NSMutableArray<iTermCallback *> *> *pending;
+@property (nonatomic, strong) iTermMultiServerConnection *primary;
+@end
 
-+ (instancetype)anyConnectionCreatingIfNeeded {
-    for (int i = 1; i < INT_MAX; i++) {
-        iTermMultiServerConnection *instance = [self connectionForSocketNumber:i createIfPossible:YES];
-        if (instance) {
-            return instance;
-        }
+@implementation iTermMultiServerConnectionGlobalState
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
+    self = [super initWithQueue:queue];
+    if (self) {
+        _registry = [NSMutableDictionary dictionary];
+        _pending = [NSMutableDictionary dictionary];
     }
-    assert(NO);
+    return self;
+}
+@end
+
+@class iTermMultiServerPerConnectionState;
+@interface iTermMultiServerPerConnectionState: iTermSynchronizedState<iTermMultiServerPerConnectionState *>
+@property (nonatomic, strong) iTermFileDescriptorMultiClient *client;
+@property (nonatomic, strong, readonly) NSMutableArray<iTermFileDescriptorMultiClientChild *> *unattachedChildren;
+@end
+
+@implementation iTermMultiServerPerConnectionState
+- (instancetype)initWithQueue:(dispatch_queue_t)queue client:(iTermFileDescriptorMultiClient *)client {
+    self = [super initWithQueue:queue];
+    if (self) {
+        _client = client;
+        _unattachedChildren = [NSMutableArray array];
+    }
+    return self;
+}
+@end
+
+@interface iTermMultiServerConnection()
+@property (nonatomic, readonly) iTermThread<iTermMultiServerPerConnectionState *> *thread;
+@end
+
+@implementation iTermMultiServerConnection
+
+#pragma mark - Class Method APIs
+
++ (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
+    [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
+        [self getOrCreatePrimaryConnectionWithState:state callback:callback];
+    }];
 }
 
-+ (instancetype)primaryConnection {
-    static iTermMultiServerConnection *instance;
-    if (!instance || ![self.registry.allValues containsObject:instance]) {
-        // Try to find a connection in the registry that is already labeled as primary.
-        instance = [self existingPrimaryConnection];
-        
-        // If that doesn't work, try each socket number until we find one that already
-        // exists or can be launched. This also sets its isPrimary flag.
-        if (!instance) {
-            instance = [self anyConnectionCreatingIfNeeded];
-            instance->_isPrimary = YES;
-        }
-    };
-    return instance;
++ (void)getConnectionForSocketNumber:(int)number
+                    createIfPossible:(BOOL)shouldCreate
+                            callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+    [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
+        [self connectionForSocketNumber:number
+                       createIfPossible:shouldCreate
+                                  state:state
+                               callback:callback];
+    }];
 }
 
-+ (NSMutableDictionary<NSNumber *, iTermMultiServerConnection *> *)registry {
-    static NSMutableDictionary<NSNumber *, iTermMultiServerConnection *> *registry;
+#pragma mark - Private Class Methods
+
++ (iTermThread<iTermMultiServerConnectionGlobalState *> *)thread {
+    static iTermThread<iTermMultiServerConnectionGlobalState *> *thread;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        registry = [NSMutableDictionary dictionary];
+        thread = [iTermThread withLabel:@"com.iterm2.multi-server-registry"
+                           stateFactory:^iTermSynchronizedState * _Nullable(dispatch_queue_t  _Nonnull queue) {
+            return [[iTermMultiServerConnectionGlobalState alloc] initWithQueue:queue];
+        }];
     });
-    return registry;
+    return thread;
 }
 
-+ (instancetype)connectionForSocketNumber:(int)number
-                         createIfPossible:(BOOL)shouldCreate {
-    iTermMultiServerConnection *result = self.registry[@(number)];
-    if (result) {
-        return result;
++ (void)findExistingPrimaryConnection:(iTermCallback<iTermMultiServerConnectionGlobalState *, iTermMultiServerConnection *> *)callback {
+    [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState *state) {
+        [callback invokeWithObject:state.primary];
+    }];
+}
+
++ (void)findAnyConnectionCreatingIfNeededWithState:(iTermMultiServerConnectionGlobalState *)state
+                                          callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
+    NSLog(@"findAnyConnectionCreatingIfNeededWithState");
+    [state check];
+
+    iTermMultiServerConnection *anyConnection = state.registry.allValues.firstObject;
+    if (anyConnection) {
+        [callback invokeWithObject:anyConnection];
+        return;
     }
+
+    [self tryCreatingConnectionStartingAtNumber:1 state:state callback:callback];
+}
+
++ (void)tryCreatingConnectionStartingAtNumber:(int)i
+                                        state:(iTermMultiServerConnectionGlobalState *)state
+                                     callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
+    NSLog(@"tryCreatingConnectionStartingAtNumber: %@", @(i));
+    [self connectionForSocketNumber:i
+                   createIfPossible:YES
+                              state:state
+                           callback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *state,
+                                                                        iTermResult<iTermMultiServerConnection *> *result) {
+        [result handleObject:
+         ^(iTermMultiServerConnection * _Nonnull object) {
+            [callback invokeWithObject:object];
+        } error:
+         ^(NSError * _Nonnull error) {
+            NSLog(@"tryCreatingConnectionStartingAtNumber: Failed, trying the next number.");
+            [self tryCreatingConnectionStartingAtNumber:i + 1
+                                                  state:state
+                                               callback:callback];
+        }];
+    }]];
+}
+
++ (void)getOrCreatePrimaryConnectionWithState:(iTermMultiServerConnectionGlobalState *)state
+                                     callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
+    if (state.primary && [state.registry.allValues containsObject:state.primary]) {
+        [callback invokeWithObject:state.primary];
+        return;
+    }
+
+    [self findAnyConnectionCreatingIfNeededWithState:state callback:callback];
+}
+
++ (void)connectionForSocketNumber:(int)number
+                 createIfPossible:(BOOL)shouldCreate
+                            state:(iTermMultiServerConnectionGlobalState *)globalState
+                         callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+    iTermMultiServerConnection *result = globalState.registry[@(number)];
+    if (result) {
+        NSLog(@"Already have a good server connection for %@", @(number));
+        [callback invokeWithObject:[iTermResult withObject:result]];
+        return;
+    }
+
+    NSMutableArray<iTermCallback *> *pendingCallbacks = globalState.pending[@(number)];
+    if (pendingCallbacks) {
+        NSLog(@"Add to pending callback for socket %@", @(number));
+        [pendingCallbacks addObject:callback];
+        return;
+    }
+
     result = [[self alloc] initWithSocketNumber:number];
     assert(result);
-    if (shouldCreate) {
-        if (![result->_client attachOrLaunchServer]) {
-            return nil;
+
+    NSLog(@"Don't have an existing or pending connection for %@", @(number));
+    [result.thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable connectionState) {
+        if (shouldCreate) {
+            // Attach or launch
+            NSLog(@"Attach or launch socket %@", @(number));
+            [connectionState.client attachOrLaunchServerWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
+                iTermResult *resultObject;
+                if (!statusNumber.boolValue) {
+                    NSLog(@"Failed to attach or launch socket %@", @(number));
+                    resultObject = [iTermResult withError:self.cannotConnectError];
+                    [callback invokeWithObject:resultObject];
+                } else {
+                    NSLog(@"Succeeded to attach or launch socket %@", @(number));
+                    resultObject = [iTermResult withObject:result];
+                    [self addConnection:result number:number state:globalState callback:callback];
+                }
+                NSMutableArray<iTermCallback *> *pendingCallbacks = globalState.pending[@(number)];
+                [globalState.pending removeObjectForKey:@(number)];
+                for (iTermCallback *callback in pendingCallbacks) {
+                    NSLog(@"Runner pending callback for %@", @(number));
+                    [callback invokeWithObject:resultObject];
+                }
+            }]];
+            return;
         }
-    } else {
-        if (![result->_client attach]) {
-            return nil;
-        }
+
+        // Attach
+        NSLog(@"Attach to %@", @(number));
+        [connectionState.client attachWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
+            if (!statusNumber.boolValue) {
+                [callback invokeWithObject:[iTermResult withError:self.cannotConnectError]];
+            } else {
+                [self addConnection:result number:number state:globalState callback:callback];
+            }
+        }]];
+    }];
+}
+
++ (NSError *)cannotConnectError {
+    return [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                               code:iTermFileDescriptorMultiClientErrorCannotConnect
+                           userInfo:nil];
+}
+
++ (void)addConnection:(iTermMultiServerConnection *)result
+               number:(NSInteger)number
+                state:(iTermMultiServerConnectionGlobalState *)state
+             callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+    NSLog(@"Register connection number %@", @(number));
+    state.registry[@(number)] = result;
+    if (!state.primary) {
+        state.primary = result;
     }
-    const BOOL isPrimary = (self.registry.count == 0);
-    result->_isPrimary = isPrimary;
-    self.registry[@(number)] = result;
-    return result;
+    [callback invokeWithObject:[iTermResult withObject:result]];
 }
 
 + (NSString *)pathForNumber:(int)number {
@@ -94,103 +226,142 @@
     return url.path;
 }
 
+#pragma mark - Instance Methods
+
 - (instancetype)initWithSocketNumber:(int)number {
     self = [super init];
     if (self) {
+        _thread = [iTermThread withLabel:@"com.iterm2.multi-server-conn" stateFactory:^iTermSynchronizedState * _Nullable(dispatch_queue_t  _Nonnull queue) {
+            NSString *const path = [self.class pathForNumber:number];
+            iTermFileDescriptorMultiClient *client = [[iTermFileDescriptorMultiClient alloc] initWithPath:path];
+            client.delegate = self;
+            return [[iTermMultiServerPerConnectionState alloc] initWithQueue:queue client:client];
+        }];
         _socketNumber = number;
-        _unattachedChildren = [NSMutableArray array];
-        NSString *const path = [self.class pathForNumber:number];
-        _client = [[iTermFileDescriptorMultiClient alloc] initWithPath:path];
-        _client.delegate = self;
     }
     return self;
 }
 
+#pragma mark - Instance Method APIs
+
+- (pid_t)pid {
+    __block pid_t pid;
+    [_thread dispatchSync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        pid = state.client.serverPID;
+    }];
+    return pid;
+}
+
+- (NSArray<iTermFileDescriptorMultiClientChild *> *)unattachedChildren {
+    __block NSArray<iTermFileDescriptorMultiClientChild *> *result;
+    [_thread dispatchSync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        result = state.unattachedChildren;
+    }];
+    return result;
+}
+
+- (void)attachToProcessID:(pid_t)pid
+                 callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)callback {
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        iTermFileDescriptorMultiClientChild *child =
+        [state.unattachedChildren objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element,
+                                                          NSUInteger index,
+                                                          BOOL *stop) {
+            return element.pid == pid;
+        }];
+        if (!child) {
+            NSLog(@"Failed to attach to child with pid %@ - not in unattached children", @(pid));
+            [callback invokeWithObject:nil];
+            return;
+        }
+        [state.unattachedChildren removeObject:child];
+        [callback invokeWithObject:child];
+    }];
+}
+
+
+// Called on job manager's queue via queueForkAndExecWithTtyState:
 - (void)launchWithTTYState:(iTermTTYState *)ttyStatePtr
                    argpath:(const char *)argpath
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd
                 newEnviron:(const char **)newEnviron
-                completion:(void (^)(iTermFileDescriptorMultiClientChild *child,
-                                     NSError *error))completion {
-    if (!_client) {
-        completion(nil,
-                   [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
-                                       code:iTermFileDescriptorMultiClientErrorCodeConnectionLost
-                                   userInfo:nil]);
-        return;
-    }
-
-    [_client launchChildWithExecutablePath:argpath
-                                      argv:argv
-                               environment:newEnviron
-                                       pwd:initialPwd
-                                  ttyState:ttyStatePtr
-                                completion:^(iTermFileDescriptorMultiClientChild * _Nonnull child, NSError * _Nullable error) {
-        if (error) {
-            DLog(@"While creating child: %@", error);
+                  callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback {
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        if (!state.client) {
+            NSError *error = [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                                                 code:iTermFileDescriptorMultiClientErrorCodeConnectionLost
+                                             userInfo:nil];
+            [callback invokeWithObject:[iTermResult withError:error]];
+            return;
         }
-        completion(child, error);
+
+        [state.client launchChildWithExecutablePath:argpath
+                                               argv:argv
+                                        environment:newEnviron
+                                                pwd:initialPwd
+                                           ttyState:ttyStatePtr
+                                           callback:callback];
     }];
 }
 
-- (iTermFileDescriptorMultiClientChild *)attachToProcessID:(pid_t)pid {
-    iTermFileDescriptorMultiClientChild *child = [_unattachedChildren objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element, NSUInteger index, BOOL *stop) {
-        return element.pid == pid;
-    }];
-    if (!child) {
-        return nil;
-    }
-    [_unattachedChildren removeObject:child];
-    return child;
-}
-
+// Called on job manager's queue from queueAttachToServer:withProcessID:task: and queueKillWithMode:
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
-removePreemptively:(BOOL)removePreemptively
-        completion:(void (^)(int, NSError * _Nullable))completion {
-    if (!_client) {
-        completion(0, [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
-                                          code:iTermFileDescriptorMultiClientErrorCodeConnectionLost
-                                      userInfo:nil]);
-        return;
-    }
-    [_client waitForChild:child removePreemptively:removePreemptively completion:completion];
-}
-
-- (pid_t)pid {
-    return _client.serverPID;
+  removePreemptively:(BOOL)removePreemptively
+            callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        if (!state.client) {
+            NSError *error = [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                                                 code:iTermFileDescriptorMultiClientErrorCodeConnectionLost
+                                             userInfo:nil];
+            [callback invokeWithObject:[iTermResult withError:error]];
+            return;
+        }
+        [state.client waitForChild:child removePreemptively:removePreemptively callback:callback];
+    }];
 }
 
 #pragma mark - iTermFileDescriptorMultiClientDelegate
 
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
                  didDiscoverChild:(iTermFileDescriptorMultiClientChild *)child {
-    [_unattachedChildren addObject:child];
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        [state.unattachedChildren addObject:child];
+    }];
 }
 
 - (void)fileDescriptorMultiClientDidClose:(iTermFileDescriptorMultiClient *)client {
-    assert(client == _client);
-    _client.delegate = nil;
-    _client = nil;
-    [[[self class] registry] removeObjectForKey:@(self.socketNumber)];
+    [[iTermMultiServerConnection thread] dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nullable state) {
+        [state.registry removeObjectForKey:@(self.socketNumber)];
+        [self.thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+            assert(client == state.client);
+            state.client.delegate = nil;
+            state.client = nil;
+        }];
+    }];
 }
 
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
                 childDidTerminate:(iTermFileDescriptorMultiClientChild *)child {
     const pid_t pid = child.pid;
-    [client waitForChild:child removePreemptively:NO completion:^(int status, NSError * _Nullable error) {
-        if (error) {
-            DLog(@"Failed to wait on child with pid %d: %@", pid, error);
-            return;
-        }
-        DLog(@"Child with pid %d terminated with status %d", pid, status);
+    [client waitForChild:child
+      removePreemptively:NO
+                callback:[iTermThread.main newCallbackWithBlock:^(iTermMainThreadState *_Nonnull state,
+                                                                  iTermResult<NSNumber *> *result) {
+        [result handleObject:
+         ^(NSNumber * _Nonnull statusNumber) {
+            DLog(@"Child with pid %d terminated with status %d", pid, statusNumber.intValue);
 
-        // Post a notification that causes the task to be removed from the task notifier. Note that
-        // this is usually unnecessary because the file descriptor will return 0 before we finish
-        // round-tripping on Wait. This is a backstop in case of the unexpected.
-        [[iTermMultiServerChildDidTerminateNotification notificationWithProcessID:child.pid
-                                                                terminationStatus:child.terminationStatus] post];
-    }];
+            // Post a notification that causes the task to be removed from the task notifier. Note that
+            // this is usually unnecessary because the file descriptor will return 0 before we finish
+            // round-tripping on Wait. This is a backstop in case of the unexpected.
+            [[iTermMultiServerChildDidTerminateNotification notificationWithProcessID:child.pid
+                                                                    terminationStatus:child.terminationStatus] post];
+        } error:
+         ^(NSError * _Nonnull error) {
+            DLog(@"Failed to wait on child with pid %d: %@", pid, error);
+        }];
+    }]];
 }
 
 @end

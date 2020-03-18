@@ -89,9 +89,20 @@ typedef struct {
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
 
-- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
+typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
+    iTermJobManagerAttachResultsAttached = (1 << 0),
+    iTermJobManagerAttachResultsRegistered = (1 << 1)
+};
+
+// Completion block will be invoked on the main thread. ok gives whether it succeeded.
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
-                  task:(id<iTermTask>)task;
+                  task:(id<iTermTask>)task
+            completion:(void (^)(iTermJobManagerAttachResults results))completion;
+
+- (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
+                                 withProcessID:(NSNumber *)thePid
+                                          task:(id<iTermTask>)task;
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
@@ -169,14 +180,17 @@ typedef struct {
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid tty:(NSString *)tty;
 
 // Multiserver
-// Synchronously attaches. Returns whether it succeeded.
-- (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier;
+- (iTermJobManagerAttachResults)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier;
 
 // Wire up the server as the task's file descriptor and process. The caller
 // will have connected to the server to get this info. Requires
 // [iTermAdvancedSettingsModel runJobsInServers]. Multiservers may return failure (NO) here
 // if the pid is not known.
-- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection;
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
+            completion:(void (^)(iTermJobManagerAttachResults results))completion;
+
+// Synchronous version of attachToServer:completion:
+- (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection;
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 

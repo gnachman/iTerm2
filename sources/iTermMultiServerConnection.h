@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermFileDescriptorMultiClient.h"
+#import "iTermThreadSafety.h"
 #import "iTermTTYState.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -20,25 +21,27 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<iTermFileDescriptorMultiClientChild *> *unattachedChildren;
 @property (nonatomic, readonly) int socketNumber;
 
-+ (instancetype)primaryConnection;
-+ (instancetype)connectionForSocketNumber:(int)number
-                         createIfPossible:(BOOL)shouldCreate;
++ (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback;
+
++ (void)getConnectionForSocketNumber:(int)number
+                    createIfPossible:(BOOL)shouldCreate
+                            callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (iTermFileDescriptorMultiClientChild *)attachToProcessID:(pid_t)pid;
+- (void)attachToProcessID:(pid_t)pid
+                 callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)callback;
 
 - (void)launchWithTTYState:(iTermTTYState *)ttyStatePtr
                    argpath:(const char *)argpath
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd
                 newEnviron:(const char **)newEnviron
-                completion:(void (^)(iTermFileDescriptorMultiClientChild *child,
-                                     NSError *error))completion;
+                  callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback;
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
-          completion:(void (^)(int, NSError * _Nullable))completion;
+            callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;
 
 @end
 

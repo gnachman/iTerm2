@@ -130,6 +130,13 @@
     }
 }
 
++ (instancetype)forceCastFrom:(id)object {
+    assert(object);
+    id result = [self castFrom:object];
+    assert(result);
+    return result;
+}
+
 - (void)performSelectorWithObjects:(NSArray *)tuple {
     SEL selector = NSSelectorFromString(tuple[0]);
     NSArray *objects = tuple[1];
@@ -196,6 +203,12 @@
     IMP imp = [self methodForSelector:selector];
     void (*func)(id, SEL, id) = (void *)imp;
     func(self, selector, object);
+}
+
+- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object1 object:(id)object2 object:(id)object3 {
+    IMP imp = [self methodForSelector:selector];
+    void (*func)(id, SEL, id, id, id) = (void *)imp;
+    func(self, selector, object1, object2, object3);
 }
 
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object {

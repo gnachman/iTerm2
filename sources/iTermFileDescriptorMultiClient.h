@@ -6,13 +6,17 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermFileDescriptorMultiClientChild.h"
 #import "iTermMultiServerProtocol.h"
+#import "iTermThreadSafety.h"
 #import "iTermTTYState.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermFileDescriptorMultiClient;
+
+typedef iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> iTermMultiClientLaunchCallback;
 
 extern NSString *const iTermFileDescriptorMultiClientErrorDomain;
 typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
@@ -21,24 +25,14 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
     iTermFileDescriptorMultiClientErrorCodeCanNotWait,  // child not terminated
     iTermFileDescriptorMultiClientErrorCodeUnknown,
     iTermFileDescriptorMultiClientErrorCodeForkFailed,
-    iTermFileDescriptorMultiClientErrorCodePreemptiveWaitResponse
+    iTermFileDescriptorMultiClientErrorCodePreemptiveWaitResponse,
+    iTermFileDescriptorMultiClientErrorIO,
+    iTermFileDescriptorMultiClientErrorProtocolError,  // unparsable message
+    iTermFileDescriptorMultiClientErrorCannotConnect,
+    iTermFileDescriptorMultiClientErrorAlreadyWaited
 };
 
-@interface iTermFileDescriptorMultiClientChild : NSObject
-@property (nonatomic, readonly) pid_t pid;
-@property (nonatomic, readonly) NSString *executablePath;
-@property (nonatomic, readonly) NSArray<NSString *> *args;
-@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *environment;
-@property (nonatomic, readonly) BOOL utf8;
-@property (nonatomic, readonly) NSString *initialDirectory;
-@property (nonatomic, readonly) BOOL hasTerminated;
-@property (nonatomic, readonly) BOOL haveWaited;  // only for non-preemptive waits
-@property (nonatomic, readonly) BOOL haveSentPreemptiveWait;
-@property (nonatomic, readonly) int terminationStatus;  // only defined if haveWaited is YES
-@property (nonatomic, readonly) int fd;
-@property (nonatomic, readonly) NSString *tty;
-@end
-
+// No guarantees about which thread delegates are called on.
 @protocol iTermFileDescriptorMultiClientDelegate<NSObject>
 
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
@@ -60,19 +54,19 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 - (instancetype)init NS_UNAVAILABLE;
 
 // Returns YES on success or NO if it failed to create a socket (out of file descriptors maybe?)
-- (BOOL)attachOrLaunchServer;
-- (BOOL)attach;
+- (void)attachOrLaunchServerWithCallback:(iTermCallback<id, NSNumber *> *)callback;
+- (void)attachWithCallback:(iTermCallback<id, NSNumber *> *)callback;
 
 - (void)launchChildWithExecutablePath:(const char *)path
                                  argv:(const char **)argv
                           environment:(const char **)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState *)ttyStatePtr
-                           completion:(void (^)(iTermFileDescriptorMultiClientChild * _Nullable child, NSError * _Nullable))completion;
+                             callback:(iTermMultiClientLaunchCallback *)callback;
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
-          completion:(void (^)(int status, NSError * _Nullable))completion;
+            callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status
 
 @end
 
