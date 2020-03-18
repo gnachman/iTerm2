@@ -525,10 +525,25 @@ static void HandleSigChld(int n) {
 
 // This works for any kind of connection. It finishes the process of attaching a PTYTask to a child
 // that we know is in a server, either newly launched or an orphan.
-- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection {
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
+            completion:(void (^)(iTermJobManagerAttachResults))completion {
     assert([self canAttach]);
     [self setJobManagerType:serverConnection.type];
-    return [_jobManager attachToServer:serverConnection withProcessID:nil task:self];
+    [_jobManager attachToServer:serverConnection
+                  withProcessID:nil
+                           task:self
+                     completion:completion];
+}
+
+- (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection {
+    assert([self canAttach]);
+    [self setJobManagerType:serverConnection.type];
+    if (serverConnection.type == iTermGeneralServerConnectionTypeMulti) {
+        DLog(@"PTYTask: attach to multiserver %@", @(serverConnection.multi.number));
+    }
+    return [_jobManager attachToServer:serverConnection
+                         withProcessID:nil
+                                  task:self];
 }
 
 - (BOOL)canAttach {
@@ -560,21 +575,25 @@ static void HandleSigChld(int n) {
         .mono = serverConnection
     };
     [self setJobManagerType:general.type];
-    [self.jobManager attachToServer:general withProcessID:@(thePid) task:self];
+    // This assumes the monoserver finishes synchronously and can't fail.
+    [self.jobManager attachToServer:general
+                      withProcessID:@(thePid)
+                               task:self
+                         completion:^(iTermJobManagerAttachResults results) {}];
     [self setTty:tty];
     return YES;
 }
 
 // Multiserver only. Used when restoring a non-orphan session. May block while connecting to the
 // server.
-- (BOOL)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier {
+- (iTermJobManagerAttachResults)tryToAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier {
     if (![self canAttach]) {
-        return NO;
+        return 0;
     }
     iTermGeneralServerConnection generalConnection;
     if (![iTermMultiServerJobManager getGeneralConnection:&generalConnection
                                 fromRestorationIdentifier:restorationIdentifier]) {
-        return NO;
+        return 0;
     }
 
     DLog(@"tryToAttachToMultiserverWithRestorationIdentifier:%@", restorationIdentifier);

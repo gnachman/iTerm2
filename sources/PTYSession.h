@@ -603,7 +603,8 @@ typedef enum {
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
 // to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]
 // is YES.
-- (void)attachToServer:(iTermGeneralServerConnection)serverConnection;
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
+            completion:(void (^)(void))completion;
 
 - (void)softTerminate;
 - (void)terminate;

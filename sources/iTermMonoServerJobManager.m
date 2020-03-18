@@ -239,15 +239,26 @@
     }
 }
 
-- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
+// NOTE: The caller assumes this is synchronous and can't fail when it knows it's a monoserver.
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)pidNumber
-                  task:(id<iTermTask>)task {
+                  task:(id<iTermTask>)task
+            completion:(void (^)(iTermJobManagerAttachResults results))completion {
+    completion([self attachToServer:serverConnection
+                      withProcessID:pidNumber
+                               task:task]);
+}
+
+- (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
+                                 withProcessID:(NSNumber *)pidNumber
+                                          task:(id<iTermTask>)task {
+    const iTermJobManagerAttachResults results = iTermJobManagerAttachResultsAttached | iTermJobManagerAttachResultsRegistered;
     dispatch_sync(self.queue, ^{
         [self queueAttachToServer:serverConnection task:task];
     });
     [[TaskNotifier sharedInstance] registerTask:task];
     if (pidNumber == nil) {
-        return YES;
+        return results;
     }
 
     const pid_t thePid = pidNumber.integerValue;
@@ -256,7 +267,7 @@
     iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);
     [[iTermOrphanServerAdopter sharedInstance] removePath:[NSString stringWithUTF8String:buffer]];
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    return YES;
+    return results;
 }
 
 - (void)closeSocketFd {

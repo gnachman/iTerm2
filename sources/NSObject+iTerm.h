@@ -50,6 +50,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 + (BOOL)object:(__kindof NSObject *)a isApproximatelyEqualToObject:(__kindof NSObject *)b epsilon:(double)epsilon;
 
 + (instancetype)castFrom:(id)object;
++ (instancetype)forceCastFrom:(id)object;
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;
 
@@ -86,6 +87,10 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (id)it_associatedObjectForKey:(void *)key;
 
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
+- (void)it_performNonObjectReturningSelector:(SEL)selector
+                                  withObject:(id)object1
+                                      object:(id)object2
+                                      object:(id)object3;
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;

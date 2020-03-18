@@ -113,10 +113,17 @@
     return iTermJobManagerForkAndExecStatusSuccess;
 }
 
-- (BOOL)attachToServer:(iTermGeneralServerConnection)serverConnection
+- (void)attachToServer:(iTermGeneralServerConnection)serverConnection
          withProcessID:(NSNumber *)thePid
-                  task:(id<iTermTask>)task {
-    return YES;
+                  task:(id<iTermTask>)task
+            completion:(void (^)(iTermJobManagerAttachResults))completion {
+    completion(iTermJobManagerAttachResultsAttached | iTermJobManagerAttachResultsRegistered);
+}
+
+- (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
+                                 withProcessID:(NSNumber *)thePid
+                                          task:(id<iTermTask>)task {
+    return iTermJobManagerAttachResultsAttached | iTermJobManagerAttachResultsRegistered;
 }
 
 - (void)sendSignal:(int)signo toProcessGroup:(BOOL)toProcessGroup {

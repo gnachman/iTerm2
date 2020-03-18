@@ -20,6 +20,8 @@
 #error ITERM_SERVER not defined. Build process is broken.
 #endif
 
+static const char *gMultiServerSocketPath;
+
 // On entry there should be three file descriptors:
 // 0: A socket we can accept() on. listen() was already called on it.
 // 1: A connection we can sendmsg() on. accept() was already called on it.
@@ -36,7 +38,7 @@ static void DLogImpl(const char *func, const char *file, int line, const char *f
     va_list args;
     va_start(args, format);
     char *temp = NULL;
-    asprintf(&temp, "iTermServer(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    asprintf(&temp, "iTermServer(pid=%d, path=%s) %s:%d %s: %s", getpid(), gMultiServerSocketPath, file, line, func, format);
     vsyslog(LOG_DEBUG, temp, args);
     va_end(args);
     free(temp);
@@ -382,7 +384,11 @@ static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
                                                                           obj.ioVectors[0].iov_len,
                                                                           child->masterFd);
     if (bytes < 0) {
-        DLog("SendMsg failed with %s", strerror(errno));
+        const int theError = errno;
+        DLog("SendMsg failed with %s", strerror(theError));
+        assert(theError != EAGAIN);
+    } else {
+        DLog("Reported child successfully");
     }
     iTermClientServerProtocolMessageFree(&obj);
     return bytes < 0;
@@ -765,6 +771,9 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
 
     int writeFd = initialWriteFd;
     int readFd = initialReadFd;
+    MakeBlocking(writeFd);
+    MakeBlocking(readFd);
+
     do {
         if (writeFd >= 0 && readFd >= 0) {
             SelectLoop(acceptFd, writeFd, readFd);
@@ -785,6 +794,8 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
         }
         DLog("Accept returned a valid file descriptor %d", writeFd);
         readFd = MakeAndSendPipe(writeFd);
+        MakeBlocking(writeFd);
+        MakeBlocking(readFd);
     } while (writeFd >= 0 && readFd >= 0);
     DLog("Returning from MainLoop because of an error.");
 }
@@ -806,6 +817,7 @@ static int MakeBlocking(int fd) {
     do {
         rc = fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
     } while (rc == -1 && errno == EINTR);
+    DLog("MakeBlocking(%d) returned %d (%s)", fd, rc, strerror(errno));
     return rc == -1;
 }
 
@@ -937,8 +949,8 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
     TransformProcessType(&psn, kProcessTransformToUIElementApplication);
 
     SetRunningServer();
-    // syslog raises sigpipe when the parent job dies on 10.12.
-//    signal(SIGPIPE, SIG_IGN);
+    // If iTerm2 dies while we're blocked in sendmsg we get a deadly sigpipe.
+    signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path);
     if (rc) {
         DLog("Initialize failed with code %d", rc);
@@ -957,6 +969,7 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
 // I'll use.
 int main(int argc, char *argv[]) {
     assert(argc == 2);
+    gMultiServerSocketPath = argv[1];
     iTermFileDescriptorMultiServerRun(argv[1],
                                       iTermMultiServerFileDescriptorAcceptSocket,
                                       iTermMultiServerFileDescriptorInitialWrite,

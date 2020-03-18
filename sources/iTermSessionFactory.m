@@ -85,10 +85,11 @@ NS_ASSUME_NONNULL_BEGIN
     // Start the command
     if (serverConnection) {
         assert([iTermAdvancedSettingsModel runJobsInServers]);
-        [aSession attachToServer:*serverConnection];
-        if (completion) {
-            completion(YES);
-        }
+        [aSession attachToServer:*serverConnection completion:^{
+            if (completion) {
+                completion(YES);
+            }
+        }];
     } else {
         [self startProgram:cmd
                environment:environment

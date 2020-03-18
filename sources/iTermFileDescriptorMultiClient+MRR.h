@@ -17,21 +17,19 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientAttachStatus) {
 };
 
 iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path, int *fdOut);
+
 int iTermCreateConnectedUnixDomainSocket(const char *path,
                                          int closeAfterAccept,
                                          int *listenFDOut,
                                          int *acceptedFDOut,
                                          int *connectFDOut);
 
-@interface iTermFileDescriptorMultiClient (Private)
-- (iTermFileDescriptorMultiClientAttachStatus)tryAttach;
-@end
-
 @interface iTermFileDescriptorMultiClient (MRR)
 
 - (iTermForkState)launchWithSocketPath:(NSString *)path
-                            executable:(NSString *)executable;
-
+                            executable:(NSString *)executable
+                                readFD:(int *)readFDOut
+                               writeFD:(int *)writeFDOut;
 @end
 
 NS_ASSUME_NONNULL_END
