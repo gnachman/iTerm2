@@ -2287,7 +2287,7 @@ static BOOL hasBecomeActive = NO;
                              makeSession:^(NSDictionary * _Nonnull profile,
                                            PseudoTerminal * _Nonnull term,
                                            void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
-        PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
+        PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile] autorelease];
         [term addSessionInNewTab:session];
         iTermGeneralServerConnection temp = generalConnection;
         const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
