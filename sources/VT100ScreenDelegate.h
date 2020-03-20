@@ -272,6 +272,7 @@
 - (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit;
 - (BOOL)screenConfirmDownloadAllowed:(NSString *)name
                                 size:(NSInteger)size
+                       displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL *)promptIfBig;
 
 @end

@@ -11013,17 +11013,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return selection == kiTermWarningSelection0;
 }
 
-- (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size promptIfBig:(BOOL *)promptIfBig {
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name
+                                size:(NSInteger)size
+                       displayInline:(BOOL)displayInline
+                         promptIfBig:(BOOL *)promptIfBig {
     NSString *identifier = @"NoSyncSuppressDownloadConfirmation";
     *promptIfBig = YES;
     const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    NSString *title;
+    NSString *heading;
+    if (displayInline) {
+        title = [NSString stringWithFormat:@"The terminal has initiated display of a file named “%@” of size %@. Allow it?",
+                 name, [NSString it_formatBytes:size]];
+        heading = @"Allow Terminal-Initiated Display?";
+    } else {
+        title = [NSString stringWithFormat:@"The terminal has initiated transfer of a file named “%@” of size %@. Download it?",
+                 name, [NSString it_formatBytes:size]];
+        heading = @"Allow Terminal-Initiated Download?";
+    }
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The terminal has initiated transfer of a file named “%@” of size %@. Download it?", name, [NSString it_formatBytes:size]]
+    [iTermWarning showWarningWithTitle:title
                                actions:@[ @"Yes", @"No" ]
                              accessory:nil
                             identifier:identifier
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Allow Terminal-Initiated Download?"
+                               heading:heading
                                 window:_view.window];
     const BOOL allow = (selection == kiTermWarningSelection0);
     if (allow && wasSilenced) {
