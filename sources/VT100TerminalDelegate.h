@@ -309,6 +309,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // nil = name unknown, -1 = size unknown. Return YES to accept it.
 - (BOOL)terminalWillReceiveFileNamed:(NSString *)name
                               ofSize:(NSInteger)size;
+
 - (BOOL)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(NSInteger)size
                                      width:(int)width

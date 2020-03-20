@@ -3902,13 +3902,23 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetPasteboard:value];
 }
 
-- (BOOL)preconfirmDownloadOfSize:(NSInteger)size name:(NSString *)name promptIfBig:(BOOL *)promptIfBig {
-    return [self.delegate screenConfirmDownloadAllowed:name size:size promptIfBig:promptIfBig];
+- (BOOL)preconfirmDownloadOfSize:(NSInteger)size
+                            name:(NSString *)name
+                   displayInline:(BOOL)displayInline
+                     promptIfBig:(BOOL *)promptIfBig {
+    return [self.delegate screenConfirmDownloadAllowed:name
+                                                  size:size
+                                         displayInline:displayInline
+                                           promptIfBig:promptIfBig];
 }
 
-- (BOOL)terminalWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size {
+- (BOOL)terminalWillReceiveFileNamed:(NSString *)name
+                              ofSize:(NSInteger)size {
     BOOL promptIfBig = YES;
-    if (![self preconfirmDownloadOfSize:size name:name promptIfBig:&promptIfBig]) {
+    if (![self preconfirmDownloadOfSize:size
+                                   name:name
+                          displayInline:NO
+                            promptIfBig:&promptIfBig]) {
         return NO;
     }
     [delegate_ screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
@@ -3924,7 +3934,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset {
     BOOL promptIfBig = YES;
-    if (![self preconfirmDownloadOfSize:size name:name promptIfBig:&promptIfBig]) {
+    if (![self preconfirmDownloadOfSize:size name:name displayInline:YES promptIfBig:&promptIfBig]) {
         return NO;
     }
     [inlineFileInfo_ release];
