@@ -29,6 +29,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL haveBeenWarnedAboutTabDockSetting;
 @property (class, nonatomic) BOOL requireAuthenticationAfterScreenLocks;
 @property (class, nonatomic) BOOL openTmuxDashboardIfHiddenWindows;
+@property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
 
 @end
 

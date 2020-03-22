@@ -21,6 +21,7 @@ static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLoggin
 
 static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks = @"RequireAuthenticationAfterScreenLocks";
 static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"OpenTmuxDashboardIfHiddenWindows";
+static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 
 @implementation iTermUserDefaults
 
@@ -151,4 +152,14 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     [self.userDefaults setBool:openTmuxDashboardIfHiddenWindows
                         forKey:iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows];
 }
+
++ (BOOL)haveExplainedHowToAddTouchbarControls {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls];
+}
+
++ (void)setHaveExplainedHowToAddTouchbarControls:(BOOL)haveExplainedHowToAddTouchbarControls {
+    [self.userDefaults setBool:haveExplainedHowToAddTouchbarControls
+                        forKey:iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls];
+}
+
 @end

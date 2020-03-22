@@ -17,8 +17,10 @@
 #import "iTermKeyMappings.h"
 #import "iTermKeystrokeFormatter.h"
 #import "iTermModifierRemapper.h"
+#import "iTermNotificationController.h"
 #import "iTermPresetKeyMappings.h"
 #import "iTermTouchbarMappings.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -490,11 +492,24 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                 forTouchbarItem:touchbarItem
                                          action:action];
         [iTermTouchbarMappings setGlobalTouchBarMap:dict];
+        [self maybeExplainHowToEditTouchBarControls];
     }];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (void)maybeExplainHowToEditTouchBarControls {
+    if ([iTermUserDefaults haveExplainedHowToAddTouchbarControls]) {
+        return;
+    }
+    if ([[iTermTouchbarMappings globalTouchBarMap] count] != 1) {
+        return;
+    }
+    [[iTermNotificationController sharedInstance] notify:@"Touch Bar Item Added"
+                                         withDescription:@"Select View > Customize Touch Bar to enable your new touch bar item."];
+    [iTermUserDefaults setHaveExplainedHowToAddTouchbarControls:YES];
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
