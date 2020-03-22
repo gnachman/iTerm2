@@ -2,7 +2,6 @@
 
 #import "iTermAdditionalHotKeyObjectValue.h"
 #import "iTermCarbonHotKeyController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermShortcutInputView.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"

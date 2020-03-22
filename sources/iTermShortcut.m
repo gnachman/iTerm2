@@ -9,7 +9,8 @@
 #import "iTermShortcut.h"
 
 #import "iTermCarbonHotKeyController.h"
-#import "iTermKeyBindingMgr.h"
+#import "iTermKeystroke.h"
+#import "iTermKeystrokeFormatter.h"
 #import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -183,9 +184,10 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
               kCharactersIgnoringModifiers: self.charactersIgnoringModifiers ?: @"" };
 }
 
-- (NSString *)identifier {
-    return [iTermKeyBindingMgr identifierForCharacterIgnoringModifiers:[self.charactersIgnoringModifiers firstCharacter]
-                                                             modifiers:self.modifiers];
+- (iTermKeystroke *)keystroke {
+    return [[iTermKeystroke alloc] initWithVirtualKeyCode:self.keyCode
+                                            modifierFlags:self.modifiers
+                                                character:[self.charactersIgnoringModifiers firstCharacter]];
 }
 
 - (NSString *)stringValue {
@@ -194,7 +196,10 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
     // it's nothing. So if there are either characters or characters ignoring modifiers, it's a
     // formattable shortcut. If you press just the dead key then both characters and charactersIgnoringModifiers
     // will be empty.
-    return (self.charactersIgnoringModifiers.length > 0 || self.characters.length > 0 || self.keyCode != 0) ? [iTermKeyBindingMgr formatKeyCombination:self.identifier keyCode:self.keyCode] : @"";
+    const BOOL valid = (self.charactersIgnoringModifiers.length > 0 ||
+                        self.characters.length > 0 ||
+                        self.keyCode != 0);
+    return valid ? [iTermKeystrokeFormatter stringForKeystroke:self.keystroke] : @"";
 }
 
 - (BOOL)isAssigned {

@@ -7,6 +7,8 @@
 
 #import "iTermPromise.h"
 
+#import "NSObject+iTerm.h"
+
 @implementation iTermOr {
     id _first;
     id _second;
@@ -31,12 +33,46 @@
     return self;
 }
 
-- (void)whenFirst:(void (^)(id))firstBlock second:(void (^)(id))secondBlock {
+- (void)whenFirst:(void (^ NS_NOESCAPE)(id))firstBlock
+           second:(void (^ NS_NOESCAPE)(id))secondBlock {
     if (_first && firstBlock) {
         firstBlock(_first);
     } else if (_second && secondBlock) {
         secondBlock(_second);
     }
+}
+
+- (BOOL)hasFirst {
+    return _first != nil;
+}
+
+- (BOOL)hasSecond {
+    return _second != nil;
+}
+
+- (NSString *)description {
+    __block NSString *value;
+    [self whenFirst:^(id  _Nonnull object) {
+        value = [NSString stringWithFormat:@"first=%@", object];
+    } second:^(id  _Nonnull object) {
+        value = [NSString stringWithFormat:@"second=%@", object];
+    }];
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass(self.class), self, value];
+}
+
+- (BOOL)isEqual:(id)object {
+    if (object == self) {
+        return YES;
+    }
+    iTermOr *other = [iTermOr castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return [NSObject object:_first isEqualToObject:other->_first] && [NSObject object:_second isEqualToObject:other->_second];
+}
+
+- (NSUInteger)hash {
+    return [_first hash] | [_second hash];
 }
 
 @end

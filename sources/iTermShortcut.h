@@ -10,6 +10,8 @@
 #import "NSDictionary+iTerm.h"
 #import "ProfileModel.h"
 
+@class iTermKeystroke;
+
 extern const NSEventModifierFlags kHotKeyModifierMask;
 extern CGFloat kShortcutPreferredHeight;
 
@@ -20,8 +22,7 @@ extern CGFloat kShortcutPreferredHeight;
 @property(nonatomic, copy) NSString *characters;
 @property(nonatomic, copy) NSString *charactersIgnoringModifiers;
 
-// A string describing the shortcut. This is how shortcuts are stored in preferences.
-@property(nonatomic, readonly) NSString *identifier;
+@property(nonatomic, readonly) iTermKeystroke *keystroke;
 
 // Suitable for display.
 @property(nonatomic, readonly) NSString *stringValue;

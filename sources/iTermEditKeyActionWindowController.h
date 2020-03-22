@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermKeystroke.h"
 #import "iTermVariableHistory.h"
 #import "iTermVariableScope.h"
 
@@ -22,9 +23,9 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @interface iTermEditKeyActionWindowController : NSWindowController
 
 @property(nonatomic) BOOL titleIsInterpolated;
-@property(nonatomic, copy) NSString *currentKeyCombination;
+@property(nonatomic, strong) iTermKeystroke *currentKeystroke;
 @property(nonatomic, copy) NSString *touchBarItemID;
-@property(nonatomic, readonly) NSString *identifier;  // currentKeyCombination, touchBarItemId, or nil
+@property(nonatomic, readonly) iTermKeystrokeOrTouchbarItem *keystrokeOrTouchbarItem;
 @property(nonatomic, copy) NSString *parameterValue;
 @property(nonatomic, copy) NSString *label;
 @property(nonatomic) int action;

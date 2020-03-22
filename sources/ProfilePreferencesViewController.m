@@ -13,7 +13,6 @@
 #import "iTermController.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermFlippedView.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilePreferencesTabViewWrapperView.h"
 #import "iTermSavePanel.h"

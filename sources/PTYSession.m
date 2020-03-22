@@ -34,13 +34,14 @@
 #import "iTermFindDriver.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermGraphicSource.h"
+#import "iTermKeyMappings.h"
+#import "iTermKeystroke.h"
 #import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
 #import "iTermHapticActuator.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
 #import "iTermInitialDirectory.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
@@ -3163,100 +3164,20 @@ ITERM_WEAKLY_REFERENCEABLE
     return changed;
 }
 
-- (int)_keyBindingActionForEvent:(NSEvent*)event
-{
-    unsigned int modflag;
-    NSString *unmodkeystr;
-    unichar unmodunicode;
-    int keyBindingAction;
-    NSString *keyBindingText;
-
-    modflag = [event it_modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
-
+- (iTermKeyBindingAction *)_keyBindingActionForEvent:(NSEvent *)event {
     // Check if we have a custom key mapping for this event
-    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
-                                                  modifiers:modflag
-                                                       text:&keyBindingText
-                                                keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
-    return keyBindingAction;
+    iTermKeyBindingAction *action =
+    [iTermKeyMappings actionForKeystroke:[iTermKeystroke withEvent:event]
+                               keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+    return action;
 }
 
-- (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event
-{
-    int keyBindingAction = [self _keyBindingActionForEvent:event];
-    switch (keyBindingAction) {
-        case KEY_ACTION_ESCAPE_SEQUENCE:
-        case KEY_ACTION_HEX_CODE:
-        case KEY_ACTION_TEXT:
-        case KEY_ACTION_VIM_TEXT:
-        case KEY_ACTION_RUN_COPROCESS:
-        case KEY_ACTION_IGNORE:
-        case KEY_ACTION_SEND_C_H_BACKSPACE:
-        case KEY_ACTION_SEND_C_QM_BACKSPACE:
-            return YES;
+- (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent *)event {
+    iTermKeyBindingAction *action = [self _keyBindingActionForEvent:event];
+    if (action.keyAction == KEY_ACTION_IGNORE) {
+        return YES;
     }
-    return NO;
-}
-
-- (BOOL)_askAboutOutdatedKeyMappings
-{
-    NSNumber* n = [_profile objectForKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS];
-    if (!n) {
-        n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
-                                                                 [_profile objectForKey:KEY_GUID]]];
-        if (!n && [_profile objectForKey:KEY_ORIGINAL_GUID]) {
-            n = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
-                                                                     [_profile objectForKey:KEY_ORIGINAL_GUID]]];
-        }
-    }
-    return n ? [n boolValue] : YES;
-}
-
-- (void)_removeOutdatedKeyMapping
-{
-    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
-    [iTermKeyBindingMgr removeMappingWithCode:NSLeftArrowFunctionKey
-                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
-                                   inBookmark:temp];
-    [iTermKeyBindingMgr removeMappingWithCode:NSRightArrowFunctionKey
-                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
-                                   inBookmark:temp];
-
-    ProfileModel* model;
-    if (self.isDivorced) {
-        model = [ProfileModel sessionsInstance];
-    } else {
-        model = [ProfileModel sharedInstance];
-    }
-    [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil
-                                                      userInfo:nil];
-    [[iTermController sharedInstance] reloadAllBookmarks];
-}
-
-- (void)_setKeepOutdatedKeyMapping
-{
-    ProfileModel* model;
-    if (self.isDivorced) {
-        model = [ProfileModel sessionsInstance];
-    } else {
-        model = [ProfileModel sharedInstance];
-    }
-    [model setObject:[NSNumber numberWithBool:NO]
-              forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
-          inBookmark:_profile];
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO]
-                                              forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
-                                                      [_profile objectForKey:KEY_GUID]]];
-    if ([_profile objectForKey:KEY_ORIGINAL_GUID]) {
-        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO]
-                                                  forKey:[NSString stringWithFormat:kAskAboutOutdatedKeyMappingKeyFormat,
-                                                          [_profile objectForKey:KEY_ORIGINAL_GUID]]];
-    }
-    [[iTermController sharedInstance] reloadAllBookmarks];
+    return [action sendsText];
 }
 
 + (BOOL)_recursiveSelectMenuWithSelector:(SEL)selector inMenu:(NSMenu *)menu {
@@ -3301,27 +3222,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 
-+ (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event
-{
-    unsigned int modflag;
-    NSString *unmodkeystr;
-    unichar unmodunicode;
-    int keyBindingAction;
-    NSString *keyBindingText;
-
-    modflag = [event it_modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
-
++ (BOOL)handleShortcutWithoutTerminal:(NSEvent *)event {
     // Check if we have a custom key mapping for this event
-    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
-                                                  modifiers:modflag
-                                                       text:&keyBindingText
-                                                keyMappings:[iTermKeyBindingMgr globalKeyMap]];
-
-    return [PTYSession performKeyBindingAction:keyBindingAction
-                                     parameter:keyBindingText
-                                         event:event];
+    iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:[iTermKeystroke withEvent:event]
+                                                             keyMappings:[iTermKeyMappings globalKeyMap]];
+    if (!action) {
+        return NO;
+    }
+    return [PTYSession performKeyBindingAction:action event:event];
 }
 
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
@@ -7061,13 +6969,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)applyAction:(iTermAction *)action {
     [self.textview.window makeFirstResponder:self.textview];
-    [self performKeyBindingAction:action.action parameter:action.parameter event:nil];
+    [self performKeyBindingAction:[iTermKeyBindingAction withAction:action.action
+                                                          parameter:action.parameter]
+                            event:nil];
 }
 
 // This is limited to the actions that don't need any existing session
-+ (BOOL)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
-    switch (keyBindingAction) {
-        case -1:
++ (BOOL)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
+    if (!action) {
+        return NO;
+    }
+    switch (action.keyAction) {
+        case KEY_ACTION_INVALID:
             // No action
             return NO;
 
@@ -7134,14 +7047,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
-            [iTermScriptFunctionCall callFunction:keyBindingText
+            [iTermScriptFunctionCall callFunction:action.parameter
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                             scope:[iTermVariableScope globalsScope]
                                        retainSelf:YES
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                            if (error) {
                                                [PTYSession reportFunctionCallError:error
-                                                                     forInvocation:keyBindingText
+                                                                     forInvocation:action.parameter
                                                                             origin:@"Key Binding"
                                                                             window:nil];
                                            }
@@ -7149,11 +7062,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return YES;
 
         case KEY_ACTION_SELECT_MENU_ITEM:
-            [PTYSession selectMenuItem:keyBindingText];
+            [PTYSession selectMenuItem:action.parameter];
             return YES;
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE: {
-            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:action.parameter];
             [iTermSessionLauncher launchBookmark:profile
                                       inTerminal:nil
                               respectTabbingMode:NO
@@ -7168,10 +7081,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NO;
 }
 
-- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
+- (void)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
+    if (!action) {
+        return;
+    }
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
 
-    switch (keyBindingAction) {
+    switch (action.keyAction) {
         case KEY_ACTION_MOVE_TAB_LEFT:
             [[_delegate realParentWindow] moveTabLeft:nil];
             break;
@@ -7232,34 +7148,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendEscapeSequence:keyBindingText];
+            [self sendEscapeSequence:action.parameter];
             break;
         case KEY_ACTION_HEX_CODE:
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendHexCode:keyBindingText];
+            [self sendHexCode:action.parameter];
             break;
         case KEY_ACTION_TEXT:
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendText:keyBindingText];
+            [self sendText:action.parameter];
             break;
         case KEY_ACTION_VIM_TEXT:
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
+            [self sendText:[action.parameter stringByExpandingVimSpecialCharacters]];
             break;
         case KEY_ACTION_RUN_COPROCESS:
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self launchCoprocessWithCommand:keyBindingText];
+            [self launchCoprocessWithCommand:action.parameter];
             break;
         case KEY_ACTION_SELECT_MENU_ITEM:
-            [PTYSession selectMenuItem:keyBindingText];
+            [PTYSession selectMenuItem:action.parameter];
             break;
 
         case KEY_ACTION_SEND_C_H_BACKSPACE:
@@ -7303,13 +7219,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
             break;
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
-            [[_delegate realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
+            [[_delegate realParentWindow] newWindowWithBookmarkGuid:action.parameter];
             break;
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
-            [[_delegate realParentWindow] newTabWithBookmarkGuid:keyBindingText];
+            [[_delegate realParentWindow] newTabWithBookmarkGuid:action.parameter];
             break;
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE: {
-            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:action.parameter];
             if (!profile) {
                 break;
             }
@@ -7322,7 +7238,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
         }
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE: {
-            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:action.parameter];
             if (!profile) {
                 break;
             }
@@ -7335,7 +7251,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
         }
         case KEY_ACTION_SET_PROFILE: {
-            Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+            Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:action.parameter];
             if (newProfile) {
                 [self setProfile:newProfile preservingName:YES];
             }
@@ -7343,7 +7259,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         case KEY_ACTION_LOAD_COLOR_PRESET: {
             // Divorce & update self
-            [self setColorsFromPresetNamed:keyBindingText];
+            [self setColorsFromPresetNamed:action.parameter];
 
             // Try to update the backing profile if possible, which may undivorce you. The original
             // profile may not exist so this could do nothing.
@@ -7355,13 +7271,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 profile = self.profile;
             }
             if (profile) {
-                [model addColorPresetNamed:keyBindingText toProfile:profile];
+                [model addColorPresetNamed:action.parameter toProfile:profile];
             }
             break;
         }
 
         case KEY_ACTION_FIND_REGEX:
-            [_view.findDriver closeViewAndDoTemporarySearchForString:keyBindingText
+            [_view.findDriver closeViewAndDoTemporarySearchForString:action.parameter
                                                                 mode:iTermFindModeCaseSensitiveRegex];
             break;
 
@@ -7379,7 +7295,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             NSString *string = [[iTermController sharedInstance] lastSelection];
             if (string.length) {
                 [_pasteHelper pasteString:string
-                             stringConfig:keyBindingText];
+                             stringConfig:action.parameter];
             }
             break;
         }
@@ -7388,7 +7304,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             NSString *string = [NSString stringFromPasteboard];
             if (string.length) {
                 [_pasteHelper pasteString:string
-                             stringConfig:keyBindingText];
+                             stringConfig:action.parameter];
             }
             break;
         }
@@ -7411,22 +7327,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
             [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
                                  inDirection:kPTYTextViewSelectionExtensionDirectionLeft
-                                          by:[keyBindingText integerValue]];
+                                          by:[action.parameter integerValue]];
             break;
         case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
             [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
                                  inDirection:kPTYTextViewSelectionExtensionDirectionRight
-                                          by:[keyBindingText integerValue]];
+                                          by:[action.parameter integerValue]];
             break;
         case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
             [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
                                  inDirection:kPTYTextViewSelectionExtensionDirectionLeft
-                                          by:[keyBindingText integerValue]];
+                                          by:[action.parameter integerValue]];
             break;
         case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
             [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
                                  inDirection:kPTYTextViewSelectionExtensionDirectionRight
-                                          by:[keyBindingText integerValue]];
+                                          by:[action.parameter integerValue]];
             break;
 
         case KEY_ACTION_DECREASE_HEIGHT:
@@ -7459,7 +7375,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self setXtermMouseReporting:![self xtermMouseReporting]];
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
-            [self invokeFunctionCall:keyBindingText scope:self.variablesScope origin:@"Key Binding"];
+            [self invokeFunctionCall:action.parameter
+                               scope:self.variablesScope
+                              origin:@"Key Binding"];
             break;
         case KEY_ACTION_DUPLICATE_TAB:
             [self.delegate sessionDuplicateTab];
@@ -7468,50 +7386,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self textViewMovePane];
             break;
         default:
-            XLog(@"Unknown key action %d", keyBindingAction);
+            XLog(@"Unknown key action %@", action);
             break;
     }
 }
 
 #pragma mark - Key Handling
-
-- (void)maybeWarnAboutOutdatedKeyBindingAction:(int)keyBindingAction modflag:(unsigned int)modflag profileAction:(int)profileAction unmodunicode:(unichar)unmodunicode {
-    if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
-        (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
-         keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
-            // Warn users about outdated default key bindings.
-            int tempMods = modflag & (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagCommand);
-            int tempKeyCode = unmodunicode;
-            if (tempMods == (NSEventModifierFlagCommand | NSEventModifierFlagOption) &&
-                (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
-                [[_delegate sessions] count] > 1) {
-                if ([self _askAboutOutdatedKeyMappings]) {
-                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                    alert.messageText = @"Outdated Key Mapping Found";
-                    alert.informativeText = @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?";
-                    [alert addButtonWithTitle:@"Remove it"];
-                    [alert addButtonWithTitle:@"Remind me later"];
-                    [alert addButtonWithTitle:@"Keep it"];
-                    switch ([alert runModal]) {
-                        case NSAlertFirstButtonReturn:
-                            // Remove it
-                            [self _removeOutdatedKeyMapping];
-                            return;
-                            break;
-                        case NSAlertSecondButtonReturn:
-                            // Remind me later
-                            break;
-                        case NSAlertThirdButtonReturn:
-                            // Keep it
-                            [self _setKeepOutdatedKeyMapping];
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-        }
-}
 
 - (BOOL)eventNeedsMitigation:(NSEvent *)event {
     if (event.keyCode != kVK_Escape) {
@@ -7696,31 +7576,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)maybeHandleKeyBindingActionForKeyEvent:(NSEvent *)event {
-    const unichar characterIgnoringModifiers = [event.charactersIgnoringModifiers length] > 0 ? [event.charactersIgnoringModifiers characterAtIndex:0] : 0;
-    const NSEventModifierFlags modifiers = event.it_modifierFlags;
-
     // Check if we have a custom key mapping for this event
-    NSString *keyBindingText;
-    int keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:characterIgnoringModifiers
-                                                  modifiers:modifiers
-                                                       text:&keyBindingText
-                                                keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+    iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
+    iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:keystroke
+                                                             keyMappings:self.profile[KEY_KEYBOARD_MAP]];
 
-    if (keyBindingAction < 0) {
+    if (!action) {
         return NO;
     }
-    DLog(@"PTYSession keyDown action=%d", keyBindingAction);
+    DLog(@"PTYSession keyDown action=%@", action);
     // A special action was bound to this key combination.
-    NSString *temp;
-    int profileAction = [iTermKeyBindingMgr localActionForKeyCode:characterIgnoringModifiers
-                                                        modifiers:modifiers
-                                                             text:&temp
-                                                      keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
-    [self maybeWarnAboutOutdatedKeyBindingAction:keyBindingAction
-                                         modflag:modifiers
-                                   profileAction:profileAction
-                                    unmodunicode:characterIgnoringModifiers];
-    [self performKeyBindingAction:keyBindingAction parameter:keyBindingText event:event];
+    [self performKeyBindingAction:action event:event];
 
     DLog(@"Special handler: KEY BINDING ACTION");
     return YES;
@@ -7765,54 +7631,40 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 
 - (NSData *)backspaceData {
-    NSString *keyBindingText;
-    int keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:0x7f
-                                                      modifiers:0
-                                                           text:&keyBindingText
-                                                    keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
-    char del = 0x7f;
-    NSData *data = nil;
-    switch (keyBindingAction) {
+    iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:[iTermKeystroke backspace]
+                                                             keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+    if (!action) {
+        const char del = 0x7f;
+        return [NSData dataWithBytes:&del length:1];
+    }
+    switch (action.keyAction) {
         case KEY_ACTION_HEX_CODE:
-            data = [self dataForHexCodes:keyBindingText];
-            break;
+            return [self dataForHexCodes:action.parameter];
 
         case KEY_ACTION_TEXT:
-            data = [keyBindingText dataUsingEncoding:self.encoding];
-            break;
+            return [action.parameter dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_VIM_TEXT:
-            data = [[keyBindingText stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
-            break;
+            return [[action.parameter stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_ESCAPE_SEQUENCE:
-            data = [[@"\e" stringByAppendingString:keyBindingText] dataUsingEncoding:self.encoding];
-            break;
+            return [[@"\e" stringByAppendingString:action.parameter] dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_SEND_C_H_BACKSPACE:
-            data = [@"\010" dataUsingEncoding:self.encoding];
-            break;
+            return [@"\010" dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
-            data = [@"\177" dataUsingEncoding:self.encoding];
-            break;
-
-        case -1:
-            data = [NSData dataWithBytes:&del length:1];
-            break;
+            return [@"\177" dataUsingEncoding:self.encoding];
 
         default:
-            data = nil;
             break;
     }
 
-    return data;
+    return nil;
 }
 
-- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event
-{
-    int keyBindingAction = [self _keyBindingActionForEvent:event];
-    return (keyBindingAction >= 0) && (keyBindingAction != KEY_ACTION_DO_NOT_REMAP_MODIFIERS) && (keyBindingAction != KEY_ACTION_REMAP_LOCALLY);
+- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event {
+    return [[self _keyBindingActionForEvent:event] isActionable];
 }
 
 - (int)optionKey

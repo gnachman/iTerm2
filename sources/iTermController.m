@@ -60,7 +60,6 @@
 #import "iTermExpose.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermNotificationController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"

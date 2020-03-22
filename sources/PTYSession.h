@@ -44,6 +44,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermAnnouncementViewController;
 @class iTermEchoProbe;
 @class iTermExpect;
+@class iTermKeyBindingAction;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
@@ -807,7 +808,7 @@ typedef enum {
 
 - (void)useTransparencyDidChange;
 
-- (void)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event;
+- (void)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event;
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName;
 

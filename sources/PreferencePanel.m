@@ -76,7 +76,6 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"

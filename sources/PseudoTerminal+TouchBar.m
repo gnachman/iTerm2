@@ -17,10 +17,12 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermColorPresets.h"
-#import "iTermKeyBindingMgr.h"
+#import "iTermKeyBindingAction.h"
+#import "iTermKeystroke.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSystemVersion.h"
 #import "iTermTouchBarButton.h"
+#import "iTermTouchbarMappings.h"
 #import "iTermVariableScope+Tab.h"
 #import "PTYTab.h"
 
@@ -153,7 +155,10 @@ ITERM_IGNORE_PARTIAL_BEGIN
                           iTermTouchBarIdentifierPreviousMark,
                           iTermTouchBarIdentifierAutocomplete,
                           iTermTouchBarIdentifierStatus ];
-        NSArray<NSString *> *customIDs = [iTermKeyBindingMgr sortedTouchBarKeysInDictionary:[iTermKeyBindingMgr globalTouchBarMap]];
+        NSArray<iTermTouchbarItem *> *items = [iTermTouchbarMappings sortedTouchbarItemsInDictionary:[iTermTouchbarMappings globalTouchBarMap]];
+        NSArray<NSString *> *customIDs = [items mapWithBlock:^id(iTermTouchbarItem *anObject) {
+            return anObject.identifier;
+        }];
         customIDs = [self idsByAddingVersions:customIDs];
         ids = [ids arrayByAddingObjectsFromArray:customIDs];
         self.touchBar.customizationAllowedItemIdentifiers = ids;
@@ -205,7 +210,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
 }
 
 - (NSArray<NSString *> *)idsByAddingVersions:(NSArray<NSString *> *)unversioned {
-    NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
+    NSDictionary *map = [iTermTouchbarMappings globalTouchBarMap];
     return [unversioned mapWithBlock:^id(NSString *string) {
         NSDictionary *binding = map[string];
         return [string stringByAppendingFormat:@"/v%@", [self versionFor:string withValue:binding]];
@@ -506,26 +511,30 @@ ITERM_IGNORE_PARTIAL_BEGIN
     
     // Custom action
     NSString *unversionedIdentifier = [self idByRemovingVersion:identifier];
-    NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
+    NSDictionary *map = [iTermTouchbarMappings globalTouchBarMap];
     NSDictionary *binding = map[unversionedIdentifier];
 
     if (!binding) {
         return nil;
     }
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:binding];
+    if (!action) {
+        return nil;
+    }
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:[iTermKeyBindingMgr touchBarLabelForBinding:binding]
+    iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:action.label
                                                                 target:self
                                                                 action:@selector(touchBarItemSelected:)];
     button.keyBindingAction = binding;
     item.view = button;
     item.view.identifier = identifier;
-    item.customizationLabel = [iTermKeyBindingMgr formatAction:binding];
+    item.customizationLabel = action.displayName;
 
     return item;
 }
 
 - (void)touchBarItemSelected:(iTermTouchBarButton *)sender {
-    NSDictionary *map = [iTermKeyBindingMgr globalTouchBarMap];
+    NSDictionary *map = [iTermTouchbarMappings globalTouchBarMap];
     NSString *unversionedIdentifier = [self idByRemovingVersion:sender.identifier];
     NSDictionary *binding = unversionedIdentifier ? map[unversionedIdentifier] : nil;
     if (!binding) {
@@ -533,9 +542,12 @@ ITERM_IGNORE_PARTIAL_BEGIN
         // existing config until the user edits it.
         binding = sender.keyBindingAction;
     }
-    [self.currentSession performKeyBindingAction:[iTermKeyBindingMgr actionForTouchBarItemBinding:binding]
-                                       parameter:[iTermKeyBindingMgr parameterForTouchBarItemBinding:binding]
-                                           event:[NSApp currentEvent]];
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:binding];
+    if (!action) {
+        DLog(@"Bogus binding: %@", binding);
+        return;
+    }
+    [self.currentSession performKeyBindingAction:action event:[NSApp currentEvent]];
 }
 
 - (void)addMarkTouchBarItemSelected:(id)sender {

@@ -30,7 +30,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermHotKeyController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermModifierRemapper.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
@@ -179,7 +178,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         // The event tap is not working, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
         // the event tap performs the remapping.
-        event = [iTermKeyBindingMgr remapModifiers:event];
+        event = [iTermModifierRemapper remapModifiers:event];
         DLog(@"Remapped modifiers to %@", event);
     }
     return event;

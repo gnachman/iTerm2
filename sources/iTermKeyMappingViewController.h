@@ -8,6 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermKeystroke.h"
+
+@class iTermKeyBindingAction;
 @class iTermKeyMappingViewController;
 @class iTermPreferencesBaseViewController;
 
@@ -15,30 +18,27 @@
 
 - (NSDictionary *)keyMappingDictionary:(iTermKeyMappingViewController *)viewController;
 
-- (NSArray *)keyMappingSortedKeys:(iTermKeyMappingViewController *)viewController;
-- (NSArray *)keyMappingSortedTouchBarKeys:(iTermKeyMappingViewController *)viewController;
+- (NSArray<iTermKeystroke *> *)keyMappingSortedKeystrokes:(iTermKeyMappingViewController *)viewController;
+- (NSArray<iTermTouchbarItem *> *)keyMappingSortedTouchbarItems:(iTermKeyMappingViewController *)viewController;
 
 - (NSDictionary *)keyMappingTouchBarItems;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
-      didChangeKey:(NSString *)keyCombo
-    isTouchBarItem:(BOOL)isTouchBarItem
+     didChangeItem:(iTermKeystrokeOrTouchbarItem *)item
            atIndex:(NSInteger)index
-          toAction:(int)action
-         parameter:(NSString *)parameter
-             label:(NSString *)label
+          toAction:(iTermKeyBindingAction *)action
         isAddition:(BOOL)addition;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
- removeKeyMappings:(NSSet<NSString *> *)keyCombos
-     touchBarItems:(NSSet<NSString *> *)touchBarItems;
+  removeKeystrokes:(NSSet<iTermKeystroke *> *)keyCombos
+     touchbarItems:(NSSet<iTermTouchbarItem *> *)touchBarItems;
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController;
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
     loadPresetsNamed:(NSString *)presetName;
 
-- (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeys:(NSSet<NSString *> *)keys;
+- (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeystrokes:(NSSet<iTermKeystroke *> *)keys;
 
 @end
 

@@ -8,7 +8,6 @@
 
 #import "iTermShortcutInputView.h"
 
-#import "iTermKeyBindingMgr.h"
 #import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSImage+iTerm.h"

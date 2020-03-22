@@ -6,7 +6,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "iTermKeyBindingMgr.h"
+
+#import "iTermKeyBindingAction.h"
 #import "iTermNotificationCenter.h"
 
 NS_ASSUME_NONNULL_BEGIN

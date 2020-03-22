@@ -30,9 +30,9 @@
 #import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermHotKeyController.h"
-#import "iTermKeyBindingMgr.h"
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermHotKeyProfileBindingController.h"
+#import "iTermKeyMappings.h"
 #import "iTermMigrationHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilesMenuController.h"
@@ -701,19 +701,19 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 + (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {
     for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
         Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
         if (profile) {
             [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
         }
     }
     for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
         Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
-        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
         if (profile) {
             [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
         }
     }
-    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
+    [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:nil];
     [self postNotificationName:kKeyBindingsChangedNotification object:nil userInfo:nil];
 }
 

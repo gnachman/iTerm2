@@ -10,6 +10,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermOr<T,U>: NSObject
+@property (nonatomic, readonly) BOOL hasFirst;
+@property (nonatomic, readonly) BOOL hasSecond;
 
 + (instancetype)first:(T)object;
 + (instancetype)second:(U)object;
@@ -17,8 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)whenFirst:(void (^ _Nullable)(T object))firstBlock
-           second:(void (^ _Nullable)(U object))secondBlock;
+- (void)whenFirst:(void (^ NS_NOESCAPE _Nullable)(T object))firstBlock
+           second:(void (^ NS_NOESCAPE _Nullable)(U object))secondBlock;
 
 @end
 
