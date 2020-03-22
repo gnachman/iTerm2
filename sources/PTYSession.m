@@ -33,6 +33,7 @@
 #import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
 #import "iTermFindOnPageHelper.h"
+#import "iTermFindPasteboard.h"
 #import "iTermGraphicSource.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
@@ -162,10 +163,6 @@ static const NSInteger kMinimumUnicodeVersion = 8;
 static const NSInteger kMaximumUnicodeVersion = 9;
 
 static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepairSavedArrangement";
-
-// The format for a user defaults key that recalls if the user has already been pestered about
-// outdated key mappings for a give profile. The %@ is replaced with the profile's GUID.
-static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdatedKeyMappingForGuid%@";
 
 NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
 NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotification";
@@ -784,10 +781,11 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(apiDidStop:)
                                                      name:iTermAPIHelperDidStopNotification
                                                    object:nil];
-        [iTermSetFindStringNotification subscribe:self
-                                            block:^(iTermSetFindStringNotification * _Nonnull notification) {
-                                                [weakSelf useStringForFind:notification.string];
-                                            }];
+        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString * _Nonnull newValue) {
+            if (weakSelf.view.window.isKeyWindow) {
+                [weakSelf useStringForFind:newValue];
+            }
+        }];
 
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
@@ -5925,9 +5923,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _pbtext = nil;
 
         // In case it was the find pasteboard that changed
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
-                                                            object:nil
-                                                          userInfo:nil];
+        [[iTermFindPasteboard sharedInstance] updateObservers];
     }
 }
 

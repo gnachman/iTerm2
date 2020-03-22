@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermFileDescriptorMultiClient.h"
+#import "iTermMultiServerChildDidTerminateNotification.h"
 #import "iTermMultiServerConnection.h"
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"

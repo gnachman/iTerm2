@@ -4,6 +4,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermEventTap.h"
+#import "iTermFlagsChangedNotification.h"
 #import "iTermNotificationCenter.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "NSArray+iTerm.h"

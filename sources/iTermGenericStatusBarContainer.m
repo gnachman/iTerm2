@@ -8,6 +8,7 @@
 #import "iTermGenericStatusBarContainer.h"
 
 #import "iTermNotificationCenter.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
 

@@ -28,6 +28,7 @@
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindDriver.h"
+#import "iTermFindPasteboard.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermNotificationCenter.h"
@@ -3464,7 +3465,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [_contentView setNeedsDisplay:YES];
-    [self _loadFindStringFromSharedPasteboard];
+    [[iTermFindPasteboard sharedInstance] updateObservers];
 
     // Start the timers back up
     for (PTYSession* aSession in [self allSessions]) {
@@ -10253,13 +10254,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [result addObjectsFromArray:[tab sessions]];
     }
     return result;
-}
-
-- (void)_loadFindStringFromSharedPasteboard
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
-                                                        object:nil
-                                                      userInfo:nil];
 }
 
 #pragma clang diagnostic push

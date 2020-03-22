@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermFindPasteboard.h"
 #import "iTermSearchHistory.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
@@ -90,10 +91,10 @@ static NSString *gSearchString;
         });
         _state = [[FindState alloc] init];
         _state.mode = gFindMode;
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(loadFindStringFromSharedPasteboard:)
-                                                     name:@"iTermLoadFindStringFromSharedPasteboard"
-                                                   object:nil];
+        __weak __typeof(self) weakSelf = self;
+        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString *newValue) {
+            [weakSelf loadFindStringFromSharedPasteboard:newValue];
+        }];
     }
     return self;
 }
@@ -313,25 +314,23 @@ static NSString *gSearchString;
 
 #pragma mark - Notifications
 
-- (void)loadFindStringFromSharedPasteboard:(NSNotification *)notification {
+- (void)loadFindStringFromSharedPasteboard:(NSString *)value {
+    DLog(@"[%p loadFindStringFromSharedPasteboard:%@] in window with frame %@", self, value, NSStringFromRect(_viewController.view.window.frame));
     if (![iTermAdvancedSettingsModel loadFromFindPasteboard]) {
         return;
     }
-    if (!_viewController.searchBarIsFirstResponder) {
-        NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
-        if ([[findBoard types] containsObject:NSStringPboardType]) {
-            NSString *value = [findBoard stringForType:NSStringPboardType];
-            if (value && [value length] > 0) {
-                if (_savedState && ![value isEqualTo:_savedState.string]) {
-                    [self setNeedsUpdateOnFocus:YES];
-                    [self restoreState];
-                }
-                if (![value isEqualToString:_viewController.findString]) {
-                    _viewController.findString = value;
-                    self.needsUpdateOnFocus = YES;
-                }
-            }
-        }
+    if (!_viewController.view.window.isKeyWindow) {
+        DLog(@"Not in key window");
+        return;
+    }
+    if (_savedState && ![value isEqualTo:_savedState.string]) {
+        [self setNeedsUpdateOnFocus:YES];
+        [self restoreState];
+    }
+    if (![value isEqualToString:_viewController.findString]) {
+        DLog(@"%@ setFindString:%@", self, value);
+        _viewController.findString = value;
+        self.needsUpdateOnFocus = YES;
     }
 }
 
@@ -353,11 +352,7 @@ static NSString *gSearchString;
         return;
     }
     // Copy into the NSFindPboard
-    NSPasteboard *findPB = [NSPasteboard pasteboardWithName:NSFindPboard];
-    if (findPB) {
-        [findPB declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [findPB setString:stringValue forType:NSStringPboardType];
-    }
+    [[iTermFindPasteboard sharedInstance] setStringValue:stringValue];
 }
 
 - (void)backTab {
@@ -528,8 +523,6 @@ static NSString *gSearchString;
     NSString *theString = _savedState ? _state.string : _viewController.findString;
     if (!_savedState) {
         [self loadFindStringIntoSharedPasteboard:_viewController.findString];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
-                                                            object:nil];
     }
     // Search.
     [self setSearchDefaults];

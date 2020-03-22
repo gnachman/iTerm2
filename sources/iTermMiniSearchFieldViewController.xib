@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -20,11 +20,11 @@
             <rect key="frame" x="0.0" y="0.0" width="213" height="18"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" textCompletion="NO" id="dU2-8g-HHo" customClass="iTermMiniSearchField">
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dU2-8g-HHo" customClass="iTermMiniSearchField">
                     <rect key="frame" x="0.0" y="0.0" width="149" height="19"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" focusRingType="none" placeholderString=" " usesSingleLineMode="YES" bezelStyle="round" sendsSearchStringImmediately="YES" sendsWholeSearchString="YES" maximumRecents="10" id="dfd-7C-O0k" customClass="iTermMiniSearchFieldCell">
-                        <font key="font" metaFont="smallSystem"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </searchFieldCell>
@@ -33,11 +33,11 @@
                         <outlet property="searchMenuTemplate" destination="SQ6-gA-jag" id="o2O-Bz-7kK"/>
                     </connections>
                 </searchField>
-                <segmentedControl verticalHuggingPriority="750" id="PjS-H3-x6e">
+                <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PjS-H3-x6e">
                     <rect key="frame" x="156" y="0.0" width="33" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="roundRect" trackingMode="momentary" id="0qr-Oz-fS9">
-                        <font key="font" metaFont="smallSystem"/>
+                        <font key="font" metaFont="label" size="11"/>
                         <segments>
                             <segment image="GoBack" width="14"/>
                             <segment image="GoForward" width="14" tag="1"/>
@@ -47,7 +47,7 @@
                         <action selector="searchNextPrev:" target="-2" id="wcj-Kf-poJ"/>
                     </connections>
                 </segmentedControl>
-                <button id="j06-kt-Dyv">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j06-kt-Dyv">
                     <rect key="frame" x="188" y="-3" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="TabClose_Front" imagePosition="only" alignment="center" alternateImage="TabClose_Front_Pressed" inset="2" id="Wvh-el-wPa">
@@ -106,6 +106,7 @@ Gw
                     </connections>
                 </menuItem>
             </items>
+            <point key="canvasLocation" x="131" y="152"/>
         </menu>
     </objects>
     <resources>

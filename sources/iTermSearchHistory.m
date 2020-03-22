@@ -6,7 +6,11 @@
 //
 
 #import "iTermSearchHistory.h"
+
+#import "iTermFindPasteboard.h"
 #import "iTermUserDefaults.h"
+
+#import <Cocoa/Cocoa.h>
 
 @implementation iTermSearchHistory {
     NSMutableArray<NSString *> *_queries;
@@ -58,6 +62,8 @@
 - (void)eraseHistory {
     iTermUserDefaults.searchHistory = @[];
     [_queries removeAllObjects];
+    [[iTermFindPasteboard sharedInstance] setStringValue:nil];
+    [[iTermFindPasteboard sharedInstance] updateObservers];
 }
 
 - (void)coalescingFence {

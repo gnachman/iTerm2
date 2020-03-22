@@ -16,6 +16,7 @@
 #import "iTermExpose.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
+#import "iTermFindPasteboard.h"
 #import "iTermImageInfo.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
@@ -4318,7 +4319,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         case NSFindPanelActionSetFindString: {
             NSString *selection = [self selectedText];
             if (selection) {
-                [[iTermSetFindStringNotification notificationWithString:selection] post];
+                [[iTermFindPasteboard sharedInstance] setStringValue:selection];
+                [[iTermFindPasteboard sharedInstance] updateObservers];
             }
             break;
         }

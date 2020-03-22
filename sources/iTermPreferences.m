@@ -13,6 +13,7 @@
 // and the view controller may customize how its control's appearance changes dynamically.
 
 #import "iTermNotificationCenter.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"

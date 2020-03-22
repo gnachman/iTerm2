@@ -8,6 +8,7 @@
 #import "iTermMultiServerConnection.h"
 
 #import "DebugLogging.h"
+#import "iTermMultiServerChildDidTerminateNotification.h"
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"
 #import "iTermThreadSafety.h"

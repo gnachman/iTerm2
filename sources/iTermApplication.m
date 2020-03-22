@@ -29,6 +29,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
+#import "iTermFlagsChangedNotification.h"
 #import "iTermHotKeyController.h"
 #import "iTermModifierRemapper.h"
 #import "iTermNotificationCenter.h"

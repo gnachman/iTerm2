@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermInitialDirectory.h"
 #import "iTermNotificationCenter.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
