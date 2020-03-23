@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL busy;
 @property (nonatomic, readonly) NSString *urlString;
 @property (nonatomic, readonly) NSString *command;
+
+- (void)showShellUnsupportedError;
+
 @end
 
 NS_ASSUME_NONNULL_END
