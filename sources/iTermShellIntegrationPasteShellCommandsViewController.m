@@ -89,23 +89,23 @@
         self.skipButton.enabled = NO;
     } else {
         if (stage < 1) {
-            prefix = @"Step 2. Modify";
+            prefix = @"Step 2. Write";
         } else if (stage == 1) {
             if (self.shell == iTermShellIntegrationShellUnknown) {
-                prefix = @"Step 2. Modify";
+                prefix = @"Step 2. Write";
             } else if (_busy) {
                 prefix = self.waitingText;
             } else {
-                prefix = @"➡ Select “Continue” to modify";
+                prefix = @"➡ Select “Continue” to write";
             }
             indexToBold = lines.count;
         } else if (stage > 1) {
-            prefix = @"✅ Modfied";
+            prefix = @"✅ Wrote";
         }
         if (_busy && stage == 1) {
             step = prefix;
         } else {
-            step = [NSString stringWithFormat:@"%@ your shell’s startup scripts.", prefix];
+            step = [NSString stringWithFormat:@"%@ the shell integration script.", prefix];
         }
         [lines addObject:step];
 
@@ -132,21 +132,21 @@
         }
 
         if (stage < i) {
-            prefix = [NSString stringWithFormat:@"Step %d. Add", i + 1];
+            prefix = [NSString stringWithFormat:@"Step %d. Update", i + 1];
         } else if (stage == i && !_busy) {
-            prefix = [NSString stringWithFormat:@"➡ Select “Continue” to add"];
+            prefix = [NSString stringWithFormat:@"➡ Select “Continue” to update"];
             indexToBold = lines.count;
         } else if (stage == i && _busy) {
             prefix = self.waitingText;
             indexToBold = lines.count;
         } else if (stage > i) {
-            prefix = @"✅ Added";
+            prefix = @"✅ Updated";
         }
         if (_busy && stage == i) {
             step = prefix;
         } else {
             step =
-            [NSString stringWithFormat:@"%@ script files under your home directory.", prefix];
+            [NSString stringWithFormat:@"%@ your shell’s dotfile.", prefix];
         }
         [lines addObject:step];
         
