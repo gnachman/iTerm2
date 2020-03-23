@@ -334,10 +334,6 @@ static const NSUInteger kMaxHosts = 100;
 @end
 
 @implementation PTYSession {
-    // PTYTask has started a job, and a call to -taskWasDeregistered will be
-    // made when it dies. All access should be synchronized.
-    BOOL _registered;
-
     // Terminal processes vt100 codes.
     VT100Terminal *_terminal;
 
@@ -1747,9 +1743,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Try to attach...");
     if ([_shell tryToAttachToServerWithProcessId:serverPid tty:tty]) {
-        @synchronized(self) {
-            _registered = YES;
-        }
         DLog(@"Success, attached.");
         return YES;
     } else {
@@ -1762,9 +1755,8 @@ ITERM_WEAKLY_REFERENCEABLE
     const iTermJobManagerAttachResults results = [_shell tryToAttachToMultiserverWithRestorationIdentifier:restorationIdentifier];
     if (results & iTermJobManagerAttachResultsRegistered) {
         DLog(@"Registered");
-        @synchronized(self) {
-            _registered = YES;
-        }
+    } else {
+        DLog(@"Attached to multiserver. Not registered.");
     }
     if (results & iTermJobManagerAttachResultsAttached) {
         DLog(@"Success, attached.");
@@ -1781,14 +1773,6 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection completion:^(iTermJobManagerAttachResults results) {
             [self->_shell setSize:_screen.size viewSize:_screen.viewSize];
-            // TODO: Eliminate _registered. It only exists because weak
-            // pointers didn't exist a decade ago, and it complicates the
-            // lifetime of PTYSession inordinately.
-            if (results & iTermJobManagerAttachResultsRegistered) {
-                @synchronized(self) {
-                    self->_registered = YES;
-                }
-            }
             completion();
         }];
     } else {
@@ -2181,9 +2165,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
-            @synchronized(self) {
-                _registered = YES;
-            }
             [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
                 [[self loggingHelper] setPath:autoLogFilename
                                       enabled:autoLogFilename != nil
@@ -2420,15 +2401,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_view release];  // This balances a retain in -terminate.
     // -taskWasDeregistered or the autorelease below will balance this retain.
-    [self retain];
-    // If _registered, -stop will cause -taskWasDeregistered to be called on a background thread,
-    // which will release this object. Otherwise we autorelease now.
-    @synchronized(self) {
-        if (!_registered) {
-            [self autorelease];
-        }
-    }
+    [[self retain] autorelease];
     [_shell stop];
+    _shell.delegate = nil;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
@@ -2697,17 +2672,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.currentMarkOrNotePosition = nil;
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:YES];
-}
-
-- (void)taskWasDeregistered {
-    DLog(@"taskWasDeregistered");
-    @synchronized(self) {
-        _registered = NO;
-    }
-    // This is called on the background thread. After this is called, we won't get any more calls
-    // on the background thread and it is safe for us to be dealloc'ed. This pairs with the retain
-    // in -hardStop. For sanity's sake, ensure dealloc gets called on the main thread.
-    [self performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run

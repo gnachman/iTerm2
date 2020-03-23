@@ -17,7 +17,6 @@
 
 NSString *const kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
-NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 static int unblockPipeR;
 static int unblockPipeW;
 
@@ -364,8 +363,6 @@ void UnblockTaskNotifier(void) {
         }
         PtyTaskDebugLog(@"run1: unlock");
         [tasksLock unlock];
-
-        [[NSNotificationCenter defaultCenter] postNotificationName:kTaskNotifierDidSpin object:nil];
 
         [autoreleasePool drain];
         autoreleasePool = [[NSAutoreleasePool alloc] init];

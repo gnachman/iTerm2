@@ -23,7 +23,6 @@
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;
 - (void)brokenPipe;  // Called in main thread
-- (void)taskWasDeregistered;
 - (void)writeForCoprocessOnlyTask:(NSData *)data;
 
 // Called on main thread from within launchWithPath:arguments:environment:customShell:gridSize:viewSize:isUTF8:.

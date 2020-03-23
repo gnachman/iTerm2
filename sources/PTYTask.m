@@ -67,8 +67,6 @@ static void HandleSigChld(int n) {
     BOOL brokenPipe_;  // synchronized (self)
     NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
 
-    // Number of spins of the select loop left before we tell the delegate we were deregistered.
-    int _spinsNeeded;
     BOOL _paused;
 
     PTYTaskSize _desiredSize;
@@ -346,7 +344,7 @@ static void HandleSigChld(int n) {
         // Send keypresses to tmux.
         NSData *copyOfData = [data copy];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self->_delegate writeForCoprocessOnlyTask:copyOfData];
+            [self.delegate writeForCoprocessOnlyTask:copyOfData];
         });
     } else {
         // Write as much as we can now through the non-blocking pipe
@@ -389,18 +387,6 @@ static void HandleSigChld(int n) {
     if (self.fd >= 0) {
         [self closeFileDescriptor];
         [[TaskNotifier sharedInstance] deregisterTask:self];
-        // Require that it spin twice so we can be completely sure that the task won't get called
-        // again. If we add the observer just before select() was going to be called, it wouldn't
-        // mean anything; but after the second call, we know we've been moved into the dead pool.
-        @synchronized(self) {
-            _spinsNeeded = 2;
-        }
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(notifierDidSpin)
-                                                     name:kTaskNotifierDidSpin
-                                                   object:nil];
-        // Force a spin
-        [[TaskNotifier sharedInstance] unblock];
 
         // This isn't an atomic update, but select() should be resilient to
         // being passed a half-broken fd. We must change it because after this
@@ -817,7 +803,7 @@ static void HandleSigChld(int n) {
 
         case iTermJobManagerForkAndExecStatusTaskDiedImmediately:
         case iTermJobManagerForkAndExecStatusServerError:
-            [self->_delegate taskDiedImmediately];
+            [self.delegate taskDiedImmediately];
             break;
     }
 }
@@ -905,7 +891,7 @@ static void HandleSigChld(int n) {
 
 - (void)setTerminalSizeToDesiredSize {
     DLog(@"Set size of %@ to %@x%@ cells, %@x%@ px",
-         _delegate,
+         self.delegate,
          @(_desiredSize.cellSize.width),
          @(_desiredSize.cellSize.height),
          @(_desiredSize.pixelSize.width),
@@ -915,25 +901,7 @@ static void HandleSigChld(int n) {
     iTermSetTerminalSize(self.fd, _desiredSize);
 }
 
-#pragma mark - Notifications
-
-// This runs in TaskNotifier's thread.
-- (void)notifierDidSpin {
-    BOOL unblock = NO;
-    @synchronized(self) {
-        unblock = (--_spinsNeeded) > 0;
-    }
-    if (unblock) {
-        // Force select() to return so we get another spin even if there is no
-        // activity on the file descriptors.
-        [[TaskNotifier sharedInstance] unblock];
-    } else {
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
-        [self.delegate taskWasDeregistered];
-    }
-}
-
-#pragma mark - iTermLoggingHelper 
+#pragma mark - iTermLoggingHelper
 
 // NOTE: This can be called before the task is launched. It is not used when logging plain text.
 - (void)loggingHelperStart:(iTermLoggingHelper *)loggingHelper {
