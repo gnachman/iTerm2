@@ -212,7 +212,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     CGEventFlags maskedFlags = (flags & kCGEventHotKeyModifierMask);
-    DLog(@"masked flags are %@", @(maskedFlags));
+    DLog(@"masked flags are %llx; mask is %llx", (unsigned long long)maskedFlags,
+         (unsigned long long)kCGEventHotKeyModifierMask);
 
     switch (self.modifierActivation) {
         case iTermHotKeyModifierActivationShift:

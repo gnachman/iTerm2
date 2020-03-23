@@ -93,10 +93,21 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 
 - (BOOL)shouldBeEnabled {
     [self pruneReleasedObservers];
-    if (IsSecureEventInputEnabled()) {
+    if (![self allowedByEventTap]) {
+        DLog(@"Event tap %@ not allowed by secure input", self.class);
         return NO;
     }
+    if (@available(macOS 10.13, *)) { } else {
+        if (IsSecureEventInputEnabled()) {
+            DLog(@"macOS 10.12 - returning NO because secure keyboard entry enabled");
+            return NO;
+        }
+    }
     return (self.remappingDelegate != nil) || (self.observers.count > 0);
+}
+
+- (BOOL)allowedByEventTap {
+    return !IsSecureEventInputEnabled();
 }
 
 /*
@@ -307,11 +318,34 @@ error:
 
 - (void)flagsDidChange:(iTermFlagsChangedNotification *)notification {
     if (@available(macOS 10.13, *)) {
-        if (IsSecureEventInputEnabled()) {
-            DLog(@"Injecting flagsChanged event %@ because secure input is on", notification.event);
+        if (_count == 0) {
+            DLog(@"Injecting flagsChanged event %@ because count is 0", notification.event);
             [self handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
+        } else {
+            DLog(@"NOT injecting flagsChanged event because count is %@", @(_count));
         }
+        [self resetCount];
     }
+}
+
+- (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {
+    _count++;
+    DLog(@"Incr count to %@", @(_count));
+    return [super handleEvent:originalEvent ofType:type];
+}
+
+- (void)resetCount {
+    DLog(@"Reset count");
+    _count = 0;
+}
+
+- (BOOL)allowedByEventTap {
+    if (@available(macOS 10.13, *)) {
+        return YES;
+    }
+    // I can't test 10.12 easily and don't want to risk introducing a bug. It
+    // might be OK to return YES here.
+    return [super allowedByEventTap];
 }
 
 #pragma mark - iTermEventTapRemappingDelegate

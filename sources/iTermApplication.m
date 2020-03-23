@@ -29,6 +29,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
+#import "iTermEventTap.h"
 #import "iTermFlagsChangedNotification.h"
 #import "iTermHotKeyController.h"
 #import "iTermModifierRemapper.h"
@@ -400,8 +401,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)handleFlagsChangedEvent:(NSEvent *)event {
     if ([self routeEventToShortcutInputView:event]) {
+        [[iTermFlagsChangedEventTap sharedInstance] resetCount];
         return YES;
     }
+    DLog(@"Posting flags-changed notification for event %@", event);
     [[iTermFlagsChangedNotification notificationWithEvent:event] post];
     return NO;
 }

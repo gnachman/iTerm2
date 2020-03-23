@@ -51,10 +51,13 @@
 // convenience since there are multiple consumers. It is enabled even when the
 // remapping delegate is set to nil.
 @interface iTermFlagsChangedEventTap : iTermEventTap
+// Number of times the event tap fired since -resetCount or initialization.
+@property (nonatomic, readonly) NSInteger count;
 
 // WARNING: This will create the event tap. Use sharedInstanceCreatingIfNeeded: if you don't want
 // it created at all.
 + (instancetype)sharedInstance;
 + (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded;
+- (void)resetCount;
 
 @end
