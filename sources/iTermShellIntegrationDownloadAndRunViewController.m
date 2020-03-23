@@ -41,6 +41,10 @@
     self.textField.stringValue = [NSString stringWithFormat:@"%@\n\n%@", prefix, self.command];
 }
 
+- (void)showShellUnsupportedError {
+    self.textField.stringValue = @"😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.";
+}
+
 - (IBAction)pipeCurlToBash:(id)sender {
     [self.shellInstallerDelegate shellIntegrationInstallerReallyDownloadAndRun];
     self.continueButton.enabled = NO;

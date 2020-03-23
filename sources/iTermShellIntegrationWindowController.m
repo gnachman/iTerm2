@@ -647,9 +647,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self.delegate shellIntegrationWindowControllerSendText:[self curlPipeBashCommand]];
     __weak __typeof(self) weakSelf = self;
 
-    [self expectRegularExpression:@"^Done.$"
+    [self expectRegularExpression:@"(^Done.$)|(^Your shell, .*, is not supported yet)"
                        completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
-        [weakSelf next:nil];
+        if ([captureGroups[0] hasPrefix:@"Your shell"]) {
+            [self.downloadAndRunViewController showShellUnsupportedError];
+        } else {
+            [weakSelf next:nil];
+        }
     }];
 }
 
