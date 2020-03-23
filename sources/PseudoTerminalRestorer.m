@@ -87,10 +87,6 @@ static BOOL gWaitingForFullScreen;
     if (!queuedBlocks) {
         DLog(@"This is the first run of PseudoTerminalRestorer");
         queuedBlocks = [[NSMutableArray alloc] init];
-        [[NSNotificationCenter defaultCenter] addObserver:[PseudoTerminalRestorer class]
-                                                 selector:@selector(runQueuedBlocks)
-                                                     name:kApplicationDidFinishLaunchingNotification
-                                                   object:nil];
     }
     NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
     if (arrangement) {

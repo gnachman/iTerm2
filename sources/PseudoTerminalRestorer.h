@@ -19,4 +19,6 @@
 // Block is run when all windows are restored. It may be run immediately.
 + (void)setRestorationCompletionBlock:(void(^)(void))completion;
 
++ (void)runQueuedBlocks;
+
 @end

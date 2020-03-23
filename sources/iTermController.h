@@ -37,8 +37,6 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
     iTermHotkeyWindowTypeFloatingWindow  // has a higher level than a regular window.
 };
 
-#define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
-
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;

@@ -1132,8 +1132,7 @@ static BOOL hasBecomeActive = NO;
     [self performSelector:@selector(performStartupActivities)
                withObject:nil
                afterDelay:0];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
-                                                        object:nil];
+    [PseudoTerminalRestorer runQueuedBlocks];
 
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidBecomeActive:)
