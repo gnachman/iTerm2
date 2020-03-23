@@ -24,7 +24,7 @@
             <windowStyleMask key="styleMask" texturedBackground="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="513" height="257"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1057"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
             <view key="contentView" id="se5-gp-TjO" customClass="iTermShellIntegrationRootView">
                 <rect key="frame" x="0.0" y="0.0" width="513" height="257"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -480,21 +480,6 @@ DQ
                 <outlet property="view" destination="lU3-F8-nfu" id="PeH-me-M2v"/>
             </connections>
         </viewController>
-        <viewController id="eQF-du-JsL" userLabel="iTermShellIntegrationChooseShellViewController" customClass="iTermShellIntegrationChooseShellViewController">
-            <connections>
-                <outlet property="shellInstallerDelegate" destination="-2" id="Caf-b4-Bf6"/>
-            </connections>
-        </viewController>
-        <viewController id="RZ6-wM-eq7" userLabel="iTermShellIntegrationUpdateDotfileViewController" customClass="iTermShellIntegrationUpdateDotfileViewController">
-            <connections>
-                <outlet property="shellInstallerDelegate" destination="-2" id="abg-CG-GVd"/>
-            </connections>
-        </viewController>
-        <viewController id="LOB-lg-GNX" userLabel="iTermShellIntegrationInstallUtilitiesViewController" customClass="iTermShellIntegrationInstallUtilitiesViewController">
-            <connections>
-                <outlet property="shellInstallerDelegate" destination="-2" id="vbE-IH-wV6"/>
-            </connections>
-        </viewController>
         <viewController id="Pfw-0c-jXm" userLabel="iTermShellIntegrationFinishedViewController" customClass="iTermShellIntegrationFinishedViewController">
             <connections>
                 <outlet property="view" destination="kWX-qb-HtK" id="Mpf-Rp-jLt"/>
@@ -519,7 +504,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="iwC-J2-hbd">
                         <rect key="frame" x="0.0" y="0.0" width="560" height="217"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsCharacterPickerTouchBarItem="NO" textCompletion="NO" id="NAF-vj-inx">
                                 <rect key="frame" x="0.0" y="0.0" width="560" height="217"/>
