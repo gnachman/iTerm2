@@ -43,9 +43,9 @@
 - (NSString *)stringValue {
     NSPasteboard *findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
     if (![[findBoard types] containsObject:NSStringPboardType]) {
-        return nil;
+        return @"";
     }
-    return [findBoard stringForType:NSStringPboardType];
+    return [findBoard stringForType:NSStringPboardType] ?: @"";
 }
 
 - (void)updateObservers {
