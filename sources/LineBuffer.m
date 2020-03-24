@@ -210,6 +210,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             }
             int charsDropped;
             int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
+            if (dropped < 1) {
+                break;
+            }
             totalDropped += dropped;
             droppedChars += charsDropped;
             if ([block isEmpty]) {
