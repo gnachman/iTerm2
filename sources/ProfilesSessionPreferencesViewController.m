@@ -228,13 +228,9 @@
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
-        strongSelf->_configureStatusBar.enabled = (![self.delegate editingTmuxSession] &&
-                                                   [strongSelf boolForKey:KEY_SHOW_STATUS_BAR]);
+        [weakSelf updateStatusBarSettingsEnabled];
     };
+    [weakSelf updateStatusBarSettingsEnabled];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     [self addViewToSearchIndex:_configureStatusBar
@@ -271,7 +267,7 @@
 - (void)updateStatusBarSettingsEnabled {
     const BOOL tmux = [self.delegate editingTmuxSession];
     _statusBarEnabled.enabled = !tmux;
-    _configureStatusBar.enabled = !tmux;
+    _configureStatusBar.enabled = !tmux && [self boolForKey:KEY_SHOW_STATUS_BAR];
 }
 
 - (void)reloadProfile {
