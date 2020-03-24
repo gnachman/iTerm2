@@ -61,10 +61,15 @@
 }
 
 - (BOOL)handleKeyDown:(NSEvent *)event {
-    if (self.dismissOnKeyDown) {
+    const BOOL handled = [self reallyHandleKeyDown:event];
+    if (!handled && self.dismissOnKeyDown) {
         [self dismiss];
         return YES;
     }
+    return handled;
+}
+
+- (BOOL)reallyHandleKeyDown:(NSEvent *)event {
     const NSEventModifierFlags mask = (NSEventModifierFlagOption |
                                        NSEventModifierFlagCommand |
                                        NSEventModifierFlagShift |

@@ -66,6 +66,9 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 
 - (void)offerToTurnOffBracketedPasteOnHostChange;
 
+- (BOOL)shouldAskAboutClearingScrollbackHistory;
+- (void)askAboutClearingScrollbackHistory;
+
 @end
 
 NS_ASSUME_NONNULL_END

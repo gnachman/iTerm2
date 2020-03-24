@@ -30,7 +30,7 @@ static inline id iTermAdvancedSettingsModelInverseTransformBool(BOOL value) {
     return @(value);
 }
 
-static inline BOOL *iTermAdvancedSettingsModelTransformOptionalBool(id object) {
+static inline const BOOL *iTermAdvancedSettingsModelTransformOptionalBool(id object) {
     if (object == nil) {
         return nil;
     } else if ([object boolValue]) {
@@ -42,7 +42,7 @@ static inline BOOL *iTermAdvancedSettingsModelTransformOptionalBool(id object) {
     }
 }
 
-static inline id iTermAdvancedSettingsModelInverseTransformOptionalBool(BOOL *value) {
+static inline id iTermAdvancedSettingsModelInverseTransformOptionalBool(const BOOL *value) {
     if (value == nil) {
         return nil;
     } else if (*value) {
@@ -130,7 +130,7 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTy
 DEFINE_BOILERPLATE(name, BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
 
 #define DEFINE_SETTABLE_OPTIONAL_BOOL(name, capitalizedName, theDefault, theDescription) \
-DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
+DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, const BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
 
 #define DEFINE_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformInt, iTermAdvancedSettingsModelInverseTransformInt)
@@ -293,7 +293,7 @@ DEFINE_BOOL(useColorfgbgFallback, YES, SECTION_TERMINAL @"Use fallback for COLOR
 DEFINE_BOOL(zeroWidthSpaceAdvancesCursor, YES, SECTION_TERMINAL @"Zero-Width Space (U+200B) advances cursor?\nWhile a zero-width space should not advance the cursor per the Unicode spec, both Terminal.app and Konsole do this, and Weechat depends on it. You must restart iTerm2 after changing this setting.");
 DEFINE_BOOL(fullHeightCursor, NO, SECTION_TERMINAL @"Cursor occupies line spacing area.\nIf lines have more than 100% vertical spacing and this setting is enabled the bottom of the cursor will be aligned to the bottom of the spacing area.");
 DEFINE_FLOAT(underlineCursorOffset, 0, SECTION_TERMINAL @"Vertical offset for underline cursor.\nPositive values move it up, negative values move it down.");
-DEFINE_BOOL(preventEscapeSequenceFromClearingHistory, NO, SECTION_TERMINAL @"Prevent CSI 3 J from clearing scrollback history?\nThis is also known as the terminfo E3 capability.");
+DEFINE_SETTABLE_OPTIONAL_BOOL(preventEscapeSequenceFromClearingHistory, PreventEscapeSequenceFromClearingHistory, nil, SECTION_TERMINAL @"Prevent CSI 3 J from clearing scrollback history?\nThis is also known as the terminfo E3 capability.");
 DEFINE_FLOAT(verticalBarCursorWidth, 1, SECTION_TERMINAL @"Width of vertical bar cursor.");
 DEFINE_BOOL(acceptOSC7, YES, SECTION_TERMINAL @"Accept OSC 7 to set username, hostname, and path.");
 DEFINE_BOOL(detectPasswordInput, YES, SECTION_TERMINAL @"Show key at cursor at password prompt?");

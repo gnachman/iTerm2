@@ -274,5 +274,6 @@
                                 size:(NSInteger)size
                        displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL *)promptIfBig;
+- (BOOL)screenShouldClearScrollbackBuffer;
 
 @end

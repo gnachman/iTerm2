@@ -22,6 +22,7 @@ static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifi
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
 static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
 static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
+static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
@@ -348,6 +349,32 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
     }];
 }
 
+- (BOOL)shouldAskAboutClearingScrollbackHistory {
+    return iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory == nil;
+}
+
+- (void)askAboutClearingScrollbackHistory {
+    NSString *message = @"A control sequence attempted to clear scrollback history. Allow this in the future?";
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier
+                                        options:@[ @"Always _Allow", @"Always _Deny" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case 0: {
+                const BOOL value = NO;
+                iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory = &value;
+                break;
+            }
+            case 1: {
+                const BOOL value = YES;
+                iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory = &value;
+                break;
+            }
+        }
+    }];
+}
 
 #pragma mark - Variable Reporting
 

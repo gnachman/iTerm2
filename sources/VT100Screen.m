@@ -3869,7 +3869,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalClearScrollbackBuffer {
-    if (![iTermAdvancedSettingsModel preventEscapeSequenceFromClearingHistory]) {
+    if ([self.delegate screenShouldClearScrollbackBuffer]) {
         [self clearScrollbackBuffer];
     }
 }

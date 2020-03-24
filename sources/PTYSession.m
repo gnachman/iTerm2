@@ -10861,6 +10861,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return allow;
 }
 
+- (BOOL)screenShouldClearScrollbackBuffer {
+    if (self.naggingController.shouldAskAboutClearingScrollbackHistory) {
+        [self.naggingController askAboutClearingScrollbackHistory];
+        return NO;
+    }
+    const BOOL *boolPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory;
+    if (!boolPtr) {
+        return NO;
+    }
+    return !*boolPtr;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }
