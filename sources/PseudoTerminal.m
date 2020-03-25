@@ -9863,6 +9863,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [item setState:currentSession.alertOnNextMark ? NSOnState : NSOffState];
         }
         result = (currentSession != nil);
+    } else if (item.action == @selector(nextMark:) || item.action == @selector(previousMark:)) {
+        NSResponder *firstResponder = self.window.firstResponder;
+        const BOOL isTextView = [firstResponder isKindOfClass:[NSTextView class]];
+        result = !isTextView;
     } else if ([item action] == @selector(selectPaneUp:) ||
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||
