@@ -65,8 +65,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     iTermMultiServerServerOriginatedMessage decodedMessage;
     const int status = iTermMultiServerProtocolParseMessageFromServer(&_message, &decodedMessage);
     if (status) {
+        DLog(@"Failed to decode message from server with status %d", status);
         return nil;
     }
+    DLog(@"Decoded message from server:");
+    iTermMultiServerProtocolLogMessageFromServer(&decodedMessage);
     return [[iTermMultiServerServerOriginatedMessageBox alloc] initWithMessage:decodedMessage];
 }
 
@@ -366,8 +369,12 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     [iTermClientServerProtocolMessageBox withFactory:^BOOL(iTermClientServerProtocolMessage *obj) {
         iTermClientServerProtocolMessageInitialize(obj);
         if (iTermMultiServerProtocolEncodeMessageFromClient(message, obj)) {
+            DLog(@"Failed to encode message from client");
+            iTermMultiServerProtocolLogMessageFromClient(message);
             return NO;
         }
+        DLog(@"Encoded message from from client");
+        iTermMultiServerProtocolLogMessageFromClient(message);
         return YES;
     }];
 

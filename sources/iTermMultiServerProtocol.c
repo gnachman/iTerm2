@@ -7,7 +7,7 @@
 
 #import "iTermMultiServerProtocol.h"
 
-#import "DebugLogging.h"
+#include "DebugLogging.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -451,9 +451,13 @@ int iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOrigin
             status = EncodeTermination(&encoder, &obj->payload.termination);
             break;
     }
-    if (!status) {
+    if (status) {
+        FDLog(LOG_ERR, "Failed to encode message from server:");
+    } else {
         iTermEncoderCommit(&encoder);
+        FDLog(LOG_DEBUG, "Encoded:");
     }
+    iTermMultiServerProtocolLogMessageFromServer(obj);
     return status;
 }
 
@@ -562,7 +566,7 @@ static ssize_t Read(int fd,
             n = read(fd, buffer + offset, length - offset);
         } while (n < 0 && errno == EINTR);
         if (n <= 0) {
-            CLog("read returned %d: %s", n, errno ? strerror(errno) : "EOF");
+            FDLog(LOG_DEBUG, "read returned %d: %s", n, errno ? strerror(errno) : "EOF");
             return n;
         }
         offset += n;
@@ -612,4 +616,134 @@ done:
     }
 
     return status;
+}
+
+static void LogHandshakeRequest(iTermMultiServerRequestHandshake *message) {
+    FDLog(LOG_DEBUG, "Handshake request [maximumProtocolVersion=%d]",
+          message->maximumProtocolVersion);
+}
+
+static void LogLaunchRequest(iTermMultiServerRequestLaunch *message) {
+    FDLog(LOG_DEBUG, "Launch request [path=%s columns=%d rows=%d pixel_width=%d pixel_height=%d isUTF8=%d pwd=%s uniqueId=%lld argc=%d envc=%d]",
+          message->path,
+          message->columns,
+          message->rows,
+          message->pixel_width,
+          message->pixel_height,
+          message->isUTF8,
+          message->pwd,
+          message->uniqueId,
+          message->argc,
+          message->envc);
+    for (int i = 0; i < message->argc; i++) {
+        FDLog(LOG_DEBUG, "  Arg %d for launch request %lld: %s",
+              i, message->uniqueId, message->argv[i]);
+    }
+    for (int i = 0; i < message->envc; i++) {
+        FDLog(LOG_DEBUG, "  Env %d for launch request %lld: %s",
+              i, message->uniqueId, message->envp[i]);
+    }
+}
+
+static void LogWaitRequest(iTermMultiServerRequestWait *message) {
+    FDLog(LOG_DEBUG, "Wait Request [pid=%d removePreemptively=%d]",
+          message->pid, message->removePreemptively);
+}
+
+void
+iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message) {
+    switch (message->type) {
+        case iTermMultiServerRPCTypeHandshake:
+            LogHandshakeRequest(&message->payload.handshake);
+            break;
+
+        case iTermMultiServerRPCTypeLaunch:
+            LogLaunchRequest(&message->payload.launch);
+            break;
+
+        case iTermMultiServerRPCTypeReportChild:
+            // Server-originated, no response.
+            break;
+
+        case iTermMultiServerRPCTypeWait:
+            LogWaitRequest(&message->payload.wait);
+            break;
+
+        case iTermMultiServerRPCTypeTermination:
+            // Server-originated, no response.
+            break;
+    }
+}
+
+static void LogHandshakeResponse(iTermMultiServerResponseHandshake *message) {
+    FDLog(LOG_DEBUG, "Handshake response [protocolVersion=%d numChildren=%d pid=%d]",
+          message->protocolVersion,
+          message->numChildren,
+          message->pid);
+}
+
+static void LogLaunchResponse(iTermMultiServerResponseLaunch *message) {
+    FDLog(LOG_DEBUG, "Launch response [status=%d pid=%d fd=%d uniqueId=%lld tty=%s]",
+          message->status,
+          message->pid,
+          message->fd,
+          message->uniqueId,
+          message->tty);
+}
+
+static void LogReportChild(iTermMultiServerReportChild *message) {
+    FDLog(LOG_DEBUG, "Report child [isLast=%d pid=%d path=%s isUTF8=%d pwd=%s terminated=%d tty=%s fd=%d argc=%d envc=%d]",
+          message->isLast,
+          message->pid,
+          message->path,
+          message->isUTF8,
+          message->pwd,
+          message->terminated,
+          message->tty,
+          message->fd,
+          message->argc,
+          message->envc);
+    for (int i = 0; i < message->argc; i++) {
+        FDLog(LOG_DEBUG, "  Arg %d of child with pid %d: %s",
+              i, message->pid, message->argv[i]);
+    }
+    for (int i = 0; i < message->envc; i++) {
+        FDLog(LOG_DEBUG, "  Env %d of child with pid %d: %s",
+              i, message->pid, message->envp[i]);
+    }
+}
+
+static void LogWaitResponse(iTermMultiServerResponseWait *message) {
+    FDLog(LOG_DEBUG, "Wait response [pid=%d status=%d errorNumber=%d]",
+          message->pid, message->status, message->errorNumber);
+}
+
+static void LogTermination(iTermMultiServerReportTermination *message) {
+    FDLog(LOG_DEBUG, "Report termination [pid=%d]",
+          message->pid);
+}
+
+void
+iTermMultiServerProtocolLogMessageFromServer(iTermMultiServerServerOriginatedMessage *message) {
+    switch (message->type) {
+        case iTermMultiServerRPCTypeHandshake:
+            LogHandshakeResponse(&message->payload.handshake);
+            break;
+
+        case iTermMultiServerRPCTypeLaunch:
+            LogLaunchResponse(&message->payload.launch);
+            break;
+
+        case iTermMultiServerRPCTypeReportChild:
+            LogReportChild(&message->payload.reportChild);
+            break;
+
+        case iTermMultiServerRPCTypeWait:
+            LogWaitResponse(&message->payload.wait);
+            break;
+
+        case iTermMultiServerRPCTypeTermination:
+            LogTermination(&message->payload.termination);
+            break;
+    }
 }

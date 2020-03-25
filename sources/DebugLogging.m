@@ -289,3 +289,10 @@ void ToggleDebugLogging(void) {
         [alert runModal];
     }
 }
+
+void DLogC(const char *format, va_list args) {
+    char *temp = NULL;
+    vasprintf(&temp, format, args);
+    DLog(@"%@", [NSString stringWithUTF8String:temp]);
+    free(temp);
+}

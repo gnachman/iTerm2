@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 
-#include "iTermCLogging.h"
+#include "DebugLogging.h"
 
 typedef union {
     struct cmsghdr cm;

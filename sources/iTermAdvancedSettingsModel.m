@@ -127,7 +127,7 @@ DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, the
 DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
 
 #define DEFINE_OPTIONAL_BOOL(name, theDefault, theDescription) \
-DEFINE_BOILERPLATE(name, BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
+DEFINE_BOILERPLATE(name, const BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)
 
 #define DEFINE_SETTABLE_OPTIONAL_BOOL(name, capitalizedName, theDefault, theDescription) \
 DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, const BOOL *, kiTermAdvancedSettingTypeOptionalBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalBool, iTermAdvancedSettingsModelInverseTransformOptionalBool)

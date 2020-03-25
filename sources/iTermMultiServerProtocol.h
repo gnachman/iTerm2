@@ -253,3 +253,9 @@ iTermMultiServerRead(int fd, iTermClientServerProtocolMessage *message);
 int __attribute__((warn_unused_result))
 iTermMultiServerProtocolGetFileDescriptor(iTermClientServerProtocolMessage *message,
                                           int *receivedFileDescriptorPtr);
+
+void
+iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message);
+
+void
+iTermMultiServerProtocolLogMessageFromServer(iTermMultiServerServerOriginatedMessage *message);

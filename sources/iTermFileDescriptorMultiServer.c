@@ -7,20 +7,20 @@
 
 #include "iTermFileDescriptorMultiServer.h"
 
+#include "iTermCLogging.h"
 #include "iTermFileDescriptorServerShared.h"
 
 #include <Carbon/Carbon.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <sys/un.h>
 
 #ifndef ITERM_SERVER
 #error ITERM_SERVER not defined. Build process is broken.
 #endif
 
-static const char *gMultiServerSocketPath;
+const char *gMultiServerSocketPath;
 
 // On entry there should be three file descriptors:
 // 0: A socket we can accept() on. listen() was already called on it.
@@ -34,18 +34,7 @@ typedef enum {
     iTermMultiServerFileDescriptorInitialRead = 3
 } iTermMultiServerFileDescriptor;
 
-static void DLogImpl(const char *func, const char *file, int line, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    char *temp = NULL;
-    asprintf(&temp, "iTermServer(pid=%d, path=%s) %s:%d %s: %s", getpid(), gMultiServerSocketPath, file, line, func, format);
-    vsyslog(LOG_DEBUG, temp, args);
-    va_end(args);
-    free(temp);
-}
 static int MakeBlocking(int fd);
-
-#define DLog(args...) DLogImpl(__FUNCTION__, __FILE__, __LINE__, args)
 
 #import "iTermFileDescriptorServer.h"
 #import "iTermMultiServerProtocol.h"
@@ -99,7 +88,7 @@ static int GetNumberOfReportableChildren(void) {
 #pragma mark - Mutate Children
 
 static void LogChild(const iTermMultiServerChild *child) {
-    DLog("masterFd=%d, pid=%d, willTerminate=%d, terminated=%d, status=%d, tty=%s", child->masterFd, child->pid, child->willTerminate, child->terminated, child->status, child->tty ?: "(null)");
+    FDLog(LOG_DEBUG, "masterFd=%d, pid=%d, willTerminate=%d, terminated=%d, status=%d, tty=%s", child->masterFd, child->pid, child->willTerminate, child->terminated, child->status, child->tty ?: "(null)");
 }
 
 static void AddChild(const iTermMultiServerRequestLaunch *launch,
@@ -140,14 +129,14 @@ static void AddChild(const iTermMultiServerRequestLaunch *launch,
     children[i].status = 0;
     children[i].tty = strdup(tty);
 
-    DLog("Added child %d:", i);
+    FDLog(LOG_DEBUG, "Added child %d:", i);
     LogChild(&children[i]);
 }
 
 static void FreeChild(int i) {
     assert(i >= 0);
     assert(i < numberOfChildren);
-    DLog("Free child %d", i);
+    FDLog(LOG_DEBUG, "Free child %d", i);
     iTermMultiServerChild *child = &children[i];
     free((char *)child->tty);
     iTermMultiServerClientOriginatedMessageFree(&child->messageWithLaunchRequest);
@@ -158,7 +147,7 @@ static void RemoveChild(int i) {
     assert(i >= 0);
     assert(i < numberOfChildren);
 
-    DLog("Remove child %d", i);
+    FDLog(LOG_DEBUG, "Remove child %d", i);
     if (numberOfChildren == 1) {
         free(children);
         children = NULL;
@@ -176,38 +165,17 @@ static void RemoveChild(int i) {
 
 #pragma mark - Launch
 
-static void Log2DArray(const char *label, const char **p, int count) {
-    for (int i = 0; i < count; i++) {
-        DLog("%s[%d] = %s", label, i, p[i] ?: "(null)");
-    }
-}
-
-static void LogLaunchRequest(const iTermMultiServerRequestLaunch *launch) {
-    DLog("Launch request path=%s size=(%d x %d cells, %d x %d px) utf8=%d pwd=%s uniqueId=%lld:",
-         launch->path ?: "(null)",
-         launch->columns,
-         launch->rows,
-         launch->pixel_width,
-         launch->pixel_height,
-         launch->isUTF8,
-         launch->pwd ?: "(null)",
-         launch->uniqueId);
-    Log2DArray("argv", launch->argv, launch->argc);
-    Log2DArray("environment", launch->envp, launch->envc);
-}
-
 static int Launch(const iTermMultiServerRequestLaunch *launch,
                   iTermForkState *forkState,
                   iTermTTYState *ttyStatePtr,
                   int *errorPtr) {
-    LogLaunchRequest(launch);
     iTermTTYStateInit(ttyStatePtr,
                       iTermTTYCellSizeMake(launch->columns, launch->rows),
                       iTermTTYPixelSizeMake(launch->pixel_width, launch->pixel_height),
                       launch->isUTF8);
     int fd;
     forkState->numFileDescriptorsToPreserve = 3;
-    DLog("Forking...");
+    FDLog(LOG_DEBUG, "Forking...");
     forkState->pid = forkpty(&fd, ttyStatePtr->tty, &ttyStatePtr->term, &ttyStatePtr->win);
     if (forkState->pid == (pid_t)0) {
         // Child
@@ -222,18 +190,15 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
     }
     if (forkState->pid == 1) {
         *errorPtr = errno;
-        DLog("forkpty failed: %s", strerror(errno));
+        FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
         return -1;
     } 
-    DLog("forkpty succeeded. Child pid is %d", forkState->pid);
+    FDLog(LOG_DEBUG, "forkpty succeeded. Child pid is %d", forkState->pid);
     *errorPtr = 0;
     return fd;
 }
 
 static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const char *tty, long long uniqueId) {
-    DLog("Send launch response fd=%d status=%d pid=%d masterFd=%d tty=%d uniqueId=%lld",
-         fd, status, pid, masterFd, tty, uniqueId);
-
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
 
@@ -250,28 +215,28 @@ static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const
     };
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Error encoding launch response");
+        FDLog(LOG_ERR, "Error encoding launch response");
         return -1;
     }
 
     ssize_t result;
     if (masterFd >= 0) {
         // Happy path. Send the file descriptor.
-        DLog("NOTE: sending file descriptor");
+        FDLog(LOG_DEBUG, "NOTE: sending file descriptor");
         result = iTermFileDescriptorServerSendMessageAndFileDescriptor(fd,
                                                                        obj.ioVectors[0].iov_base,
                                                                        obj.ioVectors[0].iov_len,
                                                                        masterFd);
     } else {
         // Error happened. Don't send a file descriptor.
-        DLog("ERROR: *not* sending file descriptor");
+        FDLog(LOG_ERR, "ERROR: *not* sending file descriptor");
         int error;
         result = iTermFileDescriptorServerSendMessage(fd,
                                                       obj.ioVectors[0].iov_base,
                                                       obj.ioVectors[0].iov_len,
                                                       &error);
         if (result < 0) {
-            DLog("SendMsg failed with %s", strerror(error));
+            FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
         }
     }
     iTermClientServerProtocolMessageFree(&obj);
@@ -279,7 +244,7 @@ static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const
 }
 
 static int HandleLaunchRequest(int fd, const iTermMultiServerRequestLaunch *launch) {
-    DLog("HandleLaunchRequest fd=%d", fd);
+    FDLog(LOG_DEBUG, "HandleLaunchRequest fd=%d", fd);
 
     iTermForkState forkState = {
         .connectionFd = -1,
@@ -312,7 +277,7 @@ static int HandleLaunchRequest(int fd, const iTermMultiServerRequestLaunch *laun
 #pragma mark - Report Termination
 
 static int ReportTermination(int fd, pid_t pid) {
-    DLog("Report termination pid=%d fd=%d", (int)pid, fd);
+    FDLog(LOG_DEBUG, "Report termination pid=%d fd=%d", (int)pid, fd);
 
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
@@ -327,7 +292,7 @@ static int ReportTermination(int fd, pid_t pid) {
     };
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Failed to encode termination report");
+        FDLog(LOG_ERR, "Failed to encode termination report");
         return -1;
     }
 
@@ -337,7 +302,7 @@ static int ReportTermination(int fd, pid_t pid) {
                                                           obj.ioVectors[0].iov_len,
                                                           &error);
     if (result < 0) {
-        DLog("SendMsg failed with %s", strerror(error));
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
     }
     iTermClientServerProtocolMessageFree(&obj);
     return result == -1;
@@ -363,7 +328,7 @@ static void PopulateReportChild(const iTermMultiServerChild *child, int isLast, 
 }
 
 static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
-    DLog("Report child fd=%d isLast=%d:", fd, isLast);
+    FDLog(LOG_DEBUG, "Report child fd=%d isLast=%d:", fd, isLast);
     LogChild(child);
 
     iTermClientServerProtocolMessage obj;
@@ -375,7 +340,7 @@ static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
     PopulateReportChild(child, isLast, &message.payload.reportChild);
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Failed to encode report child");
+        FDLog(LOG_ERR, "Failed to encode report child");
         return -1;
     }
 
@@ -385,10 +350,10 @@ static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
                                                                           child->masterFd);
     if (bytes < 0) {
         const int theError = errno;
-        DLog("SendMsg failed with %s", strerror(theError));
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(theError));
         assert(theError != EAGAIN);
     } else {
-        DLog("Reported child successfully");
+        FDLog(LOG_DEBUG, "Reported child successfully");
     }
     iTermClientServerProtocolMessageFree(&obj);
     return bytes < 0;
@@ -397,7 +362,7 @@ static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
 #pragma mark - Termination Handling
 
 static pid_t WaitPidNoHang(pid_t pid, int *statusOut) {
-    DLog("Wait on pid %d", pid);
+    FDLog(LOG_DEBUG, "Wait on pid %d", pid);
     pid_t result;
     do {
         result = waitpid(pid, statusOut, WNOHANG);
@@ -406,42 +371,42 @@ static pid_t WaitPidNoHang(pid_t pid, int *statusOut) {
 }
 
 static int WaitForAllProcesses(int connectionFd) {
-    DLog("WaitForAllProcesses connectionFd=%d", connectionFd);
+    FDLog(LOG_DEBUG, "WaitForAllProcesses connectionFd=%d", connectionFd);
 
-    DLog("Emptying pipe...");
+    FDLog(LOG_DEBUG, "Emptying pipe...");
     ssize_t rc;
     do {
         char c;
         rc = read(gPipe[0], &c, sizeof(c));
     } while (rc > 0 || (rc == -1 && errno == EINTR));
     if (rc < 0 && errno != EAGAIN) {
-        DLog("Read of gPipe[0] failed with %s", strerror(errno));
+        FDLog(LOG_ERR, "Read of gPipe[0] failed with %s", strerror(errno));
     }
-    DLog("Done emptying pipe. Wait on non-terminated children.");
+    FDLog(LOG_DEBUG, "Done emptying pipe. Wait on non-terminated children.");
     for (int i = 0; i < numberOfChildren; i++) {
         if (children[i].terminated) {
             continue;
         }
         const pid_t pid = WaitPidNoHang(children[i].pid, &children[i].status);
         if (pid > 0) {
-            DLog("Child with pid %d exited with status %d", (int)pid, children[i].status);
+            FDLog(LOG_DEBUG, "Child with pid %d exited with status %d", (int)pid, children[i].status);
             children[i].terminated = 1;
             if (!children[i].willTerminate &&
                 connectionFd >= 0 &&
                 ReportTermination(connectionFd, children[i].pid)) {
-                DLog("ReportTermination returned an error");
+                FDLog(LOG_DEBUG, "ReportTermination returned an error");
                 return -1;
             }
         }
     }
-    DLog("Finished making waitpid calls");
+    FDLog(LOG_DEBUG, "Finished making waitpid calls");
     return 0;
 }
 
 #pragma mark - Report Children
 
 static int ReportChildren(int fd) {
-    DLog("Reporting children...");
+    FDLog(LOG_DEBUG, "Reporting children...");
     // Iterate backwards because ReportAndRemoveDeadChild deletes the index passed to it.
     const int numberOfReportableChildren = GetNumberOfReportableChildren();
     int numberSent = 0;
@@ -450,24 +415,24 @@ static int ReportChildren(int fd) {
             continue;
         }
         if (ReportChild(fd, &children[i], numberSent + 1 == numberOfReportableChildren)) {
-            DLog("ReportChild returned an error code");
+            FDLog(LOG_ERR, "ReportChild returned an error code");
             return -1;
         }
         numberSent += 1;
     }
-    DLog("Done reporting children...");
+    FDLog(LOG_DEBUG, "Done reporting children...");
     return 0;
 }
 
 #pragma mark - Handshake
 
 static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) {
-    DLog("Handle handshake maximumProtocolVersion=%d", handshake->maximumProtocolVersion);;
+    FDLog(LOG_DEBUG, "Handle handshake maximumProtocolVersion=%d", handshake->maximumProtocolVersion);;
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
 
     if (handshake->maximumProtocolVersion < iTermMultiServerProtocolVersion1) {
-        DLog("Maximum protocol version is too low: %d", handshake->maximumProtocolVersion);
+        FDLog(LOG_ERR, "Maximum protocol version is too low: %d", handshake->maximumProtocolVersion);
         return -1;
     }
     iTermMultiServerServerOriginatedMessage message = {
@@ -482,21 +447,17 @@ static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) 
     };
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Failed to encode handshake response");
+        FDLog(LOG_ERR, "Failed to encode handshake response");
         return -1;
     }
 
-    DLog("Send handshake response with protocolVersion=%d, numChildren=%d, pid=%d",
-         message.payload.handshake.protocolVersion,
-         message.payload.handshake.numChildren,
-         message.payload.handshake.pid);
     int error;
     ssize_t bytes = iTermFileDescriptorServerSendMessage(fd,
                                                          obj.ioVectors[0].iov_base,
                                                          obj.ioVectors[0].iov_len,
                                                          &error);
     if (bytes < 0) {
-        DLog("SendMsg failed with %s", strerror(error));
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
     }
 
     iTermClientServerProtocolMessageFree(&obj);
@@ -518,7 +479,7 @@ static int GetChildIndexByPID(pid_t pid) {
 }
 
 static int HandleWait(int fd, iTermMultiServerRequestWait *wait) {
-    DLog("Handle wait request for pid=%d preemptive=%d", wait->pid, wait->removePreemptively);
+    FDLog(LOG_DEBUG, "Handle wait request for pid=%d preemptive=%d", wait->pid, wait->removePreemptively);
 
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
@@ -553,21 +514,17 @@ static int HandleWait(int fd, iTermMultiServerRequestWait *wait) {
     };
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Failed to encode wait response");
+        FDLog(LOG_ERR, "Failed to encode wait response");
         return -1;
     }
 
-    DLog("Send wait response with pid=%d status=%d errorNumber=%d",
-         message.payload.wait.pid,
-         message.payload.wait.status,
-         message.payload.wait.errorNumber);
     int error;
     ssize_t bytes = iTermFileDescriptorServerSendMessage(fd,
                                                          obj.ioVectors[0].iov_base,
                                                          obj.ioVectors[0].iov_len,
                                                          &error);
     if (bytes < 0) {
-        DLog("SendMsg failed with %s", strerror(error));
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
     }
 
     iTermClientServerProtocolMessageFree(&obj);
@@ -585,16 +542,22 @@ static int HandleWait(int fd, iTermMultiServerRequestWait *wait) {
 
 static int ReadRequest(int fd, iTermMultiServerClientOriginatedMessage *out) {
     iTermClientServerProtocolMessage message;
-    DLog("Reading a request...");
+    FDLog(LOG_DEBUG, "Reading a request...");
     int status = iTermMultiServerRead(fd, &message);
     if (status) {
-        DLog("Read failed");
+        FDLog(LOG_DEBUG, "Read failed");
         goto done;
     }
 
     memset(out, 0, sizeof(*out));
 
     status = iTermMultiServerProtocolParseMessageFromClient(&message, out);
+    if (status) {
+        FDLog(LOG_ERR, "Parse failed with status %d", status);
+    } else {
+        FDLog(LOG_DEBUG, "Parsed message from client:");
+        iTermMultiServerProtocolLogMessageFromClient(out);
+    }
     iTermClientServerProtocolMessageFree(&message);
 
 done:
@@ -609,7 +572,8 @@ static int ReadAndHandleRequest(int readFd, int writeFd) {
     if (ReadRequest(readFd, &request)) {
         return -1;
     }
-    DLog("Handle request of type %d", (int)request.type);
+    FDLog(LOG_DEBUG, "Handle request of type %d", (int)request.type);
+    iTermMultiServerProtocolLogMessageFromClient(&request);
     int result = 0;
     switch (request.type) {
         case iTermMultiServerRPCTypeHandshake:
@@ -622,10 +586,10 @@ static int ReadAndHandleRequest(int readFd, int writeFd) {
             result = HandleLaunchRequest(writeFd, &request.payload.launch);
             break;
         case iTermMultiServerRPCTypeTermination:
-            DLog("Ignore termination message");
+            FDLog(LOG_ERR, "Ignore termination message");
             break;
         case iTermMultiServerRPCTypeReportChild:
-            DLog("Ignore report child message");
+            FDLog(LOG_ERR, "Ignore report child message");
             break;
     }
     iTermMultiServerClientOriginatedMessageFree(&request);
@@ -635,14 +599,14 @@ static int ReadAndHandleRequest(int readFd, int writeFd) {
 #pragma mark - Core
 
 static void AcceptAndReject(int socket) {
-    DLog("Calling accept()...");
+    FDLog(LOG_DEBUG, "Calling accept()...");
     int fd = iTermFileDescriptorServerAccept(socket);
     if (fd < 0) {
-        DLog("Don't send message: accept failed");
+        FDLog(LOG_ERR, "Don't send message: accept failed");
         return;
     }
 
-    DLog("Received connection attempt while already connected. Send rejection.");
+    FDLog(LOG_DEBUG, "Received connection attempt while already connected. Send rejection.");
 
     iTermMultiServerServerOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeHandshake,
@@ -657,7 +621,7 @@ static void AcceptAndReject(int socket) {
     iTermClientServerProtocolMessageInitialize(&obj);
     const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
     if (rc) {
-        DLog("Failed to encode version-rejected");
+        FDLog(LOG_ERR, "Failed to encode version-rejected");
         goto done;
     }
     int error;
@@ -666,7 +630,7 @@ static void AcceptAndReject(int socket) {
                                                                 obj.ioVectors[0].iov_len,
                                                                 &error);
     if (result < 0) {
-        DLog("SendMsg failed with %s", strerror(error));
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
     }
 
     iTermClientServerProtocolMessageFree(&obj);
@@ -677,21 +641,21 @@ done:
 
 // There is a client connected. Respond to requests from it until it disconnects, then return.
 static void SelectLoop(int acceptFd, int writeFd, int readFd) {
-    DLog("Begin SelectLoop.");
+    FDLog(LOG_DEBUG, "Begin SelectLoop.");
     while (1) {
         static const int fdCount = 3;
         int fds[fdCount] = { gPipe[0], acceptFd, readFd };
         int results[fdCount];
-        DLog("Calling select()");
+        FDLog(LOG_DEBUG, "Calling select()");
         iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, 1 /* wantErrors */);
 
         if (results[2]) {
             // readFd
-            DLog("select: have data to read");
+            FDLog(LOG_DEBUG, "select: have data to read");
             if (ReadAndHandleRequest(readFd, writeFd)) {
-                DLog("ReadAndHandleRequest returned failure code.");
+                FDLog(LOG_DEBUG, "ReadAndHandleRequest returned failure code.");
                 if (results[0]) {
-                    DLog("Client hung up and also have SIGCHLD to deal with. Wait for processes.");
+                    FDLog(LOG_DEBUG, "Client hung up and also have SIGCHLD to deal with. Wait for processes.");
                     WaitForAllProcesses(-1);
                 }
                 break;
@@ -699,18 +663,18 @@ static void SelectLoop(int acceptFd, int writeFd, int readFd) {
         }
         if (results[0]) {
             // gPipe[0]
-            DLog("select: SIGCHLD happened during select");
+            FDLog(LOG_DEBUG, "select: SIGCHLD happened during select");
             if (WaitForAllProcesses(writeFd)) {
                 break;
             }
         }
         if (results[1]) {
             // socketFd
-            DLog("select: socket is readable");
+            FDLog(LOG_DEBUG, "select: socket is readable");
             AcceptAndReject(acceptFd);
         }
     }
-    DLog("Exited select loop.");
+    FDLog(LOG_DEBUG, "Exited select loop.");
     close(writeFd);
 }
 
@@ -725,12 +689,12 @@ static int MakeAndSendPipe(int unixDomainSocketFd) {
 
     const ssize_t rc = iTermFileDescriptorServerSendMessageAndFileDescriptor(unixDomainSocketFd, "", 0, writePipe);
     if (rc == -1) {
-        DLog("Failed to send write file descriptor: %s", strerror(errno));
+        FDLog(LOG_ERR, "Failed to send write file descriptor: %s", strerror(errno));
         close(readPipe);
         readPipe = -1;
     }
 
-    DLog("Sent write end of pipe");
+    FDLog(LOG_DEBUG, "Sent write end of pipe");
     close(writePipe);
     return readPipe;
 }
@@ -741,29 +705,29 @@ static int iTermMultiServerAccept(int socketFd) {
     while (1) {
         int fds[] = { socketFd, gPipe[0] };
         int results[2] = { 0, 0 };
-        DLog("iTermMultiServerAccept calling iTermSelect...");
+        FDLog(LOG_DEBUG, "iTermMultiServerAccept calling iTermSelect...");
         iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, 1);
-        DLog("iTermSelect returned.");
+        FDLog(LOG_DEBUG, "iTermSelect returned.");
         if (results[1]) {
-            DLog("SIGCHLD pipe became readable while waiting for connection. Calling wait...");
+            FDLog(LOG_DEBUG, "SIGCHLD pipe became readable while waiting for connection. Calling wait...");
             WaitForAllProcesses(-1);
-            DLog("Done wait()ing on all children");
+            FDLog(LOG_DEBUG, "Done wait()ing on all children");
         }
         if (results[0]) {
-            DLog("Socket became readable. Calling accept()...");
+            FDLog(LOG_DEBUG, "Socket became readable. Calling accept()...");
             connectionFd = iTermFileDescriptorServerAccept(socketFd);
             if (connectionFd != -1) {
                 break;
             }
         }
-        DLog("accept() returned %d error=%s", connectionFd, strerror(errno));
+        FDLog(LOG_DEBUG, "accept() returned %d error=%s", connectionFd, strerror(errno));
     }
     return connectionFd;
 }
 
 // Alternates between running the select loop and accepting a new connection.
 static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialReadFd) {
-    DLog("Entering main loop.");
+    FDLog(LOG_DEBUG, "Entering main loop.");
     assert(acceptFd >= 0);
     assert(acceptFd != initialWriteFd);
     assert(initialWriteFd >= 0);
@@ -781,23 +745,23 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
 
         if (GetNumberOfReportableChildren() == 0) {
             // Not attached and no children? Quit rather than leave a useless daemon running.
-            DLog("Exiting because no reportable children remain. %d terminating.", numberOfChildren);
+            FDLog(LOG_DEBUG, "Exiting because no reportable children remain. %d terminating.", numberOfChildren);
             return;
         }
 
         // You get here after the connection is lost. Listen and accept.
-        DLog("Calling iTermMultiServerAccept");
+        FDLog(LOG_DEBUG, "Calling iTermMultiServerAccept");
         writeFd = iTermMultiServerAccept(acceptFd);
         if (writeFd == -1) {
-            DLog("iTermMultiServerAccept failed: %s", strerror(errno));
+            FDLog(LOG_ERR, "iTermMultiServerAccept failed: %s", strerror(errno));
             break;
         }
-        DLog("Accept returned a valid file descriptor %d", writeFd);
+        FDLog(LOG_DEBUG, "Accept returned a valid file descriptor %d", writeFd);
         readFd = MakeAndSendPipe(writeFd);
         MakeBlocking(writeFd);
         MakeBlocking(readFd);
     } while (writeFd >= 0 && readFd >= 0);
-    DLog("Returning from MainLoop because of an error.");
+    FDLog(LOG_DEBUG, "Returning from MainLoop because of an error.");
 }
 
 #pragma mark - Bootstrap
@@ -817,7 +781,7 @@ static int MakeBlocking(int fd) {
     do {
         rc = fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
     } while (rc == -1 && errno == EINTR);
-    DLog("MakeBlocking(%d) returned %d (%s)", fd, rc, strerror(errno));
+    FDLog(LOG_DEBUG, "MakeBlocking(%d) returned %d (%s)", fd, rc, strerror(errno));
     return rc == -1;
 }
 
@@ -844,14 +808,14 @@ done:
 
 static int MakePipe(void) {
     if (pipe(gPipe) < 0) {
-        DLog("Failed to create pipe: %s", strerror(errno));
+        FDLog(LOG_ERR, "Failed to create pipe: %s", strerror(errno));
         return 1;
     }
 
     // Make pipes nonblocking
     for (int i = 0; i < 2; i++) {
         if (MakeNonBlocking(gPipe[i])) {
-            DLog("Failed to set gPipe[%d] nonblocking: %s", i, strerror(errno));
+            FDLog(LOG_ERR, "Failed to set gPipe[%d] nonblocking: %s", i, strerror(errno));
             return 2;
         }
     }
@@ -860,10 +824,10 @@ static int MakePipe(void) {
 
 static int InitializeSignals(void) {
     // We get this when iTerm2 crashes. Ignore it.
-    DLog("Installing SIGHUP handler.");
+    FDLog(LOG_DEBUG, "Installing SIGHUP handler.");
     sig_t rc = signal(SIGHUP, SIG_IGN);
     if (rc == SIG_ERR) {
-        DLog("signal(SIGHUP, SIG_IGN) failed with %s", strerror(errno));
+        FDLog(LOG_ERR, "signal(SIGHUP, SIG_IGN) failed with %s", strerror(errno));
         return 1;
     }
 
@@ -871,20 +835,20 @@ static int InitializeSignals(void) {
     sigset_t signal_set;
     sigemptyset(&signal_set);
     sigaddset(&signal_set, SIGCHLD);
-    DLog("Unblocking SIGCHLD.");
+    FDLog(LOG_DEBUG, "Unblocking SIGCHLD.");
     if (sigprocmask(SIG_UNBLOCK, &signal_set, NULL) == -1) {
-        DLog("sigprocmask(SIG_UNBLOCK, &signal_set, NULL) failed with %s", strerror(errno));
+        FDLog(LOG_ERR, "sigprocmask(SIG_UNBLOCK, &signal_set, NULL) failed with %s", strerror(errno));
         return 1;
     }
 
-    DLog("Installing SIGCHLD handler.");
+    FDLog(LOG_DEBUG, "Installing SIGCHLD handler.");
     rc = signal(SIGCHLD, SigChildHandler);
     if (rc == SIG_ERR) {
-        DLog("signal(SIGCHLD, SigChildHandler) failed with %s", strerror(errno));
+        FDLog(LOG_ERR, "signal(SIGCHLD, SigChildHandler) failed with %s", strerror(errno));
         return 1;
     }
 
-    DLog("signals initialized");
+    FDLog(LOG_DEBUG, "signals initialized");
     return 0;
 }
 
@@ -896,7 +860,7 @@ static void InitializeLogging(void) {
 static int Initialize(char *path) {
     InitializeLogging();
 
-    DLog("Server starting Initialize()");
+    FDLog(LOG_DEBUG, "Server starting Initialize()");
 
     if (MakeStandardFileDescriptorsNonBlocking()) {
         return 1;
@@ -953,13 +917,13 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
     signal(SIGPIPE, SIG_IGN);
     int rc = Initialize(path);
     if (rc) {
-        DLog("Initialize failed with code %d", rc);
+        FDLog(LOG_ERR, "Initialize failed with code %d", rc);
     } else {
         MainLoop(path, socketFd, writeFD, readFD);
         // MainLoop never returns, except by dying on a signal.
     }
-    DLog("Cleaning up to exit");
-    DLog("Unlink %s", path);
+    FDLog(LOG_DEBUG, "Cleaning up to exit");
+    FDLog(LOG_DEBUG, "Unlink %s", path);
     unlink(path);
     return 1;
 }
