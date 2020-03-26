@@ -90,9 +90,8 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
 
 
     _trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
-                                                 options:(NSTrackingMouseMoved |
-                                                          NSTrackingActiveAlways |
-                                                          NSTrackingCursorUpdate) owner:self userInfo:nil];
+                                                 options:(NSTrackingMouseMoved | NSTrackingMouseEnteredAndExited |
+                                                          NSTrackingActiveAlways) owner:self userInfo:nil];
     [self addTrackingArea:_trackingArea];
 }
 
@@ -122,6 +121,16 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
 
 - (void)mouseMoved:(NSEvent *)event {
     [self updateSelectedIndexForEvent:event];
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+    _selectedIndex = NSNotFound;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)mouseExited:(NSEvent *)event {
+    _selectedIndex = NSNotFound;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)updateSelectedIndexForEvent:(NSEvent *)event {
@@ -180,7 +189,7 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
     if (0 == _selectedIndex) {
         color = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
     } else {
-        color = self.effectiveAppearance.it_isDark ? [NSColor lightGrayColor] : [NSColor grayColor];
+        color = self.effectiveAppearance.it_isDark ? [NSColor lightGrayColor] : [NSColor colorWithWhite:0.35 alpha:1];
     }
     if (!enabled) {
         color = [color colorWithAlphaComponent:iTermColorsMenuItemViewDisabledAlpha];
