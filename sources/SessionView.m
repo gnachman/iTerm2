@@ -5,6 +5,7 @@
 #import "iTermAnnouncementViewController.h"
 #import "iTermDropDownFindViewController.h"
 #import "iTermFindDriver.h"
+#import "iTermFindPasteboard.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
@@ -305,7 +306,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)loadTemporaryStatusBarFindDriverWithStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
-    NSString *query = self.findDriver.findString ?: @"";
+    NSString *query = [[iTermFindPasteboard sharedInstance] stringValue] ?: @"";
     _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;
     NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
                              iTermStatusBarSearchComponentIsTemporaryKey: @YES };

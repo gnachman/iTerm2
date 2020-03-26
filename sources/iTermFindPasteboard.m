@@ -6,6 +6,8 @@
 //
 
 #import "iTermFindPasteboard.h"
+
+#import "DebugLogging.h"
 #import "iTermSearchQueryDidChangeNotification.h"
 
 #import <Cocoa/Cocoa.h>
@@ -33,6 +35,7 @@
 }
 
 - (void)setStringValue:(NSString *)stringValue {
+    DLog(@"Set string value to %@\n%@", stringValue, [NSThread callStackSymbols]);
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSFindPboard];
     if (pasteboard) {
         [pasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];

@@ -5987,6 +5987,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateForTransparency:self.ptyWindow];
     [self updateDocumentEdited];
+    [[iTermFindPasteboard sharedInstance] updateObservers];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -8157,6 +8158,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
     [self updateToolbeltAppearance];
+    [[iTermFindPasteboard sharedInstance] updateObservers];
 }
 
 - (void)fitWindowToTabs {
@@ -10598,6 +10600,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)showFindPanel:(id)sender {
     [[self currentSession] showFindPanel];
+    [[iTermFindPasteboard sharedInstance] updateObservers];
 }
 
 // findNext and findPrevious are reversed here because in the search UI next
