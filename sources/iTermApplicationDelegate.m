@@ -1507,9 +1507,9 @@ static BOOL hasBecomeActive = NO;
 
 - (void)addMenuItemView:(NSView *)view toMenu:(NSMenu *)menu title:(NSString *)title {
     NSMenuItem *newItem;
-    newItem = [[[NSMenuItem alloc] initWithTitle:title
-                                       action:@selector(changeTabColorToMenuAction:)
-                                keyEquivalent:@""] autorelease];
+    newItem = [[[iTermTabColorMenuItem alloc] initWithTitle:title
+                                                     action:@selector(changeTabColorToMenuAction:)
+                                              keyEquivalent:@""] autorelease];
     [newItem setView:view];
     [menu addItem:newItem];
 }

@@ -6558,6 +6558,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [rootMenu addItem: [NSMenuItem separatorItem]];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                               initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+    PTYTab *tab = [tabViewItem identifier];
+    labelTrackView.currentColor = tab.activeSession.tabColor;
     item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
                                        action:@selector(changeTabColorToMenuAction:)
                                 keyEquivalent:@""] autorelease];
@@ -9935,6 +9937,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return YES;
     } else if (item.action == @selector(performClose:)) {
         return YES;
+    } else if (item.action == @selector(changeTabColorToMenuAction:)) {
+        iTermTabColorMenuItem *colorMenuItem = [iTermTabColorMenuItem castFrom:item];
+        colorMenuItem.colorsView.currentColor = self.currentSession.tabColor;
+        return self.currentSession != nil;
     }
 
     return result;
@@ -10176,7 +10182,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 // Change the tab color to the selected menu color
-- (void)changeTabColorToMenuAction:(id)sender {
+- (IBAction)changeTabColorToMenuAction:(id)sender {
     // If we got here because you right clicked on a tab, use the represented object.
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
