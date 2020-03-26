@@ -27,12 +27,15 @@
 #import <Cocoa/Cocoa.h>
 
 @interface ColorsMenuItemView : NSView
-
+@property(nonatomic, strong) NSColor *currentColor;
 @property(nonatomic, readonly) NSColor *color;
 
-- (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex;
 - (void)drawRect:(NSRect)rect;
 - (void)mouseUp:(NSEvent*) event;
 
+@end
+
+@interface iTermTabColorMenuItem: NSMenuItem
+@property (nonatomic, readonly) ColorsMenuItemView *colorsView;
 @end
 

@@ -36,6 +36,10 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 @implementation NSColor (iTerm)
 
+- (NSString *)shortDescription {
+    return [NSString stringWithFormat:@"(%.2f, %.2f, %.2f)",
+            self.redComponent, self.greenComponent, self.blueComponent];
+}
 + (NSColor *)colorWithString:(NSString *)s {
     if ([s hasPrefix:@"#"] && s.length == 7) {
         return [self colorFromHexString:s];

@@ -31,6 +31,7 @@ static inline float SIMDPerceivedBrightness(vector_float4 x) {
 
 @property(nonatomic, readonly) CGFloat perceivedBrightness;
 @property(nonatomic, readonly) BOOL isDark;
+@property(nonatomic, readonly) NSString *shortDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSString *stringValue;
