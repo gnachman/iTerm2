@@ -474,7 +474,7 @@
     } else {
         textColor = [NSColor labelColor];
     }
-    NSColor* lightColor = [textColor colorWithAlphaComponent:0.4];
+    NSColor* lightColor = [textColor colorWithAlphaComponent:0.7];
     NSDictionary* lightAttributes = @{ NSFontAttributeName: sysFont,
                                        NSForegroundColorAttributeName: lightColor,
                                        NSParagraphStyleAttributeName: paragraphStyle };
