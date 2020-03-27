@@ -37,11 +37,47 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface NSScroller(Private)
+- (void)_setOverlayScrollerState:(unsigned long long)arg1 forceImmediately:(BOOL)arg2;
+@end
+
 @interface PTYScroller()
 @property (nonatomic, retain) iTermScrollAccumulator *accumulator;
 @end
 
 @implementation PTYScroller
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        if (self.scrollerStyle != NSScrollerStyleOverlay) {
+            _ptyScrollerState = PTYScrollerStateLegacy;
+        } else {
+            _ptyScrollerState = PTYScrollerStateOverlayHidden;
+        }
+    }
+    return self;
+}
+
+- (void)_setOverlayScrollerState:(unsigned long long)arg1 forceImmediately:(BOOL)arg2 {
+    if (self.scrollerStyle != NSScrollerStyleOverlay) {
+        _ptyScrollerState = PTYScrollerStateLegacy;
+    } else {
+        switch (arg1) {
+            case 0:
+                _ptyScrollerState = PTYScrollerStateOverlayHidden;
+                break;
+            case 1:
+                _ptyScrollerState = PTYScrollerStateOverlayVisibleNarrow;
+                break;
+            case 2:
+                _ptyScrollerState = PTYScrollerStateOverlayVisibleWide;
+                break;
+        }
+    }
+    [self.ptyScrollerDelegate ptyScrollerDidTransitionToState:_ptyScrollerState];
+    [super _setOverlayScrollerState:arg1 forceImmediately:arg2];
+}
 
 + (BOOL)isCompatibleWithOverlayScrollers {
     return YES;
@@ -91,6 +127,14 @@
 
 - (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
     DLog(@"%@: set scroller style to %@ from\n%@", self, @(scrollerStyle), [NSThread callStackSymbols]);
+
+    if (scrollerStyle != NSScrollerStyleOverlay) {
+        _ptyScrollerState = PTYScrollerStateLegacy;
+    } else {
+        _ptyScrollerState = PTYScrollerStateOverlayHidden;
+    }
+    [self.ptyScrollerDelegate ptyScrollerDidTransitionToState:_ptyScrollerState];
+
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             [self dismemberForScrollerStyle:scrollerStyle];

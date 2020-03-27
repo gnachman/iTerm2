@@ -9,7 +9,6 @@
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
-#import "iTermSearchResultsMinimapView.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
 #import "iTermStatusBarLayout.h"
@@ -33,6 +32,7 @@
 #import "SplitSelectionView.h"
 
 #import <MetalKit/MetalKit.h>
+#import <QuartzCore/QuartzCore.h>
 
 static int nextViewId;
 // NOTE: This must equal iTermStatusBarHeight
@@ -1334,12 +1334,32 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
-    if (@available(macOS 10.14, *)) {
-        const NSRect scrollerFrame = [self convertRect:_scrollview.verticalScroller.bounds
-                                              fromView:_scrollview.verticalScroller];
-        _searchResultsMinimap.frame = NSInsetRect(scrollerFrame, 0, 2);
-    }
+    [self updateSearchResultsMinimapFrameAnimated:NO];
     [_delegate sessionViewScrollViewDidResize];
+}
+
+- (void)updateSearchResultsMinimapFrameAnimated:(BOOL)animated {
+    if (@available(macOS 10.14, *)) {
+        NSRect frame = [self convertRect:_scrollview.verticalScroller.bounds
+                                fromView:_scrollview.verticalScroller];
+        PTYScroller *scroller = [PTYScroller castFrom:self.scrollview.verticalScroller];
+        if (scroller.ptyScrollerState == PTYScrollerStateOverlayVisibleNarrow) {
+            frame.size.width = 11;
+            frame.origin.x += 5;
+        }
+        frame = NSInsetRect(frame, 0, 2);
+
+        if (animated) {
+            [NSView animateWithDuration:5.0 / 60.0
+                             animations:^{
+                [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
+                _searchResultsMinimap.animator.frame = frame;
+            }
+                             completion:nil];
+        } else {
+            _searchResultsMinimap.frame = frame;
+        }
+    }
 }
 
 - (void)setTitle:(NSString *)title {
@@ -1488,6 +1508,30 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)userScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionViewUserScrollDidChange:userScroll];
+}
+
+- (void)ptyScrollerDidTransitionToState:(PTYScrollerState)state {
+    switch (state) {
+        case PTYScrollerStateLegacy:
+            _searchResultsMinimap.alphaValue = 1;
+            [self updateSearchResultsMinimapFrameAnimated:YES];
+            break;
+        case PTYScrollerStateOverlayHidden: {
+            [NSView animateWithDuration:5.0 / 60
+                             animations:^{
+                [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
+                _searchResultsMinimap.animator.alphaValue = 0;
+            }
+                             completion:nil];
+            break;
+        }
+        case PTYScrollerStateOverlayVisibleWide:
+        case PTYScrollerStateOverlayVisibleNarrow: {
+            _searchResultsMinimap.alphaValue = 1;
+            [self updateSearchResultsMinimapFrameAnimated:YES];
+            break;
+        }
+    }
 }
 
 #pragma mark - iTermFindDriverDelegate
