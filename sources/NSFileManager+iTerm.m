@@ -59,8 +59,9 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     NSArray *paths = NSSearchPathForDirectoriesInDomains(searchPathDirectory,
                                                          domainMask,
                                                          YES);
+    DLog(@"Search paths are %@", paths);
     if (!paths.count) {
-        if (errorOut)         {
+        if (errorOut) {
             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"No path found for directory in domain.",
                                         @"NSSearchPathDirectory": @(searchPathDirectory),
                                         @"NSSearchPathDomainMask": @(domainMask) };
@@ -68,6 +69,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                             code:DirectoryLocationErrorNoPathFound
                                         userInfo:userInfo];
         }
+        DLog(@"Fail, no paths");
         return nil;
     }
 
@@ -75,6 +77,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     NSString *resolvedPath = paths[0];
     if (appendComponent) {
         resolvedPath = [resolvedPath stringByAppendingPathComponent:appendComponent];
+        DLog(@"After appending %@, have %@", appendComponent, resolvedPath);
     }
 
     // Create if needed.
@@ -87,12 +90,14 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         if (errorOut) {
             *errorOut = error;
         }
+        DLog(@"Create dir of %@ failed with %@, return nil", resolvedPath, error);
         return nil;
     }
 
     if (errorOut) {
         *errorOut = nil;
     }
+    DLog(@"Return %@", resolvedPath);
     return resolvedPath;
 }
 
@@ -106,6 +111,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     NSString *executableName =
         [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     NSError *error;
+    DLog(@"Want app support directory");
     NSString *result = [self findOrCreateDirectory:NSApplicationSupportDirectory
                                           inDomain:NSUserDomainMask
                                appendPathComponent:executableName
