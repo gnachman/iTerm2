@@ -29,6 +29,7 @@ NSString *kTextmate2Identifier = @"com.macromates.TextMate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
 NSString *kAtomIdentifier = @"com.github.atom";
 NSString *kVSCodeIdentifier = @"com.microsoft.VSCode";
+NSString *kVSCodiumIdentifier = @"com.visualstudio.code.oss";
 NSString *kVSCodeInsidersIdentifier = @"com.microsoft.VSCodeInsiders";
 NSString *kEmacsAppIdentifier = @"org.gnu.Emacs";
 NSString *kIntelliJIDEAIdentifier = @"com.jetbrains.intellij.ce";
@@ -77,7 +78,8 @@ enum {
     kTextmate2Tag,
     kVSCodeTag,
     kVSCodeInsidersTag,
-    kEmacsAppTag
+    kEmacsAppTag,
+    kVSCodiumTag
     // Only append to the end of the list; never delete or change.
 };
 
@@ -120,6 +122,7 @@ enum {
                                kBBEditIdentifier: @"txmt",
                                kAtomIdentifier: @"atom",
                                kVSCodeIdentifier: @"vscode",
+                               kVSCodiumIdentifier: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
                                kEmacsAppIdentifier: @"" };
     return schemes[editor];
@@ -135,6 +138,7 @@ enum {
               kBBEditIdentifier,
               kAtomIdentifier,
               kVSCodeIdentifier,
+              kVSCodiumIdentifier,
               kVSCodeInsidersIdentifier,
               kEmacsAppIdentifier ];
 }
@@ -171,6 +175,7 @@ enum {
                                   kBBEditIdentifier: @(kBBEditTag),
                                     kAtomIdentifier: @(kAtomTag),
                                   kVSCodeIdentifier: @(kVSCodeTag),
+                                kVSCodiumIdentifier: @(kVSCodiumTag),
                           kVSCodeInsidersIdentifier: @(kVSCodeInsidersTag),
                                 kEmacsAppIdentifier: @(kEmacsAppTag) };
     return tags;
@@ -208,6 +213,7 @@ enum {
                                    kBBEditIdentifier: @"BBEdit",
                                      kAtomIdentifier: @"Atom",
                                    kVSCodeIdentifier: @"VS Code",
+                                 kVSCodiumIdentifier: @"VS Codium",
                            kVSCodeInsidersIdentifier: @"VS Code Insiders",
                                  kEmacsAppIdentifier:@"Emacs.app" };
 
@@ -273,6 +279,7 @@ enum {
                                  @(kBBEditTag): kBBEditIdentifier,
                                    @(kAtomTag): kAtomIdentifier,
                                  @(kVSCodeTag): kVSCodeIdentifier,
+                               @(kVSCodiumTag): kVSCodiumIdentifier,
                          @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier,
                                @(kEmacsAppTag): kEmacsAppIdentifier };
     return map[@([[editors_ selectedItem] tag])];

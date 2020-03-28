@@ -220,13 +220,14 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchTaskWithPath:executable arguments:args completion:nil];
 }
 
-- (void)launchVSCodeWithPath:(NSString *)path {
+- (void)launchVSCodeWithPath:(NSString *)path codium:(BOOL)codium {
     assert(path);
     if (!path) {
         // I don't expect this to ever happen.
         return;
     }
-    NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:kVSCodeIdentifier];
+    NSString *identifier = codium ? kVSCodiumIdentifier : kVSCodeIdentifier;
+    NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:identifier];
     if (bundlePath) {
         NSString *codeExecutable =
         [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
@@ -237,7 +238,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             // This isn't as good as opening "code -g" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running VSCode.  We can't
             // use AppleScript because it won't open the file to a particular line number.
-            [self launchAppWithBundleIdentifier:kVSCodeIdentifier path:path];
+            [self launchAppWithBundleIdentifier:identifier path:path];
         }
     }
 }
@@ -328,6 +329,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 + (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
     return @[ kAtomIdentifier,
               kVSCodeIdentifier,
+              kVSCodiumIdentifier,
               kSublimeText2Identifier,
               kSublimeText3Identifier,
               kMacVimIdentifier,
@@ -356,14 +358,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         [self launchAtomWithPath:path];
         return;
     }
-    if ([identifier isEqualToString:kVSCodeIdentifier]) {
+    if ([identifier isEqualToString:kVSCodeIdentifier] ||
+        [identifier isEqualToString:kVSCodiumIdentifier]) {
         if (lineNumber != nil) {
             path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
         }
         if (columnNumber != nil) {
             path = [path stringByAppendingFormat:@":%@", columnNumber];
         }
-        [self launchVSCodeWithPath:path];
+        [self launchVSCodeWithPath:path
+                            codium:[identifier isEqualToString:kVSCodiumIdentifier]];
         return;
     }
     if ([identifier isEqualToString:kSublimeText2Identifier] ||
