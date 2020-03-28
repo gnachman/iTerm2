@@ -100,6 +100,16 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     NSMutableArray<NSString *> *result = [NSMutableArray array];
+    NSArray<NSString *> *parts = [string componentsSeparatedByString:@"."];
+    if (parts.count > 1) {
+        NSString *localname = parts.firstObject;
+        if ([localname length] > 1) {
+            for (NSInteger numberToOmit = 2; numberToOmit < parts.firstObject.numberOfComposedCharacters - 2; numberToOmit++) {
+                [result addObject:[parts.firstObject byTruncatingComposedCharactersInCenter:numberToOmit]];
+            }
+            [result addObject:parts.firstObject];
+        }
+    }
     NSString *prev = nil;
     while (string != nil && (!prev || string.length < prev.length)) {
         [result addObject:string];

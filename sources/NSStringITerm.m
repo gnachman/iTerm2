@@ -1723,6 +1723,38 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return first;
 }
 
+- (NSString *)lastComposedCharacter {
+    __block NSString *substring = nil;
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        substring = [self substringWithRange:range];
+    }];
+    return substring;
+}
+
+- (NSInteger)numberOfComposedCharacters {
+    __block NSInteger count = 0;
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        count += 1;
+    }];
+    return count;
+}
+
+- (NSString *)byTruncatingComposedCharactersInCenter:(NSInteger)numberToOmit {
+    const NSInteger length = self.numberOfComposedCharacters;
+    if (length < numberToOmit + 2) {
+        return nil;
+    }
+    NSMutableArray<NSString *> *characters = [NSMutableArray array];
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        [characters addObject:[self substringWithRange:range]];
+    }];
+    const NSInteger prefixLength = (length - numberToOmit) / 2;
+    NSString *prefix = [[characters subarrayWithRange:NSMakeRange(0, prefixLength)] componentsJoinedByString:@""];
+    const NSInteger suffixLength = length - numberToOmit - prefixLength;
+    NSString *suffix = [[characters subarrayWithRange:NSMakeRange(characters.count - suffixLength, suffixLength)] componentsJoinedByString:@""];
+    return [NSString stringWithFormat:@"%@…%@", prefix, suffix];
+}
+
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
                                     block:(void (^)(NSRange range))block {
     NSRange range = [self rangeOfString:query options:NSBackwardsSearch];

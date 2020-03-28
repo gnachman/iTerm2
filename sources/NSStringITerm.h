@@ -230,6 +230,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               BOOL *stop))block;
 
 - (NSString *)firstComposedCharacter:(NSString **)rest;
+- (NSString *)lastComposedCharacter;
+- (NSInteger)numberOfComposedCharacters;
+- (NSString *)byTruncatingComposedCharactersInCenter:(NSInteger)count;
 
 // It is safe to modify, delete, or insert characters in `range` within `block`.
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
