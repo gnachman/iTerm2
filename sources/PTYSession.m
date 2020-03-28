@@ -8659,7 +8659,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (@available(macOS 10.14, *)) {
         containerSize = _view.frame.size;
     } else {
-        containerSize = view.contentRect.size;
+        containerSize = _view.contentRect.size;
     }
 
     insets.bottom = NSMinY(innerFrame);
