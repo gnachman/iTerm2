@@ -7983,7 +7983,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (CGRect)textViewContainerRect {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-        return self.view.scrollview.frame;
+        if (@available(macOS 10.14, *)) {
+            return self.view.frame;
+        } else {
+            return self.view.scrollview.frame;
+        }
     }
     NSView *container = [self.delegate sessionContainerView:self];
     return [self.view insetRect:container.bounds
@@ -8651,7 +8655,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSEdgeInsets)textViewEdgeInsets {
     NSEdgeInsets insets;
     const NSRect innerFrame = _view.scrollview.frame;
-    const NSSize containerSize = _view.contentRect.size;
+    NSSize containerSize;
+    if (@available(macOS 10.14, *)) {
+        containerSize = _view.frame.size;
+    } else {
+        containerSize = view.contentRect.size;
+    }
 
     insets.bottom = NSMinY(innerFrame);
     insets.top = containerSize.height - NSMaxY(innerFrame);
