@@ -9307,7 +9307,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         decorationSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
     }
 
-    if (@available(macOS 10.15, *)) {} else {
+    if (@available(macOS 10.14, *)) {} else {
         // Add 1px border
         if ([self haveLeftBorder]) {
             ++decorationSize.width;
