@@ -269,9 +269,9 @@ error:
 }
 
 - (void)hostDisconnected {
+    disconnected_ = YES;
     [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];
     [commandQueue_ removeAllObjects];
-    disconnected_ = YES;
 }
 
 // Accessors for objects in the current-command dictionary.
