@@ -28,6 +28,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
+#import "RegexKitLite.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 
@@ -155,6 +156,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                        appendPathComponent:nil
                                                      error:&error];
     NSString *linkName = [iTermAdvancedSettingsModel spacelessApplicationSupport];
+    linkName = [linkName stringByReplacingOccurrencesOfRegex:@"\\s" withString:@""];
+    if (!linkName.length) {
+        linkName = @"ApplicationSupport";
+    }
+
     NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
                                                                    withString:linkName];
     if (linkName.length) {
