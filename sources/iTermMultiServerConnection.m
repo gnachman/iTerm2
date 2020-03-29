@@ -281,7 +281,7 @@
 }
 
 
-- (void)launchWithTTYState:(iTermTTYState *)ttyStatePtr
+- (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd
@@ -300,7 +300,7 @@
                                                argv:argv
                                         environment:newEnviron
                                                 pwd:initialPwd
-                                           ttyState:ttyStatePtr
+                                           ttyState:ttyState
                                            callback:callback];
     }];
 }

@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attachToProcessID:(pid_t)pid
                  callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)callback;
 
-- (void)launchWithTTYState:(iTermTTYState *)ttyStatePtr
+- (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd

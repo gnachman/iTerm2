@@ -105,7 +105,7 @@ typedef struct {
     const char *pwd;
 
     // iTermMultiServerTagLaunchRequestUniqueId
-    long long uniqueId;
+    unsigned long long uniqueId;
 } iTermMultiServerRequestLaunch;
 
 // NOTE: The PTY master file descriptor is also passed with this message.
@@ -122,7 +122,7 @@ typedef struct {
     int fd;
 
     // iTermMultiServerTagLaunchResponseUniqueID
-    long long uniqueId;
+    unsigned long long uniqueId;
 
     // iTermMultiServerTagLaunchResponseTty
     const char *tty;

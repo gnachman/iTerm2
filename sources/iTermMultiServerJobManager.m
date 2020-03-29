@@ -183,7 +183,7 @@ typedef struct {
             assert(NO);
         }];
     }];
-    [conn launchWithTTYState:&forkRequest.ttyState
+    [conn launchWithTTYState:forkRequest.ttyState
                      argpath:forkRequest.argpath.bytes
                         argv:forkRequest.argv
                   initialPwd:forkRequest.initialPwd.bytes

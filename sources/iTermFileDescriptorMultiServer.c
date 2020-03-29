@@ -198,7 +198,7 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
     return fd;
 }
 
-static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const char *tty, long long uniqueId) {
+static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const char *tty, unsigned long long uniqueId) {
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
 

@@ -194,14 +194,14 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                  argv:(const char **)argv
                           environment:(const char **)environment
                                   pwd:(const char *)pwd
-                             ttyState:(iTermTTYState *)ttyStatePtr
+                             ttyState:(iTermTTYState)ttyState
                              callback:(iTermMultiClientLaunchCallback *)callback {
     [_thread dispatchSync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
         [self launchChildWithExecutablePath:path
                                        argv:argv
                                 environment:environment
                                         pwd:pwd
-                                   ttyState:ttyStatePtr
+                                   ttyState:ttyState
                                       state:state
                                    callback:callback];
     }];
@@ -594,11 +594,11 @@ static int LengthOfNullTerminatedPointerArray(const void **array) {
     return i;
 }
 
-static long long MakeUniqueID(void) {
-    long long result = arc4random_uniform(0xffffffff);
+static unsigned long long MakeUniqueID(void) {
+    unsigned long long result = arc4random_uniform(0xffffffff);
     result <<= 32;
     result |= arc4random_uniform(0xffffffff);;
-    return result;
+    return (long long)result;
 }
 
 // Called on job manager's queue via [self launchChildWithExecutablePath:…]
@@ -627,10 +627,10 @@ static long long MakeUniqueID(void) {
                                  argv:(const char **)argv
                           environment:(const char **)environment
                                   pwd:(const char *)pwd
-                             ttyState:(iTermTTYState *)ttyStatePtr
+                             ttyState:(iTermTTYState)ttyState
                                 state:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermMultiClientLaunchCallback *)callback {
-    const long long uniqueID = MakeUniqueID();
+    const unsigned long long uniqueID = MakeUniqueID();
     iTermMultiServerClientOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeLaunch,
         .payload = {
@@ -640,11 +640,11 @@ static long long MakeUniqueID(void) {
                 .argc = LengthOfNullTerminatedPointerArray((const void **)argv),
                 .envp = environment,
                 .envc = LengthOfNullTerminatedPointerArray((const void **)environment),
-                .columns = ttyStatePtr->win.ws_col,
-                .rows = ttyStatePtr->win.ws_row,
-                .pixel_width = ttyStatePtr->win.ws_xpixel,
-                .pixel_height = ttyStatePtr->win.ws_ypixel,
-                .isUTF8 = !!(ttyStatePtr->term.c_iflag & IUTF8),
+                .columns = ttyState.win.ws_col,
+                .rows = ttyState.win.ws_row,
+                .pixel_width = ttyState.win.ws_xpixel,
+                .pixel_height = ttyState.win.ws_ypixel,
+                .isUTF8 = !!(ttyState.term.c_iflag & IUTF8),
                 .pwd = pwd,
                 .uniqueId = uniqueID
             }
