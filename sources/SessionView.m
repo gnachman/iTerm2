@@ -710,7 +710,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    NSRect frame = _scrollview.contentView.frame;
+    NSRect frame;
+    if (@available(macOS 10.14, *)) {
+        frame = self.bounds;
+    } else {
+        frame = _scrollview.contentView.frame;
+    }
     if (self.showBottomStatusBar) {
         frame.origin.y += iTermStatusBarHeight;
     }
