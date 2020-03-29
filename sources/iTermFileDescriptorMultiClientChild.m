@@ -57,6 +57,11 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p pid=%@ fd=%@>", NSStringFromClass(self.class),
+            self, @(self.pid), @(self.fd)];
+}
+
 - (void)willWaitPreemptively {
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
         assert(!_haveSentPreemptiveWait);

@@ -275,6 +275,7 @@
             [callback invokeWithObject:nil];
             return;
         }
+        DLog(@"Attached to pid %@. Remove unattached child", @(pid));
         [state.unattachedChildren removeObject:child];
         [callback invokeWithObject:child];
     }];
@@ -326,6 +327,7 @@
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
                  didDiscoverChild:(iTermFileDescriptorMultiClientChild *)child {
     [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        DLog(@"Discovered child %@. Add to unattached children.", child);
         [state.unattachedChildren addObject:child];
     }];
 }

@@ -53,6 +53,17 @@
     assert(NO);
 }
 
+- (BOOL)closeFileDescriptor {
+    @synchronized (self) {
+        if (self.fd == -1) {
+            return NO;
+        }
+        close(self.fd);
+        self.fd = -1;
+        return YES;
+    }
+}
+
 - (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
                         argpath:(const char *)argpath
                            argv:(const char **)argv
@@ -71,6 +82,7 @@
                                       task:task];
     });
     if (status == iTermJobManagerForkAndExecStatusSuccess) {
+        DLog(@"Register task for pid %@", @(self.childPid));
         [[TaskNotifier sharedInstance] registerTask:task];
     }
     if (completion) {

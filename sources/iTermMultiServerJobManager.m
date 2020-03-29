@@ -154,6 +154,7 @@ typedef struct {
             // Happy path
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[iTermProcessCache sharedInstance] registerTrackedPID:child.pid];
+                DLog(@"Register %@ after server successfully execs job", @(child.pid));
                 [[TaskNotifier sharedInstance] registerTask:task];
                 [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
                 completion(iTermJobManagerForkAndExecStatusSuccess);
@@ -198,6 +199,21 @@ typedef struct {
     }];
     return result;
 }
+
+- (BOOL)closeFileDescriptor {
+    __block BOOL result = NO;
+    [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
+        if (state.child == nil) {
+            result = NO;
+            return;
+        }
+        close(state.child.fd);
+        state.child = nil;
+        result = YES;
+    }];
+    return result;
+}
+
 
 - (BOOL)ioAllowed {
     __block BOOL result = NO;
@@ -274,6 +290,8 @@ typedef struct {
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task
             completion:(void (^)(iTermJobManagerAttachResults))completion {
+    DLog(@"(async) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
+         @(serverConnection.multi.pid), [NSThread callStackSymbols]);
     void (^finish)(iTermFileDescriptorMultiClientChild *) = ^(iTermFileDescriptorMultiClientChild *child) {
         [[iTermThread main] dispatchAsync:^(id  _Nullable state) {
             if (child != nil && !child.hasTerminated) {
@@ -298,6 +316,8 @@ typedef struct {
 - (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
                                  withProcessID:(NSNumber *)thePid
                                           task:(id<iTermTask>)task {
+    DLog(@"(sync) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
+         @(serverConnection.multi.pid), [NSThread callStackSymbols]);
     __block struct {
         BOOL shouldRegister;
         BOOL attached;
@@ -341,6 +361,7 @@ typedef struct {
               withProcessID:(NSNumber *)thePid
                        task:(id<iTermTask>)task
                  completion:(void (^)(iTermFileDescriptorMultiClientChild *))completion {
+    DLog(@"begin attaching to server on socket %@ with pid %@", @(serverConnection.multi.number), @(serverConnection.multi.pid));
     [self.thread dispatchAsync:^(iTermMultiServerJobManagerState * _Nullable state) {
         assert(state.child == nil);
         [self reallyAttachToServer:serverConnection
@@ -355,9 +376,11 @@ typedef struct {
 }
 
 - (void)didAttachToProcess:(pid_t)pid task:(id<iTermTask>)task state:(iTermMainThreadState *)state {
+    DLog(@"Did attach to process with pid %@", @(pid));
     [state check];
 
     [[iTermProcessCache sharedInstance] registerTrackedPID:pid];
+    DLog(@"Register task %@ after attaching", @(pid));
     [[TaskNotifier sharedInstance] registerTask:task];
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
 }
@@ -370,7 +393,7 @@ typedef struct {
     assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
     assert(!state.conn);
     assert(!state.child);
-    DLog(@"Want to attach to %@", @(serverConnection.multi.number));
+    DLog(@"Want to attach to socket %@, child %@", @(serverConnection.multi.number), @(serverConnection.multi.pid));
     iTermCallback *callback = [self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                   iTermResult<iTermMultiServerConnection *> *result) {
         [result handleObject:^(iTermMultiServerConnection * _Nonnull conn) {

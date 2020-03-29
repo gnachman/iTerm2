@@ -97,8 +97,6 @@ static void HandleSigChld(int n) {
 }
 
 - (void)dealloc {
-    [[TaskNotifier sharedInstance] deregisterTask:self];
-
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
@@ -108,7 +106,7 @@ static void HandleSigChld(int n) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
 
-    [self closeFileDescriptor];
+    [self closeFileDescriptorAndDeregisterIfPossible];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
@@ -116,10 +114,12 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p jobManager=%@ tmuxClientProcessID=%@>",
+    return [NSString stringWithFormat:@"<%@: %p jobManager=%@ pid=%@ fd=%@ tmuxClientProcessID=%@>",
             NSStringFromClass([self class]),
             self,
             self.jobManager,
+            @(self.pid),
+            @(self.fd),
             _tmuxClientProcessID];
 }
 
@@ -384,16 +384,7 @@ static void HandleSigChld(int n) {
     // in case the child doesn't die right away.
     [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
 
-    if (self.fd >= 0) {
-        [self closeFileDescriptor];
-        [[TaskNotifier sharedInstance] deregisterTask:self];
-
-        // This isn't an atomic update, but select() should be resilient to
-        // being passed a half-broken fd. We must change it because after this
-        // function returns, a new task may be created with this fd and then
-        // the select thread wouldn't know which task a fd belongs to.
-        self.fd = -1;
-    }
+    [self closeFileDescriptorAndDeregisterIfPossible];
     if (self.isCoprocessOnly) {
         self.coprocessOnlyTaskIsDead = YES;
     }
@@ -588,6 +579,7 @@ static void HandleSigChld(int n) {
 
 - (void)registerAsCoprocessOnlyTask {
     self.isCoprocessOnly = YES;
+    DLog(@"Register pid %@ as coprocess-only task", @(self.pid));
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
@@ -861,9 +853,12 @@ static void HandleSigChld(int n) {
     }
 }
 
-- (void)closeFileDescriptor {
-    if (self.fd != -1) {
-        close(self.fd);
+- (void)closeFileDescriptorAndDeregisterIfPossible {
+    assert(self.jobManager);
+    const int fd = self.fd;
+    if ([self.jobManager closeFileDescriptor]) {
+        DLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
+        [[TaskNotifier sharedInstance] deregisterTask:self];
     }
 }
 

@@ -105,6 +105,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
+// Atomic. Only closes it once. Returns YES if close() called, NO if already closed.
+- (BOOL)closeFileDescriptor;
+
 @end
 
 @interface PTYTask : NSObject<iTermLogging>

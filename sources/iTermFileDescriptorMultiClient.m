@@ -289,7 +289,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     iTermFileDescriptorMultiClientChild *child =
     [[iTermFileDescriptorMultiClientChild alloc] initWithReport:report
                                                          thread:self->_thread];
-    [self addChild:child state:state];
+    [self addChild:child state:state attached:NO];
 }
 
 - (void)closeWithState:(iTermFileDescriptorMultiClientState *)state {
@@ -307,9 +307,13 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 }
 
 - (void)addChild:(iTermFileDescriptorMultiClientChild *)child
-           state:(iTermFileDescriptorMultiClientState *)state {
+           state:(iTermFileDescriptorMultiClientState *)state
+        attached:(BOOL)attached {
+    DLog(@"Add child %@ attached=%@", child, @(attached));
     [state.children addObject:child];
-    [self.delegate fileDescriptorMultiClient:self didDiscoverChild:child];
+    if (!attached) {
+        [self.delegate fileDescriptorMultiClient:self didDiscoverChild:child];
+    }
 }
 
 - (void)readWithState:(iTermFileDescriptorMultiClientState *)state
@@ -800,7 +804,7 @@ static unsigned long long MakeUniqueID(void) {
 
     iTermFileDescriptorMultiClientChild *child = [[iTermFileDescriptorMultiClientChild alloc] initWithReport:&fakeReport
                                                                                                       thread:_thread];
-    [self addChild:child state:state];
+    [self addChild:child state:state attached:YES];
     DLog(@"handleLaunch: Success for pid %@ from %@", @(launch.pid), _socketPath);
     [pendingLaunch.launchCallback invokeWithObject:[iTermResult withObject:child]];
 

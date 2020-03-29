@@ -270,11 +270,15 @@ void UnblockTaskNotifier(void) {
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
         PtyTaskDebugLog(@"Begin cleaning out dead tasks");
+        NSMutableArray<id<iTermTask>> *tasksToDeregister = [NSMutableArray array];
         for (id<iTermTask> theTask in _tasks) {
             if ([theTask fd] < 0) {
                 PtyTaskDebugLog(@"Deregister dead task %@\n", theTask);
-                [self deregisterTask:theTask];
+                [tasksToDeregister addObject:theTask];
             }
+        }
+        for (id<iTermTask> theTask in tasksToDeregister) {
+            [self deregisterTask:theTask];
         }
         // Make a copy because -deregisterTask modifies _coprocessOnlyTasks
         NSArray *coprocessOnlyTasks = [_coprocessOnlyTasks copy];

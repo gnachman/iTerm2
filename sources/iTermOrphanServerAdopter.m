@@ -206,6 +206,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
             }
         };
         dispatch_group_enter(group);
+        DLog(@"Orphan server adopter wants to open session for pid %@ on socket %@", @(child.pid), @(number));
         [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
                                                           inWindow:self->_window
                                                         completion:^(PTYSession *session) {

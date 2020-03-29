@@ -60,6 +60,17 @@
     assert(NO);
 }
 
+- (BOOL)closeFileDescriptor {
+    @synchronized (self) {
+        if (self.fd == -1) {
+            return NO;
+        }
+        close(self.fd);
+        self.fd = -1;
+        return YES;
+    }
+}
+
 - (NSString *)pathToNewUnixDomainSocket {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
     NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
@@ -77,6 +88,7 @@
     // Completion wrapper. NOT called on self.queue because that will deadlock.
     void (^wrapper)(iTermJobManagerForkAndExecStatus) = ^(iTermJobManagerForkAndExecStatus status) {
         if (status == iTermJobManagerForkAndExecStatusSuccess) {
+            DLog(@"Register %@ after fork and exec", @(task.pid));
             [[TaskNotifier sharedInstance] registerTask:task];
         }
         completion(status);
@@ -256,6 +268,7 @@
     dispatch_sync(self.queue, ^{
         [self queueAttachToServer:serverConnection task:task];
     });
+    DLog(@"Register task for %@", pidNumber);
     [[TaskNotifier sharedInstance] registerTask:task];
     if (pidNumber == nil) {
         return results;
