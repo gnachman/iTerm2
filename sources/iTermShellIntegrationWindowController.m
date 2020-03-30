@@ -310,7 +310,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)dotfileCommandWithBashDotfile:(NSString *)bashDotFile {
-    NSString *home_prefix = @"~";
     NSString *shell_and = @"&&";
     NSString *shell_or = @"||";
     NSString *quote = @"";
@@ -327,7 +326,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             break;
         case iTermShellIntegrationShellFish:
             script = @"~/.config/fish/config.fish";
-            home_prefix=@"$HOME";
             shell_and=@"; and";
             shell_or=@"; or";
             break;
@@ -335,7 +333,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             assert(NO);
         }
     NSString *relative_filename = [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
-                                   home_prefix, iTermShellIntegrationShellString(self.shell)];
+                                   self.dotdir, iTermShellIntegrationShellString(self.shell)];
     
     return [NSString stringWithFormat:@"test -e %@%@%@ %@ source %@%@%@ %@ true\n",
             quote, relative_filename, quote, shell_and, quote, relative_filename, quote, shell_or];
@@ -375,6 +373,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 completion:^(NSArray<NSString *> *dotdirCaptures) {
                 completion(shell, dotdirCaptures[1]);
             }];
+        } else if ([shell isEqualToString:@"fish"]) {
+            completion(shell, @"$HOME");
         } else {
             completion(shell, @"~");
         }
