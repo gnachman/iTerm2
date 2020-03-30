@@ -11,6 +11,7 @@
 #import "iTermNotificationController.h"
 #import "iTermObject.h"
 #import "iTermPowerManager.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
@@ -444,6 +445,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              selector:@selector(tmuxDidFetchSetTitlesStringOption:)
                                                  name:kTmuxControllerDidFetchSetTitlesStringOption
                                                object:nil];
+    [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
                                                              destinationPath:iTermVariableKeyTabTitleOverride];
@@ -5581,6 +5583,12 @@ typedef struct {
     }
 
     [self updateTmuxTitleMonitor];
+}
+
+- (void)preferenceDidChange:(iTermPreferenceDidChangeNotification *)notification {
+    if ([notification.key isEqualToString:kPreferenceKeyUseMetal]) {
+        [self updateUseMetal];
+    }
 }
 
 - (void)updateTmuxTitleMonitor {
