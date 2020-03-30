@@ -178,7 +178,16 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, strong) NSImage *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
+
+// For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
+// a background image it will be translucent to effect blending. When subpixel AA is ON or the OS
+// is 10.13 or earlier then this is hidden. It can't be used with subpixel AA because macOS isn't
+// able to take the color it's drawing over into account when choosing the subpixel colors and it
+// looks horrible.
 @property(nonatomic, strong) iTermBackgroundColorView *backgroundColorView NS_AVAILABLE_MAC(10_14);
+
+// How far the metal view extends beyond the visible part of the viewport, such as under the title
+// bar or bottom per-pane status bar.
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;

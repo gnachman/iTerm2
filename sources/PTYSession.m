@@ -4209,7 +4209,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)shouldDrawBackgroundImageManually {
     if (@available(macOS 10.14, *)) {
-        return NO;
+        return !iTermTextIsMonochrome();
     }
     if ([self effectiveBackgroundImage] == nil) {
         return YES;

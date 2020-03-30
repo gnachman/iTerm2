@@ -488,7 +488,10 @@ typedef struct iTermTextColorContext {
                                  _cellSize.height * rows);
         BOOL enableBlending = YES;
         if (@available(macOS 10.14, *)) {
-            enableBlending = NO;
+            // If subpixel AA is enabled, then we want to draw the default background color directly.
+            // Otherwise, we'll disable blending and make it clear. Then the background color view can
+            // do the job.
+            enableBlending = !iTermTextIsMonochrome();
         }
         NSColor *color = [self unprocessedColorForBackgroundRun:run
                                                  enableBlending:enableBlending];
@@ -499,7 +502,7 @@ typedef struct iTermTextColorContext {
 
         [box.backgroundColor set];
         NSRectFillUsingOperation(rect,
-                                 _hasBackgroundImage ? NSCompositingOperationSourceOver : NSCompositingOperationCopy);
+                                 (_hasBackgroundImage && iTermTextIsMonochrome()) ? NSCompositingOperationSourceOver : NSCompositingOperationCopy);
 
         if (_debug) {
             [[NSColor yellowColor] set];
@@ -552,14 +555,20 @@ typedef struct iTermTextColorContext {
                                             isBackground:YES];
         }
 
-        if (defaultBackground && _hasBackgroundImage) {
-            if (enableBlending) {
-                alpha = 1 - _blend;
-            } else {
+        if (defaultBackground) {
+            // We can draw the default background color with a solid-color view under some circumstances.
+            if (_hasBackgroundImage) {
+                if (enableBlending) {
+                    // Don't use the solid-color view to draw the default background color.
+                    alpha = 1 - _blend;
+                } else {
+                    // Use the solid-color view to draw the default background color
+                    alpha = 0;
+                }
+            } else if (!_reverseVideo && !enableBlending) {
+                // Use the solid-color view to draw the default background color
                 alpha = 0;
             }
-        } else if (!_reverseVideo && defaultBackground && !enableBlending) {
-            alpha = 0;
         }
     }
 

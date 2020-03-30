@@ -122,6 +122,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermFindDriver *_temporaryStatusBarFindDriver;
     iTermGenericStatusBarContainer *_genericStatusBarContainer;
     iTermImageView *_imageView NS_AVAILABLE_MAC(10_14);
+
+    // For macOS 10.14+ when subpixel AA is turned on and the scroller style is legacy, this draws
+    // some blended default background color under the vertical scroller. In all other conditions
+    // its frame is 0x0.
+    iTermBackgroundColorView *_legacyScrollerBackgroundView NS_AVAILABLE_MAC(10_14);
 }
 
 + (double)titleHeight {
@@ -158,6 +163,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _backgroundColorView.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height);
             _backgroundColorView.layer.actions = @{@"backgroundColor": [NSNull null]};
             [self addSubview:_backgroundColorView];
+
+            _legacyScrollerBackgroundView = [[iTermBackgroundColorView alloc] init];
+            _legacyScrollerBackgroundView.layer = [[CALayer alloc] init];
+            _legacyScrollerBackgroundView.wantsLayer = YES;
+            _legacyScrollerBackgroundView.frame = NSMakeRect(0, 0, 0, 0);
+            _legacyScrollerBackgroundView.layer.actions = @{@"backgroundColor": [NSNull null]};
+            _legacyScrollerBackgroundView.hidden = YES;
+            [self addSubview:_legacyScrollerBackgroundView];
         }
 
         // Set up find view
@@ -210,6 +223,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                 [self addSubviewBelowFindView:_scrollview.verticalScroller];
                 _scrollview.verticalScroller.frame = [self frameForScroller];
             }
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(scrollerStyleDidChange:)
+                                                         name:@"NSPreferredScrollerStyleDidChangeNotification"
+                                                       object:nil];
         }
     }
     return self;
@@ -249,9 +266,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (color && _metalView.alphaValue < 1) {
             DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
             _backgroundColorView.backgroundColor = color;
-            _backgroundColorView.hidden = NO;
+            _backgroundColorView.hidden = !iTermTextIsMonochrome();
+            _legacyScrollerBackgroundView.backgroundColor = color;
+            _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
         } else {
             _backgroundColorView.hidden = YES;
+            _legacyScrollerBackgroundView.hidden = YES;
         }
         [CATransaction commit];
     }
@@ -264,6 +284,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction setDisableActions:YES];
         _backgroundColorView.transparency = 1 - transparencyAlpha;
         _backgroundColorView.blend = blend;
+        _legacyScrollerBackgroundView.transparency = 1 - transparencyAlpha;
+        _legacyScrollerBackgroundView.blend = blend;
         _imageView.transparency = 1 - transparencyAlpha;
         _imageView.blend = blend;
         [CATransaction commit];
@@ -563,10 +585,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction setDisableActions:YES];
         if (_metalView.alphaValue == 0) {
             _imageView.hidden = (_imageView.image == nil);
-            _backgroundColorView.hidden = NO;
+            _backgroundColorView.hidden = !iTermTextIsMonochrome();
+            _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
         } else {
             _imageView.hidden = YES;
             _backgroundColorView.hidden = YES;
+            _legacyScrollerBackgroundView.hidden = YES;
         }
         [CATransaction commit];
     }
@@ -620,6 +644,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateLayout];
 }
 
+- (NSRect)frameForLegacyScroller {
+    if (!_scrollview.isLegacyScroller) {
+        return NSZeroRect;
+    }
+    return [_scrollview.verticalScroller convertRect:_scrollview.verticalScroller.bounds
+                                              toView:self];
+}
+
+- (void)scrollerStyleDidChange:(NSNotification *)notification {
+    [self updateLayout];
+}
+
 - (void)updateLayout {
     DLog(@"PTYSession begin updateLayout. delegate=%@\n%@", _delegate, [NSThread callStackSymbols]);
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
@@ -639,6 +675,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             [CATransaction setDisableActions:YES];
             _imageView.frame = self.bounds;
             _backgroundColorView.frame = self.bounds;
+            _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
             [CATransaction commit];
         }
     } else {
@@ -678,6 +715,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             [CATransaction setDisableActions:YES];
             _imageView.frame = frame;
             _backgroundColorView.frame = frame;
+            _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
             [CATransaction commit];
         }
     }
@@ -998,9 +1036,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
     // Fill in background color in the area around a scrollview if it's smaller
     // than the session view.
-    // TODO(metal): This will be a performance issue. Use another view with a layer and background color.
     [super drawRect:dirtyRect];
     if (_useMetal && _metalView.alphaValue == 1) {
         [self drawAroundFrame:_metalView.frame dirtyRect:dirtyRect];
@@ -1014,9 +1054,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
         }
         [self drawAroundFrame:frame dirtyRect:dirtyRect];
-    }
-    if (@available(macOS 10.14, *)) {
-        return;
     }
     // 10.13 path: work around issue 6974
     if (_useMetal &&
