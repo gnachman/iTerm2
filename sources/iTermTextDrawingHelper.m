@@ -501,8 +501,7 @@ typedef struct iTermTextColorContext {
         box.backgroundColor = color;
 
         [box.backgroundColor set];
-        NSRectFillUsingOperation(rect,
-                                 (_hasBackgroundImage && iTermTextIsMonochrome()) ? NSCompositingOperationSourceOver : NSCompositingOperationCopy);
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
         if (_debug) {
             [[NSColor yellowColor] set];

@@ -284,8 +284,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [CATransaction setDisableActions:YES];
         _backgroundColorView.transparency = 1 - transparencyAlpha;
         _backgroundColorView.blend = blend;
-        _legacyScrollerBackgroundView.transparency = 1 - transparencyAlpha;
-        _legacyScrollerBackgroundView.blend = blend;
+        if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+            // This is unfortunate but because I can't use an imageview behind everything when
+            // subpixel AA is enabled, I have to draw *something* behind the legacy scrollers.
+            // NSImageView is not equipped to do the job.
+            _legacyScrollerBackgroundView.transparency = 0;
+            _legacyScrollerBackgroundView.blend = 0;
+        } else {
+            _legacyScrollerBackgroundView.transparency = 1 - transparencyAlpha;
+            _legacyScrollerBackgroundView.blend = blend;
+        }
         _imageView.transparency = 1 - transparencyAlpha;
         _imageView.blend = blend;
         [CATransaction commit];

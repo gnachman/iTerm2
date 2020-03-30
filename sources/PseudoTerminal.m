@@ -5901,10 +5901,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)disableBlur
 {
-    id window = [self window];
+    iTermTerminalWindow *window = [self ptyWindow];
     if (nil != window &&
         [window respondsToSelector:@selector(disableBlur)]) {
-        [window disableBlur];
+        __weak __typeof(window) weakWindow = window;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakWindow disableBlur];
+        });
     }
 }
 
@@ -11008,7 +11011,7 @@ backgroundColor:(NSColor *)backgroundColor {
     _contentView.backgroundImage.image = image;
     _contentView.backgroundImage.contentMode = imageMode;
     _contentView.backgroundImage.backgroundColor = backgroundColor;
-    _contentView.backgroundImage.hidden = (image == nil);
+    _contentView.backgroundImage.hidden = !iTermTextIsMonochrome() || (image == nil);
     for (PTYSession *session in self.allSessions) {
         [session.view setNeedsDisplay:YES];
     }

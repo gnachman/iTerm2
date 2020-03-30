@@ -5571,6 +5571,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
+    
     if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonSharedBackgroundImage;
