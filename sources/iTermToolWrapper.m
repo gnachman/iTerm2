@@ -19,7 +19,7 @@ static const CGFloat kRightMargin = 4;
 static const CGFloat kBottomMargin = 8;
 static const CGFloat kButtonSize = 17;
 static const CGFloat kTopMargin = 3;  // Margin above title bar and close button
-static const CGFloat kCloseButtonLeftMargin = 5;
+static const CGFloat kCloseButtonLeftMargin = 2;
 
 @implementation NSView (ToolWrapper)
 
