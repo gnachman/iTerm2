@@ -777,7 +777,10 @@ draggingDidEndOfSplit:(int)clickedOnSplitterIndex
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
-    return -[_delegate growToolbeltBy:-delta];
+    const CGFloat amount = -[_delegate growToolbeltBy:-delta];
+    _menuButton.frame = self.menuButtonFrame;
+    return amount;
+    
 }
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
