@@ -94,9 +94,10 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 
 - (void)relayout {
     NSRect frame = [self frame];
-    _title.frame = NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
+    const CGFloat sideMargin = kCloseButtonLeftMargin + kButtonSize;
+    _title.frame = NSMakeRect(sideMargin,
                               kTopMargin,
-                              frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
+                              frame.size.width - kButtonSize - kRightMargin - sideMargin,
                               kTitleHeight - kTopMargin);
     _closeButton.frame = NSMakeRect(kCloseButtonLeftMargin, kTopMargin, kButtonSize, kButtonSize);
     _container.frame = NSMakeRect(kLeftMargin,
