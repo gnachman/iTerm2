@@ -73,9 +73,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         _scrollView.borderType = NSBezelBorder;
         NSSize contentSize = [_scrollView contentSize];
         [_scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.14, *)) { } else {
-            _scrollView.drawsBackground = NO;
-        }
+        _scrollView.drawsBackground = NO;
 
         _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
@@ -102,7 +100,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
         _actions = [[[iTermActionsModel sharedInstance] actions] copy];
         [_tableView reloadData];
-
+        if (@available(macOS 10.14, *)) {
+            _tableView.backgroundColor = [NSColor clearColor];
+        }
+        
         __weak __typeof(self) weakSelf = self;
         [iTermActionsDidChangeNotification subscribe:self
                                                block:^(iTermActionsDidChangeNotification * _Nonnull notification) {

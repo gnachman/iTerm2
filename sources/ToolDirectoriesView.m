@@ -82,9 +82,7 @@ static const CGFloat kHelpMargin = 5;
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [scrollView_ setBorderType:NSBezelBorder];
-        if (@available(macOS 10.14, *)) { } else {
-            scrollView_.drawsBackground = NO;
-        }
+        scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         NSTableColumn *col;
@@ -100,6 +98,9 @@ static const CGFloat kHelpMargin = 5;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        if (@available(macOS 10.14, *)) {
+            tableView_.backgroundColor = [NSColor clearColor];
+        }
 
         [searchField_ setArrowHandler:tableView_];
 

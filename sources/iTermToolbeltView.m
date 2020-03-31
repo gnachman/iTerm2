@@ -39,6 +39,13 @@ NSString *const iTermToolbeltDidRegisterDynamicToolNotification = @"iTermToolbel
 
 static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbeltProportions";
 
+NS_CLASS_AVAILABLE_MAC(10_14)
+@interface iTermToolbeltVibrantVisualEffectView : NSVisualEffectView
+@end
+
+@implementation iTermToolbeltVibrantVisualEffectView
+@end
+
 @interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
@@ -48,6 +55,7 @@ static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbel
     // Tool name to wrapper
     NSMutableDictionary<NSString *, iTermToolWrapper *> *_tools;
     NSDictionary *_proportions;
+    iTermToolbeltVibrantVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
 }
 
 static NSMutableDictionary *gRegisteredTools;
@@ -217,7 +225,20 @@ static NSString *const kDynamicToolURL = @"URL";
     self = [super initWithFrame:frame];
     if (self) {
         _delegate = delegate;
+        if (@available(macOS 10.14, *)) {
+            _vev = [[[iTermToolbeltVibrantVisualEffectView alloc] init] autorelease];
+            _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+            _vev.material = NSVisualEffectMaterialSidebar;
+            _vev.state = NSVisualEffectStateActive;
+            _vev.frame = self.bounds;
+            _vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            [self addSubview:_vev];
 
+            self.wantsLayer = YES;
+            self.layer = [[[CALayer alloc] init] autorelease];
+            self.layer.backgroundColor = [[self backgroundColor] CGColor];
+        }
+        
         NSArray *items = [iTermToolbeltView configuredTools];
         if (!items) {
             items = [iTermToolbeltView defaultTools];
@@ -260,19 +281,37 @@ static NSString *const kDynamicToolURL = @"URL";
 
 #pragma mark - NSView
 
+- (void)viewDidChangeEffectiveAppearance {
+    if (@available(macOS 10.14, *)) {
+        [self updateColors];
+    }
+}
+
+- (void)updateColors NS_AVAILABLE_MAC(10_14) {
+    if (self.effectiveAppearance.it_isDark) {
+        _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+    } else {
+        // The chartjunk in table views looks horrible when there is a dark
+        // window behind us, so switch to within window blending in light mode.
+        _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+    }
+    self.layer.backgroundColor = [[self backgroundColor] CGColor];
+}
+
+- (void)viewDidMoveToWindow {
+    [super viewDidMoveToWindow];
+    if (@available(macOS 10.14, *)) {
+        [self updateColors];
+    }
+}
+
 - (NSColor *)backgroundColor {
     if (@available(macOS 10.14, *)) {
-        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_COMPACT:
-            case TAB_STYLE_MINIMAL:
-                return [NSColor controlBackgroundColor];
-
-            case TAB_STYLE_LIGHT:
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            case TAB_STYLE_DARK:
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                break;
+        if (self.effectiveAppearance.it_isDark) {
+            return [NSColor clearColor];
+        } else {
+            // See comment in updateColors
+            return [NSColor whiteColor];
         }
     }
 
@@ -304,6 +343,9 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
     [[self backgroundColor] set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];

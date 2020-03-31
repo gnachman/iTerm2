@@ -39,8 +39,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         [listView_ disableArrowHandler];
         [listView_ allowMultipleSelections];
         [listView_.tableView setHeaderView:nil];
-        if (@available(macOS 10.14, *)) { } else {
-            listView_.tableView.enclosingScrollView.drawsBackground = NO;
+        listView_.tableView.enclosingScrollView.drawsBackground = NO;
+        if (@available(macOS 10.14, *)) {
+            listView_.tableView.backgroundColor = [NSColor clearColor];
         }
 
         [self addSubview:listView_];

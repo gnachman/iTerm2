@@ -63,10 +63,8 @@ static const CGFloat kMargin = 4;
         [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.14, *)) { } else {
-            scrollView_.drawsBackground = NO;
-        }
-        
+        scrollView_.drawsBackground = NO;
+
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
@@ -80,6 +78,9 @@ static const CGFloat kMargin = 4;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable];
+        if (@available(macOS 10.14, *)) {
+            tableView_.backgroundColor = [NSColor clearColor];
+        }
 
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
