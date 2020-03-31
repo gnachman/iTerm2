@@ -5,6 +5,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermDragHandleView.h"
+#import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermToolActions.h"
@@ -57,7 +58,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSMutableDictionary<NSString *, iTermToolWrapper *> *_tools;
     NSDictionary *_proportions;
     iTermToolbeltVibrantVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
-    NSButton *_menuButton;
+    iTermHamburgerButton *_menuButton;
 }
 
 static NSMutableDictionary<NSString *, Class> *gRegisteredTools;
@@ -275,13 +276,12 @@ static NSString *const kDynamicToolURL = @"URL";
         _dragHandle.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
         [self addSubview:_dragHandle];
 
-        NSImage *hamburger = [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
-        _menuButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-        _menuButton.bordered = NO;
-        _menuButton.image = hamburger;
-        _menuButton.imagePosition = NSImageOnly;
-        _menuButton.target = self;
-        _menuButton.action = @selector(openMenu:);
+        _menuButton = [[[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
+            NSMenu *menu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
+            [iTermToolbeltView addToolsToMenu:menu];
+            return menu;
+        }] autorelease];
+        [_menuButton setButtonType:NSMomentaryPushInButton];
 
         _menuButton.frame = self.menuButtonFrame;
         [self addSubview:_menuButton];
@@ -383,14 +383,6 @@ static NSString *const kDynamicToolURL = @"URL";
 
 - (BOOL)isFlipped {
     return YES;
-}
-
-#pragma mark - Actions
-
-- (void)openMenu:(id)sender {
-    NSMenu *menu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
-    [self.class addToolsToMenu:menu];
-    [NSMenu popUpContextMenu:menu withEvent:[NSApp currentEvent] forView:sender];
 }
 
 #pragma mark - APIs
