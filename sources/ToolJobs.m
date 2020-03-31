@@ -243,7 +243,8 @@ static const CGFloat kMargin = 4;
         [tableView_ setDelegate:self];
         tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
         tableView_.rowHeight = 15;
-
+        tableView_.headerView = nil;
+        
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         if (@available(macOS 10.14, *)) {
             tableView_.backgroundColor = [NSColor clearColor];
