@@ -56,6 +56,7 @@ static const CGFloat kCloseButtonLeftMargin = 2;
         [_title setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
         [_title setAlignment:NSTextAlignmentCenter];
         [_title setBezeled:NO];
+        _title.lineBreakMode = NSLineBreakByTruncatingTail;
         [self addSubview:_title];
         [_title release];
 
