@@ -101,7 +101,7 @@
 
 - (void)minimalComposer:(nonnull iTermMinimalComposerViewController *)composer
             sendCommand:(nonnull NSString *)command {
-    NSString *string = _minimalViewController.stringValue;
+    NSString *string = composer.stringValue;
     [self dismissMinimalView];
     if (command.length == 0) {
         _saved = string;

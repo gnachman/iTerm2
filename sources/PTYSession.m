@@ -12073,6 +12073,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionRevealActionsTool];
 }
 
+- (void)statusBarResignFirstResponder {
+    [_textview.window makeFirstResponder:_textview];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

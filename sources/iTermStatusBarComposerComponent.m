@@ -168,7 +168,11 @@
 }
 
 - (void)statusBarComposerDidEndEditing:(iTermsStatusBarComposerViewController *)composer {
-    [self.composerDelegate statusBarComposerComponentDidEndEditing:self];
+    if (self.composerDelegate) {
+        [self.composerDelegate statusBarComposerComponentDidEndEditing:self];
+    } else {
+        [self.delegate statusBarComponentResignFirstResponder:self];
+    }
 }
 
 #pragma mark - Notifications
