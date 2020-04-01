@@ -182,6 +182,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenu *_buriedSessions;
     NSMenu *_statusIconBuriedSessions;  // unsafe unretained
     IBOutlet NSMenu *_scriptsMenu;
+    IBOutlet NSMenuItem *_composerMenuItem;
 
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
@@ -339,6 +340,11 @@ static BOOL hasBecomeActive = NO;
         _splitHorizontallyWithCurrentProfile.title = [@"─⃞ " stringByAppendingString:_splitHorizontallyWithCurrentProfile.title];
         _splitVertically.title = [@"│⃞ " stringByAppendingString:_splitVertically.title];
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
+    }
+    if (@available(macOS 10.14, *)) { } else {
+        // It's a pain to test and without proper NSView composition it'll be
+        // next to impossible to beat this thing into submission.
+        [_composerMenuItem.menu removeItem:_composerMenuItem];
     }
 }
 

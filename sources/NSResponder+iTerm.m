@@ -43,4 +43,8 @@ static char iTermIgnoreFirstResponderChangesCountKey;
 - (void)it_scrollWheelMomentum:(NSEvent *)event {
 }
 
+- (BOOL)it_preferredFirstResponder {
+    return NO;
+}
+
 @end

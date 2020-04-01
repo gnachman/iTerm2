@@ -2798,6 +2798,15 @@
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
 		A6A2D6D524331F0600A4DF5B /* iTermHamburgerButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */; };
 		A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */; };
+		A6A2D6D9243453BA00A4DF5B /* iTermComposerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */; };
+		A6A2D6DA243453BA00A4DF5B /* iTermComposerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */; };
+		A6A2D6DE24345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */; };
+		A6A2D6DF24345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */; };
+		A6A2D6E024345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */; };
+		A6A2D6E424345D4000A4DF5B /* iTermMinimalComposerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */; };
+		A6A2D6E524345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
+		A6A2D6E624345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
+		A6A2D6E724345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
 		A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */; };
 		A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
@@ -5889,6 +5898,11 @@
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHamburgerButton.h; sourceTree = "<group>"; };
 		A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermHamburgerButton.m; sourceTree = "<group>"; };
+		A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermComposerManager.h; sourceTree = "<group>"; };
+		A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermComposerManager.m; sourceTree = "<group>"; };
+		A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMinimalComposerViewController.h; sourceTree = "<group>"; };
+		A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMinimalComposerViewController.m; sourceTree = "<group>"; };
+		A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
 		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
@@ -6985,6 +6999,9 @@
 				A67D0D2E1A2EE12A003A8B35 /* PseudoTerminal.xib */,
 				A67D0D2F1A2EE12A003A8B35 /* SplitPanel.xib */,
 				A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */,
+				A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */,
+				A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */,
+				A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";
@@ -9236,6 +9253,8 @@
 				A648DAB32427DE1D00C2FF02 /* iTermFindPasteboard.m */,
 				A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */,
 				A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */,
+				A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */,
+				A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10126,6 +10145,7 @@
 				1D6ED93119AEA20D005A7799 /* CommandHistoryPopup.h in Headers */,
 				A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
 				1D6ED93219AEA20D005A7799 /* TmuxSessionsTable.h in Headers */,
+				A6A2D6DF24345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */,
 				1D6ED93319AEA20D005A7799 /* TmuxControllerRegistry.h in Headers */,
 				1D6ED93419AEA20D005A7799 /* TmuxWindowsTable.h in Headers */,
 				1D6ED93519AEA20D005A7799 /* EquivalenceClassSet.h in Headers */,
@@ -10365,6 +10385,7 @@
 				1DD736411283C2FA009B7829 /* iTermPopupWindowController.h in Headers */,
 				1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */,
 				1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */,
+				A6A2D6DE24345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */,
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
 				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
 				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
@@ -10617,6 +10638,7 @@
 				530AB8A720B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.h in Headers */,
 				5370679521C9D2780088D0F3 /* SIGSigningAlgorithm.h in Headers */,
 				A648DAB42427DE1D00C2FF02 /* iTermFindPasteboard.h in Headers */,
+				A6A2D6D9243453BA00A4DF5B /* iTermComposerManager.h in Headers */,
 				53FF984B20967806008688D7 /* iTermMetalDeviceProvider.h in Headers */,
 				A60C0393208F8B5000FE2F1F /* iTermScriptsMenuController.h in Headers */,
 				A618FFC92245F89900B8FD88 /* iTermStatusBarKnobActionViewController.h in Headers */,
@@ -10846,6 +10868,7 @@
 				A61ED2A920E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h in Headers */,
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
+				A6A2D6E024345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */,
 				A63493F823F2685A0047C31B /* iTermPromise.h in Headers */,
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
 				A648DABE2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.h in Headers */,
@@ -11698,6 +11721,7 @@
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
+				A6A2D6E724345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				A67F61B2214395B70093940A /* graphic_php.png in Resources */,
 				A6E7AE85214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
@@ -12042,6 +12066,7 @@
 				1D44CFA31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png in Resources */,
 				A67F61E2214395D50093940A /* graphic_zip.png in Resources */,
 				1D44D0351CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
+				A6A2D6E624345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				1D44D0281CC7F5A600BE5630 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png in Resources */,
 				A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
@@ -12561,6 +12586,7 @@
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
+				A6A2D6E524345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A66F52C12106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
@@ -13326,6 +13352,7 @@
 				A629F5AF23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m in Sources */,
 				A629F58B23AF38CA00C2F16B /* iTermClickableTextField.m in Sources */,
 				A6BF035921E179680097DA86 /* iTermRecordedVariable.m in Sources */,
+				A6A2D6E424345D4000A4DF5B /* iTermMinimalComposerViewController.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A6A4B2AC2426B70C00184EAC /* iTermKeystrokeFormatter.m in Sources */,
 				A653F03423AB32F800D7979A /* iTermShellIntegrationWindowController.m in Sources */,
@@ -13338,6 +13365,7 @@
 				A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */,
 				A629F59E23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
+				A6A2D6DA243453BA00A4DF5B /* iTermComposerManager.m in Sources */,
 				53A96EE822A48A1A001C2C6F /* iTermTmuxOptionMonitor.m in Sources */,
 				A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */,
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,

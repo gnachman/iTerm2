@@ -7,6 +7,8 @@
 
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "NSEvent+iTerm.h"
+#import "NSResponder+iTerm.h"
+#import "NSView+iTerm.h"
 #import "SolidColorView.h"
 
 @interface iTermComposerView : NSView
@@ -14,12 +16,26 @@
 
 @implementation iTermComposerTextView
 
+- (BOOL)it_preferredFirstResponder {
+    return YES;
+}
+
 - (void)keyDown:(NSEvent *)event {
-    if ([event.characters isEqualToString:@"\r"] && event.it_modifierFlags & NSEventModifierFlagOption) {
-        [self.composerDelegate composerTextViewDidFinish];
+    const BOOL pressedEsc = ([event.characters isEqualToString:@"\x1b"]);
+    const BOOL pressedShiftEnter = ([event.characters isEqualToString:@"\r"] &&
+                                    (event.it_modifierFlags & NSEventModifierFlagShift) == NSEventModifierFlagShift);
+    if (pressedShiftEnter || pressedEsc) {
+        [self.composerDelegate composerTextViewDidFinishWithCancel:pressedEsc];
         return;
     }
     [super keyDown:event];
+}
+
+- (BOOL)resignFirstResponder {
+    if ([self.composerDelegate respondsToSelector:@selector(composerTextViewDidResignFirstResponder)]) {
+        [self.composerDelegate composerTextViewDidResignFirstResponder];
+    }
+    return [super resignFirstResponder];
 }
 
 @end
@@ -42,15 +58,17 @@
 
 - (void )viewDidMoveToWindow {
     [self updateBackgroundView];
+    [super viewDidMoveToWindow];
 }
 
 - (void)updateBackgroundView {
-    NSView *privateView = [[self.window contentView] superview];
-    [_backgroundView removeFromSuperview];
-    _backgroundView = [self newBackgroundViewWithFrame:privateView.bounds];
-    _backgroundView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [privateView addSubview:_backgroundView positioned:NSWindowBelow relativeTo:privateView];
-    [super viewDidMoveToWindow];
+    if ([NSStringFromClass(self.window.class) containsString:@"Popover"]) {
+        NSView *privateView = [[self.window contentView] superview];
+        [_backgroundView removeFromSuperview];
+        _backgroundView = [self newBackgroundViewWithFrame:privateView.bounds];
+        _backgroundView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [privateView addSubview:_backgroundView positioned:NSWindowBelow relativeTo:privateView];
+    }
 }
 
 - (void)setAppearance:(NSAppearance *)appearance {
@@ -70,6 +88,7 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.textView.textColor = [NSColor textColor];
+    self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
 }
 
 @end

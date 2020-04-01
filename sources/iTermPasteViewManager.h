@@ -34,6 +34,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)didStop;
 
+- (void)temporaryRightStatusBarComponentDidBecomeAvailable;
+
 @end
 
 NS_ASSUME_NONNULL_END

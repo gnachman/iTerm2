@@ -119,8 +119,12 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return NO;
 }
 
-- (NSString *)statusBarComponentIdentifier {
++ (NSString *)statusBarComponentIdentifier {
     return [NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)];
+}
+
+- (NSString *)statusBarComponentIdentifier {
+    return [self.class statusBarComponentIdentifier];
 }
 
 - (nullable NSImage *)statusBarComponentIcon {

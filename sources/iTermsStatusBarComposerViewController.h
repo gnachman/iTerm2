@@ -19,15 +19,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<NSString *> *)statusBarComposerSuggestions:(iTermsStatusBarComposerViewController *)composer;
 - (NSFont *)statusBarComposerFont:(iTermsStatusBarComposerViewController *)composer;
 - (BOOL)statusBarComposerShouldForceDarkAppearance:(iTermsStatusBarComposerViewController *)composer;
-
+- (void)statusBarComposerDidEndEditing:(iTermsStatusBarComposerViewController *)composer;
 @end
 
 @interface iTermsStatusBarComposerViewController : NSViewController
 @property (nonatomic, weak) id<iTermsStatusBarComposerViewControllerDelegate> delegate;
+@property (nonatomic, copy) NSString *stringValue;
 
 - (void)setTintColor:(NSColor *)tintColor;
 
 - (void)reloadData;
+- (void)makeFirstResponder;
 
 @end
 

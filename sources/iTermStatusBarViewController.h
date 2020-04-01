@@ -59,6 +59,7 @@ extern const CGFloat iTermStatusBarHeight;
 
 - (void)updateColors;
 - (nullable id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier;
+- (nullable __kindof id<iTermStatusBarComponent>)visibleComponentWithIdentifier:(NSString *)identifier;
 
 @end
 

@@ -103,6 +103,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 - (void)unblock;
 
 - (void)showAdvancedPasteWithFlags:(PTYSessionPasteFlags)flags;
+- (void)temporaryRightStatusBarComponentDidBecomeAvailable;
 
 #pragma mark - Testing
 

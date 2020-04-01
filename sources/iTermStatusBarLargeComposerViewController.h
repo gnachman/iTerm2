@@ -10,7 +10,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermComposerTextViewDelegate<NSObject>
-- (void)composerTextViewDidFinish;
+- (void)composerTextViewDidFinishWithCancel:(BOOL)cancel;
+
+@optional
+- (void)composerTextViewDidResignFirstResponder;
 @end
 
 @interface iTermComposerTextView : NSTextView

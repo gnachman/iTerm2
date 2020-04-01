@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -419,7 +419,7 @@ DQ
                                                 <action selector="toggleMultiLinePasteWarning:" target="201" id="BeA-rG-dNT"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Prompt to Convert Tabs to Spaces when Pasting" identifier="Paste Special.Warn Before Multi-Line Paste" id="GqP-hQ-yD1">
+                                        <menuItem title="Prompt to Convert Tabs to Spaces when Pasting" identifier="Paste Special.Prompt to Convert Tabs to Spaces when Pasting" id="GqP-hQ-yD1">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="promptToConvertTabsToSpacesWhenPasting:" target="201" id="1YE-bw-C1K"/>
@@ -701,6 +701,11 @@ Gw
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="toggleAutoCommandHistory:" target="-1" id="asy-Rr-9Eu"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Composer" keyEquivalent="." identifier="Composer" id="Bhs-45-5yR">
+                                <connections>
+                                    <action selector="compose:" target="-1" id="dCP-co-yhy"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="gzL-UV-S2y">
@@ -1328,6 +1333,7 @@ DQ
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
+                <outlet property="_composerMenuItem" destination="Bhs-45-5yR" id="Od6-HK-qOR"/>
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>

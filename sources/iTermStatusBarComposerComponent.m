@@ -24,6 +24,10 @@
     iTermsStatusBarComposerViewController *_viewController;
 }
 
+- (void)makeFirstResponder {
+    [[self viewController] makeFirstResponder];
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Icon Color:"
@@ -93,6 +97,14 @@
     return [NSSet setWithObject:iTermVariableKeySessionHostname];
 }
 
+- (NSString *)stringValue {
+    return [[self viewController] stringValue];
+}
+
+- (void)setStringValue:(NSString *)stringValue {
+    [[self viewController] setStringValue:stringValue];
+}
+
 #pragma mark - iTermStatusBarComponent
 
 - (nullable NSImage *)statusBarComponentIcon {
@@ -112,11 +124,14 @@
     NSView *view = self.viewController.view;
     const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (@available(macOS 10.14, *)) {
-        if (tabStyle == TAB_STYLE_MINIMAL &&
-            [self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
-            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        if (tabStyle == TAB_STYLE_MINIMAL) {
+            if ([self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
+                view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            } else {
+                view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            }
         } else {
-            view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            view.appearance = nil;
         }
     }
 }
@@ -150,6 +165,10 @@
 
 - (BOOL)statusBarComposerShouldForceDarkAppearance:(iTermsStatusBarComposerViewController *)composer {
     return [self.delegate statusBarComponentTerminalBackgroundColorIsDark:self];
+}
+
+- (void)statusBarComposerDidEndEditing:(iTermsStatusBarComposerViewController *)composer {
+    [self.composerDelegate statusBarComposerComponentDidEndEditing:self];
 }
 
 #pragma mark - Notifications

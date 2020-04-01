@@ -302,6 +302,12 @@ const CGFloat iTermStatusBarHeight = 21;
     }].component;
 }
 
+- (nullable __kindof id<iTermStatusBarComponent>)visibleComponentWithIdentifier:(NSString *)identifier {
+    return [_visibleContainerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
+        return [element.component.statusBarComponentIdentifier isEqual:identifier];
+    }].component;
+}
+
 #pragma mark - iTermStatusBarLayoutDelegate
 
 - (void)statusBarLayoutDidChange:(iTermStatusBarLayout *)layout {

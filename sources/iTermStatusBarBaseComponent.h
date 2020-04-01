@@ -28,6 +28,8 @@ extern const double iTermStatusBarBaseComponentDefaultPriority;
 @property (nonatomic, readonly) NSColor *defaultTextColor;
 @property (nonatomic, readonly) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 
++ (NSString *)statusBarComponentIdentifier;
+
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

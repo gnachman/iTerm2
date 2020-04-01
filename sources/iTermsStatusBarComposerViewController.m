@@ -9,6 +9,7 @@
 
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "NSImage+iTerm.h"
+#import "NSTextField+iTerm.h"
 
 static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermComposerComboBoxDidBecomeFirstResponder";
 
@@ -50,6 +51,14 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     [self reallyReloadData];
 }
 
+- (void)makeFirstResponder {
+    if ([_comboBox textFieldIsFirstResponder]) {
+        [self showPopover:nil];
+        return;
+    }
+    [_comboBox.window makeFirstResponder:_comboBox];
+}
+
 - (void)setTintColor:(NSColor *)tintColor {
     NSImage *image = [NSImage it_imageNamed:@"PopoverIcon" forClass:self.class];
     _button.image = [image it_imageWithTintColor:tintColor];
@@ -61,6 +70,19 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
                                                  name:iTermComposerComboBoxDidBecomeFirstResponder
                                                object:_comboBox];
 }
+
+- (NSString *)stringValue {
+    if (_popover.isShown) {
+        return _popoverVC.textView.string;
+    }
+    return _comboBox.stringValue;
+}
+
+- (void)setStringValue:(NSString *)stringValue {
+    _popoverVC.textView.string = stringValue;
+    _comboBox.stringValue = stringValue;
+}
+
 #pragma mark - Private
 
 - (void)comboBoxDidBecomeFirstResponder:(NSNotification *)notification {
@@ -115,6 +137,18 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     }
 }
 
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    if (!_popover.isShown) {
+        [self.delegate statusBarComposerDidEndEditing:self];
+    }
+}
+
+- (void)cancelOperation:(id)sender {
+    if (!_popover.isShown) {
+        [self.delegate statusBarComposerDidEndEditing:self];
+    }
+}
+
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverDidClose:(NSNotification *)notification {
@@ -141,10 +175,15 @@ doCommandBySelector:(SEL)commandSelector {
 
 #pragma mark - iTermComposerTextViewDelegate
 
-- (void)composerTextViewDidFinish {
-    _comboBox.stringValue = _popoverVC.textView.string ?: @"";
-    [self.delegate statusBarComposer:self sendCommand:_comboBox.stringValue];
-    _popoverVC.textView.string = @"";
+- (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {
+    NSString *string = cancel ? @"" : _popoverVC.textView.string;
+    if (cancel) {
+        [_popover close];
+    } else {
+        _comboBox.stringValue = string ?: @"";
+        [self.delegate statusBarComposer:self sendCommand:string];
+        _popoverVC.textView.string = @"";
+    }
 }
 
 @end

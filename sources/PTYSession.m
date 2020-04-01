@@ -23,6 +23,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
+#import "iTermComposerManager.h"
 #import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermController.h"
 #import "iTermCopyModeHandler.h"
@@ -286,6 +287,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermBadgeLabelDelegate,
     iTermCoprocessDelegate,
     iTermCopyModeHandlerDelegate,
+    iTermComposerManagerDelegate,
     iTermHotKeyNavigableSession,
     iTermLogging,
     iTermMetaFrustrationDetector,
@@ -561,6 +563,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermProcessInfo *_lastProcessInfo;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
+    iTermComposerManager *_composerManager;
 }
 
 @synthesize isDivorced = _divorced;
@@ -915,6 +918,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermWebSocketCookieJar sharedInstance] removeCookie:_reusableCookie];
         [_reusableCookie release];
     }
+    [_composerManager release];
 
     [super dealloc];
 }
@@ -5299,6 +5303,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)showFindPanel {
     [_view showFindUI];
+}
+
+- (void)compose {
+    if (!_composerManager) {
+        _composerManager = [[iTermComposerManager alloc] init];
+        _composerManager.delegate = self;
+    }
+    [_composerManager reveal];
 }
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
@@ -11286,6 +11298,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {
+    [_composerManager layout];
+    
     // We won't automatically layout the session view's descendents for tmux
     // tabs. Instead the change gets reported to the tmux server and it will
     // send us a new layout.
@@ -12583,6 +12597,33 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerDisableBracketedPasteMode {
     self.terminal.bracketedPasteMode = NO;
+}
+
+#pragma mark - iTermComposerManagerDelegate
+
+- (iTermStatusBarViewController *)composerManagerStatusBarViewController:(iTermComposerManager *)composerManager {
+    return _statusBarViewController;
+}
+
+- (iTermVariableScope *)composerManagerScope:(iTermComposerManager *)composerManager {
+    return self.variablesScope;
+}
+
+- (NSView *)composerManagerContainerView:(iTermComposerManager *)composerManager {
+    return _view;
+}
+
+- (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
+    [_pasteHelper temporaryRightStatusBarComponentDidBecomeAvailable];
+    [_textview.window makeFirstResponder:_textview];
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {
+    [self writeTask:command];
+}
+
+- (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
+    [_textview.window makeFirstResponder:_textview];
 }
 
 @end

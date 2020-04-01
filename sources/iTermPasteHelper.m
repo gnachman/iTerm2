@@ -510,6 +510,10 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 }
 
+- (void)temporaryRightStatusBarComponentDidBecomeAvailable {
+    [_pasteViewManager temporaryRightStatusBarComponentDidBecomeAvailable];
+}
+
 - (void)pasteLiteralEventUnconditionallyImmediately:(PasteEvent *)pasteEvent {
     [_buffer appendString:pasteEvent.string];
 

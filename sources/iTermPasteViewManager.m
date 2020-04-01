@@ -51,6 +51,13 @@ NS_ASSUME_NONNULL_BEGIN
     return _component ? _component.remainingLength : _dropDownViewController.remainingLength;
 }
 
+- (void)temporaryRightStatusBarComponentDidBecomeAvailable {
+    if (!_component) {
+        return;
+    }
+    _statusBarController.temporaryRightComponent = _component;
+}
+
 #pragma mark - Status bar
 
 - (void)showInStatusBar:(iTermStatusBarViewController *)statusBar {

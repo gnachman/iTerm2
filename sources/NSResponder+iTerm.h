@@ -16,5 +16,6 @@
 // For inscrutable reasons scrollWheel: is not called for "changed" or "ended" momentum phases.
 - (BOOL)it_wantsScrollWheelMomentumEvents;
 - (void)it_scrollWheelMomentum:(NSEvent *)event;
+- (BOOL)it_preferredFirstResponder;
 
 @end

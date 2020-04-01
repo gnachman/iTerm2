@@ -82,6 +82,7 @@
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSResponder+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
@@ -3477,9 +3478,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
-    [self performSelector:@selector(makeCurrentSessionFirstResponder)
-               withObject:nil
-               afterDelay:0];
+    if (!self.window.firstResponder.it_preferredFirstResponder) {
+        [self performSelector:@selector(makeCurrentSessionFirstResponder)
+                   withObject:nil
+                   afterDelay:0];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
@@ -3494,8 +3497,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.currentSession.view.findDriver owningViewDidBecomeFirstResponder];
 }
 
-- (void)makeCurrentSessionFirstResponder
-{
+- (void)makeCurrentSessionFirstResponder {
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
@@ -10215,6 +10217,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [aSession setTabColor:color];
     }
     [self updateTabColors];
+}
+
+- (IBAction)compose:(id)sender {
+    [self.currentSession compose];
 }
 
 // Close this window.

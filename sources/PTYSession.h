@@ -858,6 +858,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)didUpdatePromptLocation;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
+- (void)compose;
 
 #pragma mark - API
 
