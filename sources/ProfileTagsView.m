@@ -8,9 +8,8 @@
 
 #import "ProfileTagsView.h"
 #import "DebugLogging.h"
+#import "NSTextField+iTerm.h"
 #import "ProfileModel.h"
-
-static const CGFloat kRowHeight = 21;
 
 @interface ProfileTagsView ()
 @property(nonatomic, retain) NSScrollView *scrollView;
@@ -20,7 +19,9 @@ static const CGFloat kRowHeight = 21;
 @property(nonatomic, retain) NSArray *cache;
 @end
 
-@implementation ProfileTagsView
+@implementation ProfileTagsView {
+    NSFont *_font;
+}
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -40,17 +41,13 @@ static const CGFloat kRowHeight = 21;
 
         NSRect tableViewFrame = NSMakeRect(0, 0, tableViewSize.width, tableViewSize.height);
         _tableView = [[NSTableView alloc] initWithFrame:tableViewFrame];
-        _tableView.rowHeight = kRowHeight;
-        _tableView.selectionHighlightStyle = NSTableViewSelectionHighlightStyleSourceList;
         _tableView.allowsColumnResizing = NO;
         _tableView.allowsColumnReordering = NO;
         _tableView.allowsColumnSelection = NO;
         _tableView.allowsEmptySelection = YES;
         _tableView.allowsMultipleSelection = YES;
         _tableView.allowsTypeSelect = YES;
-        if (@available(macOS 10.14, *)) {
-            _tableView.backgroundColor = [NSColor controlBackgroundColor];
-        } else {
+        if (@available(macOS 10.14, *)) { } else {
             _tableView.backgroundColor = [NSColor whiteColor];
         }
 
@@ -102,11 +99,26 @@ static const CGFloat kRowHeight = 21;
     return [[self sortedIndentedTags] count];
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex {
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    static NSString *const identifier = @"ProfileTagIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        if (_font) {
+            result.font = _font;
+        } else {
+            result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        }
+    }
+
     NSArray *tuples = [self sortedIndentedTags];
-    return tuples[rowIndex][0];
+    NSString *value = tuples[row][0];
+    result.stringValue = value;
+    result.toolTip = value;
+
+    return result;
 }
 
 #pragma mark - Notifications
@@ -182,9 +194,7 @@ static const CGFloat kRowHeight = 21;
 }
 
 - (void)setFont:(NSFont *)theFont {
-    for (NSTableColumn *col in [_tableView tableColumns]) {
-        [[col dataCell] setFont:theFont];
-    }
+    _font = theFont;
     NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
     [_tableView setRowHeight:[layoutManager defaultLineHeightForFont:theFont]];
 }
