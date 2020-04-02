@@ -37,7 +37,30 @@
 
 @end
 
-@implementation MinimalPasteView
+@implementation MinimalPasteView {
+    NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+}
+
+- (void)awakeFromNib {
+    if (@available(macOS 10.14, *)) {
+        _vev = [[NSVisualEffectView alloc] initWithFrame:NSInsetRect(self.bounds, 9, 9)];
+        _vev.wantsLayer = YES;
+        _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        _vev.material = NSVisualEffectMaterialSheet;
+        _vev.state = NSVisualEffectStateActive;
+        _vev.layer.cornerRadius = 6;
+        _vev.layer.borderColor = [[NSColor grayColor] CGColor];
+        _vev.layer.borderWidth = 1;
+        [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
+    }
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    if (@available(macOS 10.14, *)) {
+        _vev.frame = NSInsetRect(self.bounds, 9, 9);
+    }
+}
 
 - (void)resetCursorRects {
     NSCursor *arrow = [NSCursor arrowCursor];
@@ -46,6 +69,9 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
     [[NSColor clearColor] set];
     NSRectFill(dirtyRect);
 
@@ -54,13 +80,8 @@
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:bounds
                                                          xRadius:radius
                                                          yRadius:radius];
-    if (@available(macOS 10.14, *)) {
-        [[NSColor controlBackgroundColor] set];
-        [path fill];
-    } else {
-        [[NSColor controlColor] set];
-        [path fill];
-    }
+    [[NSColor controlColor] set];
+    [path fill];
 
     [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
     [path setLineWidth:0.25];
