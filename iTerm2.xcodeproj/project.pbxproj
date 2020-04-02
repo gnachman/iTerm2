@@ -3773,6 +3773,8 @@
 		A6FF3F2D242C6D3B003CCB03 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
 		A6FF3F2E2435BA35003CCB03 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
 		A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
+		A6FF3F322435C8E5003CCB03 /* iTermSplitViewAnimation.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */; };
+		A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
@@ -6379,6 +6381,8 @@
 		A6FEA2851CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesWindowController.h; sourceTree = "<group>"; };
 		A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesWindowController.m; sourceTree = "<group>"; };
 		A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHotkeyPreferencesWindowController.xib; sourceTree = "<group>"; };
+		A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSplitViewAnimation.h; sourceTree = "<group>"; };
+		A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSplitViewAnimation.m; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
@@ -9255,6 +9259,8 @@
 				A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */,
 				A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */,
 				A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */,
+				A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */,
+				A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10813,6 +10819,7 @@
 				53E8F36F2244A58800F3770F /* iTermActionsModel.h in Headers */,
 				A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				5365206D21433E9C003C58FD /* iTermGitCache.h in Headers */,
+				A6FF3F322435C8E5003CCB03 /* iTermSplitViewAnimation.h in Headers */,
 				A63935952103FD8B00A16D1C /* iTermMemoryUtilization.h in Headers */,
 				A695CA7F213DAA8500486440 /* iTermLocalHostNameGuesser.h in Headers */,
 				A6DBC03C2003479400F1466D /* iTermImageRenderer.h in Headers */,
@@ -13319,6 +13326,7 @@
 				53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */,
 				A69C93452121140100531438 /* iTermStatusBarLargeComposerViewController.m in Sources */,
 				A63493F923F2685A0047C31B /* iTermPromise.m in Sources */,
+				A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,

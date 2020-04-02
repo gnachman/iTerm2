@@ -25,6 +25,7 @@
 #import "ProfileListView.h"
 
 #import "DebugLogging.h"
+#import "iTermSplitViewAnimation.h"
 #import "ITAddressBookMgr.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -1178,8 +1179,6 @@ const CGFloat kDefaultTagsWidth = 80;
     if (open == self.tagsVisible) {
         return;
     }
-    NSRect newTableFrame = tableView_.frame;
-    NSRect newTagsFrame = tagsView_.frame;
     CGFloat newTagsWidth;
     if (open) {
         newTagsWidth = lastTagsWidth_;
@@ -1187,14 +1186,16 @@ const CGFloat kDefaultTagsWidth = 80;
         lastTagsWidth_ = tagsView_.frame.size.width;
         newTagsWidth = 0;
     }
-    newTableFrame.size.width =  self.frame.size.width - newTagsWidth;
-    newTagsFrame.size.width = newTagsWidth;
+    const CGFloat oldDividerPosition = NSWidth(tagsView_.frame);
     if (animated) {
-        [tagsView_.animator setFrame:newTagsFrame];
-        [tableView_.animator setFrame:newTableFrame];
+        [[[[iTermSplitViewAnimation alloc] initWithSplitView:splitView_
+                                              dividerAtIndex:0
+                                                        from:oldDividerPosition
+                                                          to:newTagsWidth
+                                                    duration:0.125
+                                                  completion:nil] autorelease] startAnimation];
     } else {
-        tagsView_.frame = newTagsFrame;
-        tableView_.frame = newTableFrame;
+        [splitView_.animator setPosition:newTagsWidth ofDividerAtIndex:0];
     }
 }
 
