@@ -24,6 +24,7 @@
 #import "ToolPasteHistory.h"
 #import "ToolProfiles.h"
 #import "ToolWebView.h"
+#import <QuartzCore/QuartzCore.h>
 
 NSString *const kActionsToolName = @"Actions";
 NSString *const kCapturedOutputToolName = @"Captured Output";
@@ -48,7 +49,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 @implementation iTermToolbeltVibrantVisualEffectView
 @end
 
-@interface iTermToolbeltView () <iTermDragHandleViewDelegate>
+@interface iTermToolbeltView () <CALayerDelegate, iTermDragHandleViewDelegate>
 @end
 
 @implementation iTermToolbeltView {
@@ -243,6 +244,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
             self.wantsLayer = YES;
             self.layer = [[[CALayer alloc] init] autorelease];
+            self.layer.delegate = self;
             self.layer.backgroundColor = [[self backgroundColor] CGColor];
         }
         
@@ -777,6 +779,13 @@ draggingDidEndOfSplit:(int)clickedOnSplitterIndex
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
     [_delegate toolbeltDidFinishGrowing];
+}
+
+#pragma mark - CALayerDelegate
+
+// Dunno why but unless you do this the whole view fades in when unhidden.
+- (id<CAAction>)actionForLayer:(CALayer *)layer forKey:(NSString *)key {
+    return [NSNull null];
 }
 
 @end
