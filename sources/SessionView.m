@@ -1685,9 +1685,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)ptyScrollerDidTransitionToState:(PTYScrollerState)state {
+    const CGFloat maxAlpha = 0.5;
     switch (state) {
         case PTYScrollerStateLegacy:
-            _searchResultsMinimap.alphaValue = 1;
+            _searchResultsMinimap.alphaValue = maxAlpha;
             [self updateSearchResultsMinimapFrameAnimated:YES];
             break;
         case PTYScrollerStateOverlayHidden: {
@@ -1701,7 +1702,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
         case PTYScrollerStateOverlayVisibleWide:
         case PTYScrollerStateOverlayVisibleNarrow: {
-            _searchResultsMinimap.alphaValue = 1;
+            _searchResultsMinimap.alphaValue = maxAlpha;
             [self updateSearchResultsMinimapFrameAnimated:YES];
             break;
         }
