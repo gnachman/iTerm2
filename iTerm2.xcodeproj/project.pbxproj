@@ -5905,6 +5905,7 @@
 		A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMinimalComposerViewController.h; sourceTree = "<group>"; };
 		A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMinimalComposerViewController.m; sourceTree = "<group>"; };
 		A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
+		A6A2D6EE24370C2500A4DF5B /* iTermIntervalTreeObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermIntervalTreeObserver.h; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
 		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
@@ -9261,6 +9262,7 @@
 				A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */,
 				A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */,
 				A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */,
+				A6A2D6EE24370C2500A4DF5B /* iTermIntervalTreeObserver.h */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";

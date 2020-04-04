@@ -55,10 +55,12 @@ typedef struct {
 #pragma mark - NSView
 
 - (void)viewDidMoveToWindow {
+    DLog(@"viewDidMoveToWindow:%@", self.window);
     if (self.window == nil) {
         return;
     }
     self.layer.contentsScale = MAX(1, self.window.backingScaleFactor);
+    [self.layer setNeedsDisplay];
 }
 
 #pragma mark - Private
@@ -74,21 +76,23 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 #pragma mark - CALayerDelegate
 
 - (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx {
+    DLog(@"drawLayer:%@", layer);
     for (NSInteger i = 0; i < self.numberOfSeries; i++) {
         iTermMinimapSeries series = [self seriesAtIndex:i];
         CGContextSetFillColorWithColor(ctx, series.fillColor);
         CGContextSetStrokeColorWithColor(ctx, series.outlineColor);
-        NSIndexSet *indexes = [self indexSet];
+        NSIndexSet *indexes = series.indexes;
         const NSRange rangeOfVisibleLines = [self rangeOfVisibleLines];
         CGFloat numberOfLines = rangeOfVisibleLines.length;
         const CGFloat width = layer.bounds.size.width;
         const CGFloat layerHeight = layer.bounds.size.height;
         const CGFloat height = layerHeight - iTermSearchResultsMinimapViewItemHeight;
         __block CGFloat lastPointOffset = INFINITY;
-        DLog(@"Draw %@ indexes in %@ lines with height %@",
+        DLog(@"Draw %@ indexes in %@ lines with height %@ fill color %@",
              @([indexes countOfIndexesInRange:rangeOfVisibleLines]),
              @(rangeOfVisibleLines.length),
-             @(height));
+             @(height),
+             series.fillColor);
         [indexes enumerateIndexesInRange:rangeOfVisibleLines options:0 usingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
             const CGFloat fraction = (CGFloat)(idx - rangeOfVisibleLines.location) / numberOfLines;
             const CGFloat flippedFraction = 1.0 - fraction;
@@ -104,10 +108,6 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 }
 
 #pragma mark - Subclassable
-
-- (NSIndexSet *)indexSet {
-    return [NSIndexSet indexSet];
-}
 
 - (NSRange)rangeOfVisibleLines {
     return NSMakeRange(0, 0);
@@ -169,10 +169,6 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
     return _series.indexes ?: [self.delegate searchResultsMinimapViewLocations:self];
 }
 
-- (NSRange)rangeOfVisibleLines {
-    return _series.indexes != nil ? _rangeOfVisibleLines : [self.delegate searchResultsMinimapViewRangeOfVisibleLines:self];
-}
-
 - (void)didDraw {
     _series.indexes = nil;
 }
@@ -182,7 +178,14 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 }
 
 - (iTermMinimapSeries)seriesAtIndex:(NSInteger)i {
+    if (!_series.indexes) {
+        _series.indexes = [self.delegate searchResultsMinimapViewLocations:self];
+    }
     return _series;
+}
+
+- (NSRange)rangeOfVisibleLines {
+    return _rangeOfVisibleLines;
 }
 
 @end
@@ -199,12 +202,13 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
     if (self) {
         _sets = [NSMutableDictionary dictionary];
         _series = iTermMalloc(sizeof(*_series) * colors.count);
+        _numberOfSeries = colors.count;
+        memset((void *)_series, 0, sizeof(*_series) * colors.count);
         [colors enumerateObjectsUsingBlock:^(iTermTuple<NSColor *,NSColor *> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             _series[idx].outlineColor = [colors[idx].firstObject CGColor];
             CFRetain(_series[idx].outlineColor);
             _series[idx].fillColor = [colors[idx].secondObject CGColor];
             CFRetain(_series[idx].fillColor);
-            _series[idx].indexes = nil;
         }];
     }
     return self;
@@ -214,30 +218,41 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
     free(_series);
 }
 
+- (void)updateHidden {
+    for (NSMutableIndexSet *set in _sets.allValues) {
+        if (set.count > 0) {
+            [self setHasData:YES];
+            [self.layer setNeedsDisplay];
+            return;
+        }
+    }
+    [self setHasData:NO];
+}
+
 - (void)addObjectOfType:(NSInteger)objectType onLine:(NSInteger)line {
     [_sets[@(objectType)] addIndex:line];
-    [self.layer setNeedsDisplay];
+    [self updateHidden];
 }
 
 - (void)removeObjectOfType:(NSInteger)objectType fromLine:(NSInteger)line {
     [_sets[@(objectType)] removeIndex:line];
-    [self.layer setNeedsDisplay];
+    [self updateHidden];
 }
 
 - (void)setFirstVisibleLine:(NSInteger)firstVisibleLine
        numberOfVisibleLines:(NSInteger)numberOfVisibleLines {
     _visibleLines = NSMakeRange(firstVisibleLine, numberOfVisibleLines);
-    [self.layer setNeedsDisplay];
+    [self updateHidden];
 }
 
 - (void)removeAllObjects {
     _sets = [NSMutableDictionary dictionary];
-    [self.layer setNeedsDisplay];
+    [self updateHidden];
 }
 
 - (void)setLines:(NSMutableIndexSet *)lines forType:(NSInteger)type {
     _sets[@(type)] = lines;
-    [self.layer setNeedsDisplay];
+    [self updateHidden];
 }
 
 - (NSInteger)numberOfSeries {
@@ -247,6 +262,10 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 - (iTermMinimapSeries)seriesAtIndex:(NSInteger)i {
     _series[i].indexes = _sets[@(i)];
     return _series[i];
+}
+
+- (NSRange)rangeOfVisibleLines {
+    return _visibleLines;
 }
 
 @end

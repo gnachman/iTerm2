@@ -1063,6 +1063,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
             markCache_[@(totalScrollbackOverflow + range.end.y)] = mark;
         }
     }
+    [self.intervalTreeObserver intervalTreeDidReset];
 }
 
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues {
@@ -2333,6 +2334,29 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [currentGrid_ markAllCharsDirty:YES];
     note.delegate = self;
     [delegate_ screenDidAddNote:note];
+    [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
+                                                       onLine:range.start.y + self.totalScrollbackOverflow];
+}
+
+- (iTermIntervalTreeObjectType)intervalTreeObserverTypeForObject:(id<IntervalTreeObject>)object {
+    if ([object isKindOfClass:[VT100ScreenMark class]]) {
+        VT100ScreenMark *mark = (VT100ScreenMark *)object;
+        if (!mark.hasCode) {
+            return iTermIntervalTreeObjectTypeManualMark;
+        }
+        if (mark.code == 0) {
+            return iTermIntervalTreeObjectTypeSuccessMark;
+        }
+        if (mark.code >= 128 && mark.code <= 128 + 32) {
+            return iTermIntervalTreeObjectTypeOtherMark;
+        }
+        return iTermIntervalTreeObjectTypeErrorMark;
+    }
+
+    if ([object isKindOfClass:[PTYNoteViewController class]]) {
+        return iTermIntervalTreeObjectTypeAnnotation;
+    }
+    return iTermIntervalTreeObjectTypeUnknown;
 }
 
 - (void)removeInaccessibleNotes {
@@ -2349,6 +2373,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                     self.lastCommandMark = nil;
                 }
                 [intervalTree_ removeObject:obj];
+                iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
+                if (type != iTermIntervalTreeObjectTypeUnknown) {
+                    VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+                    [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
+                                                                      onLine:range.start.y + self.totalScrollbackOverflow];
+                }
             }
         }
     }
@@ -2390,6 +2420,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
     }
     [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                   onLine:range.start.y + self.totalScrollbackOverflow];
     [delegate_ screenNeedsRedraw];
     return mark;
 }
@@ -2460,6 +2492,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         objects = [enumerator nextObject];
     }
     return nil;
+}
+
+- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block {
+    const NSInteger overflow = [self totalScrollbackOverflow];
+    for (NSArray *objects in intervalTree_.forwardLimitEnumerator) {
+        for (id<IntervalTreeObject> obj in objects) {
+            const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
+            if (type == iTermIntervalTreeObjectTypeUnknown) {
+                continue;
+            }
+            NSInteger line = [self coordRangeForInterval:obj.entry.interval].start.y + overflow;
+            block(type, line);
+        }
+    }
 }
 
 - (void)enumeratePromptsFrom:(NSString *)maybeFirst
@@ -4575,6 +4621,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100ScreenMark *screenMark = [self lastCommandMark];
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
+        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:screenMark]
+                                                          onLine:[self coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
         [intervalTree_ removeObject:screenMark];
     }
 
@@ -4632,7 +4680,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
+        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
+        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                          onLine:line];
         mark.code = returnCode;
+        [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                       onLine:line];
         VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
         [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                                         onHost:remoteHost
@@ -5397,6 +5450,7 @@ static void SwapInt(int *a, int *b) {
 - (void)incrementOverflowBy:(int)overflowCount {
     scrollbackOverflow_ += overflowCount;
     cumulativeScrollbackOverflow_ += overflowCount;
+    [_intervalTreeObserver intervalTreeVisibleRangeDidChange];
 }
 
 // sets scrollback lines.
@@ -5652,6 +5706,8 @@ static void SwapInt(int *a, int *b) {
     if ([intervalTree_ containsObject:note]) {
         self.lastCommandMark = nil;
         [intervalTree_ removeObject:note];
+        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
+                                                          onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
     } else if ([savedIntervalTree_ containsObject:note]) {
         self.lastCommandMark = nil;
         [savedIntervalTree_ removeObject:note];

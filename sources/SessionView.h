@@ -36,6 +36,7 @@
 @class iTermAnnouncementViewController;
 @class iTermBackgroundColorView;
 @class iTermFindDriver;
+@class iTermIncrementalMinimapView;
 @class iTermMetalDriver;
 @protocol iTermSearchResultsMinimapViewDelegate;
 @class iTermSearchResultsMinimapView;
@@ -162,6 +163,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, weak) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) iTermSearchResultsMinimapView *searchResultsMinimap NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) iTermIncrementalMinimapView *marksMinimap NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);

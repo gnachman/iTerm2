@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "iTermIntervalTreeObserver.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "SCPPath.h"
@@ -50,6 +51,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
 @property(nonatomic, assign) id<VT100ScreenDelegate> delegate;
+@property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property(nonatomic, assign) BOOL postUserNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
@@ -246,6 +248,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name;
+- (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 
 @end
 

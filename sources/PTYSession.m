@@ -36,6 +36,7 @@
 #import "iTermFindOnPageHelper.h"
 #import "iTermFindPasteboard.h"
 #import "iTermGraphicSource.h"
+#import "iTermIntervalTreeObserver.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
 #import "iTermNaggingController.h"
@@ -289,6 +290,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermCopyModeHandlerDelegate,
     iTermComposerManagerDelegate,
     iTermHotKeyNavigableSession,
+    iTermIntervalTreeObserver,
     iTermLogging,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
@@ -1581,6 +1583,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       width:aSession.screen.width];
     }
     [aSession.screen restoreInitialSize];
+    [aSession updateMarksMinimapRangeOfVisibleLines];
 
     void (^finish)(PTYSession *, BOOL) = ^(PTYSession *newSession, BOOL ok) {
         if (!ok) {
@@ -1655,6 +1658,9 @@ ITERM_WEAKLY_REFERENCEABLE
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
+    if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        _screen.intervalTreeObserver = self;
+    }
 
     // Allocate the root per-session view.
     if (!_view) {
@@ -2371,6 +2377,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _colorMap.delegate = nil;
 
     _screen.delegate = nil;
+    _screen.intervalTreeObserver = nil;
+
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
     if (_view.findDriverDelegate == self) {
@@ -2450,6 +2458,9 @@ ITERM_WEAKLY_REFERENCEABLE
         _textview.delegate = self;
         _colorMap.delegate = _textview;
         _screen.delegate = self;
+        if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+            _screen.intervalTreeObserver = self;
+        }
         _screen.terminal = _terminal;
         _terminal.delegate = _screen;
         _shell.paused = NO;
@@ -12628,6 +12639,63 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
     [_textview.window makeFirstResponder:_textview];
+}
+
+#pragma mark - iTermIntervalTreeObserver
+
+- (void)intervalTreeDidReset {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [_view.marksMinimap removeAllObjects];
+        const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
+        NSMutableIndexSet **sets = iTermMalloc(sizeof(NSMutableIndexSet *) * count);
+        for (NSInteger i = 0; i < count; i++) {
+            sets[i] = [[[NSMutableIndexSet alloc] init] autorelease];
+        };
+        [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
+            [sets[type] addIndex:line];
+        }];
+        for (NSInteger i = 0; i < count; i++) {
+            [_view.marksMinimap setLines:sets[i] forType:i];
+        }
+        free(sets);
+    }
+}
+
+- (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
+                                onLine:(NSInteger)line {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [_view.marksMinimap addObjectOfType:type onLine:line];
+    }
+}
+
+- (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
+                                   onLine:(NSInteger)line {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [_view.marksMinimap removeObjectOfType:type fromLine:line];
+    }
+}
+
+- (void)intervalTreeVisibleRangeDidChange {
+    [self updateMarksMinimapRangeOfVisibleLines];
+}
+
+- (void)updateMarksMinimapRangeOfVisibleLines {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        [_view.marksMinimap setFirstVisibleLine:_screen.totalScrollbackOverflow
+                           numberOfVisibleLines:_screen.numberOfLines];
+    }
 }
 
 @end

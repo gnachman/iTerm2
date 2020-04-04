@@ -9,6 +9,7 @@
 #import "iTermFindPasteboard.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermImageView.h"
+#import "iTermIntervalTreeObserver.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
@@ -207,6 +208,36 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                 _searchResultsMinimap = [[iTermSearchResultsMinimapView alloc] init];
                 _searchResultsMinimap.delegate = self;
                 [self addSubviewBelowFindView:_searchResultsMinimap];
+                iTermTuple<NSColor *, NSColor *> *(^tuple)(NSColor *) = ^iTermTuple<NSColor *, NSColor *> *(NSColor *color) {
+                    NSColor *saturated = [NSColor colorWithHue:color.hueComponent
+                                                    saturation:1
+                                                    brightness:1
+                                                         alpha:1];
+                    return [iTermTuple tupleWithObject:saturated
+                                             andObject:[saturated colorDimmedBy:0.2 towardsGrayLevel:1]];
+                };
+                // This order must match the iTermIntervalTreeObjectType enum.
+                NSArray<iTermTuple<NSColor *, NSColor *> *> *colors = @[
+                    // Blue mark
+                    tuple([iTermTextDrawingHelper successMarkColor]),
+
+                     // Yellow mark
+                    [iTermTuple tupleWithObject:[iTermTextDrawingHelper otherMarkColor]
+                                      andObject:[[iTermTextDrawingHelper otherMarkColor] colorDimmedBy:0.2 towardsGrayLevel:1]],
+
+                    // Red mark
+                    tuple([iTermTextDrawingHelper errorMarkColor]),
+
+                    // Manually created mark or prompt without code
+                    [iTermTuple tupleWithObject:[NSColor colorWithWhite:0.5 alpha:1]
+                                      andObject:[NSColor colorWithWhite:0.7 alpha:1]],
+
+                    // Annotation
+                    tuple([NSColor colorWithSRGBRed:1 green:1 blue:0 alpha:1]),
+
+                ];
+                _marksMinimap = [[iTermIncrementalMinimapView alloc] initWithColors:colors];
+                [self addSubviewBelowFindView:_marksMinimap];
             }
         }
 
@@ -274,6 +305,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _legacyScrollerBackgroundView.hidden = YES;
         }
         [CATransaction commit];
+        [self updateMinimapAlpha];
     }
 }
 
@@ -1508,11 +1540,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
-    [self updateSearchResultsMinimapFrameAnimated:NO];
+    [self updateMinimapFrameAnimated:NO];
     [_delegate sessionViewScrollViewDidResize];
 }
 
-- (void)updateSearchResultsMinimapFrameAnimated:(BOOL)animated {
+- (void)updateMinimapFrameAnimated:(BOOL)animated {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
     if (@available(macOS 10.14, *)) {
         NSRect frame = [self convertRect:_scrollview.verticalScroller.bounds
                                 fromView:_scrollview.verticalScroller];
@@ -1522,16 +1557,25 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             frame.origin.x += 5;
         }
         frame = NSInsetRect(frame, 0, 2);
-
+        if (@available(macOS 10.15, *)) {
+            if ([[NSApp effectiveAppearance] it_isDark]) {
+                // Avoid overlapping the border on the right. It looks ugly
+                // when the window's dark because the part that overlaps the
+                // border is extra bright.
+                frame.size.width -= 1;
+            }
+        }
         if (animated) {
             [NSView animateWithDuration:5.0 / 60.0
                              animations:^{
                 [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
                 _searchResultsMinimap.animator.frame = frame;
+                _marksMinimap.animator.frame = frame;
             }
                              completion:nil];
         } else {
             _searchResultsMinimap.frame = frame;
+            _marksMinimap.frame = frame;
         }
     }
 }
@@ -1684,18 +1728,37 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self.delegate sessionViewUserScrollDidChange:userScroll];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [self updateMinimapAlpha];
+}
+
+- (void)updateMinimapAlpha {
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    PTYScroller *scroller = [PTYScroller castFrom:self.scrollview.verticalScroller];
+    if (scroller) {
+        [self ptyScrollerDidTransitionToState:scroller.ptyScrollerState];
+    }
+}
+
 - (void)ptyScrollerDidTransitionToState:(PTYScrollerState)state {
-    const CGFloat maxAlpha = 0.5;
+    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        return;
+    }
+    const CGFloat maxAlpha = _scrollview.verticalScroller.effectiveAppearance.it_isDark ? 0.5 : 0.75;
     switch (state) {
         case PTYScrollerStateLegacy:
             _searchResultsMinimap.alphaValue = maxAlpha;
-            [self updateSearchResultsMinimapFrameAnimated:YES];
+            _marksMinimap.alphaValue = maxAlpha;
+            [self updateMinimapFrameAnimated:YES];
             break;
         case PTYScrollerStateOverlayHidden: {
             [NSView animateWithDuration:5.0 / 60
                              animations:^{
                 [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
                 _searchResultsMinimap.animator.alphaValue = 0;
+                _marksMinimap.animator.alphaValue = 0;
             }
                              completion:nil];
             break;
@@ -1703,7 +1766,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         case PTYScrollerStateOverlayVisibleWide:
         case PTYScrollerStateOverlayVisibleNarrow: {
             _searchResultsMinimap.alphaValue = maxAlpha;
-            [self updateSearchResultsMinimapFrameAnimated:YES];
+            _marksMinimap.alphaValue = maxAlpha;
+            [self updateMinimapFrameAnimated:YES];
             break;
         }
     }

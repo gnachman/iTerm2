@@ -33,6 +33,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 @interface iTermIncrementalMinimapView: iTermBaseMinimapView
 
+// (outline color, fill color)
 - (instancetype)initWithColors:(NSArray<iTermTuple<NSColor *, NSColor *> *> *)colors NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
