@@ -734,6 +734,7 @@ typedef struct {
 }
 
 - (iTermTabBarControlView *)borrowTabBarControl {
+    DLog(@"Borrow tabbar control");
     assert(!_tabBarControlOnLoan);
     iTermTabBarControlView *view = _tabBarControl;
     _tabBarControlOnLoan = YES;
@@ -751,6 +752,7 @@ typedef struct {
 }
 
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl {
+    DLog(@"Return tabbar control");
     assert(_tabBarControlOnLoan);
     _tabBarControlOnLoan = NO;
     if (@available(macOS 10.14, *)) {
@@ -957,6 +959,7 @@ typedef struct {
 
 - (BOOL)tabBarShouldBeVisible {
     if (_tabBarControlOnLoan) {
+        DLog(@"Tab bar should not be visible because it is on loan");
         return NO;
     }
     return [self tabBarShouldBeVisibleEvenWhenOnLoan];
@@ -964,6 +967,7 @@ typedef struct {
 
 - (BOOL)tabBarShouldBeVisibleEvenWhenOnLoan {
     if (self.tabBarControl.flashing) {
+        DLog(@"Tabbar should be visible because it is flashing");
         return YES;
     } else {
         return [self tabBarShouldBeVisibleWithAdditionalTabs:0];
@@ -973,12 +977,16 @@ typedef struct {
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs {
     if (([_delegate anyFullScreen] || [_delegate enteringLionFullscreen]) &&
         ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+        DLog(@"Tabbar should not be visible because in full screen");
         return NO;
     }
     if ([_delegate tabBarAlwaysVisible]) {
+        DLog(@"Tabbar should be visible because it is configured to always be visible");
         return YES;
     }
-    return [self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1;
+    const BOOL result = [self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1;
+    DLog(@"returning %@", @(result));
+    return result;
 }
 
 - (CGFloat)tabviewWidth {
@@ -1035,9 +1043,20 @@ typedef struct {
 }
 
 - (BOOL)shouldLeaveEmptyAreaAtTop {
-    return (_tabBarControlOnLoan &&
-            [self tabBarShouldBeVisibleWithAdditionalTabs:0] &&
-            [self.delegate rootTerminalViewShouldLeaveEmptyAreaAtTop]);
+    if (!_tabBarControlOnLoan) {
+        DLog(@"NO: Tabbar control not on loan");
+        return NO;
+    }
+    if (![self tabBarShouldBeVisibleWithAdditionalTabs:0]) {
+        DLog(@"NO: tabbar should not be visible");
+        return NO;
+    }
+    if (![self.delegate rootTerminalViewShouldLeaveEmptyAreaAtTop]) {
+        DLog(@"NO: delegate says not to leave an empty area on top");
+        return NO;
+    }
+    DLog(@"YES");
+    return YES;
 }
 
 - (CGFloat)leftBorderInset {
@@ -1084,7 +1103,10 @@ typedef struct {
     };
     decorationHeights.top += [self topBorderInset];
     if ([self shouldLeaveEmptyAreaAtTop]) {
+        DLog(@"Add tabbar control height to decoration height to leave an empty area at the top.");
         decorationHeights.top += _tabBarControl.height;
+    } else {
+        DLog(@"Not leaving an empty area on top");
     }
     const NSRect frame = NSMakeRect([self leftBorderInset],
                                     decorationHeights.bottom,

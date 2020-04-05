@@ -829,6 +829,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                                            savedWindowType:savedWindowType
                                           hotkeyWindowType:hotkeyWindowType];
     }
+    DLog(@"Initialize saved window type to %@", @(savedWindowType));
     _savedWindowType = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
@@ -4831,6 +4832,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"willEnterTraditionalFullScreenMode");
     oldFrame_ = self.window.frame;
     oldFrameSizeIsBogus_ = NO;
+    DLog(@"Set saved window type to %@", @(self.windowType));
     _savedWindowType = self.windowType;
     if (@available(macOS 10.14, *)) {
         if (_contentView.tabBarControlOnLoan) {
@@ -5500,6 +5502,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self updateTabBarControlIsTitlebarAccessory];
     }
     if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
+        DLog(@"Set saved window type to %@", @(self.windowType));
         _savedWindowType = self.windowType;
         _windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     }
@@ -9081,19 +9084,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop {
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.windowType]) {
+        DLog(@"YES because window type %@ has full size content view", @(self.windowType));
         return YES;
     }
     if (!self.anyFullScreen) {
+        DLog(@"NO because not any full screen");
         return NO;
     }
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     if (!topTabBar) {
+        DLog(@"NO because tabbar not on top");
         return NO;
     }
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
+        DLog(@"YES because saved window type %@ has full size content view", @(self.savedWindowType));
         // The tab bar is not a titlebar accessory
         return YES;
     }
+    DLog(@"NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
     return NO;
 }
 
