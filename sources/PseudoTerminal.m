@@ -452,6 +452,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _settingStyleMask;
     BOOL _restorableStateInvalid;
     BOOL _inWindowDidMove;
+    NSInteger _swipingCount;
 }
 
 @synthesize scope = _scope;
@@ -8718,7 +8719,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         i++;
     }
 
-    NSLog(@"Point %lf,%lf not in any screen", p.x, p.y);
+    DLog(@"Point %lf,%lf not in any screen", p.x, p.y);
     return 0;
 }
 
@@ -11054,6 +11055,10 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 }
 
+- (BOOL)tabIsSwiping {
+    return _swipingCount > 0;
+}
+
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
@@ -11179,6 +11184,147 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (NSWindow *)presentationControllerManagedWindowControllerWindow {
     return self.window;
+}
+
+#pragma mark - iTermSwipeHandler
+
+- (NSRect)otherTabFrameForSwipeWithAmount:(CGFloat)amount {
+    CGFloat fraction;
+    if (amount < 0) {
+        fraction = 1 + MAX(MIN(0, amount), -1);
+    } else {
+        fraction = MAX(MIN(1, amount), 0) - 1;
+    }
+    NSRect frame = _contentView.tabView.bounds;
+    frame.origin.x = fraction * NSWidth(frame);
+    frame.origin.x += _contentView.tabView.frame.origin.x;
+    frame.origin.y += _contentView.tabView.frame.origin.y;
+    return frame;
+}
+
+- (NSRect)currentTabFrameForSwipeWithAmount:(CGFloat)amount {
+    const CGFloat fraction = MAX(MIN(1, amount), -1);
+    NSRect frame = _contentView.tabView.bounds;
+    frame.origin.x = fraction * NSWidth(frame);
+    frame.origin.x += _contentView.tabView.frame.origin.x;
+    frame.origin.y += _contentView.tabView.frame.origin.y;
+    return frame;
+}
+
+// Setup animation overlay layers
+- (id)didBeginSwipeWithAmount:(CGFloat)amount {
+    _swipingCount += 1;
+    [self updateUseMetalInAllTabs];
+    id userInfo = [self reallyDidBeginSwipeWithAmount:amount];
+    if (!userInfo) {
+        _swipingCount -= 1;
+        [self updateUseMetalInAllTabs];
+    }
+    return userInfo;
+}
+
+- (id)reallyDidBeginSwipeWithAmount:(CGFloat)amount {
+    DLog(@"Begin swipe");
+    PTYTab *currentTab = self.currentTab;
+    if (!currentTab) {
+        return nil;
+    }
+    const NSInteger currentTabIndex = [self.tabs indexOfObject:self.currentTab];
+    if (currentTabIndex == NSNotFound) {
+        return nil;
+    }
+    PTYTab *otherTab;
+    if (amount < 0) {
+        // Will navigate to the tab right of current
+        if (currentTabIndex + 1 >= self.tabs.count) {
+            return nil;
+        }
+        otherTab = [self.tabs objectAtIndex:currentTabIndex + 1];
+    } else {
+        // Will navigate to the tab left of current
+        if (currentTabIndex <= 0) {
+            return nil;
+        }
+        otherTab = [self.tabs objectAtIndex:currentTabIndex - 1];
+    }
+
+    DLog(@"1. Get snapshot of current");
+    NSImage *currentSnapshot = [self.currentTab.rootView snapshot];
+    if (!currentSnapshot) {
+        return nil;
+    }
+
+    DLog(@"2. Make image view of current");
+    NSImageView *currentImageView = [NSImageView imageViewWithImage:currentSnapshot];
+    if (!currentImageView) {
+        return nil;
+    }
+
+    DLog(@"3. Get snapshot of other");
+    NSImage *otherSnapshot = [otherTab.rootView snapshot];
+    if (!otherSnapshot) {
+        return nil;
+    }
+
+    DLog(@"4. Make image view of other");
+    NSImageView *otherImageView = [NSImageView imageViewWithImage:otherSnapshot];
+    if (!otherImageView) {
+        return nil;
+    }
+
+    DLog(@"5. Wrap up");
+    otherImageView.frame = [self otherTabFrameForSwipeWithAmount:amount];
+    currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
+    _contentView.tabView.hidden = YES;
+    [_contentView addSubview:otherImageView];
+    [_contentView addSubview:currentImageView];
+    DLog(@"6. Done");
+
+    return @{ @"otherImageView": otherImageView,
+              @"currentImageView": currentImageView,
+              @"tab": otherTab };
+}
+
+- (BOOL)canSwipeBack {
+    return self.currentTab && self.currentTab != self.tabs.firstObject;
+}
+
+- (BOOL)canSwipeForward {
+    return self.currentTab && self.currentTab != self.tabs.lastObject;
+}
+
+- (void)didEndSwipe:(id)context amount:(CGFloat)amount {
+    DLog(@"Swipe ended");
+}
+
+- (void)didCancelSwipe:(id)context {
+    DLog(@"Swipe canceled");
+}
+
+- (void)didCompleteSwipe:(id)context direction:(int)direction {
+    DLog(@"Swipe completed with direction %@", @(direction));
+    if (direction > 0) {
+        [self nextTab:nil];
+    } else if (direction < 0) {
+        [self previousTab:nil];
+    }
+    NSDictionary *dict = context;
+    NSImageView *otherImageView = dict[@"otherImageView"];
+    [otherImageView removeFromSuperview];
+    NSImageView *currentImageView = dict[@"currentImageView"];
+    [currentImageView removeFromSuperview];
+    _contentView.tabView.hidden = NO;
+    _swipingCount -= 1;
+    [self updateUseMetalInAllTabs];
+}
+
+- (void)didUpdateSwipe:(id)context amount:(CGFloat)amount {
+    DLog(@"Update swipe with amount %f", amount);
+    NSDictionary *dict = context;
+    NSImageView *otherImageView = dict[@"otherImageView"];
+    otherImageView.frame = [self otherTabFrameForSwipeWithAmount:amount];
+    NSImageView *currentImageView = dict[@"currentImageView"];
+    currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
 }
 
 @end

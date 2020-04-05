@@ -919,6 +919,14 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 #pragma mark - NSView Mouse-Related Overrides
 
+- (BOOL)wantsScrollEventsForSwipeTrackingOnAxis:(NSEventGestureAxis)axis {
+    if (@available(macOS 10.14, *)) {
+        return (axis == NSEventGestureAxisHorizontal) ? YES : NO;
+    } else {
+        return [super wantsScrollEventsForSwipeTrackingOnAxis:axis];
+    }
+}
+
 - (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
     const NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
@@ -5679,6 +5687,10 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 dragSemanticHistoryWithEvent:(NSEvent *)event
                coord:(VT100GridCoord)coord {
     [self handleSemanticHistoryItemDragWithEvent:event coord:coord];
+}
+
+- (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender {
+    return [self.delegate textViewSwipeHandler];
 }
 
 @end

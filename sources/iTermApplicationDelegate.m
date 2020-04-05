@@ -2091,6 +2091,8 @@ static BOOL hasBecomeActive = NO;
         case iTermMetalUnavailableReasonSharedBackgroundImage:
 #warning TODO: Try to relax this restriction. Also make sure to update metal availability when it changes.
             return @"background images are not per-pane";
+        case iTermMetalUnavailableReasonSwipingBetweenTabs:
+            return @"swiping between tabs";
     }
 
     return @"of an internal error. Please file a bug report!";

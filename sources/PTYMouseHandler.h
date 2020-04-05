@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermSwipeHandler.h"
 #import "PointerController.h"
 #import "VT100GridTypes.h"
 #import "VT100Terminal.h"
@@ -99,6 +100,9 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 dragSemanticHistoryWithEvent:(NSEvent *)event
                coord:(VT100GridCoord)coord;
 - (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:(PTYMouseHandler *)sender;
+
+- (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
+
 
 @end
 

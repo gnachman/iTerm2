@@ -8740,6 +8740,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self effectiveBlend];
 }
 
+- (id<iTermSwipeHandler>)textViewSwipeHandler {
+    return [self.delegate sessionSwipeHandler];
+}
+
 - (void)bury {
     if (_synthetic) {
         DLog(@"Attempt to bury while synthetic");

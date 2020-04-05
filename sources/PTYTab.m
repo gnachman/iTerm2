@@ -513,6 +513,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                              weak:YES];
 }
 
+- (NSView *)rootView {
+    return root_;
+}
+
 - (BOOL)useSeparateStatusbarsPerPane {
     if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
         return NO;
@@ -5535,6 +5539,8 @@ typedef struct {
         _metalUnavailableReason = reason;
     } else if (_bounceMetal) {
         _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
+    } else if ([self.delegate tabIsSwiping]) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonSwipingBetweenTabs;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;
@@ -5901,6 +5907,10 @@ backgroundColor:(NSColor *)backgroundColor {
         return;
     }
     [self.delegate tab:self setBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
+}
+
+- (id<iTermSwipeHandler>)sessionSwipeHandler {
+    return self.delegate;
 }
 
 #pragma mark - iTermObject

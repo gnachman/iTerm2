@@ -255,7 +255,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (iTermBackgroundImageMode)sessionBackgroundImageMode;
 - (CGFloat)sessionBlend;
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
-
+- (id<iTermSwipeHandler>)sessionSwipeHandler;
 @end
 
 @class SessionView;

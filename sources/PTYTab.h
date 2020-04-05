@@ -63,6 +63,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property (nonatomic, readonly) PTYTabState state;
 @property (nonatomic, readonly) iTermVariables *variables;
 @property (nonatomic, readonly) iTermVariables *userVariables;
+@property (nonatomic, readonly) NSView *rootView;
 
 // If non-nil, this session may not change size. This is useful when you want
 // to change a session's size. You can resize it, lock it, and then

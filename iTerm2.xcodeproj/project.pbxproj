@@ -2206,6 +2206,7 @@
 		A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
+		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
 		A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */; };
@@ -5376,6 +5377,7 @@
 		A666D5F3221A1F9200D6184A /* iTermVariableScope+Global.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermVariableScope+Global.m"; sourceTree = "<group>"; };
 		A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptFunctionCallTest.m; sourceTree = "<group>"; };
 		A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2SharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
 		A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSApplication+iTerm.m"; sourceTree = "<group>"; };
@@ -9263,6 +9265,7 @@
 				A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */,
 				A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */,
 				A6A2D6EE24370C2500A4DF5B /* iTermIntervalTreeObserver.h */,
+				A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10450,6 +10453,7 @@
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
 				1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */,
 				1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */,
+				A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 				A67960AA1F81FC9E008A42BC /* iTermBackgroundColorRenderer.h in Headers */,
 				A67960AB1F81FC9E008A42BC /* iTermMarkRenderer.h in Headers */,

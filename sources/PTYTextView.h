@@ -26,6 +26,7 @@
 @class iTermQuickLookController;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
+@protocol iTermSwipeHandler;
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 @class MovingAverage;
@@ -207,7 +208,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewFindOnPageLocationsDidChange;
 - (CGFloat)textViewBlend;
 - (NSEdgeInsets)textViewExtraMargins;
-
+- (id<iTermSwipeHandler>)textViewSwipeHandler;
 @end
 
 @interface iTermHighlightedRow : NSObject

@@ -41,7 +41,12 @@
 }
 
 - (NSImage *)snapshot {
-    return [[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]];
+    NSBitmapImageRep *rep = [self bitmapImageRepForCachingDisplayInRect:self.bounds];
+    [self cacheDisplayInRect:self.bounds toBitmapImageRep:rep];
+    NSImage *image = [[NSImage alloc] initWithSize:self.bounds.size];
+    [image addRepresentation:rep];
+
+    return image;
 }
 
 - (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
