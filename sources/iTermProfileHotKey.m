@@ -7,6 +7,7 @@
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermPresentationController.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
@@ -845,6 +846,7 @@ static NSString *const kArrangement = @"Arrangement";
     [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
     [[self.windowController currentTab] recheckBlur];
     self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
+    [[iTermPresentationController sharedInstance] update];
 }
 
 - (void)didFinishRollingOut {
