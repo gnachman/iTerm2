@@ -48,6 +48,11 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
     self = [super init];
     if (self) {
         _url = url;
+#if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
+        _minimumVersion = 1;
+#else
+        _minimumVersion = 2;
+#endif
     }
     return self;
 }
@@ -219,13 +224,13 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
         }
         return NO;
     }
-    if (version < SIGArchiveVerifiedLowestSupportedVersion) {
+    if (version < SIGArchiveVerifiedLowestSupportedVersion || version < _minimumVersion) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeDeprecatedOldVersion];
         }
         return NO;
     }
-    
+
     NSString *const digestType = dictionary[SIGArchiveMetadataKeyDigestType];
     if (!digestType) {
         if (error) {

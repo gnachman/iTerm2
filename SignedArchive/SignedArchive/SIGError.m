@@ -68,11 +68,11 @@ NSString *const SIGErrorDomain = @"com.iterm2.sig";
         case SIGErrorCodeAlgorithmCreationFailed:
             return @"Could not create algorithm";
         case SIGErrorCodeVersionTooNew:
-            return @"This file is from a newer version of this app and cannot be loaded. Please upgrade and try again.";
+            return @"This file is from a newer version of this app and cannot be loaded. Please upgrade and try again";
         case SIGErrorCodeMalformedMetadata:
             return @"Metadata chunk malformed";
         case SIGErrorCodeDeprecatedOldVersion:
-            return @"This file is in an older format that is no longer supported because its authenticity cannot be guaranteed. It cannot be opened by this version of the app.";
+            return @"This file is in an older format that is no longer supported because its authenticity cannot be guaranteed. It cannot be opened by this version of the app";
         case SIGErrorCodeMalformedHeader:
             return @"Header chunk malformed";
         case SIGErrorCodeUnsupportedAlgorithm:

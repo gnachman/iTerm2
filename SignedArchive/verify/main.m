@@ -48,13 +48,14 @@ static NSString *Details(SIGArchiveVerifier *verifier) {
     return [detailLines componentsJoinedByString:@"\n"];
 }
 
-static NSError *Verify(NSString *path, NSString **detailsPtr) {
+static NSError *Verify(NSString *path, BOOL requireV2, NSString **detailsPtr) {
     SIGArchiveVerifier *verifier = [[SIGArchiveVerifier alloc] initWithURL:[NSURL fileURLWithPath:path]];
     __block BOOL result;
     __block NSError *errorResult = nil;
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
     __block NSString *details;
+    verifier.minimumVersion = requireV2 ? 2 : 1;
     [verifier verifyWithCompletion:^(BOOL ok, NSError *error) {
         details = Details(verifier);
         result = ok;
@@ -77,19 +78,25 @@ static NSError *Verify(NSString *path, NSString **detailsPtr) {
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         if (argc < 2) {
-            fprintf(stderr, "Usage: verify [-v] file [file...]\n");
+            fprintf(stderr, "Usage: verify [-v] [-2] file [file...]\n");
             return 1;
         }
         int errors = 0;
         int first = 1;
+        BOOL requireV2 = NO;
         BOOL verbose = NO;
         if (argc > 1 && !strcmp(argv[1], "-v")) {
             verbose = YES;
             first++;
         }
+        if (argc > first && !strcmp(argv[first], "-2")) {
+            requireV2 = YES;
+            first++;
+        }
         for (int i = first; i < argc; i++) {
             NSString *details;
             NSError *error = Verify([NSString stringWithUTF8String:argv[i]],
+                                    requireV2,
                                     verbose ? &details : NULL);
             if (error) {
                 errors++;
