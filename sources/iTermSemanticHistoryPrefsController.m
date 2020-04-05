@@ -23,6 +23,7 @@ NSString *kSemanticHistoryTextKey = @"text";
 
 NSString *kSublimeText2Identifier = @"com.sublimetext.2";
 NSString *kSublimeText3Identifier = @"com.sublimetext.3";
+NSString *kSublimeText4Identifier = @"com.sublimetext.4";
 NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.TextMate";
 NSString *kTextmate2Identifier = @"com.macromates.TextMate.preview";
@@ -74,6 +75,7 @@ enum {
     kTextmateTag,
     kBBEditTag,
     kSublimeText3Tag,
+    kSublimeText4Tag,
     kAtomTag,
     kTextmate2Tag,
     kVSCodeTag,
@@ -98,7 +100,8 @@ enum {
 
     if (count > 0) {
         if ([bundleId isEqualToString:kSublimeText2Identifier] ||
-            [bundleId isEqualToString:kSublimeText3Identifier]) {
+            [bundleId isEqualToString:kSublimeText3Identifier] ||
+            [bundleId isEqualToString:kSublimeText4Identifier]) {
             // Extra check for sublime text.
             if (![[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId]) {
                 return NO;
@@ -116,6 +119,7 @@ enum {
 + (NSString *)schemeForEditor:(NSString *)editor {
     NSDictionary *schemes = @{ kSublimeText2Identifier: @"subl",
                                kSublimeText3Identifier: @"subl",
+                               kSublimeText4Identifier: @"subl",
                                kMacVimIdentifier: @"mvim",
                                kTextmateIdentifier: @"txmt",
                                kTextmate2Identifier: @"txmt",
@@ -130,7 +134,8 @@ enum {
 
 + (NSArray *)editorsInPreferenceOrder {
     // Editors from most to least preferred.
-    return @[ kSublimeText3Identifier,
+    return @[ kSublimeText4Identifier,
+              kSublimeText3Identifier,
               kSublimeText2Identifier,
               kMacVimIdentifier,
               kTextmateIdentifier,
@@ -155,6 +160,7 @@ enum {
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId {
     NSArray *editorBundleIds = @[ kSublimeText2Identifier,
                                   kSublimeText3Identifier,
+                                  kSublimeText4Identifier,
                                   kMacVimIdentifier,
                                   kTextmateIdentifier,
                                   kTextmate2Identifier,
@@ -167,7 +173,8 @@ enum {
 }
 
 + (NSDictionary *)identifierToTagMap {
-    NSDictionary *tags = @{ kSublimeText3Identifier: @(kSublimeText3Tag),
+    NSDictionary *tags = @{ kSublimeText4Identifier: @(kSublimeText4Tag),
+                            kSublimeText3Identifier: @(kSublimeText3Tag),
                             kSublimeText2Identifier: @(kSublimeText2Tag),
                                   kMacVimIdentifier: @(kMacVimTag),
                                 kTextmateIdentifier: @(kTextmateTag),
@@ -205,7 +212,8 @@ enum {
                                                                           functionsOnly:NO];
     text_.delegate = _textFieldDelegate;
 
-    NSDictionary *names = @{ kSublimeText3Identifier: @"Sublime Text 3",
+    NSDictionary *names = @{ kSublimeText4Identifier: @"Sublime Text 4",
+                             kSublimeText3Identifier: @"Sublime Text 3",
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",
                                  kTextmateIdentifier: @"Textmate",
@@ -271,7 +279,8 @@ enum {
 
 - (NSString *)editorIdentifier
 {
-    NSDictionary *map = @{ @(kSublimeText3Tag): kSublimeText3Identifier,
+    NSDictionary *map = @{ @(kSublimeText4Tag): kSublimeText4Identifier,
+                           @(kSublimeText3Tag): kSublimeText3Identifier,
                            @(kSublimeText2Tag): kSublimeText2Identifier,
                                  @(kMacVimTag): kMacVimIdentifier,
                                @(kTextmateTag): kTextmateIdentifier,

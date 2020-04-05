@@ -14,6 +14,7 @@ extern NSString *kSemanticHistoryTextKey;
 
 extern NSString *kSublimeText2Identifier;
 extern NSString *kSublimeText3Identifier;
+extern NSString *kSublimeText4Identifier;
 extern NSString *kMacVimIdentifier;
 extern NSString *kAtomIdentifier;
 extern NSString *kVSCodeIdentifier;

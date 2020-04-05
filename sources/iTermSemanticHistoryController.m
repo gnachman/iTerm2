@@ -332,6 +332,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kVSCodiumIdentifier,
               kSublimeText2Identifier,
               kSublimeText3Identifier,
+              kSublimeText4Identifier,
               kMacVimIdentifier,
               kTextmateIdentifier,
               kTextmate2Identifier,
@@ -371,7 +372,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
     if ([identifier isEqualToString:kSublimeText2Identifier] ||
-        [identifier isEqualToString:kSublimeText3Identifier]) {
+        [identifier isEqualToString:kSublimeText3Identifier] ||
+        [identifier isEqualToString:kSublimeText4Identifier]) {
         if (lineNumber != nil) {
             path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
         }
@@ -381,6 +383,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         NSString *bundleId;
         if ([identifier isEqualToString:kSublimeText3Identifier]) {
             bundleId = kSublimeText3Identifier;
+        } else if ([identifier isEqualToString:kSublimeText4Identifier]) {
+            bundleId = kSublimeText4Identifier;
         } else {
             bundleId = kSublimeText2Identifier;
         }

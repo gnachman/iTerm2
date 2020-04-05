@@ -929,6 +929,31 @@
     XCTAssert([kExistingFileAbsolutePathWithLineNumber isEqualToString:_semanticHistoryController.launchedAppArg]);
 }
 
+- (void)testOpenPathOpensTextFileSublimeText4Editor {
+    _semanticHistoryController.prefs =
+        @{ kSemanticHistoryActionKey: kSemanticHistoryEditorAction,
+           kSemanticHistoryEditorKey: kSublimeText4Identifier };
+    NSString *kExistingFileAbsolutePath = @"/file/that/exists";
+    NSString *kExistingFileAbsolutePathWithLineNumber =[kExistingFileAbsolutePath stringByAppendingString:@":12"];
+    [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
+    _semanticHistoryController.defaultAppIsEditor = NO;
+    NSString *lineNumber, *columnNumber;
+    BOOL opened = [self openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                            suffix:nil
+                                                                  workingDirectory:@"/"
+                                                               extractedLineNumber:&lineNumber
+                                                                      columnNumber:&columnNumber]
+                   orRawFilename:kExistingFileAbsolutePathWithLineNumber
+                   substitutions:@{ kSemanticHistoryPrefixSubstitutionKey: @"Prefix",
+                                    kSemanticHistorySuffixSubstitutionKey: @"Suffix",
+                                    kSemanticHistoryWorkingDirectorySubstitutionKey: @"/" }
+                      lineNumber:lineNumber
+                    columnNumber:columnNumber];
+    XCTAssert(opened);
+    XCTAssert([kSublimeText4Identifier isEqualToString:_semanticHistoryController.launchedApp]);
+    XCTAssert([kExistingFileAbsolutePathWithLineNumber isEqualToString:_semanticHistoryController.launchedAppArg]);
+}
+
 - (void)testOpenPathOpensTextFileSublimeText3Editor {
     _semanticHistoryController.prefs =
         @{ kSemanticHistoryActionKey: kSemanticHistoryEditorAction,
