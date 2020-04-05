@@ -926,6 +926,7 @@ static int Initialize(char *path) {
     if (InitializeSignals()) {
         return 1;
     }
+    chdir("/");
 
     return 0;
 }
