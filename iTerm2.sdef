@@ -252,6 +252,12 @@
         description="the session, tab, or window to close."/>
     </command>
 
+    <command name="request cookie" code="Itrmrqck" description="Request a Python API cookie">
+        <cocoa class="iTermRequestCookieCommand" />
+        <result type="text"
+          description="A cookie that can be used to connect to the Python API endpoint" />
+    </command>
+
     <command name="create tab" code="Itrmntwp"
       description="Create a new tab">
       <direct-parameter type="specifier"
