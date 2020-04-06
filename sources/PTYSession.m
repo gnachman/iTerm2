@@ -8516,7 +8516,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // Grow or shrink the height of the frame if the number of lines in the data
 // source + IME has changed.
-- (void)textViewResizeFrameIfNeeded {
+- (BOOL)textViewResizeFrameIfNeeded {
     // Check if the frame size needs to grow or shrink.
     NSRect frame = [_textview frame];
     const CGFloat desiredHeight = _textview.desiredHeight;
@@ -8527,7 +8527,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
         NSAccessibilityPostNotification(_textview,
                                         NSAccessibilityRowCountChangedNotification);
+        return YES;
     }
+    return NO;
 }
 
 - (NSInteger)textViewUnicodeVersion {
@@ -8733,6 +8735,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewFindOnPageLocationsDidChange {
     if (@available(macOS 10.14, *)) {
         [_view.searchResultsMinimap invalidate];
+        [_view.marksMinimap invalidate];
     }
 }
 

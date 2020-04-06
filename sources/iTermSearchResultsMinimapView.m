@@ -19,11 +19,15 @@ typedef struct {
     NSIndexSet *indexes;
 } iTermMinimapSeries;
 
+static NSString *const iTermBaseMinimapViewInvalidateNotification = @"iTermBaseMinimapViewInvalidateNotification";
+
 @interface iTermBaseMinimapView()<CALayerDelegate>
-@property (nonatomic, strong) iTermRateLimitedUpdate *rateLimit;
+@property (nonatomic, readonly) iTermRateLimitedUpdate *rateLimit;
 @end
 
-@implementation iTermBaseMinimapView
+@implementation iTermBaseMinimapView {
+    BOOL _invalid;
+}
 
 - (instancetype)init {
     self = [super initWithFrame:NSZeroRect];
@@ -35,10 +39,23 @@ typedef struct {
         self.layer.opacity = 0.62;
         self.layer.delegate = self;
         self.hidden = YES;
-        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _rateLimit.minimumInterval = 0.25;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(performInvalidateIfNeeded)
+                                                     name:iTermBaseMinimapViewInvalidateNotification
+                                                   object:nil];
     }
     return self;
+}
+
+// Use a shared rate limit so all the minimaps update in sync.
+- (iTermRateLimitedUpdate *)rateLimit {
+    static iTermRateLimitedUpdate *rateLimit;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        rateLimit = [[iTermRateLimitedUpdate alloc] init];
+        rateLimit.minimumInterval = 0.25;
+    });
+    return rateLimit;
 }
 
 - (void)setHasData:(BOOL)hasData {
@@ -126,6 +143,33 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
     return ignore;
 }
 
+- (void)invalidate {
+    DLog(@"Invalidate");
+    _invalid = YES;
+    [self.rateLimit performRateLimitedSelector:@selector(postInvalidateNotification)
+                                      onTarget:[iTermBaseMinimapView class]
+                                    withObject:nil];
+}
+
++ (void)postInvalidateNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBaseMinimapViewInvalidateNotification
+                                                        object:nil];
+}
+
+// All minimaps get this called when any minimaps anywhere was invalidated.
+- (void)performInvalidateIfNeeded {
+    if (!_invalid) {
+        return;
+    }
+    _invalid = NO;
+    [self performInvalidate];
+}
+
+// Subclasses to override
+- (void)performInvalidate {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
 @end
 
 @implementation iTermSearchResultsMinimapView {
@@ -150,14 +194,7 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
     CFRelease(_series.outlineColor);
 }
 
-- (void)invalidate {
-    DLog(@"Invalidate");
-    [self.rateLimit performRateLimitedSelector:@selector(maybeInvalidate)
-                                      onTarget:self
-                                    withObject:nil];
-}
-
-- (void)maybeInvalidate {
+- (void)performInvalidate {
     _series.indexes = [self.delegate searchResultsMinimapViewLocations:self];
     _rangeOfVisibleLines = [self.delegate searchResultsMinimapViewRangeOfVisibleLines:self];
     const NSUInteger count = [_series.indexes countOfIndexesInRange:_rangeOfVisibleLines];
@@ -219,6 +256,10 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 }
 
 - (void)updateHidden {
+    [self invalidate];
+}
+
+- (void)performInvalidate {
     for (NSMutableIndexSet *set in _sets.allValues) {
         if (set.count > 0) {
             [self setHasData:YES];

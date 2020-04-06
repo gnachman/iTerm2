@@ -22,13 +22,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 - (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
+
+- (void)invalidate;
 @end
 
 NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermSearchResultsMinimapView : iTermBaseMinimapView
 @property (nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> delegate;
-
-- (void)invalidate;
 @end
 
 @interface iTermIncrementalMinimapView: iTermBaseMinimapView

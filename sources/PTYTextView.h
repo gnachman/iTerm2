@@ -167,7 +167,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying;
 
 // Update the text view's frame needed.
-- (void)textViewResizeFrameIfNeeded;
+- (BOOL)textViewResizeFrameIfNeeded;
 
 - (NSInteger)textViewUnicodeVersion;
 - (void)textViewDidRefresh;

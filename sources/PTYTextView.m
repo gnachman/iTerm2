@@ -2014,7 +2014,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Get the number of lines that have disappeared if scrollback buffer is full.
     const int scrollbackOverflow = [_dataSource scrollbackOverflow];
     [_dataSource resetScrollbackOverflow];
-    [_delegate textViewResizeFrameIfNeeded];
+    const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (scrollbackOverflow > 0) {
@@ -2051,7 +2051,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if (foundDirty) {
         [self refreshAccessibility];
     }
-    if (scrollbackOverflow > 0) {
+    if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
         [self.delegate textViewFindOnPageLocationsDidChange];
     }
