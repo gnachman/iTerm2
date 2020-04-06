@@ -247,7 +247,24 @@ static NSString *sPreviousVersion;
         // and it seems to work.
         //
         // See issue 3244 for details.
-        @"NSScrollViewShouldScrollUnderTitlebar": @NO
+        @"NSScrollViewShouldScrollUnderTitlebar": @NO,
+
+        // macOS does an insane thing and looks for views that might possibly be trying to do something
+        // clever with scrollers and then if it finds them changes to legacy scrollers. Quothe the
+        // mailing list https://lists.apple.com/archives/cocoa-dev/2012/Mar/msg00939.html
+        //  NSScrollView does various checks to see if the App is trying to put placards in the
+        //  scroller area. If NSScrollView thinks there are placards, then it reverts back to legacy
+        //  scrollers for compatibility. Some apps have been known to do this via a sibling view
+        //  instead of a subview. This is why it intermittently happens during your animation as
+        //  your sibling views momentarily overlap
+        //
+        // In addition to being a bad idea, it is poorly implemented and the scrollers randomly
+        // have the wrong light/dark appearance, in addition to other visual glitches that words
+        // can't describe.
+        //
+        // Well, I am trying to do something clever and I damn well want it to work. With a bit of
+        // the old disassembler, I found this user default which seems to turn off the stupid.
+        @"NSOverlayScrollersFallBackForAccessoryViews": @NO,
     };
 }
 
