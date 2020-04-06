@@ -210,6 +210,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;
 + (BOOL)profilesWindowJoinsActiveSpace;
 + (BOOL)promptForPasteWhenNotAtPrompt;
++ (NSString *)pythonRuntimeBetaDownloadURL;
 + (NSString *)pythonRuntimeDownloadURL;
 + (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
 + (BOOL)proportionalScrollWheelReporting;
