@@ -1400,7 +1400,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (![self canRenamePane]) {
         return;
     }
-    NSString *theCommand = [NSString stringWithFormat:@"select-pane -t %%'%d' -T \"%@\"",
+    NSString *theCommand = [NSString stringWithFormat:@"select-pane -t %%%d -T \"%@\"",
                             windowPane, [self stringByEscapingBackslashesAndRemovingNewlines:newTitle]];
     [gateway_ sendCommand:theCommand
            responseTarget:nil
