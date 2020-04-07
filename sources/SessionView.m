@@ -710,14 +710,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (self.showBottomStatusBar) {
             [self updateBottomStatusBarFrame];
         }
-        if (@available(macOS 10.14, *)) {
-            [CATransaction begin];
-            [CATransaction setDisableActions:YES];
-            _imageView.frame = self.bounds;
-            _backgroundColorView.frame = self.bounds;
-            _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
-            [CATransaction commit];
-        }
     } else {
         DLog(@"Keep everything top aligned.");
         // Don't resize anything but do keep it all top-aligned.
@@ -758,6 +750,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
             [CATransaction commit];
         }
+    }
+    if (@available(macOS 10.14, *)) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        _imageView.frame = self.bounds;
+        _backgroundColorView.frame = self.bounds;
+        _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
+        [CATransaction commit];
     }
 
     if (_hoverURLView) {
