@@ -3844,7 +3844,7 @@ typedef struct {
     if (self.titleOverride.length == 0) {
         // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
         // already set a title override.
-        self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"\\(%@?)", iTermVariableKeyTabTmuxWindowTitle];
+        self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"↣ \\(%@?)", iTermVariableKeyTabTmuxWindowTitle];
     }
 }
 
