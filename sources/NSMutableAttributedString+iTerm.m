@@ -142,7 +142,9 @@
         }
         
         NSString *string = [self.string substringWithRange:range];
-        NSDictionary *attributes = @{};
+        NSMutableDictionary *attributes = [attrs mutableCopy];
+        [attributes removeObjectForKey:NSBackgroundColorAttributeName];
+        [attributes removeObjectForKey:NSForegroundColorAttributeName];
         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:attributes];
         [result appendAttributedString:attributedString];
     }];

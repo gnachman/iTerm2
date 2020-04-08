@@ -4124,10 +4124,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     iTermPrintAccessoryViewController *accessory = nil;
     NSAttributedString *attributedString;
-    NSDictionary *attributes =
-        @{ NSBackgroundColorAttributeName: [NSColor textBackgroundColor],
-           NSForegroundColorAttributeName: [NSColor textColor],
-           NSFontAttributeName: [NSFont userFixedPitchFontOfSize:0] };
     if ([content isKindOfClass:[NSAttributedString class]]) {
         attributedString = content;
         accessory = [[[iTermPrintAccessoryViewController alloc] initWithNibName:@"iTermPrintAccessoryViewController"
@@ -4142,6 +4138,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
             [[tempView textStorage] setAttributedString:theAttributedString];
         };
     } else {
+        NSDictionary *attributes =
+            @{ NSBackgroundColorAttributeName: [NSColor textBackgroundColor],
+               NSForegroundColorAttributeName: [NSColor textColor],
+               NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:0] };
         attributedString = [[[NSAttributedString alloc] initWithString:content
                                                             attributes:attributes] autorelease];
     }
