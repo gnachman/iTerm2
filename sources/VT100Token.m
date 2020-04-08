@@ -232,7 +232,7 @@
 
 - (CSIParam *)csi {
     if (!_csi) {
-        _csi = calloc(sizeof(*_csi), 1);
+        _csi = iTermCalloc(sizeof(*_csi), 1);
     }
     return _csi;
 }
@@ -276,7 +276,7 @@
 - (void)preInitializeScreenChars {
     // TODO: Expand this beyond just ascii characters.
     if (_asciiData.length > kStaticScreenCharsCount) {
-        _screenChars.buffer = calloc(_asciiData.length, sizeof(screen_char_t));
+        _screenChars.buffer = iTermCalloc(_asciiData.length, sizeof(screen_char_t));
     } else {
         _screenChars.buffer = _screenChars.staticBuffer;
         memset(_screenChars.buffer, 0, _asciiData.length * sizeof(screen_char_t));

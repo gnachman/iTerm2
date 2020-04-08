@@ -438,7 +438,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
                                  wasMaximized:wasMaximized
                                    controller:controller];
 
-    NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
+    NSRect* frames = (NSRect *)iTermCalloc([images count], sizeof(NSRect));
 
     // Figure out the right size for a thumbnail.
     NSScreen* theScreen = [iTermExposeGridView exposeScreen];

@@ -142,7 +142,7 @@
         }
     }
 
-    NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
+    NSRect* frames = (NSRect *)iTermCalloc([images count], sizeof(NSRect));
     NSScreen* theScreen = [iTermExposeGridView exposeScreen];
     NSRect screenFrame = [theScreen visibleFrame];
     screenFrame.origin = NSZeroPoint;
@@ -152,7 +152,7 @@
     }
     [[iTermExpose sharedInstance] computeLayout:images frames:frames screenFrame:screenFrame];
 
-    NSRect* permutedFrames = (NSRect*)calloc([images count], sizeof(NSRect));
+    NSRect* permutedFrames = (NSRect *)iTermCalloc([images count], sizeof(NSRect));
     for (i = 0; i < [images count]; i++) {
         //NSLog(@"Move frame at %d to %d", [[permutation objectAtIndex:i] intValue], i);
         permutedFrames[i] = frames[[[permutation objectAtIndex:i] intValue]];

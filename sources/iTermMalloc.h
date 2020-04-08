@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Allocate memory. `size` must not be negative. Will never return NULL. Dies if size is negative
 // or malloc returns NULL. Use `free` to dispose of this pointer.
 void *iTermMalloc(NSInteger size);
+void *iTermCalloc(NSInteger count, size_t unitSize);
 
 // Like realloc, but will never return NULL. Dies if the size is negative or realloc() returns NULL.
 // Stubbornly refuses to allow signed integers to overflow. Use `free` to dispose of this pointer.

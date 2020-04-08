@@ -107,6 +107,7 @@ static void AddChild(const iTermMultiServerRequestLaunch *launch,
     if (!children) {
         children = calloc(1, sizeof(iTermMultiServerChild));
     } else {
+        assert((numberOfChildren + 1) < SIZE_MAX / sizeof(iTermMultiServerChild));
         children = realloc(children, (numberOfChildren + 1) * sizeof(iTermMultiServerChild));
     }
     const int i = numberOfChildren;

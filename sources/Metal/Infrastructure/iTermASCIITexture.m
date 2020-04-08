@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermCache.h"
 #import "iTermCharacterSource.h"
+#import "iTermMalloc.h"
 
 const unsigned char iTermASCIITextureMinimumCharacter = 32; // space
 const unsigned char iTermASCIITextureMaximumCharacter = 126; // ~
@@ -97,7 +98,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
     self = [super init];
     if (self) {
-        _parts = (iTermASCIITextureParts *)calloc(128, sizeof(iTermASCIITextureParts));
+        _parts = (iTermASCIITextureParts *)iTermCalloc(128, sizeof(iTermASCIITextureParts));
         _attributes = attributes;
         _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:descriptor.glyphSize.width
                                                           textureHeight:descriptor.glyphSize.height

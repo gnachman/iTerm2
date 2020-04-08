@@ -152,7 +152,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 
     cached_numlines_width = -1;
     if (cll_capacity > 0) {
-        metadata_ = (LineBlockMetadata *)calloc(sizeof(LineBlockMetadata), cll_capacity);
+        metadata_ = (LineBlockMetadata *)iTermCalloc(sizeof(LineBlockMetadata), cll_capacity);
     }
 }
 
