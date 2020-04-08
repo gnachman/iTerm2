@@ -294,6 +294,8 @@ DEFINE_BOOL(zeroWidthSpaceAdvancesCursor, YES, SECTION_TERMINAL @"Zero-Width Spa
 DEFINE_BOOL(fullHeightCursor, NO, SECTION_TERMINAL @"Cursor occupies line spacing area.\nIf lines have more than 100% vertical spacing and this setting is enabled the bottom of the cursor will be aligned to the bottom of the spacing area.");
 DEFINE_FLOAT(underlineCursorOffset, 0, SECTION_TERMINAL @"Vertical offset for underline cursor.\nPositive values move it up, negative values move it down.");
 DEFINE_SETTABLE_OPTIONAL_BOOL(preventEscapeSequenceFromClearingHistory, PreventEscapeSequenceFromClearingHistory, nil, SECTION_TERMINAL @"Prevent CSI 3 J from clearing scrollback history?\nThis is also known as the terminfo E3 capability.");
+DEFINE_SETTABLE_OPTIONAL_BOOL(preventEscapeSequenceFromChangingProfile, PreventEscapeSequenceFromChangingProfile, nil, SECTION_TERMINAL @"Prevent control sequences from changing the current profile?");
+
 DEFINE_FLOAT(verticalBarCursorWidth, 1, SECTION_TERMINAL @"Width of vertical bar cursor.");
 DEFINE_BOOL(acceptOSC7, YES, SECTION_TERMINAL @"Accept OSC 7 to set username, hostname, and path.");
 DEFINE_BOOL(detectPasswordInput, YES, SECTION_TERMINAL @"Show key at cursor at password prompt?");

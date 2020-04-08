@@ -24,6 +24,7 @@ static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationId
 static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
+static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled = @"NoSyncNeverAskAboutMouseReportingFrustration";
@@ -374,6 +375,34 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
             }
         }
     }];
+}
+
+- (BOOL)terminalCanChangeProfile {
+    const BOOL *boolPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile;
+    if (boolPtr) {
+        return !*boolPtr;
+    }
+    NSString *message = @"A control sequence attempted to change the current profile. Allow this in the future?";
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerAskAboutChangingProfileIdentifier
+                                        options:@[ @"Always _Allow", @"Always _Deny" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case 0: {
+                const BOOL value = NO;
+                iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile = &value;
+                break;
+            }
+            case 1: {
+                const BOOL value = YES;
+                iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile = &value;
+                break;
+            }
+        }
+    }];
+    return NO;
 }
 
 #pragma mark - Variable Reporting

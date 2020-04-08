@@ -208,6 +208,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;
++ (const BOOL *)preventEscapeSequenceFromChangingProfile;
++ (void)setPreventEscapeSequenceFromChangingProfile:(const BOOL *)value;
 + (BOOL)profilesWindowJoinsActiveSpace;
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (NSString *)pythonRuntimeBetaDownloadURL;

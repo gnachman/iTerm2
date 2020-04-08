@@ -68,6 +68,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 
 - (BOOL)shouldAskAboutClearingScrollbackHistory;
 - (void)askAboutClearingScrollbackHistory;
+- (BOOL)terminalCanChangeProfile;
 
 @end
 
