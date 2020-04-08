@@ -2095,6 +2095,7 @@
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
 		A665C1D0243A606C00F623F0 /* iTermRequestCookieCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */; };
 		A665C1D1243A606C00F623F0 /* iTermRequestCookieCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CF243A606C00F623F0 /* iTermRequestCookieCommand.m */; };
+		A665C1D2243D962C00F623F0 /* TerminalFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C08187A1809004A60AF /* TerminalFile.m */; };
 		A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A666130F225CFF7200840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
@@ -3099,7 +3100,6 @@
 		A6C762FA1B45C52B00E3C992 /* iTermExposeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74751188C6693005355CF /* iTermExposeWindow.m */; };
 		A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30CC186D1414007F550F /* FileTransferManager.m */; };
 		A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D6186D1429007F550F /* SCPPath.m */; };
-		A6C762FE1B45C52B00E3C992 /* TerminalFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A6057C08187A1809004A60AF /* TerminalFile.m */; };
 		A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D7186D1429007F550F /* TransferrableFile.m */; };
 		A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D8186D1429007F550F /* TransferrableFileMenuItemView.m */; };
 		A6C763011B45C52B00E3C992 /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D9186D1429007F550F /* TransferrableFileMenuItemViewController.m */; };
@@ -13037,6 +13037,7 @@
 				537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
+				A665C1D2243D962C00F623F0 /* TerminalFile.m in Sources */,
 				A6D8CC3220CE417000E79512 /* URLAction.m in Sources */,
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */,
@@ -13736,7 +13737,6 @@
 				A667F3901B49FC2E00705186 /* iTermToolbeltSplitView.m in Sources */,
 				A6C762F61B45C52B00E3C992 /* iTermExpose.m in Sources */,
 				A6C763371B45C52B00E3C992 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
-				A6C762FE1B45C52B00E3C992 /* TerminalFile.m in Sources */,
 				A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */,
 				A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */,
 				A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */,

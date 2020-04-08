@@ -9623,7 +9623,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidReceiveBase64FileData:(NSString *)data {
     const NSInteger lengthBefore = self.download.length;
-    [self.download appendData:data];
+    if (self.download && ![self.download appendData:data]) {
+        iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"A file transfer was aborted for exceeding its declared size."
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ ]
+                                                    completion:^(int selection) {}];
+        [self queueAnnouncement:announcement identifier:@"FileTransferAbortedOversize"];
+
+        [self.download stop];
+        [self.download endOfData];
+        self.download = nil;
+        return;
+    }
     const NSInteger lengthAfter = self.download.length;
     if (!self.download.preconfirmed) {
         [_screen confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter name:self.download.shortName];

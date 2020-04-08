@@ -23,7 +23,8 @@ extern NSString *const kTerminalFileShouldStopNotification;
 - (instancetype)initWithName:(NSString *)name size:(NSInteger)size;
 
 // Appends data to a file in transferring status. Enters transferring status.
-- (void)appendData:(NSString *)data;
+// Returns NO if the transfer should be aborted.
+- (BOOL)appendData:(NSString *)data;
 
 // Marks the end of data, at which time the file is decoded and saved. If -stop
 // was called, the cancelled state is entered.
