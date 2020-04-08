@@ -9502,6 +9502,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value {
+    if (![self.naggingController terminalCanChangeProfile]) {
+        return;
+    }
     Profile *newProfile;
     if ([value length]) {
         newProfile = [[ProfileModel sharedInstance] bookmarkWithName:value];

@@ -66,6 +66,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 
 - (void)offerToTurnOffBracketedPasteOnHostChange;
 
+- (BOOL)terminalCanChangeProfile;
+
 @end
 
 NS_ASSUME_NONNULL_END
