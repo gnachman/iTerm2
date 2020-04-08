@@ -10,14 +10,24 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-void *iTermMalloc(NSInteger size)
-{
+static size_t iTermSafeSignedNonnegativeMultiply(NSInteger count, size_t unitSize);
+
+void *iTermMalloc(NSInteger size) {
     ITAssertWithMessage(size >= 0, @"Malloc(%@)", @(size));
     errno = 0;
     // Don't allow to malloc(0) because that can return NULL and I want this function to be nonnull.
     void *result = malloc(MAX(1, size));
     ITAssertWithMessage(result != NULL, @"malloc(%@) returned NULL with errno=%@", @(size), @(errno));
     return result;
+}
+
+void *iTermCalloc(NSInteger count, size_t unitSize) {
+    ITAssertWithMessage(unitSize >= 0 && count >= 0, @"Calloc(%@,%@)", @(count), @(unitSize));
+    const size_t size = iTermSafeSignedNonnegativeMultiply(count, unitSize);
+    if (size == 0) {
+        return iTermMalloc(0);
+    }
+    return calloc(count, unitSize);
 }
 
 static size_t iTermSafeSignedNonnegativeMultiply(NSInteger count, size_t unitSize) {

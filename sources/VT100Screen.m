@@ -1255,8 +1255,8 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     string = StringByNormalizingString(string, _normalization);
     len = [string length];
     if (3 * len >= kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) calloc(3 * len,
-                                                          sizeof(screen_char_t));
+        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
+                                                               sizeof(screen_char_t));
         assert(buffer);
         if (!buffer) {
             NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
@@ -5536,7 +5536,7 @@ static void SwapInt(int *a, int *b) {
 {
     // Undo the appending of the screen to scrollback
     int i;
-    screen_char_t* dummy = calloc(currentGrid_.size.width, sizeof(screen_char_t));
+    screen_char_t* dummy = iTermCalloc(currentGrid_.size.width, sizeof(screen_char_t));
     for (i = 0; i < linesPushed; ++i) {
         int cont;
         BOOL isOk __attribute__((unused)) =
