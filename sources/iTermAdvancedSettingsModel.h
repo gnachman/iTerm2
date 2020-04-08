@@ -207,6 +207,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)pointSizeOfTimeStamp;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
++ (BOOL)saveScrollBufferWhenClearing;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;
 + (const BOOL *)preventEscapeSequenceFromChangingProfile;
 + (void)setPreventEscapeSequenceFromChangingProfile:(const BOOL *)value;

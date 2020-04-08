@@ -3174,7 +3174,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         yStart = currentGrid_.cursor.y;
         x2 = currentGrid_.size.width - 1;
         y2 = currentGrid_.size.height - 1;
-        if (x1 == 0 && yStart == 0) {
+        if (x1 == 0 && yStart == 0 && [iTermAdvancedSettingsModel saveScrollBufferWhenClearing]) {
             // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
             // clear the screen.
             [delegate_ screenRemoveSelection];
