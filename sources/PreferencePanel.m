@@ -389,7 +389,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 #pragma mark - View layout
 
 - (void)awakeFromNib {
-    ITUpgradedNSAssert(self.isWindowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
+    ITAssertWithMessage(self.isWindowLoaded, @"window not loaded in %@", NSStringFromSelector(_cmd));
     [self.window setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 

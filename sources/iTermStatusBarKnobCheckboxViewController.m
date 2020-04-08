@@ -44,7 +44,7 @@
 }
 
 - (void)setHelpURL:(NSURL *)url {
-    ITUpgradedNSAssert(NO, @"Not supported");
+    ITAssertWithMessage(NO, @"Not supported");
 }
 
 @end

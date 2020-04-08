@@ -238,7 +238,7 @@
 }
 
 - (uint16_t)closeFrameCode {
-    ITUpgradedNSAssert(self.opcode = iTermWebSocketOpcodeConnectionClose, @"Not a close frame");
+    ITAssertWithMessage(self.opcode = iTermWebSocketOpcodeConnectionClose, @"Not a close frame");
     if (self.payload.length < 2) {
         return 0;
     }
@@ -248,7 +248,7 @@
 }
 
 - (NSString *)closeFrameReason {
-    ITUpgradedNSAssert(self.opcode = iTermWebSocketOpcodeConnectionClose, @"Not a close frame");
+    ITAssertWithMessage(self.opcode = iTermWebSocketOpcodeConnectionClose, @"Not a close frame");
     if (self.payload.length < 2) {
         return nil;
     }
@@ -257,7 +257,7 @@
 }
 
 - (NSString *)text {
-    ITUpgradedNSAssert(self.opcode == iTermWebSocketOpcodeText, @"Not a text frame");
+    ITAssertWithMessage(self.opcode == iTermWebSocketOpcodeText, @"Not a text frame");
     return [[NSString alloc] initWithData:self.payload encoding:NSUTF8StringEncoding];
 }
 

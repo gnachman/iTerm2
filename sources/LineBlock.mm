@@ -449,7 +449,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     // but that stuff was erased and the EOL_SOFT was left behind.
     if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
-        ITUpgradedNSAssert(cll_entries > 0, @"is_partial but has no entries");
+        ITAssertWithMessage(cll_entries > 0, @"is_partial but has no entries");
         // update the numlines cache with the new number of full lines that the updated line has.
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
@@ -917,7 +917,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
 - (int)getRawLineLength:(int)linenum
 {
-    ITUpgradedNSAssert(linenum < cll_entries && linenum >= 0, @"Out of bounds");
+    ITAssertWithMessage(linenum < cll_entries && linenum >= 0, @"Out of bounds");
     int prev;
     if (linenum == 0) {
         prev = 0;
@@ -939,7 +939,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 }
 
 - (void)changeBufferSize:(int)capacity {
-    ITUpgradedNSAssert(capacity >= [self rawSpaceUsed], @"Truncating used space");
+    ITAssertWithMessage(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
     raw_buffer = (screen_char_t*) iTermRealloc((void*) raw_buffer, sizeof(screen_char_t), capacity);
     buffer_start = raw_buffer + start_offset;

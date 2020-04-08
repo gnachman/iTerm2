@@ -605,7 +605,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                             profile:(Profile *)profile {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
-    ITUpgradedNSAssert(self, @"initWithWindowNibName returned nil");
+    ITAssertWithMessage(self, @"initWithWindowNibName returned nil");
     if (self) {
         [self finishInitializationWithSmartLayout:smartLayout
                                        windowType:windowType
@@ -10183,7 +10183,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.tabs.count < 2) {
         return nil;
     }
-    ITUpgradedNSAssert([self.tabs containsObject:aTab], @"Called on wrong window");
+    ITAssertWithMessage([self.tabs containsObject:aTab], @"Called on wrong window");
     NSTabViewItem *aTabViewItem = aTab.tabViewItem;
     NSPoint point = [[self window] frame].origin;
     point.x += 10;

@@ -154,10 +154,6 @@ extern BOOL gDebugLogging;
   } while (0)
 #endif
 
-// I shouldn't use NSAssert because it is compiled out. But turning them all on at once is scary.
-// I will gradually ramp this up and see what catches on fire.
-#define ITUpgradedNSAssert(condition, args...) ITBetaAssertSampled(100, condition, args)
-
 #if BETA
 #define ITBetaAssert(condition, args...) \
   do { \

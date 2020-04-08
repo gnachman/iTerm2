@@ -4938,7 +4938,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case ColorModeInvalid:
             return kColorMapInvalid;
     }
-    ITUpgradedNSAssert(ok, @"Bogus color mode %d", (int)theMode);
+    ITAssertWithMessage(ok, @"Bogus color mode %d", (int)theMode);
     return kColorMapInvalid;
 }
 

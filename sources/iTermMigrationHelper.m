@@ -157,7 +157,7 @@
         } else if ([prefix isEqualToString:@"KeyBindings"]) {
             parent = [keybindingProfiles objectForKey:[dict objectForKey:KEY_KEYBOARD_PROFILE]];
         } else {
-            ITUpgradedNSAssert(0, @"Bad prefix");
+            ITAssertWithMessage(0, @"Bad prefix");
         }
         id value = nil;
         if (parent) {
