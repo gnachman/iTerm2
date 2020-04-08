@@ -1853,8 +1853,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)closeTerminalWindow:(id)sender {
-    [self killOrHideTmuxWindow];
-    [self close];
+    if ([self windowShouldClose:self.window]) {
+        [self close];
+    }
 }
 
 - (void)performClose:(id)sender {
