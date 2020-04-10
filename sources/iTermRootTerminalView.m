@@ -22,7 +22,6 @@
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermImageView.h"
 #import "iTermPreferences.h"
-#import "iTermRoundedCornerImageCreator.h"
 #import "iTermWindowSizeView.h"
 #import "iTermStandardWindowButtonsView.h"
 #import "iTermStatusBarViewController.h"
@@ -235,19 +234,31 @@ typedef struct {
         if (@available(macOS 10.14, *)) {
             NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
             {
-                iTermRoundedCornerImageCreator *creator = [[iTermRoundedCornerImageCreator alloc] initWithColor:borderColor
-                                                                                                           size:NSMakeSize(iTermWindowBorderRadius, iTermWindowBorderRadius)
-                                                                                                         radius:iTermWindowBorderRadius
-                                                                                                strokeThickness:0.5];
-                NSImage *topLeftCornerImage = [creator topLeft];
-                NSImage *topRightCornerImage = [creator topRight];
-                NSImage *bottomLeftCornerImage = [creator bottomLeft];
-                NSImage *bottomRightCornerImage = [creator bottomRight];
-                
+                static NSImage *gTopLeftCornerImage;
+                static NSImage *gTopRightCornerImage;
+                static NSImage *gBottomLeftCornerImage;
+                static NSImage *gBottomRightCornerImage;
+
+                static dispatch_once_t onceToken;
+                dispatch_once(&onceToken, ^{
+                    gTopLeftCornerImage = [[NSImage it_imageNamed:@"WindowCorner" forClass:self.class] it_verticallyFlippedImage];
+                    gTopRightCornerImage = [gTopLeftCornerImage it_horizontallyFlippedImage];
+                    gBottomLeftCornerImage = [NSImage it_imageNamed:@"WindowCorner" forClass:self.class];
+                    gBottomRightCornerImage = [gBottomLeftCornerImage it_horizontallyFlippedImage];
+                });
+                NSImage *topLeftCornerImage = gTopLeftCornerImage;
+                NSImage *topRightCornerImage = gTopRightCornerImage;
+                NSImage *bottomLeftCornerImage = gBottomLeftCornerImage;
+                NSImage *bottomRightCornerImage = gBottomRightCornerImage;
+
                 _topLeftCornerRoundImageView = [NSImageView imageViewWithImage:topLeftCornerImage];
+                _topLeftCornerRoundImageView.alphaValue = 0.75;
                 _topRightCornerRoundImageView = [NSImageView imageViewWithImage:topRightCornerImage];
+                _topRightCornerRoundImageView.alphaValue = 0.75;
                 _bottomLeftCornerRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerImage];
+                _bottomLeftCornerRoundImageView.alphaValue = 0.75;
                 _bottomRightCornerRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerImage];
+                _bottomRightCornerRoundImageView.alphaValue = 0.75;
 
                 _topLeftCornerRoundImageView.hidden = YES;
                 _topRightCornerRoundImageView.hidden = YES;

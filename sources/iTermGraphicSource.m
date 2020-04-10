@@ -101,7 +101,7 @@ static NSDictionary *sGraphicIconMap;
     image = [NSImage it_imageNamed:iconName forClass:[self class]];
     if (@available(macOS 10.15, *)) {
     } else {
-        image = [image it_flippedImage];
+        image = [image it_verticallyFlippedImage];
     }
 
     NSString *colorCode = sGraphicColorMap[command];

@@ -31,7 +31,7 @@
 
     _image = [[NSImage alloc] initWithContentsOfFile:path];
     if (flipped) {
-        _image = [_image it_flippedImage];
+        _image = [_image it_verticallyFlippedImage];
     }
     if (!NSEqualSizes(size, _image.size)) {
         _image = [_image it_imageOfSize:size];

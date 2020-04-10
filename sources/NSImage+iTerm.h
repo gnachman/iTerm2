@@ -46,7 +46,8 @@
 - (void)saveAsPNGTo:(NSString *)filename;
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
-- (NSImage *)it_flippedImage;
+- (NSImage *)it_verticallyFlippedImage;
+- (NSImage *)it_horizontallyFlippedImage;
 - (NSImage *)it_imageOfSize:(NSSize)size;
 
 // Returns an image of size `size`, with the receiver zoomed and cropped so it at least fills the

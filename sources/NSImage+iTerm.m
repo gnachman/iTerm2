@@ -312,13 +312,21 @@
 
 }
 
-- (NSImage *)it_flippedImage {
+- (NSImage *)it_verticallyFlippedImage {
+    return [self it_imageScaledByX:1 y:-1];
+}
+
+- (NSImage *)it_horizontallyFlippedImage {
+    return [self it_imageScaledByX:-1 y:1];
+}
+
+- (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
     const NSSize size = self.size;
     if (size.width == 0 || size.height == 0) {
         return self;
     }
     NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform scaleXBy:1 yBy:-1];
+    [transform scaleXBy:xScale yBy:yScale];
     NSAffineTransform *center = [NSAffineTransform transform];
     [center translateXBy:size.width / 2. yBy:size.height / 2.];
     [transform appendTransform:center];
