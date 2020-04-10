@@ -74,6 +74,7 @@ Edit > Paste Special > Paste Slowly Faster                                      
 Edit > Paste Special > Paste Slower                                                     `Paste Special.Paste Slower`                                                  
 Edit > Paste Special > Paste Slowly Slower                                              `Paste Special.Paste Slowly Slower`                                           
 Edit > Paste Special > Warn Before Multi-Line Paste                                     `Paste Special.Warn Before Multi-Line Paste`                                  
+Edit > Paste Special > Prompt to Convert Tabs to Spaces when Pasting                    `Paste Special.Prompt to Convert Tabs to Spaces when Pasting`                 
 Edit > Paste Special > Limit Multi-Line Paste Warning to Shell Prompt                   `Paste Special.Limit Multi-Line Paste Warning to Shell Prompt`                
 Edit > Paste Special > Warn Before Pasting One Line Ending in a Newline at Shell Prompt `Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt`
 Edit > Open Selection                                                                   `Open Selection`                                                              
@@ -109,6 +110,7 @@ View > Show Cursor Guide                                                        
 View > Show Timestamps                                                                  `Show Timestamps`                                                             
 View > Show Annotations                                                                 `Show Annotations`                                                            
 View > Auto Command Completion                                                          `Auto Command Completion`                                                     
+View > Composer                                                                         `Composer`                                                                    
 View > Open Quickly                                                                     `Open Quickly`                                                                
 View > Maximize Active Pane                                                             `Maximize Active Pane`                                                        
 View > Make Text Bigger                                                                 `Make Text Bigger`                                                            
