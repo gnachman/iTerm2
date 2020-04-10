@@ -17,6 +17,7 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
@@ -159,46 +160,84 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     }
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-                          row:(NSInteger)rowIndex {
-    {
-        // Try to handle as key mapping
-        NSDictionary *dict = [_delegate keyMappingDictionary:self];
-        if (rowIndex < dict.count) {
-            NSArray<iTermKeystroke *> *sortedKeystrokes = [_delegate keyMappingSortedKeystrokes:self];
-            iTermKeystroke *keystroke = sortedKeystrokes[rowIndex];
-
-            if (aTableColumn == _keyCombinationColumn) {
-                return [iTermKeystrokeFormatter stringForKeystroke:keystroke];
-            }
-            if (aTableColumn == _actionColumn) {
-                iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:[keystroke valueInBindingDictionary:dict]];
-                return action.displayName;
-            }
-            return nil;
-        }
-
-        // Must be a touch bar mapping
-        rowIndex -= dict.count;
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    static NSString *const identifier = @"KeyMappingTableViewIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.lineBreakMode = NSLineBreakByTruncatingTail;
+        result.usesSingleLineMode = YES;
+        result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
 
-    {
-        // Handle touch bar mapping
-        NSDictionary *dict = [_delegate keyMappingTouchBarItems];
-        NSArray<iTermTouchbarItem *> *sortedKeys = [_delegate keyMappingSortedTouchbarItems:self];
-        iTermTouchbarItem *key = sortedKeys[rowIndex];
+    result.stringValue = [self stringValueForColumn:tableColumn row:row];
+    result.toolTip = result.stringValue;
+    return result;
+}
 
-        if (aTableColumn == _keyCombinationColumn) {
-            iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict[key.identifier]];
-            return action.label;
-        }
-        if (aTableColumn == _actionColumn) {
-            iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict[key.identifier]];
-            return action.displayName;
-        }
+- (NSString *)keyCombinationStringForKeystroke:(iTermKeystroke *)keystroke {
+    return [iTermKeystrokeFormatter stringForKeystroke:keystroke];
+}
+
+- (NSString *)descriptionForKeystroke:(iTermKeystroke *)keystroke
+                    bindingDictionary:(NSDictionary *)dict {
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:[keystroke valueInBindingDictionary:dict]];
+    return action.displayName;
+}
+
+- (NSString *)stringValueForKeyMappingOnRow:(NSInteger)rowIndex
+                                     column:(NSTableColumn *)column
+                          bindingDictionary:(NSDictionary *)dict {
+    NSArray<iTermKeystroke *> *sortedKeystrokes = [_delegate keyMappingSortedKeystrokes:self];
+    iTermKeystroke *keystroke = sortedKeystrokes[rowIndex];
+
+    if (column == _keyCombinationColumn) {
+        return [self keyCombinationStringForKeystroke:keystroke];
+    }
+    if (column == _actionColumn) {
+        return [self descriptionForKeystroke:keystroke
+                           bindingDictionary:dict];
     }
     return nil;
+}
+
+- (NSString *)labelForTouchBarItem:(NSDictionary *)dict {
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict];
+    return action.label;
+}
+
+- (NSString *)actionForTouchBarItem:(NSDictionary *)dict {
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict];
+    return action.displayName;
+}
+
+- (NSString *)stringValueForTouchBarMappingOnRow:(NSInteger)rowIndex
+                                          column:(NSTableColumn *)column {
+    NSDictionary *dict = [_delegate keyMappingTouchBarItems];
+    NSArray<iTermTouchbarItem *> *sortedKeys = [_delegate keyMappingSortedTouchbarItems:self];
+    iTermTouchbarItem *key = sortedKeys[rowIndex];
+
+    if (column == _keyCombinationColumn) {
+        return [self labelForTouchBarItem:dict[key.identifier]];
+    }
+    if (column == _actionColumn) {
+        return [self actionForTouchBarItem:dict[key.identifier]];
+    }
+    return nil;
+}
+
+- (NSString *)stringValueForColumn:(NSTableColumn *)column
+                               row:(NSInteger)rowIndex {
+    // Try to handle as key mapping
+    NSDictionary *dict = [_delegate keyMappingDictionary:self];
+    if (rowIndex < dict.count) {
+        return [self stringValueForKeyMappingOnRow:rowIndex
+                                            column:column
+                                 bindingDictionary:dict];
+    }
+
+    return [self stringValueForTouchBarMappingOnRow:rowIndex - dict.count
+                                             column:column];
 }
 
 #pragma mark - Modal Sheets
