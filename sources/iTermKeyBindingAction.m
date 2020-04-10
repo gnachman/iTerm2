@@ -152,9 +152,11 @@ static NSString *GetProfileName(NSString *guid) {
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
 						    _parameter];
             break;
-        case KEY_ACTION_SELECT_MENU_ITEM:
-            actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Select Menu Item", _parameter];
+        case KEY_ACTION_SELECT_MENU_ITEM: {
+            NSArray *parts = [_parameter componentsSeparatedByString:@"\n"];
+            actionString = [NSString stringWithFormat:@"%@ “%@”", @"Select Menu Item", parts.firstObject];
             break;
+        }
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
             actionString = [NSString stringWithFormat:@"New Window with \"%@\" Profile", GetProfileName(_parameter)];
             break;
