@@ -40,7 +40,6 @@
 #import "iTermSessionLauncher.h"
 #import "iTermVariables.h"
 #import "iTermWebSocketCookieJar.h"
-#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
