@@ -95,7 +95,6 @@ static iTermController *gSharedInstance;
     BOOL _willPowerOff;
     BOOL _arrangeHorizontallyPendingFullScreenTransitions;
     iTermSetCurrentTerminalHelper *_setCurrentTerminalHelper;
-    NSString *_lastSelection;
 }
 
 + (iTermController *)sharedInstance {
@@ -248,15 +247,6 @@ static iTermController *gSharedInstance;
         }
     }
     return nil;
-}
-
--(NSString *)lastSelection {
-    return _lastSelection;
-}
-
--(void)setLastSelection:(NSString *)selection {
-    _lastSelection = selection;
-    DLog(@"setLastSelection: selection: '%@'", selection);
 }
 
 - (void)updateSelectionVariables:(NSString *)selection {
