@@ -663,6 +663,8 @@ static const NSUInteger kMaxHosts = 100;
                      forVariableNamed:iTermVariableKeySessionCreationTimeString];
         [self.variablesScope setValue:[@(_autoLogId) stringValue] forVariableNamed:iTermVariableKeySessionAutoLogID];
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
+        [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
+        [self.variablesScope setValue:[NSNumber numberWithInt:0] forVariableNamed:iTermVariableKeySessionSelectionLength];
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
                                                            vendor:self.variablesScope];

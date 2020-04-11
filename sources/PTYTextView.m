@@ -4697,6 +4697,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             selection = nil;
         }
         [[iTermController sharedInstance] setLastSelection:selection];
+    } else {
+        [[iTermController sharedInstance] setLastSelection:nil];
     }
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);

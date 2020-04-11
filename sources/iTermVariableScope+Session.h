@@ -45,6 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSString *tmuxStatusRight;
 @property (nullable, nonatomic, strong) NSNumber *mouseReportingMode;
 @property (nullable, nonatomic, strong) NSString *badge;
+@property (nullable, nonatomic, strong) NSString *selection;
+@property (nullable, nonatomic, strong) NSNumber *selectionLength;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermTabScope> *tab;
 
 @end

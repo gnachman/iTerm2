@@ -270,4 +270,20 @@
     return [iTermVariableScope newTabScopeWithVariables:[self valueForVariableName:iTermVariableKeySessionTab]];
 }
 
+- (NSString *)selection {
+    return [self valueForVariableName:iTermVariableKeySessionSelection];
+}
+
+- (void)setSelection:(NSString *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionSelection];
+}
+
+- (NSNumber *)selectionLength {
+    return [self valueForVariableName:iTermVariableKeySessionSelectionLength];
+}
+
+- (void)setSelectionLength:(NSNumber *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionSelectionLength];
+}
+
 @end

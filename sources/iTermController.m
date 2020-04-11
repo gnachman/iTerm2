@@ -39,6 +39,7 @@
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermWebSocketCookieJar.h"
+#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -93,6 +94,7 @@ static iTermController *gSharedInstance;
     BOOL _willPowerOff;
     BOOL _arrangeHorizontallyPendingFullScreenTransitions;
     iTermSetCurrentTerminalHelper *_setCurrentTerminalHelper;
+    NSString *_lastSelection;
 }
 
 + (iTermController *)sharedInstance {
@@ -245,6 +247,34 @@ static iTermController *gSharedInstance;
         }
     }
     return nil;
+}
+
+-(NSString *)lastSelection {
+    return _lastSelection;
+}
+
+-(void)setLastSelection:(NSString *)selection {
+    // Assign the whole selection to the internal _lastSelection variable but only
+    // maximumBytesToProvideToPythonAPI characters to the "selection" iTerm Variable
+    //
+    // The "selectionLength" iTerm variable contains the full length of the original
+    // selection; not the restricted length assigned to the "selection" iTerm Variable
+    _lastSelection = selection;
+    DLog(@"setLastSelection: selection: '%@'", selection);
+    PTYSession * current_session = [_frontTerminalWindowController currentSession];
+    if (current_session) {
+        iTermVariableScope * variablesScope = current_session.variablesScope;
+        if (variablesScope) {
+            if (selection && selection.length > 0) {
+                int max_length = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
+                [variablesScope setValue:[selection substringToIndex:MIN(max_length,selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
+                [variablesScope setValue:[NSNumber numberWithInt:selection.length] forVariableNamed:iTermVariableKeySessionSelectionLength];
+            } else {
+                [variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
+                [variablesScope setValue:[NSNumber numberWithInt:0] forVariableNamed:iTermVariableKeySessionSelectionLength];
+            }
+        }
+    }
 }
 
 // Action methods
