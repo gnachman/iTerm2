@@ -74,12 +74,6 @@
     return cookie;
 }
 
-- (NSString *)randomStringForReusableCookie {
-    NSString *cookie = [self.randomString stringByAppendingString:@"_"];
-    [self addCookie:cookie];
-    return cookie;
-}
-
 - (void)removeCookie:(NSString *)cookie {
     @synchronized(_cookies) {
         [_cookies removeObject:cookie];

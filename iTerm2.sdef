@@ -254,6 +254,10 @@
 
     <command name="request cookie" code="Itrmrqck" description="Request a Python API cookie">
         <cocoa class="iTermRequestCookieCommand" />
+        <parameter name="and key for app named" code="Rcsn" type="text" optional="yes"
+            description="Name of script using the cookie. This is shown in the console.">
+            <cocoa key="appName"/>
+        </parameter>
         <result type="text"
           description="A cookie that can be used to connect to the Python API endpoint" />
     </command>

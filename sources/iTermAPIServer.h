@@ -20,6 +20,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
                       preauthorized:(BOOL)preauthorized
                                unix:(BOOL)unix
+                      disableAuthUI:(BOOL)disableAuthUI
                              reason:(out NSString **)reason
                         displayName:(out NSString **)displayName;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;

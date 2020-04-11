@@ -1174,6 +1174,7 @@ static iTermAPIHelper *sAPIHelperInstance;
 - (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
                       preauthorized:(BOOL)preauthorized
                                unix:(BOOL)unix
+                      disableAuthUI:(BOOL)disableAuthUI
                              reason:(out NSString *__autoreleasing *)reason
                         displayName:(out NSString *__autoreleasing *)displayName {
     iTermProcessInspector *controller = [[iTermProcessInspector alloc] initWithProcessIDs:pids];
@@ -1182,6 +1183,10 @@ static iTermAPIHelper *sAPIHelperInstance;
     if (preauthorized) {
         *reason = @"Script launched by user action";
         return YES;
+    }
+    if (disableAuthUI) {
+        *reason = @"UI authorization disabled and no valid cookie was presented.";
+        return NO;
     }
 
     NSString *message;

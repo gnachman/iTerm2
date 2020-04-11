@@ -334,7 +334,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
 @property(nonatomic, retain) VT100RemoteHost *currentHost;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
-@property(nonatomic, copy) NSString *reusableCookie;
+@property(nonatomic, copy) NSString *cookie;
 @end
 
 @implementation PTYSession {
@@ -916,9 +916,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_naggingController release];
     [_expect release];
     [_pasteBracketingOopsieExpectation release];
-    if (_reusableCookie) {
-        [[iTermWebSocketCookieJar sharedInstance] removeCookie:_reusableCookie];
-        [_reusableCookie release];
+    if (_cookie) {
+        [[iTermWebSocketCookieJar sharedInstance] removeCookie:_cookie];
+        [_cookie release];
     }
     [_composerManager release];
 
@@ -2095,8 +2095,8 @@ ITERM_WEAKLY_REFERENCEABLE
         env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
     if ([iTermAdvancedSettingsModel setCookie]) {
-        self.reusableCookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForReusableCookie];
-        env[@"ITERM2_COOKIE"] = self.reusableCookie;
+        self.cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
+        env[@"ITERM2_COOKIE"] = self.cookie;
     }
     DLog(@"Begin locale logic");
     if (!_profile[KEY_SET_LOCALE_VARS] ||
@@ -4600,8 +4600,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_logging.enabled) {
         result[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] = _logging.path;
     }
-    if (_reusableCookie) {
-        result[SESSION_ARRANGEMENT_REUSABLE_COOKIE] = _reusableCookie;
+    if (_cookie) {
+        result[SESSION_ARRANGEMENT_REUSABLE_COOKIE] = _cookie;
     }
     if (_overriddenFields.count > 0) {
         result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;

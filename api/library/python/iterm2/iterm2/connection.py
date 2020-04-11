@@ -1,6 +1,7 @@
 """Manages the details of the websocket connection. """
 
 import asyncio
+import iterm2.auth
 import os
 import sys
 import traceback
@@ -33,7 +34,8 @@ def _cookie_and_key():
 def _headers():
     cookie, key = _cookie_and_key()
     headers = {"origin": "ws://localhost/",
-               "x-iterm2-library-version": "python {}".format(__version__)}
+               "x-iterm2-library-version": "python {}".format(__version__),
+               "x-iterm2-disable-auth-ui": "true"}
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
     if key is not None:
@@ -85,19 +87,37 @@ class Connection:
         :returns: A new connection to iTerm2.
         """
         connection = Connection()
-        try:
-            connection.websocket = await connection._async_connect_impl()
-        except websockets.exceptions.InvalidStatusCode as status_code_exception:
-            if status_code_exception.status_code == 406:
-                print("This version of the iterm2 module is too old for " +
-                      "the current version of iTerm2. Please upgrade.")
-                sys.exit(1)
-            raise
-        # pylint: disable=protected-access
-        connection.__dispatch_forever_future = asyncio.ensure_future(
-            connection._async_dispatch_forever(
-                connection, asyncio.get_event_loop()))
-        return connection
+
+        # Set ITERM2_COOKIE and ITERM2_KEY if needed by making an Applescript
+        # request.
+        have_fresh_cookie = connection.authenticate(False)
+
+        while True:
+            try:
+                connection.websocket = await connection._get_connect_coro()
+                # pylint: disable=protected-access
+                connection.__dispatch_forever_future = asyncio.ensure_future(
+                    connection._async_dispatch_forever(
+                        connection, asyncio.get_event_loop()))
+                return connection
+            except websockets.exceptions.InvalidStatusCode as status_code_exception:
+                if status_code_exception.status_code == 401:
+                    if have_fresh_cookie:
+                        raise
+                    # Force request a cookie and try one more time.
+                    connection._remove_auth()
+                    have_fresh_cookie = connection.authenticate(True)
+                    if not have_fresh_cookie:
+                        # Didn't get a cookie, so no point trying again.
+                        raise
+                elif status_code_exception.status_code == 406:
+                    print("This version of the iterm2 module is too old for " +
+                          "the current version of iTerm2. Please upgrade.")
+                    sys.exit(1)
+                    raise
+                else:
+                    raise
+
 
     def __init__(self):
         self.websocket = None
@@ -292,12 +312,20 @@ class Connection:
             return (0, 0)
         return (int(parts[0]), int(parts[1]))
 
-    async def _async_connect_impl(self):
+    def _get_connect_coro(self):
         if "unix" in CONNECT_FLAGS:
-            return await self._async_connect_unix()
-        return await self._async_connect_tcp()
+            return self._get_unix_connect_coro()
+        else:
+            return self._get_tcp_connect_coro()
 
-    async def _async_connect_unix(self):
+    def _remove_auth(self):
+        # Remove these because they are not re-usable.
+        vars = ["ITERM2_COOKIE", "ITERM2_KEY"]
+        for var in vars:
+            if var in os.environ:
+                del os.environ[var]
+
+    def _get_unix_connect_coro(self):
         """Experimental: connect with unix domain socket."""
         applicationSupport = os.path.join(
             AppKit.NSSearchPathForDirectoriesInDomains(
@@ -306,7 +334,7 @@ class Connection:
                 True)[0],
             "iTerm2")
         path = os.path.join(applicationSupport, "private", "socket")
-        return await websockets.client.unix_connect(
+        return websockets.client.unix_connect(
             path,
             "ws://localhost/",
             ping_interval=None,
@@ -314,12 +342,31 @@ class Connection:
             subprotocols=_subprotocols())
 
 
-    async def _async_connect_tcp(self):
+    def _get_tcp_connect_coro(self):
         """Legacy: connect with tcp socket."""
-        return await websockets.connect(_uri(),
+        return websockets.connect(_uri(),
                                         ping_interval=None,
                                         extra_headers=_headers(),
                                         subprotocols=_subprotocols())
+
+    def authenticate(self, force):
+        """
+        Request a cookie via Applescript.
+
+        :param force: Remove existing cookies first?
+
+        :returns: True if a new cookie was gotten. False if not. When `force`
+            is True, then a return value of `False` means it wasn't able to
+            connect. When `force` is False, a return value of `False` could
+            mean either a failure to connect or that there was already a
+            (possibly stale) cookie in the environment.
+        """
+        if force:
+            self._remove_auth()
+        try:
+            return iterm2.auth.authenticate()
+        except iterm2.auth.AuthenticationException:
+            return False
 
     async def async_connect(self, coro, retry=False):
         """
@@ -340,8 +387,13 @@ class Connection:
         """
         done = False
         while not done:
+            # Set ITERM2_COOKIE and ITERM2_KEY if needed by making an
+            # Applescript request. This cookie might be stale, but we'll try it
+            # optimstically.
+            have_fresh_cookie = self.authenticate(False)
+
             try:
-                async with self._async_connect_impl() as websocket:
+                async with self._get_connect_coro() as websocket:
                     done = True
                     self.websocket = websocket
                     # pylint: disable=broad-except
@@ -351,11 +403,32 @@ class Connection:
                         traceback.print_exc()
                         sys.exit(1)
             except websockets.exceptions.InvalidStatusCode as exception:
-                if exception.status_code == 406:
+                if exception.status_code == 401:
+                    # Auth failure.
+                    if retry:
+                        # Sleep and try to authenticate until successful.
+                        while not have_fresh_cookie:
+                            await asyncio.sleep(0.5)
+                            have_fresh_cookie = self.authenticate(True)
+                    else:
+                        # Not retrying forever.
+                        if have_fresh_cookie:
+                            # Welp, that shoulda worked. Give up.
+                            raise
+
+                        # Prepare the second and final attempt.
+                        self._remove_auth()
+                        have_fresh_cookie = self.authenticate(True)
+                        if not have_fresh_cookie:
+                            # Failed to get a cookie. Give up.
+                            raise
+                elif exception.status_code == 406:
                     print("This version of the iterm2 module is too old " +
                           "for the current version of iTerm2. Please upgrade.")
                     sys.exit(1)
-                raise
+                    raise
+                else:
+                    raise
             except websockets.exceptions.InvalidMessage:
                 # This is a temporary workaround for this issue:
                 #
@@ -387,6 +460,8 @@ or run_forever()
 """, file=sys.stderr)
                     done = True
                     raise
+            finally:
+                self._remove_auth()
 
 
 def run_until_complete(

@@ -155,12 +155,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }
 
     NSString *key = [[NSUUID UUID] UUIDString];
+    NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
     if (virtualenv) {
         // Convert /foo/bar/Name/Name/main.py to Name
         name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
     }
-    NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                                           fullPath:fullPath
                                                                         identifier:identifier

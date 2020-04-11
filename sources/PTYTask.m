@@ -750,7 +750,7 @@ static void HandleSigChld(int n) {
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     DLog(@"initialPwd=%s", initialPwd);
-
+#warning TODO: Make this code path safe. These raw C pointers are a disaster waiting to happen. The dispatch async in -[iTermMultiServerjobManager forkAndExecWithTtyState:…] uses a dangling pointer (argpath I think)
     [self.jobManager forkAndExecWithTtyState:&ttyState
                                      argpath:argpath
                                         argv:argv

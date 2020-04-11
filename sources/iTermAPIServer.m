@@ -369,9 +369,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         dispatch_async(dispatch_get_main_queue(), ^{
             NSString *reason = nil;
             NSString *displayName = nil;
+            const BOOL disableAuthUI = request.allHTTPHeaderFields[@"x-iterm2-disable-auth-ui"] != nil;
             const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
                                                          preauthorized:webSocketConnection.preauthorized
                                                                   unix:connection.clientAddress.addressFamily == AF_UNIX
+                                                         disableAuthUI:disableAuthUI
                                                                 reason:&reason
                                                            displayName:&displayName];
             if (ok) {
@@ -394,11 +396,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                     }];
                 });
             } else {
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
-                                                                    object:request.allHTTPHeaderFields[@"x-iterm2-key"]
-                                                                  userInfo:@{ @"reason": reason ?: @"Unknown reason",
-                                                                              @"job": displayName ?: [NSNull null],
-                                                                              @"pids": pids }];
+                if (!disableAuthUI) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                        object:request.allHTTPHeaderFields[@"x-iterm2-key"]
+                                                                      userInfo:@{ @"reason": reason ?: @"Unknown reason",
+                                                                                  @"job": displayName ?: [NSNull null],
+                                                                                  @"pids": pids }];
+                }
                 dispatch_async(connection.queue, ^{
                     [connection unauthorized];
                 });
