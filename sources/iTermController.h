@@ -159,6 +159,8 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 
 void OnHotKeyEvent(void);
 
+- (void)updateSelectionVariables:(NSString *)selection;
+
 // Does a serialized fullscreening of the term's window. Slated for production in 3.1.
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term;
 

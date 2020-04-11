@@ -38,6 +38,7 @@
 #import "iTermProfileModelJournal.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
+#import "iTermVariables.h"
 #import "iTermWebSocketCookieJar.h"
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
@@ -254,13 +255,16 @@ static iTermController *gSharedInstance;
 }
 
 -(void)setLastSelection:(NSString *)selection {
+    _lastSelection = selection;
+    DLog(@"setLastSelection: selection: '%@'", selection);
+}
+
+- (void)updateSelectionVariables:(NSString *)selection {
     // Assign the whole selection to the internal _lastSelection variable but only
     // maximumBytesToProvideToPythonAPI characters to the "selection" iTerm Variable
     //
     // The "selectionLength" iTerm variable contains the full length of the original
     // selection; not the restricted length assigned to the "selection" iTerm Variable
-    _lastSelection = selection;
-    DLog(@"setLastSelection: selection: '%@'", selection);
     PTYSession * current_session = [_frontTerminalWindowController currentSession];
     if (current_session) {
         iTermVariableScope * variablesScope = current_session.variablesScope;
