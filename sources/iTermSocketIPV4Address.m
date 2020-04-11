@@ -60,4 +60,8 @@
             _sockaddr.sin_port == otherIn->sin_port);
 }
 
+- (int)addressFamily {
+    return AF_INET;
+}
+
 @end

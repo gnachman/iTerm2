@@ -6,10 +6,13 @@ import sys
 import traceback
 import typing
 import websockets
+import AppKit
 
 import iterm2.api_pb2
 from iterm2._version import __version__
 
+# Add "unix" to this array to enable unix domain socket support. Experimental.
+CONNECT_FLAGS=[]
 
 def _getenv(key):
     """Gets an environment variable safely.
@@ -83,11 +86,7 @@ class Connection:
         """
         connection = Connection()
         try:
-            connection.websocket = await websockets.connect(
-                _uri(),
-                ping_interval=None,  # type: ignore
-                extra_headers=_headers(),
-                subprotocols=_subprotocols())
+            connection.websocket = await connection._async_connect_impl()
         except websockets.exceptions.InvalidStatusCode as status_code_exception:
             if status_code_exception.status_code == 406:
                 print("This version of the iterm2 module is too old for " +
@@ -293,6 +292,35 @@ class Connection:
             return (0, 0)
         return (int(parts[0]), int(parts[1]))
 
+    async def _async_connect_impl(self):
+        if "unix" in CONNECT_FLAGS:
+            return await self._async_connect_unix()
+        return await self._async_connect_tcp()
+
+    async def _async_connect_unix(self):
+        """Experimental: connect with unix domain socket."""
+        applicationSupport = os.path.join(
+            AppKit.NSSearchPathForDirectoriesInDomains(
+                AppKit.NSApplicationSupportDirectory,
+                AppKit.NSUserDomainMask,
+                True)[0],
+            "iTerm2")
+        path = os.path.join(applicationSupport, "private", "socket")
+        return await websockets.client.unix_connect(
+            path,
+            "ws://localhost/",
+            ping_interval=None,
+            extra_headers=_headers(),
+            subprotocols=_subprotocols())
+
+
+    async def _async_connect_tcp(self):
+        """Legacy: connect with tcp socket."""
+        return await websockets.connect(_uri(),
+                                        ping_interval=None,
+                                        extra_headers=_headers(),
+                                        subprotocols=_subprotocols())
+
     async def async_connect(self, coro, retry=False):
         """
         Establishes a websocket connection.
@@ -313,11 +341,7 @@ class Connection:
         done = False
         while not done:
             try:
-                async with websockets.connect(
-                        _uri(),
-                        ping_interval=None,
-                        extra_headers=_headers(),
-                        subprotocols=_subprotocols()) as websocket:
+                async with self._async_connect_impl() as websocket:
                     done = True
                     self.websocket = websocket
                     # pylint: disable=broad-except

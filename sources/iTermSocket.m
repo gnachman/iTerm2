@@ -15,16 +15,22 @@
 @implementation iTermSocket {
     iTermSocketAddress *_boundAddress;
     dispatch_queue_t _acceptQueue;
+    int _addressFamily;
 }
 
 + (instancetype)tcpIPV4Socket {
     return [[self alloc] initWithAddressFamily:AF_INET socketType:SOCK_STREAM];
 }
 
++ (instancetype)unixDomainSocket {
+    return [[self alloc] initWithAddressFamily:AF_UNIX socketType:SOCK_STREAM];
+}
+
 - (instancetype)initWithAddressFamily:(int)addressFamily
                            socketType:(int)socketType {
     self = [super init];
     if (self) {
+        _addressFamily = addressFamily;
         _fd = socket(addressFamily, socketType, 0);
         if (_fd < 0) {
             XLog(@"socket failed with %s", strerror(errno));
@@ -41,6 +47,9 @@
 }
 
 - (void)setReuseAddr:(BOOL)reuse {
+    if (_addressFamily == AF_UNIX) {
+        return;
+    }
     int optionValue = reuse ? 1 : 0;
     int rc = setsockopt(_fd,
                         SOL_SOCKET,

@@ -10,6 +10,7 @@
 
 #import "Api.pbobjc.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermHTTPConnection.h"
 #import "iTermLSOF.h"
 #import "iTermWebSocketConnection.h"
@@ -18,8 +19,12 @@
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
 #import "NSArray+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+
 #import <objc/runtime.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #import <Cocoa/Cocoa.h>
 
@@ -141,11 +146,23 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return instance;
 }
 
++ (NSString *)folderForUnixSocket {
+    return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:@"private"];
+}
+
++ (NSString *)unixSocketPath {
+    return [[self folderForUnixSocket] stringByAppendingPathComponent:@"socket"];
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
         _connections = [[NSMutableDictionary alloc] init];
-        _socket = [iTermSocket tcpIPV4Socket];
+        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
+            _socket = [iTermSocket unixDomainSocket];
+        } else {
+            _socket = [iTermSocket tcpIPV4Socket];
+        }
         if (!_socket) {
             XLog(@"Failed to create socket");
             return nil;
@@ -154,13 +171,27 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         _executionQueue = dispatch_queue_create("com.iterm2.apiexec", DISPATCH_QUEUE_SERIAL);
 
-        [_socket setReuseAddr:YES];
-        iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
-        iTermSocketAddress *socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
-                                                                                        port:1912];
+        iTermSocketAddress *socketAddress = nil;
+        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
+            NSString *path = [iTermAPIServer unixSocketPath];
+            [[NSFileManager defaultManager] createDirectoryAtPath:[iTermAPIServer folderForUnixSocket]
+                                      withIntermediateDirectories:YES
+                                                       attributes:@{ NSFilePosixPermissions: @(S_IRWXU) }
+                                                            error:nil];
+            socketAddress = [iTermSocketAddress socketAddressWithPath:path];
+            unlink(path.UTF8String);
+        } else {
+            iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
+            socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
+                                                                        port:1912];
+            [_socket setReuseAddr:YES];
+        }
         if (![_socket bindToAddress:socketAddress]) {
             XLog(@"Failed to bind");
             return nil;
+        }
+        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
+            chmod([iTermAPIServer unixSocketPath].UTF8String, (S_IRUSR | S_IWUSR));
         }
 
         BOOL ok = [_socket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress) {
@@ -232,6 +263,20 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                           retries:(NSInteger)retries {
     DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
     dispatch_queue_t queue = _queue;
+    if (connection.clientAddress.addressFamily == AF_UNIX) {
+        [self startRequestOnConnection:connection pids:@[] completion:^(BOOL ok, NSString *reason) {
+            [self->_pendingConnections removeObject:connection];
+            if (!ok) {
+                XLog(@"Reject unix domain socket connection: %@", reason);
+                dispatch_async(connection.queue, ^{
+                    [connection unauthorized];
+                });
+            }
+        }];
+        return;
+    }
+
+    // TCP path
     [iTermLSOF getProcessIDsWithConnectionFromAddress:connection.clientAddress
                                                 queue:queue
                                            completion:^(NSArray<NSNumber *> *pids) {
@@ -326,6 +371,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             NSString *displayName = nil;
             const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
                                                          preauthorized:webSocketConnection.preauthorized
+                                                                  unix:connection.clientAddress.addressFamily == AF_UNIX
                                                                 reason:&reason
                                                            displayName:&displayName];
             if (ok) {

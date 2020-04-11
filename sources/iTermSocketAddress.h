@@ -17,9 +17,11 @@
 @property (nonatomic, readonly) const struct sockaddr *sockaddr;
 @property (nonatomic, readonly) socklen_t sockaddrSize;
 @property (nonatomic, readonly) uint16 port;
+@property (nonatomic, readonly) int addressFamily;
 
 + (instancetype)socketAddressWithIPV4Address:(iTermIPV4Address *)address port:(uint16_t)port;
 + (instancetype)socketAddressWithSockaddr:(struct sockaddr)sockaddr;
++ (instancetype)socketAddressWithPath:(NSString *)path;
 + (int)socketAddressPort:(struct sockaddr *)sa;
 + (BOOL)socketAddressIsLoopback:(struct sockaddr *)sa;
 

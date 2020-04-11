@@ -17,7 +17,11 @@ extern NSString *const iTermAPIServerConnectionAccepted;
 extern NSString *const iTermAPIServerConnectionClosed;
 
 @protocol iTermAPIServerDelegate<NSObject>
-- (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids preauthorized:(BOOL)preauthorized reason:(out NSString **)reason displayName:(out NSString **)displayName;
+- (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
+                      preauthorized:(BOOL)preauthorized
+                               unix:(BOOL)unix
+                             reason:(out NSString **)reason
+                        displayName:(out NSString **)displayName;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request handler:(void (^)(ITMGetPromptResponse *))handler;
 - (void)apiServerListPrompts:(ITMListPromptsRequest *)request handler:(void (^)(ITMListPromptsResponse *))handler;
