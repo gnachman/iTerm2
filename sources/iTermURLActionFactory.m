@@ -101,6 +101,19 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     [factory tryCurrentPhase];
 }
 
+- (iTermTextExtractor *)extractor {
+    VT100GridRange logicalWindow = _extractor.logicalWindow;
+    const int width = [_extractor.dataSource width];
+    if (logicalWindow.location >= width) {
+        logicalWindow.location = MAX(0, width - 1);
+    }
+    if (logicalWindow.location + logicalWindow.length > width) {
+        logicalWindow.length = width - logicalWindow.location;
+    }
+    _extractor.logicalWindow = logicalWindow;
+    return _extractor;
+}
+
 // This is always eventually callsed.
 - (void)completeWithAction:(URLAction *)action {
     DLog(@"Phase completed successfully with action %@", action);
