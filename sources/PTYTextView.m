@@ -4699,7 +4699,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         [[iTermController sharedInstance] setLastSelection:selectionString];
     }
-    [_delegate selectionDidChange:selectionString];
+    [_delegate textViewSelectionDidChangeToTruncatedString:selectionString];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }

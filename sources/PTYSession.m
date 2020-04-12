@@ -7558,22 +7558,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self showVisualIndicatorForEvent:event];
 }
 
-- (void)selectionDidChange:(NSString *)selection {
+- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)selection {
     // Assign a maximum of maximumBytesToProvideToPythonAPI characters to the "selection"
     // iTerm Variable
     //
     // The "selectionLength" iTerm variable contains the full length of the original
     // selection; not the restricted length assigned to the "selection" iTerm Variable
-    DLog(@"selectionDidChange to %@", selection);
-    
-    if (selection && selection.length > 0) {
-        const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
-        [self.variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
-        [self.variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
-    } else {
-        [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
-        [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
-    }
+    DLog(@"textViewSelectionDidChangeToTruncatedString: %@", selection);
+
+    selection = selection ? selection : @"";
+    const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
+    [self.variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
+    [self.variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
 }
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
