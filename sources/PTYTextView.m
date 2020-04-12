@@ -4688,19 +4688,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
+    NSString *selectionString = nil;
     DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
-        NSString *selection = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
-        if (selection.length == MAX_SELECTION_SIZE) {
-            selection = nil;
+        selectionString = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
+        if (selectionString.length == MAX_SELECTION_SIZE) {
+            selectionString = nil;
         }
-        [[iTermController sharedInstance] setLastSelection:selection];
-        [[iTermController sharedInstance] updateSelectionVariables:selection];
-    } else {
-        [[iTermController sharedInstance] updateSelectionVariables:nil];
+        [[iTermController sharedInstance] setLastSelection:selectionString];
     }
+    [_delegate selectionDidChange:selectionString];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }

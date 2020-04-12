@@ -7558,6 +7558,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self showVisualIndicatorForEvent:event];
 }
 
+- (void)selectionDidChange:(NSString *)selection {
+    // Assign the whole selection to the internal _lastSelection variable but only
+    // maximumBytesToProvideToPythonAPI characters to the "selection" iTerm Variable
+    //
+    // The "selectionLength" iTerm variable contains the full length of the original
+    // selection; not the restricted length assigned to the "selection" iTerm Variable
+    DLog(@"selectionDidChange to %@", selection);
+    
+    if (selection && selection.length > 0) {
+        const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
+        [self.variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
+        [self.variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
+    } else {
+        [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
+        [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {

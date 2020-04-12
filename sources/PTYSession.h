@@ -728,6 +728,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refresh;
 
+// Update PTYSession variables on selection change
+- (void)selectionDidChange:(NSString *)selection;
+
 // Open the current selection with semantic history.
 - (void)openSelection;
 
