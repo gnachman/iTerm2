@@ -256,15 +256,15 @@ static iTermController *gSharedInstance;
     // selection; not the restricted length assigned to the "selection" iTerm Variable
     PTYSession * current_session = [_frontTerminalWindowController currentSession];
     if (current_session) {
-        iTermVariableScope * variablesScope = current_session.variablesScope;
+        iTermVariableScope *variablesScope = current_session.variablesScope;
         if (variablesScope) {
             if (selection && selection.length > 0) {
-                int max_length = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
-                [variablesScope setValue:[selection substringToIndex:MIN(max_length,selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
-                [variablesScope setValue:[NSNumber numberWithInt:selection.length] forVariableNamed:iTermVariableKeySessionSelectionLength];
+                const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
+                [variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
+                [variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
             } else {
                 [variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
-                [variablesScope setValue:[NSNumber numberWithInt:0] forVariableNamed:iTermVariableKeySessionSelectionLength];
+                [variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
             }
         }
     }
@@ -1535,4 +1535,3 @@ static iTermController *gSharedInstance;
 }
 
 @end
-
