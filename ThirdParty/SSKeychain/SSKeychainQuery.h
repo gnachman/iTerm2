@@ -61,6 +61,10 @@ typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
  */
 @property (nonatomic, copy) NSString *password;
 
+/**
+  ACLs to set when saving
+ */
+@property (nonatomic, copy) NSArray<NSString *> *aclPaths;
 
 ///------------------------
 /// @name Saving & Deleting

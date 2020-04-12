@@ -27,7 +27,11 @@
 #pragma mark - Public
 
 - (BOOL)save:(NSError *__autoreleasing *)error {
-	OSStatus status = SSKeychainErrorBadArguments;
+    if (self.aclPaths) {
+        return [self saveACLs:error] == errSecSuccess;
+    }
+
+    OSStatus status = SSKeychainErrorBadArguments;
 	if (!self.service || !self.account || !self.passwordData) {
 		if (error) {
 			*error = [[self class] errorWithCode:status];
@@ -48,6 +52,7 @@
 		[query setObject:(__bridge id)accessibilityType forKey:(__bridge id)kSecAttrAccessible];
 	}
 #endif
+
 	status = SecItemAdd((__bridge CFDictionaryRef)query, NULL);
 
 	if (status != errSecSuccess && error != NULL) {
@@ -57,8 +62,124 @@
 	return (status == errSecSuccess);
 }
 
+- (OSStatus)saveACLs:(NSError *__autoreleasing *)error {
+    if (!self.service || !self.account || !self.password) {
+        if (error) {
+            *error = [[self class] errorWithCode:SSKeychainErrorBadArguments];
+        }
+        return NO;
+    }
 
-- (BOOL)deleteItem:(NSError *__autoreleasing *)error {
+    NSMutableDictionary *query = [self query];
+    OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, nil);
+    switch (status) {
+        case errSecSuccess: {
+            // Item already exists. Just set the password.
+            NSDictionary *update = @{ (__bridge NSString *)kSecValueData: self.passwordData};
+            return SecItemUpdate((__bridge CFDictionaryRef)query,
+                                 (__bridge CFDictionaryRef)update);
+        }
+        case errSecItemNotFound: {
+            // Create new ACL
+            SecAccessRef access = NULL;
+            status = [self createAccess:&access withError:error];
+            if (status != errSecSuccess) {
+                return status;
+            }
+            assert(access != NULL);
+
+            status = [self addItemWithAccess:access];
+            break;
+        }
+        default:
+            break;
+    }
+    return status;
+}
+
+- (OSStatus)createAccess:(SecAccessRef *)accessPtr withError:(NSError *__autoreleasing *)error {
+    *accessPtr = NULL;
+
+    NSMutableArray *trustedApps = [NSMutableArray array];
+    {
+        SecTrustedApplicationRef meTrustedApplication = NULL;
+        const OSStatus status = SecTrustedApplicationCreateFromPath(nil, &meTrustedApplication);
+        if (status != errSecSuccess) {
+            return status;
+        }
+        if (meTrustedApplication == NULL) {
+            return errSecAuthFailed;
+        }
+        [trustedApps addObject:(__bridge id)meTrustedApplication];
+        CFRelease(meTrustedApplication);
+    }
+
+    for (NSString *path in self.aclPaths) {
+        SecTrustedApplicationRef otherTrustedApplication = NULL;
+        const OSStatus status = SecTrustedApplicationCreateFromPath(path.UTF8String,
+                                                                    &otherTrustedApplication);
+        if (status != errSecSuccess) {
+            return status;
+        }
+        if (otherTrustedApplication == NULL) {
+            return errSecAuthFailed;
+        }
+        [trustedApps addObject:(__bridge id)otherTrustedApplication];
+        CFRelease(otherTrustedApplication);
+    }
+
+    const OSStatus status = SecAccessCreate((__bridge CFStringRef)self.service,
+                                            (__bridge CFArrayRef)trustedApps,
+                                            accessPtr);
+    if (status != errSecSuccess) {
+        return status;
+    }
+    if (*accessPtr == NULL) {
+        return errSecAuthFailed;
+    }
+    return status;
+}
+
+- (OSStatus)addItemWithAccess:(SecAccessRef)access {
+    SecKeychainAttribute attrs[3];
+    UInt32 i = 0;
+    if ([self createAttribute:kSecLabelItemAttr value:self.label keychainAttribute:&attrs[i]]) {
+        i++;
+    }
+    if ([self createAttribute:kSecAccountItemAttr value:self.account keychainAttribute:&attrs[i]]) {
+        i++;
+    }
+    if ([self createAttribute:kSecServiceItemAttr value:self.service keychainAttribute:&attrs[i]]) {
+        i++;
+    }
+
+    SecKeychainAttributeList list = {
+        .count = i,
+        .attr = attrs
+    };
+    return SecKeychainItemCreateFromContent(kSecGenericPasswordItemClass,
+                                            &list,
+                                            (UInt32)strlen(self.password.UTF8String),
+                                            self.password.UTF8String,
+                                            nil,
+                                            access,
+                                            nil);
+}
+
+- (BOOL)createAttribute:(UInt32)tag
+                  value:(NSString *)data
+      keychainAttribute:(SecKeychainAttribute *)keychainAttributePtr {
+    if (!data) {
+        return NO;
+    }
+    keychainAttributePtr->tag = (SecKeychainAttrType)tag;
+    keychainAttributePtr->length = (UInt32)strlen(data.UTF8String);
+    keychainAttributePtr->data = (void *)data.UTF8String;
+    return YES;
+}
+
+- (BOOL)deleteItem:(NSError *
+                    __autoreleasing *)error {
 	OSStatus status = SSKeychainErrorBadArguments;
 	if (!self.service || !self.account) {
 		if (error) {

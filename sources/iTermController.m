@@ -100,7 +100,7 @@ static iTermController *gSharedInstance;
     dispatch_once(&onceToken, ^{
         gSharedInstance = [[iTermController alloc] init];
     });
-
+    [[iTermWebSocketCookieJar sharedInstance] rotateKeyringCookie];
     return gSharedInstance;
 }
 

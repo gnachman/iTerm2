@@ -14,5 +14,6 @@
 - (NSString *)randomStringForCookie;
 - (void)removeCookie:(NSString *)cookie;
 - (void)addCookie:(NSString *)cookie;
+- (void)rotateKeyringCookie;
 
 @end

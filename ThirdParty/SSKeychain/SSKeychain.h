@@ -102,6 +102,14 @@ extern NSString *const kSSKeychainWhereKey;
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account;
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
 
+/**
+ @param acls Paths of apps that should have access to this item.
+ */
++ (BOOL)setPassword:(NSString *)password
+         forService:(NSString *)serviceName
+            account:(NSString *)account
+               acls:(NSArray<NSString *> *)acls
+              error:(NSError *__autoreleasing *)error;
 
 /**
  Returns an array containing the Keychain's accounts, or `nil` if the Keychain has no accounts.

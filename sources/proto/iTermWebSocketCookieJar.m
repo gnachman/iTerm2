@@ -7,6 +7,9 @@
 
 #import "iTermWebSocketCookieJar.h"
 
+#import "DebugLogging.h"
+#import <SSKeychain.h>
+
 @implementation iTermWebSocketCookieJar {
     NSMutableSet<NSString *> *_cookies;
 }
@@ -77,6 +80,18 @@
 - (void)removeCookie:(NSString *)cookie {
     @synchronized(_cookies) {
         [_cookies removeObject:cookie];
+    }
+}
+
+- (void)rotateKeyringCookie {
+    NSError *error = nil;
+    [SSKeychain setPassword:[self randomStringForCookie]
+                 forService:@"iTerm2 API Token"
+                    account:@"n/a"
+                       acls:@[ @"/usr/local/Cellar/python/3.7.6/Frameworks/Python.framework/Versions/3.7/Resources/Python.app" ]
+                      error:&error];
+    if (error) {
+        DLog(@"Failed to rotate keyring cookie: %@", error);
     }
 }
 
