@@ -12,6 +12,7 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermProcessCache.h"
+#import "NSArray+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
@@ -78,13 +79,13 @@
     return tempPath;
 }
 
-- (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
-                        argpath:(const char *)argpath
-                           argv:(const char **)argv
-                     initialPwd:(const char *)initialPwd
-                     newEnviron:(const char **)newEnviron
+- (void)forkAndExecWithTtyState:(iTermTTYState)ttyState
+                        argpath:(NSString *)argpath
+                           argv:(NSArray<NSString *> *)argv
+                     initialPwd:(NSString *)initialPwd
+                     newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
     // Completion wrapper. NOT called on self.queue because that will deadlock.
     void (^wrapper)(iTermJobManagerForkAndExecStatus) = ^(iTermJobManagerForkAndExecStatus status) {
         if (status == iTermJobManagerForkAndExecStatusSuccess) {
@@ -96,7 +97,7 @@
 
     __block iTermJobManagerForkAndExecStatus savedStatus = iTermJobManagerForkAndExecStatusSuccess;
     dispatch_sync(self.queue, ^{
-        [self queueForkAndExecWithTtyState:ttyStatePtr
+        [self queueForkAndExecWithTtyState:ttyState
                                    argpath:argpath
                                       argv:argv
                                 initialPwd:initialPwd
@@ -112,11 +113,11 @@
     });
 }
 
-- (void)queueForkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
-                             argpath:(const char *)argpath
-                                argv:(const char **)argv
-                          initialPwd:(const char *)initialPwd
-                          newEnviron:(const char **)newEnviron
+- (void)queueForkAndExecWithTtyState:(iTermTTYState)ttyState
+                             argpath:(NSString *)argpath
+                                argv:(NSArray<NSString *> *)argv
+                          initialPwd:(NSString *)initialPwd
+                          newEnviron:(NSArray<NSString *> *)newEnviron
                                 task:(id<iTermTask>)task
                           completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
@@ -136,14 +137,19 @@
         .deadMansPipe = { 0, 0 },
     };
 
+    const char **cArgv = [argv nullTerminatedCStringArray];
+    const char **cEnviron = [newEnviron nullTerminatedCStringArray];
     self.fd = iTermForkAndExecToRunJobInServer(&forkState,
-                                               ttyStatePtr,
+                                               &ttyState,
                                                unixDomainSocketPath,
-                                               argpath,
-                                               argv,
+                                               argpath.UTF8String,
+                                               cArgv,
                                                NO,
-                                               initialPwd,
-                                               newEnviron);
+                                               initialPwd.UTF8String,
+                                               cEnviron);
+    iTermFreeeNullTerminatedCStringArray(cArgv);
+    iTermFreeeNullTerminatedCStringArray(cEnviron);
+
     const int fd = self.fd;
     if (fd >= 0) {
         fcntl(self.fd, F_SETFL, O_NONBLOCK);
@@ -158,13 +164,13 @@
     }
 
     [self queueDidForkParent:&forkState
-                    ttyState:ttyStatePtr
+                    ttyState:ttyState
                         task:task
                   completion:completion];
 }
 
 - (void)queueDidForkParent:(const iTermForkState *)forkStatePtr
-                  ttyState:(iTermTTYState *)ttyStatePtr
+                  ttyState:(iTermTTYState)ttyState
                       task:(id<iTermTask>)task
                 completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
@@ -175,7 +181,6 @@
     // will send us the child pid now. We don't really need the rest of the
     // stuff in serverConnection since we already know it, but that's ok.
     iTermForkState forkState = *forkStatePtr;
-    iTermTTYState ttyState = *ttyStatePtr;
     DLog(@"Begin handshake");
     int connectionFd = forkState.connectionFd;
     int deadmansPipeFd = forkState.deadMansPipe[0];

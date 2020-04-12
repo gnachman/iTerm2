@@ -8,6 +8,7 @@
 
 #import "NSArray+iTerm.h"
 
+#import "iTermMalloc.h"
 #import "iTermTuple.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -557,6 +558,22 @@
             return obj;
         }
     }];
+}
+
+- (const char **)nullTerminatedCStringArray {
+    const char **array = iTermMalloc(sizeof(char *) * (self.count + 1));
+    [self enumerateObjectsUsingBlock:^(NSString *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        array[idx] = strdup(obj.UTF8String);
+    }];
+    array[self.count] = NULL;
+    return array;
+}
+
+void iTermFreeeNullTerminatedCStringArray(const char **array) {
+    for (size_t i = 0; array[i] != NULL; i++) {
+        free((void *)array[i]);
+    }
+    free(array);
 }
 
 @end

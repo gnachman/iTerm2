@@ -116,8 +116,11 @@
 
 - (double)sumOfNumbers;
 - (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement;
+- (const char **)nullTerminatedCStringArray;
 
 @end
+
+void iTermFreeeNullTerminatedCStringArray(const char **array);
 
 @interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;

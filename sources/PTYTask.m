@@ -623,24 +623,17 @@ static void HandleSigChld(int n) {
     return result;
 }
 
-// Returns an array of C strings terminated with a null pointer of the form
-// KEY=VALUE that is based on this process's "environ" variable. Values passed
-// in "env" are added or override existing environment vars. Both the returned
-// array and all string pointers within it are malloced and should be free()d
-// by the caller.
-- (const char **)environWithOverrides:(NSDictionary *)env {
+- (NSArray<NSString *> *)environWithOverrides:(NSDictionary *)env {
     NSMutableDictionary *environmentDict = [self mutableEnvironmentDictionary];
     for (NSString *k in env) {
         environmentDict[k] = env[k];
     }
-    char **environment = iTermMalloc(sizeof(char*) * (environmentDict.count + 1));
-    int i = 0;
+    NSMutableArray<NSString *> *environment = [NSMutableArray array];
     for (NSString *k in environmentDict) {
         NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
-        environment[i++] = strdup([temp UTF8String]);
+        [environment addObject:temp];
     }
-    environment[i] = NULL;
-    return (const char **)environment;
+    return environment;
 }
 
 - (NSDictionary *)environmentBySettingShell:(NSDictionary *)originalEnvironment {
@@ -655,27 +648,6 @@ static void HandleSigChld(int n) {
 
 - (void)setCommand:(NSString *)command {
     command_ = [command copy];
-}
-
-- (void)populateArgvArray:(const char **)argv
-              fromProgram:(NSString *)progpath
-                     args:(NSArray *)args
-                    count:(int)max {
-    argv[0] = [[progpath stringByStandardizingPath] UTF8String];
-    if (args != nil) {
-        int i;
-        for (i = 0; i < max; ++i) {
-            argv[i + 1] = [args[i] UTF8String];
-        }
-    }
-    argv[max + 1] = NULL;
-}
-
-- (void)freeEnvironment:(char **)newEnviron {
-    for (int j = 0; newEnviron[j]; j++) {
-        free(newEnviron[j]);
-    }
-    free(newEnviron);
 }
 
 - (NSString *)tty {
@@ -725,7 +697,6 @@ static void HandleSigChld(int n) {
     DLog(@"After setting shell environment is %@", env);
     path = [progpath copy];
     NSString *commandToExec = [progpath stringByStandardizingPath];
-    const char *argpath = [commandToExec UTF8String];
 
     // Register a handler for the child death signal. There is some history here.
     // Originally, a do-nothing handler was registered with the following comment:
@@ -739,20 +710,19 @@ static void HandleSigChld(int n) {
     // notifier.
     signal(SIGCHLD, HandleSigChld);
 
-    int max = (args == nil) ? 0 : [args count];
-    const char **argv = (const char **)iTermMalloc(sizeof(char *) * (max + 2));
-    [self populateArgvArray:argv fromProgram:progpath args:args count:max];
+    NSMutableArray<NSString *> *argv = [NSMutableArray array];
+    [argv addObject:[progpath stringByStandardizingPath]];
+    [argv addObjectsFromArray:args];
 
     DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
     DLog(@"Environment is\n%@", env);
-    const char **newEnviron = [self environWithOverrides:env];
+    NSArray<NSString *> *newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
-    const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
-    DLog(@"initialPwd=%s", initialPwd);
-#warning TODO: Make this code path safe. These raw C pointers are a disaster waiting to happen. The dispatch async in -[iTermMultiServerjobManager forkAndExecWithTtyState:…] uses a dangling pointer (argpath I think)
-    [self.jobManager forkAndExecWithTtyState:&ttyState
-                                     argpath:argpath
+    NSString *initialPwd = [[env objectForKey:@"PWD"] stringByStandardizingPath];
+    DLog(@"initialPwd=%@", initialPwd);
+    [self.jobManager forkAndExecWithTtyState:ttyState
+                                     argpath:commandToExec
                                         argv:argv
                                   initialPwd:initialPwd
                                   newEnviron:newEnviron
@@ -760,8 +730,6 @@ static void HandleSigChld(int n) {
                                   completion:
      ^(iTermJobManagerForkAndExecStatus status) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            free(argv);
-            [self freeEnvironment:(char **)newEnviron];
             [self didForkAndExec:progpath
                       withStatus:status
                      errorNumber:errno];

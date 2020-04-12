@@ -113,19 +113,19 @@ typedef struct {
     const char **environ;
 } iTermMultiServerJobManagerForkRequest;
 
-- (void)forkAndExecWithTtyState:(iTermTTYState *)ttyStatePtr
-                        argpath:(const char *)argpath
-                           argv:(const char **)argv
-                     initialPwd:(const char *)initialPwd
-                     newEnviron:(const char **)newEnviron
+- (void)forkAndExecWithTtyState:(iTermTTYState)ttyState
+                        argpath:(NSString *)argpath
+                           argv:(NSArray<NSString *> *)argv
+                     initialPwd:(NSString *)initialPwd
+                     newEnviron:(NSArray<NSString *> *)newEnviron
                            task:(id<iTermTask>)task
-                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion {
+                     completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
     iTermMultiServerJobManagerForkRequest forkRequest = {
-        .ttyState = *ttyStatePtr,
-        .argpath = [NSData dataWithBytes:argpath length:strlen(argpath) + 1],
-        .argv = argv,
-        .initialPwd = [NSData dataWithBytes:initialPwd length:strlen(initialPwd) + 1],
-        .environ = newEnviron
+        .ttyState = ttyState,
+        .argpath = [NSData dataWithBytes:argpath.UTF8String length:strlen(argpath.UTF8String) + 1],
+        .argv = [argv nullTerminatedCStringArray],
+        .initialPwd = [NSData dataWithBytes:initialPwd.UTF8String length:strlen(initialPwd.UTF8String) + 1],
+        .environ = [newEnviron nullTerminatedCStringArray]
     };
     iTermCallback *callback = [self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                   iTermMultiServerConnection *conn) {
@@ -134,7 +134,13 @@ typedef struct {
                                    connection:conn
                                          task:task
                                         state:state
-                                   completion:completion];
+                                   completion:^(iTermJobManagerForkAndExecStatus status) {
+            iTermFreeeNullTerminatedCStringArray(forkRequest.argv);
+            iTermFreeeNullTerminatedCStringArray(forkRequest.environ);
+            if (completion) {
+                completion(status);
+            }
+        }];
     }];
     [iTermMultiServerConnection getOrCreatePrimaryConnectionWithCallback:callback];
 }

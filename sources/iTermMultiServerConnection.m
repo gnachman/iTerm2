@@ -281,7 +281,7 @@
     }];
 }
 
-
+// These C pointers need to live until the callback is run.
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(const char **)argv
