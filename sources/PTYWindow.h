@@ -78,6 +78,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property(nonatomic, readonly) BOOL isCompact;
 @property(nonatomic) NSInteger it_openingSheet;
 @property (nonatomic) BOOL it_becomingKey;
+@property (nonatomic) NSInteger it_accessibilityResizing;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
@@ -119,6 +120,9 @@ typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
 
 // Private NSWindow method, needed to avoid ghosting when using transparency.
 - (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;
+
+// Called when a window gets resized via accessibility.
+- (void)accessibilitySetSizeAttribute:(id)arg1;
 
 @end
 

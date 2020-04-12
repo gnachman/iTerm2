@@ -4131,6 +4131,11 @@ ITERM_WEAKLY_REFERENCEABLE
         snapWidth = snapHeight = NO;
     }
 
+    // Let accessibility resize windows as it pleases.
+    if (self.ptyWindow.it_accessibilityResizing) {
+        snapWidth = snapHeight = NO;
+    }
+
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
     NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;

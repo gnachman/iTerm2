@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @synthesize it_openingSheet;
 @synthesize it_becomingKey;
+@synthesize it_accessibilityResizing;
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
@@ -477,6 +478,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 #endif
+
+- (void)accessibilitySetSizeAttribute:(id)arg1 {
+    self.it_accessibilityResizing += 1;
+    [super accessibilitySetSizeAttribute:arg1];
+    self.it_accessibilityResizing -= 1;
+}
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor {
     return [self.ptyDelegate terminalWindowDecorationBackgroundColor];
