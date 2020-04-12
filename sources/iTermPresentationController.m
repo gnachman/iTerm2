@@ -24,6 +24,25 @@
     return instance;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
+    }
+    return self;
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    [self update];
+}
+
+- (void)dealloc {
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+}
+
 - (void)update {
     [self updateWithSanityCheck:YES];
 }
