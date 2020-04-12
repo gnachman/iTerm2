@@ -7559,8 +7559,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)selectionDidChange:(NSString *)selection {
-    // Assign the whole selection to the internal _lastSelection variable but only
-    // maximumBytesToProvideToPythonAPI characters to the "selection" iTerm Variable
+    // Assign a maximum of maximumBytesToProvideToPythonAPI characters to the "selection"
+    // iTerm Variable
     //
     // The "selectionLength" iTerm variable contains the full length of the original
     // selection; not the restricted length assigned to the "selection" iTerm Variable

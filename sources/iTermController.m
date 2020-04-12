@@ -1512,3 +1512,4 @@ static iTermController *gSharedInstance;
 }
 
 @end
+
