@@ -2411,7 +2411,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)hardStop {
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_view release];  // This balances a retain in -terminate.
-    // -taskWasDeregistered or the autorelease below will balance this retain.
     [[self retain] autorelease];
     [_shell stop];
     _shell.delegate = nil;
