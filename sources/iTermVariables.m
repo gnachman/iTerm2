@@ -76,6 +76,8 @@ NSString *const iTermVariableKeySessionTmuxStatusRight = @"tmuxStatusRight";
 NSString *const iTermVariableKeySessionMouseReportingMode = @"mouseReportingMode";
 NSString *const iTermVariableKeySessionBadge = @"badge";
 NSString *const iTermVariableKeySessionTab = @"tab";
+NSString *const iTermVariableKeySessionSelection = @"selection";
+NSString *const iTermVariableKeySessionSelectionLength = @"selectionLength";
 
 #pragma mark - Window Context
 

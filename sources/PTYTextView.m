@@ -2346,8 +2346,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     return theSelectedText;
 }
 
-- (NSString *)selectedTextWithCappedAtSize:(int)maxBytes
-                         minimumLineNumber:(int)minimumLineNumber {
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes
+                     minimumLineNumber:(int)minimumLineNumber {
     return [self selectedTextAttributed:NO
                            cappedAtSize:maxBytes
                       minimumLineNumber:minimumLineNumber];
@@ -4688,16 +4688,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
+    NSString *selectionString = @"";
     DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
-        NSString *selection = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
-        if (selection.length == MAX_SELECTION_SIZE) {
-            selection = nil;
-        }
-        [[iTermController sharedInstance] setLastSelection:selection];
+        selectionString = [self selectedTextCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
+        [[iTermController sharedInstance] setLastSelection:
+            selectionString.length < MAX_SELECTION_SIZE ? selectionString : nil];
     }
+    [_delegate textViewSelectionDidChangeToTruncatedString:selectionString];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }

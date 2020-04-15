@@ -663,6 +663,8 @@ static const NSUInteger kMaxHosts = 100;
                      forVariableNamed:iTermVariableKeySessionCreationTimeString];
         [self.variablesScope setValue:[@(_autoLogId) stringValue] forVariableNamed:iTermVariableKeySessionAutoLogID];
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
+        [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
+        [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
                                                            vendor:self.variablesScope];
@@ -7554,6 +7556,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self actuateHapticFeedbackForEvent:event];
     [self playSoundForEvent:event];
     [self showVisualIndicatorForEvent:event];
+}
+
+- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection {
+    // Assign a maximum of maximumBytesToProvideToPythonAPI characters to the "selection"
+    // iTerm Variable
+    //
+    // The "selectionLength" iTerm variable contains the full length of the original
+    // selection; not the restricted length assigned to the "selection" iTerm Variable
+    DLog(@"textViewSelectionDidChangeToTruncatedString: %@", maybeSelection);
+
+    NSString *selection = maybeSelection ?: @"";
+    const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
+    [self.variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
+    [self.variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
 }
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then

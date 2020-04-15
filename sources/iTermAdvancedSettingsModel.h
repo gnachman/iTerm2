@@ -146,6 +146,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logRestorableStateSize;
 + (BOOL)lowFiCombiningMarks;
 + (int)maximumBytesToProvideToServices;
++ (int)maximumBytesToProvideToPythonAPI;
 + (int)maxSemanticHistoryPrefixOrSuffix;
 + (double)metalSlowFrameRate;
 + (BOOL)middleClickClosesTab;
