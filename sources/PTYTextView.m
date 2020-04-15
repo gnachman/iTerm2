@@ -2346,8 +2346,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     return theSelectedText;
 }
 
-- (NSString *)selectedTextWithCappedAtSize:(int)maxBytes
-                         minimumLineNumber:(int)minimumLineNumber {
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes
+                     minimumLineNumber:(int)minimumLineNumber {
     return [self selectedTextAttributed:NO
                            cappedAtSize:maxBytes
                       minimumLineNumber:minimumLineNumber];
@@ -4693,7 +4693,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
-        selectionString = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
+        selectionString = [self selectedTextCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
         [[iTermController sharedInstance] setLastSelection:
             selectionString.length < MAX_SELECTION_SIZE ? selectionString : nil];
     }
