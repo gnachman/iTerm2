@@ -7566,7 +7566,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // selection; not the restricted length assigned to the "selection" iTerm Variable
     DLog(@"textViewSelectionDidChangeToTruncatedString: %@", maybeSelection);
 
-    NSString * selection = maybeSelection ?: @"";
+    NSString *selection = maybeSelection ?: @"";
     const int maxLength = [iTermAdvancedSettingsModel maximumBytesToProvideToPythonAPI];
     [self.variablesScope setValue:[selection substringToIndex:MIN(maxLength, selection.length)] forVariableNamed:iTermVariableKeySessionSelection];
     [self.variablesScope setValue:@(selection.length) forVariableNamed:iTermVariableKeySessionSelectionLength];
