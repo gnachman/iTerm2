@@ -27,6 +27,7 @@ typedef enum iTermClientServerProtocolError {
     iTermClientServerProtocolErrorUnexpectedLength,
     iTermClientServerProtocolErrorStringArrayTruncated,
     iTermClientServerProtocolErrorStringArrayCountTruncated,
+    iTermClientServerProtocolErrorStringArrayTooBig,
     iTermClientServerProtocolErrorOutOfSpace
 } iTermClientServerProtocolError;
 
@@ -142,14 +143,24 @@ static int iTermClientServerProtocolParseStringArray(iTermClientServerProtocolMe
     if (iTermClientServerProtocolParseInt(parser, countOut, sizeof(*countOut))) {
         return iTermClientServerProtocolErrorStringArrayCountTruncated;
     }
+    static const int MAX_STRING_ARRAY_COUNT = 1024 * 1024;
+    if (*countOut > MAX_STRING_ARRAY_COUNT) {
+        return iTermClientServerProtocolErrorStringArrayTooBig;
+    }
     *arrayOut = malloc(sizeof(char *) * (*countOut + 1));
+    int truncated = 0;
     for (int i = 0; i < *countOut; i++) {
-        if (iTermClientServerProtocolParseTaggedString(parser, &(*arrayOut)[i], tag)) {
-            return iTermClientServerProtocolErrorStringArrayTruncated;
+        if (!truncated && iTermClientServerProtocolParseTaggedString(parser, &(*arrayOut)[i], tag)) {
+            truncated = 1;
+        }
+        if (truncated) {
+            // We will free all the strings in the array, so if parsing fails midway we still have
+            // to set them all to malloced strings.
+            (*arrayOut)[i] = calloc(1, 1);
         }
     }
     (*arrayOut)[*countOut] = NULL;
-    return 0;
+    return truncated ? iTermClientServerProtocolErrorStringArrayTruncated : 0;
 }
 
 int iTermClientServerProtocolParseTaggedStringArray(iTermClientServerProtocolMessageParser *parser,

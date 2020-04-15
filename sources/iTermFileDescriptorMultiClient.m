@@ -602,7 +602,9 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                length:(NSInteger)length
              callback:(iTermCallback<id, iTermResult<iTermMultiServerMessage *> *> *)callback {
     iTermMultiServerMessageBuilder *builder = [[iTermMultiServerMessageBuilder alloc] init];
-    [self partialReadWithState:state totalLength:length builder:builder callback:callback];
+    [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
+        [self partialReadWithState:state totalLength:length builder:builder callback:callback];
+    }];
 }
 
 - (void)partialReadWithState:(iTermFileDescriptorMultiClientState *)state
