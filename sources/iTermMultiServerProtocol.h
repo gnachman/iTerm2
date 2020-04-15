@@ -9,7 +9,8 @@
 
 enum {
     iTermMultiServerProtocolVersionRejected = -1,
-    iTermMultiServerProtocolVersion1 = 1
+    iTermMultiServerProtocolVersion1 = 1,
+    iTermMultiServerProtocolVersion2 = 2
 };
 
 typedef enum {
@@ -37,7 +38,7 @@ typedef enum {
 
     iTermMultiServerTagWaitResponsePid,
     iTermMultiServerTagWaitResponseStatus,
-    iTermMultiServerTagWaitResponseErrno,
+    iTermMultiServerTagWaitResponseResultType,
 
     iTermMultiServerTagLaunchResponseStatus,
     iTermMultiServerTagLaunchResponsePid,
@@ -136,20 +137,31 @@ typedef struct {
     int removePreemptively;
 } iTermMultiServerRequestWait;
 
+// A note on preemptive wait: we use this when we kill the child with a signal.
+// The server doesn't remove its reference to the child immediately, but the
+// client does. That's because the client is unilaterally breaking ties with
+// this child. If for some reason it does not die, the server is responsible
+// for wait()ing on it eventually. So it is possible that they will get out of
+// sync. This will be resolved on the next attach, when that child will come
+// back as an orphan.
+typedef int iTermMultiServerResponseWaitResultType;
+enum iTermMultiServerResponseWaitResultType {
+    iTermMultiServerResponseWaitResultTypePreemptive = 1,  // Child marked as future termination for preemptive wait.
+    iTermMultiServerResponseWaitResultTypeStatusIsValid = 0,  // No error. Status is valid. Child has been removed.
+    iTermMultiServerResponseWaitResultTypeNoSuchChild = -1,  // No such child
+    iTermMultiServerResponseWaitResultTypeNotTerminated = -2,  // Child not terminated
+};
+
 typedef struct {
     // iTermMultiServerTagWaitResponsePid
     pid_t pid;
 
     // iTermMultiServerTagWaitResponseStatus
-    // Meaningful only if errorNumber is 0. Gives exit status from waitpid().
+    // Meaningful only if resultType is .statusIsValid. Gives exit status from waitpid().
     int status;
 
-    // iTermMultiServerTagWaitResponseErrno
-    // 1: Child marked as future termination for preemptive wait.
-    // 0: No error. Status is valid. Child has been removed.
-    // -1: No such child
-    // -2: Child not terminated
-    int errorNumber;
+    // iTermMultiServerTagWaitResponseResultType
+    iTermMultiServerResponseWaitResultType resultType;
 } iTermMultiServerResponseWait;
 
 typedef struct iTermMultiServerReportChild {
@@ -191,7 +203,8 @@ typedef enum {
     iTermMultiServerRPCTypeLaunch,  // Client-originated, has response
     iTermMultiServerRPCTypeWait,  // Client-originated, has response
     iTermMultiServerRPCTypeReportChild,  // Server-originated, no response.
-    iTermMultiServerRPCTypeTermination  // Server-originated, no response.
+    iTermMultiServerRPCTypeTermination,  // Server-originated, no response.
+    iTermMultiServerRPCTypeHello,  // Server-originated, no response.
 } iTermMultiServerRPCType;
 
 // You should send iTermMultiServerResponseWait after getting this.
@@ -210,6 +223,9 @@ typedef struct {
 } iTermMultiServerClientOriginatedMessage;
 
 typedef struct {
+} iTermMultiServerHello;
+
+typedef struct {
     iTermMultiServerRPCType type;
     union {
         iTermMultiServerResponseHandshake handshake;
@@ -217,6 +233,7 @@ typedef struct {
         iTermMultiServerResponseWait wait;
         iTermMultiServerReportTermination termination;
         iTermMultiServerReportChild reportChild;
+        iTermMultiServerHello hello;
     } payload;
 } iTermMultiServerServerOriginatedMessage;
 
@@ -239,10 +256,13 @@ iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOriginated
 void iTermMultiServerClientOriginatedMessageFree(iTermMultiServerClientOriginatedMessage *obj);
 void iTermMultiServerServerOriginatedMessageFree(iTermMultiServerServerOriginatedMessage *obj);
 
-// Reads a message from the UDS. Returns 0 on success. When successful, the message
-// must be freed by the caller with iTermClientServerProtocolMessageFree().
-int __attribute__((warn_unused_result))
-iTermMultiServerRecv(int fd, iTermClientServerProtocolMessage *message);
+// Reads a message from the UDS. Returns -1 on error or number of bytes read on success.
+// When successful, the message must be freed by the caller with
+// iTermClientServerProtocolMessageFree().
+// NOTE: a status of 0 is not EOF! You could have zero bytes and a file descriptor, and it would
+// return 0.
+ssize_t __attribute__((warn_unused_result))
+iTermMultiServerReadMessage(int fd, iTermClientServerProtocolMessage *message, ssize_t bufferSize);
 
 // Reads text from a file descriptor.
 int __attribute__((warn_unused_result))

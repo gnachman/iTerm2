@@ -14,6 +14,8 @@ typedef struct {
     int valid;
     struct msghdr message;
     iTermFileDescriptorControlMessage controlBuffer;
+
+    // "real" storage that message iovectors may choose to use.
     struct iovec ioVectors[1];
 } iTermClientServerProtocolMessage;
 
@@ -28,6 +30,10 @@ typedef struct {
 } iTermClientServerProtocolMessageEncoder;
 
 void iTermClientServerProtocolMessageInitialize(iTermClientServerProtocolMessage *message);
+
+void iTermClientServerProtocolMessageEnsureSpace(iTermClientServerProtocolMessage *message,
+                                                 ssize_t spaceNeeded);
+
 void iTermClientServerProtocolMessageFree(iTermClientServerProtocolMessage *message);
 
 int iTermClientServerProtocolParseTaggedInt(iTermClientServerProtocolMessageParser *parser,

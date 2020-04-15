@@ -427,4 +427,14 @@
     close(fd);
 }
 
+- (NSData *)subdataFromOffset:(NSInteger)offset {
+    if (offset <= 0) {
+        return self;
+    }
+    if (offset >= self.length) {
+        return [NSData data];
+    }
+    return [self subdataWithRange:NSMakeRange(offset, self.length - offset)];
+}
+
 @end

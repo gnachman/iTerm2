@@ -30,12 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL haveSentPreemptiveWait;
 @property (nonatomic) int terminationStatus;  // only defined if haveWaited is YES
 
-// Number is an integer status from wait()
-@property (nullable, atomic, strong) iTermCallback<id, iTermResult<NSNumber *> *> *waitCallback;
-
 - (instancetype)initWithReport:(iTermMultiServerReportChild *)report
                         thread:(iTermThread *)thread NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
+
+- (void)addWaitCallback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;
+- (void)invokeWaitCallback:(iTermResult<NSNumber *> *)status;
+- (void)invokeAllWaitCallbacks:(iTermResult<NSNumber *> *)status;
 
 // Must be called on child's thread.
 - (void)willWaitPreemptively;

@@ -61,30 +61,16 @@ int iTermFileDescriptorServerAccept(int socketFd) {
     return connectionFd;
 }
 
-// Returns number of bytes sent, or -1 for error.
-ssize_t iTermFileDescriptorServerSendMessage(int fd,
-                                             void *buffer,
-                                             size_t bufferSize,
-                                             int *errorOut) {
-    struct msghdr message;
-    memset(&message, 0, sizeof(message));
-
-    struct iovec iov[1];
-    iov[0].iov_base = buffer;
-    iov[0].iov_len = bufferSize;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-
-    errno = 0;
-    ssize_t rc = sendmsg(fd, &message, 0);
-    while (rc == -1 && errno == EINTR) {
-        rc = sendmsg(fd, &message, 0);
-    }
+static ssize_t iTermFileDescriptorWriteImpl(int fd,
+                                            void *buffer,
+                                            size_t bufferSize,
+                                            int *errorOut) {
+    const ssize_t rc = iTermFileDescriptorServerWrite(fd, buffer, bufferSize);
     if (rc == -1) {
-        if (errorOut) {
+        if (*errorOut) {
             *errorOut = errno;
         }
-        FDLog(LOG_DEBUG, "sendmsg failed with %s", strerror(errno));
+        FDLog(LOG_DEBUG, "iTermFileDescriptorServerWrite failed with %s", strerror(errno));
     } else {
         if (errorOut) {
             *errorOut = 0;
@@ -94,7 +80,56 @@ ssize_t iTermFileDescriptorServerSendMessage(int fd,
     return rc;
 }
 
-static ssize_t Write(int fd, void *buffer, size_t bufferSize) {
+// Returns number of bytes sent, or -1 for error.
+ssize_t iTermFileDescriptorServerWriteLengthAndBuffer(int fd,
+                                                      void *buffer,
+                                                      size_t bufferSize,
+                                                      int *errorOut) {
+    unsigned char temp[sizeof(bufferSize)];
+    memmove(temp, &bufferSize, sizeof(bufferSize));
+    const ssize_t rc = iTermFileDescriptorWriteImpl(fd, temp, sizeof(temp), errorOut);
+    if (rc != sizeof(temp)) {
+        return rc;
+    }
+
+    return iTermFileDescriptorWriteImpl(fd, buffer, bufferSize, errorOut);
+}
+
+// Returns -1 on error
+ssize_t iTermFileDescriptorServerWriteLengthAndBufferAndFileDescriptor(int connectionFd,
+                                                                       void *buffer,
+                                                                       size_t bufferSize,
+                                                                       int fdToSend,
+                                                                       int *errorOut) {
+    // Write length
+    unsigned char temp[sizeof(bufferSize)];
+    memmove(temp, &bufferSize, sizeof(bufferSize));
+    ssize_t rc = iTermFileDescriptorWriteImpl(connectionFd, temp, sizeof(temp), errorOut);
+    if (rc != sizeof(temp)) {
+        return rc;
+    }
+
+    // Write message with file descriptor
+    rc = iTermFileDescriptorServerSendMessageAndFileDescriptor(connectionFd,
+                                                               buffer,
+                                                               bufferSize,
+                                                               fdToSend);
+    if (rc == -1) {
+        if (errorOut) {
+            *errorOut = errno;
+        }
+    } else {
+        if (errorOut) {
+            *errorOut = 0;
+        }
+    }
+    return rc;
+}
+
+ssize_t iTermFileDescriptorServerWrite(int fd, void *buffer, size_t bufferSize) {
+    assert(bufferSize > 0);
+    FDLog(LOG_DEBUG, "Write message of length %d", (int)bufferSize);
+
     ssize_t rc = -1;
     size_t offset = 0;
     while (offset < bufferSize) {
@@ -112,17 +147,23 @@ static ssize_t Write(int fd, void *buffer, size_t bufferSize) {
     } else {
         FDLog(LOG_DEBUG, "write %d bytes to server", (int)rc);
     }
-    return rc;
+    return rc <= 0 ? rc : offset;
 }
 
-ssize_t iTermFileDescriptorClientWrite(int fd, void *buffer, size_t bufferSize) {
-    size_t length = bufferSize;
-    ssize_t n = Write(fd, (void *)&length, sizeof(length));
-    if (n != sizeof(length)) {
-        return n;
+ssize_t iTermFileDescriptorClientWrite(int fd, const void *buffer, size_t bufferSize) {
+    ssize_t rc = -1;
+    size_t totalWritten = 0;
+    while (totalWritten < bufferSize) {
+        do {
+            errno = 0;
+            rc = write(fd, buffer, bufferSize);
+        } while (rc == -1 && errno == EINTR);
+        if (rc <= 0) {
+            return rc;
+        }
+        totalWritten += rc;
     }
-
-    return Write(fd, buffer, bufferSize);
+    return totalWritten;
 }
 
 ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
@@ -154,9 +195,17 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
     message.msg_iov = iov;
     message.msg_iovlen = 1;
 
+    FDLog(LOG_DEBUG, "Send message of length %d along with file descriptor %d", (int)bufferSize, fdToSend);
+
     ssize_t rc = sendmsg(connectionFd, &message, 0);
     while (rc == -1 && errno == EINTR) {
         rc = sendmsg(connectionFd, &message, 0);
+    }
+    if (rc >= 0 && rc < bufferSize) {
+        // I don't know if this is possible, but you don't want to send the file descriptor
+        // more than once or it will create multiple file descriptors in the recipient.
+        char *temp = buffer;
+        return iTermFileDescriptorServerWrite(connectionFd, temp + rc, bufferSize - rc);
     }
     return rc;
 }

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermFileDescriptorMultiClientChild.h"
+#import "iTermFileDescriptorMultiClientPendingLaunch.h"
 #import "iTermMultiServerProtocol.h"
 #import "iTermThreadSafety.h"
 #import "iTermTTYState.h"
@@ -15,8 +16,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermFileDescriptorMultiClient;
-
-typedef iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> iTermMultiClientLaunchCallback;
 
 extern NSString *const iTermFileDescriptorMultiClientErrorDomain;
 typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
@@ -45,6 +44,8 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 
 @end
 
+#pragma mark -
+
 @interface iTermFileDescriptorMultiClient : NSObject
 
 @property (nonatomic, weak) id<iTermFileDescriptorMultiClientDelegate> delegate;
@@ -54,7 +55,7 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 - (instancetype)init NS_UNAVAILABLE;
 
 // Returns YES on success or NO if it failed to create a socket (out of file descriptors maybe?)
-- (void)attachOrLaunchServerWithCallback:(iTermCallback<id, NSNumber *> *)callback;
+- (void)attachToOrLaunchNewDaemonWithCallback:(iTermCallback<id, NSNumber *> *)callback;
 - (void)attachWithCallback:(iTermCallback<id, NSNumber *> *)callback;
 
 - (void)launchChildWithExecutablePath:(const char *)path

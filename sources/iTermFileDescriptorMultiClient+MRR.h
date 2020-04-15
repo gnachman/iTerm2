@@ -6,6 +6,8 @@
 //
 
 #import "iTermFileDescriptorMultiClient.h"
+
+#import "iTermFileDescriptorMultiClientPendingLaunch.h"
 #import "iTermPosixTTYReplacements.h"
 
 NS_ASSUME_NONNULL_BEGIN

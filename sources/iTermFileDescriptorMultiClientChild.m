@@ -9,6 +9,7 @@
 
 @implementation iTermFileDescriptorMultiClientChild {
     iTermThread *_thread;
+    NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_callbacks;
 }
 @synthesize hasTerminated = _hasTerminated;
 @synthesize haveWaited = _haveWaited;
@@ -53,6 +54,7 @@
         fcntl(_fd, F_SETFL, O_NONBLOCK);
         _tty = [NSString stringWithUTF8String:report->tty] ?: @"";
         _haveWaited = NO;
+        _callbacks = [NSMutableArray array];
     }
     return self;
 }
@@ -114,6 +116,35 @@
         result = _terminationStatus;
     }];
     return result;
+}
+
+- (void)addWaitCallback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        [_callbacks addObject:callback];
+    }];
+}
+
+- (void)invokeWaitCallback:(iTermResult<NSNumber *> *)status {
+    __block iTermCallback<id, iTermResult<NSNumber *> *> *callback;
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        callback = _callbacks.firstObject;
+        if (!callback) {
+            return;
+        }
+        [_callbacks removeObjectAtIndex:0];
+    }];
+    [callback invokeWithObject:status];
+}
+
+- (void)invokeAllWaitCallbacks:(iTermResult<NSNumber *> *)status {
+    __block NSArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *callbacks;
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        callbacks = [_callbacks copy];
+        [_callbacks removeAllObjects];
+    }];
+    for (iTermCallback<id, iTermResult<NSNumber *> *> *callback in callbacks) {
+        [callback invokeWithObject:status];
+    }
 }
 
 @end

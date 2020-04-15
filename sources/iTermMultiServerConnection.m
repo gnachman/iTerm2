@@ -69,6 +69,7 @@
 + (void)getConnectionForSocketNumber:(int)number
                     createIfPossible:(BOOL)shouldCreate
                             callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+    DLog(@"Want to get connection for socket %@. shouldCreate=%@", @(number), @(shouldCreate));
     [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
         [self connectionForSocketNumber:number
                        createIfPossible:shouldCreate
@@ -169,7 +170,7 @@
         if (shouldCreate) {
             // Attach or launch
             DLog(@"Attach or launch socket %@", @(number));
-            [connectionState.client attachOrLaunchServerWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
+            [connectionState.client attachToOrLaunchNewDaemonWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
                 iTermResult *resultObject;
                 if (!statusNumber.boolValue) {
                     DLog(@"Failed to attach or launch socket %@", @(number));
@@ -222,7 +223,7 @@
 
 + (NSString *)pathForNumber:(int)number {
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *filename = [NSString stringWithFormat:@"daemon-%d.socket", number];
+    NSString *filename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *url = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:filename];
     return url.path;
 }
@@ -281,7 +282,7 @@
     }];
 }
 
-// These C pointers need to live until the callback is run.
+// These C pointers live until the callback is run.
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(const char **)argv

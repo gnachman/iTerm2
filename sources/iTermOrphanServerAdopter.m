@@ -62,7 +62,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
                                                 options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
                                            errorHandler:nil];
         for (NSURL *url in enumerator) {
-            if (![url.path.lastPathComponent stringMatchesGlobPattern:@"daemon-*.socket" caseSensitive:YES]) {
+            if (![url.path.lastPathComponent stringMatchesGlobPattern:@"iterm2-daemon-*.socket" caseSensitive:YES]) {
                 continue;
             }
             [result addObject:url.path];
@@ -166,7 +166,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
 - (void)enqueueAdoptionsOfMultiServerOrphansWithPath:(NSString *)filename completion:(void (^)(void))completion {
     DLog(@"Try to connect to multiserver at %@", filename);
     NSString *basename = filename.lastPathComponent.stringByDeletingPathExtension;
-    NSString *const prefix = @"daemon-";
+    NSString *const prefix = @"iterm2-daemon-";
     assert([basename hasPrefix:prefix]);
     NSString *numberAsString = [basename substringFromIndex:prefix.length];
     NSScanner *scanner = [NSScanner scannerWithString:numberAsString];
