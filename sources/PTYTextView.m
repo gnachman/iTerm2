@@ -4688,16 +4688,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
-    NSString *selectionString = nil;
+    NSString *selectionString = @"";
     DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
         selectionString = [self selectedTextWithCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
-        if (selectionString.length == MAX_SELECTION_SIZE) {
-            selectionString = nil;
-        }
-        [[iTermController sharedInstance] setLastSelection:selectionString];
+        [[iTermController sharedInstance] setLastSelection:
+            selectionString.length < MAX_SELECTION_SIZE ? selectionString : nil];
     }
     [_delegate textViewSelectionDidChangeToTruncatedString:selectionString];
     DLog(@"Selection did change: selection=%@. stack=%@",

@@ -728,8 +728,6 @@ backgroundColor:(NSColor *)backgroundColor;
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refresh;
 
-- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)selection;
-
 // Open the current selection with semantic history.
 - (void)openSelection;
 
