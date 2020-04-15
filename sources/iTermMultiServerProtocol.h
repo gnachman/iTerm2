@@ -191,7 +191,8 @@ typedef enum {
     iTermMultiServerRPCTypeLaunch,  // Client-originated, has response
     iTermMultiServerRPCTypeWait,  // Client-originated, has response
     iTermMultiServerRPCTypeReportChild,  // Server-originated, no response.
-    iTermMultiServerRPCTypeTermination  // Server-originated, no response.
+    iTermMultiServerRPCTypeTermination,  // Server-originated, no response.
+    iTermMultiServerRPCTypeHello,  // Server-originated, no response.
 } iTermMultiServerRPCType;
 
 // You should send iTermMultiServerResponseWait after getting this.
@@ -210,6 +211,9 @@ typedef struct {
 } iTermMultiServerClientOriginatedMessage;
 
 typedef struct {
+} iTermMultiServerHello;
+
+typedef struct {
     iTermMultiServerRPCType type;
     union {
         iTermMultiServerResponseHandshake handshake;
@@ -217,6 +221,7 @@ typedef struct {
         iTermMultiServerResponseWait wait;
         iTermMultiServerReportTermination termination;
         iTermMultiServerReportChild reportChild;
+        iTermMultiServerHello hello;
     } payload;
 } iTermMultiServerServerOriginatedMessage;
 
@@ -239,10 +244,13 @@ iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOriginated
 void iTermMultiServerClientOriginatedMessageFree(iTermMultiServerClientOriginatedMessage *obj);
 void iTermMultiServerServerOriginatedMessageFree(iTermMultiServerServerOriginatedMessage *obj);
 
-// Reads a message from the UDS. Returns 0 on success. When successful, the message
-// must be freed by the caller with iTermClientServerProtocolMessageFree().
-int __attribute__((warn_unused_result))
-iTermMultiServerRecv(int fd, iTermClientServerProtocolMessage *message);
+// Reads a message from the UDS. Returns -1 on error or number of bytes read on success.
+// When successful, the message must be freed by the caller with
+// iTermClientServerProtocolMessageFree().
+// NOTE: a status of 0 is not EOF! You could have zero bytes and a file descriptor, and it would
+// return 0.
+ssize_t __attribute__((warn_unused_result))
+iTermMultiServerReadMessage(int fd, iTermClientServerProtocolMessage *message, ssize_t bufferSize);
 
 // Reads text from a file descriptor.
 int __attribute__((warn_unused_result))

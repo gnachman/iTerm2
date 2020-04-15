@@ -16,6 +16,9 @@
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
 
+#undef DLog
+#define DLog NSLog
+
 @class iTermMultiServerConnectionState;
 
 @interface iTermMultiServerConnectionGlobalState: iTermSynchronizedState<iTermMultiServerConnectionState *>
@@ -69,6 +72,7 @@
 + (void)getConnectionForSocketNumber:(int)number
                     createIfPossible:(BOOL)shouldCreate
                             callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+    DLog(@"Want to get connection for socket %@. shouldCreate=%@", @(number), @(shouldCreate));
     [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
         [self connectionForSocketNumber:number
                        createIfPossible:shouldCreate
@@ -281,7 +285,7 @@
     }];
 }
 
-// These C pointers need to live until the callback is run.
+// These C pointers live until the callback is run.
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(const char **)argv

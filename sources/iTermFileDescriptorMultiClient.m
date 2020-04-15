@@ -10,71 +10,128 @@
 
 #import "DebugLogging.h"
 #import "iTermFileDescriptorServer.h"
+#import "iTermMalloc.h"
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 
 #include <syslog.h>
 #include <sys/un.h>
 
+#undef DLog
+#define DLog NSLog
+
 NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescriptorMultiClientErrorDomain";
 
-@interface iTermMultiServerServerOriginatedMessageBox: NSObject
-@property (nonatomic) iTermMultiServerServerOriginatedMessage message;
+@interface iTermMultiServerMessage: NSObject
+@property (nonatomic, readonly) NSData *data;
+@property (nonatomic, readonly) NSNumber *fileDescriptor;
+
+- (instancetype)initWithData:(NSData *)data fileDescriptor:(NSNumber *)fileDescriptor NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
-@implementation iTermMultiServerServerOriginatedMessageBox
-- (instancetype)initWithMessage:(iTermMultiServerServerOriginatedMessage)message {
+@implementation iTermMultiServerMessage
+
+- (instancetype)initWithData:(NSData *)data fileDescriptor:(NSNumber *)fileDescriptor {
     self = [super init];
     if (self) {
-        _message = message;
+        _data = [data copy];
+        _fileDescriptor = fileDescriptor;
     }
     return self;
 }
-- (void)dealloc {
-    iTermMultiServerServerOriginatedMessageFree(&_message);
+
+@end
+
+@interface iTermMultiServerMessageBuilder: NSObject
+@property (nonatomic, readonly) iTermMultiServerMessage *message;
+@property (nonatomic, readonly) NSInteger length;
+
+- (void)appendBytes:(void *)bytes length:(NSInteger)length;
+- (void)setFileDescriptor:(int)fileDescriptor;
+@end
+
+@implementation iTermMultiServerMessageBuilder {
+    NSMutableData *_accumulator;
+    NSNumber *_fileDescriptor;
 }
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _accumulator = [NSMutableData data];
+    }
+    return self;
+}
+
+- (void)appendBytes:(void *)bytes length:(NSInteger)length {
+    [_accumulator appendBytes:bytes
+                       length:length];
+}
+
+- (void)setFileDescriptor:(int)fileDescriptor {
+    _fileDescriptor = @(fileDescriptor);
+}
+
+- (NSInteger)length {
+    return _accumulator.length;
+}
+
+- (iTermMultiServerMessage *)message {
+    return [[iTermMultiServerMessage alloc] initWithData:_accumulator
+                                          fileDescriptor:_fileDescriptor];
+}
+
 @end
 
 @interface iTermClientServerProtocolMessageBox: NSObject
-@property (nonatomic) iTermClientServerProtocolMessage message;
-@property (nonatomic, readonly) iTermMultiServerServerOriginatedMessageBox *decoded;
-- (instancetype)initWithMessage:(iTermClientServerProtocolMessage)message;
+@property (nonatomic) iTermMultiServerMessage *message;
+@property (nonatomic, readonly) iTermMultiServerServerOriginatedMessage *decoded;
+
++ (instancetype)withMessage:(iTermMultiServerMessage *)message;
 @end
 
-@implementation iTermClientServerProtocolMessageBox
-+ (instancetype)withFactory:(BOOL (^)(iTermClientServerProtocolMessage *messagePtr))factory {
+@implementation iTermClientServerProtocolMessageBox {
+    iTermClientServerProtocolMessage _protocolMessage;
+    BOOL _haveDecodedMessage;
+    iTermMultiServerServerOriginatedMessage _decodedMessage;
+}
+
++ (instancetype)withMessage:(iTermMultiServerMessage *)message {
     iTermClientServerProtocolMessageBox *box = [[iTermClientServerProtocolMessageBox alloc] init];
-    memset(&box->_message, 0, sizeof(box->_message));
-    if (!factory(&box->_message)) {
-        return nil;
+    iTermClientServerProtocolMessageInitialize(&box->_protocolMessage);
+    if (message.fileDescriptor) {
+        box->_protocolMessage.controlBuffer.cm.cmsg_len = CMSG_LEN(sizeof(int));
+        box->_protocolMessage.controlBuffer.cm.cmsg_level = SOL_SOCKET;
+        box->_protocolMessage.controlBuffer.cm.cmsg_type = SCM_RIGHTS;
+        *((int *)CMSG_DATA(&box->_protocolMessage.controlBuffer.cm)) = message.fileDescriptor.intValue;
     }
+    iTermClientServerProtocolMessageEnsureSpace(&box->_protocolMessage, message.data.length);
+    memmove(box->_protocolMessage.message.msg_iov[0].iov_base, message.data.bytes, message.data.length);
+    box->_message = message;
     return box;
 }
 
-- (instancetype)initWithMessage:(iTermClientServerProtocolMessage)message {
-    self = [super init];
-    if (self) {
-        _message = message;
+- (iTermMultiServerServerOriginatedMessage *)decoded {
+    if (_haveDecodedMessage) {
+        return &_decodedMessage;
     }
-    return self;
-}
-
-- (iTermMultiServerServerOriginatedMessageBox *)decoded {
-    iTermMultiServerServerOriginatedMessage decodedMessage;
-    const int status = iTermMultiServerProtocolParseMessageFromServer(&_message, &decodedMessage);
+    const int status = iTermMultiServerProtocolParseMessageFromServer(&_protocolMessage, &_decodedMessage);
     if (status) {
         DLog(@"Failed to decode message from server with status %d", status);
         return nil;
     }
+    _haveDecodedMessage = YES;
     DLog(@"Decoded message from server:");
-    iTermMultiServerProtocolLogMessageFromServer(&decodedMessage);
-    return [[iTermMultiServerServerOriginatedMessageBox alloc] initWithMessage:decodedMessage];
+    iTermMultiServerProtocolLogMessageFromServer(&_decodedMessage);
+    return &_decodedMessage;
 }
 
 - (void)dealloc {
-    iTermClientServerProtocolMessageFree(&_message);
+    iTermClientServerProtocolMessageFree(&_protocolMessage);
 }
 @end
 
@@ -122,15 +179,26 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 @end
 
 @class iTermFileDescriptorMultiClientState;
+
 @interface iTermFileDescriptorMultiClientState: iTermSynchronizedState<iTermFileDescriptorMultiClientState *>
 @property (nonatomic) int readFD;
 @property (nonatomic) int writeFD;
 @property (nonatomic) pid_t serverPID;
 @property (nonatomic, readonly) NSMutableArray<iTermFileDescriptorMultiClientChild *> *children;
 @property (nonatomic, readonly) NSMutableDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches;
+
+- (void)whenWritable:(void (^)(iTermFileDescriptorMultiClientState *state))block;
+- (void)whenReadable:(void (^)(iTermFileDescriptorMultiClientState *state))block;
+
 @end
 
-@implementation iTermFileDescriptorMultiClientState
+@implementation iTermFileDescriptorMultiClientState {
+    dispatch_source_t _writeSource;
+    NSMutableArray *_writeQueue;
+    dispatch_source_t _readSource;
+    NSMutableArray *_readQueue;
+}
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super initWithQueue:queue];
     if (self) {
@@ -139,9 +207,122 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
         _readFD = -1;
         _writeFD = -1;
         _serverPID = -1;
+        _writeQueue = [NSMutableArray array];
+        _readQueue = [NSMutableArray array];
     }
     return self;
 }
+
+- (void)setFileDescriptorNonblocking:(int)fd {
+    const int flags = fcntl(fd, F_GETFL, 0);
+    if (flags != -1) {
+        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
+}
+
+- (void)setWriteFD:(int)writeFD {
+    if (writeFD >= 0) {
+        [self setFileDescriptorNonblocking:writeFD];
+    }
+    const BOOL cancelWrites = (writeFD < 0 && _writeFD >= 0);
+    _writeFD = writeFD;
+    if (cancelWrites) {
+        [self didBecomeWritable];
+        assert(_writeQueue.count == 0);
+    }
+}
+
+- (void)setReadFD:(int)readFD {
+    if (readFD >= 0) {
+        [self setFileDescriptorNonblocking:readFD];
+    }
+    const BOOL cancelReads = (readFD < 0 && _readFD >= 0);
+    _readFD = readFD;
+    if (cancelReads) {
+        [self didBecomeReadable];
+        assert(_readQueue.count == 0);
+    }
+}
+
+- (void)whenReadable:(void (^)(iTermFileDescriptorMultiClientState *))block {
+    assert(_readFD >= 0);
+    [_readQueue addObject:[block copy]];
+    if (_readSource) {
+        return;
+    }
+    _readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, _readFD, 0, self.queue);
+    if (!_readSource) {
+        DLog(@"Failed to create dispatch source for read!");
+        close(_readFD);
+        _readFD = -1;
+        return;
+    }
+
+    __weak __typeof(self) weakSelf = self;
+    dispatch_source_set_event_handler(_readSource, ^{
+        [weakSelf didBecomeReadable];
+    });
+
+    dispatch_resume(_readSource);
+}
+
+- (void)didBecomeReadable {
+    NSArray *queue = [_readQueue copy];
+    [_readQueue removeAllObjects];
+
+    for (void (^block)(iTermFileDescriptorMultiClientState *) in queue) {
+        if (_readQueue.count) {
+            [_readQueue addObject:block];
+        } else {
+            block(self);
+        }
+    }
+    if (_readQueue.count == 0 && _readSource != nil) {
+        dispatch_source_cancel(_readSource);
+        _readSource = nil;
+    }
+}
+
+- (void)whenWritable:(void (^)(iTermFileDescriptorMultiClientState *state))block {
+    assert(_writeFD >= 0);
+
+    [_writeQueue addObject:[block copy]];
+    if (_writeSource) {
+        return;
+    }
+    _writeSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_WRITE, _writeFD, 0, self.queue);
+    if (!_writeSource) {
+        DLog(@"Failed to create dispatch source for write!");
+        close(_writeFD);
+        _writeFD = -1;
+        return;
+    }
+
+    __weak __typeof(self) weakSelf = self;
+    dispatch_source_set_event_handler(_writeSource, ^{
+        [weakSelf didBecomeWritable];
+    });
+
+    dispatch_resume(_writeSource);
+}
+
+- (void)didBecomeWritable {
+    NSArray *queue = [_writeQueue copy];
+    [_writeQueue removeAllObjects];
+
+    for (void (^block)(iTermFileDescriptorMultiClientState *) in queue) {
+        if (_writeQueue.count) {
+            [_writeQueue addObject:block];
+        } else {
+            block(self);
+        }
+    }
+    if (_writeQueue.count == 0 && _writeSource != nil) {
+        dispatch_source_cancel(_writeSource);
+        _writeSource = nil;
+    }
+}
+
 @end
 
 @implementation iTermFileDescriptorMultiClient {
@@ -181,15 +362,22 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 }
 
 - (void)attachWithCallback:(iTermCallback<id, NSNumber *> *)callback {
+    iTermThread<iTermFileDescriptorMultiClientState *> *thread = _thread;
     [_thread dispatchAsync:^(iTermFileDescriptorMultiClientState *state) {
-        if ([self tryAttachWithState:state] != iTermFileDescriptorMultiClientAttachStatusSuccess) {
-            [callback invokeWithObject:@NO];
-            return;
-        }
-        [self handshakeWithState:state callback:callback];
+        [self tryAttachWithState:state callback:[thread newCallbackWithBlock:
+                                                 ^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                                   NSNumber *_Nullable value) {
+            const iTermFileDescriptorMultiClientAttachStatus status = value.unsignedIntegerValue;
+            if (status != iTermFileDescriptorMultiClientAttachStatusSuccess) {
+                [callback invokeWithObject:@NO];
+                return;
+            }
+            [self handshakeWithState:state callback:callback];
+        }]];
     }];
 }
 
+// These C pointers live until the callback is run.
 - (void)launchChildWithExecutablePath:(const char *)path
                                  argv:(const char **)argv
                           environment:(const char **)environment
@@ -212,7 +400,23 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 - (void)attachOrLaunchServerWithState:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermCallback<id, NSNumber *> *)callback {
     [state check];
-    switch ([self tryAttachWithState:state]) {
+    __weak __typeof(self) weakSelf = self;
+    [self tryAttachWithState:state callback:[_thread newCallbackWithBlock:
+                                             ^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                               NSNumber *_Nullable statusNumber) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [callback invokeWithObject:@(iTermFileDescriptorMultiClientAttachStatusFatalError)];
+            return;
+        }
+        [strongSelf didAttachOrLaunchWithState:state status:statusNumber.integerValue callback:callback];
+    }]];
+}
+
+- (void)didAttachOrLaunchWithState:(iTermFileDescriptorMultiClientState *)state
+                            status:(iTermFileDescriptorMultiClientAttachStatus)status
+                          callback:(iTermCallback<id, NSNumber *> *)callback {
+    switch (status) {
         case iTermFileDescriptorMultiClientAttachStatusSuccess:
             DLog(@"Attached to %@. Will handshake.", _socketPath);
             [self handshakeWithState:state callback:callback];
@@ -266,6 +470,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                     callback:innerCallback
          childDiscoveryBlock:^(iTermFileDescriptorMultiClientState *state,
                                iTermMultiServerReportChild *report) {
+        // report must be consumed synchronously!
         [weakSelf didDiscoverChild:report state:state];
     }];
 }
@@ -284,6 +489,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 }
 
 // Called during handshake as children are reported.
+// report must be consumed synchronously!
 - (void)didDiscoverChild:(iTermMultiServerReportChild *)report
                    state:(iTermFileDescriptorMultiClientState *)state {
     iTermFileDescriptorMultiClientChild *child =
@@ -293,9 +499,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 }
 
 - (void)closeWithState:(iTermFileDescriptorMultiClientState *)state {
+    if (state.readFD < 0 && state.writeFD < 0) {
+        DLog(@"Already closed %@, doing nothing", _socketPath);
+        return;
+    }
     DLog(@"CLOSE %@", _socketPath);
-    assert(state.readFD >= 0);
-    assert(state.writeFD >= 0);
 
     close(state.readFD);
     close(state.writeFD);
@@ -316,85 +524,255 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
 }
 
-- (void)readWithState:(iTermFileDescriptorMultiClientState *)state
-             callback:(iTermCallback<id, iTermResult<iTermMultiServerServerOriginatedMessageBox *> *> *)callback {
-    int readFD = state.readFD;
-    iTermThread *thread = _thread;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        int fds[1] = { readFD };
-        int results[1] = { 0 };
-        DLog(@"Readloop: waiting for %@", self->_socketPath);
-        iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, YES);
-        DLog(@"Readloop: select woke for %@", self->_socketPath);
-        [thread dispatchAsync:^(iTermFileDescriptorMultiClientState *state) {
-            if (state.readFD < 0) {
-                DLog(@"Readloop: IO error for %@", self->_socketPath);
-                [callback invokeWithObject:[iTermResult withError:self.ioError]];
+- (void)appendDataFromMessage:(iTermClientServerProtocolMessage *)message
+                           to:(NSMutableData *)accumulator {
+    [accumulator appendBytes:message->message.msg_iov[0].iov_base
+                      length:message->message.msg_iov[0].iov_len];
+}
+
+// Read a full message, which may contain a file desciptor.
+- (void)readMessageWithState:(iTermFileDescriptorMultiClientState *)state
+                    callback:(iTermCallback<id, iTermResult<iTermClientServerProtocolMessageBox *> *> *)callback {
+    // First, read the length of the forthcoming message.
+    __weak __typeof(self) weakSelf = self;
+    NSString *socketPath = [_socketPath copy];
+    DLog(@"Read length of next message from %@", socketPath);
+    [self readWithState:state
+                 length:sizeof(size_t)
+               callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                                        iTermResult<iTermMultiServerMessage *> *_Nullable result) {
+        [result handleObject:^(iTermMultiServerMessage * _Nonnull lengthMessage) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                DLog(@"Looks like I've been dealloced. %@", socketPath);
+                [callback invokeWithObject:[iTermResult withError:[NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                                                                                      code:iTermFileDescriptorMultiClientErrorCodeUnknown
+                                                                                  userInfo:nil]]];
                 return;
             }
-            [callback invokeWithObject:[self resultByReadingAndDecodingMessageWithState:state]];
+            assert(lengthMessage.data.length == sizeof(size_t));
+            size_t length;
+            memmove(&length, lengthMessage.data.bytes, sizeof(size_t));
+            DLog(@"Next message length is %@. %@", @(length), socketPath);
+            static const NSInteger MAX_MESSAGE_SIZE = 1024 * 1024;
+            if (length > MAX_MESSAGE_SIZE) {
+                DLog(@"Max length exceeded, return io error %@", socketPath);
+                [callback invokeWithObject:[iTermResult withError:strongSelf.ioError]];
+                return;
+            }
+
+            DLog(@"Will read payload of length %@. %@", @(length), socketPath);
+            // Now read the payload including a possible file descriptor.
+            [weakSelf readWithState:state
+                             length:length
+                           callback:[strongSelf->_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                                                                iTermResult<iTermMultiServerMessage *> *_Nullable result) {
+                [result handleObject:^(iTermMultiServerMessage * _Nonnull payload) {
+                    // Try to decode the payload.
+                    __strong __typeof(self) strongSelf = weakSelf;
+                    if (!strongSelf) {
+                        DLog(@"I've been dealloced while reading %@", socketPath);
+                        [callback invokeWithObject:[iTermResult withError:[NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                                                                                              code:iTermFileDescriptorMultiClientErrorCodeUnknown
+                                                                                          userInfo:nil]]];
+                        return;
+                    }
+                    iTermClientServerProtocolMessageBox *encodedBox = [iTermClientServerProtocolMessageBox withMessage:payload];
+
+                    if (!encodedBox) {
+                        DLog(@"Decoding: recv failed for %@", strongSelf->_socketPath);
+                        [callback invokeWithObject:[iTermResult withError:strongSelf.protocolError]];
+                    }
+
+                    [callback invokeWithObject:[iTermResult withObject:encodedBox]];
+                }
+                               error:^(NSError * _Nonnull error) {
+                    DLog(@"Failed to read payload from %@: %@", socketPath, error);
+                    [callback invokeWithObject:[iTermResult withError:error]];
+                }];
+            }]];
+        } error:^(NSError * _Nonnull error) {
+            DLog(@"Failed to read next message's length %@: %@", socketPath, error);
+            [callback invokeWithObject:[iTermResult withError:error]];
         }];
-    });
+    }]];
 }
 
-- (iTermResult<iTermMultiServerServerOriginatedMessageBox *> *)resultByReadingAndDecodingMessageWithState:(iTermFileDescriptorMultiClientState *)state {
-    DLog(@"Decoding message from %@", _socketPath);
+- (void)readWithState:(iTermFileDescriptorMultiClientState *)state
+               length:(NSInteger)length
+             callback:(iTermCallback<id, iTermResult<iTermMultiServerMessage *> *> *)callback {
+    iTermMultiServerMessageBuilder *builder = [[iTermMultiServerMessageBuilder alloc] init];
+    [self partialReadWithState:state totalLength:length builder:builder callback:callback];
+}
+
+- (void)partialReadWithState:(iTermFileDescriptorMultiClientState *)state
+                 totalLength:(NSInteger)totalLength
+                     builder:(iTermMultiServerMessageBuilder *)builder
+                    callback:(iTermCallback<id, iTermResult<iTermMultiServerMessage *> *> *)callback {
+    DLog(@"Want to read %@ from %@", @(totalLength), _socketPath);
+
     if (state.readFD < 0) {
-        DLog(@"Decoding: FD already closed for %@", _socketPath);
-        return [iTermResult withError:self.ioError];
-    }
-    iTermClientServerProtocolMessageBox *encodedBox =
-    [iTermClientServerProtocolMessageBox withFactory:^BOOL(iTermClientServerProtocolMessage *messagePtr) {
-        assert(state.readFD >= 0);
-        return iTermMultiServerRecv(state.readFD, messagePtr) == 0;
-    }];
-
-    if (!encodedBox) {
-        DLog(@"Decoding: recv failed for %@", _socketPath);
-        return [iTermResult withError:self.protocolError];
+        DLog(@"readFD<0 for %@", _socketPath);
+        [callback invokeWithObject:[iTermResult withError:self.ioError]];
+        return;
     }
 
-    iTermMultiServerServerOriginatedMessageBox *decodedBox = encodedBox.decoded;
-    if (!decodedBox) {
-        DLog(@"Decoding: decode failed for %@", _socketPath);
-        return [iTermResult withError:self.protocolError];
-    }
-
-    return [iTermResult withObject:decodedBox];
-}
-
-- (BOOL)send:(iTermMultiServerClientOriginatedMessage *)message
-       state:(iTermFileDescriptorMultiClientState *)state {
-    if (state.writeFD < 0) {
-        return NO;
-    }
-
-    iTermClientServerProtocolMessageBox *box =
-    [iTermClientServerProtocolMessageBox withFactory:^BOOL(iTermClientServerProtocolMessage *obj) {
-        iTermClientServerProtocolMessageInitialize(obj);
-        if (iTermMultiServerProtocolEncodeMessageFromClient(message, obj)) {
-            DLog(@"Failed to encode message from client");
-            iTermMultiServerProtocolLogMessageFromClient(message);
-            return NO;
+    iTermClientServerProtocolMessage message;
+    const ssize_t bytesRead = iTermMultiServerReadMessage(state.readFD, &message, totalLength - builder.length);
+    if (bytesRead < 0) {
+        if (errno == EAGAIN) {
+            DLog(@"Nothing to read %@. Will wait for the socket to become readable and try again later.", _socketPath);
+            __weak __typeof(self) weakSelf = self;
+            [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
+                [weakSelf partialReadWithState:state
+                                   totalLength:totalLength
+                                       builder:builder
+                                      callback:callback];
+            }];
+            return;
         }
-        DLog(@"Encoded message from from client");
-        iTermMultiServerProtocolLogMessageFromClient(message);
-        return YES;
-    }];
-
-    if (!box) {
-        return NO;
+        DLog(@"read failed with %s for %@", strerror(errno), _socketPath);
+        [callback invokeWithObject:[iTermResult withError:self.ioError]];
+        return;
+    }
+    if (bytesRead == 0) {
+        DLog(@"EOF %@", _socketPath);
+        [callback invokeWithObject:[iTermResult withError:self.ioError]];
+        return;
     }
 
-    errno = 0;
-    const ssize_t bytesWritten = iTermFileDescriptorClientWrite(state.writeFD,
-                                                                box.message.ioVectors[0].iov_base,
-                                                                box.message.ioVectors[0].iov_len);
+    // If you're asked to read 0 bytes then it could be a file descriptor.
+    if (message.controlBuffer.cm.cmsg_len == CMSG_LEN(sizeof(int)) &&
+        message.controlBuffer.cm.cmsg_level == SOL_SOCKET &&
+        message.controlBuffer.cm.cmsg_type == SCM_RIGHTS) {
+        DLog(@"Got a file descriptor in message from %@", _socketPath);
+        [builder setFileDescriptor:*((int *)CMSG_DATA(&message.controlBuffer.cm))];
+    }
+    DLog(@"Append %@ bytes in read from %@", @(bytesRead), _socketPath);
+    if (bytesRead > 0) {
+        [builder appendBytes:message.message.msg_iov[0].iov_base
+                      length:bytesRead];
+    }
 
-    return bytesWritten > 0;
+    assert(builder.length <= totalLength);
+    if (builder.length == totalLength) {
+        DLog(@"Read complete from %@", _socketPath);
+        [callback invokeWithObject:[iTermResult withObject:builder.message]];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    DLog(@"Have read %@/%@ from %@. Wait for socket to be readable again.", @(builder.length), @(totalLength), _socketPath);
+    [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
+        [weakSelf partialReadWithState:state
+                           totalLength:totalLength
+                               builder:builder
+                              callback:callback];
+    }];
 }
 
-- (BOOL)sendHandshakeRequestWithState:(iTermFileDescriptorMultiClientState *)state {
+static void HexDump(NSData *data) {
+    char buffer[80];
+    const unsigned char *bytes = (const unsigned char *)data.bytes;
+    int addr = 0;
+    int offset = 0;
+    DLog(@"- Begin hex dump of outbound message -");
+    for (int i = 0; i < data.length; i++) {
+        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
+        if (i % 16 == 0 && i > 0) {
+            DLog(@"%04d  %s", addr, buffer);
+            addr = i;
+            offset = 0;
+        }
+    }
+    if (offset > 0) {
+        DLog(@"%04d  %s", addr, buffer);
+    }
+    DLog(@"- End hex dump of outbound message -");
+}
+
+- (void)send:(iTermMultiServerClientOriginatedMessage *)message
+       state:(iTermFileDescriptorMultiClientState *)state
+    callback:(iTermCallback<id, NSNumber *> *)callback {
+    if (state.writeFD < 0) {
+        [callback invokeWithObject:@NO];
+        return;
+    }
+
+    iTermClientServerProtocolMessage clientServerProtocolMessage;
+    iTermClientServerProtocolMessageInitialize(&clientServerProtocolMessage);
+    if (iTermMultiServerProtocolEncodeMessageFromClient(message, &clientServerProtocolMessage)) {
+        DLog(@"Failed to encode message from client");
+        iTermMultiServerProtocolLogMessageFromClient(message);
+        [callback invokeWithObject:@NO];
+        iTermClientServerProtocolMessageFree(&clientServerProtocolMessage);
+        return;
+    }
+
+    DLog(@"Encoded message from from client");
+    iTermMultiServerProtocolLogMessageFromClient(message);
+
+    if (clientServerProtocolMessage.ioVectors[0].iov_len == 0) {
+        [callback invokeWithObject:@YES];
+        return;
+    }
+    
+    NSMutableData *data = [NSMutableData data];
+    size_t length = clientServerProtocolMessage.ioVectors[0].iov_len;
+    char temp[sizeof(length)];
+    memmove(temp, &length, sizeof(length));
+    [data appendBytes:temp length:sizeof(temp)];
+    [data appendBytes:clientServerProtocolMessage.ioVectors[0].iov_base
+               length:length];
+    iTermClientServerProtocolMessageFree(&clientServerProtocolMessage);
+
+    DLog(@"Will send %@ byte header plus %@ byte payload, totaling %@ bytes",
+         @(sizeof(temp)), @(length), @(data.length));
+    HexDump(data);
+
+    __weak __typeof(self) weakSelf = self;
+    [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        [weakSelf tryWrite:data
+                     state:state
+                  callback:callback];
+    }];
+
+}
+
+- (void)tryWrite:(NSData *)data
+           state:(iTermFileDescriptorMultiClientState *)state
+        callback:(iTermCallback<id, NSNumber *> *)callback {
+    assert(data.length > 0);
+    if (state.writeFD < 0) {
+        [callback invokeWithObject:@NO];
+        return;
+    }
+    errno = 0;
+    DLog(@"Try to write %@ bytes", @(data.length));
+    const ssize_t bytesWritten = iTermFileDescriptorClientWrite(state.writeFD,
+                                                                data.bytes,
+                                                                data.length);
+    DLog(@"Wrote %@/%@", @(bytesWritten), @(data.length));
+    if (bytesWritten < 0) {
+        DLog(@"Write failed to %@: %s", _socketPath, strerror(errno));
+        [callback invokeWithObject:@NO];
+        return;
+    }
+    if (bytesWritten == data.length) {
+        [callback invokeWithObject:@YES];
+        return;
+    }
+
+    DLog(@"Queue attempt to write in the future.");
+    __weak __typeof(self) weakSelf = self;
+    [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        [weakSelf tryWrite:[data subdataFromOffset:bytesWritten]
+                     state:state
+                  callback:callback];
+    }];
+}
+
+- (void)sendHandshakeRequestWithState:(iTermFileDescriptorMultiClientState *)state
+                             callback:(iTermCallback<id, NSNumber *> *)callback {
     iTermMultiServerClientOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
@@ -403,7 +781,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
             }
         }
     };
-    return [self send:&message state:state];
+    [self send:&message state:state callback:callback];
 }
 
 - (void)readHandshakeResponseWithState:(iTermFileDescriptorMultiClientState *)state
@@ -413,24 +791,30 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                                  pid_t pid))completion {
     NSString *socketPath = _socketPath;
     DLog(@"Read handshake response for %@", socketPath);
-    [self readWithState:state callback:[_thread newCallbackWithBlock:^(id  _Nonnull state,
-                                                                       iTermResult<iTermMultiServerServerOriginatedMessageBox *> *result) {
-        [result handleObject:^(iTermMultiServerServerOriginatedMessageBox * _Nonnull boxedMessage) {
+    [self readMessageWithState:state
+                      callback:[_thread newCallbackWithBlock:^(id  _Nonnull state,
+                                                               iTermResult<iTermClientServerProtocolMessageBox *> *result) {
+        [result handleObject:^(iTermClientServerProtocolMessageBox * _Nonnull boxedMessage) {
             DLog(@"Got a response for %@", socketPath);
-            if (boxedMessage.message.type != iTermMultiServerRPCTypeHandshake) {
+            if (!boxedMessage.decoded) {
+                DLog(@"Failed to decode message for %@", socketPath);
+                completion(state, NO, 0, -1);
+                return;
+            }
+            if (boxedMessage.decoded->type != iTermMultiServerRPCTypeHandshake) {
                   DLog(@"Got an unexpected response for %@", socketPath);
                 completion(state, NO, 0, -1);
                 return;
             }
             DLog(@"Got a valid handshake response for %@", socketPath);
-            if (boxedMessage.message.payload.handshake.protocolVersion != iTermMultiServerProtocolVersion1) {
+            if (boxedMessage.decoded->payload.handshake.protocolVersion != iTermMultiServerProtocolVersion1) {
                 completion(state, NO, 0, -1);
                 return;
             }
             completion(state,
                        YES,
-                       boxedMessage.message.payload.handshake.numChildren,
-                       boxedMessage.message.payload.handshake.pid);
+                       boxedMessage.decoded->payload.handshake.numChildren,
+                       boxedMessage.decoded->payload.handshake.pid);
         } error:^(NSError * _Nonnull error) {
             DLog(@"FAILED: Invalid handshake response for %@", socketPath);
             completion(state, NO, 0, -1);
@@ -450,24 +834,29 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
     __weak __typeof(self) weakSelf = self;
     NSString *socketPath = _socketPath;
-    [self readWithState:state
-               callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
-                                                        iTermResult<iTermMultiServerServerOriginatedMessageBox *> *result) {
-        [result handleObject:^(iTermMultiServerServerOriginatedMessageBox * _Nonnull box) {
+    [self readMessageWithState:state
+                      callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                                               iTermResult<iTermClientServerProtocolMessageBox *> *result) {
+        [result handleObject:^(iTermClientServerProtocolMessageBox * _Nonnull box) {
             __strong __typeof(self) strongSelf = weakSelf;
             DLog(@"Read a child report for %@", socketPath);
             if (!strongSelf) {
                 completion(state, NO);
                 return;
             }
-            if (box.message.type != iTermMultiServerRPCTypeReportChild) {
+            if (!box.decoded) {
+                DLog(@"Failed to decode message for %@", socketPath);
+                completion(state, NO);
+                return;
+            }
+            if (box.decoded->type != iTermMultiServerRPCTypeReportChild) {
                 DLog(@"Unexpected message type when reading child reports for %@", socketPath);
                 completion(state, NO);
                 return;
             }
-            iTermMultiServerServerOriginatedMessage message = box.message;
-            block(state, &message.payload.reportChild);
-            const BOOL foundLast = box.message.payload.reportChild.isLast;
+            iTermMultiServerServerOriginatedMessage *message = box.decoded;
+            block(state, &message->payload.reportChild);
+            const BOOL foundLast = message->payload.reportChild.isLast;
             if (!foundLast) {
                 assert(numberOfChildren > 0);
                 [strongSelf->_thread dispatchAsync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
@@ -482,6 +871,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
             DLog(@"Got last child report for %@", socketPath);
             completion(state, YES);
         } error:^(NSError * _Nonnull error) {
+            DLog(@"FAILED to read initial child report %@: %@", socketPath, error);
             completion(state, NO);
         }];
     }]];
@@ -494,13 +884,33 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     assert(state.writeFD >= 0);
 
     DLog(@"Send handshake request for %@", _socketPath);
-    if (![self sendHandshakeRequestWithState:state]) {
+    __weak __typeof(self) weakSelf = self;
+    [self sendHandshakeRequestWithState:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                                                                       NSNumber *sendResult) {
+        [weakSelf didSendHandshakeRequestWithSuccess:sendResult.boolValue
+                                               state:state
+                                            callback:callback
+                                 childDiscoveryBlock:block];
+    }]];
+}
+
+- (void)didSendHandshakeRequestWithSuccess:(BOOL)sendOK
+                                     state:(iTermFileDescriptorMultiClientState *)state
+                                  callback:(iTermCallback<id, NSNumber *> *)callback
+                       childDiscoveryBlock:(void (^)(iTermFileDescriptorMultiClientState *state,
+                                                     iTermMultiServerReportChild *))block {
+    if (!sendOK) {
         DLog(@"FAILED: Send handshake request for %@", _socketPath);
         [callback invokeWithObject:@NO];
         return;
     }
+
     NSString *socketPath = _socketPath;
-    [self readHandshakeResponseWithState:state completion:^(iTermFileDescriptorMultiClientState *state, BOOL ok, int numberOfChildren, pid_t pid) {
+    [self readHandshakeResponseWithState:state
+                              completion:^(iTermFileDescriptorMultiClientState *state,
+                                           BOOL ok,
+                                           int numberOfChildren,
+                                           pid_t pid) {
         if (!ok) {
             [callback invokeWithObject:@NO];
             return;
@@ -518,53 +928,78 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
             // Ensure the completion callback runs before the read loop starts producing events.
             [callback invokeWithObject:@YES];
-            [self enterReadLoop];
+            [self readAndDispatchNextMessageWhenReadyWithState:state];
         }];
     }];
 }
 
-- (void)enterReadLoop {
-    [self->_thread dispatchAsync:^(iTermFileDescriptorMultiClientState *state) {
-        [self readLoopWithState:state];
+- (void)readAndDispatchNextMessageWhenReadyWithState:(iTermFileDescriptorMultiClientState *)state {
+    if (state.readFD < 0 || state.writeFD < 0) {
+        DLog(@"readAndDispatchNextMessageWhenReadyWithState: aborting because files are closed");
+        return;
+    }
+    DLog(@"readAndDispatchNextMessageWhenReadyWithState: registring read callback");
+    __weak __typeof(self) weakSelf = self;
+    [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
+        [weakSelf readAndDispatchNextMessageWithState:state];
     }];
 }
 
 // This is copypasta from iTermFileDescriptorClient.c's iTermFileDescriptorClientConnect()
 // NOTE: Sets _readFD and_writeFD as a side-effect.
-// TODO: Make this async if it's really necessary. It's going to be difficult.
-- (iTermFileDescriptorMultiClientAttachStatus)tryAttachWithState:(iTermFileDescriptorMultiClientState *)state {
+// Result will be @(enum iTermFileDescriptorMultiClientAttachStatus).
+- (void)tryAttachWithState:(iTermFileDescriptorMultiClientState *)state
+                  callback:(iTermCallback<id, NSNumber *> *)callback {
     DLog(@"tryAttachWithState(%@): Try attach", _socketPath);
     [state check];
     assert(state.readFD < 0);
+
+    // Connect to the socket. This gets us the reading file descriptor.
     int temp = -1;
     iTermFileDescriptorMultiClientAttachStatus status = iTermConnectToUnixDomainSocket(_socketPath.UTF8String, &temp);
     state.readFD = temp;
     if (status != iTermFileDescriptorMultiClientAttachStatusSuccess) {
         // Server dead or already connected.
         DLog(@"tryAttachWithState(%@): Server dead or already connected", _socketPath);
-        return status;
+        [callback invokeWithObject:@(status)];
+        return;
     }
-    iTermClientServerProtocolMessage message;
-    iTermClientServerProtocolMessageInitialize(&message);
-    temp = state.writeFD;
 
-    int readStatus = iTermMultiServerRecv(state.readFD, &message);
-    DLog(@"Recv of initial file descriptor for %@ success=%@", _socketPath, @(!readStatus));
-    if (!readStatus) {
-        readStatus = iTermMultiServerProtocolGetFileDescriptor(&message, &temp);
-        DLog(@"Extract file descriptor for %@ success=%@", _socketPath, @(!readStatus));
-    }
-    if (readStatus) {
-        close(state.readFD);
-        state.readFD = -1;
-        // You can get here if the server crashes right after accepting the connection. It can
-        // also happen if the server already has a connected client and rejects.
-        DLog(@"tryAttachWithState(%@): Fatal error (see above)", _socketPath);
-        return iTermFileDescriptorMultiClientAttachStatusFatalError;
-    }
-    state.writeFD = temp;
-    DLog(@"tryAttachWithState(%@): Success", _socketPath);
-    return iTermFileDescriptorMultiClientAttachStatusSuccess;
+    // Receive the file descriptor to write to.
+    // TODO: why? Unix domain sockets are bidirectional.
+    __weak __typeof(self) weakSelf = self;
+    [self readMessageWithState:state callback:[_thread newCallbackWithBlock:
+                                               ^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                                 iTermResult<iTermClientServerProtocolMessageBox *> *_Nullable result) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [callback invokeWithObject:@(iTermFileDescriptorMultiClientAttachStatusFatalError)];
+            return;
+        }
+
+        __block BOOL ok = NO;
+        [result handleObject:^(iTermClientServerProtocolMessageBox * _Nonnull messageBox) {
+            if (messageBox.message.fileDescriptor) {
+                state.writeFD = messageBox.message.fileDescriptor.intValue;
+                DLog(@"tryAttachWithState(%@): Success", strongSelf->_socketPath);
+                [callback invokeWithObject:@(iTermFileDescriptorMultiClientAttachStatusSuccess)];
+                ok = YES;
+            } else {
+                DLog(@"tryAttachWithState(%@): Failed to get a file descriptor", strongSelf->_socketPath);
+            }
+        } error:^(NSError * _Nonnull error) {
+            DLog(@"tryAttachWithState(%@): Error reading file descriptor: %@", strongSelf->_socketPath, error);
+            ok = NO;
+        }];
+        if (!ok) {
+            close(state.readFD);
+            state.readFD = -1;
+            // You can get here if the server crashes right after accepting the connection. It can
+            // also happen if the server already has a connected client and rejects.
+            DLog(@"tryAttachWithState(%@): Fatal error (see above)", strongSelf->_socketPath);
+            [callback invokeWithObject:@(iTermFileDescriptorMultiClientAttachStatusFatalError)];
+        }
+    }]];
 }
 
 - (BOOL)launchWithState:(iTermFileDescriptorMultiClientState *)state {
@@ -627,6 +1062,7 @@ static unsigned long long MakeUniqueID(void) {
     return messageCopy;
 }
 
+// These C pointers live until the callback is run.
 - (void)launchChildWithExecutablePath:(const char *)path
                                  argv:(const char **)argv
                           environment:(const char **)environment
@@ -654,18 +1090,26 @@ static unsigned long long MakeUniqueID(void) {
             }
         }
     };
-    if (![self send:&message state:state]) {
-        [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
-        return;
-    }
-
     iTermMultiServerClientOriginatedMessage messageCopy = [self copyLaunchRequest:message];
 
-    DLog(@"Add pending launch %@ for %@", @(uniqueID), _socketPath);
-    state.pendingLaunches[@(uniqueID)] =
-    [[iTermFileDescriptorMultiClientPendingLaunch alloc] initWithRequest:messageCopy.payload.launch
-                                                                callback:callback
-                                                                  thread:_thread];
+    DLog(@"Add pending launch %@ for %@", @(message.payload.launch.uniqueId), _socketPath);
+    state.pendingLaunches[@(message.payload.launch.uniqueId)] =
+        [[iTermFileDescriptorMultiClientPendingLaunch alloc] initWithRequest:messageCopy.payload.launch
+                                                                    callback:callback
+                                                                      thread:_thread];
+
+    [self send:&message state:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                                                             NSNumber *result) {
+        const BOOL ok = result.boolValue;
+        if (ok) {
+            DLog(@"Wrote launch request successfully.");
+            return;
+        }
+
+        DLog(@"Failed to write launch request.");
+        [state.pendingLaunches removeObjectForKey:@(uniqueID)];
+        [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+    }]];
 }
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
@@ -705,11 +1149,7 @@ static unsigned long long MakeUniqueID(void) {
             }
         }
     };
-    if (![self send:&message state:state]) {
-        [self closeWithState:state];
-        [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
-        return;
-    }
+
     __weak __typeof(child) weakChild = child;
     child.waitCallback = [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
                                                          iTermResult<NSNumber *> *waitResult) {
@@ -725,23 +1165,52 @@ static unsigned long long MakeUniqueID(void) {
             [callback invokeWithObject:waitResult];
         }];
     }];
+
+    __weak __typeof(self) weakSelf = self;
+    [self send:&message state:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                                                             NSNumber *value) {
+        [weakSelf didWriteWaitRequestWithStatus:value.boolValue
+                                          child:child
+                                          state:state
+                                       callback:callback];
+    }]];
 }
 
-- (void)readLoopWithState:(iTermFileDescriptorMultiClientState *)state {
-    DLog(@"readloop(%@): read", _socketPath);
-    [self readWithState:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
-                                                                       iTermResult<iTermMultiServerServerOriginatedMessageBox *> *result) {
-        [result handleObject:^(iTermMultiServerServerOriginatedMessageBox * _Nonnull object) {
-            [self dispatch:object
-                     state:state];
-        } error:^(NSError * _Nonnull error) {
-            if (state.readFD >= 0 && state.writeFD >= 0) {
-                [self closeWithState:state];
+- (void)didWriteWaitRequestWithStatus:(BOOL)sendOK
+                                child:(iTermFileDescriptorMultiClientChild *)child
+                                state:(iTermFileDescriptorMultiClientState *)state
+                             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+    if (sendOK) {
+        return;
+    }
+    child.waitCallback = nil;
+    DLog(@"Close client for %@ because of failed write", _socketPath);
+    [self closeWithState:state];
+    [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+}
+
+- (void)readAndDispatchNextMessageWithState:(iTermFileDescriptorMultiClientState *)state {
+    DLog(@"readAndDispatchNextMessageWithState(%@)", _socketPath);
+    NSString *socketPath = [_socketPath copy];
+    [self readMessageWithState:state
+                      callback:[_thread newCallbackWithBlock:
+                                ^(iTermFileDescriptorMultiClientState *state,
+                                  iTermResult<iTermClientServerProtocolMessageBox *> *result) {
+        __block BOOL ok = YES;
+        [result handleObject:^(iTermClientServerProtocolMessageBox * _Nonnull object) {
+            ok = [self dispatch:object state:state];
+            if (!ok) {
+                DLog(@"Close connection because dispatch failed %@", socketPath);
             }
+        } error:^(NSError * _Nonnull error) {
+            DLog(@"FAILED to read message to be dispatched %@: %@", socketPath, error);
+            ok = NO;
         }];
-        if (state.readFD >= 0 && state.writeFD >= 0) {
-            [self enterReadLoop];
+        if (!ok) {
+            [self closeWithState:state];
+            return;
         }
+        [self readAndDispatchNextMessageWhenReadyWithState:state];
     }]];
 }
 
@@ -769,6 +1238,7 @@ static unsigned long long MakeUniqueID(void) {
     child.waitCallback = nil;
 }
 
+// launch must be consumed synchronously.
 - (void)handleLaunch:(iTermMultiServerResponseLaunch)launch
                state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"handleLaunch: unique ID %@ for %@", @(launch.uniqueId), _socketPath);
@@ -827,27 +1297,34 @@ static unsigned long long MakeUniqueID(void) {
 }
 
 // Runs on _queue
-- (void)dispatch:(iTermMultiServerServerOriginatedMessageBox *)box
-                  state:(iTermFileDescriptorMultiClientState *)state {
+- (BOOL)dispatch:(iTermClientServerProtocolMessageBox *)box
+           state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"dispatch for %@", _socketPath);
-    switch (box.message.type) {
+    iTermMultiServerServerOriginatedMessage *decoded = box.decoded;
+    if (!decoded) {
+        return NO;
+    }
+    switch (decoded->type) {
         case iTermMultiServerRPCTypeWait:
-            [self handleWait:box.message.payload.wait state:state];
+            [self handleWait:decoded->payload.wait state:state];
             break;
 
         case iTermMultiServerRPCTypeLaunch:
-            [self handleLaunch:box.message.payload.launch state:state];
+            [self handleLaunch:decoded->payload.launch state:state];
             break;
 
         case iTermMultiServerRPCTypeTermination:
-            [self handleTermination:box.message.payload.termination state:state];
+            [self handleTermination:decoded->payload.termination state:state];
             break;
 
+        case iTermMultiServerRPCTypeHello:  // Shouldn't happen at this point
         case iTermMultiServerRPCTypeHandshake:
         case iTermMultiServerRPCTypeReportChild:
+            DLog(@"Close %@ because of unexpected message of type %@", _socketPath, @(decoded->type));
             [self closeWithState:state];
             break;
     }
+    return YES;
 }
 
 - (NSError *)forkError {

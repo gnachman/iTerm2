@@ -28,14 +28,20 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
                                                               size_t bufferSize,
                                                               int fdToSend);
 
-// Socket only (e.g., unix-domain socket, not pipe)
-ssize_t iTermFileDescriptorServerSendMessage(int connectionFd,
-                                             void *buffer,
-                                             size_t bufferSize,
-                                             int *errorOut);
+ssize_t iTermFileDescriptorServerWriteLengthAndBuffer(int connectionFd,
+                                                      void *buffer,
+                                                      size_t bufferSize,
+                                                      int *errorOut);
+ssize_t iTermFileDescriptorServerWriteLengthAndBufferAndFileDescriptor(int connectionFd,
+                                                                       void *buffer,
+                                                                       size_t bufferSize,
+                                                                       int fdToSend,
+                                                                       int *errorOut);
+
+ssize_t iTermFileDescriptorServerWrite(int fd, void *buffer, size_t bufferSize);
 
 // For use on a pipe or other non-socket
-ssize_t iTermFileDescriptorClientWrite(int fd, void *buffer, size_t bufferSize);
+ssize_t iTermFileDescriptorClientWrite(int fd, const void *buffer, size_t bufferSize);
 
 // Takes an array of file descriptors and its length as input. `results` should be an array of
 // equal length. On return, the readable FDs will have the corresponding value in `results` set to

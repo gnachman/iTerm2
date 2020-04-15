@@ -294,5 +294,7 @@ void DLogC(const char *format, va_list args) {
     char *temp = NULL;
     vasprintf(&temp, format, args);
     DLog(@"%@", [NSString stringWithUTF8String:temp]);
+#warning DNS
+    NSLog(@"%@", [NSString stringWithUTF8String:temp]);
     free(temp);
 }

@@ -52,5 +52,6 @@
 + (NSData *)randomAESKey;
 
 - (void)writeReadOnlyToURL:(NSURL *)url;
+- (NSData *)subdataFromOffset:(NSInteger)offset;
 
 @end

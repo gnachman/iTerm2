@@ -71,10 +71,7 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
             }
             DLog(@"Trying again because connect returned EINTR.");
         } else {
-            // Make socket block again.
             interrupted = 0;
-            DLog(@"Connected. Calling fcntl() 3");
-            fcntl(socketFd, F_SETFL, flags & ~O_NONBLOCK);
         }
     } while (interrupted);
     *fdOut = socketFd;

@@ -20,6 +20,7 @@
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
+        _queue = queue;
         _queueLabel = dispatch_queue_get_label(queue);
         assert(_queueLabel);
     }

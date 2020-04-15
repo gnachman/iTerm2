@@ -25,9 +25,12 @@ static inline void CDLogImpl(const int level, const char *func, const char *file
 #ifndef __OBJC__
     extern char gDebugLogging;
 #endif
+#warning DNS
+    /*
     if (!gDebugLogging) {
         return;
     }
+     */
 #endif
     va_list args;
     va_start(args, format);

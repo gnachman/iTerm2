@@ -18,6 +18,9 @@
 #import "NSObject+iTerm.h"
 #import "TaskNotifier.h"
 
+#undef DLog
+#define DLog NSLog
+
 NSString *const iTermMultiServerRestorationKeyType = @"Type";
 NSString *const iTermMultiServerRestorationKeyVersion = @"Version";
 NSString *const iTermMultiServerRestorationKeySocket = @"Socket";
@@ -514,12 +517,14 @@ typedef struct {
             break;
     }
     const pid_t pid = state.child.pid;
-    [state.conn waitForChild:state.child
-          removePreemptively:YES
-                    callback:[self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
-                                                                 iTermResult<NSNumber *> *result) {
-        DLog(@"Preemptive wait for %d finished with result %@", pid, result);
-    }]];
+    if (pid) {
+        [state.conn waitForChild:state.child
+              removePreemptively:YES
+                        callback:[self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
+                                                                     iTermResult<NSNumber *> *result) {
+            DLog(@"Preemptive wait for %d finished with result %@", pid, result);
+        }]];
+    }
 }
 
 @end
