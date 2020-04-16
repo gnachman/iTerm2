@@ -16,9 +16,6 @@
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
 
-#undef DLog
-#define DLog NSLog
-
 @class iTermMultiServerConnectionState;
 
 @interface iTermMultiServerConnectionGlobalState: iTermSynchronizedState<iTermMultiServerConnectionState *>

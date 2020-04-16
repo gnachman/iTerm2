@@ -528,38 +528,31 @@ int iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOrigin
     return status;
 }
 
-// I got an inexplicable ASAN null dereference. I really don't think free(NULL) will confuse it
-// but it's worth a trhy.
-static void SafeFree(void *ptr) {
-    if (ptr) {
-        free(ptr);
-    }
-}
 static void FreeLaunchRequest(iTermMultiServerRequestLaunch *obj) {
-    SafeFree((void *)obj->path);
+    free((void *)obj->path);
     for (int i = 0; i < obj->argc; i++) {
-        SafeFree((void *)obj->argv[i]);
+        free((void *)obj->argv[i]);
     }
-    SafeFree((void *)obj->argv);
+    free((void *)obj->argv);
     for (int i = 0; i < obj->envc; i++) {
-        SafeFree((void *)obj->envp[i]);
+        free((void *)obj->envp[i]);
     }
-    SafeFree((void *)obj->envp);
-    SafeFree((void *)obj->pwd);
+    free((void *)obj->envp);
+    free((void *)obj->pwd);
     memset(obj, 0xab, sizeof(*obj));
 }
 
 static void FreeReportChild(iTermMultiServerReportChild *obj) {
-    SafeFree((void *)obj->path);
+    free((void *)obj->path);
     for (int i = 0; i < obj->argc; i++) {
-        SafeFree((void *)obj->argv[i]);
+        free((void *)obj->argv[i]);
     }
-    SafeFree((void *)obj->argv);
+    free((void *)obj->argv);
     for (int i = 0; i < obj->envc; i++) {
-        SafeFree((void *)obj->envp[i]);
+        free((void *)obj->envp[i]);
     }
-    SafeFree((void *)obj->envp);
-    SafeFree((void *)obj->tty);
+    free((void *)obj->envp);
+    free((void *)obj->tty);
     memset(obj, 0xab, sizeof(*obj));
 }
 

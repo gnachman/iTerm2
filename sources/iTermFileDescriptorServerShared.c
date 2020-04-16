@@ -151,8 +151,6 @@ ssize_t iTermFileDescriptorServerWrite(int fd, void *buffer, size_t bufferSize) 
 }
 
 ssize_t iTermFileDescriptorClientWrite(int fd, const void *buffer, size_t bufferSize) {
-#warning DNS
-    bufferSize = 1;
     ssize_t rc = -1;
     size_t totalWritten = 0;
     while (totalWritten < bufferSize) {

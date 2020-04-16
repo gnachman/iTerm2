@@ -154,9 +154,7 @@ static int iTermClientServerProtocolParseStringArray(iTermClientServerProtocolMe
             truncated = 1;
         }
         if (truncated) {
-            // We will free all the strings in the array, so if parsing fails midway we still have
-            // to set them all to malloced strings.
-            (*arrayOut)[i] = calloc(1, 1);
+            (*arrayOut)[i] = NULL;
         }
     }
     (*arrayOut)[*countOut] = NULL;

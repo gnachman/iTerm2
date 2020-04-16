@@ -20,9 +20,6 @@
 #include <syslog.h>
 #include <sys/un.h>
 
-#undef DLog
-#define DLog NSLog
-
 NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescriptorMultiClientErrorDomain";
 
 @interface iTermMultiServerMessage: NSObject
@@ -679,12 +676,12 @@ static void HexDump(NSData *data) {
     int offset = 0;
     DLog(@"- Begin hex dump of outbound message -");
     for (int i = 0; i < data.length; i++) {
-        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
         if (i % 16 == 0 && i > 0) {
-            DLog(@"%04d  %s", addr, buffer);
+            DLog(@"%4d  %s", addr, buffer);
             addr = i;
             offset = 0;
         }
+        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
     }
     if (offset > 0) {
         DLog(@"%04d  %s", addr, buffer);
@@ -729,7 +726,7 @@ static void HexDump(NSData *data) {
 
     DLog(@"Will send %@ byte header plus %@ byte payload, totaling %@ bytes",
          @(sizeof(temp)), @(length), @(data.length));
-    HexDump(data);
+    HexDump([data subdataFromOffset:sizeof(temp)]);
 
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {

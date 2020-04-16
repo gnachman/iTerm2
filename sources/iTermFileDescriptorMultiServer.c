@@ -554,12 +554,12 @@ static void HexDump(iTermClientServerProtocolMessage *message) {
     int offset = 0;
     FDLog(LOG_DEBUG, "- Begin hex dump of message -");
     for (int i = 0; i < message->message.msg_iov[0].iov_len; i++) {
-        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
         if (i % 16 == 0 && i > 0) {
-            FDLog(LOG_DEBUG, "%04d  %s", addr, buffer);
+            FDLog(LOG_DEBUG, "%4d  %s", addr, buffer);
             addr = i;
             offset = 0;
         }
+        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
     }
     if (offset > 0) {
         FDLog(LOG_DEBUG, "%04d  %s", addr, buffer);
