@@ -223,7 +223,7 @@
 
 + (NSString *)pathForNumber:(int)number {
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *filename = [NSString stringWithFormat:@"daemon-%d.socket", number];
+    NSString *filename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *url = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:filename];
     return url.path;
 }

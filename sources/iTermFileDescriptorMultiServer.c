@@ -438,7 +438,7 @@ static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) 
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
 
-    if (handshake->maximumProtocolVersion < iTermMultiServerProtocolVersion1) {
+    if (handshake->maximumProtocolVersion < iTermMultiServerProtocolVersion2) {
         FDLog(LOG_ERR, "Maximum protocol version is too low: %d", handshake->maximumProtocolVersion);
         return -1;
     }
@@ -446,7 +446,7 @@ static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) 
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .protocolVersion = iTermMultiServerProtocolVersion1,
+                .protocolVersion = iTermMultiServerProtocolVersion2,
                 .numChildren = GetNumberOfReportableChildren(),
                 .pid = getpid()
             }

@@ -813,7 +813,7 @@ static void HexDump(NSData *data) {
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .maximumProtocolVersion = iTermMultiServerProtocolVersion1
+                .maximumProtocolVersion = iTermMultiServerProtocolVersion2
             }
         }
     };
@@ -844,7 +844,7 @@ static void HexDump(NSData *data) {
                 return;
             }
             DLog(@"Got a valid handshake response for %@", socketPath);
-            if (boxedMessage.decoded->payload.handshake.protocolVersion != iTermMultiServerProtocolVersion1) {
+            if (boxedMessage.decoded->payload.handshake.protocolVersion != iTermMultiServerProtocolVersion2) {
                 completion(state, NO, 0, -1);
                 return;
             }
@@ -1295,7 +1295,7 @@ static unsigned long long MakeUniqueID(void) {
     } else {
         result = [iTermResult withObject:@(wait.status)];
     }
-    [child.waitCallback invokeWithObject:result];
+    [child invokeWaitCallback:result];
 }
 
 // Handle a launch response, telling us about a child that was hopefully forked and execed.

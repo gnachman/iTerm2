@@ -9,7 +9,8 @@
 
 enum {
     iTermMultiServerProtocolVersionRejected = -1,
-    iTermMultiServerProtocolVersion1 = 1
+    iTermMultiServerProtocolVersion1 = 1,
+    iTermMultiServerProtocolVersion2 = 2
 };
 
 typedef enum {
