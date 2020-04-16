@@ -241,8 +241,17 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
 }
 
+// There is an important subtlety here. If you call whenReadable: from within a
+// whenReadable block, that call gets inserted at the head of the list. That is
+// essential for the two-stage reads that are performed here: first we read the
+// length and then the payload. We can't allow another read to be interposed
+// between them. As long as whenReadable: for the payload is called from within
+// the whenReadable block for the length, it is safe.
 - (void)whenReadable:(void (^)(iTermFileDescriptorMultiClientState *))block {
-    assert(_readFD >= 0);
+    if (_readFD < 0) {
+        block(self);
+        return;
+    }
     [_readQueue addObject:[block copy]];
     if (_readSource) {
         return;
@@ -280,8 +289,12 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
 }
 
+// See the comment on whenReadable:. This works the same way.
 - (void)whenWritable:(void (^)(iTermFileDescriptorMultiClientState *state))block {
-    assert(_writeFD >= 0);
+    if (_writeFD < 0) {
+        block(self);
+        return;
+    }
 
     [_writeQueue addObject:[block copy]];
     if (_writeSource) {
@@ -358,6 +371,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }];
 }
 
+// Connect on the unix domain socket. Send a handshake request. Read initial
+// child reports. Start the read-dispatch loop. Then run the callback.
 - (void)attachWithCallback:(iTermCallback<id, NSNumber *> *)callback {
     iTermThread<iTermFileDescriptorMultiClientState *> *thread = _thread;
     [_thread dispatchAsync:^(iTermFileDescriptorMultiClientState *state) {
@@ -394,6 +409,9 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
 #pragma mark - Private Methods
 
+// Connect on the unix domain socket. If successful, handshake and start read-dispatch
+// loop and run callback. Otherwise, launch a server, handshake, start the read-dispatch
+// loop, and then run the callback.
 - (void)attachOrLaunchServerWithState:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermCallback<id, NSNumber *> *)callback {
     [state check];
@@ -436,6 +454,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
 }
 
+// Launch a new daemon, handshake with it, start the read-dispatch loop, adn run the callback.
 - (void)launchAndHandshakeWithState:(iTermFileDescriptorMultiClientState *)state
                            callback:(iTermCallback<id, NSNumber *> *)callback {
     assert(state.readFD < 0);
@@ -451,6 +470,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     [self handshakeWithState:state callback:callback];
 }
 
+// Send a handshake message. Read child reports. Start the read-dispatch loop.
+// Then run the callback.
 - (void)handshakeWithState:(iTermFileDescriptorMultiClientState *)state
                   callback:(iTermCallback<id, NSNumber *> *)callback {
     // Just launched the server. Now handshake with it.
@@ -467,7 +488,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                     callback:innerCallback
          childDiscoveryBlock:^(iTermFileDescriptorMultiClientState *state,
                                iTermMultiServerReportChild *report) {
-        // report must be consumed synchronously!
+        // Report must be consumed synchronously!
         [weakSelf didDiscoverChild:report state:state];
     }];
 }
@@ -486,7 +507,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 }
 
 // Called during handshake as children are reported.
-// report must be consumed synchronously!
+// The `report` must be consumed synchronously because its memory will not
+// survive the return of this function.
 - (void)didDiscoverChild:(iTermMultiServerReportChild *)report
                    state:(iTermFileDescriptorMultiClientState *)state {
     iTermFileDescriptorMultiClientChild *child =
@@ -495,6 +517,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     [self addChild:child state:state attached:NO];
 }
 
+// Close the file descriptors. Notify the delegate.
 - (void)closeWithState:(iTermFileDescriptorMultiClientState *)state {
     if (state.readFD < 0 && state.writeFD < 0) {
         DLog(@"Already closed %@, doing nothing", _socketPath);
@@ -502,8 +525,12 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
     DLog(@"CLOSE %@", _socketPath);
 
-    close(state.readFD);
-    close(state.writeFD);
+    if (state.readFD >= 0) {
+        close(state.readFD);
+    }
+    if (state.writeFD >= 0) {
+        close(state.writeFD);
+    }
 
     state.readFD = -1;
     state.writeFD = -1;
@@ -521,13 +548,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
 }
 
-- (void)appendDataFromMessage:(iTermClientServerProtocolMessage *)message
-                           to:(NSMutableData *)accumulator {
-    [accumulator appendBytes:message->message.msg_iov[0].iov_base
-                      length:message->message.msg_iov[0].iov_len];
-}
-
-// Read a full message, which may contain a file desciptor.
+// Read a full message, which may contain a file desciptor. First, read the
+// length of the message. Then read the payload. Then decode it and invoke the
+// callback. See the note on whenReadable: for why doing two async reads is
+// safe. It is critical that this be the only method that calls -readWithState
+// after than handshake is complete. Otherwise, reads could get intermingled.
 - (void)readMessageWithState:(iTermFileDescriptorMultiClientState *)state
                     callback:(iTermCallback<id, iTermResult<iTermClientServerProtocolMessageBox *> *> *)callback {
     // First, read the length of the forthcoming message.
@@ -595,6 +620,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }]];
 }
 
+// When the socket becomes readable, read exactly `length` bytes and then run
+// the callback with the result.
 - (void)readWithState:(iTermFileDescriptorMultiClientState *)state
                length:(NSInteger)length
              callback:(iTermCallback<id, iTermResult<iTermMultiServerMessage *> *> *)callback {
@@ -604,6 +631,10 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }];
 }
 
+// Read exactly `totalLength` bytes and then run the callback. Since it may
+// take many async read calls, the builder is used to accumulate the input.
+// This is run from within a whenReadable: callback, so any call to
+// whenReadable: made herein is moved to the head of the queue.
 - (void)partialReadWithState:(iTermFileDescriptorMultiClientState *)state
                  totalLength:(NSInteger)totalLength
                      builder:(iTermMultiServerMessageBuilder *)builder
@@ -612,7 +643,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
     if (state.readFD < 0) {
         DLog(@"readFD<0 for %@", _socketPath);
-        [callback invokeWithObject:[iTermResult withError:self.ioError]];
+        [callback invokeWithObject:[iTermResult withError:self.connectionLostError]];
         return;
     }
 
@@ -636,17 +667,17 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }
     if (bytesRead == 0) {
         DLog(@"EOF %@", _socketPath);
-        [callback invokeWithObject:[iTermResult withError:self.ioError]];
+        [callback invokeWithObject:[iTermResult withError:self.connectionLostError]];
         return;
     }
 
-    // If you're asked to read 0 bytes then it could be a file descriptor.
     if (message.controlBuffer.cm.cmsg_len == CMSG_LEN(sizeof(int)) &&
         message.controlBuffer.cm.cmsg_level == SOL_SOCKET &&
         message.controlBuffer.cm.cmsg_type == SCM_RIGHTS) {
         DLog(@"Got a file descriptor in message from %@", _socketPath);
         [builder setFileDescriptor:*((int *)CMSG_DATA(&message.controlBuffer.cm))];
     }
+
     DLog(@"Append %@ bytes in read from %@", @(bytesRead), _socketPath);
     if (bytesRead > 0) {
         [builder appendBytes:message.message.msg_iov[0].iov_base
@@ -669,6 +700,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     }];
 }
 
+#if BETA
 static void HexDump(NSData *data) {
     char buffer[80];
     const unsigned char *bytes = (const unsigned char *)data.bytes;
@@ -688,7 +720,9 @@ static void HexDump(NSData *data) {
     }
     DLog(@"- End hex dump of outbound message -");
 }
+#endif
 
+// Send a message. Then run the callback.
 - (void)send:(iTermMultiServerClientOriginatedMessage *)message
        state:(iTermFileDescriptorMultiClientState *)state
     callback:(iTermCallback<id, NSNumber *> *)callback {
@@ -710,10 +744,8 @@ static void HexDump(NSData *data) {
     DLog(@"Encoded message from from client");
     iTermMultiServerProtocolLogMessageFromClient(message);
 
-    if (clientServerProtocolMessage.ioVectors[0].iov_len == 0) {
-        [callback invokeWithObject:@YES];
-        return;
-    }
+    // 0 length messages are indistinguishable from EOF.
+    assert(clientServerProtocolMessage.ioVectors[0].iov_len != 0);
     
     NSMutableData *data = [NSMutableData data];
     size_t length = clientServerProtocolMessage.ioVectors[0].iov_len;
@@ -726,7 +758,9 @@ static void HexDump(NSData *data) {
 
     DLog(@"Will send %@ byte header plus %@ byte payload, totaling %@ bytes",
          @(sizeof(temp)), @(length), @(data.length));
+#if BETA
     HexDump([data subdataFromOffset:sizeof(temp)]);
+#endif
 
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
@@ -737,6 +771,9 @@ static void HexDump(NSData *data) {
 
 }
 
+// Write the entirety of data, then run the callback.
+// This may take many async writes. It is always called from a whenWritable:
+// block which ensures writes will be consecutive.
 - (void)tryWrite:(NSData *)data
            state:(iTermFileDescriptorMultiClientState *)state
         callback:(iTermCallback<id, NSNumber *> *)callback {
@@ -783,6 +820,7 @@ static void HexDump(NSData *data) {
     [self send:&message state:state callback:callback];
 }
 
+// Read the handshake response and run the completion block.
 - (void)readHandshakeResponseWithState:(iTermFileDescriptorMultiClientState *)state
                             completion:(void (^)(iTermFileDescriptorMultiClientState *state,
                                                  BOOL ok,
@@ -821,6 +859,10 @@ static void HexDump(NSData *data) {
     }]];
 }
 
+// Read exactly `numberOfChildren` child reports. This happens before the
+// read-dispatch loop begins so it is safe to do a bunch of async read calls.
+// It will call itself recursively until numberOfChildren is 0. Then the
+// completion block will be called.
 - (void)readInitialChildReports:(int)numberOfChildren
                           state:(iTermFileDescriptorMultiClientState *)state
                           block:(void (^)(iTermFileDescriptorMultiClientState *state, iTermMultiServerReportChild *))block
@@ -876,6 +918,8 @@ static void HexDump(NSData *data) {
     }]];
 }
 
+// Send a handshake request. Read the response. Read the child reports, calling
+// `block` for each. Run the callback. Then start the read-dispatch loop.
 - (void)handshakeWithState:(iTermFileDescriptorMultiClientState *)state
                   callback:(iTermCallback<id, NSNumber *> *)callback
        childDiscoveryBlock:(void (^)(iTermFileDescriptorMultiClientState *state, iTermMultiServerReportChild *))block {
@@ -893,6 +937,8 @@ static void HexDump(NSData *data) {
     }]];
 }
 
+// Read the handshake response. Read the child reports, calling `block` for
+// each. Run the callback. Then start the read-dispatch loop. 
 - (void)didSendHandshakeRequestWithSuccess:(BOOL)sendOK
                                      state:(iTermFileDescriptorMultiClientState *)state
                                   callback:(iTermCallback<id, NSNumber *> *)callback
@@ -932,19 +978,7 @@ static void HexDump(NSData *data) {
     }];
 }
 
-- (void)readAndDispatchNextMessageWhenReadyWithState:(iTermFileDescriptorMultiClientState *)state {
-    if (state.readFD < 0 || state.writeFD < 0) {
-        DLog(@"readAndDispatchNextMessageWhenReadyWithState: aborting because files are closed");
-        return;
-    }
-    DLog(@"readAndDispatchNextMessageWhenReadyWithState: registring read callback");
-    __weak __typeof(self) weakSelf = self;
-    [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
-        [weakSelf readAndDispatchNextMessageWithState:state];
-    }];
-}
-
-// This is copypasta from iTermFileDescriptorClient.c's iTermFileDescriptorClientConnect()
+// Connect to the unix domain socket. Read the hello message. Then run the callback.
 // NOTE: Sets _readFD and_writeFD as a side-effect.
 // Result will be @(enum iTermFileDescriptorMultiClientAttachStatus).
 - (void)tryAttachWithState:(iTermFileDescriptorMultiClientState *)state
@@ -1001,6 +1035,7 @@ static void HexDump(NSData *data) {
     }]];
 }
 
+// Launch a daemon synchronously.
 - (BOOL)launchWithState:(iTermFileDescriptorMultiClientState *)state {
     assert(state.readFD < 0);
 
@@ -1061,6 +1096,9 @@ static unsigned long long MakeUniqueID(void) {
     return messageCopy;
 }
 
+// Send a launch request and then run the callback. Eventually, you may receive
+// a child report. The request and the child report are coupled by the unique
+// ID, but we may read other messages before getting the child report.
 // These C pointers live until the callback is run.
 - (void)launchChildWithExecutablePath:(const char *)path
                                  argv:(const char **)argv
@@ -1111,6 +1149,7 @@ static unsigned long long MakeUniqueID(void) {
     }]];
 }
 
+// Callable from any thread.
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
@@ -1122,6 +1161,13 @@ static unsigned long long MakeUniqueID(void) {
     }];
 }
 
+// Send a wait request. The response handler gets attached to the child to
+// avoid coupling request and response in time. The callback is run right
+// away if the request can't be written, or else it gets called when the
+// wait response for this pid is received.
+// TODO: There's a bug here. If you call this more than once then the previous
+// waitCallback gets overwritten. That means one callback may be run twice
+// while another is not run at all.
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
                state:(iTermFileDescriptorMultiClientState *)state
@@ -1150,7 +1196,8 @@ static unsigned long long MakeUniqueID(void) {
     };
 
     __weak __typeof(child) weakChild = child;
-    child.waitCallback = [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
+    iTermCallback<id, iTermResult<NSNumber *> *> *waitCallback =
+    [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
                                                          iTermResult<NSNumber *> *waitResult) {
         [waitResult handleObject:
          ^(NSNumber * _Nonnull statusNumber) {
@@ -1164,6 +1211,7 @@ static unsigned long long MakeUniqueID(void) {
             [callback invokeWithObject:waitResult];
         }];
     }];
+    [child addWaitCallback:waitCallback];
 
     __weak __typeof(self) weakSelf = self;
     [self send:&message state:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
@@ -1182,12 +1230,27 @@ static unsigned long long MakeUniqueID(void) {
     if (sendOK) {
         return;
     }
-    child.waitCallback = nil;
+    [child invokeAllWaitCallbacks:[iTermResult withError:self.ioError]];
     DLog(@"Close client for %@ because of failed write", _socketPath);
     [self closeWithState:state];
     [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
 }
 
+// This is the read-dispatch loop. readAndDispatchNextMessageWithState will call this method after
+// it's done reading a message.
+- (void)readAndDispatchNextMessageWhenReadyWithState:(iTermFileDescriptorMultiClientState *)state {
+    if (state.readFD < 0 || state.writeFD < 0) {
+        DLog(@"readAndDispatchNextMessageWhenReadyWithState: aborting because files are closed");
+        return;
+    }
+    DLog(@"readAndDispatchNextMessageWhenReadyWithState: registring read callback");
+    __weak __typeof(self) weakSelf = self;
+    [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
+        [weakSelf readAndDispatchNextMessageWithState:state];
+    }];
+}
+
+// Read a message and dispatch it to the appropriate handler.
 - (void)readAndDispatchNextMessageWithState:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"readAndDispatchNextMessageWithState(%@)", _socketPath);
     NSString *socketPath = [_socketPath copy];
@@ -1213,7 +1276,6 @@ static unsigned long long MakeUniqueID(void) {
     }]];
 }
 
-// Called on self.queue from handleTermination: and handleWait:
 - (iTermFileDescriptorMultiClientChild *)childWithPID:(pid_t)pid
                                                 state:(iTermFileDescriptorMultiClientState *)state {
     return [state.children objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element, NSUInteger index, BOOL *stop) {
@@ -1221,7 +1283,7 @@ static unsigned long long MakeUniqueID(void) {
     }];
 }
 
-// Called on self.queue from dispatch:
+// Handle a wait response from the daemon, giving the child's exit code.
 - (void)handleWait:(iTermMultiServerResponseWait)wait
              state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"handleWait for socket %@ pid %@ with error %@, status %@",
@@ -1234,10 +1296,11 @@ static unsigned long long MakeUniqueID(void) {
         result = [iTermResult withObject:@(wait.status)];
     }
     [child.waitCallback invokeWithObject:result];
-    child.waitCallback = nil;
 }
 
-// launch must be consumed synchronously.
+// Handle a launch response, telling us about a child that was hopefully forked and execed.
+// Add a new child and run the callback for the pending launch.
+// `launch` must be consumed synchronously.
 - (void)handleLaunch:(iTermMultiServerResponseLaunch)launch
                state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"handleLaunch: unique ID %@ for %@", @(launch.uniqueId), _socketPath);
@@ -1284,7 +1347,7 @@ static unsigned long long MakeUniqueID(void) {
     [pendingLaunch invalidate];
 }
 
-// Runs on _queue
+// Handle a termination notification from the daemon. Notifies the delegate.
 - (void)handleTermination:(iTermMultiServerReportTermination)termination
                     state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"handleTermination for %@", _socketPath);
@@ -1295,7 +1358,7 @@ static unsigned long long MakeUniqueID(void) {
     }
 }
 
-// Runs on _queue
+// Invoke the appropriate handler for a just-received message.
 - (BOOL)dispatch:(iTermClientServerProtocolMessageBox *)box
            state:(iTermFileDescriptorMultiClientState *)state {
     DLog(@"dispatch for %@", _socketPath);

@@ -428,7 +428,7 @@
 }
 
 - (NSData *)subdataFromOffset:(NSInteger)offset {
-    if (offset == 0) {
+    if (offset <= 0) {
         return self;
     }
     if (offset >= self.length) {

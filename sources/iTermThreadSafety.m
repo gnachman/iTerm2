@@ -207,6 +207,17 @@ static void Check(iTermSynchronizedState *self) {
     }];
 }
 
+- (void)invokeMaybeImmediatelyWithObject:(id)object {
+    void (^block)(id, id) = [_block retain];
+    [self retain];
+    [_thread dispatchRecursiveSync:^(iTermSynchronizedState *state) {
+        block(state, object);
+        [block release];
+        dispatch_group_leave(_group);
+        [self release];
+    }];
+}
+
 - (void)waitUntilInvoked {
     dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
 }

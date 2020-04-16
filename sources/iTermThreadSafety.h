@@ -93,6 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)onThread:(iTermThread *)thread block:(void (^)(CallerState state, ObjectType _Nullable result))block;
 - (void)invokeWithObject:(ObjectType _Nullable)object;
+- (void)invokeMaybeImmediatelyWithObject:(ObjectType _Nullable)object;
 - (void)waitUntilInvoked;
 
 @end
