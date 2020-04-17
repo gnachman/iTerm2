@@ -252,13 +252,20 @@ typedef struct {
                 NSImage *bottomRightCornerImage = gBottomRightCornerImage;
 
                 _topLeftCornerRoundImageView = [NSImageView imageViewWithImage:topLeftCornerImage];
+                _topLeftCornerRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
                 _topLeftCornerRoundImageView.alphaValue = 0.75;
+
                 _topRightCornerRoundImageView = [NSImageView imageViewWithImage:topRightCornerImage];
                 _topRightCornerRoundImageView.alphaValue = 0.75;
+                _topRightCornerRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
+
                 _bottomLeftCornerRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerImage];
                 _bottomLeftCornerRoundImageView.alphaValue = 0.75;
+                _bottomLeftCornerRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
+
                 _bottomRightCornerRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerImage];
                 _bottomRightCornerRoundImageView.alphaValue = 0.75;
+                _bottomRightCornerRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
                 _topLeftCornerRoundImageView.hidden = YES;
                 _topRightCornerRoundImageView.hidden = YES;
@@ -274,15 +281,22 @@ typedef struct {
                 _leftBorderView = [[NSView alloc] init];
                 _leftBorderView.wantsLayer = YES;
                 _leftBorderView.layer.backgroundColor = borderColor.CGColor;
+                _leftBorderView.autoresizingMask = NSViewMaxXMargin | NSViewHeightSizable;
+
                 _rightBorderView = [[NSView alloc] init];
                 _rightBorderView.wantsLayer = YES;
                 _rightBorderView.layer.backgroundColor = borderColor.CGColor;
+                _rightBorderView.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
+
                 _topBorderView = [[NSView alloc] init];
                 _topBorderView.wantsLayer = YES;
                 _topBorderView.layer.backgroundColor = borderColor.CGColor;
+                _topBorderView.autoresizingMask = NSViewMinYMargin | NSViewWidthSizable;
+
                 _bottomBorderView = [[NSView alloc] init];
                 _bottomBorderView.wantsLayer = YES;
                 _bottomBorderView.layer.backgroundColor = borderColor.CGColor;
+                _bottomBorderView.autoresizingMask = NSViewMaxYMargin | NSViewWidthSizable;
                 
                 [self addSubview:_leftBorderView];
                 [self addSubview:_rightBorderView];
