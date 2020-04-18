@@ -415,8 +415,6 @@ typedef struct {
                                                                               iTermFileDescriptorMultiClientChild *child) {
                 state.child = child;
                 if (!state.child) {
-                    // Happens when doing Quit (killing all children) followed by relaunching. Don't want a
-                    // broken pipe in that case.
                     [completionCallback invokeWithObject:nil];
                     return;
                 }
@@ -445,11 +443,10 @@ typedef struct {
                 [completionCallback invokeWithObject:child];
             }]];
         } error:^(NSError * _Nonnull error) {
-            DLog(@"Have a connection to %@, but FAILED to attach to child with pid %@.",
+            DLog(@"FAILED to connect to daemon %@, while aiming to attach to child with pid %@.",
                   @(serverConnection.multi.number),
                   @(serverConnection.multi.pid));
             state.conn = nil;
-            [task brokenPipe];
             [completionCallback invokeWithObject:nil];
         }];
     }];

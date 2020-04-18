@@ -1776,11 +1776,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Note: this async code path is taken by orphan adoption.
 - (void)attachToServer:(iTermGeneralServerConnection)serverConnection
             completion:(void (^)(void))completion {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection completion:^(iTermJobManagerAttachResults results) {
+            if (!(results & iTermJobManagerAttachResultsAttached)) {
+                [self brokenPipe];
+            }
             [self->_shell setSize:_screen.size viewSize:_screen.viewSize];
             completion();
         }];
