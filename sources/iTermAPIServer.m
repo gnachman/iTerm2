@@ -194,8 +194,8 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             chmod([iTermAPIServer unixSocketPath].UTF8String, (S_IRUSR | S_IWUSR));
         }
 
-        BOOL ok = [_socket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress) {
-            [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress retries:1];
+        BOOL ok = [_socket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress, NSNumber *euid) {
+            [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
         }];
         if (!ok) {
             XLog(@"Failed to listen");
@@ -248,11 +248,16 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 }
 
-- (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address retries:(NSInteger)retries {
+- (void)didAcceptConnectionOnFileDescriptor:(int)fd
+                                fromAddress:(iTermSocketAddress *)address
+                                       euid:(NSNumber *)euid
+                                    retries:(NSInteger)retries {
     DLog(@"Accepted connection");
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
-        iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
+        iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd
+                                                                                clientAddress:address
+                                                                                         euid:euid];
         [self->_pendingConnections addObject:connection];
         [self reallyDidAcceptConnection:connection retries:retries];
     });
@@ -264,6 +269,14 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
     dispatch_queue_t queue = _queue;
     if (connection.clientAddress.addressFamily == AF_UNIX) {
+        if (!connection.euid || connection.euid.unsignedIntValue != geteuid()) {
+            DLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
+            dispatch_async(connection.queue, ^{
+                [connection unauthorized];
+            });
+            return;
+        }
+        
         [self startRequestOnConnection:connection pids:@[] completion:^(BOOL ok, NSString *reason) {
             [self->_pendingConnections removeObject:connection];
             if (!ok) {

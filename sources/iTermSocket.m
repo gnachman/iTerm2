@@ -71,7 +71,7 @@
     return NO;
 }
 
-- (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *))acceptBlock {
+- (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *, NSNumber *))acceptBlock {
     if (!_boundAddress) {
         return NO;
     }
@@ -89,9 +89,11 @@
     dispatch_async(_acceptQueue, ^{
         while (1) {
             @autoreleasepool {
+                uid_t euid = (uid_t)-1;
+                gid_t egid = (gid_t)-1;
                 struct sockaddr sockaddr;
                 socklen_t clientAddressLength = sizeof(sockaddr);
-                int acceptFd = accept(fd, &sockaddr, &clientAddressLength);
+                const int acceptFd = accept(fd, &sockaddr, &clientAddressLength);
                 if (acceptFd < 0) {
                     if (errno == EINTR || errno == EWOULDBLOCK) {
                         continue;
@@ -100,7 +102,18 @@
                         return;
                     }
                 }
-                acceptBlock(acceptFd, [iTermSocketAddress socketAddressWithSockaddr:sockaddr]);
+
+                // The man page for getpeereid appears to contain a lie.
+                //   "The argument s must be a UNIX-domain socket (unix(4)) of type SOCK_STREAM on
+                //    which either connect(2) or listen(2) have been called"
+                // Well, we called listen on `fd`, but `getpeereid` gives "Socket is not connected"
+                // when you pass that to it. If you give it `acceptFd`, it works fine.
+                // ¯\_(ツ)_/¯
+                NSNumber *uidNumber = nil;
+                if (getpeereid(acceptFd, &euid, &egid) == 0) {
+                    uidNumber = @(euid);
+                }
+                acceptBlock(acceptFd, [iTermSocketAddress socketAddressWithSockaddr:sockaddr], uidNumber);
             }
         }
     });

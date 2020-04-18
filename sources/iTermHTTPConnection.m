@@ -20,13 +20,16 @@
     NSMutableData *_buffer;
 }
 
-- (instancetype)initWithFileDescriptor:(int)fd clientAddress:(iTermSocketAddress *)address {
+- (instancetype)initWithFileDescriptor:(int)fd
+                         clientAddress:(iTermSocketAddress *)address
+                                  euid:(NSNumber *)euid {
     self = [super init];
     if (self) {
         _fd = fd;
         _fdSync = [[NSObject alloc] init];
         _buffer = [[NSMutableData alloc] init];
         _clientAddress = address;
+        _euid = euid;
         _queue = dispatch_queue_create("com.iterm2.httpconn", NULL);
     }
     return self;

@@ -19,7 +19,8 @@
 
 - (void)setReuseAddr:(BOOL)reuse;
 - (BOOL)bindToAddress:(iTermSocketAddress *)address;
-- (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *))acceptBlock;
+// If nonnil, the number is the effective user ID of the connecting process.
+- (BOOL)listenWithBacklog:(int)backlog accept:(void (^)(int, iTermSocketAddress *, NSNumber *))acceptBlock;
 - (void)close;
 
 @end

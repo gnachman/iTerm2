@@ -14,8 +14,11 @@
 
 @property (nonatomic, readonly) dispatch_queue_t queue;
 @property (nonatomic, readonly) iTermSocketAddress *clientAddress;
+@property (nonatomic, readonly) NSNumber *euid;
 
-- (instancetype)initWithFileDescriptor:(int)fd clientAddress:(iTermSocketAddress *)address;
+- (instancetype)initWithFileDescriptor:(int)fd
+                         clientAddress:(iTermSocketAddress *)address
+                                  euid:(NSNumber *)euid;
 
 // All methods methods should only be called on self.queue:
 - (NSURLRequest *)readRequest;
