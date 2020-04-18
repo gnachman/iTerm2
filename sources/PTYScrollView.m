@@ -204,7 +204,7 @@
 }
 
 + (BOOL)shouldDismember NS_AVAILABLE_MAC(10_14) {
-    if (@available(macOS 10.15, *)) {
+    if (@available(macOS 10.14, *)) {
         return [iTermAdvancedSettingsModel dismemberScrollView];
     }
     return YES;

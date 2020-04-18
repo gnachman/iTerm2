@@ -495,7 +495,7 @@ static void HandleSigChld(int n) {
                 return;
             }
             DLog(@"Replace jobmanager %@ with multiserver instance", self.jobManager);
-            self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
+            self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
             break;
     }
 }

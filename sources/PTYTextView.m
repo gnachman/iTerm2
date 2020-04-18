@@ -200,7 +200,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 // app settings and make a maximized window on a 2014 iMac. Run tests/spam.cc.
 // You should get just about 60 fps if it's fast, and 30-45 if it's slow.
 + (BOOL)useLayerForBetterPerformance {
-    if (@available(macOS 10.15, *)) {
+    if (@available(macOS 10.14, *)) {
         return ![iTermAdvancedSettingsModel dismemberScrollView];
     }
     return NO;
