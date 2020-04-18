@@ -101,6 +101,7 @@
 - (NSDictionary<id, NSArray<ObjectType> *> *)classifyWithBlock:(id (^)(ObjectType))block;
 - (ObjectType)uncheckedObjectAtIndex:(NSInteger)index;
 
+- (NSUInteger)indexOfMaxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (ObjectType)maxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (ObjectType)minWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (NSArray<ObjectType> *)it_arrayByDroppingLastN:(NSUInteger)n;

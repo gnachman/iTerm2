@@ -13,6 +13,7 @@
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
@@ -137,8 +138,64 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     }
 }
 
+- (NSString *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
+    NSString *(^pwd)(PTYSession *) = ^NSString *(PTYSession *session) {
+        return session.variablesScope.path;
+    };
+    NSString *(^command)(PTYSession *) = ^NSString *(PTYSession *session) {
+        return session.commands.lastObject;
+    };
+    NSString *(^hostname)(PTYSession *) = ^NSString *(PTYSession *session) {
+        return session.currentHost.usernameAndHostname;
+    };
+    NSString *(^badge)(PTYSession *) = ^NSString *(PTYSession *session) {
+        return session.badgeLabel;
+    };
+    NSArray<NSString *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
+    NSMutableArray<NSMutableArray *> *functionValues = [NSMutableArray array];
+    [functions enumerateObjectsUsingBlock:^(NSString *(^ _Nonnull obj)(PTYSession *), NSUInteger idx, BOOL * _Nonnull stop) {
+        [functionValues addObject:[NSMutableArray array]];
+    }];
+    [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger sessionIndex, BOOL * _Nonnull stop) {
+        [functions enumerateObjectsUsingBlock:^(NSString *(^ _Nonnull f)(PTYSession *), NSUInteger functionIndex, BOOL * _Nonnull stop) {
+            NSString *value = f(session);
+            if (value) {
+                [functionValues[functionIndex] addObject:value];
+            }
+        }];
+    }];
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [functionValues enumerateObjectsUsingBlock:^(NSMutableArray * _Nonnull values, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (values.count == sessions.count) {
+            [indexes addIndex:idx];
+        }
+    }];
+
+    NSMutableArray<NSString *(^)(PTYSession *)> *filteredFunctions = [NSMutableArray array];
+    NSMutableArray<NSMutableArray *> *filteredFunctionValues = [NSMutableArray array];
+    [indexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        [filteredFunctions addObject:functions[idx]];
+        [filteredFunctionValues addObject:functionValues[idx]];
+    }];
+    double (^variance)(NSArray<NSString *> *) = ^double(NSArray<NSString *> *strings) {
+        NSSet<NSString *> *set = [NSSet setWithArray:strings];
+        return set.count;
+    };
+    const NSUInteger best = [filteredFunctionValues indexOfMaxWithBlock:
+                             ^NSComparisonResult(NSMutableArray<NSString *> *obj1,
+                                                 NSMutableArray<NSString *> *obj2) {
+        return [@(variance(obj1)) compare:@(variance(obj2))];
+    }];
+    if (best == NSNotFound) {
+        return nil;
+    }
+    return filteredFunctions[best];
+}
+
 - (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    NSString *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
+
     for (PTYSession *session in self.sessions) {
         NSMutableArray *features = [NSMutableArray array];
         iTermOpenQuicklySessionItem *item = [[iTermOpenQuicklySessionItem alloc] init];
@@ -163,6 +220,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
             }
 
             item.identifier = session.guid;
+            if (detailFunction) {
+                item.detail = [self.delegate openQuicklyModelAttributedStringForDetail:detailFunction(session)];
+            }
             [items addObject:item];
         }
     }

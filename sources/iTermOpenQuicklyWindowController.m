@@ -420,6 +420,11 @@
     return theString;
 }
 
+- (NSAttributedString *)openQuicklyModelAttributedStringForDetail:(NSString *)detail {
+    return [self attributedStringFromString:detail
+                      byHighlightingIndices:nil];
+}
+
 #pragma mark - String Formatting
 
 // Highlight and underline characters in |source| at indices in |indexSet|.

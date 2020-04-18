@@ -10,6 +10,7 @@
 - (id)openQuicklyModelDisplayStringForFeatureNamed:(NSString *)name
                                              value:(NSString *)value
                                 highlightedIndexes:(NSIndexSet *)highlight;
+- (NSAttributedString *)openQuicklyModelAttributedStringForDetail:(NSString *)detail;
 
 @end
 

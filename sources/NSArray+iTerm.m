@@ -438,6 +438,24 @@
     }
 }
 
+- (NSUInteger)indexOfMaxWithBlock:(NSComparisonResult (^)(id, id))block {
+    __block NSUInteger maxIndex = NSNotFound;
+    __block id max = nil;
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull object, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (max) {
+            NSComparisonResult result = block(max, object);
+            if (result == NSOrderedAscending) {
+                max = object;
+                maxIndex = idx;
+            }
+        } else {
+            max = object;
+            maxIndex = idx;
+        }
+    }];
+    return maxIndex;
+}
+
 - (id)maxWithBlock:(NSComparisonResult (^)(id, id))block {
     id max = nil;
     for (id object in self) {
