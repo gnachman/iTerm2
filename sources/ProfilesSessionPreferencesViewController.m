@@ -213,7 +213,7 @@
 
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
-            displayName:@"Time between sending charactesr when idle"
+            displayName:@"Time between sending characters when idle"
                    type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
