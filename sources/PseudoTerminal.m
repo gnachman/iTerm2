@@ -546,14 +546,16 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground);
+                    NSWindowStyleMaskTexturedBackground |
+                    NSWindowStyleMaskResizable);
 
         case WINDOW_TYPE_MAXIMIZED:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground);
+                    NSWindowStyleMaskTexturedBackground |
+                    NSWindowStyleMaskResizable);
  
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
@@ -2261,10 +2263,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (self.window.frame.size.width < 250) {
             aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
         } else {
-            aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d",
+            NSString *detail = [self rootTerminalViewWindowSizeViewDetailString];
+            aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d%@",
                       [self undecoratedWindowTitle],
                       [session columns],
-                      [session rows]];
+                      [session rows],
+                      detail ? [@" \u2014 " stringByAppendingString:detail] : @""];
         }
         [self setWindowTitle:aTitle];
     } else {
@@ -4091,6 +4095,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
         DLog( @"Blocking resize" );
+        self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.screen.visibleFrameIgnoringHiddenDock.size;
     }
     NSSize originalProposal = proposedFrameSize;
@@ -4116,12 +4121,14 @@ ITERM_WEAKLY_REFERENCEABLE
     // If resizing a full-width/height X-of-screen window in a direction perpendicular to the screen
     // edge it's attached to, turn off snapping in the direction parallel to the edge.
     if (self.windowType == WINDOW_TYPE_RIGHT || self.windowType == WINDOW_TYPE_LEFT) {
+        self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         proposedFrameSize.height = self.window.frame.size.height;
         if (proposedFrameSize.height == self.window.frame.size.height) {
             snapHeight = NO;
         }
     }
     if (self.windowType == WINDOW_TYPE_TOP || self.windowType == WINDOW_TYPE_BOTTOM) {
+        self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         proposedFrameSize.width = self.window.frame.size.width;
         if (proposedFrameSize.width == self.window.frame.size.width) {
             snapWidth = NO;
@@ -5237,6 +5244,34 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
     [self clearForceFrame];
     liveResize_ = YES;
+    if ([self windowTitleIsVisible]) {
+        switch (self.windowType) {
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_NORMAL:
+                break;
+
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+                // Force the note about the window not being resizable to be shown.
+                self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
+                _previousGridSize = VT100GridSizeMake(-1, -1);
+                [self setWindowTitle];
+                break;
+
+        }
+    }
     if (@available(macOS 10.14, *)) {
         if (![self windowTitleIsVisible] && !self.anyFullScreen) {
             [_contentView setShowsWindowSize:YES];
@@ -9150,6 +9185,34 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return size;
 }
 
+- (NSString *)rootTerminalViewWindowSizeViewDetailString {
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            break;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+            return @"Fixed-width window";
+
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+            return @"Fixed-height window";
+
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return @"Fixed-size window";
+    }
+    return nil;
+}
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style = [[iTermTheme sharedInstance] tabStyleWithDelegate:self
                                                           effectiveAppearance:self.window.effectiveAppearance];

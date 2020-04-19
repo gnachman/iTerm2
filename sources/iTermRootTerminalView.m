@@ -832,7 +832,7 @@ typedef struct {
     if (_windowSizeView) {
         return;
     }
-    _windowSizeView = [[iTermWindowSizeView alloc] init];
+    _windowSizeView = [[iTermWindowSizeView alloc] initWithDetail:[self.delegate rootTerminalViewWindowSizeViewDetailString]];
     [self addSubview:_windowSizeView];
     NSRect myBounds = self.bounds;
     _windowSizeView.frame = NSMakeRect(NSMidX(myBounds), NSMidY(myBounds), 0, 0);
