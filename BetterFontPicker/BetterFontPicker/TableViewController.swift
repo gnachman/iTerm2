@@ -94,10 +94,10 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
                                                queue: nil) { [weak self] (notification) in
                                                 self?.layOutTableView()
         }
-        NotificationCenter.default.addObserver(forName: NSFont.fontSetChangedNotification,
+        NotificationCenter.default.addObserver(forName: SystemFontClassifier.didUpdateNotificationName,
                                                object: nil,
                                                queue: nil) { [weak self] (notification) in
-                                                self?.fontSetDidChange()
+                                                self?.systemFontsDidChange()
         }
         layOutTableView()
 
@@ -110,8 +110,9 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func fontSetDidChange() {
-        for dataSource in dataSources {
+    private func systemFontsDidChange() {
+        dirty = true
+        for dataSource in systemFontDataSources {
             dataSource.reload()
         }
         tableView.reloadData()

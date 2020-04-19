@@ -8,7 +8,7 @@
 
 import Cocoa
 
-fileprivate extension BidirectionalCollection where Element == String {
+extension BidirectionalCollection where Element == String {
     func sortedLocalized() -> Array<String> {
         return sorted(by: { (s1: String, s2: String) -> Bool in
             return s1.localizedCaseInsensitiveCompare(s2) == .orderedAscending
@@ -16,40 +16,9 @@ fileprivate extension BidirectionalCollection where Element == String {
     }
 }
 
-private func ComputeMonospaceAndVariableFamilyNames() -> ([String], [String]) {
-    var monospace: Set<String> = []
-    var variable: Set<String> = []
-    for descriptor in  NSFontCollection.withAllAvailableDescriptors.matchingDescriptors ?? [] {
-        if let name = descriptor.object(forKey: NSFontDescriptor.AttributeName.family) as? String {
-            if monospace.contains(name) || variable.contains(name) {
-                // The call to symbolicTraits is slow so avoid doing it more than needed.
-                continue
-            }
-            if descriptor.symbolicTraits.contains(.monoSpace) {
-                monospace.insert(name)
-            } else {
-                variable.insert(name)
-            }
-        }
-    }
-    let newValue = (Array(monospace).sortedLocalized(),
-                    Array(variable).sortedLocalized())
-    return newValue
-}
-
 @objc(BFPSystemFontsDataSource)
 class SystemFontsDataSource: NSObject, FontListDataSource {
-    private static var suppressCacheInvalidation = false
-    private static var internalMonospaceAndVariableFamilyNames: ([String], [String])? = nil
-
-    private static var monospaceAndVariableFamilyNames: ([String], [String]) {  // monospace, variable pitch
-        if let result = internalMonospaceAndVariableFamilyNames {
-            return result
-        }
-        let newValue = ComputeMonospaceAndVariableFamilyNames()
-        internalMonospaceAndVariableFamilyNames = newValue
-        return newValue
-    }
+    let classifier = SystemFontClassifier()
 
     private let pointSize = CGFloat(12)
     private var internalMatchingFonts: [String]?
@@ -61,9 +30,9 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
         case .all:
             internalMatchingFonts = NSFontManager.shared.availableFontFamilies.sortedLocalized()
         case .fixedPitch:
-            internalMatchingFonts = SystemFontsDataSource.monospaceAndVariableFamilyNames.0
+            internalMatchingFonts = Array(classifier.monospace).sortedLocalized()
         case .variablePitch:
-            internalMatchingFonts = SystemFontsDataSource.monospaceAndVariableFamilyNames.1
+            internalMatchingFonts = Array(classifier.variable).sortedLocalized()
         }
         return internalMatchingFonts!
     }
@@ -108,27 +77,20 @@ class SystemFontsDataSource: NSObject, FontListDataSource {
     }
 
     func postInit() {
+        classifier.sync()
     }
 
     func reload() {
-        if !SystemFontsDataSource.suppressCacheInvalidation {
-            SystemFontsDataSource.internalMonospaceAndVariableFamilyNames = nil
-            SystemFontsDataSource.suppressCacheInvalidation = true
-            DispatchQueue.main.async {
-                SystemFontsDataSource.suppressCacheInvalidation = false
-            }
-        }
         internalMatchingFonts = nil
         names = loadNames()
     }
 
     private func loadNames() -> [String] {
-        let names = matchingFonts
-        let familyNames = names as Array<String>
+        classifier.sync()
+        let familyNames = Array(matchingFonts)
         let queryTokens = filter.normalizedTokens
         return familyNames.filter({ (name) -> Bool in
             return name.matchesTableViewSearchQueryTokens(queryTokens)
         })
-
     }
 }

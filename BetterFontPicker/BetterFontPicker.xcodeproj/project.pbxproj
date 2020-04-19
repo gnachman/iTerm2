@@ -22,6 +22,7 @@
 		A6B00D27225ACA8D00536A68 /* FilledStar.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D1E225AC79A00536A68 /* FilledStar.png */; };
 		A6B00D28225ACA8D00536A68 /* FilledStar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B00D20225AC79A00536A68 /* FilledStar@2x.png */; };
 		A6B00D2C225B056000536A68 /* FontListTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B00D2B225B056000536A68 /* FontListTableView.swift */; };
+		A6CC4AF9244C2BDD00421B9A /* SystemFontClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC4AF8244C2BDD00421B9A /* SystemFontClassifier.swift */; };
 		A6DBE791225A565700144200 /* BetterFontPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBE78F225A565700144200 /* BetterFontPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6DBE79A225A56A100144200 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBE799225A56A100144200 /* MainViewController.swift */; };
 		A6DBE79C225A56D300144200 /* MainViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE79B225A56D300144200 /* MainViewController.xib */; };
@@ -54,6 +55,7 @@
 		A6B00D1F225AC79A00536A68 /* EmptyStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "EmptyStar@2x.png"; sourceTree = "<group>"; };
 		A6B00D20225AC79A00536A68 /* FilledStar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FilledStar@2x.png"; sourceTree = "<group>"; };
 		A6B00D2B225B056000536A68 /* FontListTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontListTableView.swift; sourceTree = "<group>"; };
+		A6CC4AF8244C2BDD00421B9A /* SystemFontClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemFontClassifier.swift; sourceTree = "<group>"; };
 		A6DBE78C225A565700144200 /* BetterFontPicker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BetterFontPicker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6DBE78F225A565700144200 /* BetterFontPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BetterFontPicker.h; sourceTree = "<group>"; };
 		A6DBE790225A565700144200 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 				A6DBE7A3225AAE5E00144200 /* TableViewController.swift */,
 				A6661301225CF57C00840E89 /* VerticalSpacingIcon.png */,
 				A6661302225CF57C00840E89 /* VerticalSpacingIcon@2x.png */,
+				A6CC4AF8244C2BDD00421B9A /* SystemFontClassifier.swift */,
 			);
 			path = BetterFontPicker;
 			sourceTree = "<group>";
@@ -290,6 +293,7 @@
 				A6DBE7A6225AB24A00144200 /* FontListDataSource.swift in Sources */,
 				A6DBE7AC225AB8C300144200 /* SeparatorTableViewCell.swift in Sources */,
 				A6B00D2C225B056000536A68 /* FontListTableView.swift in Sources */,
+				A6CC4AF9244C2BDD00421B9A /* SystemFontClassifier.swift in Sources */,
 				A6DBE7A0225A59EB00144200 /* RecentsDataSource.swift in Sources */,
 				A66612F6225C6E3B00840E89 /* Affordance.swift in Sources */,
 				A6DBE79E225A575D00144200 /* FavoritesDataSource.swift in Sources */,
