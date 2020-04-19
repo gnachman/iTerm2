@@ -4116,11 +4116,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // If resizing a full-width/height X-of-screen window in a direction perpendicular to the screen
     // edge it's attached to, turn off snapping in the direction parallel to the edge.
     if (self.windowType == WINDOW_TYPE_RIGHT || self.windowType == WINDOW_TYPE_LEFT) {
+        proposedFrameSize.height = self.window.frame.size.height;
         if (proposedFrameSize.height == self.window.frame.size.height) {
             snapHeight = NO;
         }
     }
     if (self.windowType == WINDOW_TYPE_TOP || self.windowType == WINDOW_TYPE_BOTTOM) {
+        proposedFrameSize.width = self.window.frame.size.width;
         if (proposedFrameSize.width == self.window.frame.size.width) {
             snapWidth = NO;
         }
