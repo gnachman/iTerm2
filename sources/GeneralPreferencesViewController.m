@@ -533,6 +533,10 @@ enum {
     }];
 }
 
+- (IBAction)pythonAPIAuthHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
+}
+
 #pragma mark - Notifications
 
 - (void)savedArrangementChanged:(id)sender {
