@@ -80,6 +80,10 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 // For text controls, this is called when editing ends.
 @property(nonatomic, copy) void (^controlTextDidEndEditing)(NSNotification *notification);
 
+// Use this when the value is not backed by user defaults.
+@property(nonatomic, copy) id (^syntheticGetter)(void);
+@property(nonatomic, copy) void (^syntheticSetter)(id newValue);
+
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;

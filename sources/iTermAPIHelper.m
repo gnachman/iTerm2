@@ -58,6 +58,7 @@ NSString *const iTermAPIDidRegisterStatusBarComponentNotification = @"iTermAPIDi
 NSString *const iTermAPIHelperDidStopNotification = @"iTermAPIHelperDidStopNotification";
 static NSString *const iTermAPIHelperEnablePythonAPIWarningIdentifier = @"NoSyncEnableAPIServer";
 NSString *const iTermAPIHelperErrorDomain = @"com.iterm2.api";
+static NSString *const iTermAPIHelperDisableApplescriptAuthMagic = @"61DF88DC-3423-4823-B725-22570E01C027";
 
 NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
 
@@ -354,6 +355,108 @@ static iTermAPIHelper *sAPIHelperInstance;
         return nil;
     }
     return [self sharedInstance];
+}
+
++ (NSString *)noauthPath {
+    return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:@"disable-automation-auth"];
+}
+
++ (BOOL)requireApplescriptAuth {
+    NSError *error = nil;
+    NSDictionary<NSFileAttributeKey, id> *attributes =
+        [[NSFileManager defaultManager] attributesOfItemAtPath:[self noauthPath]
+                                                         error:&error];
+    if (!attributes || error) {
+        return YES;
+    }
+    if ([attributes[NSFileOwnerAccountID] integerValue] != 0) {
+        return YES;
+    }
+    const BOOL contentsCorrect = [iTermAPIHelperDisableApplescriptAuthMagic isEqualToString:[NSString stringWithContentsOfFile:[self noauthPath] encoding:NSUTF8StringEncoding error:nil]];
+    return !contentsCorrect;
+}
+
++ (void)createNoAuthFile:(NSWindow *)window {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"Do you want to allow all apps running on this machine to use the Python API?\n\nThis will disable the check for Automation permission. If you agree, you’ll be prompted for administrator access to make the change."
+                               actions:@[ @"OK", @"Cancel", @"More Info" ]
+                             accessory:nil
+                            identifier:@"NoSyncRequireApplescriptAuth"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Disable per-app authentication?"
+                                window:window];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            [self reallyCreateNoAuthFile:window];
+            return;
+        case kiTermWarningSelection1:
+            return;
+        case kiTermWarningSelection2:
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
+            return;
+        default:
+            assert(NO);
+    }
+}
+
++ (void)removeNoAuthFile:(NSWindow *)window {
+    NSError *error;
+    NSString *path = [self noauthPath];
+    const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+    if (ok) {
+        return;
+    }
+
+    [self setEnabled:NO];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to remove the file “%@”: %@\n\nPlease remove this file manually to require Automation permission for the Python API.\n\nThe Python API has been disabled for your security.", path, error.localizedDescription]
+                               actions:@[ @"OK", @"Reveal In Finder" ]
+                             accessory:nil
+                            identifier:@"NoSyncFailedToRemoveNoAuth"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Error changing API permissions setting"
+                                window:window];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            return;
+        case kiTermWarningSelection1:
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:path] ]];
+            return;
+        default:
+            assert(NO);
+    }
+}
+
+ + (void)setRequireApplescriptAuth:(BOOL)requireApplescriptAuth
+                            window:(NSWindow *)window {
+    if (requireApplescriptAuth == [self requireApplescriptAuth]) {
+        return;
+    }
+    if (requireApplescriptAuth) {
+        [self removeNoAuthFile:window];
+    } else {
+        [self createNoAuthFile:window];
+    }
+
+}
+
++ (void)reallyCreateNoAuthFile:(NSWindow *)window {
+    NSString *sourceCode = [NSString stringWithFormat:@"do shell script \"printf '%%s' '%@' > %@\" with administrator privileges",
+                            iTermAPIHelperDisableApplescriptAuthMagic,
+                            [[self noauthPath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    NSAppleScript *script = [[NSAppleScript alloc] initWithSource:sourceCode];
+    NSDictionary<NSString *, id> *dict = nil;
+    [script executeAndReturnError:&dict];
+    if (!dict) {
+        return;
+    }
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The setting could not be changed: %@", dict[NSAppleScriptErrorBriefMessage]]
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncFailedToCreateNoAuth"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Failed to make change"
+                                window:window];
 }
 
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions {
@@ -1182,6 +1285,10 @@ static iTermAPIHelper *sAPIHelperInstance;
 
     if (preauthorized) {
         *reason = @"Script launched by user action";
+        return YES;
+    }
+    if (![iTermAPIHelper requireApplescriptAuth]) {
+        *reason = @"All apps are allowed to use the API, per “Prefs > General > Magic > Allow all apps to connect”.";
         return YES;
     }
     if (disableAuthUI) {

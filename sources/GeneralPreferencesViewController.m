@@ -61,6 +61,7 @@ enum {
     iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
 
     IBOutlet NSButton *_enableAPI;
+    IBOutlet NSPopUpButton *_apiPermission;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -255,6 +256,23 @@ enum {
                                                   }
                                               }];
 
+    info = [self defineControl:_apiPermission
+                           key:kPreferenceKeyAPIAuthentication
+                   displayName:@"Authentication method for Python API"
+                          type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        return @([iTermAPIHelper requireApplescriptAuth] ? 0 : 1);
+    };
+    info.syntheticSetter = ^(NSNumber *newValue) {
+        const BOOL useApplescript = (newValue.intValue == 0);
+        [iTermAPIHelper setRequireApplescriptAuth:useApplescript
+                                           window:self.view.window];
+        [weakSelf updateAPIEnabledState];
+    };
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:kPreferenceKeyEnableAPIServer];
+    };
+    
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
     [_advancedGPUWindowController window];
     _advancedGPUWindowController.viewController.disableWhenDisconnected.target = self;
@@ -452,10 +470,18 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [self updateEnabledState];
+    [self commitControls];
+}
+
+- (void)updateAPIEnabledState {
+    _enableAPI.state = [self boolForKey:kPreferenceKeyEnableAPIServer];
+    [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
+    [self updateEnabledState];
 }
 
 - (void)updateEnabledState {
     [super updateEnabledState];
+    [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
     _evenIfThereAreNoWindows.enabled = [self boolForKey:kPreferenceKeyPromptOnQuit];
 }
 
@@ -468,6 +494,12 @@ enum {
 }
 
 - (BOOL)enableAPISettingDidChange {
+    const BOOL result = [self reallyEnableAPISettingDidChange];
+    [self updateEnabledState];
+    return result;
+}
+
+- (BOOL)reallyEnableAPISettingDidChange {
     const BOOL enabled = _enableAPI.state == NSOnState;
     if (enabled) {
         // Prompt the user. If they agree, or have permanently agreed, set the user default to YES.

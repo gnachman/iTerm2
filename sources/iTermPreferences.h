@@ -89,6 +89,7 @@ extern NSString *const kPreferenceKeyDisableMetalWhenUnplugged;
 extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 extern NSString *const kPreferenceKeyEnableAPIServer;
+extern NSString *const kPreferenceKeyAPIAuthentication;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;

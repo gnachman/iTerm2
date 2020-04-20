@@ -69,6 +69,20 @@ class LSBackgroundContextManager():
         else:
             del info["LSBackgroundOnly"]
 
+def applescript_auth_disabled():
+    filename = os.path.expanduser("~/Library/Application Support/iTerm2/disable-automation-auth")
+    try:
+        expected = "61DF88DC-3423-4823-B725-22570E01C027"
+        stat = os.stat(filename, follow_symlinks=False)
+        if stat.st_uid != 0:
+            return False
+        if stat.st_size != len(expected):
+            return False
+        with open(filename, "r") as f:
+            return f.read() == expected
+    except:
+        return False
+
 def authenticate(
         launch_if_needed: bool = False,
         myname: typing.Optional[str] = None) -> bool:
@@ -83,9 +97,10 @@ def authenticate(
     Raises an :class:`~iterm2.AuthenticationException` exception if
     authentication fails.
     """
+    if applescript_auth_disabled():
+        return True
     if os.environ.get("ITERM2_COOKIE"):
         return False
-
     with LSBackgroundContextManager() as _:
         cookie_and_key = request_cookie_and_key(launch_if_needed, myname)
         cookie, key = cookie_and_key.split(" ")

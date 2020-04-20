@@ -72,6 +72,9 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
                      phrases:(NSArray<NSString *> *)phrases
                          key:(NSString *)key;
 
+// Call this after defining controls.
+- (void)commitControls;
+
 #pragma mark - IBActions
 
 // Standard selector invoked by controls when their values changed, bound in XIB file.

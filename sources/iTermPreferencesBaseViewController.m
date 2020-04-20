@@ -39,6 +39,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     NSMapTable<NSControl *, PreferenceInfo *> *_keyMap;
     // Set of all defined keys (KEY_XXX).
     NSMutableSet *_keys;
+    NSMutableSet *_keysWithSyntheticGetters;
+    NSMutableSet *_keysWithSyntheticSetters;
 
     NSMutableArray<iTermPreferencesSearchDocument *> *_docs;
     NSRect _desiredFrame;
@@ -53,6 +55,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                                             valueOptions:NSPointerFunctionsStrongMemory
                                                 capacity:16];
         _keys = [[NSMutableSet alloc] init];
+        _keysWithSyntheticGetters = [NSMutableSet set];
+        _keysWithSyntheticSetters = [NSMutableSet set];
         _docs = [NSMutableArray array];
         _otherSearchableViews = [NSPointerArray weakObjectsPointerArray];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -90,67 +94,133 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     }];
 }
 
+- (id)syntheticObjectForKey:(NSString *)key {
+    PreferenceInfo *info = [self infoForKey:key];
+    return info.syntheticGetter();
+}
+
+- (void)setSyntheticValue:(id)value forKey:(NSString *)key {
+    PreferenceInfo *info = [self infoForKey:key];
+    return info.syntheticSetter(value);
+}
+
 - (BOOL)boolForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] boolValue];
+    }
     return [iTermPreferences boolForKey:key];
 }
 
 - (void)setBool:(BOOL)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setBool:value forKey:key];
 }
 
 - (int)intForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] intValue];
+    }
     return [iTermPreferences intForKey:key];
 }
 
 - (void)setInt:(int)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setInt:value forKey:key];
 }
 
 - (NSInteger)integerForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] integerValue];
+    }
     return [iTermPreferences integerForKey:key];
 }
 
 - (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setInteger:value forKey:key];
 }
 
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] unsignedIntegerValue];
+    }
     return [iTermPreferences unsignedIntegerForKey:key];
 }
 
 - (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setUnsignedInteger:value forKey:key];
 }
 
 - (double)floatForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] doubleValue];
+    }
     return [iTermPreferences floatForKey:key];
 }
 
 - (void)setFloat:(double)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setFloat:value forKey:key];
 }
 
 - (double)doubleForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [[self syntheticObjectForKey:key] doubleValue];
+    }
     return [iTermPreferences doubleForKey:key];
 }
 
 - (void)setDouble:(double)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [iTermPreferences setDouble:value forKey:key];
 }
 
 - (NSString *)stringForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [self syntheticObjectForKey:key];
+    }
     return [iTermPreferences stringForKey:key];
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:value forKey:key];
+        return;
+    }
     [iTermPreferences setString:value forKey:key];
 }
 
 - (NSObject *)objectForKey:(NSString *)key {
+    if ([_keysWithSyntheticGetters containsObject:key]) {
+        return [self syntheticObjectForKey:key];
+    }
     return [iTermPreferences objectForKey:key];
 }
 
 - (void)setObject:(NSObject *)object forKey:(NSString *)key {
+    if ([_keysWithSyntheticSetters containsObject:key]) {
+        [self setSyntheticValue:object forKey:key];
+        return;
+    }
     [iTermPreferences setObject:object forKey:key];
 }
 
@@ -633,6 +703,22 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (void)windowWillClose {
     // Documented as doing nothing.
+}
+
+- (void)commitControls {
+    for (id control in _keyMap) {
+        PreferenceInfo *info = [_keyMap objectForKey:control];
+        if (!info) {
+            continue;
+        }
+        NSString *key = info.key;
+        if (info.syntheticGetter) {
+            [_keysWithSyntheticGetters addObject:key];
+        }
+        if (info.syntheticSetter) {
+            [_keysWithSyntheticSetters addObject:key];
+        }
+    }
 }
 
 #pragma mark - Private
