@@ -7487,10 +7487,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (event.keyCode != kVK_Escape) {
         return NO;
     }
-    // This isn't quite right because you might be using an external keyboard.
-    // Looks like you have to use an event tap to detect touches on the bar,
-    // which requires user consent.
-    if (!IsTouchBarAvailable()) {
+    // Credit to https://github.com/niw/HapticKey for the magic number.
+    const int64_t keyboardType = CGEventGetIntegerValueField(event.CGEvent, kCGKeyboardEventKeyboardType);
+    static const int64_t touchbarKeyboardType = 198;
+    if (keyboardType != touchbarKeyboardType) {
+        return NO;
+    }
+    if (event.isARepeat) {
         return NO;
     }
 
