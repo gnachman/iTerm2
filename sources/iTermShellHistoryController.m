@@ -285,6 +285,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     NSString *path = [[self pathToDatabase] stringByDeletingLastPathComponent];
     NSDirectoryEnumerator<NSString *> *enumerator =
         [[NSFileManager defaultManager] enumeratorAtPath:path];
+    [enumerator skipDescendants];
     BOOL foundAny = NO;
     BOOL anyErrors = NO;
     for (NSString *filename in enumerator) {
