@@ -1,7 +1,10 @@
 import AppKit
 import Foundation
 import __main__
+import inspect
 import os
+import pathlib
+import sys
 import typing
 
 class AuthenticationException(Exception):
@@ -23,6 +26,16 @@ def has_error(result):
 def get_error_reason(result):
     return result[1]["NSAppleScriptErrorBriefMessage"]
 
+def get_script_name():
+    name = None
+    if hasattr(__main__, "__file__"):
+        name = pathlib.Path(os.path.basename(__main__.__file__))
+    elif len(sys.argv) > 0:
+        name = os.path.basename(sys.argv[0])
+    if not name:
+        name = "Unknown"
+    return name
+
 def request_cookie_and_key(
         launch_if_needed: bool, myname: typing.Optional[str]):
     script = """
@@ -40,7 +53,7 @@ def request_cookie_and_key(
             raise AuthenticationException("iTerm2 not running")
     justName = myname
     if justName is None:
-        justName = os.path.basename(__main__.__file__)
+        justName = get_script_name()
     s = Foundation.NSAppleScript.alloc().initWithSource_(
             'tell application "iTerm2" to request cookie and key ' +
             f'for app named "{justName}"')
@@ -72,7 +85,8 @@ class LSBackgroundContextManager():
 def applescript_auth_disabled():
     filename = os.path.expanduser("~/Library/Application Support/iTerm2/disable-automation-auth")
     try:
-        expected = "61DF88DC-3423-4823-B725-22570E01C027"
+        magic = "61DF88DC-3423-4823-B725-22570E01C027"
+        expected = filename.encode("utf-8").hex() + " " + magic
         stat = os.stat(filename, follow_symlinks=False)
         if stat.st_uid != 0:
             return False

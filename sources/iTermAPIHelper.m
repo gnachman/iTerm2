@@ -36,11 +36,13 @@
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -59,10 +61,12 @@ NSString *const iTermAPIHelperDidStopNotification = @"iTermAPIHelperDidStopNotif
 static NSString *const iTermAPIHelperEnablePythonAPIWarningIdentifier = @"NoSyncEnableAPIServer";
 NSString *const iTermAPIHelperErrorDomain = @"com.iterm2.api";
 static NSString *const iTermAPIHelperDisableApplescriptAuthMagic = @"61DF88DC-3423-4823-B725-22570E01C027";
+NSString *const iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification = @"iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification";
 
-NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
+NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";
 
 static iTermAPIHelper *sAPIHelperInstance;
+static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 @interface iTermAllObjectsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -361,7 +365,27 @@ static iTermAPIHelper *sAPIHelperInstance;
     return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:@"disable-automation-auth"];
 }
 
++ (NSString *)noauthMagic {
+    return [NSString stringWithFormat:@"%@ %@",
+            [[[self noauthPath] dataUsingEncoding:NSUTF8StringEncoding] it_hexEncoded],
+            iTermAPIHelperDisableApplescriptAuthMagic];
+}
+
 + (BOOL)requireApplescriptAuth {
+    const BOOL result = [self internalRequireApplescriptAuth];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        iTermAPIHelperLastApplescriptAuthRequiredSetting = result;
+    });
+    const BOOL changed = (result != iTermAPIHelperLastApplescriptAuthRequiredSetting);
+    iTermAPIHelperLastApplescriptAuthRequiredSetting = result;
+    if (changed) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification object:nil];
+    }
+    return result;
+}
+
++ (BOOL)internalRequireApplescriptAuth {
     NSError *error = nil;
     NSDictionary<NSFileAttributeKey, id> *attributes =
         [[NSFileManager defaultManager] attributesOfItemAtPath:[self noauthPath]
@@ -372,11 +396,31 @@ static iTermAPIHelper *sAPIHelperInstance;
     if ([attributes[NSFileOwnerAccountID] integerValue] != 0) {
         return YES;
     }
-    const BOOL contentsCorrect = [iTermAPIHelperDisableApplescriptAuthMagic isEqualToString:[NSString stringWithContentsOfFile:[self noauthPath] encoding:NSUTF8StringEncoding error:nil]];
+    static NSString *valueForLastWarning = nil;
+    NSString *actualContents = [NSString stringWithContentsOfFile:[self noauthPath] encoding:NSUTF8StringEncoding error:nil];
+    const BOOL contentsCorrect = [[self noauthMagic] isEqualToString:actualContents];
+    if (!contentsCorrect) {
+        if (valueForLastWarning && [valueForLastWarning isEqualToString:actualContents]) {
+            return YES;
+        }
+        valueForLastWarning = actualContents;
+
+        const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"The location of your Application Support directory appears to have moved or its contents have changed unexpectedly. As a precaution, the authentication mechanism for Python API scripts for iTerm2 has been reverted to always require Automation permission."
+                                   actions:@[ @"OK", @"Reveal Preference" ]
+                                 accessory:nil
+                                identifier:@"NoSyncAppSupportMoved"
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Python API Permissions Reset"
+                                    window:nil];
+        if (selection == kiTermWarningSelection1) {
+            [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAPIAuthentication];
+        }
+    }
     return !contentsCorrect;
 }
 
-+ (void)createNoAuthFile:(NSWindow *)window {
++ (BOOL)createNoAuthFile:(NSWindow *)window {
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:@"Do you want to allow all apps running on this machine to use the Python API?\n\nThis will disable the check for Automation permission. If you agree, you’ll be prompted for administrator access to make the change."
                                actions:@[ @"OK", @"Cancel", @"More Info" ]
@@ -387,24 +431,25 @@ static iTermAPIHelper *sAPIHelperInstance;
                                 window:window];
     switch (selection) {
         case kiTermWarningSelection0:
-            [self reallyCreateNoAuthFile:window];
-            return;
+            return [self reallyCreateNoAuthFile:window];
         case kiTermWarningSelection1:
-            return;
+            return NO;
         case kiTermWarningSelection2:
             [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
-            return;
+            return NO;
         default:
             assert(NO);
     }
+    return NO;
 }
 
-+ (void)removeNoAuthFile:(NSWindow *)window {
+// Returns YES on success.
++ (BOOL)removeNoAuthFile:(NSWindow *)window {
     NSError *error;
     NSString *path = [self noauthPath];
     const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
     if (ok) {
-        return;
+        return YES;
     }
 
     [self setEnabled:NO];
@@ -418,13 +463,14 @@ static iTermAPIHelper *sAPIHelperInstance;
                                 window:window];
     switch (selection) {
         case kiTermWarningSelection0:
-            return;
+            break;
         case kiTermWarningSelection1:
             [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:path] ]];
-            return;
+            break;
         default:
             assert(NO);
     }
+    return NO;
 }
 
  + (void)setRequireApplescriptAuth:(BOOL)requireApplescriptAuth
@@ -433,22 +479,30 @@ static iTermAPIHelper *sAPIHelperInstance;
         return;
     }
     if (requireApplescriptAuth) {
-        [self removeNoAuthFile:window];
+        if (![self removeNoAuthFile:window]) {
+            return;
+        }
     } else {
-        [self createNoAuthFile:window];
+        if (![self createNoAuthFile:window]) {
+            return;
+        }
     }
-
+     iTermAPIHelperLastApplescriptAuthRequiredSetting = requireApplescriptAuth;
+     // Verify that it changed and issue a warning if not.
+     [self requireApplescriptAuth];
 }
 
-+ (void)reallyCreateNoAuthFile:(NSWindow *)window {
-    NSString *sourceCode = [NSString stringWithFormat:@"do shell script \"printf '%%s' '%@' > %@\" with administrator privileges",
-                            iTermAPIHelperDisableApplescriptAuthMagic,
++ (BOOL)reallyCreateNoAuthFile:(NSWindow *)window {
+    // Write to a temp file and then move it. If the destination is a link then it's not safe
+    // to write to it.
+    NSString *sourceCode = [NSString stringWithFormat:@"do shell script \"umask 077; TF=$(mktemp); printf '%%s' '%@' > \\\"$TF\\\" && chmod a+r \\\"$TF\\\" && mv \\\"$TF\\\" %@ || rm -f \\\"$TF\\\"\" with administrator privileges",
+                            [self noauthMagic],
                             [[self noauthPath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
     NSAppleScript *script = [[NSAppleScript alloc] initWithSource:sourceCode];
     NSDictionary<NSString *, id> *dict = nil;
     [script executeAndReturnError:&dict];
     if (!dict) {
-        return;
+        return YES;
     }
     [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The setting could not be changed: %@", dict[NSAppleScriptErrorBriefMessage]]
                                actions:@[ @"OK" ]
@@ -457,6 +511,7 @@ static iTermAPIHelper *sAPIHelperInstance;
                            silenceable:kiTermWarningTypePersistent
                                heading:@"Failed to make change"
                                 window:window];
+    return NO;
 }
 
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions {
@@ -1278,10 +1333,15 @@ static iTermAPIHelper *sAPIHelperInstance;
                       preauthorized:(BOOL)preauthorized
                                unix:(BOOL)unix
                       disableAuthUI:(BOOL)disableAuthUI
+                       advisoryName:(NSString *)advisoryName
                              reason:(out NSString *__autoreleasing *)reason
                         displayName:(out NSString *__autoreleasing *)displayName {
-    iTermProcessInspector *controller = [[iTermProcessInspector alloc] initWithProcessIDs:pids];
-    *displayName = controller.humanReadableName ?: @"Unknown";
+    if (unix) {
+        *displayName = advisoryName ? [@"≈" stringByAppendingString:advisoryName] : @"Unknown";
+    } else {
+        iTermProcessInspector *controller = [[iTermProcessInspector alloc] initWithProcessIDs:pids];
+        *displayName = controller.humanReadableName ?: @"Unknown";
+    }
 
     if (preauthorized) {
         *reason = @"Script launched by user action";

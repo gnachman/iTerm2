@@ -590,7 +590,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSSearchField *searchField = (NSSearchField *)_searchFieldToolbarItem.view;
     if (responder == searchField && searchField.stringValue.length > 0) {
         [self showScrimAndSERP];
-    } else {
+    } else if (responder != nil) {
         [self hideScrimAndSERP];
     }
 }

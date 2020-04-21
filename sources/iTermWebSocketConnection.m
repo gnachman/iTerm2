@@ -147,6 +147,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         conn->_preauthorized = authenticated;
         NSString *key = headers[@"x-iterm2-key"] ?: [[NSUUID UUID] UUIDString];
         conn->_key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+        conn->_advisoryName = headers[@"x-iterm2-advisory-name"];
     }
     return conn;
 }

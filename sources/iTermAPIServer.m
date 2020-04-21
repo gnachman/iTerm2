@@ -383,10 +383,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             NSString *reason = nil;
             NSString *displayName = nil;
             const BOOL disableAuthUI = request.allHTTPHeaderFields[@"x-iterm2-disable-auth-ui"] != nil;
+            const BOOL connectionOnUnixDomainSocket = (connection.clientAddress.addressFamily == AF_UNIX);
             const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
                                                          preauthorized:webSocketConnection.preauthorized
-                                                                  unix:connection.clientAddress.addressFamily == AF_UNIX
+                                                                  unix:connectionOnUnixDomainSocket
                                                          disableAuthUI:disableAuthUI
+                                                          advisoryName:webSocketConnection.advisoryName
                                                                 reason:&reason
                                                            displayName:&displayName];
             if (ok) {

@@ -133,6 +133,10 @@ enum {
                                                  selector:@selector(savedArrangementChanged:)
                                                      name:kSavedArrangementDidChangeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didRevertPythonAuthenticationMethod:)
+                                                     name:iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification
+                                                   object:nil];
 
     }
     return self;
@@ -543,6 +547,11 @@ enum {
     PreferenceInfo *info = [self infoForControl:_openWindowsAtStartup];
     [self updateValueForInfo:info];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
+}
+
+// The API helper just noticed that the file's contents changed.
+- (void)didRevertPythonAuthenticationMethod:(NSNotification *)notification {
+    [self updateAPIEnabledState];
 }
 
 #pragma mark - Remote Prefs

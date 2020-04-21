@@ -38,6 +38,8 @@ def _headers():
                "x-iterm2-disable-auth-ui": "true"}
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
+    else:
+        headers["x-iterm2-advisory-name"] = iterm2.auth.get_script_name()
     if key is not None:
         headers["x-iterm2-key"] = key
     return headers

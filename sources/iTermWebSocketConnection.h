@@ -26,6 +26,7 @@ extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
 @property(nonatomic, copy) NSString *displayName;
 @property(nonatomic, readonly) BOOL preauthorized;
 @property(nonatomic, readonly) id key;
+@property(nonatomic, readonly) NSString *advisoryName;
 @property(nonatomic, readonly) NSString *guid;
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request

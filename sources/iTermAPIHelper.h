@@ -14,6 +14,7 @@ extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
 extern NSString *const iTermAPIDidRegisterStatusBarComponentNotification;  // object is the unique id of the status bar component
 extern NSString *const iTermAPIHelperDidStopNotification;
+extern NSString *const iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification;
 extern NSString *const iTermAPIHelperErrorDomain;
 
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
