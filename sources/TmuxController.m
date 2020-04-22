@@ -485,8 +485,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     const int height = [self adjustHeightForStatusBar:size.height];
-    ITBetaAssert(size.width > 0);
-    ITBetaAssert(height > 0);
+    ITBetaAssert(size.width > 0, @"Invalid size");
+    ITBetaAssert(height > 0, @"Invalid size");
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                 size.width, height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
@@ -841,7 +841,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
                                 sessionId_, (int)size.width, (int)size.height];
     const int height = [self adjustHeightForStatusBar:(int)size.height];
-    ITBetaAssert(height > 0);
+    ITBetaAssert(height > 0, @"Invalid size");
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -1296,9 +1296,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                           [profile[KEY_COLUMNS] intValue] ?: 80),
                                       MIN(iTermMaxInitialSessionSize,
                                           [profile[KEY_ROWS] intValue] ?: 25));
-             ITBetaAssert((int)size.width > 0);
+             ITBetaAssert((int)size.width > 0, @"Invalid size");
              const int height = [self adjustHeightForStatusBar:size.height];
-             ITBetaAssert(height > 0);
+             ITBetaAssert(height > 0, @"Invalid size");
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
@@ -1329,9 +1329,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
      ^(NSString *command) {
          NSMutableArray *commands = [NSMutableArray array];
          if (variableWindowSize) {
-             ITBetaAssert((int)size.width > 0);
+             ITBetaAssert((int)size.width > 0, @"Invalid size");
              const int height = [self adjustHeightForStatusBar:size.height];
-             ITBetaAssert(height > 0);
+             ITBetaAssert(height > 0, @"Invalid size");
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
