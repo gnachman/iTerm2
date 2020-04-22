@@ -45,6 +45,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, assign) BOOL initial;
 @property (nonatomic, copy) void (^completion)(int windowIndex);
 @property (nonatomic, assign) NSDecimalNumber *minimumServerVersion;
+@property (nonatomic, readonly) NSInteger errorCount;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;

@@ -309,60 +309,81 @@ error:
                                             forKey:kCommandFlags] intValue];
 }
 
-- (void)currentCommandResponseFinishedWithError:(BOOL)withError
-{
-    id target = [self currentCommandTarget];
-    if (target) {
-        SEL selector = [self currentCommandSelector];
-        id obj = [self currentCommandObject];
-        if (withError) {
-            if ([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors) {
-                [target performSelector:selector
-                             withObject:nil
-                             withObject:obj];
-            } else {
-                if ([currentCommandResponse_ hasPrefix:@"bad working directory:"] &&
-                    [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
-                    [currentCommand_[kCommandString] containsString:@"-c"] &&
-                    [self.maximumServerVersion compare:@2.1] != NSOrderedAscending) {
-                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
-                                                 currentCommandResponse_, currentCommand_]];
-                } else {
-                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
+- (void)currentCommandResponseFinishedWithError:(BOOL)withError {
+    BOOL failNext = NO;
+    do {
+        failNext = NO;
+        id target = [self currentCommandTarget];
+        if (target) {
+            SEL selector = [self currentCommandSelector];
+            id obj = [self currentCommandObject];
+            if (withError) {
+                if (_tmuxLogging) {
+                    [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Error “%@” in response to “%@”]",
+                                              currentCommandResponse_, currentCommand_[kCommandString]]];
                 }
-                return;
-            }
-        } else {
-            if ([self currentCommandFlags] & kTmuxGatewayCommandWantsData) {
-                [target performSelector:selector
-                             withObject:currentCommandData_
-                             withObject:obj];
+                if ([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors) {
+                    [target performSelector:selector
+                                 withObject:nil
+                                 withObject:obj];
+                    // Remove subsequent commands belonging to the same list so we can go back to life
+                    // as usual.
+                    if ([currentCommand_[kCommandIsInList] boolValue] && !
+                        [currentCommand_[kCommandIsLastInList] boolValue]) {
+                        DLog(@"Automatically fail the next command.");
+                        failNext = YES;
+                    }
+                } else {
+                    if ([currentCommandResponse_ hasPrefix:@"bad working directory:"] &&
+                        [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
+                        [currentCommand_[kCommandString] containsString:@"-c"] &&
+                        [self.maximumServerVersion compare:@2.1] != NSOrderedAscending) {
+                        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
+                                                     currentCommandResponse_, currentCommand_]];
+                    } else {
+                        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
+                    }
+                    return;
+                }
             } else {
-                [target performSelector:selector
-                             withObject:currentCommandResponse_
-                             withObject:obj];
+                if (_tmuxLogging) {
+                    [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Normal response to “%@”]", currentCommand_[kCommandString]]];
+                }
+                if ([self currentCommandFlags] & kTmuxGatewayCommandWantsData) {
+                    [target performSelector:selector
+                                 withObject:currentCommandData_
+                                 withObject:obj];
+                } else {
+                    [target performSelector:selector
+                                 withObject:currentCommandResponse_
+                                 withObject:obj];
+                }
             }
         }
-    }
-    if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
-        DLog(@"Begin accepting notifications");
-        acceptNotifications_ = YES;
-    }
-    if (!_initialized) {
-        _initialized = YES;
-        if (withError) {
-            [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
-        } else {
-            [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
+        if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
+            DLog(@"Begin accepting notifications");
+            acceptNotifications_ = YES;
         }
-    }
+        if (!_initialized) {
+            _initialized = YES;
+            if (withError) {
+                [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
+            } else {
+                [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
+            }
+        }
 
-    [currentCommand_ release];
-    currentCommand_ = nil;
-    [currentCommandResponse_ release];
-    currentCommandResponse_ = nil;
-    [currentCommandData_ release];
-    currentCommandData_ = nil;
+        [currentCommand_ release];
+        currentCommand_ = nil;
+        [currentCommandResponse_ release];
+        currentCommandResponse_ = nil;
+        [currentCommandData_ release];
+        currentCommandData_ = nil;
+
+        if (failNext) {
+            [self beginHandlingNextResponseWithID:@"n/a"];
+        }
+    } while (failNext);
 }
 
 - (void)parseBegin:(NSString *)command {
@@ -399,16 +420,24 @@ error:
             [self abortWithErrorMessage:@"%begin with empty command queue"];
             return;
         }
-        currentCommand_ = [commandQueue_[0] retain];
-        NSString *commandId = components[1];
-        currentCommand_[kCommandId] = commandId;
-        TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
-        [currentCommandResponse_ release];
-        [currentCommandData_ release];
-        currentCommandResponse_ = [[NSMutableString alloc] init];
-        currentCommandData_ = [[NSMutableData alloc] init];
-        [commandQueue_ removeObjectAtIndex:0];
+        [self beginHandlingNextResponseWithID:components[1]];
+        if (_tmuxLogging) {
+            TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
+            [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Begin response for %@]", currentCommand_[kCommandString]]];
+        }
     }
+}
+
+- (void)beginHandlingNextResponseWithID:(NSString *)commandId {
+    assert(!currentCommand_);
+    currentCommand_ = [commandQueue_[0] retain];
+    currentCommand_[kCommandId] = commandId;
+
+    [currentCommandResponse_ release];
+    [currentCommandData_ release];
+    currentCommandResponse_ = [[NSMutableString alloc] init];
+    currentCommandData_ = [[NSMutableData alloc] init];
+    [commandQueue_ removeObjectAtIndex:0];
 }
 
 - (void)stripLastNewline {
@@ -744,11 +773,11 @@ error:
         [cmd appendString:[dict objectForKey:kCommandString]];
         NSMutableDictionary *amended = [NSMutableDictionary dictionaryWithDictionary:dict];
         if (dict == [commandDicts lastObject]) {
-            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsLastInList];
+            [amended setObject:@YES forKey:kCommandIsLastInList];
         }
-        [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInList];
+        [amended setObject:@YES forKey:kCommandIsInList];
         if (initial && dict == [commandDicts lastObject]) {
-            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInitial];
+            [amended setObject:@YES forKey:kCommandIsInitial];
         }
         [self enqueueCommandDict:amended];
         if (disconnected_) {

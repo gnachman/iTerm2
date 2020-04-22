@@ -3281,10 +3281,12 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
                                                                               objectType:iTermWindowObject]
                                 scope:[iTermVariableScope globalsScope]
                            completion:^(int newWindowId) {
-                               PTYTab *tab = [controller window:newWindowId];
-                               response.createWindow.tabId = [NSString stringWithFormat:@"%d", tab.uniqueId];
-                               handler(response);
-                           }];
+        if (newWindowId >= 0) {
+            PTYTab *tab = [controller window:newWindowId];
+            response.createWindow.tabId = [NSString stringWithFormat:@"%d", tab.uniqueId];
+        }
+        handler(response);
+    }];
 }
 
 - (void)handleTmuxSetWindowVisible:(ITMTmuxRequest_SetWindowVisible *)request handler:(void (^)(ITMTmuxResponse *))handler {

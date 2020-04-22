@@ -198,18 +198,19 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                            responseTarget:self
                          responseSelector:@selector(requestDidComplete)
                            responseObject:nil
-                                    flags:0];
+                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
+
     NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t \"%%%d\"", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(getPendingOutputResponse:pane:)
                            responseObject:wp
-                                    flags:kTmuxGatewayCommandWantsData];
+                                    flags:kTmuxGatewayCommandWantsData | kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSDictionary *)dictForGetUserVars:(NSNumber *)wp {
@@ -221,7 +222,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                            responseTarget:self
                          responseSelector:@selector(getUserVarsResponse:pane:)
                            responseObject:wp
-                                    flags:0];
+                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp {
@@ -233,7 +234,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
                            responseObject:wp
-                                    flags:0];
+                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
  - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
@@ -249,13 +250,35 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                                            wp,
                                            [NSNumber numberWithBool:alternate],
                                            nil]
-                                    flags:0];
+                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didReceiveError {
+    _errorCount += 1;
+    if (pendingRequests_ - _errorCount == 0) {
+        [self finishErroneously];
+    }
+}
+
+- (void)finishErroneously {
+    if (self.target) {
+        [self.target performSelector:self.selector
+                          withObject:self];
+    }
+    if (self.completion) {
+        self.completion(windowIndex_);
+    }
 }
 
 // Command response handler for dump-history
 // info is an array: [window pane number, isAlternate flag]
 - (void)dumpHistoryResponse:(NSString *)response
            paneAndAlternate:(NSArray *)info {
+    if (!response) {
+        [self didReceiveError];
+        return;
+    }
+
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
     NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
@@ -293,6 +316,11 @@ static int OctalValue(const char *bytes) {
 }
 
 - (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp {
+    if (!response) {
+        [self didReceiveError];
+        return;
+    }
+
     const char *bytes = response.bytes;
     NSMutableData *pending = [NSMutableData data];
     for (int i = 0; i < response.length; i++) {
@@ -319,6 +347,11 @@ static int OctalValue(const char *bytes) {
 }
 
 - (void)getUserVarsResponse:(NSString *)response pane:(NSNumber *)wp {
+    if (!response) {
+        [self didReceiveError];
+        return;
+    }
+
     if (wp) {
         [self.controller setEncodedUserVars:response forPane:wp.intValue];
     }
@@ -326,14 +359,33 @@ static int OctalValue(const char *bytes) {
 }
 
 - (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp {
+    if (!response) {
+        [self didReceiveError];
+        return;
+    }
+
     NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
                                                                         forPaneId:[wp intValue]];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }
 
+- (void)didResizePane:(NSString *)response {
+    if (!response) {
+        [self didReceiveError];
+        return;
+    }
+    [self requestDidComplete];
+}
+
 - (void)requestDidComplete {
     --pendingRequests_;
+    if (_errorCount) {
+        if (pendingRequests_ - _errorCount == 0) {
+            [self finishErroneously];
+            return;
+        }
+    }
     DLog(@"requestDidComplete. Pending requests is now %d", pendingRequests_);
     if (pendingRequests_ == 0) {
         NSWindowController<iTermWindowController> *term = nil;

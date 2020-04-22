@@ -484,8 +484,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // condition is easily recovered from by reattaching.
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
+    const int height = [self adjustHeightForStatusBar:size.height];
+    ITBetaAssert(size.width > 0);
+    ITBetaAssert(height > 0);
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                size.width, [self adjustHeightForStatusBar:size.height]];
+                                size.width, height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
@@ -837,6 +840,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""];
     NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
                                 sessionId_, (int)size.width, (int)size.height];
+    const int height = [self adjustHeightForStatusBar:(int)size.height];
+    ITBetaAssert(height > 0);
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -844,7 +849,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseObject:nil
                                                   flags:0],
                          [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                                         (int)size.width, [self adjustHeightForStatusBar:(int)size.height]]
+                                                         (int)size.width, height]
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
@@ -1291,8 +1296,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                           [profile[KEY_COLUMNS] intValue] ?: 80),
                                       MIN(iTermMaxInitialSessionSize,
                                           [profile[KEY_ROWS] intValue] ?: 25));
+             ITBetaAssert((int)size.width > 0);
+             const int height = [self adjustHeightForStatusBar:size.height];
+             ITBetaAssert(height > 0);
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                         (int)size.width, [self adjustHeightForStatusBar:size.height]];
+                                         (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
                                                  responseTarget:nil
                                                responseSelector:nil
@@ -1321,8 +1329,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
      ^(NSString *command) {
          NSMutableArray *commands = [NSMutableArray array];
          if (variableWindowSize) {
+             ITBetaAssert((int)size.width > 0);
+             const int height = [self adjustHeightForStatusBar:size.height];
+             ITBetaAssert(height > 0);
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                         (int)size.width, [self adjustHeightForStatusBar:size.height]];
+                                         (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
                                                  responseTarget:nil
                                                responseSelector:nil
@@ -2323,8 +2334,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)windowDidOpen:(TmuxWindowOpener *)windowOpener {
     NSNumber *windowIndex = @(windowOpener.windowIndex);
-    DLog(@"TmuxController windowDidOpen for index %@", windowIndex);
+    DLog(@"TmuxController windowDidOpen for index %@ with error count %@", windowIndex, @(windowOpener.errorCount));
     [pendingWindowOpens_ removeObject:windowIndex];
+    if (windowOpener.errorCount != 0) {
+        [affinities_ removeValue:[@(windowOpener.windowIndex) stringValue]];
+        [[iTermNotificationController sharedInstance] notify:@"Error opening tmux tab"
+                                             withDescription:@"A tmux pane terminated immediately after creation"];
+        return;
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
                                                         object:nil];
     PTYTab *tab = [self window:[windowIndex intValue]];
