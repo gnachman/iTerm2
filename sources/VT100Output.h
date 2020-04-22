@@ -55,7 +55,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
 - (NSData *)reportStatus;
 - (NSData *)reportDeviceAttribute;
-- (NSData *)reportSecondaryDeviceAttribute;
+- (NSData *)reportSecondaryDeviceAttribute:(int)param;
 
 // Prefix is either @"4;" (for OSC 4) or @"" (for OSC 10 and OSC 11).
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix;

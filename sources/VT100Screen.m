@@ -3087,8 +3087,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [delegate_ screenShouldSendReportForVariable:variable];
 }
 
-- (void)terminalSendReport:(NSData *)report
-{
+- (void)terminalSendReport:(NSData *)report {
     if ([delegate_ screenShouldSendReport] && report) {
         [delegate_ screenWriteDataToTask:report];
     }
