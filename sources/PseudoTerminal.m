@@ -1623,6 +1623,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tabSessionDidChangeTransparency:(PTYTab *)tab {
     // In case the last pane just becamse opaque, we can drop the visual effect view in the fake window title bar.
     [_contentView invalidateAutomaticTabBarBackingHiding];
+    if (tab == self.currentTab) {
+        // Update the window's background color
+        [self updateTabColors];
+    }
 }
 
 - (BOOL)miniaturizedWindowShouldPreserveFrameUntilDeminiaturized {
