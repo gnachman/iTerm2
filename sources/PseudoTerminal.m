@@ -453,6 +453,13 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _restorableStateInvalid;
     BOOL _inWindowDidMove;
     NSInteger _swipingCount;
+
+    // Work around a macOS bug. If you set the window's appearance to light when creating a new
+    // lion full screen window while a lion full screen window is key then a bogus black window
+    // is created on the primary display. Issue 8842.
+    BOOL _deferSetAppearance;
+    BOOL _haveDesiredAppearance;
+    NSAppearance *_desiredAppearance;
 }
 
 @synthesize scope = _scope;
@@ -690,9 +697,13 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     _proxyIconOrderEnforcer = [[iTermOrderEnforcer alloc] init];
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
-    PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+    _deferSetAppearance = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf disableDeferSetAppearance];
+    });
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        PseudoTerminal *strongSelf = weakSelf.weaklyReferencedObject;
+        __strong __typeof(self) strongSelf = [[weakSelf retain] autorelease];
         if (strongSelf != nil) {
             strongSelf->_windowWasJustCreated = NO;
         }
@@ -6931,22 +6942,41 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.currentSession.textview.transparencyAlpha < 1;
 }
 
+- (void)disableDeferSetAppearance {
+    _deferSetAppearance = NO;
+    if (_haveDesiredAppearance) {
+        [self safeSetAppearance:_desiredAppearance];
+    }
+}
+
+- (void)safeSetAppearance:(NSAppearance *)appearance {
+    if (_deferSetAppearance) {
+        DLog(@"Defer set appearance to %@ for %@", appearance.name, self);
+        _haveDesiredAppearance = YES;
+        [_desiredAppearance autorelease];
+        _desiredAppearance = [appearance retain];
+        return;
+    }
+    DLog(@"Immediately set appearance to %@ for %@", appearance.name, self);
+    self.window.appearance = appearance;
+}
+
 - (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_COMPACT:
         case TAB_STYLE_MINIMAL:
-            self.window.appearance = nil;
+            [self safeSetAppearance:nil];
             break;
 
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            [self safeSetAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
             break;
 
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            [self safeSetAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];
             break;
     }
     self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
