@@ -293,12 +293,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (@available(macOS 10.14, *)) {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
+
         _imageView.backgroundColor = color;
+        _legacyScrollerBackgroundView.backgroundColor = color;
+        _backgroundColorView.backgroundColor = color;
+
+        DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
         if (color && _metalView.alphaValue < 1) {
-            DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
-            _backgroundColorView.backgroundColor = color;
             _backgroundColorView.hidden = !iTermTextIsMonochrome();
-            _legacyScrollerBackgroundView.backgroundColor = color;
             _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
         } else {
             _backgroundColorView.hidden = YES;
