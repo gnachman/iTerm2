@@ -78,6 +78,7 @@ typedef enum {
     VT100CSI_CPL,                   // Cursor Preceding Line
     VT100CSI_DA,                    // Device Attributes
     VT100CSI_DA2,                   // Secondary Device Attributes
+    VT100CSI_XDA,                   // Extended device attributes (https://github.com/mintty/mintty/issues/881)
     VT100CSI_DECALN,                // Screen Alignment Display
     VT100CSI_DECDHL,                // Double Height Line
     VT100CSI_DECDWL,                // Double Width Line

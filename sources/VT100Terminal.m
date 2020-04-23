@@ -1466,7 +1466,14 @@ static const int kMaxScreenRows = 4096;
             break;
         case VT100CSI_DA2:
             if ([delegate_ terminalShouldSendReport]) {
-                [delegate_ terminalSendReport:[self.output reportSecondaryDeviceAttribute:token.csi->p[0]]];
+                [delegate_ terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
+            }
+            break;
+        case VT100CSI_XDA:
+            if ([delegate_ terminalShouldSendReport]) {
+                if (token.csi->p[0] == 0 || token.csi->p[0] == -1) {
+                    [delegate_ terminalSendReport:[self.output reportExtendedDeviceAttribute]];
+                }
             }
             break;
         case VT100CSI_DECALN:

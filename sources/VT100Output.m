@@ -574,17 +574,15 @@ typedef enum {
     }
 }
 
-- (NSData *)reportSecondaryDeviceAttribute:(int)param {
-    if (param == 0) {
-        return [NSData dataWithBytes:REPORT_SDA
-                              length:STATIC_STRLEN(REPORT_SDA)];
-    } else if (param == 1) {
-        NSString *versionString = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-        NSString *reportString = [NSString stringWithFormat:@"%cP>|iTerm2 %@%c\\", ESC, versionString, ESC];
-        return [reportString dataUsingEncoding:NSUTF8StringEncoding];
-    } else {
-        return nil;
-    }
+- (NSData *)reportSecondaryDeviceAttribute {
+    return [NSData dataWithBytes:REPORT_SDA
+                          length:STATIC_STRLEN(REPORT_SDA)];
+}
+
+- (NSData *)reportExtendedDeviceAttribute {
+    NSString *versionString = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    NSString *reportString = [NSString stringWithFormat:@"%cP>|iTerm2 %@%c\\", ESC, versionString, ESC];
+    return [reportString dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix {

@@ -105,6 +105,7 @@
                           @(VT100CSI_CUU):                    @"VT100CSI_CUU",
                           @(VT100CSI_DA):                     @"VT100CSI_DA",
                           @(VT100CSI_DA2):                    @"VT100CSI_DA2",
+                          @(VT100CSI_XDA):                    @"VT100CSI_XDA",
                           @(VT100CSI_DECALN):                 @"VT100CSI_DECALN",
                           @(VT100CSI_DECDHL):                 @"VT100CSI_DECDHL",
                           @(VT100CSI_DECDWL):                 @"VT100CSI_DECDWL",
