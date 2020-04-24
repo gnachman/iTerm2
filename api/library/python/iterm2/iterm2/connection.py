@@ -7,13 +7,11 @@ import sys
 import traceback
 import typing
 import websockets
-import AppKit
 
 import iterm2.api_pb2
 from iterm2._version import __version__
 
 # Add "unix" to this array to enable unix domain socket support. Experimental.
-CONNECT_FLAGS=[]
 
 def _getenv(key):
     """Gets an environment variable safely.
@@ -315,10 +313,7 @@ class Connection:
         return (int(parts[0]), int(parts[1]))
 
     def _get_connect_coro(self):
-        if "unix" in CONNECT_FLAGS:
-            return self._get_unix_connect_coro()
-        else:
-            return self._get_tcp_connect_coro()
+        return self._get_unix_connect_coro()
 
     def _remove_auth(self):
         # Remove these because they are not re-usable.
@@ -327,15 +322,13 @@ class Connection:
             if var in os.environ:
                 del os.environ[var]
 
+    def _path_to_unix_domain_socket(self):
+        home = os.path.expanduser("~")
+        return os.path.join(home, "Library", "Application Support", "iTerm2", "private", "socket")
+
     def _get_unix_connect_coro(self):
         """Experimental: connect with unix domain socket."""
-        applicationSupport = os.path.join(
-            AppKit.NSSearchPathForDirectoriesInDomains(
-                AppKit.NSApplicationSupportDirectory,
-                AppKit.NSUserDomainMask,
-                True)[0],
-            "iTerm2")
-        path = os.path.join(applicationSupport, "private", "socket")
+        path = self._path_to_unix_domain_socket()
         return websockets.client.unix_connect(
             path,
             "ws://localhost/",
@@ -343,13 +336,6 @@ class Connection:
             extra_headers=_headers(),
             subprotocols=_subprotocols())
 
-
-    def _get_tcp_connect_coro(self):
-        """Legacy: connect with tcp socket."""
-        return websockets.connect(_uri(),
-                                        ping_interval=None,
-                                        extra_headers=_headers(),
-                                        subprotocols=_subprotocols())
 
     def authenticate(self, force):
         """
