@@ -32,6 +32,7 @@
 #import "FileTransferManager.h"
 #import "iTermAPIHelper.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAPIConnectionIdentifierController.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -1952,7 +1953,16 @@ static BOOL hasBecomeActive = NO;
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
         NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
-        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
+        NSString *key = [[NSUUID UUID] UUIDString];
+        NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+        iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
+                                                                              fullPath:nil
+                                                                            identifier:identifier
+                                                                              relaunch:nil];
+        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
+                                       @"ITERM2_KEY": key };
+
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
                                                                arguments:@[ @"--banner=\\\"\\\"" ]
                                                                   inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]

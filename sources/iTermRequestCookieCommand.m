@@ -31,7 +31,7 @@
                                                                             identifier:identifier
                                                                               relaunch:nil];
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-        [entry addOutput:@"API permission granted by Applescript."];
+        [entry addOutput:@"API permission granted by Applescript.\n"];
         return [NSString stringWithFormat:@"%@ %@", cookie, key];
     }
     return cookie;

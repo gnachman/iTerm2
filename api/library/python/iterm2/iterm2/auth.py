@@ -29,7 +29,10 @@ def get_error_reason(result):
 def get_script_name():
     name = None
     if hasattr(__main__, "__file__"):
-        name = pathlib.Path(os.path.basename(__main__.__file__))
+        fileName = __main__.__file__
+        if os.path.basename(fileName) == "__main__.py":
+            fileName = os.path.dirname(__main__.__file__)
+        name = pathlib.Path(os.path.basename(fileName))
     elif len(sys.argv) > 0:
         name = os.path.basename(sys.argv[0])
     if not name:

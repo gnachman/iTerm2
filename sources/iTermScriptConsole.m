@@ -473,7 +473,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!entry) {
         return;
     }
-    [entry addOutput:@"\nConnection closed."];
+    [entry addOutput:@"\nConnection closed.\n"];
     [entry stopRunning];
 }
 

@@ -454,7 +454,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                     }];
                 });
             } else {
-                if (!disableAuthUI) {
+                if (disableAuthUI) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                        object:nil
+                                                                      userInfo:@{ @"reason": reason ?: @"Unknown reason",
+                                                                                  @"job": displayName ?: [NSNull null],
+                                                                                  @"pids": pids }];
+                } else {
                     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
                                                                         object:request.allHTTPHeaderFields[@"x-iterm2-key"]
                                                                       userInfo:@{ @"reason": reason ?: @"Unknown reason",
