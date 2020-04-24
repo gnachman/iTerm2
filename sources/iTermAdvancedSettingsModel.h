@@ -319,7 +319,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useOpenDirectory;
 + (BOOL)useSystemCursorWhenPossible;
 + (BOOL)useUnevenTabs;
-+ (BOOL)useUnixDomainSocketForAPI;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;

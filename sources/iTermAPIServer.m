@@ -130,7 +130,8 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 @end
 
 @implementation iTermAPIServer {
-    iTermSocket *_socket;
+    iTermSocket *_tcpSocket;  // will be deprecated. See plan in https://gitlab.com/gnachman/iterm2/-/issues/8714#note_330673495
+    iTermSocket *_unixSocket;
     NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
     NSMutableArray<iTermHTTPConnection *> *_pendingConnections;  // _queue
@@ -158,51 +159,76 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     self = [super init];
     if (self) {
         _connections = [[NSMutableDictionary alloc] init];
-        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
-            _socket = [iTermSocket unixDomainSocket];
-        } else {
-            _socket = [iTermSocket tcpIPV4Socket];
+        _unixSocket = [iTermSocket unixDomainSocket];
+        if (!_unixSocket) {
+            XLog(@"Failed to create unix socket");
+            return nil;
         }
-        if (!_socket) {
-            XLog(@"Failed to create socket");
+        _tcpSocket = [iTermSocket tcpIPV4Socket];
+        if (!_tcpSocket) {
+            XLog(@"Failed to create TCP socket");
             return nil;
         }
         _pendingConnections = [NSMutableArray array];
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         _executionQueue = dispatch_queue_create("com.iterm2.apiexec", DISPATCH_QUEUE_SERIAL);
 
-        iTermSocketAddress *socketAddress = nil;
-        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
-            NSString *path = [iTermAPIServer unixSocketPath];
-            [[NSFileManager defaultManager] createDirectoryAtPath:[iTermAPIServer folderForUnixSocket]
-                                      withIntermediateDirectories:YES
-                                                       attributes:@{ NSFilePosixPermissions: @(S_IRWXU) }
-                                                            error:nil];
-            socketAddress = [iTermSocketAddress socketAddressWithPath:path];
-            unlink(path.UTF8String);
-        } else {
-            iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
-            socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
-                                                                        port:1912];
-            [_socket setReuseAddr:YES];
-        }
-        if (![_socket bindToAddress:socketAddress]) {
-            XLog(@"Failed to bind");
+        if (![self listenOnTCPSocket]) {
             return nil;
         }
-        if ([iTermAdvancedSettingsModel useUnixDomainSocketForAPI]) {
-            chmod([iTermAPIServer unixSocketPath].UTF8String, (S_IRUSR | S_IWUSR));
-        }
-
-        BOOL ok = [_socket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress, NSNumber *euid) {
-            [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
-        }];
-        if (!ok) {
-            XLog(@"Failed to listen");
+        if (![self listenOnUnixSocket]) {
             return nil;
         }
     }
     return self;
+}
+
+- (BOOL)listenOnTCPSocket {
+    iTermSocketAddress *socketAddress = nil;
+    iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
+    socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
+                                                                port:1912];
+    [_tcpSocket setReuseAddr:YES];
+    if (![_tcpSocket bindToAddress:socketAddress]) {
+        XLog(@"Failed to bind");
+        return NO;
+    }
+
+    BOOL ok = [_tcpSocket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress, NSNumber *euid) {
+        [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
+    }];
+    if (!ok) {
+        XLog(@"Failed to listen");
+        return NO;
+    }
+
+    return YES;
+}
+
+- (BOOL)listenOnUnixSocket {
+    iTermSocketAddress *socketAddress = nil;
+    NSString *path = [iTermAPIServer unixSocketPath];
+    [[NSFileManager defaultManager] createDirectoryAtPath:[iTermAPIServer folderForUnixSocket]
+                              withIntermediateDirectories:YES
+                                               attributes:@{ NSFilePosixPermissions: @(S_IRWXU) }
+                                                    error:nil];
+    socketAddress = [iTermSocketAddress socketAddressWithPath:path];
+    unlink(path.UTF8String);
+    if (![_unixSocket bindToAddress:socketAddress]) {
+        XLog(@"Failed to bind");
+        return NO;
+    }
+    chmod([iTermAPIServer unixSocketPath].UTF8String, (S_IRUSR | S_IWUSR));
+
+    BOOL ok = [_unixSocket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress, NSNumber *euid) {
+        [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
+    }];
+    if (!ok) {
+        XLog(@"Failed to listen");
+        return NO;
+    }
+
+    return YES;
 }
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
@@ -220,8 +246,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 - (void)stop {
     self.delegate = nil;
-    [_socket close];
-    _socket = nil;
+    [_tcpSocket close];
+    _tcpSocket = nil;
+    [_unixSocket close];
+    _unixSocket = nil;
     dispatch_sync(_queue, ^{
         [self->_pendingConnections enumerateObjectsUsingBlock:^(iTermHTTPConnection * _Nonnull connection, NSUInteger idx, BOOL * _Nonnull stop) {
             [connection threadSafeClose];
@@ -267,29 +295,44 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)reallyDidAcceptConnection:(iTermHTTPConnection *)connection
                           retries:(NSInteger)retries {
     DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
-    dispatch_queue_t queue = _queue;
     if (connection.clientAddress.addressFamily == AF_UNIX) {
-        if (!connection.euid || connection.euid.unsignedIntValue != geteuid()) {
-            DLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
-            dispatch_async(connection.queue, ^{
-                [connection unauthorized];
-            });
-            return;
-        }
-        
-        [self startRequestOnConnection:connection pids:@[] completion:^(BOOL ok, NSString *reason) {
-            [self->_pendingConnections removeObject:connection];
-            if (!ok) {
-                XLog(@"Reject unix domain socket connection: %@", reason);
-                dispatch_async(connection.queue, ^{
-                    [connection unauthorized];
-                });
-            }
-        }];
+        [self reallyDidAcceptUnixConnection:connection retries:retries];
+        return;
+    }
+    [self reallyDidAcceptTCPConnection:connection retries:retries];
+}
+
+// run on _queue
+- (void)reallyDidAcceptUnixConnection:(iTermHTTPConnection *)connection
+                              retries:(NSInteger)retries {
+    if (!connection.euid || connection.euid.unsignedIntValue != geteuid()) {
+        DLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
+        dispatch_async(connection.queue, ^{
+            NSString *reason = [NSString stringWithFormat:@"Peer's euid of %@ not equal to my euid of %@",
+                                connection.euid, @(geteuid())];
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                object:nil
+                                                              userInfo:@{ @"reason": reason }];
+            [connection unauthorized];
+        });
         return;
     }
 
-    // TCP path
+    [self startRequestOnConnection:connection pids:@[] completion:^(BOOL ok, NSString *reason) {
+        [self->_pendingConnections removeObject:connection];
+        if (!ok) {
+            XLog(@"Reject unix domain socket connection: %@", reason);
+            dispatch_async(connection.queue, ^{
+                [connection unauthorized];
+            });
+        }
+    }];
+}
+
+// run on _queue
+- (void)reallyDidAcceptTCPConnection:(iTermHTTPConnection *)connection
+                             retries:(NSInteger)retries {
+    dispatch_queue_t queue = _queue;
     [iTermLSOF getProcessIDsWithConnectionFromAddress:connection.clientAddress
                                                 queue:queue
                                            completion:^(NSArray<NSNumber *> *pids) {
