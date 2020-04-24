@@ -9,7 +9,6 @@
 
 #import "DebugLogging.h"
 #import "iTermStatusBarAutoRainbowController.h"
-#import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
@@ -28,9 +27,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
-static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
-
-const CGFloat iTermStatusBarHeight = 21;
 
 @interface iTermStatusBarViewController ()<
     iTermStatusBarComponentDelegate,
@@ -161,7 +157,7 @@ const CGFloat iTermStatusBarHeight = 21;
          view.frame = NSMakeRect(round(view.desiredOrigin),
                                  iTermStatusBarViewControllerBottomMargin,
                                  ceil(view.desiredWidth),
-                                 iTermStatusBarViewControllerContainerHeight);
+                                 iTermGetStatusBarHeight() - iTermStatusBarViewControllerBottomMargin);
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
          [view layoutSubviews];
          view.rightSeparatorOffset = -1;

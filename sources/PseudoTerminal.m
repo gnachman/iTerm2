@@ -9459,7 +9459,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         ++decorationSize.height;
     }
     if ([self shouldPlaceStatusBarOutsideTabview]) {
-        decorationSize.height += iTermStatusBarHeight;
+        decorationSize.height += iTermGetStatusBarHeight();
     }
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
 }

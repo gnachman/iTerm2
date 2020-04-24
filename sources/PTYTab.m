@@ -1920,7 +1920,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         outerSize.height += [SessionView titleHeight];
     }
     if (showBottomStatusBar) {
-        outerSize.height += iTermStatusBarHeight;
+        outerSize.height += iTermGetStatusBarHeight();
     }
     DLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
@@ -3453,7 +3453,7 @@ typedef struct {
         const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
         // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
         // change, this line of code might prevent a bug.
-        const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermStatusBarHeight : 0;
+        const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
         const CGSize margins = NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2,
                                           [iTermAdvancedSettingsModel terminalVMargin] * 2);
         return (PTYTabDecorationSize) {

@@ -859,7 +859,7 @@ typedef struct {
         if ([_delegate rootTerminalViewSharedStatusBarViewController] &&
             [iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop) {
             // Have a top status bar. Move the division view to sit above it.
-            divisionViewFrame.origin.y += iTermStatusBarHeight;
+            divisionViewFrame.origin.y += iTermGetStatusBarHeight();
         }
         if (!_divisionView) {
             Class theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
@@ -1499,15 +1499,15 @@ typedef struct {
     switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
             return NSMakeRect(NSMinX(containingFrame),
-                              NSMaxY(containingFrame) - iTermStatusBarHeight,
+                              NSMaxY(containingFrame) - iTermGetStatusBarHeight(),
                               NSWidth(containingFrame),
-                              iTermStatusBarHeight);
+                              iTermGetStatusBarHeight());
 
         case iTermStatusBarPositionBottom:
             return NSMakeRect(NSMinX(containingFrame),
                               NSMinY(containingFrame),
                               NSWidth(containingFrame),
-                              iTermStatusBarHeight);
+                              iTermGetStatusBarHeight());
     }
     return NSZeroRect;
 }
@@ -1527,11 +1527,11 @@ typedef struct {
 - (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {
     switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop: {
-            decorationHeights->top += iTermStatusBarHeight;
+            decorationHeights->top += iTermGetStatusBarHeight();
             break;
         }
         case iTermStatusBarPositionBottom:
-            decorationHeights->bottom += iTermStatusBarHeight;
+            decorationHeights->bottom += iTermGetStatusBarHeight();
             break;
     }
 }

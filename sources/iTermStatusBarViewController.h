@@ -6,13 +6,12 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermStatusBarContainerView.h"
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-extern const CGFloat iTermStatusBarHeight;
 
 @class iTermAction;
 @class iTermStatusBarLayout;

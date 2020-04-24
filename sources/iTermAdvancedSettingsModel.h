@@ -264,6 +264,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)sshSchemePath;
 + (BOOL)sshURLsSupportPath;
 + (BOOL)startDebugLoggingAutomatically;
++ (double)statusBarHeight;
 + (BOOL)statusBarIcon;
 + (BOOL)stealKeyFocus;
 + (BOOL)supportREPCode;

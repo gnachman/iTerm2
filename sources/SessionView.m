@@ -14,6 +14,7 @@
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
+#import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
@@ -38,8 +39,10 @@
 #import <QuartzCore/QuartzCore.h>
 
 static int nextViewId;
-// NOTE: This must equal iTermStatusBarHeight
-static const double kTitleHeight = 22;
+
+static const CGFloat iTermGetSessionViewTitleHeight() {
+    return iTermGetStatusBarHeight() + 1;
+}
 
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
@@ -131,7 +134,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 + (double)titleHeight {
-    return kTitleHeight;
+    return iTermGetSessionViewTitleHeight();
 }
 
 + (void)initialize {
@@ -437,7 +440,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         size.height += _title.frame.size.height;
     }
     if (_showBottomStatusBar) {
-        size.height += iTermStatusBarHeight;
+        size.height += iTermGetStatusBarHeight();
     }
     return size;
 }
@@ -800,7 +803,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     } else {
         NSRect frame = _scrollview.contentView.frame;
         if (self.showBottomStatusBar) {
-            frame.origin.y += iTermStatusBarHeight;
+            frame.origin.y += iTermGetStatusBarHeight();
         }
         _metalView.frame = [self frameByInsettingForMetal:frame];
     }
@@ -1138,10 +1141,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (NSEdgeInsets)extraMargins {
     NSEdgeInsets insets = NSEdgeInsetsZero;
     if (_showTitle) {
-        insets.top = kTitleHeight;
+        insets.top = iTermGetSessionViewTitleHeight();
     }
     if (self.showBottomStatusBar) {
-        insets.bottom = iTermStatusBarHeight;
+        insets.bottom = iTermGetStatusBarHeight();
     }
     return insets;
 }
@@ -1309,11 +1312,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showTitle) {
-        frame.size.height -= kTitleHeight;
+        frame.size.height -= iTermGetSessionViewTitleHeight();
         _title = [[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
-                                                                    self.frame.size.height - kTitleHeight,
+                                                                    self.frame.size.height - iTermGetSessionViewTitleHeight(),
                                                                     self.frame.size.width,
-                                                                    kTitleHeight)];
+                                                                    iTermGetSessionViewTitleHeight())];
         [self invalidateStatusBar];
         if (adjustScrollView) {
             [_title setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
@@ -1322,7 +1325,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
         [self addSubviewBelowFindView:_title];
     } else {
-        frame.size.height += kTitleHeight;
+        frame.size.height += iTermGetSessionViewTitleHeight();
         [_title removeFromSuperview];
         _title = nil;
     }
@@ -1358,11 +1361,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar) {
         iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
         _title.statusBarViewController = nil;
-        frame.size.height -= iTermStatusBarHeight;
+        frame.size.height -= iTermGetStatusBarHeight();
         _genericStatusBarContainer = [[iTermGenericStatusBarContainer alloc] initWithFrame:NSMakeRect(0,
                                                                                                       0,
                                                                                                       self.frame.size.width,
-                                                                                                      iTermStatusBarHeight)];
+                                                                                                      iTermGetStatusBarHeight())];
         _genericStatusBarContainer.statusBarViewController = statusBar;
         _genericStatusBarContainer.delegate = self;
         [self invalidateStatusBar];
@@ -1373,7 +1376,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     } else {
         [_genericStatusBarContainer removeFromSuperview];
         _genericStatusBarContainer = nil;
-        frame.size.height += iTermStatusBarHeight;
+        frame.size.height += iTermGetStatusBarHeight();
     }
     if (adjustScrollView) {
         [scrollView setFrame:frame];
@@ -1443,10 +1446,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                  scrollerStyle:[[self scrollview] scrollerStyle]];
 
     if (_showTitle) {
-        size.height += kTitleHeight;
+        size.height += iTermGetSessionViewTitleHeight();
     }
     if (_showBottomStatusBar) {
-        size.height += iTermStatusBarHeight;
+        size.height += iTermGetStatusBarHeight();
     }
     DLog(@"Smallest such frame is %@", NSStringFromSize(size));
     return size;
@@ -1456,11 +1459,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     NSSize size = self.frame.size;
     DLog(@"maximumPossibleScrollViewContentSize. size=%@", [NSValue valueWithSize:size]);
     if (_showTitle) {
-        size.height -= kTitleHeight;
+        size.height -= iTermGetSessionViewTitleHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub title height. size=%@", [NSValue valueWithSize:size]);
     }
     if (_showBottomStatusBar) {
-        size.height -= iTermStatusBarHeight;
+        size.height -= iTermGetStatusBarHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub bottom status bar height. size=%@", NSStringFromSize(size));
     }
     Class verticalScrollerClass = [[[self scrollview] verticalScroller] class];
@@ -1482,9 +1485,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     NSRect aRect = [self frame];
     if (_showTitle) {
         [_title setFrame:NSMakeRect(0,
-                                    aRect.size.height - kTitleHeight,
+                                    aRect.size.height - iTermGetSessionViewTitleHeight(),
                                     aRect.size.width,
-                                    kTitleHeight)];
+                                    iTermGetSessionViewTitleHeight())];
         NSViewController *viewController = [self.delegate sessionViewStatusBarViewController];
         
         [[viewController view] setNeedsLayout:YES];
@@ -1499,7 +1502,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _genericStatusBarContainer.frame = NSMakeRect(0,
                                                0,
                                                aRect.size.width,
-                                               iTermStatusBarHeight);
+                                               iTermGetStatusBarHeight());
         
         [_genericStatusBarContainer.statusBarViewController.view setNeedsLayout:YES];
     }
@@ -1518,7 +1521,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)updateScrollViewFrame {
     DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
-    CGFloat bottomStatusBarHeight = _showBottomStatusBar ? iTermStatusBarHeight : 0;
+    CGFloat bottomStatusBarHeight = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
                                      self.frame.size.height - titleHeight - bottomStatusBarHeight);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
@@ -1652,7 +1655,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     rect = _currentAnnouncement.view.frame;
     rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;
     if (_showTitle) {
-        rect.origin.y -= kTitleHeight;
+        rect.origin.y -= iTermGetSessionViewTitleHeight();
     }
     _currentAnnouncement.view.frame = rect;
 }

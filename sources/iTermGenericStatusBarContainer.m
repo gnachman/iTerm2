@@ -58,7 +58,7 @@
     const NSRect rect = NSMakeRect(0,
                                    0,
                                    self.frame.size.width,
-                                   iTermStatusBarHeight);
+                                   iTermGetStatusBarHeight());
     _backing.frame = rect;
     _statusBarViewController.view.frame = rect;
 }

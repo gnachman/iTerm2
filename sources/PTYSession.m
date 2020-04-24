@@ -1871,7 +1871,7 @@ ITERM_WEAKLY_REFERENCEABLE
             result -= [SessionView titleHeight];
         }
         if (_view.showBottomStatusBar) {
-            result -= iTermStatusBarHeight;
+            result -= iTermGetStatusBarHeight();
         }
         result -= [iTermAdvancedSettingsModel terminalVMargin] * 2;
         int iLineHeight = [_textview lineHeight];

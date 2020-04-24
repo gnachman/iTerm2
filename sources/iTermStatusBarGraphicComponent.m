@@ -151,7 +151,7 @@
 }
 
 - (void)redraw {
-    NSSize size = NSMakeSize(self.view.frame.size.width, iTermStatusBarHeight);
+    NSSize size = NSMakeSize(self.view.frame.size.width, iTermGetStatusBarHeight());
     if (size.width > 0) {
         NSImage *image = [NSImage imageOfSize:size drawBlock:^{
             [[NSColor clearColor] set];
@@ -182,7 +182,7 @@
 }
 
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
-    self.view.frame = NSMakeRect(0, 0, width, iTermStatusBarHeight);
+    self.view.frame = NSMakeRect(0, 0, width, iTermGetStatusBarHeight());
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
