@@ -238,10 +238,14 @@
 }
 
 - (NSArray *)componentsInShellCommand {
-    return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ @'n': @"\n",
-                                                                              @'a': @"\x07",
-                                                                              @'t': @"\t",
-                                                                              @'r': @"\r" } ];
+    NSNumber *nkey = @'n';
+    NSNumber *akey = @'a';
+    NSNumber *tkey = @'t';
+    NSNumber *rkey = @'r';
+    return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ nkey: @"\n",
+                                                                              akey: @"\x07",
+                                                                              tkey: @"\t",
+                                                                              rkey: @"\r" } ];
 }
 
 - (NSString *)it_compressedString {
@@ -251,11 +255,16 @@
 }
 
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters {
-    NSDictionary *escapes = @{ @'n': @('\n'),
-                               @'a': @('\x07'),
-                               @'t': @('\t'),
-                               @'r': @('\r'),
-                               @'\\': @('\\') };
+    NSNumber *nkey = @'n';
+    NSNumber *akey = @'a';
+    NSNumber *tkey = @'t';
+    NSNumber *rkey = @'r';
+    NSNumber *bskey = @'\\';
+    NSDictionary *escapes = @{ nkey: @('\n'),
+                               akey: @('\x07'),
+                               tkey: @('\t'),
+                               rkey: @('\r'),
+                               bskey: @('\\') };
     NSMutableString *result = [NSMutableString string];
     NSInteger start = 0;
     BOOL escape = NO;
