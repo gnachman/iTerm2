@@ -17,9 +17,7 @@
 
 - (BOOL)shouldPremultiply {
     if (@available(macOS 10.14, *)) {
-        if (self.configuration.hasBackgroundImage) {
-            return iTermTextIsMonochrome();
-        }
+        return iTermTextIsMonochrome();
     }
     return NO;
 }

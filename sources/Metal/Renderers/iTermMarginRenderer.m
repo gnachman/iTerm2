@@ -79,7 +79,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
     if (@available(macOS 10.14, *)) {
-        if (transientState.configuration.hasBackgroundImage && iTermTextIsMonochrome()) {
+        if (iTermTextIsMonochrome()) {
             color.x *= color.w;
             color.y *= color.w;
             color.z *= color.w;
