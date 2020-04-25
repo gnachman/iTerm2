@@ -586,6 +586,29 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)newPythonScript {
+    __weak __typeof(self) weakSelf = self;
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+    [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                     pythonVersion:nil
+                                         minimumEnvironmentVersion:0
+                                                requiredToContinue:YES
+                                                    withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        switch (status) {
+            case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+            case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+            case iTermPythonRuntimeDownloaderStatusUnknown:
+            case iTermPythonRuntimeDownloaderStatusWorking:
+            case iTermPythonRuntimeDownloaderStatusError:
+                return;
+            case iTermPythonRuntimeDownloaderStatusNotNeeded:
+            case iTermPythonRuntimeDownloaderStatusDownloaded:
+                break;
+        }
+        [weakSelf reallyCreateNewPythonScript];
+    }];
+}
+
+- (void)reallyCreateNewPythonScript {
     iTermScriptTemplatePickerWindowController *picker = [[iTermScriptTemplatePickerWindowController alloc] initWithWindowNibName:@"iTermScriptTemplatePickerWindowController"];
     [NSApp runModalForWindow:picker.window];
     [picker.window close];
