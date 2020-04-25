@@ -29,7 +29,8 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - API
 
 // Allocate a new session and assign it a bookmark.
-- (PTYSession *)newSessionWithProfile:(Profile *)profile {
+- (PTYSession *)newSessionWithProfile:(Profile *)profile
+                               parent:(nullable PTYSession *)parent {
     assert(profile);
     PTYSession *aSession;
 
@@ -41,6 +42,9 @@ NS_ASSUME_NONNULL_BEGIN
 
     // set our preferences
     [aSession setProfile:profile];
+    if (parent) {
+        [aSession setParentScope:parent.variablesScope];
+    }
     return aSession;
 }
 

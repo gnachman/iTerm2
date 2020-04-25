@@ -8124,6 +8124,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                 profile:theBookmark
                                           targetSession:targetSession
                                                  oldCWD:oldCWD
+                                            parentScope:currentSession.variablesScope
                                              completion:ready];
             if (completion) {
                 completion(session, YES);
@@ -8138,6 +8139,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                         profile:theBookmark
                                   targetSession:targetSession
                                          oldCWD:nil
+                                     parentScope:nil
                                      completion:ready];
     if (completion) {
         completion(session, YES);
@@ -8149,6 +8151,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         profile:(Profile *)theBookmark
                   targetSession:(PTYSession *)targetSession
                          oldCWD:(NSString *)oldCWD
+                    parentScope:(iTermVariableScope *)parentScope
                      completion:(void (^)(PTYSession *, BOOL))completion {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
@@ -8184,7 +8187,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [[ProfileModel sessionsInstance] addBookmark:temp];
         theBookmark = temp;
     }
-    PTYSession* newSession = [[self.sessionFactory newSessionWithProfile:theBookmark] autorelease];
+    PTYSession* newSession = [[self.sessionFactory newSessionWithProfile:theBookmark
+                                                                  parent:targetSession] autorelease];
     [self splitVertically:isVertical
                    before:before
             addingSession:newSession
@@ -10506,6 +10510,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                 withCommand:command
                                                 environment:environment
                                           previousDirectory:nil
+                                                     parent:nil
                                                  completion:completion];
         if (didMakeSession) {
             didMakeSession(newSession);
@@ -10524,6 +10529,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                       withCommand:command
                                                       environment:environment
                                                 previousDirectory:pwd
+                                                           parent:currentSession
                                                        completion:completion];
         if (didMakeSession) {
             didMakeSession(newSession);
@@ -10535,6 +10541,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment
                    previousDirectory:(NSString *)previousDirectory
+                              parent:(PTYSession *)parent
                           completion:(void (^)(PTYSession *, BOOL ok))completion {
     iTermObjectType objectType;
     if ([_contentView.tabView numberOfTabViewItems] == 0) {
@@ -10550,7 +10557,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     // Initialize a new session
-    PTYSession *aSession = [[self.sessionFactory newSessionWithProfile:profile] autorelease];
+    PTYSession *aSession = [[self.sessionFactory newSessionWithProfile:profile
+                                                                parent:parent] autorelease];
 
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];

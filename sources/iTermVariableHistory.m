@@ -83,6 +83,9 @@
     [self recordUseOfNonterminalVariableNamed:iTermVariableKeySessionTab
                                     inContext:iTermVariablesSuggestionContextSession
                              leadingToContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfNonterminalVariableNamed:iTermVariableKeySessionParent
+                                    inContext:iTermVariablesSuggestionContextSession
+                             leadingToContext:iTermVariablesSuggestionContextSession];
 
     // Tab context
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];

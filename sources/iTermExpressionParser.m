@@ -273,12 +273,13 @@
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
                                                             scope:(iTermVariableScope *)scope {
-    return [self parsedExpressionWithInterpolatedString:swifty escapingFunction:nil scope:scope];
+    return [self parsedExpressionWithInterpolatedString:swifty escapingFunction:nil scope:scope strict:NO];
 }
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
                                                  escapingFunction:(NSString *(^)(NSString *string))escapingFunction
-                                                            scope:(iTermVariableScope *)scope {
+                                                            scope:(iTermVariableScope *)scope
+                                                           strict:(BOOL)strict {
     __block NSError *error = nil;
     NSMutableArray *interpolatedParts = [NSMutableArray array];
     [swifty enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
@@ -296,7 +297,8 @@
             [interpolatedParts addObject:[[iTermParsedExpression alloc] initWithString:escapedString]];
             return;
         }
-        if ([iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings] &&
+        if (!strict &&
+            [iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings] &&
             expression.expressionType == iTermParsedExpressionTypeError) {
             // If the expression was a variable reference, replace it with empty string. This works
             // around the annoyance of remembering to add question marks in interpolated strings,

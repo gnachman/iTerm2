@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermVariableRecordingScope *)recordingCopy;
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
+- (void)removeFrameWithName:(NSString *)name;
 - (id)valueForVariableName:(NSString *)name;
 - (id)valueForPath:(NSString *)firstName, ... NS_REQUIRES_NIL_TERMINATION;
 

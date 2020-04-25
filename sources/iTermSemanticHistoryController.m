@@ -673,7 +673,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         };
         iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:url
                                                                                                escapingFunction:urlEscapeFunction
-                                                                                                          scope:scope];
+                                                                                                          scope:scope
+                                                                                                         strict:NO];
         _expressionEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
                                                                                invocation:url
                                                                                     scope:scope];

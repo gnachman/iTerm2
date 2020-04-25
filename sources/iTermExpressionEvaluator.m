@@ -52,7 +52,20 @@
                                     scope:scope];
 }
 
-- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString scope:(iTermVariableScope *)scope {
+- (instancetype)initWithStrictInterpolatedString:(NSString *)interpolatedString
+                                           scope:(iTermVariableScope *)scope {
+    iTermParsedExpression *parsedExpression =
+    [iTermExpressionParser parsedExpressionWithInterpolatedString:interpolatedString
+                                                 escapingFunction:nil
+                                                            scope:scope
+                                                           strict:YES];
+    return [self initWithParsedExpression:parsedExpression
+                               invocation:interpolatedString
+                                    scope:scope];
+}
+
+- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
+                                     scope:(iTermVariableScope *)scope {
     iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:interpolatedString
                                                                                                       scope:scope];
     return [self initWithParsedExpression:parsedExpression

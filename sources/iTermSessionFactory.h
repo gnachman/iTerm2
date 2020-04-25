@@ -21,7 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL promptingDisabled;
 
-- (PTYSession *)newSessionWithProfile:(Profile *)profile;
+- (PTYSession *)newSessionWithProfile:(Profile *)profile
+                               parent:(nullable PTYSession *)parent;
 
 // Completion block is passed whether it was possible to create a session. If the user cancels a
 // substitution prompt, it will fail. On the other hand, if the command fails immediately

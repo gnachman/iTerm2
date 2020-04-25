@@ -225,7 +225,8 @@
                    windowController:(PseudoTerminal *)windowController
                          completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     DLog(@"Creating a new session by URL: %@", _url);
-    PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile];
+    PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
+                                                                          parent:nil];
     [windowController addSessionInNewTab:session];
     __weak __typeof(self) weakSelf = self;
     const BOOL ok = [windowController.sessionFactory attachOrLaunchCommandInSession:session

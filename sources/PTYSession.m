@@ -31,6 +31,7 @@
 #import "iTermDisclosableView.h"
 #import "iTermEchoProbe.h"
 #import "iTermExpect.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermFindDriver.h"
 #import "iTermFindOnPageHelper.h"
@@ -2166,15 +2167,13 @@ ITERM_WEAKLY_REFERENCEABLE
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
           completion:(void (^)(BOOL))completion {
-    DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
+   DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
-
     self.program = command;
     self.customShell = customShell;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
-
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
@@ -2193,22 +2192,65 @@ ITERM_WEAKLY_REFERENCEABLE
                               viewSize:_screen.viewSize
                                 isUTF8:isUTF8
                             completion:^{
-                                [self sendInitialText];
-                                if (completion) {
-                                    completion(YES);
-                                }
-                            }];
+                    [self sendInitialText];
+                    if (completion) {
+                        completion(YES);
+                    }
+                }];
             }];
         }];
     }];
 }
 
+- (void)setParentScope:(iTermVariableScope *)parentScope {
+    iTermVariableScope *scope = self.variablesScope;
+    assert(parentScope != scope);  // I'm almost sure this is impossible because how could you be your own parent?
+
+    // Remove existing variable (this is just paranoia! it shouldn't do anything)
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionParent];
+
+    // Remove existing frame
+    [scope removeFrameWithName:iTermVariableKeySessionParent];
+    __block iTermVariables *variables = nil;
+    // Find root frame in parent and add it it as a frame to my scope
+    [parentScope.frames enumerateObjectsUsingBlock:^(iTermTuple<NSString *,iTermVariables *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (tuple.firstObject) {
+            return;
+        }
+        variables = tuple.secondObject;
+        [scope addVariables:tuple.secondObject toScopeNamed:iTermVariableKeySessionParent];
+        *stop = YES;
+    }];
+
+    // Find non-root frames (e.g., tab) and add their variables as nonterminals to parentSession (becoming, e.g., parentSession.tab)
+    [parentScope.frames enumerateObjectsUsingBlock:^(iTermTuple<NSString *,iTermVariables *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (!tuple.firstObject) {
+            return;
+        }
+        [variables setValue:tuple.secondObject forVariableNamed:tuple.firstObject];
+    }];
+}
+
 - (void)sendInitialText {
     NSString *initialText = _profile[KEY_INITIAL_TEXT];
-    if ([initialText length]) {
-        [self writeTaskNoBroadcast:initialText];
-        [self writeTaskNoBroadcast:@"\n"];
+    if (![initialText length]) {
+        return;
     }
+    DLog(@"Evaluate initial text %@", initialText);
+
+    iTermExpressionEvaluator *evaluator =
+    [[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:initialText
+                                                                  scope:self.variablesScope] autorelease];
+    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        NSString *string = [NSString castFrom:evaluator.value];
+        if (!string) {
+            DLog(@"Evaluation of %@ returned %@", initialText, evaluator.value);
+            return;
+        }
+        DLog(@"Write initial text %@", string);
+        [self writeTaskNoBroadcast:string];
+        [self writeTaskNoBroadcast:@"\n"];
+    }];
 }
 
 - (void)launchProfileInCurrentTerminal:(Profile *)profile

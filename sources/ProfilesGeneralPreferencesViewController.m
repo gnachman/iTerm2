@@ -82,6 +82,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeLabel;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     IBOutlet NSButton *_editBadgeButton;
+    iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldForEditCurrentSessionDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
@@ -243,6 +244,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_INITIAL_TEXT
             relatedView:_sendTextAtStartLabel
                    type:kPreferenceInfoTypeStringTextField];
+
+    _sendTextAtStartDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                       passthrough:_sendTextAtStart.delegate
+                                                     functionsOnly:NO];
+    _sendTextAtStart.delegate = _sendTextAtStartDelegate;
+
 
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY

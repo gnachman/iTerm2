@@ -81,6 +81,12 @@ NS_ASSUME_NONNULL_BEGIN
     [self resolveDanglingReferences];
 }
 
+- (void)removeFrameWithName:(NSString *)name {
+    [_frames removeObjectsPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *obj) {
+        return [obj.firstObject isEqual:name];
+    }];
+}
+
 - (NSArray<iTermVariables *> *)variablesInScopeNamed:(nullable NSString *)scopeName {
     return [_frames mapWithBlock:^id(iTermTuple<NSString *,iTermVariables *> *anObject) {
         if (![NSObject object:scopeName isEqualToObject:anObject.firstObject]) {

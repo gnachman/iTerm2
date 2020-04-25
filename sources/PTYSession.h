@@ -880,6 +880,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)invokeFunctionCall:(NSString *)invocation
                      scope:(iTermVariableScope *)scope
                     origin:(NSString *)origin;
+- (void)setParentScope:(iTermVariableScope *)parentScope;
 
 #pragma mark - Testing utilities
 

@@ -31,7 +31,8 @@
 // Strings get passed through escapingFunction, if nonnil.
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
                                                  escapingFunction:(NSString *(^)(NSString *string))escapingFunction
-                                                            scope:(iTermVariableScope *)scope;
+                                                            scope:(iTermVariableScope *)scope
+                                                           strict:(BOOL)strict;
 
 // Given an invocation like foo(x: "bar", y: [1, 2]) returns the signature like foo(x,y)
 + (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation

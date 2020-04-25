@@ -31,6 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
                                      scope:(iTermVariableScope *)scope;
 
+// Fails on undefined references
+- (instancetype)initWithStrictInterpolatedString:(NSString *)interpolatedString
+                                           scope:(iTermVariableScope *)scope;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 // Evaluates an expression. If timeout is 0 then it completes synchronously without making RPCs.

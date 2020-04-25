@@ -64,6 +64,7 @@ extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated bad
 extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
 extern NSString *const iTermVariableKeySessionSelection;  // NSString. Containing selected text.
 extern NSString *const iTermVariableKeySessionSelectionLength;  // NSNumber. Contains length of selected text.
+extern NSString *const iTermVariableKeySessionParent;  // Session that was active when this one was created, if any.
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
