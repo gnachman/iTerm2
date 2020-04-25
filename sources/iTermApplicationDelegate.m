@@ -979,8 +979,8 @@ static BOOL hasBecomeActive = NO;
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
-        DLog(@"applicationWillFinishLaunching:");
     }
+    DLog(@"applicationWillFinishLaunching:");
 
     _globalScopeController = [[iTermGlobalScopeController alloc] init];
 
@@ -1324,12 +1324,16 @@ static BOOL hasBecomeActive = NO;
 
 // This performs startup activities as long as they haven't been run before.
 - (void)performStartupActivities {
+    DLog(@"performStartupActivities");
     if (gStartupActivitiesPerformed) {
+        DLog(@"Already done");
         return;
     }
     gStartupActivitiesPerformed = YES;
     if (quiet_) {
+        DLog(@"Launched in quiet mode. Return early.");
         // iTerm2 was launched with "open file" that turns off startup activities.
+        [_untitledWindowStateMachine didPerformStartupActivities];
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
