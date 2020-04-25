@@ -92,6 +92,7 @@
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermUntitledWindowStateMachine.h"
 #import "iTermURLStore.h"
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
@@ -158,7 +159,8 @@ static BOOL hasBecomeActive = NO;
 @interface iTermApplicationDelegate () <
     iTermOrphanServerAdopterDelegate,
     iTermPasswordManagerDelegate,
-    iTermRestorableStateControllerDelegate>
+    iTermRestorableStateControllerDelegate,
+    iTermUntitledWindowStateMachineDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -221,29 +223,19 @@ static BOOL hasBecomeActive = NO;
     NSArray<NSDictionary *> *_buriedSessionsState;
 
     iTermScriptsMenuController *_scriptsMenuController;
-    enum {
-        iTermUntitledFileOpenUnsafe,
-        iTermUntitledFileOpenPending,
-        iTermUntitledFileOpenAllowed,
-        iTermUntitledFileOpenComplete,
-        iTermUntitledFileOpenDisallowed
-    } _untitledFileOpenStatus;
-    
     BOOL _disableTermination;
 
     iTermFocusFollowsMouseController *_focusFollowsMouseController;
     iTermGlobalScopeController *_globalScopeController;
     iTermRestorableStateController *_restorableStateController;
+    iTermUntitledWindowStateMachine *_untitledWindowStateMachine;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        if ([iTermAdvancedSettingsModel openNewWindowAtStartup]) {
-            _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
-        } else {
-            _untitledFileOpenStatus = iTermUntitledFileOpenDisallowed;
-        }
+        _untitledWindowStateMachine = [[iTermUntitledWindowStateMachine alloc] init];
+        _untitledWindowStateMachine.delegate = self;
         if ([iTermAdvancedSettingsModel useRestorableStateController]) {
             _restorableStateController = [[iTermRestorableStateController alloc] init];
             _restorableStateController.delegate = self;
@@ -319,6 +311,7 @@ static BOOL hasBecomeActive = NO;
     [_appNapStoppingActivity release];
     [_focusFollowsMouseController release];
     [_globalScopeController release];
+    [_untitledWindowStateMachine release];
     [super dealloc];
 }
 
@@ -839,10 +832,17 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
+    DLog(@"Open untitled file");
     if ([self isAppleScriptTestApp]) {
+        DLog(@"Nope, am applescript test app");
         // Don't want to do this for applescript testing so we have a blank slate.
         return NO;
     }
+    DLog(@"finishedLaunching=%@ openArrangementAtStartup=%@ openNoWindowsAtStartup=%@",
+         @(finishedLaunching_),
+         @([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]),
+         @([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]));
+
     if (!finishedLaunching_ &&
         ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
          [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] )) {
@@ -851,59 +851,15 @@ static BOOL hasBecomeActive = NO;
         //    no windows, and iTerm2 is configured to restore it at startup.
         // 2. System window restoration is off in System Prefs>General and iTerm2 is configured to
         //    open no windows at startup.
+        DLog(@"Nope");
         return NO;
     }
     if (![iTermAdvancedSettingsModel openUntitledFile]) {
+        DLog(@"Opening untitled files is disabled");
         return NO;
     }
-    [self maybeOpenUntitledFile];
+    [_untitledWindowStateMachine maybeOpenUntitledFile];
     return YES;
-}
-
-- (void)openUntitledFileBecameSafe {
-    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
-        _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
-        return;
-    }
-    switch (_untitledFileOpenStatus) {
-        case iTermUntitledFileOpenUnsafe:
-            _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
-            break;
-        case iTermUntitledFileOpenAllowed:
-            // Shouldn't happen
-            break;
-        case iTermUntitledFileOpenPending:
-            _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
-            [self maybeOpenUntitledFile];
-            break;
-
-        case iTermUntitledFileOpenComplete:
-            // Shouldn't happen
-            break;
-        case iTermUntitledFileOpenDisallowed:
-            break;
-    }
-}
-
-- (void)maybeOpenUntitledFile {
-    if (![[NSApplication sharedApplication] isRunningUnitTests]) {
-        switch (_untitledFileOpenStatus) {
-            case iTermUntitledFileOpenUnsafe:
-                _untitledFileOpenStatus = iTermUntitledFileOpenPending;
-                break;
-            case iTermUntitledFileOpenAllowed:
-                _untitledFileOpenStatus = iTermUntitledFileOpenComplete;
-                [self newWindow:nil];
-                break;
-            case iTermUntitledFileOpenPending:
-                break;
-            case iTermUntitledFileOpenComplete:
-                [self newWindow:nil];
-                break;
-            case iTermUntitledFileOpenDisallowed:
-                break;
-        }
-    }
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
@@ -977,16 +933,7 @@ static BOOL hasBecomeActive = NO;
             // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
             const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
             if (count > 0) {
-                switch (_untitledFileOpenStatus) {
-                    case iTermUntitledFileOpenUnsafe:
-                    case iTermUntitledFileOpenAllowed:
-                    case iTermUntitledFileOpenDisallowed:
-                        _untitledFileOpenStatus = iTermUntitledFileOpenDisallowed;
-                        break;
-                    case iTermUntitledFileOpenPending:
-                    case iTermUntitledFileOpenComplete:
-                        break;
-                }
+                [_untitledWindowStateMachine didRestoreHotkeyWindows];
             }
         }
     }
@@ -1072,7 +1019,7 @@ static BOOL hasBecomeActive = NO;
         [[PreferencePanel sharedInstance] openToProfileWithGuid:guid
                                                             key:KEY_AUTOLOG];
     }];
-    [self openUntitledFileBecameSafe];
+    [_untitledWindowStateMachine didBecomeSafe];
     [_restorableStateController restoreWindows];
 }
 
@@ -1418,11 +1365,7 @@ static BOOL hasBecomeActive = NO;
                ![[NSApplication sharedApplication] isRunningUnitTests]) {
         [self newWindow:nil];
     }
-    if (_untitledFileOpenStatus == iTermUntitledFileOpenDisallowed) {
-        // Don't need to worry about the initial window any more. Allow future clicks
-        // on the dock icon to open an untitled window.
-        _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
-    }
+    [_untitledWindowStateMachine didPerformStartupActivities];
 
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
@@ -1687,9 +1630,11 @@ static BOOL hasBecomeActive = NO;
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
-    if (!cancel) {
-        [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
+    if (cancel) {
+        DLog(@"Cancel");
+        return;
     }
+    [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
 }
 
 - (IBAction)arrangeHorizontally:(id)sender
@@ -2410,6 +2355,13 @@ static BOOL hasBecomeActive = NO;
     }
     [term window:window willEncodeRestorableState:coder];
     [window encodeRestorableStateWithCoder:coder];
+}
+
+#pragma mark - iTermUntitledWindowStateMachineDelegate
+
+- (void)untitledWindowStateMachineCreateNewWindow:(iTermUntitledWindowStateMachine *)sender {
+    DLog(@"untitledWindowStateMachineCreateNewWindow");
+    [self newWindow:nil];
 }
 
 @end
