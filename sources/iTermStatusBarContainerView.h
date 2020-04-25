@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern const CGFloat iTermStatusBarViewControllerIconWidth;
 
-const CGFloat iTermGetStatusBarHeight();
+const CGFloat iTermGetStatusBarHeight(void);
 
 @class iTermStatusBarContainerView;
 
