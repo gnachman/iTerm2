@@ -82,6 +82,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeLabel;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     IBOutlet NSButton *_editBadgeButton;
+    iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldForEditCurrentSessionDelegate;
@@ -228,6 +229,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     _customCommand.cell.usesSingleLineMode = YES;
     _customCommand.hidden = YES;
+
+    _commandDelegate =
+    [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                       passthrough:_customCommand.delegate
+                                                     functionsOnly:NO];
+    if ([[self objectForKey:KEY_CUSTOM_COMMAND] isEqual:kProfilePreferenceCommandTypeCustomValue]) {
+        _customCommand.delegate = _commandDelegate;
+    }
+
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
                    displayName:@"Profile custom ommand"
@@ -741,12 +751,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     switch (tag) {
         case iTermGeneralProfilePreferenceCustomCommandTagCustom:
             value = kProfilePreferenceCommandTypeCustomValue;
+            _customCommand.delegate = _commandDelegate;
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
             value = kProfilePreferenceCommandTypeLoginShellValue;
+            _customCommand.delegate = _commandDelegate.passthrough;
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
             value = kProfilePreferenceCommandTypeCustomShellValue;
+            _customCommand.delegate = _commandDelegate.passthrough;
             break;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];

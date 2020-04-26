@@ -8146,6 +8146,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+#warning TODO: Any callers pass nil for completion? If so that implies that attachOrLaunch was synchronous but that is no longer the case.
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
@@ -8195,24 +8196,30 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             targetSession:targetSession
              performSetup:YES];
 
-    if (![self.sessionFactory attachOrLaunchCommandInSession:newSession
-                                                   canPrompt:YES
-                                                  objectType:iTermPaneObject
-                                            serverConnection:nil
-                                                   urlString:nil
-                                                allowURLSubs:NO
-                                                 environment:@{}
-                                                customShell:[ITAddressBookMgr customShellForProfile:theBookmark]
-                                                      oldCWD:oldCWD
-                                              forceUseOldCWD:NO
-                                                     command:nil
-                                                      isUTF8:nil
-                                               substitutions:nil
-                                            windowController:self
-                                                  completion:completion]) {
-        [newSession terminate];
-        [[self tabForSession:newSession] removeSession:newSession];
+    __weak __typeof(self) weakSelf = self;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:newSession
+                                                      canPrompt:YES
+                                                     objectType:iTermPaneObject
+                                               serverConnection:nil
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:theBookmark]
+                                                         oldCWD:oldCWD
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:self
+                                                          ready:^(BOOL ok) {
+        if (!ok) {
+            [newSession terminate];
+            [[weakSelf tabForSession:newSession] removeSession:newSession];
+        }
     }
+                                                     completion:completion];
+    [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
     return newSession;
 }
 
@@ -10563,25 +10570,28 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
 
-    [self.sessionFactory attachOrLaunchCommandInSession:aSession
-                                              canPrompt:YES
-                                             objectType:objectType
-                                       serverConnection:nil
-                                              urlString:nil
-                                           allowURLSubs:NO
-                                            environment:environment
-                                            customShell:[ITAddressBookMgr customShellForProfile:profile]
-                                                 oldCWD:previousDirectory
-                                         forceUseOldCWD:NO
-                                                command:nil
-                                                 isUTF8:nil
-                                          substitutions:nil
-                                       windowController:self
-                                             completion:^(PTYSession * _Nullable newSession, BOOL ok) {
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
+                                                      canPrompt:YES
+                                                     objectType:objectType
+                                               serverConnection:nil
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:environment
+                                                    customShell:[ITAddressBookMgr customShellForProfile:profile]
+                                                         oldCWD:previousDirectory
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:self
+                                                          ready:nil
+                                                     completion:^(PTYSession * _Nullable newSession, BOOL ok) {
         if (completion) {
             completion(newSession, ok);
         }
     }];
+    [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1) {

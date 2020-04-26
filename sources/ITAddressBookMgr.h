@@ -402,8 +402,15 @@ typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
 
 // This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSString *)descFromFont:(NSFont*)font __attribute__((deprecated));
-+ (NSString *)bookmarkCommand:(Profile*)bookmark
-                forObjectType:(iTermObjectType)objectType;
++ (void)computeCommandForProfile:(Profile *)profile
+                      objectType:(iTermObjectType)objectType
+                           scope:(iTermVariableScope *)scope
+                      completion:(void (^)(NSString *command))completion;
+
+// Like computeCommandForProfile:objectType:scope:completion: but does not evaluate it.
++ (NSString *)bookmarkCommandSwiftyString:(Profile *)bookmark
+                            forObjectType:(iTermObjectType)objectType;
+
 + (NSString *)customShellForProfile:(Profile *)profile;
 
 // Indicates if it is safe to remove the profile from the model.

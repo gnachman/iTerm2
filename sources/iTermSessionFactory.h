@@ -17,6 +17,43 @@ NS_ASSUME_NONNULL_BEGIN
 @class Profile;
 @class PseudoTerminal;
 
+@interface iTermSessionAttachOrLaunchRequest: NSObject
+@property (nonatomic, strong) PTYSession *session;
+@property (nonatomic) BOOL canPrompt;
+@property (nonatomic) iTermObjectType objectType;
+@property (nullable, nonatomic) iTermGeneralServerConnection *serverConnection;
+@property (nonatomic, nullable, copy) NSString *urlString;
+@property (nonatomic) BOOL allowURLSubs;
+@property (nonatomic, nullable, copy) NSDictionary *environment;
+@property (nonatomic, nullable, copy) NSString *customShell;
+@property (nonatomic, nullable, copy) NSString *oldCWD;
+@property (nonatomic) BOOL forceUseOldCWD;  // Change custom directory setting to make it use the passed-in oLDCWD
+@property (nonatomic, nullable, copy) NSString *command;   // Overrides profile's command if nonnil
+@property (nonatomic) BOOL isUTF8;
+@property (nonatomic, nullable, copy) NSDictionary *substitutions;
+@property (nonatomic, strong) PseudoTerminal *windowController;
+@property (nonatomic, nullable, copy) void (^ready)(BOOL ok);
+@property (nonatomic, nullable, copy) void (^completion)(PTYSession * _Nullable session, BOOL ok);  // If nonnil, attachorLaunch may be async
+
++ (instancetype)launchRequestWithSession:(PTYSession *)aSession
+                               canPrompt:(BOOL)canPrompt
+                              objectType:(iTermObjectType)objectType
+                        serverConnection:(iTermGeneralServerConnection * _Nullable)serverConnection
+                               urlString:(nullable NSString *)urlString
+                            allowURLSubs:(BOOL)allowURLSubs
+                             environment:(nullable NSDictionary *)environment
+                             customShell:(nullable NSString *)customShell
+                                  oldCWD:(nullable NSString *)oldCWD
+                          forceUseOldCWD:(BOOL)forceUseOldCWD
+                                 command:(nullable NSString *)command
+                                  isUTF8:(nullable NSNumber *)isUTF8Number  // Overrides profile's iSUTF8 if nonnil
+                           substitutions:(nullable NSDictionary *)substitutions
+                        windowController:(PseudoTerminal * _Nonnull)windowController
+                                   ready:(void (^ _Nullable)(BOOL ok))ready
+                              completion:(void (^ _Nullable)(PTYSession * _Nullable, BOOL))completion;
+
+@end
+
 @interface iTermSessionFactory : NSObject
 
 @property (nonatomic) BOOL promptingDisabled;
@@ -24,24 +61,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (PTYSession *)newSessionWithProfile:(Profile *)profile
                                parent:(nullable PTYSession *)parent;
 
-// Completion block is passed whether it was possible to create a session. If the user cancels a
-// substitution prompt, it will fail. On the other hand, if the command fails immediately
-// (e.g., no such file to exec) it will return success and immediately brokenPipe.
-- (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
-                             canPrompt:(BOOL)canPrompt
-                            objectType:(iTermObjectType)objectType
-                      serverConnection:(iTermGeneralServerConnection * _Nullable)serverConnection
-                             urlString:(nullable NSString *)urlString
-                          allowURLSubs:(BOOL)allowURLSubs
-                           environment:(nullable NSDictionary *)environment
-                           customShell:(nullable NSString *)customShell
-                                oldCWD:(nullable NSString *)oldCWD
-                        forceUseOldCWD:(BOOL)forceUseOldCWD  // Change custom directory setting to make it use the passed-in oLDCWD
-                               command:(nullable NSString *)command   // Overrides profile's command if nonnil
-                                isUTF8:(nullable NSNumber *)isUTF8Number // Overrides profile's iSUTF8 if nonnil
-                         substitutions:(nullable NSDictionary *)substitutions
-                      windowController:(PseudoTerminal * _Nonnull)windowController
-                            completion:(void (^ _Nullable)(PTYSession * _Nullable, BOOL))completion;  // If nonnil this may be async
+- (void)attachOrLaunchWithRequest:(iTermSessionAttachOrLaunchRequest *)request;
+
 @end
 
 NS_ASSUME_NONNULL_END

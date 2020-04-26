@@ -26,7 +26,6 @@
 
 @implementation iTermFunctionCallTextFieldDelegate {
     iTermFunctionCallSuggester *_suggester;
-    __weak id _passthrough;
 }
 
 - (instancetype)initWithPathSource:(NSSet<NSString *> *(^)(NSString *))pathSource

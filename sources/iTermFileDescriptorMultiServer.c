@@ -979,7 +979,6 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
     return 1;
 }
 
-
 // There should be a single command-line argument, which is the path to the unix-domain socket
 // I'll use.
 int main(int argc, char *argv[]) {

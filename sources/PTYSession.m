@@ -1557,22 +1557,26 @@ ITERM_WEAKLY_REFERENCEABLE
                 customShell = aSession.customShell;
             }
             runCommandBlock = ^(iTermSessionCreationCompletionBlock completion) {
+                assert(completion);
+                iTermSessionAttachOrLaunchRequest *launchRequest =
+                [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
+                                                                  canPrompt:NO
+                                                                 objectType:objectType
+                                                           serverConnection:nil
+                                                                  urlString:nil
+                                                               allowURLSubs:NO
+                                                                environment:environmentArg
+                                                                customShell:customShell
+                                                                     oldCWD:oldCWD
+                                                             forceUseOldCWD:contents != nil && oldCWD.length
+                                                                    command:commandArg
+                                                                     isUTF8:isUTF8Arg
+                                                              substitutions:substitutionsArg
+                                                           windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
+                                                                      ready:nil
+                                                                 completion:completion];
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
-                [factory attachOrLaunchCommandInSession:aSession
-                                              canPrompt:NO
-                                             objectType:objectType
-                                       serverConnection:nil
-                                              urlString:nil
-                                           allowURLSubs:NO
-                                            environment:environmentArg
-                                            customShell:customShell
-                                                 oldCWD:oldCWD
-                                         forceUseOldCWD:contents != nil && oldCWD.length
-                                                command:commandArg
-                                                 isUTF8:isUTF8Arg
-                                          substitutions:substitutionsArg
-                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
-                                             completion:completion];
+                [factory attachOrLaunchWithRequest:launchRequest];
             };
         }
     } else {
@@ -4843,7 +4847,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
     DLog(@"%p set job name to %@", self, processInfo.name);
-    [self.variablesScope setValue:processInfo.name forVariableNamed:iTermVariableKeySessionJob];
+    NSString *name = processInfo.name;
+
+    // This is a gross hack but I haven't found a nicer way to do it yet. When exec fails (or takes
+    // enough time that we happen to poll it before exec finishes ) then the process name is
+    // "iTermServer" as inherited from the parent. This avoids showing it in the UI.
+    if ([name isEqualToString:@"iTermServer"] && ![[self.program lastPathComponent] isEqualToString:name]) {
+        name = self.program.lastPathComponent;
+    }
+    [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
     [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
 

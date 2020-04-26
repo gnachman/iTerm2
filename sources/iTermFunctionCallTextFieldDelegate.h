@@ -11,6 +11,7 @@
 @interface iTermFunctionCallTextFieldDelegate : NSObject<iTermFocusReportingTextFieldDelegate>
 
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
+@property (nonatomic, weak) id passthrough;
 
 // If passthrough is nonnil then controlTextDidBeginEditing and controlTextDidEndEditing get called
 // on it.

@@ -2263,7 +2263,16 @@ static BOOL hasBecomeActive = NO;
                                            inWindow:(id)desiredWindow
                                          completion:(void (^)(PTYSession *session))completion {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
-    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+
+    void (^makeSession)(NSDictionary * _Nonnull,
+                        PseudoTerminal * _Nonnull,
+                        void (^ _Nonnull)(PTYSession * _Nonnull)) =
+    ^(NSDictionary * _Nonnull profile,
+      PseudoTerminal * _Nonnull term,
+      void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
+        [self makeSessionWithConnection:generalConnection windowController:term completion:didMakeSession];
+    };
+
     [iTermSessionLauncher launchBookmark:nil
                               inTerminal:desiredWindow
                                  withURL:nil
@@ -2272,35 +2281,40 @@ static BOOL hasBecomeActive = NO;
                              canActivate:NO
                       respectTabbingMode:NO
                                  command:nil
-                             makeSession:^(NSDictionary * _Nonnull profile,
-                                           PseudoTerminal * _Nonnull term,
-                                           void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
-        PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile
-                                                                   parent:nil] autorelease];
-        [term addSessionInNewTab:session];
-        iTermGeneralServerConnection temp = generalConnection;
-        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
-                                                                  canPrompt:NO
-                                                                 objectType:iTermWindowObject
-                                                           serverConnection:&temp
-                                                                  urlString:nil
-                                                               allowURLSubs:NO
-                                                                environment:@{}
-                                                                customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
-                                                                     oldCWD:nil
-                                                             forceUseOldCWD:NO
-                                                                    command:nil
-                                                                     isUTF8:nil
-                                                              substitutions:nil
-                                                           windowController:term
-                                                                 completion:nil];
-        didMakeSession(ok ? session : nil);
-    }
+                             makeSession:makeSession
                           didMakeSession:^(PTYSession * _Nonnull session) {
         [session showOrphanAnnouncement];
         completion(session);
     }
                               completion:nil];
+}
+
+- (void)makeSessionWithConnection:(iTermGeneralServerConnection)generalConnection
+                 windowController:(PseudoTerminal *)term
+                       completion:(void (^)(PTYSession *))didMakeSession {
+    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile
+                                                               parent:nil] autorelease];
+    [term addSessionInNewTab:session];
+    iTermGeneralServerConnection temp = generalConnection;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
+                                                      canPrompt:NO
+                                                     objectType:iTermWindowObject
+                                               serverConnection:&temp
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
+                                                         oldCWD:nil
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:term
+                                                          ready:^(BOOL ok) { didMakeSession(ok ? session : nil); }
+                                                     completion:nil];
+    [term.sessionFactory attachOrLaunchWithRequest:launchRequest];
 }
 
 #pragma mark - iTermRestorableStateControllerDelegate
