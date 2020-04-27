@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didCancelSwipe:(id)context;
 - (void)didCompleteSwipe:(id)context direction:(int)direction;
 - (void)didUpdateSwipe:(id)context amount:(CGFloat)amount;
+- (CGFloat)swipeWidth;
 @end
 
 NS_ASSUME_NONNULL_END

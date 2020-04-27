@@ -11456,4 +11456,8 @@ backgroundColor:(NSColor *)backgroundColor {
     currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
 }
 
+- (CGFloat)swipeWidth {
+    return self.tabView.frame.size.width;
+}
+
 @end

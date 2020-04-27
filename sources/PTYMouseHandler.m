@@ -16,6 +16,7 @@
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
+#import "iTermSwipeTracker.h"
 #import "NSEvent+iTerm.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 
@@ -35,16 +36,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
 }
 
-@interface PTYMouseSwipeContext: NSObject
-@property (nonatomic) BOOL swipeAnimationCanceled;
-@property (nonatomic) id userInfo;
-@property (nonatomic, weak) id<iTermSwipeHandler> swipeHandler;
-@end
-
-@implementation PTYMouseSwipeContext
-@end
-
-@interface PTYMouseHandler()<iTermAltScreenMouseScrollInferrerDelegate>
+@interface PTYMouseHandler()<iTermAltScreenMouseScrollInferrerDelegate, iTermSwipeTrackerDelegate>
 @end
 
 @implementation PTYMouseHandler {
@@ -89,7 +81,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     BOOL _haveSeenScrollWheelEvent;
 
-    PTYMouseSwipeContext *_swipeContext;
+    iTermSwipeTracker *_swipeTracker;
 }
 
 - (instancetype)initWithSelectionScrollHelper:(iTermSelectionScrollHelper *)selectionScrollHelper
@@ -108,6 +100,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         pointer_.delegate = pointerControllerDelegate;
         _mouseReportingFrustrationDetector = [[iTermMouseReportingFrustrationDetector alloc] init];
         _mouseReportingFrustrationDetector.delegate = mouseReportingFrustrationDetectorDelegate;
+        _swipeTracker = [[iTermSwipeTracker alloc] init];
+        _swipeTracker.delegate = self;
     }
     return self;
 }
@@ -837,104 +831,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // See issue 1350
 - (BOOL)tryToHandleSwipeBetweenTabsForScrollWheelEvent:(NSEvent *)event {
-    // NSScrollView is instructed to only forward horizontal scroll gesture events (see code above). However, depending
-    // on where your controller is in the responder chain, it may receive other scrollWheel events that we don't want
-    // to track as a fluid swipe because the event wasn't routed though an NSScrollView first.
-    if (event.phase == NSEventPhaseNone) {
-        DLog(@"Not a gesture scroll event %@", event);
-        return NO; // Not a gesture scroll event.
-    }
-    if (fabs(event.scrollingDeltaX) <= fabs(event.scrollingDeltaY)) {
-        DLog(@"Not horizontal");
-        return NO; // Not horizontal
-    }
-    // If the user has disabled tracking scrolls as fluid swipes in system preferences, we should respect that.
-    // NSScrollView will do this check for us, however, depending on where your controller is in the responder chain,
-    // it may scrollWheel events that are not filtered by an NSScrollView.
-    if (![NSEvent isSwipeTrackingFromScrollEventsEnabled]) {
-        DLog(@"Swipe tracking not enabled");
-        return NO;
-    }
-    if (_swipeContext && !_swipeContext.swipeAnimationCanceled) {
-        DLog(@"FYI cancel curent swipe");
-        // A swipe animation is still in gestureAmount. Just kill it.
-        _swipeContext.swipeAnimationCanceled = YES;
-        _swipeContext = nil;
-    }
-    id<iTermSwipeHandler> handler = [self.mouseDelegate mouseHandlerSwipeHandler:self];
-    const NSInteger numberOfTabsBefore = [handler canSwipeBack] ? 1 : 0;
-    const NSInteger numberOfTabsAfter = [handler canSwipeForward] ? -1 : 0;
-    if (numberOfTabsBefore == 0 && numberOfTabsAfter == 0) {
-        DLog(@"I am the only tab");
-        return NO;
-    }
-    PTYMouseSwipeContext *context = [[PTYMouseSwipeContext alloc] init];
-    context.swipeHandler = handler;
-    __weak __typeof(self) weakSelf = self;
-    [event trackSwipeEventWithOptions:0
-             dampenAmountThresholdMin:numberOfTabsAfter
-                                  max:numberOfTabsBefore
-                         usingHandler:^(CGFloat gestureAmount,
-                                        NSEventPhase phase,
-                                        BOOL isComplete,
-                                        BOOL *stop) {
-        if (context.swipeAnimationCanceled) {
-            *stop = YES;
-            DLog(@"Stop because canceled");
-            // Tear down animation overlay
-            return;
-        }
-        if (phase == NSEventPhaseBegan) {
-            DLog(@"Began");
-            context.userInfo = [context.swipeHandler didBeginSwipeWithAmount:gestureAmount];
-            if (!context.userInfo) {
-                *stop = YES;
-            }
-        }
-        // Update animation overlay to match gestureAmount
-        if (phase == NSEventPhaseEnded) {
-            // The user has completed the gesture successfully.
-            // This handler will continue to get called with updated gestureAmount
-            // to animate to completion, but just in case we need
-            // to cancel the animation (due to user swiping again) setup the
-            // controller / view to point to the new content / index / whatever
-            DLog(@"Swipe completed with delta %@", @(gestureAmount));
-            [context.swipeHandler didEndSwipe:context.userInfo amount:gestureAmount];
-        } else if (phase == NSEventPhaseCancelled) {
-            DLog(@"Cancelled");
-            // The user has completed the gesture un-successfully.
-            // This handler will continue to get called with updated gestureAmount
-            // But we don't need to change the underlying controller / view settings.
-            [context.swipeHandler didCancelSwipe:context.userInfo];
-        }
-        if (isComplete) {
-            DLog(@"Did complete with %@", @(gestureAmount));
-            // Animation has completed and gestureAmount is either -1, 0, or 1.
-            // This handler block will be released upon return from this iteration.
-            // Note: we already updated our view to use the new (or same) content
-            // above. So no need to do that here. Just...
-            // Tear down animation overlay here
-            int direction;
-            if (gestureAmount < 0) {
-                direction = 1;
-            } else if (gestureAmount > 0) {
-                direction = -1;
-            } else {
-                direction = 0;
-            }
-            [context.swipeHandler didCompleteSwipe:context.userInfo direction:direction];
-            [weakSelf didCompleteSwipe:direction];
-        } else {
-            [context.swipeHandler didUpdateSwipe:context.userInfo amount:gestureAmount];
-        }
-    }];
-    // Retain the ability to cancel the context later.
-    _swipeContext = context;
-    return YES;
+    return [_swipeTracker handleEvent:event];
 }
 
 - (void)didCompleteSwipe:(int)direction {
-    _swipeContext = nil;
 }
 
 - (void)swipeWithEvent:(NSEvent *)event {
@@ -1230,6 +1130,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)altScreenMouseScrollInferrerDidInferScrollingIntent:(BOOL)isTrying {
     [self.mouseDelegate mouseHandlerDidInferScrollingIntent:self trying:isTrying];
+}
+
+#pragma mark - iTermSwipeTrackerDelegate
+
+- (iTermSwipeState *)swipeTrackerWillBeginNewSwipe:(iTermSwipeTracker *)tracker
+                                             delta:(CGFloat)delta {
+    id<iTermSwipeHandler> handler = [self.mouseDelegate mouseHandlerSwipeHandler:self];
+    return [[iTermSwipeState alloc] initWithSwipeHandler:handler];
 }
 
 @end
