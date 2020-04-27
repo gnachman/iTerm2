@@ -103,7 +103,6 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
 
-
 @end
 
 @interface PTYMouseHandler : NSObject

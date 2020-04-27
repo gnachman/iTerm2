@@ -9,14 +9,22 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Post this with the identifier as the object to cancel a swipe.
+extern NSString *const iTermSwipeHandlerCancelSwipe;
+
 @protocol iTermSwipeHandler<NSObject>
-- (nullable id)didBeginSwipeWithAmount:(CGFloat)amount;
-- (BOOL)canSwipeBack;
-- (BOOL)canSwipeForward;
-- (void)didEndSwipe:(id)context amount:(CGFloat)amount;
-- (void)didCancelSwipe:(id)context;
-- (void)didCompleteSwipe:(id)context direction:(int)direction;
-- (void)didUpdateSwipe:(id)context amount:(CGFloat)amount;
+
+typedef struct {
+    NSInteger count;
+    NSInteger currentIndex;
+    CGFloat width;
+} iTermSwipeHandlerParameters;
+
+- (iTermSwipeHandlerParameters)swipeHandlerParameters;
+- (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(id)identifier;
+- (void)swipeHandlerSetOffset:(CGFloat)offset forSession:(id)session;
+- (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -485,8 +485,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     const int height = [self adjustHeightForStatusBar:size.height];
-    ITBetaAssert(size.width > 0, @"Invalid size");
-    ITBetaAssert(height > 0, @"Invalid size");
+    if (size.width == 0) {
+        size.width = 1;
+    }
+    if (size.height == 0) {
+        size.height = 1;
+    }
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                 size.width, height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
