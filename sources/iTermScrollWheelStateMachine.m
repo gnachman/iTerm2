@@ -71,62 +71,93 @@ NSString *iTermShortEventPhasesString(NSEvent *event) {
             event.scrollingDeltaX];
 }
 
-- (void)handleEvent:(NSEvent *)event {
-    DLog(@"handleEvent:%@ for %@", iTermShortEventPhasesString(event), self);
-    switch (self.state) {
-        case iTermScrollWheelStateMachineStateGround:
-            if (!!(event.phase & NSEventPhaseBegan) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateStartDrag;
-                return;
-            }
-            if (!!(event.phase & NSEventPhaseMayBegin) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateTouchAndHold;
-                return;
-            }
-            if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseChanged)) {
-                self.state = iTermScrollWheelStateMachineStateGround;
-                return;
-            }
-            if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseBegan)) {
-                // I'm not sure what this is or why it only happens sometimes. TODO
-                self.state = iTermScrollWheelStateMachineStateGround;
-                return;
-            }
-            if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseEnded)) {
-                self.state = iTermScrollWheelStateMachineStateGround;
-                return;
-            }
-            return;
-        case iTermScrollWheelStateMachineStateStartDrag:
-            if (!!(event.phase & NSEventPhaseChanged) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateDrag;
-                return;
-            }
-            [self unexpectedEvent:event];
-            return;
-        case iTermScrollWheelStateMachineStateDrag:
-            if (!!(event.phase & NSEventPhaseEnded) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateGround;
-                return;
-            }
-            if (!!(event.phase & NSEventPhaseChanged) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateDrag;
-                return;
-            }
-            [self unexpectedEvent:event];
-            return;
-        case iTermScrollWheelStateMachineStateTouchAndHold:
-            if (!!(event.phase & NSEventPhaseBegan) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateStartDrag;
-                return;
-            }
-            if (!!(event.phase & NSEventPhaseCancelled) && (event.momentumPhase == NSEventPhaseNone)) {
-                self.state = iTermScrollWheelStateMachineStateGround;
-                return;
-            }
-            [self unexpectedEvent:event];
-            return;
+static BOOL EqualPhases(NSEventPhase lhs, NSEventPhase rhs) {
+    if (rhs == 0) {
+        return lhs == 0;
     }
+    return !!(lhs & rhs);
+}
+
+- (void)handleEvent:(NSEvent *)event {
+    static struct {
+        iTermScrollWheelStateMachineState fromState;
+        NSEventPhase phase;
+        NSEventPhase momentumPhase;
+        iTermScrollWheelStateMachineState toState;
+    } transitions[] = {
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseBegan,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateStartDrag },
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseMayBegin,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateTouchAndHold },
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseNone,
+            NSEventPhaseChanged,
+            iTermScrollWheelStateMachineStateGround },
+        // I'm not sure what this is or why it only happens sometimes. TODO
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseNone,
+            NSEventPhaseBegan,
+            iTermScrollWheelStateMachineStateGround },
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseNone,
+            NSEventPhaseEnded,
+            iTermScrollWheelStateMachineStateGround },
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseChanged,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateGround },
+
+
+        { iTermScrollWheelStateMachineStateStartDrag,
+            NSEventPhaseChanged,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateDrag },
+        { iTermScrollWheelStateMachineStateStartDrag,
+            NSEventPhaseEnded,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateGround },
+
+
+        { iTermScrollWheelStateMachineStateDrag,
+            NSEventPhaseEnded,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateGround },
+        { iTermScrollWheelStateMachineStateDrag,
+            NSEventPhaseChanged,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateDrag },
+
+
+        { iTermScrollWheelStateMachineStateTouchAndHold,
+            NSEventPhaseBegan,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateStartDrag },
+        { iTermScrollWheelStateMachineStateTouchAndHold,
+            NSEventPhaseCancelled,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateGround }
+    };
+    const iTermScrollWheelStateMachineState initialState = self.state;
+    const NSEventPhase phase = event.phase;
+    const NSEventPhase momentumPhase = event.momentumPhase;
+    for (int i = 0; i < sizeof(transitions) / sizeof(*transitions); i++) {
+        if (initialState != transitions[i].fromState) {
+            continue;
+        }
+        if (!EqualPhases(phase, transitions[i].phase)) {
+            continue;
+        }
+        if (!EqualPhases(momentumPhase, transitions[i].momentumPhase)) {
+            continue;
+        }
+        self.state = transitions[i].toState;
+        return;
+    }
+    [self unexpectedEvent:event];
 }
 
 - (void)unexpectedEvent:(NSEvent *)event {

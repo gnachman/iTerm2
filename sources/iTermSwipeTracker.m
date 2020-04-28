@@ -529,7 +529,7 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
     static CGFloat sumOfFrictionPowers;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        const CGFloat desiredDuration = 5; //0.25;
+        const CGFloat desiredDuration = 0.25;
         const CGFloat framesPerSecond = 60;
         const CGFloat numberOfFrames = round(desiredDuration * framesPerSecond);
         sumOfFrictionPowers = 0;

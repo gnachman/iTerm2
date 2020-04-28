@@ -56,6 +56,7 @@
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
+#import "iTermSwipeImageView.h"
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
 #import "iTermSystemVersion.h"
@@ -11384,7 +11385,7 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 
     DLog(@"2. Make image view of current");
-    NSImageView *currentImageView = [NSImageView imageViewWithImage:currentSnapshot];
+    NSImageView *currentImageView = [iTermSwipeImageView imageViewWithImage:currentSnapshot];
     if (!currentImageView) {
         return nil;
     }
@@ -11396,7 +11397,7 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 
     DLog(@"4. Make image view of other");
-    NSImageView *otherImageView = [NSImageView imageViewWithImage:otherSnapshot];
+    NSImageView *otherImageView = [iTermSwipeImageView imageViewWithImage:otherSnapshot];
     if (!otherImageView) {
         return nil;
     }
@@ -11406,7 +11407,14 @@ backgroundColor:(NSColor *)backgroundColor {
     currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
     _contentView.tabView.hidden = YES;
     [_contentView addSubview:otherImageView];
-    [_contentView addSubview:currentImageView];
+    const NSInteger indexOfFirstSwipeImageView = [_contentView.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [view isKindOfClass:[iTermSwipeImageView class]];
+    }];
+    if (indexOfFirstSwipeImageView == NSNotFound) {
+        [_contentView addSubview:currentImageView];
+    } else {
+        [_contentView insertSubview:currentImageView atIndex:indexOfFirstSwipeImageView];
+    }
     DLog(@"6. Done");
 
     return @{ @"otherImageView": otherImageView,
