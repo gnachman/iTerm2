@@ -33,8 +33,6 @@
             return @"Drag";
         case iTermScrollWheelStateMachineStateTouchAndHold:
             return @"TouchAndHold";
-        case iTermScrollWheelStateMachineStateMomentum:
-            return @"Momentum";
     }
     return [@(self.state) stringValue];
 }
@@ -86,13 +84,11 @@ NSString *iTermShortEventPhasesString(NSEvent *event) {
                 return;
             }
             if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseChanged)) {
-//                self.state = iTermScrollWheelStateMachineStateMomentum;
                 self.state = iTermScrollWheelStateMachineStateGround;
                 return;
             }
             if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseBegan)) {
                 // I'm not sure what this is or why it only happens sometimes. TODO
-//                self.state = iTermScrollWheelStateMachineStateMomentum;
                 self.state = iTermScrollWheelStateMachineStateGround;
                 return;
             }
@@ -130,18 +126,6 @@ NSString *iTermShortEventPhasesString(NSEvent *event) {
             }
             [self unexpectedEvent:event];
             return;
-        case iTermScrollWheelStateMachineStateMomentum:
-            assert(NO);
-//            if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseChanged)) {
-//                self.state = iTermScrollWheelStateMachineStateMomentum;
-//                return;
-//            }
-//            if ((event.phase == NSEventPhaseNone) && !!(event.momentumPhase & NSEventPhaseEnded)) {
-//                self.state = iTermScrollWheelStateMachineStateGround;
-//                return;
-//            }
-//            [self unexpectedEvent:event];
-//            return;
     }
 }
 

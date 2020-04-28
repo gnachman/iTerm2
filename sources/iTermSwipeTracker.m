@@ -19,6 +19,14 @@
 
 const CGFloat gSwipeFriction = 0.1;
 
+typedef enum {
+    iTermSwipeStateMomentumStageNone,
+    // No possibility of momentum events. Continue toward 1.
+    iTermSwipeStateMomentumStagePositive,
+    // No possibility of momentum events. Continue toward -1.
+    iTermSwipeStateMomentumStageNegative
+}  iTermSwipeStateMomentumStage;
+
 typedef struct {
     iTermScrollWheelStateMachineState before;
     iTermScrollWheelStateMachineState after;
@@ -79,6 +87,7 @@ typedef struct {
 
 @property (nonatomic, readonly) BOOL isRetired;
 @property (nonatomic, readonly) BOOL wantsEvents;
+@property (nonatomic, readonly) iTermSwipeStateMomentumStage momentumStage;
 
 - (void)handleEvent:(NSEvent *)event
          transition:(iTermScrollWheelStateMachineStateTransition)transition;
@@ -104,7 +113,7 @@ typedef struct {
 }
 
 - (BOOL)shouldTrack {
-    if (_liveState && !_liveState.isRetired) {
+    if (_liveState != nil || _backgroundStates.count > 0) {
         return YES;
     }
     return NO;
@@ -114,12 +123,14 @@ typedef struct {
     if (!event.window) {
         return NO;
     }
-    const BOOL shouldTrack = [self internalHandleEvent:event];
-    if (!shouldTrack) {
+    const BOOL handled = [self internalHandleEvent:event];
+    if (!handled) {
         return NO;
     }
 
-    assert([self shouldTrack]);
+    if (![self shouldTrack]) {
+        return NO;
+    }
 
     DLog(@"Start tracking loop");
     const NSEventMask eventMask = NSEventMaskScrollWheel;
@@ -168,6 +179,9 @@ typedef struct {
 
     if (_liveState && !_liveState.isRetired) {
         [_liveState handleEvent:event transition:transition];
+        if (_liveState.momentumStage != iTermSwipeStateMomentumStageNone) {
+            [self backgroundLiveState];
+        }
         return YES;
     }
     if ([self createStateForEventIfNeeded:event transition:transition]) {
@@ -207,7 +221,7 @@ typedef struct {
 
 - (void)backgroundLiveState {
     assert(_liveState);
-    DLog(@"Background live state");
+    DLog(@"Background live state %@", _liveState);
     [_backgroundStates addObject:_liveState];
     _liveState = nil;
 }
@@ -252,24 +266,11 @@ typedef struct {
 
 @end
 
-typedef enum {
-    iTermSwipeStateCancelStageNone,
-    // drag->ground. Wait 2 ticks to see if momentum starts.
-    iTermSwipeStateCancelStageWait2Ticks,
-    // drag->ground happened 1 tick ago. Still waiting to see if momentum starts.
-    iTermSwipeStateCancelStageWait1Tick,
-    // No possibility of momentum events. Continue toward 1.
-    iTermSwipeStateCancelStageCanceledPositive,
-    // No possibility of momentum events. Continue toward -1.
-    iTermSwipeStateCancelStageCanceledNegative
-}  iTermSwipeStateCancelStage;
-
 @implementation iTermSwipeState {
     CGFloat _width;
     CGFloat _offset;
     CGFloat _momentum;
     iTermScrollWheelStateMachineState _state;
-    iTermSwipeStateCancelStage _cancelStage;
 }
 
 - (instancetype)initWithSwipeHandler:(id<iTermSwipeHandler>)handler {
@@ -286,43 +287,45 @@ typedef enum {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p width=%@ offset=%@ momentum=%@ state=%@ cancelStage=%@>",
+    return [NSString stringWithFormat:@"<%@: %p width=%@ offset=%@ momentum=%@ state=%@ momentumStage=%@>",
             NSStringFromClass(self.class),
             self,
             @(_width),
             @(_offset),
             @(_momentum),
             @(_state),
-            @(_cancelStage)];
+            @(self.momentumStage)];
 }
 
-- (iTermSwipeStateCancelStage)cancelType {
+- (iTermSwipeStateMomentumStage)desiredMomentumStage {
     if (_momentum < -1) {
-        return iTermSwipeStateCancelStageCanceledNegative;
+        return iTermSwipeStateMomentumStageNegative;
     }
     if (_momentum > 1) {
-        return iTermSwipeStateCancelStageCanceledPositive;
+        return iTermSwipeStateMomentumStagePositive;
     }
     
     const CGFloat fraction = _offset / _width;
     const CGFloat threshold = 0.25;
     if (fraction < 0) {
         if (fraction < -threshold) {
-            return iTermSwipeStateCancelStageCanceledNegative;
+            return iTermSwipeStateMomentumStageNegative;
         }
-        return iTermSwipeStateCancelStageCanceledPositive;
+        return iTermSwipeStateMomentumStagePositive;
     }
     if (fraction > threshold) {
-        return iTermSwipeStateCancelStageCanceledPositive;
+        return iTermSwipeStateMomentumStagePositive;
     }
-    return iTermSwipeStateCancelStageCanceledNegative;
+    return iTermSwipeStateMomentumStageNegative;
 }
 
-- (void)retireWithDirection:(int)direction {
-    DLog(@"Retire with direction %d", direction);
+- (void)retire {
+    DLog(@"Retire %@", self);
     assert(!_isRetired);
-    [self.swipeHandler didCompleteSwipe:self.userInfo direction:direction];
-    self.cancelStage = iTermSwipeStateCancelStageNone;
+    if (self.userInfo) {
+        [self.swipeHandler didCompleteAnimation:self.userInfo];
+    }
+    self.momentumStage = iTermSwipeStateMomentumStageNone;
     self.wantsEvents = NO;
     _isRetired = YES;
 }
@@ -332,30 +335,36 @@ typedef enum {
     assert(!_isRetired);
     if (_offset == 0) {
         // Super unlikely. This should only happen if the offset was 0 when the touch up occurred.
-        [self retireWithDirection:0];
+        [self retire];
         return;
     }
     const CGFloat force = -_momentum * gSwipeFriction;
-    switch (_cancelStage) {
-        case iTermSwipeStateCancelStageNone:
+    switch (self.momentumStage) {
+        case iTermSwipeStateMomentumStageNone:
             DLog(@"Nothing to do");
             return;
-        case iTermSwipeStateCancelStageWait2Ticks:
-            self.cancelStage = iTermSwipeStateCancelStageWait1Tick;
-            return;
-        case iTermSwipeStateCancelStageWait1Tick:
-            self.cancelStage = [self cancelType];
-            if ((_offset <= 0 && _cancelStage == iTermSwipeStateCancelStageCanceledPositive) ||
-                (_offset >= 0 && _cancelStage == iTermSwipeStateCancelStageCanceledNegative)) {
-                DLog(@"didCancel %@", self);
-                [self.swipeHandler didCancelSwipe:self.userInfo];
-            }
-            break;
-        case iTermSwipeStateCancelStageCanceledPositive:
-        case iTermSwipeStateCancelStageCanceledNegative:
+        case iTermSwipeStateMomentumStagePositive:
+        case iTermSwipeStateMomentumStageNegative:
             self.wantsEvents = NO;
-            [self applyForce:force];
-            break;
+            if (fabs(force) > 0.1) {
+                [self applyForce:force];
+                return;
+            }
+            DLog(@"Force less than threshold (%f)", force);
+            if (force < 0) {
+                if (_offset > 0) {
+                    [self didCrossZero];
+                    return;
+                }
+                [self retire];
+                return;
+            }
+            if (_offset < 0) {
+                [self didCrossZero];
+                return;
+            }
+            [self retire];
+            return;
     }
 }
 
@@ -365,26 +374,32 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
 
 - (void)applyForce:(CGFloat)force {
     DLog(@"Apply force %@ to %@", @(force), self);
-    _momentum += force;
     const CGFloat offsetBefore = _offset;
     _offset += _momentum;
+    _momentum += force;
     CGFloat clamped = Clamp(_offset / _width, -1, 1);
     DLog(@"After applying force: %@", self);
     if ((offsetBefore > 0 && _offset <= 0) || (offsetBefore < 0 && _offset >= 0)) {
-        DLog(@"Zero crossing");
-        [self.swipeHandler didUpdateSwipe:self.userInfo amount:0];
-        _offset = 0;
-        [self retireWithDirection:0];
-        self.cancelStage = iTermSwipeStateCancelStageNone;
+        [self didCrossZero];
         return;
     }
 
     [self.swipeHandler didUpdateSwipe:self.userInfo amount:clamped];
     if (_offset >= _width && force < 0) {
-        [self retireWithDirection:-1];
-    } else if (_offset <= -_width && force > 0) {
-        [self retireWithDirection:1];
+        [self retire];
+        return;
     }
+    if (_offset <= -_width && force > 0) {
+        [self retire];
+    }
+}
+
+- (void)didCrossZero {
+    DLog(@"Zero crossing");
+    [self.swipeHandler didUpdateSwipe:self.userInfo amount:0];
+    _offset = 0;
+    [self retire];
+    self.momentumStage = iTermSwipeStateMomentumStageNone;
 }
 
 - (void)dragBy:(CGFloat)delta {
@@ -407,6 +422,19 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
 }
 
 - (void)startDrag:(CGFloat)amount {
+    if (amount < 0) {
+        if (![self.swipeHandler canSwipeForward]) {
+            DLog(@"Can't swipe forward");
+            [self retire];
+            return;
+        }
+    } else if (amount > 0) {
+        if (![self.swipeHandler canSwipeBack]) {
+            DLog(@"Can't swipe back");
+            [self retire];
+            return;
+        }
+    }
     DLog(@"startDrag:%@ for %@", @(amount), self);
     assert(!_userInfo);
     _userInfo = [self.swipeHandler didBeginSwipeWithAmount:amount / _width];
@@ -434,9 +462,6 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
                     break;
                 case iTermScrollWheelStateMachineStateTouchAndHold:
                     break;
-                case iTermScrollWheelStateMachineStateMomentum:
-                    [self handleMomentumWithDelta:[self deltaXForEvent:event]];
-                    break;
                 case iTermScrollWheelStateMachineStateStartDrag:
                     [self startDrag:[self deltaXForEvent:event]];
                     break;
@@ -450,7 +475,6 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
                     [self dragBy:[self deltaXForEvent:event]];
                     break;
                 case iTermScrollWheelStateMachineStateGround:
-                case iTermScrollWheelStateMachineStateMomentum:
                 case iTermScrollWheelStateMachineStateStartDrag:
                 case iTermScrollWheelStateMachineStateTouchAndHold:
                     assert(NO);
@@ -466,9 +490,8 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
                     [self startDrag:[self deltaXForEvent:event]];
                     break;
                 case iTermScrollWheelStateMachineStateGround:
-                    [self retireWithDirection:0];
+                    [self retire];
                     break;
-                case iTermScrollWheelStateMachineStateMomentum:
                 case iTermScrollWheelStateMachineStateTouchAndHold:
                     assert(NO);
                     break;
@@ -480,26 +503,19 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
                     [self dragBy:[self deltaXForEvent:event]];
                     break;
                 case iTermScrollWheelStateMachineStateGround:
-                    self.cancelStage = iTermSwipeStateCancelStageWait2Ticks;
+                    self.momentumStage = [self desiredMomentumStage];
+                    if ((_offset <= 0 && self.momentumStage == iTermSwipeStateMomentumStagePositive) ||
+                        (_offset >= 0 && self.momentumStage == iTermSwipeStateMomentumStageNegative)) {
+                        DLog(@"didCancel %@", self);
+                        [self.swipeHandler didCompleteSwipe:self.userInfo direction:0];
+                        [self.swipeHandler didCancelSwipe:self.userInfo];
+                    } else if (self.momentumStage == iTermSwipeStateMomentumStagePositive) {
+                        [self.swipeHandler didCompleteSwipe:self.userInfo direction:-1];
+                    } else if (self.momentumStage == iTermSwipeStateMomentumStageNegative) {
+                        [self.swipeHandler didCompleteSwipe:self.userInfo direction:1];
+                    }
                     [self.swipeHandler didEndSwipe:self.userInfo amount:[self deltaXForEvent:event]];
                     break;
-                case iTermScrollWheelStateMachineStateMomentum:
-                case iTermScrollWheelStateMachineStateStartDrag:
-                case iTermScrollWheelStateMachineStateTouchAndHold:
-                    assert(NO);
-                    break;
-            }
-            break;
-        case iTermScrollWheelStateMachineStateMomentum:
-            switch (transition.after) {
-                case iTermScrollWheelStateMachineStateMomentum:
-                    [self handleMomentumWithDelta:[self deltaXForEvent:event]];
-                    break;
-                case iTermScrollWheelStateMachineStateGround:
-                    self.cancelStage = [self cancelType];
-                    self.wantsEvents = NO;
-                    break;
-                case iTermScrollWheelStateMachineStateDrag:
                 case iTermScrollWheelStateMachineStateStartDrag:
                 case iTermScrollWheelStateMachineStateTouchAndHold:
                     assert(NO);
@@ -513,7 +529,7 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
     static CGFloat sumOfFrictionPowers;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        const CGFloat desiredDuration = 0.25;
+        const CGFloat desiredDuration = 5; //0.25;
         const CGFloat framesPerSecond = 60;
         const CGFloat numberOfFrames = round(desiredDuration * framesPerSecond);
         sumOfFrictionPowers = 0;
@@ -521,25 +537,30 @@ static CGFloat Clamp(CGFloat value, CGFloat min, CGFloat max) {
             sumOfFrictionPowers += (pow(1 - gSwipeFriction, i));
         }
     });
-    return (distance / sumOfFrictionPowers);
+    // A little extra for rounding errors.
+    return (distance / sumOfFrictionPowers) * 1.02;
 }
 
-- (void)setCancelStage:(iTermSwipeStateCancelStage)stage {
-    DLog(@"setCancelStage %@ for %@", @(stage), self);
-    if (stage == iTermSwipeStateCancelStageCanceledPositive) {
+- (void)setMomentumStage:(iTermSwipeStateMomentumStage)stage {
+    DLog(@"setMomentumStage %@ for %@", @(stage), self);
+    if (stage == iTermSwipeStateMomentumStagePositive) {
         if (_offset >= 0) {
+            // Continue to completion
             _momentum = [self momentumForDistance:_width - _offset];
         } else {
-            _momentum = -[self momentumForDistance:_width + _offset];
+            // Cancel
+            _momentum = [self momentumForDistance:-_offset];
         }
-    } else if (stage == iTermSwipeStateCancelStageCanceledNegative) {
+    } else if (stage == iTermSwipeStateMomentumStageNegative) {
         if (_offset <= 0) {
+            // Continue to completion
             _momentum = -[self momentumForDistance:_width + _offset];
         } else {
-            _momentum = [self momentumForDistance:_width - _offset];
+            // Cancel
+            _momentum = -[self momentumForDistance:_offset];
         }
     }
-    _cancelStage = stage;
+    _momentumStage = stage;
 }
 
 - (void)setWantsEvents:(BOOL)wantsEvents {

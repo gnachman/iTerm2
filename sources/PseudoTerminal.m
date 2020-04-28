@@ -11437,6 +11437,9 @@ backgroundColor:(NSColor *)backgroundColor {
     } else if (direction < 0) {
         [self previousTab:nil];
     }
+}
+
+- (void)didCompleteAnimation:(id)context {
     NSDictionary *dict = context;
     NSImageView *otherImageView = dict[@"otherImageView"];
     [otherImageView removeFromSuperview];

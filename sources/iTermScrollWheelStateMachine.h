@@ -14,7 +14,6 @@ typedef NS_ENUM(NSUInteger, iTermScrollWheelStateMachineState) {
     iTermScrollWheelStateMachineStateStartDrag,
     iTermScrollWheelStateMachineStateDrag,
     iTermScrollWheelStateMachineStateTouchAndHold,
-    iTermScrollWheelStateMachineStateMomentum
 };
 
 extern NSString *iTermShortEventPhasesString(NSEvent *event);
