@@ -19,6 +19,7 @@
 #define DLog NSLog
 
 const CGFloat gSwipeFriction = 0.1;
+NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
 
 typedef enum {
     iTermSwipeStateMomentumStageNone,
@@ -240,6 +241,7 @@ typedef struct {
     iTermScrollWheelStateMachineState _state;
     NSInteger _targetIndex;
     BOOL _started;
+    NSString *_identifier;
 }
 
 - (instancetype)initWithSwipeHandler:(id<iTermSwipeHandler>)handler {
@@ -247,6 +249,11 @@ typedef struct {
     self = [super init];
     if (self) {
         _parameters = [handler swipeHandlerParameters];
+        _identifier = [[NSUUID UUID] UUIDString];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(cancelSwipe:)
+                                                     name:iTermSwipeHandlerCancelSwipe
+                                                   object:_identifier];
         if (_parameters.count == 0 || _parameters.width <= 0) {
             return nil;
         }
@@ -269,6 +276,11 @@ typedef struct {
             @(_momentum),
             @(_state),
             @(self.momentumStage)];
+}
+
+- (void)cancelSwipe:(NSNotification *)notification {
+    DLog(@"Cancel swipe by notification.\n%@", [NSThread callStackSymbols]);
+    [self retire];
 }
 
 - (iTermSwipeStateMomentumStage)desiredMomentumStage {
@@ -390,7 +402,8 @@ typedef struct {
     if (!_userInfo) {
         _initialOffset = _parameters.currentIndex * -_parameters.width;
         _rawOffset = _initialOffset + delta;
-        _userInfo = [self.swipeHandler swipeHandlerBeginSessionAtOffset:_initialOffset];
+        _userInfo = [self.swipeHandler swipeHandlerBeginSessionAtOffset:_initialOffset
+                                                             identifier:_identifier];
         if (fabs(_initialOffset - _rawOffset) >= 1) {
             [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:_userInfo];
         }

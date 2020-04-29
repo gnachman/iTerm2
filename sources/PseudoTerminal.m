@@ -217,6 +217,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
 @property(nonatomic, readwrite) BOOL isReplacingWindow;
+@property(nonatomic, copy) NSString *swipeIdentifier;
 @end
 
 @implementation PseudoTerminal {
@@ -930,6 +931,10 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                                                  name:NSApplicationDidBecomeActiveNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidResignActive:)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowOcclusionDidChange:)
                                                  name:iTermWindowOcclusionDidChange
                                                object:nil];
@@ -1201,7 +1206,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_methods release];
     [_screenConfigurationAtTimeOfForceFrame release];
     [_proxyIconOrderEnforcer release];
-
+    [_swipeIdentifier release];
     [super dealloc];
 }
 
@@ -1885,6 +1890,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self windowShouldClose:self.window]) {
         [self close];
     }
+}
+
+- (void)close {
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
+    [super close];
 }
 
 - (void)performClose:(id)sender {
@@ -3870,8 +3883,19 @@ ITERM_WEAKLY_REFERENCEABLE
     _hasBeenKeySinceActivation = [self.window isKeyWindow];
 }
 
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
+}
+
 - (void)windowDidResignKey:(NSNotification *)aNotification {
     PtyLog(@"PseudoTerminal windowDidResignKey");
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     if (_openingPopupWindow) {
         DLog(@"Ignoring it because we're opening a popup window now");
         return;
@@ -4106,6 +4130,10 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
            self, NSStringFromSize(proposedFrameSize), self.window.screen);
     DLog(@"%@", [NSThread callStackSymbols]);
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     if (self.togglingLionFullScreen || self.lionFullScreen || self.window.screen == nil) {
         DLog(@"Accepting proposal");
         return proposedFrameSize;
@@ -4443,6 +4471,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
         // Pretend nothing happened to avoid slowing down zooming.
@@ -5011,6 +5043,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)toggleTraditionalFullScreenMode {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
     if (!_fullScreen) {
         [self willEnterTraditionalFullScreenMode];
@@ -5550,6 +5586,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     togglingLionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [self updateUseMetalInAllTabs];
@@ -5651,6 +5691,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
     DLog(@"Window will exit lion fullscreen");
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     exitingLionFullscreen_ = YES;
 
     if (@available(macOS 10.14, *)) {
@@ -5723,6 +5767,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // Windows forget their collection behavior when exiting full screen when the app is a LSUIElement. Issue 8048.
     if ([[iTermApplication sharedApplication] isUIElement]) {
         self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
+    }
+}
+
+- (void)windowWillBeginSheet:(NSNotification *)notification {
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
     }
 }
 
@@ -6421,6 +6472,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView {
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
+    if (self.swipeIdentifier) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
+                                                            object:self.swipeIdentifier];
+    }
     for (PTYSession* session in [self allSessions]) {
         [session setIgnoreResizeNotifications:NO];
     }
@@ -11319,8 +11374,9 @@ backgroundColor:(NSColor *)backgroundColor {
 
 #pragma mark - iTermSwipeHandler
 
-- (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset {
+- (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
     assert(!_swipeContainerView);
+    self.swipeIdentifier = identifier;
 
     NSRect frame = self.contentView.frame;
     frame.origin.x = offset;
@@ -11375,12 +11431,17 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index {
+    self.swipeIdentifier = nil;
     [_contentView.tabView addSubview:self.currentTab.rootView];
     self.currentTab.rootView.frame = _contentView.tabView.bounds;
     [_swipeContainerView removeFromSuperview];
     [self updateUseMetalInAllTabs];
     _swipeContainerView = nil;
-    [self.tabView selectTabViewItemAtIndex:index];
+    if (index >= 0 && index < self.tabs.count) {
+        [self.tabView selectTabViewItemAtIndex:index];
+    } else if (self.tabs.count) {
+        [self.tabView selectLastTabViewItem:nil];
+    }
 }
 
 @end
