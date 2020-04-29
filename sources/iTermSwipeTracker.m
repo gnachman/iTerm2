@@ -239,6 +239,7 @@ typedef struct {
     CGFloat _momentum;
     iTermScrollWheelStateMachineState _state;
     NSInteger _targetIndex;
+    BOOL _started;
 }
 
 - (instancetype)initWithSwipeHandler:(id<iTermSwipeHandler>)handler {
@@ -369,6 +370,14 @@ typedef struct {
 }
 
 - (void)dragBy:(CGFloat)delta {
+    if (!_started) {
+        if (fabs(delta) > 10) {
+            _started = YES;
+        } else {
+            DLog(@"Ignore drag by %0.0f because it's not enough to get started", delta);
+            return;
+        }
+    }
     DLog(@"dragBy:%@ for %@", @(delta), self);
     _rawOffset += delta;
     _momentum = delta;
