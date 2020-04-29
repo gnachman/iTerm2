@@ -453,7 +453,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _settingStyleMask;
     BOOL _restorableStateInvalid;
     BOOL _inWindowDidMove;
-    NSInteger _swipingCount;
+    NSView *_swipeContainerView;
 
     // Work around a macOS bug. If you set the window's appearance to light when creating a new
     // lion full screen window while a lion full screen window is key then a bogus black window
@@ -10933,8 +10933,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (_contentView.tabBarControl.flashing) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonTabBarTemporarilyVisible;
-            return NO;
         }
+        return NO;
     }
     return YES;
 }
@@ -11186,7 +11186,7 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (BOOL)tabIsSwiping {
-    return _swipingCount > 0;
+    return _swipeContainerView != nil;
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate
@@ -11318,157 +11318,111 @@ backgroundColor:(NSColor *)backgroundColor {
 
 #pragma mark - iTermSwipeHandler
 
-- (NSRect)otherTabFrameForSwipeWithAmount:(CGFloat)amount {
-    CGFloat fraction;
-    if (amount < 0) {
-        fraction = 1 + MAX(MIN(0, amount), -1);
-    } else {
-        fraction = MAX(MIN(1, amount), 0) - 1;
-    }
-    NSRect frame = _contentView.tabView.bounds;
-    frame.origin.x = fraction * NSWidth(frame);
-    frame.origin.x += _contentView.tabView.frame.origin.x;
-    frame.origin.y += _contentView.tabView.frame.origin.y;
-    return frame;
-}
+- (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset {
+    assert(!_swipeContainerView);
 
-- (NSRect)currentTabFrameForSwipeWithAmount:(CGFloat)amount {
-    const CGFloat fraction = MAX(MIN(1, amount), -1);
-    NSRect frame = _contentView.tabView.bounds;
-    frame.origin.x = fraction * NSWidth(frame);
-    frame.origin.x += _contentView.tabView.frame.origin.x;
-    frame.origin.y += _contentView.tabView.frame.origin.y;
-    return frame;
-}
-
-// Setup animation overlay layers
-- (id)didBeginSwipeWithAmount:(CGFloat)amount {
-    _swipingCount += 1;
+    NSRect frame = self.contentView.frame;
+    frame.origin.x = offset;
+    frame.size.width *= self.tabs.count;
+    _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
-    id userInfo = [self reallyDidBeginSwipeWithAmount:amount];
-    if (!userInfo) {
-        _swipingCount -= 1;
-        [self updateUseMetalInAllTabs];
-    }
-    return userInfo;
-}
 
-- (id)reallyDidBeginSwipeWithAmount:(CGFloat)amount {
-    DLog(@"Begin swipe");
-    PTYTab *currentTab = self.currentTab;
-    if (!currentTab) {
-        return nil;
-    }
-    const NSInteger currentTabIndex = [self.tabs indexOfObject:self.currentTab];
-    if (currentTabIndex == NSNotFound) {
-        return nil;
-    }
-    PTYTab *otherTab;
-    if (amount < 0) {
-        // Will navigate to the tab right of current
-        if (currentTabIndex + 1 >= self.tabs.count) {
-            return nil;
-        }
-        otherTab = [self.tabs objectAtIndex:currentTabIndex + 1];
-    } else {
-        // Will navigate to the tab left of current
-        if (currentTabIndex <= 0) {
-            return nil;
-        }
-        otherTab = [self.tabs objectAtIndex:currentTabIndex - 1];
-    }
-
-    DLog(@"1. Get snapshot of current");
-    NSImage *currentSnapshot = [self.currentTab.rootView snapshot];
-    if (!currentSnapshot) {
-        return nil;
-    }
-
-    DLog(@"2. Make image view of current");
-    NSImageView *currentImageView = [iTermSwipeImageView imageViewWithImage:currentSnapshot];
-    if (!currentImageView) {
-        return nil;
-    }
-
-    DLog(@"3. Get snapshot of other");
-    NSImage *otherSnapshot = [otherTab.rootView snapshot];
-    if (!otherSnapshot) {
-        return nil;
-    }
-
-    DLog(@"4. Make image view of other");
-    NSImageView *otherImageView = [iTermSwipeImageView imageViewWithImage:otherSnapshot];
-    if (!otherImageView) {
-        return nil;
-    }
-
-    DLog(@"5. Wrap up");
-    otherImageView.frame = [self otherTabFrameForSwipeWithAmount:amount];
-    currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
-    _contentView.tabView.hidden = YES;
-    [_contentView addSubview:otherImageView];
-    const NSInteger indexOfFirstSwipeImageView = [_contentView.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [view isKindOfClass:[iTermSwipeImageView class]];
+    [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSView *view = tab.rootView;
+        NSRect frame = self.contentView.frame;
+        frame.origin.x = idx * frame.size.width;
+        view.frame = frame;
+        [_swipeContainerView addSubview:view];
     }];
-    if (indexOfFirstSwipeImageView == NSNotFound) {
-        [_contentView addSubview:currentImageView];
-    } else {
-        [_contentView insertSubview:currentImageView atIndex:indexOfFirstSwipeImageView];
+    [self.contentView.tabView addSubview:_swipeContainerView];
+
+    return @{};
+}
+
+- (iTermSwipeHandlerParameters)swipeHandlerParameters {
+    return (iTermSwipeHandlerParameters){
+        .count = self.tabs.count,
+        .currentIndex = [self.tabs indexOfObject:self.currentTab],
+        .width = NSWidth(self.contentView.frame)
+    };
+}
+
+- (NSUInteger)swipeHandlerCount {
+    return self.tabs.count;
+}
+
+- (NSUInteger)swipeHandlerIndex {
+    return [self.tabs indexOfObject:self.currentTab];
+}
+
+- (CGFloat)swipeHandlerWidth {
+    return NSWidth(self.contentView.frame);
+}
+
+// We want to keep the offset from getting too far from the limit (be it negative values
+// below zero or positive values past the maximum allowable offset). Let's use negative
+// values as an example. When the raw offset goes just slightly negative, we'd like the
+// effective offset to be approximately equal. As the raw offset becomes farther from
+// zero, the effective offset should start to change more slowly. And no matter how far
+// from zero the raw offset is, the effective offset can never exceed -limit.
+//
+// In other words, we want a function f(rawOffset) with the following properties:
+// 1. Monotonically decreasing
+// 2. Asymptotic on -limit
+// 3. f'(0)=1
+// 4. Smooth
+//
+// This function is asymptotic on l starting at 0 at x=0. We'll only consider x>=0.
+//   ĝ(x) = l * (1 - e^(-x))
+// The base e is arbitrary and doesn't give g'(0)=1. Let's call the base b and find a value
+// of b that gives g'(0)=1.
+//   g(x) = l * (1 - b^(-x))
+// A bit of the old wolfram alpha gives:
+//   dg/dx = l*b^(-x)*log(b) = g'(x)
+// Which at x=0 is simply:
+//   g'(0) = l * log(b)
+// We want g'(0)=1:
+//   1 = l * log(b)
+// Solve for b:
+//   b = e^(1/l)
+// Plug this back in to g:
+//   g(x) = l * (1 - b^(-x))
+//
+// The final results are:
+//   f(x) = -g(-x)          (for x < 0)
+//   f(x) = x               (for x in [0,m])
+//   f(x) = m - g(x - m)    (for x > m)
+- (CGFloat)truncatedSwipeOffset:(CGFloat)x {
+    const iTermSwipeHandlerParameters params = self.swipeHandlerParameters;
+    const CGFloat l = params.width * 0.25;
+    const CGFloat m = MAX(0, ((NSInteger)params.count) - 1) * params.width;
+    const CGFloat b = exp(1.0 / l);
+    CGFloat (^g)(CGFloat) = ^CGFloat(CGFloat x) {
+        return l * (1.0 - pow(b, -x));
+    };
+    if (x < 0) {
+        return -g(-x);
     }
-    DLog(@"6. Done");
-
-    return @{ @"otherImageView": otherImageView,
-              @"currentImageView": currentImageView,
-              @"tab": otherTab };
-}
-
-- (BOOL)canSwipeBack {
-    return self.currentTab && self.currentTab != self.tabs.firstObject;
-}
-
-- (BOOL)canSwipeForward {
-    return self.currentTab && self.currentTab != self.tabs.lastObject;
-}
-
-- (void)didEndSwipe:(id)context amount:(CGFloat)amount {
-    DLog(@"Swipe ended");
-}
-
-- (void)didCancelSwipe:(id)context {
-    DLog(@"Swipe canceled");
-}
-
-- (void)didCompleteSwipe:(id)context direction:(int)direction {
-    DLog(@"Swipe completed with direction %@", @(direction));
-    if (direction > 0) {
-        [self nextTab:nil];
-    } else if (direction < 0) {
-        [self previousTab:nil];
+    if (x <= m) {
+        return x;
     }
+    return m + g(x - m);
 }
 
-- (void)didCompleteAnimation:(id)context {
-    NSDictionary *dict = context;
-    NSImageView *otherImageView = dict[@"otherImageView"];
-    [otherImageView removeFromSuperview];
-    NSImageView *currentImageView = dict[@"currentImageView"];
-    [currentImageView removeFromSuperview];
-    _contentView.tabView.hidden = NO;
-    _swipingCount -= 1;
+- (void)swipeHandlerSetOffset:(CGFloat)rawOffset forSession:(id)session {
+    NSRect frame = _swipeContainerView.frame;
+    const CGFloat offset = -[self truncatedSwipeOffset:-rawOffset];
+    frame.origin.x = offset;
+    _swipeContainerView.frame = frame;
+}
+
+- (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index {
+    [_contentView.tabView addSubview:self.currentTab.rootView];
+    self.currentTab.rootView.frame = _contentView.tabView.bounds;
+    [_swipeContainerView removeFromSuperview];
     [self updateUseMetalInAllTabs];
-}
-
-- (void)didUpdateSwipe:(id)context amount:(CGFloat)amount {
-    DLog(@"Update swipe with amount %f", amount);
-    NSDictionary *dict = context;
-    NSImageView *otherImageView = dict[@"otherImageView"];
-    otherImageView.frame = [self otherTabFrameForSwipeWithAmount:amount];
-    NSImageView *currentImageView = dict[@"currentImageView"];
-    currentImageView.frame = [self currentTabFrameForSwipeWithAmount:amount];
-}
-
-- (CGFloat)swipeWidth {
-    return self.tabView.frame.size.width;
+    _swipeContainerView = nil;
+    [self.tabView selectTabViewItemAtIndex:index];
 }
 
 @end

@@ -10,21 +10,18 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermSwipeHandler<NSObject>
-- (nullable id)didBeginSwipeWithAmount:(CGFloat)amount;
-- (BOOL)canSwipeBack;
-- (BOOL)canSwipeForward;
-- (void)didEndSwipe:(id)context amount:(CGFloat)amount;
-- (void)didCancelSwipe:(id)context;
 
-// Called when momentum stage begun
-- (void)didCompleteSwipe:(id)context direction:(int)direction;
+typedef struct {
+    NSUInteger count;
+    NSUInteger currentIndex;
+    CGFloat width;
+} iTermSwipeHandlerParameters;
 
-// Called when momentum stage ends.
-- (void)didCompleteAnimation:(id)context;
+- (iTermSwipeHandlerParameters)swipeHandlerParameters;
+- (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset;
+- (void)swipeHandlerSetOffset:(CGFloat)offset forSession:(id)session;
+- (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index;
 
-// Update animation location
-- (void)didUpdateSwipe:(id)context amount:(CGFloat)amount;
-- (CGFloat)swipeWidth;
 @end
 
 NS_ASSUME_NONNULL_END

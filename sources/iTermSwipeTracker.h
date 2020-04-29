@@ -23,8 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermSwipeTrackerDelegate<NSObject>
 // Delta gives distance moved.
-- (iTermSwipeState *)swipeTrackerWillBeginNewSwipe:(iTermSwipeTracker *)tracker
-                                             delta:(CGFloat)delta;
+- (iTermSwipeState *)swipeTrackerWillBeginNewSwipe:(iTermSwipeTracker *)tracker;
 @end
 
 @interface iTermSwipeTracker : NSObject

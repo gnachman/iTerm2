@@ -1134,8 +1134,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - iTermSwipeTrackerDelegate
 
-- (iTermSwipeState *)swipeTrackerWillBeginNewSwipe:(iTermSwipeTracker *)tracker
-                                             delta:(CGFloat)delta {
+- (iTermSwipeState *)swipeTrackerWillBeginNewSwipe:(iTermSwipeTracker *)tracker {
     id<iTermSwipeHandler> handler = [self.mouseDelegate mouseHandlerSwipeHandler:self];
     return [[iTermSwipeState alloc] initWithSwipeHandler:handler];
 }
