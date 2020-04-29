@@ -12,8 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermSwipeHandler<NSObject>
 
 typedef struct {
-    NSUInteger count;
-    NSUInteger currentIndex;
+    NSInteger count;
+    NSInteger currentIndex;
     CGFloat width;
 } iTermSwipeHandlerParameters;
 

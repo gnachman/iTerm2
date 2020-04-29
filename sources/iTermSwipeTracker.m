@@ -12,6 +12,7 @@
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "iTermScrollWheelStateMachine.h"
+#import "iTermSquash.h"
 
 #warning DNS
 #undef DLog
@@ -110,7 +111,7 @@ typedef struct {
 }
 
 - (BOOL)shouldTrack {
-    return !_liveState.isRetired;
+    return _liveState != nil && !_liveState.isRetired;
 }
 
 - (BOOL)handleEvent:(NSEvent *)event {
@@ -163,8 +164,8 @@ typedef struct {
     if (_stateMachine.state == iTermScrollWheelStateMachineStateGround &&
         _liveState.momentumStage == iTermSwipeStateMomentumStageNone &&
         fabs(event.scrollingDeltaX) <= fabs(event.scrollingDeltaY)) {
-        DLog(@"Not horizontal x=%0.2f y=%02.f", fabs(event.scrollingDeltaX), fabs(event.scrollingDeltaY));
-        return NO; // Not horizontal
+        DLog(@"Not horizontal x=%0.2f y=%0.2f", fabs(event.scrollingDeltaX), fabs(event.scrollingDeltaY));
+        return NO;
     }
 
     iTermScrollWheelStateMachineStateTransition transition = {
@@ -233,7 +234,7 @@ typedef struct {
 @implementation iTermSwipeState {
     iTermSwipeHandlerParameters _parameters;
     CGFloat _width;
-    CGFloat _offset;
+    CGFloat _rawOffset;
     CGFloat _initialOffset;
     CGFloat _momentum;
     iTermScrollWheelStateMachineState _state;
@@ -258,11 +259,12 @@ typedef struct {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p width=%@ offset=%@ momentum=%@ state=%@ momentumStage=%@>",
+    return [NSString stringWithFormat:@"<%@: %p width=%@ offset=%@ (%@) momentum=%@ state=%@ momentumStage=%@>",
             NSStringFromClass(self.class),
             self,
             @(_width),
-            @(_offset),
+            @(self.squashedOffset),
+            @(_rawOffset),
             @(_momentum),
             @(_state),
             @(self.momentumStage)];
@@ -276,7 +278,7 @@ typedef struct {
         return iTermSwipeStateMomentumStagePositive;
     }
 
-    if (_offset < _initialOffset) {
+    if (self.squashedOffset < _initialOffset) {
         return iTermSwipeStateMomentumStagePositive;
     }
     return iTermSwipeStateMomentumStageNegative;
@@ -310,7 +312,7 @@ typedef struct {
             return;
         case iTermSwipeStateMomentumStagePositive:
         case iTermSwipeStateMomentumStageNegative:
-            if (_offset == [self offsetOfTargetIndex]) {
+            if (self.squashedOffset == [self offsetOfTargetIndex]) {
                 // Super unlikely. This should only happen if the offset was just right when the touch up occurred.
                 [self retire];
                 return;
@@ -321,14 +323,14 @@ typedef struct {
             }
             DLog(@"Force less than threshold (%f). Will retire.", force);
             if (force < 0) {
-                if ([self offsetIsAfterTargetIndex:_offset]) {
+                if ([self offsetIsAfterTargetIndex:self.squashedOffset]) {
                     [self didCrossZero];
                     return;
                 }
                 [self retire];
                 return;
             }
-            if (![self offsetIsAfterTargetIndex:_offset]) {
+            if (![self offsetIsAfterTargetIndex:self.squashedOffset]) {
                 [self didCrossZero];
                 return;
             }
@@ -339,22 +341,22 @@ typedef struct {
 
 - (void)applyForce:(CGFloat)force {
     DLog(@"Apply force %@ to %@", @(force), self);
-    const CGFloat offsetBefore = _offset;
-    _offset += _momentum;
+    const CGFloat offsetBefore = self.squashedOffset;
+    _rawOffset += _momentum;
     _momentum += force;
     DLog(@"After applying force: %@", self);
-    if (([self offsetIsAfterTargetIndex:offsetBefore] && ![self offsetIsAfterTargetIndex:_offset]) ||
-        (![self offsetIsAfterTargetIndex:offsetBefore] && [self offsetIsAfterTargetIndex:_offset])) {
+    if (([self offsetIsAfterTargetIndex:offsetBefore] && ![self offsetIsAfterTargetIndex:self.squashedOffset]) ||
+        (![self offsetIsAfterTargetIndex:offsetBefore] && [self offsetIsAfterTargetIndex:self.squashedOffset])) {
         [self didCrossZero];
         return;
     }
 
-    [self.swipeHandler swipeHandlerSetOffset:_offset forSession:self.userInfo];
-    if ([self offsetIsAfterTargetIndex:_offset] && force < 0) {
+    [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:self.userInfo];
+    if ([self offsetIsAfterTargetIndex:self.squashedOffset] && force < 0) {
         [self retire];
         return;
     }
-    if (![self offsetIsAfterTargetIndex:_offset] && force > 0) {
+    if (![self offsetIsAfterTargetIndex:self.squashedOffset] && force > 0) {
         [self retire];
     }
 }
@@ -368,25 +370,30 @@ typedef struct {
 
 - (void)dragBy:(CGFloat)delta {
     DLog(@"dragBy:%@ for %@", @(delta), self);
-    _offset += delta;
+    _rawOffset += delta;
     _momentum = delta;
     DLog(@"After drag: %@", self);
-    [self.swipeHandler swipeHandlerSetOffset:_offset forSession:self.userInfo];
+    [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:self.userInfo];
 }
 
-- (void)startDrag:(CGFloat)amount {
-    DLog(@"startDrag:%@ for %@", @(amount), self);
+- (void)startDrag:(CGFloat)delta {
+    DLog(@"startDrag:%@ for %@", @(delta), self);
     if (!_userInfo) {
         _initialOffset = _parameters.currentIndex * -_parameters.width;
-        _offset = _initialOffset + amount;
+        _rawOffset = _initialOffset + delta;
         _userInfo = [self.swipeHandler swipeHandlerBeginSessionAtOffset:_initialOffset];
-        if (fabs(_initialOffset - _offset) >= 1) {
-            [self.swipeHandler swipeHandlerSetOffset:_offset forSession:_userInfo];
+        if (fabs(_initialOffset - _rawOffset) >= 1) {
+            [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:_userInfo];
         }
-        DLog(@"Set offset=%@ initialOffset=%@", @(_offset), @(_initialOffset));
+        DLog(@"Set offset=%@ initialOffset=%@", @(self.squashedOffset), @(_initialOffset));
+    } else {
+        DLog(@"Resume existing session. Update raw & initial offsets");
+        _parameters.currentIndex = [self indexForOffset:self.squashedOffset round:0];
+        _initialOffset = _rawOffset;
+        _rawOffset += delta;
     }
     assert(_userInfo);
-    _momentum = amount;
+    _momentum = delta;
     DLog(@"After starting drag: %@", self);
 }
 
@@ -422,6 +429,8 @@ typedef struct {
                     [self dragBy:[self deltaXForEvent:event]];
                     break;
                 case iTermScrollWheelStateMachineStateGround:
+                    [self retire];
+                    break;
                 case iTermScrollWheelStateMachineStateStartDrag:
                 case iTermScrollWheelStateMachineStateTouchAndHold:
                     assert(NO);
@@ -481,6 +490,9 @@ typedef struct {
     return (distance / sumOfFrictionPowers) * 1.02;
 }
 
+// roundDirection < 0: round down
+// roundDirection = 0: round to nearest (or away from 0 if halfway)
+// roundDirection > 0: round up
 - (NSInteger)indexForOffset:(CGFloat)offset round:(int)roundDirection {
     CGFloat unroundedIndex = -round(offset) / _parameters.width;
     NSInteger (^clamp)(NSInteger) = ^NSInteger(NSInteger i) {
@@ -492,24 +504,48 @@ typedef struct {
         }
         return i;
     };
-    if (unroundedIndex == floor(unroundedIndex) || roundDirection < 0) {
+    if (roundDirection < 0) {
         return clamp(floor(unroundedIndex));
     }
-    return clamp(ceil(unroundedIndex));
-
+    if (roundDirection > 0) {
+        return clamp(ceil(unroundedIndex));
+    }
+    return clamp(round(unroundedIndex));
 }
 
 - (void)setMomentumStage:(iTermSwipeStateMomentumStage)stage {
     DLog(@"setMomentumStage %@ for %@", @(stage), self);
     _momentumStage = stage;
     if (stage == iTermSwipeStateMomentumStagePositive) {
-        _targetIndex = [self indexForOffset:_offset round:-1];
+        _targetIndex = [self indexForOffset:self.squashedOffset round:-1];
     } else if (stage == iTermSwipeStateMomentumStageNegative) {
-        _targetIndex = [self indexForOffset:_offset round:1];
+        _targetIndex = [self indexForOffset:self.squashedOffset round:1];
+    } else {
+        return;
     }
-    _momentum = [self momentumForDistance:[self offsetOfTargetIndex] - _offset];
+    // Clamp it
+    _targetIndex = MAX(MIN(_targetIndex,
+                           _parameters.currentIndex + 1),
+                       _parameters.currentIndex - 1);
+    assert(_targetIndex >= 0);
+    assert(_targetIndex < _parameters.count);
+    _momentum = [self momentumForDistance:[self offsetOfTargetIndex] - _rawOffset];
     DLog(@"Set target index to %@ given offset %@, width %@, stage %@. Set momentum to %@.",
-         @(_targetIndex), @(_offset), @(_parameters.width), @(stage), @(_momentum));
+         @(_targetIndex), @(self.squashedOffset), @(_parameters.width), @(stage), @(_momentum));
+}
+
+- (CGFloat)squashedOffset {
+    const CGFloat relativeOffset = _rawOffset - _initialOffset;
+    const CGFloat softMovementLimit = _parameters.width;
+    const CGFloat wiggle = _parameters.width / 4.0;
+    const CGFloat shifted = relativeOffset + softMovementLimit;
+    const CGFloat squashedShifted = iTermSquash(shifted,
+                                                softMovementLimit * 2,
+                                                wiggle);
+    const CGFloat squashedRelativeOffset = squashedShifted - softMovementLimit;
+    const CGFloat squashed = squashedRelativeOffset + _initialOffset;
+    DLog(@"Squash %0.0f (initial=%0.0f) -> %0.0f (width=%0.0f)", _rawOffset, _initialOffset, squashed, _parameters.width);
+    return squashed;
 }
 
 @end
