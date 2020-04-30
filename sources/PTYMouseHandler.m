@@ -779,13 +779,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Misc mouse
 
 - (BOOL)scrollWheel:(NSEvent *)event pointInView:(NSPoint)point {
-    if (@available(macOS 10.14, *)) {
-        // Limited to 10.14 because it requires proper view compositing.
-        if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
-            return YES;
-        }
-    }
-
     [_threeFingerTapGestureRecognizer scrollWheel];
 
     if (!_haveSeenScrollWheelEvent) {
@@ -822,6 +815,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // three fingers as described in issue 8538.
             if ([self.mouseDelegate mouseHandler:self moveSelectionToPointInEvent:event]) {
                 _committedToDrag = YES;
+            }
+        } else {
+            // Swipe between tabs.
+            if (@available(macOS 10.14, *)) {
+                // Limited to 10.14 because it requires proper view compositing.
+                if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
+                    return YES;
+                }
             }
         }
         return YES;
@@ -1071,21 +1072,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)scrollWheelShouldSendDataForEvent:(NSEvent *)event at:(NSPoint)point {
     if (![self.mouseDelegate mouseHandler:self viewCoordIsReportable:point]) {
+        DLog(@"Coord not reportable");
         return NO;
     }
     if (event.type != NSEventTypeScrollWheel) {
+        DLog(@"Not a wheel event");
         return NO;
     }
     if (![self.mouseDelegate mouseHandlerShowingAlternateScreen:self]) {
+        DLog(@"Not in alt screen");
         return NO;
     }
     if ([self shouldReportMouseEvent:event at:point] &&
         [self.mouseDelegate mouseHandlerMouseMode:self] != MOUSE_REPORTING_NONE) {
         // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
+        DLog(@"Mouse reporting is on");
         return NO;
     }
     if (event.it_modifierFlags & NSEventModifierFlagOption) {
         // Hold alt to disable sending arrow keys.
+        DLog(@"Alt held");
+        return NO;
+    }
+    if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
+        DLog(@"Not vertical");
         return NO;
     }
     BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
@@ -1093,8 +1103,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
 
     if (alternateMouseScroll || upString.length || downString.length) {
+        DLog(@"Feature enabled, have strings.");
         return YES;
     } else {
+        DLog(@"Feature disabled or empty/nil string");
         [_altScreenMouseScrollInferrer scrollWheel:event];
         return NO;
     }
