@@ -11378,16 +11378,18 @@ backgroundColor:(NSColor *)backgroundColor {
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;
 
-    NSRect frame = self.contentView.frame;
+    NSRect frame = NSZeroRect;
     frame.origin.x = offset;
-    frame.size.width *= self.tabs.count;
+    frame.size.width = self.tabs.firstObject.rootView.frame.size.width * self.tabs.count;
+    frame.size.height = self.tabs.firstObject.rootView.frame.size.height;
     _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
 
     [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
         NSView *view = tab.rootView;
-        NSRect frame = self.contentView.frame;
+        NSRect frame = view.frame;
         frame.origin.x = idx * frame.size.width;
+        frame.origin.y = 0;
         view.frame = frame;
         [_swipeContainerView addSubview:view];
     }];
@@ -11437,6 +11439,10 @@ backgroundColor:(NSColor *)backgroundColor {
     [_swipeContainerView removeFromSuperview];
     [self updateUseMetalInAllTabs];
     _swipeContainerView = nil;
+    if (index == NSNotFound) {
+        [self.tabView selectTabViewItem:self.currentTab.tabViewItem];
+        return;
+    }
     if (index >= 0 && index < self.tabs.count) {
         [self.tabView selectTabViewItemAtIndex:index];
     } else if (self.tabs.count) {

@@ -110,6 +110,10 @@ static BOOL EqualPhases(NSEventPhase lhs, NSEventPhase rhs) {
             NSEventPhaseChanged,
             NSEventPhaseNone,
             iTermScrollWheelStateMachineStateGround },
+        { iTermScrollWheelStateMachineStateGround,
+            NSEventPhaseEnded,
+            NSEventPhaseNone,
+            iTermScrollWheelStateMachineStateGround },
 
 
         { iTermScrollWheelStateMachineStateStartDrag,
@@ -130,6 +134,10 @@ static BOOL EqualPhases(NSEventPhase lhs, NSEventPhase rhs) {
             NSEventPhaseChanged,
             NSEventPhaseNone,
             iTermScrollWheelStateMachineStateDrag },
+        { iTermScrollWheelStateMachineStateDrag,
+            NSEventPhaseNone,
+            NSEventPhaseChanged,
+            iTermScrollWheelStateMachineStateGround },
 
 
         { iTermScrollWheelStateMachineStateTouchAndHold,
@@ -161,7 +169,8 @@ static BOOL EqualPhases(NSEventPhase lhs, NSEventPhase rhs) {
 }
 
 - (void)unexpectedEvent:(NSEvent *)event {
-    DLog(@"Ignore unexpected event in state %@: %@", @(self.state), iTermShortEventPhasesString(event));
+    DLog(@"Ignore unexpected event in state %@: %@",
+         [self stateString:self.state], iTermShortEventPhasesString(event));
 }
 
 - (void)setState:(iTermScrollWheelStateMachineState)state {
