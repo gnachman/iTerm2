@@ -1035,7 +1035,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *scriptsPath = [[NSFileManager defaultManager] autolaunchScriptPath];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
     for (NSString *file in enumerator) {
-        if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
+        if ([file hasPrefix:@"."]) {
             continue;
         }
         NSString *path = [scriptsPath stringByAppendingPathComponent:file];
