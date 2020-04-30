@@ -1093,7 +1093,18 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)panel:(id)sender validateURL:(NSURL *)url error:(NSError **)outError {
-    return [self urlIsUnderScripts:url];
+    if ([self urlIsUnderScripts:url]) {
+        return YES;
+    }
+    NSString *message = [NSString stringWithFormat:@"Full-environment scripts must be located under in your Application Support/iTerm2/Scripts directory:\n%@", [[NSFileManager defaultManager] scriptsPath]];
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"FullEnvironmentScriptsLocationRestricted"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Invalid Folder"
+                                window:sender];
+    return NO;
 }
 
 @end
