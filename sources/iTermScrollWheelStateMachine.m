@@ -9,10 +9,6 @@
 
 #import "DebugLogging.h"
 
-#warning DNS
-#undef DLog
-#define DLog NSLog
-
 @interface iTermScrollWheelStateMachine()
 @property (nonatomic, readwrite) iTermScrollWheelStateMachineState state;
 @end
