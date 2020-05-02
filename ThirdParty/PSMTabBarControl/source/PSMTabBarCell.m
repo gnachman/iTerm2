@@ -175,6 +175,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     BOOL _hasIcon;
     BOOL _highlighted;
     NSAccessibilityElement *_element;
+    NSMutableArray<PSMCachedTitle *> *_titleCache;
 }
 
 #pragma mark - Creation/Destruction
@@ -242,6 +243,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [_indicator release];
     [_tabColor release];
     [_element release];
+    [_titleCache release];
     [super dealloc];
 }
 
@@ -264,6 +266,30 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 #pragma mark - Accessors
+
+- (PSMCachedTitle *)cachedTitle {
+    if (!_titleCache) {
+        _titleCache = [[NSMutableArray alloc] init];
+    }
+    PSMCachedTitleInputs *inputs = [self cachedTitleInputs];
+    NSInteger index = [_titleCache indexOfObjectPassingTest:^BOOL(PSMCachedTitle * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj.inputs isEqual:inputs];
+    }];
+    if (index != NSNotFound) {
+        PSMCachedTitle *title = _titleCache[index];
+        if (index > 0) {
+            [_titleCache removeObjectAtIndex:index];
+            [_titleCache insertObject:title atIndex:0];
+        }
+        return title;
+    }
+    PSMCachedTitle *title = [[PSMCachedTitle alloc] initWith:inputs];
+    [_titleCache insertObject:title atIndex:0];
+    while (_titleCache.count > 2) {
+        [_titleCache removeLastObject];
+    }
+    return title;
+}
 
 - (BOOL)closeButtonVisible {
     return !_isCloseButtonSuppressed || [self highlightAmount] > 0;
@@ -293,7 +319,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 - (void)updateStringValue:(NSTimer *)timer {
     [_delayedStringValueTimer release];
     _delayedStringValueTimer = nil;
-    _stringSize = [[self attributedStringValue] size];
+    _stringSize = [[self cachedTitle] size];
     // need to redisplay now - binding observation was too quick.
     [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];
 }
@@ -302,10 +328,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     return _stringSize;
 }
 
-- (NSAttributedString *)attributedStringValue {
+- (PSMCachedTitleInputs *)cachedTitleInputs {
     id<PSMTabBarControlProtocol> control = [self psmTabControlView];
     id <PSMTabStyle> tabStyle = [control style];
-    return [tabStyle attributedStringValueForTabCell:self];
+    return [tabStyle cachedTitleInputsForTabCell:self];
 }
 
 - (PSMProgressIndicator *)indicator {

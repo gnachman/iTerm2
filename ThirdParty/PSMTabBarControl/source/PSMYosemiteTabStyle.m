@@ -16,41 +16,6 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
-@interface NSAttributedString(PSM)
-- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
-@end
-
-@implementation NSAttributedString(PSM)
-
-- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
-    if (self.length == 0) {
-        return self;
-    }
-    NSInteger representativeIndex = self.length;
-    representativeIndex = MAX(0, representativeIndex - 1);
-    NSDictionary *immutableAttributes = [self attributesAtIndex:representativeIndex effectiveRange:nil];
-    if (!immutableAttributes) {
-        return self;
-    }
-
-    NSMutableAttributedString *mutableCopy = [[self mutableCopy] autorelease];
-    [self enumerateAttributesInRange:NSMakeRange(0, self.length)
-                             options:0
-                          usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-                              NSMutableParagraphStyle *paragraphStyle = [[attrs[NSParagraphStyleAttributeName] mutableCopy] autorelease];
-                              if (!paragraphStyle) {
-                                  paragraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
-                              }
-                              paragraphStyle.alignment = textAlignment;
-                              NSMutableDictionary *updatedAttrs = [[attrs mutableCopy] autorelease];
-                              updatedAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
-                              [mutableCopy setAttributes:updatedAttrs range:range];
-                          }];
-    return mutableCopy;
-}
-
-@end
-
 @interface PSMTabBarCell(PSMYosemiteTabStyle)
 
 @property(nonatomic) NSAttributedString *previousAttributedString;
@@ -443,57 +408,13 @@
     }
 }
 
-- (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {
-    // Paragraph Style for Truncating Long Text
-    NSMutableParagraphStyle *truncatingTailParagraphStyle =
-        [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
-    [truncatingTailParagraphStyle setLineBreakMode:[cell truncationStyle]];
-    if (_orientation == PSMTabBarHorizontalOrientation) {
-        [truncatingTailParagraphStyle setAlignment:NSTextAlignmentCenter];
-    } else {
-        [truncatingTailParagraphStyle setAlignment:NSTextAlignmentLeft];
-    }
-
-    // graphic
-    NSImage *graphic = [(id)[[cell representedObject] identifier] psmTabGraphic];
-
-    NSFont *font = [NSFont systemFontOfSize:self.fontSize];
-    DLog(@"Computing text color for cell %@ with title %@", cell, cell.stringValue);
-    NSDictionary *attributes = @{ NSFontAttributeName: font,
-                                  NSForegroundColorAttributeName: [self textColorForCell:cell],
-                                  NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
-    NSAttributedString *textAttributedString = [[[NSAttributedString alloc] initWithString:[cell stringValue]
-                                                                                attributes:attributes] autorelease];
-    if (!graphic) {
-        return textAttributedString;
-    }
-    
-    NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
-    textAttachment.image = graphic;
-    textAttachment.bounds = NSMakeRect(0,
-                                       - (graphic.size.height - font.capHeight) / 2.0,
-                                       graphic.size.width,
-                                       graphic.size.height);
-    NSAttributedString *graphicAttributedString = [NSAttributedString attributedStringWithAttachment:textAttachment];
-
-    NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@"\u2002"
-                                                                 attributes:attributes] autorelease];
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
-    [result appendAttributedString:graphicAttributedString];
-    [result appendAttributedString:space];
-    [result appendAttributedString:textAttributedString];
-    [result enumerateAttribute:NSAttachmentAttributeName
-                       inRange:NSMakeRange(0, result.length)
-                       options:0
-                    usingBlock:^(id  _Nullable attachment, NSRange range, BOOL * _Nonnull stop) {
-                        if ([attachment isKindOfClass:[NSTextAttachment class]]) {
-                            [result addAttribute:NSParagraphStyleAttributeName
-                                           value:truncatingTailParagraphStyle
-                                           range:range];
-                        }
-                    }];
-
-    return result;
+- (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
+    return [[[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+                                        truncationStyle:cell.truncationStyle
+                                                  color:[self textColorForCell:cell]
+                                                graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
+                                            orientation:_orientation
+                                               fontSize:self.fontSize] autorelease];
 }
 
 - (CGFloat)fontSize {
@@ -945,7 +866,7 @@
 
     }
 
-    NSAttributedString *attributedString = [cell attributedStringValue];
+    PSMCachedTitle *cachedTitle = cell.cachedTitle;
 
     // icon
     BOOL drewIcon = NO;
@@ -957,7 +878,7 @@
                                                labelPosition:labelPosition
                                                      hasIcon:YES
                                                     iconRect:iconRect
-                                            attributedString:attributedString
+                                                 cachedTitle:cachedTitle
                                                reservedSpace:reservedSpace
                                                 boundingSize:NULL
                                                     truncate:NULL];
@@ -999,7 +920,7 @@
     }
 
     // label rect
-    if (attributedString.length > 0) {
+    if (!cachedTitle.isEmpty) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
         NSSize boundingSize;
@@ -1008,19 +929,19 @@
                                            labelPosition:labelPosition
                                                  hasIcon:drewIcon
                                                 iconRect:iconRect
-                                        attributedString:attributedString
+                                        cachedTitle:cachedTitle
                                            reservedSpace:reservedSpace
                                             boundingSize:&boundingSize
                                                 truncate:&truncate];
         labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
         labelRect.size.height = boundingSize.height;
 
+        NSAttributedString *attributedString = [cachedTitle attributedStringForcingLeftAlignment:truncate
+                                                                               truncatedForWidth:labelRect.size.width];
         if (truncate) {
-            attributedString = [attributedString attributedStringWithTextAlignment:NSTextAlignmentLeft];
             labelRect.origin.x += reservedSpace;
         }
 
-        attributedString = [self truncateAttributedStringIfNeeded:attributedString forWidth:labelRect.size.width];
         [attributedString drawInRect:labelRect];
     }
 }
@@ -1029,7 +950,7 @@
                  labelPosition:(CGFloat)labelPosition
                        hasIcon:(BOOL)drewIcon
                       iconRect:(NSRect)iconRect
-              attributedString:(NSAttributedString *)attributedString
+                   cachedTitle:(PSMCachedTitle *)cachedTitle
                  reservedSpace:(CGFloat)reservedSpace
                   boundingSize:(NSSize *)boundingSizeOut
                       truncate:(BOOL *)truncateOut {
@@ -1049,7 +970,7 @@
         labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
     }
 
-    NSSize boundingSize = [attributedString boundingRectWithSize:labelRect.size options:0].size;
+    NSSize boundingSize = [cachedTitle boundingRectWithSize:labelRect.size].size;
 
     BOOL truncate = NO;
     if (_orientation == PSMTabBarHorizontalOrientation) {
@@ -1067,27 +988,6 @@
         *boundingSizeOut = boundingSize;
     }
     return labelRect.size.width;
-}
-
-// In the neverending saga of Cocoa embarassing itself, if there isn't enough space for a text
-// attachment and the text that follows it, they are drawn overlapping.
-- (NSAttributedString *)truncateAttributedStringIfNeeded:(NSAttributedString *)attributedString
-                                                forWidth:(CGFloat)width {
-    __block BOOL truncate = NO;
-    [attributedString enumerateAttribute:NSAttachmentAttributeName
-                                 inRange:NSMakeRange(0, 1)
-                                 options:0
-                              usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
-                                  if (![value isKindOfClass:[NSTextAttachment class]]) {
-                                      return;
-                                  }
-                                  NSTextAttachment *attachment = value;
-                                  truncate = (attachment.image.size.width * 2 > width);
-                              }];
-    if (truncate) {
-        return [attributedString attributedSubstringFromRange:NSMakeRange(0, 1)];
-    }
-    return attributedString;
 }
 
 - (NSColor *)tabBarColor {

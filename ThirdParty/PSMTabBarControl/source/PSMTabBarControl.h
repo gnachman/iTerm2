@@ -7,6 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
+#import "PSMCachedTitle.h"
 #import "PSMProgressIndicator.h"
 
 extern NSString *const kPSMModifierChangedNotification;
@@ -140,11 +142,6 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderli
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView;
 
 @end
-
-typedef enum {
-    PSMTabBarHorizontalOrientation,
-    PSMTabBarVerticalOrientation
-} PSMTabBarOrientation;
 
 enum {
     PSMTab_SelectedMask = 1 << 1,

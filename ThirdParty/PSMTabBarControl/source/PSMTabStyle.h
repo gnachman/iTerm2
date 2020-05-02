@@ -43,7 +43,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 // cell values
 - (NSAttributedString *)attributedObjectCountValueForTabCell:(PSMTabBarCell *)cell;
-- (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell;
+- (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell;
 
 // drawing
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount;
