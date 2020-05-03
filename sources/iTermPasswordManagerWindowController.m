@@ -794,6 +794,11 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
                                      account:entry.combinedAccountNameUserName
                                        error:nil];
                 [self reloadAccounts];
+
+                const NSUInteger index = [self indexOfAccountName:entry.accountName];
+                if (index != NSNotFound) {
+                    [aTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+                }
             }
         }
     }
