@@ -125,6 +125,22 @@ static NSDictionary *gIntrospection;
 @interface iTermAdvancedSettingsViewController()<NSTextFieldDelegate>
 @end
 
+@interface iTermAdvancedSettingsTableView: NSTableView
+@end
+
+@implementation iTermAdvancedSettingsTableView
+
+// Corbin Dunn is my hero
+// https://stackoverflow.com/questions/7101237/respond-to-mouse-events-in-text-field-in-view-based-table-view
+- (BOOL)validateProposedFirstResponder:(NSResponder *)responder forEvent:(NSEvent *)event {
+    if ([responder isKindOfClass:[iTermTableViewTextField class]]) {
+        return YES;
+    }
+    return [super validateProposedFirstResponder:responder forEvent:event];
+}
+
+@end
+
 @implementation iTermAdvancedSettingsViewController {
     IBOutlet NSTableColumn *_settingColumn;
     IBOutlet NSTableColumn *_valueColumn;
