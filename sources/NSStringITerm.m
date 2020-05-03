@@ -455,8 +455,8 @@ static int fromhex(unichar c) {
     return newString;
 }
 
-- (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s
-{
+- (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)maybeString {
+    NSString *s = maybeString ?: @"";
     NSString *br = [NSString stringWithFormat:@"\\%C", echar];
     NSMutableArray *ranges = [NSMutableArray array];
     NSRange range = [self rangeOfString:br];
