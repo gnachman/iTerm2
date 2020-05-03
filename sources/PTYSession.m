@@ -407,6 +407,7 @@ static const NSUInteger kMaxHosts = 100;
     // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
     BOOL _tmuxTitleOutOfSync;
     PTYSessionTmuxMode _tmuxMode;
+    BOOL _tmuxWindowClosingByClientRequest;
 
     NSInteger _requestAttentionId;  // Last request-attention identifier
     iTermMark *_lastMark;
@@ -784,6 +785,10 @@ static const NSUInteger kMaxHosts = 100;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(apiDidStop:)
                                                      name:iTermAPIHelperDidStopNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxWillKillWindow:)
+                                                     name:iTermTmuxControllerWillKillWindow
                                                    object:nil];
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString * _Nonnull newValue) {
             if (weakSelf.view.window.isKeyWindow) {
@@ -3036,6 +3041,43 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
 }
 
+- (void)tmuxDidDisconnect {
+    DLog(@"tmuxDidDisconnect");
+    if (_exited) {
+        return;
+    }
+    _exited = YES;
+    [self cleanUpAfterBrokenPipe];
+    [self appendBrokenPipeMessage:@"tmux detached"];
+    switch (self.endAction) {
+        case iTermSessionEndActionClose:
+            if ([_delegate sessionShouldAutoClose:self]) {
+                [_delegate closeSession:self];
+                return;
+            }
+            break;
+
+        case iTermSessionEndActionRestart:
+        case iTermSessionEndActionDefault:
+            if (_tmuxWindowClosingByClientRequest ||
+                [self.naggingController tmuxWindowsShouldCloseAfterDetach]) {
+                [_delegate closeSession:self];
+                return;
+            }
+            break;
+    }
+
+    [self updateDisplayBecause:@"session ended"];
+}
+
+- (void)cleanUpAfterBrokenPipe {
+    _exited = YES;
+    [_logging stop];
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    [_delegate updateLabelAttributes];
+}
+
 // Called when the file descriptor closes. If -terminate was already called this does nothing.
 // Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
@@ -3055,11 +3097,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     DLog(@"  brokenPipe: set exited = YES");
-    _exited = YES;
-    [_logging stop];
-    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
-    [_delegate updateLabelAttributes];
+    [self cleanUpAfterBrokenPipe];
 
     if (_shouldRestart) {
         [_terminal resetByUserRequest:NO];
@@ -6846,6 +6884,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     [aSession reveal];
+}
+
+- (void)tmuxWillKillWindow:(NSNotification *)notification {
+    if ([self.delegate tmuxWindow] == [notification.object intValue]) {
+        _tmuxWindowClosingByClientRequest = YES;
+    }
 }
 
 - (NSString*)encodingName
@@ -12710,6 +12754,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerDisableBracketedPasteMode {
     self.terminal.bracketedPasteMode = NO;
+}
+
+- (void)naggingControllerCloseSession {
+    [_delegate closeSession:self];
 }
 
 #pragma mark - iTermComposerManagerDelegate

@@ -38,6 +38,8 @@ extern NSString *const kTmuxControllerAttachedSessionDidChange;
 extern NSString *const kTmuxControllerSessionWasRenamed;
 // Posted when set-titles option changes. Object is tmux controller.
 extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
+// Posted before sending kill-window
+extern NSString *const iTermTmuxControllerWillKillWindow;
 
 @interface TmuxController : NSObject
 
@@ -60,7 +62,7 @@ extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 @property(nonatomic, readonly) BOOL serverIsLocal;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
-
+@property(nonatomic, readonly) BOOL detached;
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
                         profile:(Profile *)profile

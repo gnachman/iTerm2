@@ -287,6 +287,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)timeoutForStringEvaluation;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)tmuxVariableWindowSizesSupported;
++ (const BOOL *)tmuxWindowsShouldCloseAfterDetach;
++ (void)setTmuxWindowsShouldCloseAfterDetach:(const BOOL *)value;
 + (BOOL)tolerateUnrecognizedTmuxCommands;
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)traditionalVisualBell;

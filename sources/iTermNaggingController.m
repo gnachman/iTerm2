@@ -25,6 +25,7 @@ static NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier 
 static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
+static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled = @"NoSyncNeverAskAboutMouseReportingFrustration";
@@ -32,8 +33,20 @@ static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustratio
 static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetBackgroundImageFile";
 static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
 static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"AlwaysDenyBackgroundImage";
+static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach = @"iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach";
 
 @implementation iTermNaggingController
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didChangeTmuxWindowsShouldCloseAfterDetach:)
+                                                     name:iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach
+                                                   object:nil];
+    }
+    return self;
+}
 
 - (BOOL)permissionToReportVariableNamed:(NSString *)name {
     static NSString *const allow = @"allow:";
@@ -403,6 +416,35 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
         }
     }];
     return NO;
+}
+
+- (BOOL)tmuxWindowsShouldCloseAfterDetach {
+    const BOOL *boolPtr = iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach;
+    if (boolPtr) {
+        return *boolPtr;
+    }
+    NSString *message = @"Close tmux windows after detaching?";
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach
+                                        options:@[ @"_Always", @"_Never" ]
+                                     completion:^(int selection) {
+        if (selection == 0 || selection == 1) {
+            BOOL value = (selection == 0);
+            iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach = &value;
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach
+                                                                object:@(value)];
+        }
+    }];
+    return NO;
+}
+
+- (void)didChangeTmuxWindowsShouldCloseAfterDetach:(NSNotification *)notification {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach];
+    if ([notification.object boolValue]) {
+        [self.delegate naggingControllerCloseSession];
+    }
 }
 
 #pragma mark - Variable Reporting

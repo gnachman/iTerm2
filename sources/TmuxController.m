@@ -43,6 +43,7 @@ NSString *const kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttac
 NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 NSString *const kTmuxControllerDidFetchSetTitlesStringOption = @"kTmuxControllerDidFetchSetTitlesStringOption";
+NSString *const iTermTmuxControllerWillKillWindow = @"iTermTmuxControllerWillKillWindow";
 
 static NSString *const iTermTmuxControllerEncodingPrefixHotkeys = @"h_";
 static NSString *const iTermTmuxControllerEncodingPrefixTabColors = @"t_";
@@ -98,7 +99,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
     NSString *lastOrigins_;
-    BOOL detached_;
     NSString *sessionName_;
     int sessionId_;
     NSMutableSet *pendingWindowOpens_;
@@ -138,6 +138,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize sessionObjects = sessionObjects_;
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 @synthesize sessionId = sessionId_;
+@synthesize detached = detached_;
 
 static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile *profile) {
     return @{ KEY_NORMAL_FONT: [iTermProfilePreferences stringForKey:KEY_NORMAL_FONT inProfile:profile],
@@ -1515,7 +1516,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)killWindow:(int)window {
-        [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermTmuxControllerWillKillWindow object:@(window)];
+    [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
@@ -2323,13 +2325,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
 }
 
-- (void)closeAllPanes
-{
+- (void)closeAllPanes {
     // Close all sessions. Iterate over a copy of windowPanes_ because the loop
     // body modifies it by closing sessions.
     for (NSString *key in [[windowPanes_ copy] autorelease]) {
         PTYSession *session = [windowPanes_ objectForKey:key];
-        [session.delegate.realParentWindow softCloseSession:session];
+        [session tmuxDidDisconnect];
     }
 
     // Clean up all state to avoid trying to reuse it.

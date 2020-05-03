@@ -3309,7 +3309,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)killOrHideTmuxWindow {
     int n = 0;
     for (PTYTab *aTab in [self tabs]) {
-        if ([aTab isTmuxTab]) {
+        if ([aTab isTmuxTab] && !aTab.tmuxController.detached) {
             n++;
         }
     }

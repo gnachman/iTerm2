@@ -32,6 +32,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 - (void)naggingControllerSetBackgroundImageToFileWithName:(nullable NSString *)filename;
 - (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently;
 - (void)naggingControllerDisableBracketedPasteMode;
+- (void)naggingControllerCloseSession;
 @end
 
 @interface iTermNaggingController : NSObject
@@ -69,6 +70,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 - (BOOL)shouldAskAboutClearingScrollbackHistory;
 - (void)askAboutClearingScrollbackHistory;
 - (BOOL)terminalCanChangeProfile;
+- (BOOL)tmuxWindowsShouldCloseAfterDetach;
 
 @end
 
