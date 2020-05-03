@@ -2360,6 +2360,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
+        [self updateWindowMenu];
         DLog(@"in a live resize");
         return;
     }
@@ -2380,6 +2381,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // Unless the window was just created, set the title immediately. Issue 5876.
             DLog(@"set title immediately to %@", self.desiredTitle);
             self.window.title = self.desiredTitle;
+            [self updateWindowMenu];
         }
         PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
         DLog(@"schedule timer to set window title");
@@ -2387,6 +2389,7 @@ ITERM_WEAKLY_REFERENCEABLE
             if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
                 DLog(@"timer fired. Set title to %@", weakSelf.desiredTitle);
                 weakSelf.window.title = weakSelf.desiredTitle;
+                [weakSelf updateWindowMenu];
             }
             weakSelf.desiredTitle = nil;
         });
@@ -5157,6 +5160,29 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
     [self updateForTransparency:self.ptyWindow];
+    [self updateWindowMenu];
+}
+
+- (void)updateWindowMenu {
+    if (!self.fullScreen) {
+        DLog(@"No - not fullscreen %@", self);
+        return;
+    }
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            break;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            DLog(@"No - not minimal/compact %@", self);
+            return;
+    }
+    DLog(@"Yes - changeWindowsItem %@", self);
+    [NSApp changeWindowsItem:self.window title:self.window.title filename:NO];
 }
 
 - (void)updateForTransparency:(NSWindow<PTYWindow> *)window {
@@ -8960,7 +8986,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self safelySetStyleMask:self.styleMask];
     [self updateProxyIcon];
     [self updateForTransparency:self.ptyWindow];
-
+    [self updateWindowMenu];
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
