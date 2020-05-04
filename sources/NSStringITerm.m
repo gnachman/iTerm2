@@ -1180,10 +1180,14 @@ int decode_utf8_char(const unsigned char *datap,
     // maximum field width, so ensure it is null terminated.
     utf8FontName[127] = '\0';
 
-    aFont = [NSFont fontWithName:[NSString stringWithFormat:@"%s", utf8FontName] size:fontSize];
+    DLog(@"Looking for font with string rep %@", self);
+    NSString *fontName = [NSString stringWithFormat:@"%s", utf8FontName];
+    aFont = [NSFont fontWithName:fontName size:fontSize];
     if (aFont == nil) {
+        DLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
+    DLog(@"Font %@ is %@", fontName, aFont);
 
     return aFont;
 }
