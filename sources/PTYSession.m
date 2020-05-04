@@ -3610,7 +3610,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // For fields that are no longer overridden because the shared profile took on the same value
     // as the sessions profile, remove those keys from overriddenFields.
     for (NSString *key in noLongerOverriddenFields) {
-        DLog(@"%@ is no longer overridden because shared profile now matches session profile value of %@", key, temp[key]);
+        DLog(@"%p: %@ is no longer overridden because shared profile now matches session profile value of %@",
+             self, key, temp[key]);
         [_overriddenFields removeObject:key];
     }
     DLog(@"After shared profile change overridden keys are: %@", _overriddenFields);
@@ -3641,10 +3642,10 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL isEqual = [newSessionValue isEqual:sharedValue];
         BOOL isOverridden = [_overriddenFields containsObject:aKey];
         if (!isEqual && !isOverridden) {
-            DLog(@"%@ is now overridden because %@ != %@", aKey, newSessionValue, sharedValue);
+            DLog(@"%p: %@ is now overridden because %@ != %@", self, aKey, newSessionValue, sharedValue);
             [_overriddenFields addObject:aKey];
         } else if (isEqual && isOverridden) {
-            DLog(@"%@ is no longer overridden because %@ == %@", aKey, newSessionValue, sharedValue);
+            DLog(@"%p: %@ is no longer overridden because %@ == %@", self, aKey, newSessionValue, sharedValue);
             [_overriddenFields removeObject:aKey];
         }
     }
@@ -4936,6 +4937,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([notification.object isEqual:_naggingController.missingSavedArrangementProfileGUID]) {
         Profile *newProfile = notification.userInfo[@"new profile"];
         [self setIsDivorced:NO withDecree:@"Saved arrangement was repaired. Set divorced to NO."];
+        DLog(@"saved arrangement repaired, remove all overridden fields");
         [_overriddenFields removeAllObjects];
         [_originalProfile release];
         _originalProfile = nil;
@@ -5166,6 +5168,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return _divorced;
 }
 
+- (void)inheritDivorceFrom:(PTYSession *)parent decree:(NSString *)decree {
+    assert(parent);
+    [self setIsDivorced:YES withDecree:decree];
+    [_overriddenFields removeAllObjects];
+    [_overriddenFields addObjectsFromArray:parent->_overriddenFields.allObjects];
+    DLog(@"%@: Set overridden fields from %@: %@", self, parent, _overriddenFields);
+}
+
 - (void)setIsDivorced:(BOOL)isDivorced withDecree:(NSString *)decree {
     _divorced = isDivorced;
     NSString *guid = self.profile[KEY_GUID];
@@ -5226,6 +5236,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [logs addObject:@"Stack trace:"];
     [logs addObject:[[NSThread callStackSymbols] componentsJoinedByString:@"\n"]];
     [self setDivorceDecree:[logs componentsJoinedByString:@"\n"]];
+    DLog(@"%p: divorce. overridden fields are now %@", self, _overriddenFields);
     return guid;
 }
 

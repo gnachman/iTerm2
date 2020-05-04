@@ -621,7 +621,7 @@ typedef enum {
 // overriddenFields.
 - (BOOL)reloadProfile;
 
-- (void)setIsDivorced:(BOOL)isDivorced withDecree:(NSString *)decree;
+- (void)inheritDivorceFrom:(PTYSession *)parent decree:(NSString *)decree;
 
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
