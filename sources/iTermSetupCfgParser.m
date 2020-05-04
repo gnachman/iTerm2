@@ -126,8 +126,10 @@ static int iTermSetupCfgParserIniHandler(void *user,
 
 // Sets one of _dependencies or _dependenciesError
 - (void)computeDependencies:(NSString *)value {
-    NSArray<NSString *> *names = [[value componentsSeparatedByString:@";"] mapWithBlock:^id(NSString *anObject) {
+    NSArray<NSString *> *names = [[[value componentsSeparatedByString:@";"] mapWithBlock:^id(NSString *anObject) {
         return [anObject stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }] filteredArrayUsingBlock:^BOOL(NSString *value) {
+        return value.length > 0;
     }];
     _dependencies = [[NSSet setWithArray:names] allObjects];
 }
