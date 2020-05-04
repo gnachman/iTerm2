@@ -8120,14 +8120,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [session.view updateDim];
     }
     if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]]) {
-        // We assign directly to isDivorced because we know the GUID is unique and in sessions
-        // instance and the original guid is already set. This might be possible to do earlier,
-        // but I'm afraid of introducing bugs.
-        // NOTE: I'm pretty sure there's a bug where the guid somehow ceases to
-        // be in the sessions instance and we assert later.
-        [newSession setIsDivorced:YES
-                       withDecree:[NSString stringWithFormat:@"Split vertically with guid %@",
-                                   newSession.profile[KEY_GUID]]];
+        // We know the GUID is unique and in sessions instance and the original guid is already set.
+        // This might be possible to do earlier, but I'm afraid of introducing bugs.
+        [newSession inheritDivorceFrom:targetSession
+                                decree:[NSString stringWithFormat:@"Split vertically with guid %@",
+                                        newSession.profile[KEY_GUID]]];
     }
     if (![newSession.tabColor isEqual:tabColor] && newSession.tabColor != tabColor) {
         newSession.tabColor = tabColor;
