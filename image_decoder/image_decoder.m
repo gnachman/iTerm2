@@ -10,6 +10,8 @@
 #include <syslog.h>
 #import "iTermSerializableImage.h"
 #include "sixel.h"
+#import <QuickLook/QuickLook.h>
+#include <unistd.h>
 
 @implementation NSImage(ImageDecoder)
 + (instancetype)imageWithRawData:(NSData *)data
@@ -144,6 +146,33 @@ static NSImage *ImageFromSixelData(NSData *data) {
     return image;
 }
 
+NSImage *ImageUsingQuicklook(NSData *data) {
+    NSString *template = [[NSString stringWithUTF8String:P_tmpdir] stringByAppendingPathComponent:@"imgXXXXXXXXXXXX"];
+    char *templateCString = strdup(template.UTF8String);
+    if (!templateCString) {
+        return nil;
+    }
+    const char *path = mktemp(templateCString);
+    NSURL *fileURL = [NSURL fileURLWithPath:[[NSString stringWithUTF8String:path] stringByAppendingPathExtension:@"svg"]];
+    unlink(templateCString);
+    [data writeToURL:fileURL atomically:NO];
+    NSDictionary *options = @{ (__bridge NSString *)kQLThumbnailOptionIconModeKey: @NO,
+                               (__bridge NSString *)kQLThumbnailOptionScaleFactorKey: @2.0 };
+
+    CGSize pixelSize = CGSizeMake(800, 800);
+    CGImageRef cgImage = QLThumbnailImageCreate(CFAllocatorGetDefault(), (__bridge CFURLRef)fileURL, pixelSize, (__bridge CFDictionaryRef)(options));
+    NSImage *result = nil;
+    if (cgImage != NULL) {
+        result = [[NSImage alloc] initWithCGImage:cgImage size:NSMakeSize(pixelSize.width / 2,
+                                                                          pixelSize.height / 2)];
+        CFRelease(cgImage);
+    }
+    unlink(fileURL.path.UTF8String);
+    free(templateCString);
+    return result;
+
+}
+
 int main(int argc, const char * argv[]) {
     syslog(LOG_DEBUG, "image_decoder started");
     @autoreleasepool {
@@ -170,6 +199,9 @@ int main(int argc, const char * argv[]) {
             image = ImageFromSixelData(data);
         } else {
             image = [[NSImage alloc] initWithData:data];
+        }
+        if (!image) {
+            image = ImageUsingQuicklook(data);
         }
         if (!image) {
             syslog(LOG_ERR, "data did not produce valid image");

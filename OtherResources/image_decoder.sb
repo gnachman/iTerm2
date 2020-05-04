@@ -22,7 +22,14 @@
   (regex "^/Library/Preferences/")
   (regex "^/System/Library/CoreServices/SystemAppearance.bundle")
   (regex "^/usr/lib")
-  (regex "^/etc"))
+  (regex "^/etc")
+  (subpath "/dev/dtracehelper")
+  (subpath "/private/var/db/timezone")
+  (literal "@APP_ROOT@/Contents/Info.plist")
+  (literal "@APP_ROOT@/Contents")
+  (subpath "@APP_ROOT@/Contents/Resources")
+  (subpath "/private/var/tmp")
+  )
   
 (allow ipc-posix-shm-read-data)
 
@@ -35,7 +42,53 @@
   (regex "^/Library$")
   (regex "^/Library/Fonts$")
   (regex "^/Library/Fonts/")
-  (regex "^/var$"))
+  (regex "^/var$")
+  (subpath "/private/var/db/dyld")
+  (literal "/private/etc/localtime")
+  (literal "/private/var/db/timezone/zoneinfo")
+  (literal "/")
+  )
 
 (allow process-exec (literal "@PATH_TO_EXECUTABLE@/@EXECUTABLE@"))
 (allow mach* sysctl-read)
+
+(allow file-write*
+    (subpath "/private/var/tmp")
+    (literal "/dev/dtracehelper")
+    )
+
+(allow file-ioctl
+    (literal "/dev/dtracehelper")
+)
+
+(allow file-issue-extension
+ (subpath "/private/var/tmp")
+)
+
+(allow file-read-xattr
+    (literal "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/Exceptions.plst")
+)
+
+(allow file-read-metadata
+ (literal "/private/var/db/.AppleSetupDone"))
+
+(allow file-read-xattr
+ (literal "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/Exceptions.plist"))
+
+(allow file-read-metadata
+ (literal "/Users"))
+
+(allow file-read-metadata
+ (literal "/Users"))
+
+(allow file-read-metadata
+ (literal "/tmp"))
+
+(allow file-read*
+ (subpath "/Users/gnachman"))
+(allow file-write*
+(subpath "/Users/gnachman"))
+(allow process-exec file-read-data file-read-metadata (literal "/Users/gnachman/git/iterm2/build/Development/iTerm2.app/Contents/MacOS/image_decoder"))
+(allow file*
+    (subpath "/dev/autofs_nowait")
+)
