@@ -1496,6 +1496,7 @@ DQ
                 <outlet property="_blinkingCursor" destination="4773" id="yLP-hh-9Zx"/>
                 <outlet property="_cursorType" destination="5017" id="5F8-RD-GnE"/>
                 <outlet property="_cursorTypeLabel" destination="4772" id="h5G-5R-9bQ"/>
+                <outlet property="_ligatureWarning" destination="JNC-H4-Kuf" id="mRU-9S-27Y"/>
                 <outlet property="_nonASCIIFontPicker" destination="e3h-Ex-Npu" id="9Sh-d5-Ydb"/>
                 <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
                 <outlet property="_nonAsciiLigatures" destination="6Fq-pl-5nd" id="x1S-bR-tKg"/>
@@ -2550,7 +2551,7 @@ DQ
             <point key="canvasLocation" x="2351" y="393"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="571" height="446"/>
+            <rect key="frame" x="0.0" y="0.0" width="572" height="446"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4765">
@@ -2871,12 +2872,21 @@ DQ
                     </connections>
                 </button>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yZc-ct-5Wq" customClass="BFPCompositeView">
-                    <rect key="frame" x="20" y="153" width="531" height="27"/>
+                    <rect key="frame" x="20" y="153" width="534" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JNC-H4-Kuf">
+                    <rect key="frame" x="262" y="182" width="291" height="14"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" alignment="left" title="⚠️ Enabling ligatures may reduce performance" id="voP-Nf-qdo">
+                        <font key="font" metaFont="message" size="11"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
             <accessibility identifier="prefsProfilesText"/>
-            <point key="canvasLocation" x="503.5" y="1335"/>
+            <point key="canvasLocation" x="503" y="1335"/>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="571" height="455"/>

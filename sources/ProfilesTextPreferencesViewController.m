@@ -51,6 +51,7 @@
     IBOutlet NSButton *_powerline;
     IBOutlet BFPCompositeView *_asciiFontPicker;
     IBOutlet BFPCompositeView *_nonASCIIFontPicker;
+    IBOutlet NSTextField *_ligatureWarning;
     BFPSizePickerView *_horizontalSpacingView;
     BFPSizePickerView *_verticalSpacingView;
 
@@ -117,19 +118,24 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    PreferenceInfo *info =
     [self defineControl:_asciiLigatures
                     key:KEY_ASCII_LIGATURES
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
-    [self defineUnsearchableControl:_nonAsciiLigatures
-                                key:KEY_NON_ASCII_LIGATURES
-                               type:kPreferenceInfoTypeCheckbox];
-
-    PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
-                                           key:KEY_AMBIGUOUS_DOUBLE_WIDTH
-                                   relatedView:nil
-                                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateLigatureWarning];
+    };
+    info = [self defineUnsearchableControl:_nonAsciiLigatures
+                                       key:KEY_NON_ASCII_LIGATURES
+                                      type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateLigatureWarning];
+    };
+    info = [self defineControl:_ambiguousIsDoubleWidth
+                           key:KEY_AMBIGUOUS_DOUBLE_WIDTH
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
@@ -257,6 +263,12 @@
 
     [self updateFontsDescriptionsIncludingSpacing:YES];
     [self updateNonAsciiFontViewVisibility];
+    [self updateLigatureWarning];
+}
+
+- (void)updateLigatureWarning {
+    const BOOL enabled = ([self boolForKey:KEY_ASCII_LIGATURES] || [self boolForKey:KEY_NON_ASCII_LIGATURES]);
+    _ligatureWarning.hidden = !enabled;
 }
 
 - (void)unicodeVersionDidChange {
