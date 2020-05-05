@@ -2302,6 +2302,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.isSingleUseSession) {
         return;
     }
+    if (_tmuxMode == TMUX_CLIENT && _tmuxController.detached) {
+        return;
+    }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
