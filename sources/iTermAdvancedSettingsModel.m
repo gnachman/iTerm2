@@ -516,12 +516,12 @@ DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01530456, SECTION_PASTEBOARD @"Delay
 DEFINE_INT(slowPasteBytesPerCall, 16, SECTION_PASTEBOARD @"Number of bytes to paste in each chunk when pasting slowly.");
 DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, SECTION_PASTEBOARD @"Delay in seconds between chunks when pasting slowly");
 DEFINE_BOOL(copyWithStylesByDefault, NO, SECTION_PASTEBOARD @"Copy to pasteboard on selection includes color and font style.");
-DEFINE_BOOL(copyBackgroundColor, YES, SECTION_PASTEBOARD @"When copying with color and font style, include the background color.");
+DEFINE_BOOL(copyBackgroundColor, YES, SECTION_PASTEBOARD @"Exclude the default background color when text is copied with color and font style?\nWhen off, the default background color will be left unset. Non-default background colors will remain.");
 DEFINE_INT(pasteHistoryMaxOptions, 20, SECTION_PASTEBOARD @"Number of entries to save in Paste History.\n");
 DEFINE_BOOL(disallowCopyEmptyString, NO, SECTION_PASTEBOARD @"Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, SECTION_PASTEBOARD @"Pressing a key will remove the selection.");
 DEFINE_SETTABLE_BOOL(promptForPasteWhenNotAtPrompt, PromptForPasteWhenNotAtPrompt, NO, SECTION_PASTEBOARD @"Warn before pasting when not at shell prompt?");
-DEFINE_BOOL(excludeBackgroundColorsFromCopiedStyle, NO, SECTION_PASTEBOARD @"Exclude background colors when text is copied with color and font style?");
+DEFINE_BOOL(excludeBackgroundColorsFromCopiedStyle, NO, SECTION_PASTEBOARD @"Exclude all background colors when text is copied with color and font style?\nThis includes both the default background color and non-default background colors.");
 DEFINE_BOOL(includePasteHistoryInAdvancedPaste, YES, SECTION_PASTEBOARD @"Include paste history in the advanced paste menu.");
 DEFINE_INT(alwaysWarnBeforePastingOverSize, -1, SECTION_PASTEBOARD @"When pasting more than this many characters, require confirmation.\nSet to -1 to disable warning.\nCharacters are counted in UTF-16.");
 DEFINE_BOOL(saveToPasteHistoryWhenSecureInputEnabled, NO, SECTION_PASTEBOARD @"Save to paste history when secure keyboard input is enabled?");
