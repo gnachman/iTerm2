@@ -136,6 +136,9 @@
 
 - (CGFloat)retinaRound:(CGFloat)value {
     NSWindow *window = self.window;
+    if (!window) {
+        return round(value);
+    }
     CGFloat scale = window.backingScaleFactor;
     if (!scale) {
         scale = [[NSScreen mainScreen] backingScaleFactor];
@@ -148,6 +151,9 @@
 
 - (CGFloat)retinaRoundUp:(CGFloat)value {
     NSWindow *window = self.window;
+    if (!window) {
+        return ceil(value);
+    }
     CGFloat scale = window.backingScaleFactor;
     if (!scale) {
         scale = [[NSScreen mainScreen] backingScaleFactor];
