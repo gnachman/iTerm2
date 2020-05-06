@@ -309,6 +309,11 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 - (BOOL)dockIconClicked {
     __block BOOL handled = NO;
     if (self.visibleWindowControllers.count > 0) {
+        if ([[iTermApplication sharedApplication] it_justBecameActive]) {
+            DLog(@"Just became active. Ignoring dock click.");
+            return YES;
+        }
+        DLog(@"Closing hotkey windows in response to dock click.");
         [self.profileHotKeys enumerateObjectsUsingBlock:^(iTermProfileHotKey  *_Nonnull profileHotKey,
                                                           NSUInteger idx,
                                                           BOOL *_Nonnull stop) {

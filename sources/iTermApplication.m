@@ -103,6 +103,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                                  selector:@selector(it_windowDidOrderOffScreen:)
                                                      name:@"NSWindowDidOrderOffScreenAndFinishAnimatingNotification"
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
 
     });
     return sharedApplication;
@@ -125,6 +129,18 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         _it_imeOpen = NO;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationInputMethodEditorDidClose object:nil];
     }
+}
+
+- (void)it_applicationDidBecomeActive:(NSNotification *)notification {
+    _it_justBecameActive = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf it_resetJustBecameActive];
+    });
+}
+
+- (void)it_resetJustBecameActive {
+    _it_justBecameActive = NO;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
