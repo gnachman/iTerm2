@@ -3184,7 +3184,7 @@
 		A6C7630B1B45C52B00E3C992 /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
 		A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
 		A6C7630E1B45C52B00E3C992 /* iTermBackgroundColorRun.m in Sources */ = {isa = PBXBuildFile; fileRef = A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */; };
-		A6C7630F1B45C52B00E3C992 /* iTermColorMap.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.mm */; };
+		A6C7630F1B45C52B00E3C992 /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6C763101B45C52B00E3C992 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
 		A6C763111B45C52B00E3C992 /* iTermFlippedView.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */; };
 		A6C763121B45C52B00E3C992 /* iTermImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57B61B01A01800B4F135 /* iTermImageInfo.m */; };
@@ -5921,7 +5921,7 @@
 		A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionLauncher.h; sourceTree = "<group>"; };
 		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
-		A6A13AA118C2D23300B241ED /* iTermColorMap.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermColorMap.mm; sourceTree = "<group>"; tabWidth = 4; };
+		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AAA18C3347200B241ED /* VT100Output.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Output.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -9131,7 +9131,7 @@
 				53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */,
 				A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */,
 				A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */,
-				A6A13AA118C2D23300B241ED /* iTermColorMap.mm */,
+				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
 				A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */,
 				A62EED9520DF602F00943DE3 /* iTermCommandRunner.m */,
 				A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */,
@@ -14128,7 +14128,7 @@
 				A6C762A71B45C52B00E3C992 /* iTermNewWindowCommand.m in Sources */,
 				A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */,
 				A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */,
-				A6C7630F1B45C52B00E3C992 /* iTermColorMap.mm in Sources */,
+				A6C7630F1B45C52B00E3C992 /* iTermColorMap.m in Sources */,
 				A6C763561B45C52B00E3C992 /* iTermOpenQuicklyTableView.m in Sources */,
 				A62C3B2C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				A6C7635F1B45C52B00E3C992 /* iTermPopupWindowController.m in Sources */,
