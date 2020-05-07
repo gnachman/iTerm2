@@ -1040,9 +1040,17 @@ const CGFloat kDefaultTagsWidth = 80;
         dataSource_.lockedGuid = nil;
         [self updateResultsForSearch];
         return YES;
-    } else {
-        return NO;
     }
+    if (commandSelector == @selector(insertNewline:) &&
+        (self.numberOfRows == 1 || tableView_.selectedRow != -1) &&
+        [self.delegate respondsToSelector:@selector(profileTableRowSelected:)]) {
+        if (tableView_.selectedRow == -1) {
+            [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+        }
+        [self.delegate profileTableRowSelected:self];
+        return YES;
+    }
+    return NO;
 }
 
 

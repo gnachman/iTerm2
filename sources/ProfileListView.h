@@ -50,7 +50,6 @@ extern NSString *const kProfileWasDeletedNotification;
 - (void)profileTableFilterDidChange:(ProfileListView *)profileListView;
 
 - (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView;
-
 @end
 
 @interface ProfileListView : NSView <
