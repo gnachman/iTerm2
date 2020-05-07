@@ -400,7 +400,9 @@
 // Only called when the app is active.
 - (CGEventRef)eventByRemappingEvent:(CGEventRef)event {
     NSEvent *cocoaEvent = [NSEvent eventWithCGEvent:event];
-    DLog(@"Remapping event %@", cocoaEvent);
+
+    DLog(@"Remapping event %@ from keyboard of type %@", cocoaEvent, @(CGEventGetIntegerValueField(event, kCGKeyboardEventKeyboardType)));
+    
     iTermShortcutInputView *shortcutView = nil;
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
     if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
