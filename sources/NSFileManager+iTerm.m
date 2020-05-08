@@ -193,7 +193,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)scriptsPathWithoutSpaces {
-    NSString *modernPath = [[self applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:@"Scripts"];
+    NSString *modernPath = [[self applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink] stringByAppendingPathComponent:@"Scripts"];
     return modernPath;
 }
 
