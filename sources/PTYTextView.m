@@ -5660,7 +5660,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 }
 
 - (BOOL)mouseHandlerShowingAlternateScreen:(PTYMouseHandler *)mouseHandler {
-    return [self.dataSource showingAlternateScreen];
+    return [self.dataSource.terminal softAlternateScreenMode];
 }
 
 - (void)mouseHandlerWillDrag:(PTYMouseHandler *)mouseHandler {
