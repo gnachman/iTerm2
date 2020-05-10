@@ -316,10 +316,13 @@ class Connection:
         return (int(parts[0]), int(parts[1]))
 
     def _get_connect_coro(self):
-        if gAppKitAvailable and os.path.exists(self._unix_domain_socket_path()):
-            return self._get_unix_connect_coro()
-        else:
-            return self._get_tcp_connect_coro()
+        if gAppKitAvailable:
+            path = self._unix_domain_socket_path()
+            exists = os.path.exists(path)
+
+            if exists:
+                return self._get_unix_connect_coro()
+        return self._get_tcp_connect_coro()
 
     def _remove_auth(self):
         # Remove these because they are not re-usable.
@@ -368,7 +371,7 @@ class Connection:
             (possibly stale) cookie in the environment.
         """
         if not gAppKitAvailable:
-          return False
+            return False
         if force:
             self._remove_auth()
         try:
@@ -466,6 +469,11 @@ raising an exception, pass retry=true to run_until_complete()
 or run_forever()
 
 """, file=sys.stderr)
+                    if gAppKitAvailable:
+                        path = self._unix_domain_socket_path()
+                        exists = os.path.exists(path)
+                        if exists:
+                            print(f"If you have downgraded from iTerm2 3.3.11+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
                     done = True
                     raise
             finally:
