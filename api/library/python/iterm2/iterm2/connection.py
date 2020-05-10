@@ -1,19 +1,20 @@
 """Manages the details of the websocket connection. """
 
 import asyncio
-import iterm2.auth
 import os
 import sys
 import traceback
 import typing
 import websockets
-import AppKit
+try:
+  import AppKit
+  import iterm2.auth
+  gAppKitAvailable = True
+except:
+  gAppKitAvailable = False
 
 import iterm2.api_pb2
 from iterm2._version import __version__
-
-# Add "unix" to this array to enable unix domain socket support. Experimental.
-CONNECT_FLAGS=[]
 
 def _getenv(key):
     """Gets an environment variable safely.
@@ -38,7 +39,7 @@ def _headers():
                "x-iterm2-disable-auth-ui": "true"}
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
-    else:
+    elif gAppKitAvailable:
         headers["x-iterm2-advisory-name"] = iterm2.auth.get_script_name()
     if key is not None:
         headers["x-iterm2-key"] = key
@@ -315,7 +316,7 @@ class Connection:
         return (int(parts[0]), int(parts[1]))
 
     def _get_connect_coro(self):
-        if "unix" in CONNECT_FLAGS:
+        if gAppKitAvailable and os.path.exists(self._unix_domain_socket_path()):
             return self._get_unix_connect_coro()
         else:
             return self._get_tcp_connect_coro()
@@ -327,15 +328,18 @@ class Connection:
             if var in os.environ:
                 del os.environ[var]
 
-    def _get_unix_connect_coro(self):
-        """Experimental: connect with unix domain socket."""
+    def _unix_domain_socket_path(self):
         applicationSupport = os.path.join(
             AppKit.NSSearchPathForDirectoriesInDomains(
                 AppKit.NSApplicationSupportDirectory,
                 AppKit.NSUserDomainMask,
                 True)[0],
             "iTerm2")
-        path = os.path.join(applicationSupport, "private", "socket")
+        return os.path.join(applicationSupport, "private", "socket")
+
+    def _get_unix_connect_coro(self):
+        """Experimental: connect with unix domain socket."""
+        path = self._unix_domain_socket_path()
         return websockets.client.unix_connect(
             path,
             "ws://localhost/",
@@ -363,6 +367,8 @@ class Connection:
             mean either a failure to connect or that there was already a
             (possibly stale) cookie in the environment.
         """
+        if not gAppKitAvailable:
+          return False
         if force:
             self._remove_auth()
         try:
