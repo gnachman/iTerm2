@@ -102,10 +102,6 @@ static NSString *const iTermStatusBarActionKey = @"action";
     }
 }
 
-- (CGFloat)statusBarComponentVerticalOffset {
-    return 0;
-}
-
 - (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
     [super setDelegate:delegate];
     [self updateTitleInButton];
