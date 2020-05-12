@@ -515,6 +515,7 @@ extension SearchableComboTableViewController: SearchableComboTableViewDelegate {
                                   keyDown event: NSEvent) {
         if event.characters == "\r" {
             select(tableView.selectedRow)
+            return
         }
         delegate?.searchableComboTableViewController(self, didType: event)
     }

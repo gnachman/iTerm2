@@ -127,8 +127,12 @@ extension SearchableComboListViewController: SearchableComboTableViewControllerD
 
     func searchableComboTableViewController(
         _ tableViewController: SearchableComboTableViewController, didType event: NSEvent) {
+        // Restore keyboard focus to the search field.
+        guard searchField.window != nil else {
+            return
+        }
         makeSearchFieldFirstResponderPreservingTableViewSelectedRow()
-        guard let fieldEditor = searchField.window?.fieldEditor(false, for: nil) else {
+        guard let fieldEditor = searchField.window?.fieldEditor(false, for: searchField) else {
             return
         }
         fieldEditor.selectedRange = NSRange(location: fieldEditor.string.utf16.count, length: 0)
