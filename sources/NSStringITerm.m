@@ -2294,6 +2294,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (double)it_localizedDoubleValue {
+    if ([[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] isEqualToString:@"∞"]) {
+        return INFINITY;
+    }
+    if ([[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] isEqualToString:@"-∞"]) {
+        return -INFINITY;
+    }
     NSScanner *scanner = [NSScanner localizedScannerWithString:self];
     double d;
     if (![scanner scanDouble:&d]) {
