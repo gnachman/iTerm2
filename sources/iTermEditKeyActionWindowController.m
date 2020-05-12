@@ -324,12 +324,15 @@
                                                                                       functionsOnly:NO];
                 }
                 _touchBarLabel.delegate = _labelDelegate;
+            } else {
+                _touchBarLabel.delegate = nil;
             }
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;
         case iTermEditKeyActionWindowControllerModeTouchBarItem:
             _keyboardShortcutLabel.stringValue = @"Touch Bar Label";
+            _touchBarLabel.delegate = nil;
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;
