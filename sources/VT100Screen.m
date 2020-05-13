@@ -1970,6 +1970,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return string;
 }
 
+- (NSString *)compactLineDumpWithContinuationMarks {
+    return [currentGrid_ compactLineDumpWithContinuationMarks];
+}
+
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
     NSMutableString *string =
         [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:self.width andContinuationMarks:YES]];

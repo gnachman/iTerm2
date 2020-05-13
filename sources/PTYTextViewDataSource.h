@@ -131,5 +131,6 @@
 // returns a nonnil state if the saved grid was swapped in (only possible if useSavedGrid
 // is YES, of course).
 - (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
+- (NSString *)compactLineDumpWithContinuationMarks;
 
 @end

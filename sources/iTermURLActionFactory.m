@@ -193,6 +193,9 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                 continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
                                            coords:self.prefixCoords];
+    DLog(@"Prefix respectingHardNewlines=%@ from %@ is %@ with coords %@",
+         @(forceRespect || self.respectHardNewlines),
+         VT100GridCoordDescription(self.coord), self.prefix, self.prefixCoords);
 
     self.suffixCoords = [NSMutableArray array];
     self.suffix = [self.extractor wrappedStringAt:self.coord
@@ -202,6 +205,9 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                 continuationChars:self.continuationCharsCoords
                               convertNullsToSpace:NO
                                            coords:self.suffixCoords];
+    DLog(@"Suffix respectingHardNewlines=%@ from %@ is %@ with coords %@",
+         @(forceRespect || self.respectHardNewlines),
+         VT100GridCoordDescription(self.coord), self.suffix, self.suffixCoords);
 
     [self urlActionForExistingFileWithCompletion:^(URLAction *action, BOOL workingDirectoryIsLocal) {
         self.workingDirectoryIsLocal = workingDirectoryIsLocal;
@@ -214,6 +220,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                 self.continuationCharsCoords = savedContinuationCharsCoords;
                 self.prefixCoords = savedPrefixCoords;
                 self.suffixCoords = savedSuffixCoords;
+                DLog(@"Restore coords. set prefixCoords=%@\nset suffixCoords=%@",
+                     self.prefixCoords, self.suffixCoords);
             }
             [self fail];
         }
@@ -550,6 +558,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 - (URLAction *)urlActionForString:(NSString *)string
                             range:(NSRange)stringRange
                       prefixChars:(int)prefixChars {
+    DLog(@"urlActionForString:%@ range:%@ prefixChars:%@", string, NSStringFromRange(stringRange), @(prefixChars));
     NSURL *url = [NSURL URLWithUserSuppliedString:string];
     DLog(@"See if I can open %@, aka %@", string, url);
     // If something can handle the scheme then we're all set.
@@ -562,19 +571,33 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         DLog(@"%@ is openable", url);
         VT100GridWindowedRange range;
         NSInteger j = self.prefix.length - prefixChars;
+        DLog(@"j=%@-%@=%@", @(self.prefix.length), @(prefixChars), @(j));
         if (j < self.prefixCoords.count) {
+            DLog(@"j=%@ < self.prefixCoords.count=%@", @(j), @(self.prefixCoords.count));
             range.coordRange.start = [self.prefixCoords[j] gridCoordValue];
+            DLog(@"range.coordRange.start=%@", VT100GridCoordDescription(range.coordRange.start));
         } else if (j == self.prefixCoords.count && j > 0) {
+            DLog(@"j=%@ == self.prefixCoords.count && j > 0", @(j));
             range.coordRange.start = [self.extractor successorOfCoord:[self.prefixCoords[j - 1] gridCoordValue]];
+            DLog(@"range.coordRange.start=%@ which is successor of last prefix coord %@",
+                 VT100GridCoordDescription(range.coordRange.start),
+                 VT100GridCoordDescription([self.prefixCoords[j - 1] gridCoordValue]));
         } else {
             DLog(@"prefixCoordscount=%@ j=%@", @(self.prefixCoords.count), @(j));
             return nil;
         }
         NSInteger i = stringRange.length - prefixChars;
+        DLog(@"i=%@-%@=%@", @(stringRange.length), @(prefixChars), @(i));
         if (i < self.suffixCoords.count) {
+            DLog(@"i < suffixCoords.count=%@", @(self.suffixCoords.count));
             range.coordRange.end = [self.suffixCoords[i] gridCoordValue];
+            DLog(@"range.coordRange.end=%@", VT100GridCoordDescription([self.suffixCoords[i] gridCoordValue]));
         } else if (i > 0 && i == self.suffixCoords.count) {
+            DLog(@"i == suffixCoords.count");
             range.coordRange.end = [self.extractor successorOfCoord:[self.suffixCoords[i - 1] gridCoordValue]];
+            DLog(@"range.coordRange.end=%@, successor of %@",
+                 VT100GridCoordDescription([self.suffixCoords[i - 1] gridCoordValue]),
+                 VT100GridCoordDescription([self.suffixCoords[i] gridCoordValue]));
         } else {
             DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.suffixCoords.count));
             return nil;
