@@ -3808,6 +3808,8 @@
 		A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
 		A6FF3F322435C8E5003CCB03 /* iTermSplitViewAnimation.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */; };
 		A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */; };
+		A6FF4AEE246BBFDB00410BA2 /* iTermTmuxWindowCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */; };
+		A6FF4AEF246BBFDB00410BA2 /* iTermTmuxWindowCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
@@ -6447,6 +6449,8 @@
 		A6FEA2871CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHotkeyPreferencesWindowController.xib; sourceTree = "<group>"; };
 		A6FF3F302435C8E5003CCB03 /* iTermSplitViewAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSplitViewAnimation.h; sourceTree = "<group>"; };
 		A6FF3F312435C8E5003CCB03 /* iTermSplitViewAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSplitViewAnimation.m; sourceTree = "<group>"; };
+		A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxWindowCache.h; sourceTree = "<group>"; };
+		A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxWindowCache.m; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
@@ -7539,6 +7543,8 @@
 				53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */,
 				53E98E79233C6B760094D8A9 /* iTermTmuxSessionObject.h */,
 				53E98E7A233C6B760094D8A9 /* iTermTmuxSessionObject.m */,
+				A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */,
+				A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -11145,6 +11151,7 @@
 				A6F718C12265AF1D0053488E /* iTermPathFinder.h in Headers */,
 				535EA4F120D0CB7A00FC81E0 /* iTermSwiftyString.h in Headers */,
 				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
+				A6FF4AEE246BBFDB00410BA2 /* iTermTmuxWindowCache.h in Headers */,
 				A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */,
 				A6B60CAB245E33C200DBD6A7 /* PSMCachedTitle.h in Headers */,
 				A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */,
@@ -13601,6 +13608,7 @@
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
+				A6FF4AEF246BBFDB00410BA2 /* iTermTmuxWindowCache.m in Sources */,
 				A61F457322FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m in Sources */,
 				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
 				A6AFD68924496EF1007D0660 /* iTermMultiServerMessageBuilder.m in Sources */,

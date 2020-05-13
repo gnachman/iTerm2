@@ -40,6 +40,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 extern NSString *const kTmuxControllerDidFetchSetTitlesStringOption;
 // Posted before sending kill-window
 extern NSString *const iTermTmuxControllerWillKillWindow;
+// Posted when one or more windows changes hidden status
+extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 @interface TmuxController : NSObject
 

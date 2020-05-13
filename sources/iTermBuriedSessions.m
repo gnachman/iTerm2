@@ -9,13 +9,14 @@
 #import "iTermBuriedSessions.h"
 
 #import "iTermApplication.h"
-#import "iTermApplicationDelegate.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermTmuxWindowCache.h"
 #import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "TmuxControllerRegistry.h"
 
 NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBuriedStateChangeTabNotification";
 
@@ -36,6 +37,10 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     self = [super init];
     if (self) {
         _array = [[NSMutableArray alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxWindowCacheDidChange:)
+                                                     name:iTermTmuxWindowCacheDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -52,7 +57,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         return;
     }
     [_array addObject:restorableSession];
-    [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [self updateMenus];
     [NSApp invalidateRestorableState];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:sessionToBury];
 }
@@ -103,7 +108,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             }
         }
     }
-    [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [self updateMenus];
     [NSApp invalidateRestorableState];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:session];
 }
@@ -127,8 +132,79 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             [_array addObject:restorable];
         }
     }
-    [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [self updateMenus];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:nil];
+}
+
+- (void)setMenus:(NSArray<NSMenu *> *)menus {
+    _menus = [menus copy];
+    [self updateMenus];
+}
+
+- (void)updateMenus {
+    for (NSMenu *menu in _menus) {
+        [self updateMenu:menu];
+    }
+}
+
+- (void)updateMenu:(NSMenu *)menu {
+    if (!menu) {
+        return;
+    }
+    BOOL needsSeparator = NO;
+    [menu removeAllItems];
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
+        item.representedObject = session;
+        item.target = self;
+        [menu addItem:item];
+        needsSeparator = YES;
+    }
+
+    for (iTermTmuxWindowCacheWindowInfo *window in [[iTermTmuxWindowCache sharedInstance] hiddenWindows]) {
+        if (needsSeparator) {
+            needsSeparator = NO;
+            [menu addItem:[NSMenuItem separatorItem]];
+        }
+
+        NSString *clientName = [window.clientName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (!clientName.length) {
+            clientName = @"tmux";
+        }
+        NSString *title = [NSString stringWithFormat:@"↣ %@ — %@", clientName, window.name];
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:title
+                                                       action:@selector(disinterTmuxWindow:)
+                                                keyEquivalent:@""] autorelease];
+        item.target = self;
+        item.representedObject = window;
+        [menu addItem:item];
+    }
+
+    [[menu.supermenu.itemArray objectPassingTest:^BOOL(NSMenuItem *element, NSUInteger index, BOOL *stop) {
+        return element.submenu == menu;
+    }] setEnabled:menu.itemArray.count > 0];
+}
+
+- (void)disinter:(NSMenuItem *)menuItem {
+    PTYSession *session = menuItem.representedObject;
+    [[iTermBuriedSessions sharedInstance] restoreSession:session];
+}
+
+// TODO: Remember the affinities and the profile.
+- (void)disinterTmuxWindow:(NSMenuItem *)menuItem {
+    iTermTmuxWindowCacheWindowInfo *window = menuItem.representedObject;
+    TmuxController *controller =
+        [[TmuxControllerRegistry sharedInstance] controllerForClient:window.clientName];
+    [controller openWindowWithId:window.windowNumber
+                     intentional:YES
+                         profile:controller.sharedProfile];
+
+}
+
+#pragma mark - tmux
+
+- (void)tmuxWindowCacheDidChange:(NSNotification *)notification {
+    [self updateMenus];
 }
 
 @end

@@ -12,6 +12,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermTmuxSessionObject : NSObject
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic) int number;
+
+- (iTermTmuxSessionObject *)copyWithName:(NSString *)name;
+
 @end
 
 NS_ASSUME_NONNULL_END

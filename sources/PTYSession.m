@@ -6183,7 +6183,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (remoteHost) {
         return [NSString stringWithFormat:@"%@@%@", remoteHost.username, remoteHost.hostname];
     } else {
-        return _nameController.presentationSessionTitle;
+        NSString *name = [_nameController.presentationSessionTitle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (name.length) {
+            return name;
+        }
+        return @"tmux";
     }
 }
 

@@ -71,7 +71,6 @@ extern NSString *const iTermApplicationWillTerminate;
 - (void)userDidInteractWithASession;
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
-- (void)updateBuriedSessionsMenu;
 - (void)didToggleTraditionalFullScreenMode;
 
 #pragma mark - Actions

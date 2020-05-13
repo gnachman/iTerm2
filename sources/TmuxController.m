@@ -44,6 +44,7 @@ NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose"
 NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 NSString *const kTmuxControllerDidFetchSetTitlesStringOption = @"kTmuxControllerDidFetchSetTitlesStringOption";
 NSString *const iTermTmuxControllerWillKillWindow = @"iTermTmuxControllerWillKillWindow";
+NSString *const kTmuxControllerDidChangeHiddenWindows = @"kTmuxControllerDidChangeHiddenWindows";
 
 static NSString *const iTermTmuxControllerEncodingPrefixHotkeys = @"h_";
 static NSString *const iTermTmuxControllerEncodingPrefixTabColors = @"t_";
@@ -111,7 +112,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
     NSMutableSet<NSNumber *> *hiddenWindows_;
     NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
-    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
     BOOL ambiguousIsDoubleWidth_;
     NSMutableDictionary<NSNumber *, NSDictionary *> *_hotkeys;
     NSMutableSet<NSNumber *> *_paneIDs;  // existing pane IDs
@@ -130,6 +130,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
     NSMutableDictionary<NSNumber *, void (^)(PTYSession *)> *_when;
+    NSMutableArray *_listWindowsQueue;
 }
 
 @synthesize gateway = gateway_;
@@ -174,6 +175,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
+        _listWindowsQueue = [[NSMutableArray alloc] init];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -205,6 +207,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_defaultTerminal release];
     [_userVars release];
     [_when release];
+    [_listWindowsQueue release];
 
     [super dealloc];
 }
@@ -344,25 +347,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                          repeats:NO];
 }
 
-- (void)session:(int)sessionId renamedTo:(NSString *)newName
-{
+- (void)session:(int)sessionId renamedTo:(NSString *)newName {
     if (sessionId == sessionId_) {
         self.sessionName = newName;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionWasRenamed
-                                                        object:[NSArray arrayWithObjects:
-                                                                [NSNumber numberWithInt:sessionId],
-                                                                newName,
-                                                                nil]];
+                                                        object:@[ @(sessionId), newName ?: @"", self ]];
 }
 
-- (void)windowWasRenamedWithId:(int)wid to:(NSString *)newName
-{
+- (void)windowWasRenamedWithId:(int)wid to:(NSString *)newName {
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowWasRenamed
-                                                        object:[NSArray arrayWithObjects:
-                                                                [NSNumber numberWithInt:wid],
-                                                                newName,
-                                                                nil]];
+                                                        object:@[ @(wid), newName ?: @"", self ]];
 }
 
 - (void)windowsChanged
@@ -674,8 +669,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
-    [listWindowsTimer_ invalidate];
-    listWindowsTimer_ = nil;
     detached_ = YES;
     [self closeAllPanes];
     [gateway_ release];
@@ -1581,6 +1574,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (theTab) {
         [[theTab realParentWindow] closeTab:theTab soft:YES];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
 }
 
 - (void)openWindowWithId:(int)windowId
@@ -1591,6 +1585,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         DLog(@"open intentional: Remove these window IDS to hidden: %d", windowId);
         [hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
         [self saveHiddenWindows];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
     }
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
     [gateway_ sendCommand:[NSString stringWithFormat:@"display -p -F %@ -t @%d",
@@ -1690,32 +1685,36 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@ -t \"$%d\"",
                                     kListWindowsFormat, sessionNumber];
+    NSArray *userInfo = @[listWindowsCommand,
+                          object,
+                          target,
+                          NSStringFromSelector(selector) ];
+    if ([_listWindowsQueue containsObject:userInfo]) {
+        // Already have this queued up.
+        return;
+    }
     // Wait a few seconds. We always get a windows-close notification when the last window in
     // a window closes. To avoid spamming the command line with list-windows, we wait a bit to see
     // if there is an exit notification coming down the pipe.
     const CGFloat kListWindowsDelay = 1.5;
-    [listWindowsTimer_ invalidate];
-    listWindowsTimer_ =
     [NSTimer scheduledTimerWithTimeInterval:kListWindowsDelay
                                      target:self
                                    selector:@selector(listWindowsTimerFired:)
-                                   userInfo:@[listWindowsCommand,
-                                              object,
-                                              target,
-                                              NSStringFromSelector(selector) ]
+                                   userInfo:userInfo
                                     repeats:NO];
 }
 
-- (void)listWindowsTimerFired:(NSTimer *)timer
-{
+- (void)listWindowsTimerFired:(NSTimer *)timer {
+    if (detached_) {
+        return;
+    }
     NSArray *array = [timer userInfo];
     NSString *command = array[0];
     id object = array[1];
     id target = array[2];
     NSString *selector = array[3];
 
-    [listWindowsTimer_ invalidate];
-    listWindowsTimer_ = nil;
+    [_listWindowsQueue removeObject:timer.userInfo];
 
     [gateway_ sendCommand:command
            responseTarget:self
@@ -2109,6 +2108,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
         }
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
 }
 
 - (void)getAffinitiesResponse:(NSString *)result {
@@ -2205,7 +2205,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return obj;
     }];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionsDidChange
-                                                        object:nil];
+                                                        object:self];
 }
 
 - (void)listedWindowsToOpenOne:(NSString *)response
@@ -2289,18 +2289,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     if (notify) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
-                                                            object:nil];
+                                                            object:@[ k, self ]];
     }
 }
 
-- (void)releaseWindow:(int)window
-{
+- (void)releaseWindow:(int)window {
     NSNumber *k = [NSNumber numberWithInt:window];
     iTermTmuxWindowState *state = _windowStates[k];
     state.refcount = state.refcount - 1;
     if (!state.refcount) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidClose
-                                                            object:nil];
+                                                            object:@[ k, self ]];
         [_windowStates removeObjectForKey:k];
     }
 }

@@ -340,6 +340,7 @@ static BOOL hasBecomeActive = NO;
         // next to impossible to beat this thing into submission.
         [_composerMenuItem.menu removeItem:_composerMenuItem];
     }
+    [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -496,31 +497,6 @@ static BOOL hasBecomeActive = NO;
     } else {
         return action;
     }
-}
-
-- (void)updateBuriedSessionsMenu {
-    [self updateBuriedSessionsMenu:_buriedSessions];
-    [self updateBuriedSessionsMenu:_statusIconBuriedSessions];
-}
-
-- (void)updateBuriedSessionsMenu:(NSMenu *)menu {
-    if (!menu) {
-        return;
-    }
-    [menu removeAllItems];
-    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
-        item.representedObject = session;
-        [menu addItem:item];
-    }
-    [[menu.supermenu.itemArray objectPassingTest:^BOOL(NSMenuItem *element, NSUInteger index, BOOL *stop) {
-        return element.submenu == menu;
-    }] setEnabled:menu.itemArray.count > 0];
-}
-
-- (void)disinter:(NSMenuItem *)menuItem {
-    PTYSession *session = menuItem.representedObject;
-    [[iTermBuriedSessions sharedInstance] restoreSession:session];
 }
 
 - (PseudoTerminal *)currentTerminal {
@@ -1155,7 +1131,7 @@ static BOOL hasBecomeActive = NO;
     item.title = @"Buried Sessions";
     [menu addItem:item];
 
-    [self updateBuriedSessionsMenu:_statusIconBuriedSessions];
+    [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
 
     item = [[[NSMenuItem alloc] initWithTitle:@"Check For Updates"
                                        action:@selector(checkForUpdatesFromMenu:)

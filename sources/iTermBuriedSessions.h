@@ -6,13 +6,14 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 @class PTYSession;
 
 extern NSString *const iTermSessionBuriedStateChangeTabNotification;
 
 @interface iTermBuriedSessions : NSObject
+@property (nonatomic, strong) NSArray<NSMenu *> *menus;
 
 + (instancetype)sharedInstance;
 
@@ -22,5 +23,6 @@ extern NSString *const iTermSessionBuriedStateChangeTabNotification;
 - (void)restoreSession:(PTYSession *)session;
 - (NSArray<PTYSession *> *)buriedSessions;
 - (NSArray<NSDictionary *> *)restorableState;
+- (void)updateMenus;
 
 @end
