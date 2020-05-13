@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermLocatedString.h"
 #import "ScreenChar.h"
 #import "SmartMatch.h"
 #import "PTYTextViewDataSource.h"
@@ -139,6 +140,17 @@ extern const NSInteger kLongMaximumWordLength;
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords;
 
+// Returns an iTermLocated[Attributed]String
+- (id)locatedStringInRange:(VT100GridWindowedRange)range
+         attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+                nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                       pad:(BOOL)pad
+        includeLastNewline:(BOOL)includeLastNewline
+    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+              cappedAtSize:(int)maxBytes
+              truncateTail:(BOOL)truncateTail
+         continuationChars:(NSMutableIndexSet *)continuationChars;
+
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
 - (int)lengthOfLine:(int)line;
@@ -156,13 +168,12 @@ extern const NSInteger kLongMaximumWordLength;
 //
 // If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
 // the return value, giving VT100GridCoord's with their provenance.
-- (NSString *)wrappedStringAt:(VT100GridCoord)coord
-                      forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines
-                     maxChars:(int)maxChars
-            continuationChars:(NSMutableIndexSet *)continuationChars
-          convertNullsToSpace:(BOOL)convertNullsToSpace
-                       coords:(NSMutableArray *)coords;
+- (iTermLocatedString *)wrappedLocatedStringAt:(VT100GridCoord)coord
+                                       forward:(BOOL)forward
+                           respectHardNewlines:(BOOL)respectHardNewlines
+                                      maxChars:(int)maxChars
+                             continuationChars:(NSMutableIndexSet *)continuationChars
+                           convertNullsToSpace:(BOOL)convertNullsToSpace;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 

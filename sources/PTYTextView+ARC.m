@@ -223,6 +223,7 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
     }
 
     __weak __typeof(self) weakSelf = self;
+    DLog(@"updateUnderlinedURLs in screen:\n%@", [self.dataSource compactLineDumpWithContinuationMarks]);
     [_urlActionHelper urlActionForClickAtCoord:coord completion:^(URLAction *action) {
         [weakSelf finishUpdatingUnderlinesWithAction:action
                                                event:event];

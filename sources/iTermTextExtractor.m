@@ -9,6 +9,7 @@
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
 #import "iTermImageInfo.h"
+#import "iTermLocatedString.h"
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermURLStore.h"
@@ -1269,33 +1270,56 @@ const NSInteger kLongMaximumWordLength = 100000;
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
+trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+        cappedAtSize:(int)maxBytes
+        truncateTail:(BOOL)truncateTail
+   continuationChars:(NSMutableIndexSet *)continuationChars
+              coords:(NSMutableArray *)coordsOut {
+    __kindof iTermLocatedString *locatedString =
+    [self locatedStringInRange:windowedRange
+             attributeProvider:attributeProvider
+                    nullPolicy:nullPolicy
+                           pad:pad
+            includeLastNewline:includeLastNewline
+        trimTrailingWhitespace:trimSelectionTrailingSpaces
+                  cappedAtSize:maxBytes
+                  truncateTail:truncateTail
+             continuationChars:continuationChars];
+    [coordsOut addObjectsFromArray:locatedString.coords];
+    return attributeProvider ? ((iTermLocatedAttributedString *)locatedString).attributedString : locatedString.string;
+}
+
+- (id)locatedStringInRange:(VT100GridWindowedRange)windowedRange
+         attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+                nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                       pad:(BOOL)pad
+        includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
               truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet *)continuationChars
-              coords:(NSMutableArray *)coords {
+         continuationChars:(NSMutableIndexSet *)continuationChars {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
          (int)trimSelectionTrailingSpaces);
-    __block id result;
+    __block iTermLocatedString *locatedString;
+    __block iTermLocatedAttributedString *locatedAttributedString;
     // Appends a string to |result|, either attributed or not, as appropriate.
     void (^appendString)(NSString *, screen_char_t, VT100GridCoord) =
-        ^void(NSString *string, screen_char_t theChar, VT100GridCoord coord) {
-            if (attributeProvider) {
-                [result iterm_appendString:string
-                            withAttributes:attributeProvider(theChar)];
-            } else {
-                [result appendString:string];
-            }
-            for (NSInteger i = 0; i < string.length; i++) {
-                [coords addObject:[NSValue valueWithGridCoord:coord]];
-            }
-        };
+    ^void(NSString *string, screen_char_t theChar, VT100GridCoord coord) {
+        if (attributeProvider) {
+            [locatedAttributedString appendString:string
+                                   withAttributes:attributeProvider(theChar)
+                                               at:coord];
+        } else {
+            [locatedString appendString:string at:coord];
+        }
+    };
 
     if (attributeProvider) {
-        result = [[[NSMutableAttributedString alloc] init] autorelease];
+        locatedAttributedString = [[[iTermLocatedAttributedString alloc] init] autorelease];
+        locatedString = locatedAttributedString;
     } else {
-        result = [NSMutableString string];
+        locatedString = [[[iTermLocatedString alloc] init] autorelease];
     }
 
     if (maxBytes < 0) {
@@ -1322,8 +1346,8 @@ const NSInteger kLongMaximumWordLength = 100000;
                                       NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
                                       textAttachment.image = imageInfo.image.images.firstObject;
                                       NSAttributedString *attributedStringWithAttachment = [NSAttributedString attributedStringWithAttachment:textAttachment];
-                                      [result appendAttributedString:attributedStringWithAttachment];
-                                      [coords addObject:[NSValue valueWithGridCoord:coord]];
+                                      [locatedAttributedString appendAttributedString:attributedStringWithAttachment
+                                                                                   at:coord];
                                   }
                               }
                           } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
@@ -1337,8 +1361,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                               // line end up in eolBlock.
                               switch (nullPolicy) {
                                   case kiTermTextExtractorNullPolicyFromLastToEnd:
-                                      [result deleteCharactersInRange:NSMakeRange(0, [result length])];
-                                      [coords removeAllObjects];
+                                      [locatedString erase];
                                       break;
                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
                                       return YES;
@@ -1364,14 +1387,14 @@ const NSInteger kLongMaximumWordLength = 100000;
                               }
                           }
                           if (truncateTail) {
-                              return [result length] >= maxBytes;
-                          } else if ([result length] > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
+                              return [locatedString length] >= maxBytes;
+                          } else if ([locatedString length] > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
                               // Truncate from head when significantly oversize.
                               //
                               // Removing byte from the beginning of the string is slow. The only reason to do it is to save
                               // memory. Remove a big chunk periodically. After enumeration is done we'll cut it to the
                               // exact size it needs to be.
-                              [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
+                              [locatedString dropFirst:locatedString.length - maxBytes];
                           }
                           return NO;
                       }
@@ -1398,8 +1421,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                            } else if (numPrecedingNulls > 0) {
                                switch (nullPolicy) {
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
-                                       [result deleteCharactersInRange:NSMakeRange(0, [result length])];
-                                       [coords removeAllObjects];
+                                       [locatedString erase];
                                        shouldAppendNewline = NO;
                                        break;
                                    case kiTermTextExtractorNullPolicyFromStartToFirst:
@@ -1417,40 +1439,34 @@ const NSInteger kLongMaximumWordLength = 100000;
                                shouldAppendNewline &&
                                (includeLastNewline || line < windowedRange.coordRange.end.y)) {
                                if (trimSelectionTrailingSpaces) {
-                                   NSInteger lengthBeforeTrimming = [result length];
-                                   [result trimTrailingWhitespace];
-                                   [coords removeObjectsInRange:NSMakeRange([result length],
-                                                                            lengthBeforeTrimming - [result length])];
+                                   [locatedString trimTrailingWhitespace];
                                }
                                appendString(@"\n",
                                             [self defaultChar],
                                             VT100GridCoordMake(right, line));
                            }
                            if (truncateTail) {
-                               return [result length] >= maxBytes;
-                           } else if ([result length] > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
+                               return locatedString.length >= maxBytes;
+                           } else if (locatedString.length > maxBytes + kMaximumOversizeAmountWhenTruncatingHead) {
                                // Truncate from head when significantly oversize.
                                //
                                // Removing byte from the beginning of the string is slow. The only reason to do it is to save
                                // memory. Remove a big chunk periodically. After enumeration is done we'll cut it to the
                                // exact size it needs to be.
-                               [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
+                               [locatedString dropFirst:locatedString.length - maxBytes];
                            }
                            return NO;
                        }];
 
-    if (!truncateTail && [result length] > maxBytes) {
+    if (!truncateTail && locatedString.length > maxBytes) {
         // Truncate the head to the exact size.
-        [result replaceCharactersInRange:NSMakeRange(0, [result length] - maxBytes) withString:@""];
+        [locatedString dropFirst:locatedString.length - maxBytes];
     }
 
     if (trimSelectionTrailingSpaces) {
-        NSInteger lengthBeforeTrimming = [result length];
-        [result trimTrailingWhitespace];
-        [coords removeObjectsInRange:NSMakeRange([result length],
-                                                 lengthBeforeTrimming - [result length])];
+        [locatedString trimTrailingWhitespace];
     }
-    return result;
+    return locatedString;
 }
 
 
@@ -1653,13 +1669,12 @@ const NSInteger kLongMaximumWordLength = 100000;
     return YES;
 }
 
-- (NSString *)wrappedStringAt:(VT100GridCoord)coord
-                      forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines
-                     maxChars:(int)maxChars
-            continuationChars:(NSMutableIndexSet *)continuationChars
-          convertNullsToSpace:(BOOL)convertNullsToSpace
-                       coords:(NSMutableArray *)coords {
+- (iTermLocatedString *)wrappedLocatedStringAt:(VT100GridCoord)coord
+                                       forward:(BOOL)forward
+                           respectHardNewlines:(BOOL)respectHardNewlines
+                                      maxChars:(int)maxChars
+                             continuationChars:(NSMutableIndexSet *)continuationChars
+                           convertNullsToSpace:(BOOL)convertNullsToSpace {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -1680,7 +1695,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         range.coordRange.start = coord;
         if (VT100GridCoordOrder(range.coordRange.start,
                                 range.coordRange.end) != NSOrderedAscending) {
-            return @"";
+            return [[[iTermLocatedString alloc] init] autorelease];
         }
     } else {
         nullPolicy = kiTermTextExtractorNullPolicyFromLastToEnd;
@@ -1689,37 +1704,27 @@ const NSInteger kLongMaximumWordLength = 100000;
         range.coordRange.end = coord;
         if (VT100GridCoordOrder(range.coordRange.start,
                                 range.coordRange.end) != NSOrderedAscending) {
-            return @"";
+            return [[[iTermLocatedString alloc] init] autorelease];
         }
     }
     if (convertNullsToSpace) {
         nullPolicy = kiTermTextExtractorNullPolicyTreatAsSpace;
     }
 
-    NSString *content =
-            [self contentInRange:range
-               attributeProvider:nil
-                      nullPolicy:nullPolicy
-                             pad:NO
-              includeLastNewline:NO
-          trimTrailingWhitespace:NO
-                    cappedAtSize:maxChars
-                    truncateTail:forward
-               continuationChars:continuationChars
-                          coords:coords];
+    iTermLocatedString *locatedString =
+        [self locatedStringInRange:range
+                 attributeProvider:nil
+                        nullPolicy:nullPolicy
+                               pad:NO
+                includeLastNewline:NO
+            trimTrailingWhitespace:NO
+                      cappedAtSize:maxChars
+                      truncateTail:forward
+                 continuationChars:continuationChars];
     if (!respectHardNewlines) {
-        if (coords == nil) {
-            content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-        } else {
-            NSMutableString *mutableContent = [[content mutableCopy] autorelease];
-            [content reverseEnumerateSubstringsEqualTo:@"\n" block:^(NSRange range) {
-                [mutableContent replaceCharactersInRange:range withString:@""];
-                [coords removeObjectsInRange:range];
-            }];
-            content = mutableContent;
-        }
+        [locatedString removeOcurrencesOfString:@"\n"];
     }
-    return content;
+    return locatedString;
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range

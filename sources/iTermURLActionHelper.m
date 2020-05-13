@@ -236,20 +236,22 @@
     if (action) {
         switch (action.actionType) {
             case kURLActionOpenExistingFile: {
-                NSString *extendedPrefix = [extractor wrappedStringAt:coord
-                                                              forward:NO
-                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
-                NSString *extendedSuffix = [extractor wrappedStringAt:coord
-                                                              forward:YES
-                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
-                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                                    continuationChars:nil
-                                                  convertNullsToSpace:YES
-                                                               coords:nil];
+                iTermLocatedString *locatedPrefix = [extractor wrappedLocatedStringAt:coord
+                                                                              forward:NO
+                                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
+                                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                                                                    continuationChars:nil
+                                                                  convertNullsToSpace:YES];
+                NSString *extendedPrefix = locatedPrefix.string;
+
+                iTermLocatedString *locatedSuffix = [extractor wrappedLocatedStringAt:coord
+                                                                              forward:YES
+                                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
+                                                                             maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                                                                    continuationChars:nil
+                                                                  convertNullsToSpace:YES];
+                NSString *extendedSuffix = locatedSuffix.string;
+
                 __weak __typeof(self) weakSelf = self;
                 [self openSemanticHistoryPath:action.fullPath
                                 orRawFilename:action.rawFilename

@@ -1769,7 +1769,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
-                                    block:(void (^)(NSRange range))block {
+                                    block:(void (^ NS_NOESCAPE)(NSRange range))block {
     NSRange range = [self rangeOfString:query options:NSBackwardsSearch];
     while (range.location != NSNotFound) {
         block(range);

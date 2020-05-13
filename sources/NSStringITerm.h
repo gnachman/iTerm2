@@ -236,7 +236,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // It is safe to modify, delete, or insert characters in `range` within `block`.
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
-                                    block:(void (^)(NSRange range))block;
+                                    block:(void (^ NS_NOESCAPE)(NSRange range))block;
 
 - (NSUInteger)iterm_unsignedIntegerValue;
 

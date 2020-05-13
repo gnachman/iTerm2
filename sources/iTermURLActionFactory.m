@@ -11,6 +11,7 @@
 #import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermLocatedString.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
@@ -51,11 +52,8 @@ typedef enum {
 @property (nonatomic) iTermURLActionFactoryPhase phase;
 @property (nonatomic) BOOL workingDirectoryIsLocal;
 
-@property (nonatomic, strong) NSMutableIndexSet *continuationCharsCoords;
-@property (nonatomic, strong) NSMutableArray *prefixCoords;
-@property (nonatomic, strong) NSString *prefix;
-@property (nonatomic, strong) NSMutableArray *suffixCoords;
-@property (nonatomic, strong) NSString *suffix;
+@property (nonatomic, strong) iTermLocatedString *locatedPrefix;
+@property (nonatomic, strong) iTermLocatedString *locatedSuffix;
 @end
 
 static NSMutableArray<iTermURLActionFactory *> *sFactories;
@@ -178,43 +176,35 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         [self fail];
         return;
     }
-    NSString *savedPrefix = self.prefix;
-    NSString *savedSuffix = self.suffix;
-    NSMutableIndexSet *savedContinuationCharsCoords = [self.continuationCharsCoords mutableCopy];
-    NSMutableArray *savedPrefixCoords = [self.prefixCoords mutableCopy];
-    NSMutableArray *savedSuffixCoords = [self.suffixCoords mutableCopy];
+    iTermLocatedString *locatedPrefix =
+        [self.extractor wrappedLocatedStringAt:self.coord
+                                       forward:NO
+                           respectHardNewlines:forceRespect || self.respectHardNewlines
+                                      maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                             continuationChars:nil
+                           convertNullsToSpace:NO];
+    if (!self.locatedPrefix) {
+        self.locatedPrefix = locatedPrefix;
+    }
 
-    self.continuationCharsCoords = [NSMutableIndexSet indexSet];
-    self.prefixCoords = [NSMutableArray array];
-    self.prefix = [self.extractor wrappedStringAt:self.coord
-                                          forward:NO
-                              respectHardNewlines:forceRespect || self.respectHardNewlines
-                                         maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                continuationChars:self.continuationCharsCoords
-                              convertNullsToSpace:NO
-                                           coords:self.prefixCoords];
+    iTermLocatedString *locatedSuffix =
+        [self.extractor wrappedLocatedStringAt:self.coord
+                                       forward:YES
+                           respectHardNewlines:forceRespect || self.respectHardNewlines
+                                      maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
+                             continuationChars:nil
+                           convertNullsToSpace:NO];
+    if (!self.locatedSuffix) {
+        self.locatedSuffix = locatedSuffix;
+    }
 
-    self.suffixCoords = [NSMutableArray array];
-    self.suffix = [self.extractor wrappedStringAt:self.coord
-                                          forward:YES
-                              respectHardNewlines:forceRespect || self.respectHardNewlines
-                                         maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                                continuationChars:self.continuationCharsCoords
-                              convertNullsToSpace:NO
-                                           coords:self.suffixCoords];
-
-    [self urlActionForExistingFileWithCompletion:^(URLAction *action, BOOL workingDirectoryIsLocal) {
+    [self urlActionForExistingFileWithPrefix:locatedPrefix
+                                      suffix:locatedSuffix
+                                  completion:^(URLAction *action, BOOL workingDirectoryIsLocal) {
         self.workingDirectoryIsLocal = workingDirectoryIsLocal;
         if (action) {
             [self completeWithAction:action];
         } else {
-            if (forceRespect) {
-                self.prefix = savedPrefix;
-                self.suffix = savedSuffix;
-                self.continuationCharsCoords = savedContinuationCharsCoords;
-                self.prefixCoords = savedPrefixCoords;
-                self.suffixCoords = savedSuffixCoords;
-            }
             [self fail];
         }
     }];
@@ -288,15 +278,17 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 }
 
-- (void)urlActionForExistingFileWithCompletion:(void (^)(URLAction *, BOOL workingDirectoryIsLocal))completion {
+- (void)urlActionForExistingFileWithPrefix:(iTermLocatedString *)locatedPrefix
+                                  suffix:(iTermLocatedString *)locatedSuffix
+                                completion:(void (^)(URLAction *, BOOL workingDirectoryIsLocal))completion {
     NSString *possibleFilePart1 =
-        [self.prefix substringIncludingOffset:[self.prefix length] - 1
-                        fromCharacterSet:[NSCharacterSet filenameCharacterSet]
-                    charsTakenFromPrefix:NULL];
+    [locatedPrefix.string substringIncludingOffset:[locatedPrefix.string length] - 1
+                                  fromCharacterSet:[NSCharacterSet filenameCharacterSet]
+                              charsTakenFromPrefix:NULL];
     NSString *possibleFilePart2 =
-        [self.suffix substringIncludingOffset:0
-                        fromCharacterSet:[NSCharacterSet filenameCharacterSet]
-                    charsTakenFromPrefix:NULL];
+    [locatedSuffix.string substringIncludingOffset:0
+                                  fromCharacterSet:[NSCharacterSet filenameCharacterSet]
+                              charsTakenFromPrefix:NULL];
     DLog(@"Prefix=%@", possibleFilePart1);
     DLog(@"Suffix=%@", possibleFilePart2);
 
@@ -306,15 +298,17 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                                         object:nil];
 
     _pathfinder = [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
-                                                                        suffix:possibleFilePart2
-                                                              workingDirectory:self.workingDirectory
-                                                                trimWhitespace:NO
-                                                                    completion:^(NSString *filename,
-                                                                                 int prefixChars,
-                                                                                 int suffixChars,
-                                                                                 BOOL workingDirectoryIsLocal) {
+                                                                             suffix:possibleFilePart2
+                                                                   workingDirectory:self.workingDirectory
+                                                                     trimWhitespace:NO
+                                                                         completion:^(NSString *filename,
+                                                                                      int prefixChars,
+                                                                                      int suffixChars,
+                                                                                      BOOL workingDirectoryIsLocal) {
         DLog(@"Semantic history controller returned filename %@ with %@ prefix and %@ suffix chars", filename, @(prefixChars), @(suffixChars));
         URLAction *action = [self urlActionForFilename:filename
+                                         locatedPrefix:locatedPrefix
+                                         locatedSuffix:locatedSuffix
                                            prefixChars:prefixChars
                                            suffixChars:suffixChars];
         completion(action, workingDirectoryIsLocal);
@@ -322,6 +316,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 }
 
 - (URLAction *)urlActionForFilename:(NSString *)filename
+                      locatedPrefix:(iTermLocatedString *)locatedPrefix
+                      locatedSuffix:(iTermLocatedString *)locatedSuffix
                         prefixChars:(int)prefixChars
                         suffixChars:(int)suffixChars {
     if (self.extractor.dataSource == nil) {
@@ -340,22 +336,22 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
     VT100GridWindowedRange range;
 
-    if (self.prefixCoords.count > 0 && prefixChars > 0) {
-        NSInteger i = MAX(0, (NSInteger)self.prefixCoords.count - prefixChars);
-        range.coordRange.start = [self.prefixCoords[i] gridCoordValue];
+    if (locatedPrefix.coords.count > 0 && prefixChars > 0) {
+        NSInteger i = MAX(0, (NSInteger)locatedPrefix.coords.count - prefixChars);
+        range.coordRange.start = [locatedPrefix.coords[i] gridCoordValue];
     } else {
         // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
-        range.coordRange.start = [self.suffixCoords[0] gridCoordValue];
+        range.coordRange.start = [locatedSuffix.coords[0] gridCoordValue];
     }
     VT100GridCoord lastCoord;
     // Ensure we don't run off the end of suffixCoords if something unexpected happens.
     // Subtract 1 because the 0th index into suffixCoords corresponds to 1 suffix char being used, etc.
-    NSInteger i = MIN((NSInteger)self.suffixCoords.count - 1, suffixChars - 1);
+    NSInteger i = MIN((NSInteger)locatedSuffix.coords.count - 1, suffixChars - 1);
     if (i >= 0) {
-        lastCoord = [self.suffixCoords[i] gridCoordValue];
+        lastCoord = [locatedSuffix.coords[i] gridCoordValue];
     } else {
         // This shouldn't happen, but better safe than sorry
-        lastCoord = [[self.prefixCoords lastObject] gridCoordValue];
+        lastCoord = [[locatedPrefix.coords lastObject] gridCoordValue];
     }
     range.coordRange.end = [self.extractor successorOfCoord:lastCoord];
     range.columnWindow = self.extractor.logicalWindow;
@@ -365,7 +361,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     NSString *columnNumber = nil;
     action.rawFilename = filename;
     action.fullPath = [self.semanticHistoryController cleanedUpPathFromPath:filename
-                                                                     suffix:[self.suffix substringFromIndex:suffixChars]
+                                                                     suffix:[locatedSuffix.string substringFromIndex:suffixChars]
                                                            workingDirectory:self.workingDirectory
                                                         extractedLineNumber:&lineNumber
                                                                columnNumber:&columnNumber];
@@ -431,11 +427,11 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 }
 
 - (URLAction *)urlActionForURLLike {
-    NSString *joined = [self.prefix stringByAppendingString:self.suffix];
+    NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
     DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
-         joined, (int)[self.prefix length]);
+         joined, (int)[self.locatedPrefix.string length]);
     int prefixChars = 0;
-    NSString *possibleUrl = [joined substringIncludingOffset:[self.prefix length]
+    NSString *possibleUrl = [joined substringIncludingOffset:[self.locatedPrefix.string length]
                                             fromCharacterSet:[NSCharacterSet urlCharacterSet]
                                         charsTakenFromPrefix:&prefixChars];
     DLog(@"String of just permissible chars is <<%@>> with prefix length %d", possibleUrl, prefixChars);
@@ -550,33 +546,48 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 - (URLAction *)urlActionForString:(NSString *)string
                             range:(NSRange)stringRange
                       prefixChars:(int)prefixChars {
+    DLog(@"urlActionForString:%@ range:%@ prefixChars:%@", string, NSStringFromRange(stringRange), @(prefixChars));
     NSURL *url = [NSURL URLWithUserSuppliedString:string];
     DLog(@"See if I can open %@, aka %@", string, url);
     // If something can handle the scheme then we're all set.
     BOOL openable = (url &&
                      [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil &&
                      prefixChars >= 0 &&
-                     prefixChars <= self.prefix.length);
+                     prefixChars <= self.locatedPrefix.string.length);
 
     if (openable) {
         DLog(@"%@ is openable", url);
         VT100GridWindowedRange range;
-        NSInteger j = self.prefix.length - prefixChars;
-        if (j < self.prefixCoords.count) {
-            range.coordRange.start = [self.prefixCoords[j] gridCoordValue];
-        } else if (j == self.prefixCoords.count && j > 0) {
-            range.coordRange.start = [self.extractor successorOfCoord:[self.prefixCoords[j - 1] gridCoordValue]];
+        NSInteger j = self.locatedPrefix.string.length - prefixChars;
+        DLog(@"j=%@-%@=%@", @(self.locatedPrefix.string.length), @(prefixChars), @(j));
+        if (j < self.locatedPrefix.coords.count) {
+            DLog(@"j=%@ < self.locatedPrefix.coords.count=%@", @(j), @(self.locatedPrefix.coords.count));
+            range.coordRange.start = [self.locatedPrefix.coords[j] gridCoordValue];
+            DLog(@"range.coordRange.start=%@", VT100GridCoordDescription(range.coordRange.start));
+        } else if (j == self.locatedPrefix.coords.count && j > 0) {
+            DLog(@"j=%@ == self.locatedPrefix.coords.count && j > 0", @(j));
+            range.coordRange.start = [self.extractor successorOfCoord:[self.locatedPrefix.coords[j - 1] gridCoordValue]];
+            DLog(@"range.coordRange.start=%@ which is successor of last prefix coord %@",
+                 VT100GridCoordDescription(range.coordRange.start),
+                 VT100GridCoordDescription([self.locatedPrefix.coords[j - 1] gridCoordValue]));
         } else {
-            DLog(@"prefixCoordscount=%@ j=%@", @(self.prefixCoords.count), @(j));
+            DLog(@"prefixCoordscount=%@ j=%@", @(self.locatedPrefix.coords.count), @(j));
             return nil;
         }
         NSInteger i = stringRange.length - prefixChars;
-        if (i < self.suffixCoords.count) {
-            range.coordRange.end = [self.suffixCoords[i] gridCoordValue];
-        } else if (i > 0 && i == self.suffixCoords.count) {
-            range.coordRange.end = [self.extractor successorOfCoord:[self.suffixCoords[i - 1] gridCoordValue]];
+        DLog(@"i=%@-%@=%@", @(stringRange.length), @(prefixChars), @(i));
+        if (i < self.locatedSuffix.coords.count) {
+            DLog(@"i < suffixCoords.count=%@", @(self.locatedSuffix.coords.count));
+            range.coordRange.end = [self.locatedSuffix.coords[i] gridCoordValue];
+            DLog(@"range.coordRange.end=%@", VT100GridCoordDescription([self.locatedSuffix.coords[i] gridCoordValue]));
+        } else if (i > 0 && i == self.locatedSuffix.coords.count) {
+            DLog(@"i == suffixCoords.count");
+            range.coordRange.end = [self.extractor successorOfCoord:[self.locatedSuffix.coords[i - 1] gridCoordValue]];
+            DLog(@"range.coordRange.end=%@, successor of %@",
+                 VT100GridCoordDescription([self.locatedSuffix.coords[i - 1] gridCoordValue]),
+                 VT100GridCoordDescription([self.locatedSuffix.coords[i] gridCoordValue]));
         } else {
-            DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.suffixCoords.count));
+            DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.locatedSuffix.coords.count));
             return nil;
         }
         range.columnWindow = self.extractor.logicalWindow;

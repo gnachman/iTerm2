@@ -243,6 +243,76 @@ static const NSInteger kUnicodeVersion = 9;
   XCTAssertEqual(actual.end.y, expected.end.y);
 }
 
+- (void)testContentInRange_TruncateHeadSearchingBackwards_Huge {
+    // Make a big array like
+    // abc
+    // ***
+    // ... repeats many times ...
+    // ***
+    // xyz
+    NSMutableArray *temp = [NSMutableArray array];
+    NSUInteger length = 0;
+    [temp addObject:@"abc"];
+    while (length < 1024*200) {
+        [temp addObject:@"***"];
+        length += 3;
+    }
+    [temp addObject:@"xyz"];
+    _lines = temp;
+
+    // Extract the whole range but truncate it 3 bytes at the head.
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, _lines.count), 0, 0);
+    NSMutableArray *coords = [NSMutableArray array];
+    NSString *actual = [extractor contentInRange:range
+                               attributeProvider:nil
+                                      nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:3
+                                    truncateTail:NO
+                               continuationChars:nil
+                                          coords:coords];
+    XCTAssertEqualObjects(@"xyz", actual);
+    XCTAssertEqual(coords.count, 3);
+}
+
+- (void)testContentInRange_TruncateHeadSearchingBackwards_NotHuge {
+    // Make a big array like
+    // abc
+    // ***
+    // ... repeats many times ...
+    // ***
+    // xyz
+    NSMutableArray *temp = [NSMutableArray array];
+    NSUInteger length = 0;
+    [temp addObject:@"abc"];
+    while (length < 5) {
+        [temp addObject:@"***"];
+        length += 3;
+    }
+    [temp addObject:@"xyz"];
+    _lines = temp;
+
+    // Extract the whole range but truncate it 3 bytes at the head.
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, _lines.count), 0, 0);
+    NSMutableArray *coords = [NSMutableArray array];
+    NSString *actual = [extractor contentInRange:range
+                               attributeProvider:nil
+                                      nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                             pad:NO
+                              includeLastNewline:NO
+                          trimTrailingWhitespace:NO
+                                    cappedAtSize:3
+                                    truncateTail:NO
+                               continuationChars:nil
+                                          coords:coords];
+    XCTAssertEqualObjects(@"xyz", actual);
+    XCTAssertEqual(coords.count, 3);
+}
+
 - (void)testContentInRange_TruncateHeadAndTail {
     // Make a big array like
     // abc
@@ -369,22 +439,21 @@ static const NSInteger kUnicodeVersion = 9;
 }
 
 - (void)testWrappedString {
-    NSMutableArray<NSValue *> *coords = [NSMutableArray array];
     // cell       0     0     12345
     _lines = @[ @"\u2716\ufe0e https://example.com/" ];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    NSString *prefix = [extractor wrappedStringAt:VT100GridCoordMake(5, 0)
+    iTermLocatedString *prefix =
+    [extractor wrappedLocatedStringAt:VT100GridCoordMake(5, 0)
                                           forward:NO
                               respectHardNewlines:YES
                                          maxChars:4096
                                 continuationChars:[NSMutableIndexSet indexSet]
-                              convertNullsToSpace:NO
-                                           coords:coords];
-    XCTAssertEqualObjects(prefix, @"\u2716\ufe0e htt");
-    XCTAssertEqual(coords.count, prefix.length);
+                              convertNullsToSpace:NO];
+    XCTAssertEqualObjects(prefix.string, @"\u2716\ufe0e htt");
+    XCTAssertEqual(prefix.coords.count, prefix.string.length);
     int expected[] = { 0, 0, 1, 2, 3, 4 };
     for (int i = 0; i < sizeof(expected) / sizeof(*expected); i++) {
-        NSValue *value = coords[i];
+        NSValue *value = prefix.coords[i];
         VT100GridCoord coord = [value gridCoordValue];
         XCTAssertEqual(expected[i], coord.x);
         XCTAssertEqual(0, coord.y);
