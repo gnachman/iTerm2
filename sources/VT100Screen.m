@@ -4884,7 +4884,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [result addObject:@"3"];
     }
     if (c.underline) {
-        [result addObject:@"4"];
+        switch (c.underlineStyle) {
+            case VT100UnderlineStyleSingle:
+                [result addObject:@"4"];
+                break;
+            case VT100UnderlineStyleCurly:
+                [result addObject:@"4:3"];
+                break;
+        }
     }
     if (c.blink) {
         [result addObject:@"5"];

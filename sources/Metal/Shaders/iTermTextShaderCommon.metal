@@ -131,7 +131,10 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
         // the second underline will draw above it. The same hack was added
         // to the non-metal code path so this isn't a glaring difference.
         underlineOffset = max(0.0, underlineOffset - underlineThickness);
+    } else if (underlineStyle == iTermMetalGlyphAttributesUnderlineCurly) {
+        underlineOffset = max(0.0, underlineOffset - underlineThickness / 2.0);
     }
+
     float weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
                                                           viewportSize,
                                                           cellOffset,
@@ -162,6 +165,27 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
                 return weight;
             }
 
+        case iTermMetalGlyphAttributesUnderlineCurly: {
+            const float wavelength = 6;
+            if (weight > 0 && fmod(clipSpacePosition.x, (wavelength) * scale) >= (wavelength / 2) * scale) {
+                // Make a hole in the bottom underline
+                return 0;
+            } else if (weight == 0 && !(fmod(clipSpacePosition.x, (wavelength) * scale) >= (wavelength / 2) * scale)) {
+                // Make a hole in the top underline
+                return 0;
+            } else if (weight == 0) {
+                // Add a top underline if the y coordinate is right
+                return FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
+                                                              viewportSize,
+                                                              cellOffset,
+                                                              underlineOffset + underlineThickness,
+                                                              underlineThickness);
+            } else {
+                // Visible part of dashed bottom underline
+                return weight;
+            }
+        }
+
         case iTermMetalGlyphAttributesUnderlineDashedSingle:
             if (weight > 0 && fmod(clipSpacePosition.x, 7 * scale) >= 4 * scale) {
                 return 0;
@@ -172,6 +196,7 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle:
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble:
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle:
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly:
             // This shouldn't happen.
             return 0;
     }

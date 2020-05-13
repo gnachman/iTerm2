@@ -61,6 +61,12 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
 
+typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
+    iTermCharacterAttributesUnderlineNone,
+    iTermCharacterAttributesUnderlineRegular,  // Single unless isURL, then double.
+    iTermCharacterAttributesUnderlineCurly
+};
+
 // IMPORTANT: If you add a field here also update the comparison function
 // shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:combinedAttributesChanged:
 typedef struct {
@@ -72,7 +78,7 @@ typedef struct {
     BOOL bold;
     BOOL fakeBold;
     BOOL fakeItalic;
-    BOOL underline;
+    iTermCharacterAttributesUnderline underlineType;
     BOOL strikethrough;
     BOOL isURL;
     NSInteger ligatureLevel;
@@ -2009,7 +2015,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
-                                          newAttributes->underline != previousAttributes->underline ||
+                                          newAttributes->underlineType != previousAttributes->underlineType ||
                                           newAttributes->strikethrough != previousAttributes->strikethrough ||
                                           newAttributes->isURL != previousAttributes->isURL ||
                                           newAttributes->drawable != previousAttributes->drawable);
@@ -2095,7 +2101,20 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             }
         }
     }
-    attributes->underline = (c->underline || inUnderlinedRange);
+    if (c->underline) {
+        switch (c->underlineStyle) {
+            case VT100UnderlineStyleSingle:
+                attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
+                break;
+            case VT100UnderlineStyleCurly:
+                attributes->underlineType = iTermCharacterAttributesUnderlineCurly;
+                break;
+        }
+    } else if (inUnderlinedRange) {
+        attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
+    } else {
+        attributes->underlineType = iTermCharacterAttributesUnderlineNone;
+    }
     attributes->strikethrough = c->strikethrough;
     attributes->isURL = (c->urlCode != 0);
     attributes->drawable = drawable;
@@ -2103,14 +2122,22 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
     NSUnderlineStyle underlineStyle = NSUnderlineStyleNone;
-    if (attributes->underline) {
-        if (attributes->isURL) {
-            underlineStyle = NSUnderlineStyleDouble;
-        } else {
-            underlineStyle = NSUnderlineStyleSingle;
-        }
-    } else if (attributes->isURL) {
-        underlineStyle = NSUnderlinePatternDash;
+    switch (attributes->underlineType) {
+        case iTermCharacterAttributesUnderlineNone:
+            if (attributes->isURL) {
+                underlineStyle = NSUnderlinePatternDash;
+            }
+            break;
+        case iTermCharacterAttributesUnderlineRegular:
+            if (attributes->isURL) {
+                underlineStyle = NSUnderlineStyleDouble;
+            } else {
+                underlineStyle = NSUnderlineStyleSingle;
+            }
+            break;
+        case iTermCharacterAttributesUnderlineCurly:
+            underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
+            break;
     }
     NSUnderlineStyle strikethroughStyle = NSUnderlineStyleNone;
     if (attributes->strikethrough) {
@@ -2291,7 +2318,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             ++segmentLength;
             iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
             if (drawable ||
-                ((characterAttributes.underline ||
+                ((characterAttributes.underlineType ||
                   characterAttributes.strikethrough ||
                   characterAttributes.isURL) && segmentLength == 1)) {
                 [self updateBuilder:builder
@@ -2331,7 +2358,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
             id<iTermAttributedString> builtString = builder.attributedString;
-            if (previousCharacterAttributes.underline ||
+            if (previousCharacterAttributes.underlineType ||
                 previousCharacterAttributes.strikethrough ||
                 previousCharacterAttributes.isURL) {
                 [builtString addAttribute:iTermUnderlineLengthAttribute
@@ -2362,7 +2389,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_COMBINE_ATTRIBUTES]);
 
-        if (drawable || ((characterAttributes.underline ||
+        if (drawable || ((characterAttributes.underlineType ||
                           characterAttributes.strikethrough ||
                           characterAttributes.isURL) && segmentLength == 1)) {
             // Use " " when not drawable to prevent 0-length attributed strings when an underline/strikethrough is
@@ -2378,7 +2405,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     if (builder.length) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
         id<iTermAttributedString> builtString = builder.attributedString;
-        if (previousCharacterAttributes.underline ||
+        if (previousCharacterAttributes.underlineType ||
             previousCharacterAttributes.strikethrough ||
             previousCharacterAttributes.isURL) {
             [builtString addAttribute:iTermUnderlineLengthAttribute
@@ -2520,6 +2547,31 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             [path setLineWidth:lineWidth];
             [path setLineDash:dashPattern count:2 phase:phase];
             [path stroke];
+            break;
+        }
+        case NSUnderlineStyleThick: {  // We use this for curly. Cocoa doesn't have curly underlines, so we reprupose thick.
+            origin.y -= lineWidth;
+            CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
+            CGContextSaveGState(cgContext);
+            CGContextClipToRect(cgContext, NSMakeRect(origin.x, origin.y - 1, rect.size.width, 3));
+
+            [color set];
+            NSBezierPath *path = [NSBezierPath bezierPath];
+            const CGFloat height = 1;
+            const CGFloat width = 3;
+            const CGFloat offset = self.isRetina ? 0.25 : 0.5;
+            const CGFloat lowY = origin.y + offset;
+            const CGFloat highY = origin.y + height + offset;
+            for (CGFloat x = origin.x - fmod(origin.x, width * 2); x < NSMaxX(rect); x += width * 2) {
+                [path moveToPoint:NSMakePoint(x + 0, highY)];
+                [path lineToPoint:NSMakePoint(x + width, highY)];
+
+                [path moveToPoint:NSMakePoint(x + width, lowY)];
+                [path lineToPoint:NSMakePoint(x + width * 2, lowY)];
+            }
+            [path setLineWidth:1];
+            [path stroke];
+            CGContextRestoreGState(cgContext);
             break;
         }
 

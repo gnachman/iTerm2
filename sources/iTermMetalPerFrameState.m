@@ -498,6 +498,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             c.backgroundColorMode = ColorModeAlternate;
 
             c.underline = YES;
+            c.underlineStyle = VT100UnderlineStyleSingle;
             c.strikethrough = NO;
             
             if (i + 1 < len &&
@@ -825,8 +826,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (annotated) {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
         } else if (line[x].underline || inUnderlinedRange) {
+            const BOOL curly = line[x].underline && line[x].underlineStyle == VT100UnderlineStyleCurly;
             if (line[x].urlCode) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+            } else if (curly && !inUnderlinedRange) {
+                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
             } else {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             }
@@ -863,10 +867,15 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             }
             glyphKeys[x].drawable = NO;
             glyphKeys[x].combiningSuccessor = 0;
-        } else if (annotated || characterIsDrawable) {
+        } else if (attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone || characterIsDrawable) {
             lastDrawableGlyph = x;
-            glyphKeys[x].code = line[x].code;
-            glyphKeys[x].isComplex = line[x].complexChar;
+            if (characterIsDrawable) {
+                glyphKeys[x].code = line[x].code;
+                glyphKeys[x].isComplex = line[x].complexChar;
+            } else {
+                glyphKeys[x].code = ' ';
+                glyphKeys[x].isComplex = NO;
+            }
             glyphKeys[x].boxDrawing = isBoxDrawingCharacter;
             glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
 

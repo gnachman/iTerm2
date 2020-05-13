@@ -556,12 +556,12 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ unused=%@>",
+    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ unused=%@>",
             @(c.code), @(c.complexChar), @(c.image), @(c.urlCode),
             @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue),
             @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue), modes[c.foregroundColorMode],
             modes[c.backgroundColorMode], @(c.bold), @(c.faint), @(c.italic), @(c.blink),
-            @(c.underline), @(c.strikethrough), @(c.unused)];
+            @(c.underline), @(c.strikethrough), @(c.underlineStyle), @(c.unused)];
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -685,6 +685,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->blink = fg.blink;
     s->underline = fg.underline;
     s->strikethrough = fg.strikethrough;
+    s->underlineStyle = fg.underlineStyle;
     s->image = NO;
     s->urlCode = fg.urlCode;
     s->unused = 0;
@@ -808,7 +809,14 @@ NSString *ScreenCharDescription(screen_char_t c) {
         [attrs addObject:@"Blink"];
     }
     if (c.underline) {
-        [attrs addObject:@"Underline"];
+        switch (c.underlineStyle) {
+            case VT100UnderlineStyleSingle:
+                [attrs addObject:@"Underline"];
+                break;
+            case VT100UnderlineStyleCurly:
+                [attrs addObject:@"Curly-Underline"];
+                break;
+        }
     }
     if (c.strikethrough) {
         [attrs addObject:@"Strike"];

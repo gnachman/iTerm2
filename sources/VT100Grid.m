@@ -1702,6 +1702,7 @@ static NSString *const kGridSizeKey = @"Size";
 
     c.underline = NO;
     c.strikethrough = NO;
+    c.underlineStyle = VT100UnderlineStyleSingle;
     c.urlCode = 0;
     c.image = 0;
 

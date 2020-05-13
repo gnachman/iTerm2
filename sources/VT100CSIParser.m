@@ -241,7 +241,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 }
                 // reset the parameter flag
                 readNumericParameter = NO;
-
+                isSub = NO;
                 if (!AdvanceAndEatControlChars(context, support8BitControlCharacters, incidentals)) {
                     return NO;
                 }

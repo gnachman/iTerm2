@@ -33,7 +33,7 @@ typedef struct {
 typedef struct {
     vector_float4 foregroundColor;
     vector_float4 backgroundColor;
-    iTermMetalGlyphAttributesUnderline underlineStyle : 3;
+    iTermMetalGlyphAttributesUnderline underlineStyle : 4;
     BOOL annotation;  // affects underline color
 } iTermMetalGlyphAttributes;
 
@@ -91,6 +91,9 @@ NS_INLINE NSString *iTermMetalGlyphAttributesDescription(iTermMetalGlyphAttribut
         case iTermMetalGlyphAttributesUnderlineDashedSingle:
             underline = @"DASHED SINGLE";
             break;
+        case iTermMetalGlyphAttributesUnderlineCurly:
+            underline = @"CURLY";
+            break;
         case iTermMetalGlyphAttributesUnderlineStrikethrough:
             underline = @"STRIKETHROUGH";
             break;
@@ -102,6 +105,9 @@ NS_INLINE NSString *iTermMetalGlyphAttributesDescription(iTermMetalGlyphAttribut
             break;
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle:
             underline = @"STRIKETHROUGH+DASHED SINGLE";
+            break;
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly:
+            underline = @"STRIKETHROUGH+CURLY";
             break;
     }
     return [NSString stringWithFormat:@"fg=%@ bg=%@ underline=%@ annotation=%@",

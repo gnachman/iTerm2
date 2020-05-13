@@ -33,19 +33,22 @@ typedef enum {
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
-#define iTermMetalGlyphAttributesUnderlineBitmask 3
+#define iTermMetalGlyphAttributesUnderlineBitmask 7
 // OR this to set the strikethrough bit
-#define iTermMetalGlyphAttributesUnderlineStrikethroughFlag 4
+#define iTermMetalGlyphAttributesUnderlineStrikethroughFlag 8
+// If this grows update the size of the bit field in iTermMetalGlyphAttributes.
 typedef enum {
     iTermMetalGlyphAttributesUnderlineNone = 0,
     iTermMetalGlyphAttributesUnderlineSingle = 1,
     iTermMetalGlyphAttributesUnderlineDouble = 2,
     iTermMetalGlyphAttributesUnderlineDashedSingle = 3,
+    iTermMetalGlyphAttributesUnderlineCurly = 4,
 
     iTermMetalGlyphAttributesUnderlineStrikethrough = iTermMetalGlyphAttributesUnderlineStrikethroughFlag,
-    iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle = 5,
-    iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble = 6,
-    iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle = 7,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 1,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 2,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 3,
+    iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 4,
 } iTermMetalGlyphAttributesUnderline;
 
 typedef struct {

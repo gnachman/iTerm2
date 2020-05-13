@@ -18,6 +18,7 @@ NSString *const kGraphicRenditionBoldKey = @"Bold";
 NSString *const kGraphicRenditionBlinkKey = @"Blink";
 NSString *const kGraphicRenditionUnderlineKey = @"Underline";
 NSString *const kGraphicRenditionStrikethroughKey = @"Strikethrough";
+NSString *const kGraphicRenditionUnderlineStyle = @"Underline Style";
 NSString *const kGraphicRenditionReversedKey = @"Reversed";
 NSString *const kGraphicRenditionFaintKey = @"Faint";
 NSString *const kGraphicRenditionItalicKey = @"Italic";
@@ -439,6 +440,7 @@ static const int kMaxScreenRows = 4096;
     result.italic = graphicRendition_.italic;
     result.underline = graphicRendition_.underline;
     result.strikethrough = graphicRendition_.strikethrough;
+    result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
     result.image = NO;
     result.urlCode = _currentURLCode;
@@ -479,6 +481,7 @@ static const int kMaxScreenRows = 4096;
     result.italic = graphicRendition_.italic;
     result.underline = graphicRendition_.underline;
     result.strikethrough = graphicRendition_.strikethrough;
+    result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
     result.urlCode = _currentURLCode;
     return result;
@@ -691,9 +694,25 @@ static const int kMaxScreenRows = 4096;
                 case VT100CHARATTR_NOT_ITALIC:
                     graphicRendition_.italic = NO;
                     break;
-                case VT100CHARATTR_UNDERLINE:
+                case VT100CHARATTR_UNDERLINE: {
                     graphicRendition_.underline = YES;
+                    int subs[VT100CSISUBPARAM_MAX];
+                    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
+                    if (numberOfSubparameters > 0) {
+                        switch (subs[0]) {
+                            case 0:
+                                graphicRendition_.underline = NO;
+                                break;
+                            case 1:
+                                graphicRendition_.underlineStyle = VT100UnderlineStyleSingle;
+                                break;
+                            case 3:
+                                graphicRendition_.underlineStyle = VT100UnderlineStyleCurly;
+                                break;
+                        }
+                    }
                     break;
+                }
                 case VT100CHARATTR_NOT_UNDERLINE:
                     graphicRendition_.underline = NO;
                     break;
@@ -1273,6 +1292,7 @@ static const int kMaxScreenRows = 4096;
     // Reset UNDERLINE & STRIKETHROUGH
     graphicRendition_.underline = NO;
     graphicRendition_.strikethrough = NO;
+    graphicRendition_.underlineStyle = VT100UnderlineStyleSingle;
 
     self.url = nil;
     self.urlParams = nil;
@@ -2892,6 +2912,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
               kGraphicRenditionBlinkKey: @(graphicRendition.blink),
               kGraphicRenditionUnderlineKey: @(graphicRendition.underline),
               kGraphicRenditionStrikethroughKey: @(graphicRendition.strikethrough),
+              kGraphicRenditionUnderlineStyle: @(graphicRendition.underlineStyle),
               kGraphicRenditionReversedKey: @(graphicRendition.reversed),
               kGraphicRenditionFaintKey: @(graphicRendition.faint),
               kGraphicRenditionItalicKey: @(graphicRendition.italic),
@@ -2911,6 +2932,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     graphicRendition.blink = [dict[kGraphicRenditionBlinkKey] boolValue];
     graphicRendition.underline = [dict[kGraphicRenditionUnderlineKey] boolValue];
     graphicRendition.strikethrough = [dict[kGraphicRenditionStrikethroughKey] boolValue];
+    graphicRendition.underlineStyle = [dict[kGraphicRenditionUnderlineStyle] unsignedIntegerValue];
     graphicRendition.reversed = [dict[kGraphicRenditionReversedKey] boolValue];
     graphicRendition.faint = [dict[kGraphicRenditionFaintKey] boolValue];
     graphicRendition.italic = [dict[kGraphicRenditionItalicKey] boolValue];

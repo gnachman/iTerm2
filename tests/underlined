@@ -1,12 +1,17 @@
 [4mUnderlined -p- 😀  🆕  gjgjgjg        😀[0m
 [31;4mRed Underlined[0m
 [21mDouble underline[m
+[4:3mCurly underline[m
+[31;4:3mRed curly underline[m
+[4mＬｏｒｅｍ ｉｐｓｕｍ[m
 
 [9mStrikethrough[29mNot strikethrough[9mStrikethrough[mNot strikethrough
 [31;9mRed Strikethrough[0m
 
 [4;9mUnderlined and strikethrough[m
 [21;9mDouble underlined and strikethrough[m
+[9;4:3mCurly underlined and strikethrough[m
+[4:3;9mCurly underlined and strikethrough[m
 
 
 OSC 8 URL TESTS
