@@ -490,6 +490,8 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
+// Only add to this if you're doing something fancy. You can usually add your case to -execute
+// instead.
 - (void)hook {
     switch ([self compactSequence]) {
     case MAKE_COMPACT_SEQUENCE(0, 0, 'p'):
@@ -516,6 +518,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 
             _hook = [[VT100SixelParser alloc] initWithParameters:[self parameters]];
             _hookFinished = NO;
+            break;
         }
     }
 }
@@ -599,6 +602,10 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             } else if ([_parameterString isEqualToString:@"2"]) {
                 token->type = DCS_END_SYNCHRONIZED_UPDATE;
             }
+            break;
+        case MAKE_COMPACT_SEQUENCE(0, '$', 'q'):
+            token->type = DCS_DECRQSS;
+            token.string = [_data substringFromIndex:1];
             break;
     }
 }

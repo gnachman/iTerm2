@@ -131,6 +131,10 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Changes whether the cursor blinks.
 - (void)terminalSetCursorBlinking:(BOOL)blinking;
 
+// Returns the current cursor style as a DECSCUSR param.
+- (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
+                     blinking:(BOOL *)blinking;
+
 // Sets the left/right scroll region.
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
 

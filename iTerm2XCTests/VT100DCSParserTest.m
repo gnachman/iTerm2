@@ -365,4 +365,10 @@
     XCTAssert(token->type == VT100CSI_SGR);
 }
 
+- (void)testDECRQSS {
+    VT100Token *token = [self tokenForDataWithFormat:@"%cP$q q%c\\", VT100CC_ESC, VT100CC_ESC];
+    XCTAssert(token->type == DCS_DECRQSS);
+    XCTAssertEqualObjects(token.string, @" q");
+}
+
 @end

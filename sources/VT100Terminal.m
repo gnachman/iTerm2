@@ -846,12 +846,24 @@ static const int kMaxScreenRows = 4096;
                             graphicRendition_.bgBlue = 0;
                             graphicRendition_.bgColorMode = ColorModeNormal;
                         } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
-                            // CSI 48:2:R:G:B m
                             // 24-bit color
-                            graphicRendition_.bgColorCode = subs[1];
-                            graphicRendition_.bgGreen = subs[2];
-                            graphicRendition_.bgBlue = subs[3];
-                            graphicRendition_.bgColorMode = ColorMode24bit;
+                            if (numberOfSubparameters >= 5) {
+                                // Spec-compliant. Likely rarely used in 2020.
+                                // CSI 48:2:colorspace:R:G:B m
+                                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
+                                // but good luck actually finding the colour space IDs.
+                                graphicRendition_.bgColorCode = subs[2];
+                                graphicRendition_.bgGreen = subs[3];
+                                graphicRendition_.bgBlue = subs[4];
+                                graphicRendition_.bgColorMode = ColorMode24bit;
+                            } else {
+                                // Misinterpretation compliant.
+                                // CSI 48:2:R:G:B m  <- misinterpretation compliant
+                                graphicRendition_.bgColorCode = subs[1];
+                                graphicRendition_.bgGreen = subs[2];
+                                graphicRendition_.bgBlue = subs[3];
+                                graphicRendition_.bgColorMode = ColorMode24bit;
+                            }
                         }
                     } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
                         // CSI 48;5;P m
@@ -862,6 +874,7 @@ static const int kMaxScreenRows = 4096;
                         i += 2;
                     } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
                         // CSI 48;2;R;G;B m
+                        // Hack for xterm compatibility
                         // 24-bit color
                         graphicRendition_.bgColorCode = token.csi->p[i + 2];
                         graphicRendition_.bgGreen = token.csi->p[i + 3];
@@ -2139,10 +2152,197 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalAppendSixelData:token.savedData];
             break;
 
+        case DCS_DECRQSS:
+            [delegate_ terminalSendReport:[[self decrqss:token.string] dataUsingEncoding:_encoding]];
+            break;
+
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;
     }
+}
+
+- (NSString *)decrqss:(NSString *)pt {
+    NSString *payload = [self decrqssPayload:pt];
+    if (payload) {
+        return [NSString stringWithFormat:@"%cP1$r%@%c\\", VT100CC_ESC, payload, VT100CC_ESC];
+    }
+    return [NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, pt, VT100CC_ESC];
+}
+
+- (NSString *)decrqssPayload:(NSString *)pt {
+    /* Per xterm's ctlseqs:
+    m       ⇒  SGR
+    " p     ⇒  DECSCL
+    SP q    ⇒  DECSCUSR
+    " q     ⇒  DECSCA
+    r       ⇒  DECSTBM
+    s       ⇒  DECSLRM
+    t       ⇒  DECSLPP
+    $ |     ⇒  DECSCPP
+    * |     ⇒  DECSNLS
+     */
+    if ([pt isEqualToString:@"m"]) {
+        NSArray<NSString *> *codes = [[self sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
+        return [NSString stringWithFormat:@"%@m", [codes componentsJoinedByString:@";"]];
+    }
+    if ([pt isEqualToString:@" q"]) {
+        ITermCursorType type = CURSOR_BOX;
+        BOOL blinking = YES;
+        [self.delegate terminalGetCursorType:&type blinking:&blinking];
+        int code = 0;
+        switch (type) {
+            case CURSOR_DEFAULT:
+            case CURSOR_BOX:
+                code = 1;
+                break;
+            case CURSOR_UNDERLINE:
+                code = 3;
+                break;
+            case CURSOR_VERTICAL:
+                code = 5;
+                break;
+        }
+        if (!blinking) {
+            code++;
+        }
+        return [NSString stringWithFormat:@"%@ q", @(code)];
+    }
+    return nil;
+}
+
+- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c {
+    VT100GraphicRendition g = {
+        .bold = c.bold,
+        .blink = c.blink,
+        .underline = c.underline,
+        .underlineStyle = c.underlineStyle,
+        .strikethrough = c.strikethrough,
+        .reversed = 0,
+        .faint = c.faint,
+        .italic = c.italic,
+        .fgColorCode = c.foregroundColor,
+        .fgGreen = c.fgGreen,
+        .fgBlue = c.fgBlue,
+        .fgColorMode = c.foregroundColorMode,
+
+        .bgColorCode = c.backgroundColor,
+        .bgGreen = c.bgGreen,
+        .bgBlue = c.bgBlue,
+        .bgColorMode = c.backgroundColorMode
+    };
+    return [self sgrCodesForGraphicRendition:g];
+}
+
+- (NSSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
+    NSMutableSet<NSString *> *result = [NSMutableSet set];
+    switch (graphicRendition.fgColorMode) {
+        case ColorModeNormal:
+            if (graphicRendition.fgColorCode < 8) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.fgColorCode + 30)]];
+            } else if (graphicRendition.fgColorCode < 16) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.fgColorCode + 90)]];
+            } else {
+                [result addObject:[NSString stringWithFormat:@"38:5:%@", @(graphicRendition.fgColorCode)]];
+            }
+            break;
+
+        case ColorModeAlternate:
+            switch (graphicRendition.fgColorCode) {
+                case ALTSEM_DEFAULT:
+                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
+                    [result addObject:@"39"];
+                    break;
+
+                case ALTSEM_SYSTEM_MESSAGE:
+                    // There is no SGR code for this case.
+                    break;
+
+                case ALTSEM_SELECTED:
+                case ALTSEM_CURSOR:
+                    // This isn't used as far as I can tell.
+                    break;
+
+            }
+            break;
+
+        case ColorMode24bit:
+            [result addObject:[NSString stringWithFormat:@"38:2:1:%@:%@:%@",
+              @(graphicRendition.fgColorCode), @(graphicRendition.fgGreen), @(graphicRendition.fgBlue)]];
+            break;
+
+        case ColorModeInvalid:
+            break;
+    }
+
+    switch (graphicRendition.bgColorMode) {
+        case ColorModeNormal:
+            if (graphicRendition.bgColorCode < 8) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.bgColorCode + 40)]];
+            } else if (graphicRendition.bgColorCode < 16) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.bgColorCode + 100)]];
+            } else {
+                [result addObject:[NSString stringWithFormat:@"48:5:%@", @(graphicRendition.bgColorCode)]];
+            }
+            break;
+
+        case ColorModeAlternate:
+            switch (graphicRendition.bgColorCode) {
+                case ALTSEM_DEFAULT:
+                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
+                    [result addObject:@"49"];
+                    break;
+
+                case ALTSEM_SYSTEM_MESSAGE:
+                    // There is no SGR code for this case.
+                    break;
+
+                case ALTSEM_SELECTED:
+                case ALTSEM_CURSOR:
+                    // This isn't used as far as I can tell.
+                    break;
+
+            }
+            break;
+
+        case ColorMode24bit:
+            [result addObject:[NSString stringWithFormat:@"48:2:1:%@:%@:%@",
+              @(graphicRendition.bgColorCode), @(graphicRendition.bgGreen), @(graphicRendition.bgBlue)]];
+            break;
+
+        case ColorModeInvalid:
+            break;
+    }
+
+    if (graphicRendition.bold) {
+        [result addObject:@"1"];
+    }
+    if (graphicRendition.faint) {
+        [result addObject:@"2"];
+    }
+    if (graphicRendition.italic) {
+        [result addObject:@"3"];
+    }
+    if (graphicRendition.underline) {
+        switch (graphicRendition.underlineStyle) {
+            case VT100UnderlineStyleSingle:
+                [result addObject:@"4"];
+                break;
+            case VT100UnderlineStyleCurly:
+                [result addObject:@"4:3"];
+                break;
+        }
+    }
+    if (graphicRendition.blink) {
+        [result addObject:@"5"];
+    }
+    if (graphicRendition.reversed) {
+        [result addObject:@"7"];
+    }
+    if (graphicRendition.strikethrough) {
+        [result addObject:@"9"];
+    }
+    return result;
 }
 
 - (NSArray<NSNumber *> *)xtermParseColorArgument:(NSString *)part {

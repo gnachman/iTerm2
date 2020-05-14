@@ -9285,6 +9285,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[self textview] setBlinkingCursor:blink];
 }
 
+- (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut
+                   blinking:(BOOL *)blinking {
+    *cursorTypeOut = self.cursorType;
+    *blinking = self.textview.blinkingCursor;
+}
+
 - (BOOL)screenShouldInitiateWindowResize {
     return ![[[self profile] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue];
 }

@@ -3279,6 +3279,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetCursorBlinking:blinking];
 }
 
+- (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
+                     blinking:(BOOL *)blinking {
+    [delegate_ screenGetCursorType:cursorTypeOut blinking:blinking];
+}
+
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
     if (currentGrid_.useScrollRegionCols) {
         currentGrid_.scrollRegionCols = VT100GridRangeMake(scrollLeft,
@@ -4795,111 +4800,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
-    NSMutableSet<NSString *> *result = [NSMutableSet set];
-    switch (c.foregroundColorMode) {
-        case ColorModeNormal:
-            if (c.foregroundColor < 8) {
-                [result addObject:[NSString stringWithFormat:@"%@", @(c.foregroundColor + 30)]];
-            } else if (c.foregroundColor < 16) {
-                [result addObject:[NSString stringWithFormat:@"%@", @(c.foregroundColor + 90)]];
-            } else {
-                [result addObject:[NSString stringWithFormat:@"38:5:%@", @(c.foregroundColor)]];
-            }
-            break;
-
-        case ColorModeAlternate:
-            switch (c.foregroundColor) {
-                case ALTSEM_DEFAULT:
-                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
-                    [result addObject:@"39"];
-                    break;
-
-                case ALTSEM_SYSTEM_MESSAGE:
-                    // There is no SGR code for this case.
-                    break;
-
-                case ALTSEM_SELECTED:
-                case ALTSEM_CURSOR:
-                    // This isn't used as far as I can tell.
-                    break;
-
-            }
-            break;
-
-        case ColorMode24bit:
-            [result addObject:[NSString stringWithFormat:@"38:2:1:%@:%@:%@",
-              @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue)]];
-            break;
-
-        case ColorModeInvalid:
-            break;
-    }
-
-    switch (c.backgroundColorMode) {
-        case ColorModeNormal:
-            if (c.backgroundColor < 8) {
-                [result addObject:[NSString stringWithFormat:@"%@", @(c.backgroundColor + 40)]];
-            } else if (c.backgroundColor < 16) {
-                [result addObject:[NSString stringWithFormat:@"%@", @(c.backgroundColor + 100)]];
-            } else {
-                [result addObject:[NSString stringWithFormat:@"48:5:%@", @(c.backgroundColor)]];
-            }
-            break;
-
-        case ColorModeAlternate:
-            switch (c.backgroundColor) {
-                case ALTSEM_DEFAULT:
-                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
-                    [result addObject:@"49"];
-                    break;
-
-                case ALTSEM_SYSTEM_MESSAGE:
-                    // There is no SGR code for this case.
-                    break;
-
-                case ALTSEM_SELECTED:
-                case ALTSEM_CURSOR:
-                    // This isn't used as far as I can tell.
-                    break;
-
-            }
-            break;
-
-        case ColorMode24bit:
-            [result addObject:[NSString stringWithFormat:@"48:2:1:%@:%@:%@",
-              @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue)]];
-            break;
-
-        case ColorModeInvalid:
-            break;
-    }
-
-    if (c.bold) {
-        [result addObject:@"1"];
-    }
-    if (c.faint) {
-        [result addObject:@"2"];
-    }
-    if (c.italic) {
-        [result addObject:@"3"];
-    }
-    if (c.underline) {
-        switch (c.underlineStyle) {
-            case VT100UnderlineStyleSingle:
-                [result addObject:@"4"];
-                break;
-            case VT100UnderlineStyleCurly:
-                [result addObject:@"4:3"];
-                break;
-        }
-    }
-    if (c.blink) {
-        [result addObject:@"5"];
-    }
-    if (c.strikethrough) {
-        [result addObject:@"9"];
-    }
-    return result;
+    return [terminal_ sgrCodesForCharacter:c];
 }
 
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect {
