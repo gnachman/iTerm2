@@ -643,7 +643,7 @@ typedef struct {
         const CGFloat leftInset = haveLeft ? radius : 0;
         const CGFloat rightInset = haveRight ? radius : 0;
 
-        const CGFloat thickness = 0.5;
+        const CGFloat thickness = self.window.backingScaleFactor > 1 ? 0.5 : 1.0;
         _leftBorderView.frame = NSMakeRect(0,
                                          bottomInset,
                                          thickness,
