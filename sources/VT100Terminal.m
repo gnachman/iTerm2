@@ -1676,28 +1676,30 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {
                 case 0:
+                    [delegate_ terminalResetCursorTypeAndBlink];
+                    break;
                 case 1:
-                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorBlinking:YES];
                     [delegate_ terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 2:
-                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorBlinking:NO];
                     [delegate_ terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 3:
-                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorBlinking:YES];
                     [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 4:
-                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorBlinking:NO];
                     [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 5:
-                    [delegate_ terminalSetCursorBlinking:true];
+                    [delegate_ terminalSetCursorBlinking:YES];
                     [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
                     break;
                 case 6:
-                    [delegate_ terminalSetCursorBlinking:false];
+                    [delegate_ terminalSetCursorBlinking:NO];
                     [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
                     break;
             }

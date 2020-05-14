@@ -9285,6 +9285,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[self textview] setBlinkingCursor:blink];
 }
 
+- (void)screenResetCursorTypeAndBlink {
+    self.cursorTypeOverride = nil;
+    self.textview.blinkingCursor = [iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:self.profile];
+}
+
 - (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut
                    blinking:(BOOL *)blinking {
     *cursorTypeOut = self.cursorType;

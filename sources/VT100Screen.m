@@ -3284,6 +3284,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenGetCursorType:cursorTypeOut blinking:blinking];
 }
 
+- (void)terminalResetCursorTypeAndBlink {
+    [delegate_ screenResetCursorTypeAndBlink];
+}
+
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
     if (currentGrid_.useScrollRegionCols) {
         currentGrid_.scrollRegionCols = VT100GridRangeMake(scrollLeft,

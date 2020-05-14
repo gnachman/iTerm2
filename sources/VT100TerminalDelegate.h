@@ -131,6 +131,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Changes whether the cursor blinks.
 - (void)terminalSetCursorBlinking:(BOOL)blinking;
 
+// Reset type and blink to default
+- (void)terminalResetCursorTypeAndBlink;
+
 // Returns the current cursor style as a DECSCUSR param.
 - (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
                      blinking:(BOOL *)blinking;

@@ -49,6 +49,9 @@
 - (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut
                    blinking:(BOOL *)blinking;
 
+- (void)screenResetCursorTypeAndBlink;
+
+
 // Returns if the screen is permitted to resize the window.
 - (BOOL)screenShouldInitiateWindowResize;
 
