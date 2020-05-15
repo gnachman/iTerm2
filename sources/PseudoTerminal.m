@@ -11406,14 +11406,18 @@ backgroundColor:(NSColor *)backgroundColor {
     frame.size.height = self.tabs.firstObject.rootView.frame.size.height;
     _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
+    const CGFloat width = self.swipeHandlerParameters.width;
 
     [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
         NSView *view = tab.rootView;
         NSRect frame = view.frame;
-        frame.origin.x = idx * frame.size.width;
+        frame.origin.x = idx * width;
         frame.origin.y = 0;
-        view.frame = frame;
-        [_swipeContainerView addSubview:view];
+        frame.size.width = width;
+        NSView *clipView = [[[NSView alloc] initWithFrame:frame] autorelease];
+        [clipView addSubview:view];
+        view.frame = clipView.bounds;
+        [_swipeContainerView addSubview:clipView];
     }];
     [self.contentView.tabView addSubview:_swipeContainerView];
 
@@ -11424,20 +11428,8 @@ backgroundColor:(NSColor *)backgroundColor {
     return (iTermSwipeHandlerParameters){
         .count = self.tabs.count,
         .currentIndex = [self.tabs indexOfObject:self.currentTab],
-        .width = NSWidth(self.contentView.frame)
+        .width = NSWidth(_contentView.tabView.frame)
     };
-}
-
-- (NSUInteger)swipeHandlerCount {
-    return self.tabs.count;
-}
-
-- (NSUInteger)swipeHandlerIndex {
-    return [self.tabs indexOfObject:self.currentTab];
-}
-
-- (CGFloat)swipeHandlerWidth {
-    return NSWidth(self.contentView.frame);
 }
 
 - (CGFloat)truncatedSwipeOffset:(CGFloat)x {
@@ -11471,6 +11463,7 @@ backgroundColor:(NSColor *)backgroundColor {
         [self.tabView selectLastTabViewItem:nil];
     }
     [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self currentTab] recheckBlur];
 }
 
 @end
