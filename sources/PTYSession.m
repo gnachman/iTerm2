@@ -7384,11 +7384,11 @@ verticalSpacing:(float)verticalSpacing {
 }
 
 - (void)screenPrintString:(NSString *)string {
-    [[self textview] printContent:string];
+    // [[self textview] printContent:string];
 }
 
 - (void)screenPrintVisibleArea {
-    [[self textview] print:nil];
+    // [[self textview] print:nil];
 }
 
 - (BOOL)screenShouldSendContentsChangedNotification {

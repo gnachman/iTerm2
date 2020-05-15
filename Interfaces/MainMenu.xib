@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -151,40 +151,6 @@
                                         </menuItem>
                                     </items>
                                 </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1307">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Page Setup..." identifier="Page Setup..." id="685">
-                                <connections>
-                                    <action selector="runPageLayout:" target="-1" id="691"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Print" id="822">
-                                <menu key="submenu" title="Print" id="824">
-                                    <items>
-                                        <menuItem title="Screen" identifier="Print.Screen" id="823">
-                                            <connections>
-                                                <action selector="print:" target="-1" id="827"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Selection" tag="1" identifier="Print.Selection" id="825">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="print:" target="-1" id="828"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Buffer" tag="2" identifier="Print.Buffer" id="826">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="print:" target="-1" id="829"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="689">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                         </items>
                     </menu>
@@ -759,6 +725,7 @@ DQ
                     </menu>
                 </menuItem>
             </items>
+            <point key="canvasLocation" x="139" y="154"/>
         </menu>
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>

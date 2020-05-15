@@ -4551,6 +4551,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)doPrint
 {
+#if 0
     if ([printBuffer_ length] > 0) {
         [delegate_ screenPrintString:printBuffer_];
     } else {
@@ -4559,6 +4560,7 @@ static void SwapInt(int *a, int *b) {
     [printBuffer_ release];
     printBuffer_ = nil;
     collectInputForPrinting_ = NO;
+#endif
 }
 
 - (BOOL)isDoubleWidthCharacter:(unichar)c {
