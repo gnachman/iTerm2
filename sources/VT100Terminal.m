@@ -1649,6 +1649,7 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case ANSICSI_PRINT:
+#if 0
             switch (token.csi->p[0]) {
                 case 4:
                     [delegate_ terminalPrintBuffer];
@@ -1659,6 +1660,7 @@ static const int kMaxScreenRows = 4096;
                 default:
                     [delegate_ terminalPrintScreen];
             }
+#endif
             break;
 
 #if 0
@@ -2553,9 +2555,8 @@ static const int kMaxScreenRows = 4096;
     NSInteger i = [string rangeOfString:@" "].location;
     if (i == NSNotFound) {
         return nil;
-    } else {
-        return [string substringFromIndex:i + 1];
     }
+    return [string substringFromIndex:i + 1];
 }
 
 - (void)pushUnicodeVersion:(NSString *)label {
