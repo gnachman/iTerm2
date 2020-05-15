@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermGCDTimer.h"
 #import "iTermScrollWheelStateMachine.h"
 #import "iTermSwipeState+Private.h"
@@ -87,7 +88,8 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
 
 - (BOOL)internalHandleEvent:(NSEvent *)event {
     DLog(@"internalHandleEvent: %@", iTermShortEventPhasesString(event));
-    if (![NSEvent isSwipeTrackingFromScrollEventsEnabled]) {
+    if (![NSEvent isSwipeTrackingFromScrollEventsEnabled] ||
+        ![iTermAdvancedSettingsModel allowInteractiveSwipeBetweenTabs]) {
         DLog(@"Swipe tracking not enabled");
         return NO;
     }

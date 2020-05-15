@@ -230,6 +230,7 @@ DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?"
 DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advanced setting “Custom tab label font size”.");
 DEFINE_FLOAT(customTabBarFontSize, 11.0, SECTION_TABS @"Custom tab label font size\nFor this to take effect, turn on “Use custom font size for tab labels?”.");
 DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence of selected tab underline indicator in Minimal theme when there is at least one colored tab.");
+DEFINE_BOOL(allowInteractiveSwipeBetweenTabs, YES, SECTION_TABS @"Allow two-finger interactive swipe between tabs?\nThe system preference Trackpad > More Gestures > Swipe between pages controls this globally. When “swipe with two fingers” is enabled, you can change this setting to “No” to prevent swiping between tabs in iTerm2.");
 
 #pragma mark Mouse
 

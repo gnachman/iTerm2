@@ -41,6 +41,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;
++ (BOOL)allowInteractiveSwipeBetweenTabs;
 + (BOOL)alternateMouseScroll;
 + (void)setAlternateMouseScroll:(BOOL)value;
 + (NSString *)alternateMouseScrollStringForDown;
