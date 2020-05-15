@@ -16,6 +16,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermShellHistoryController.h"
 #import "iTermWarning.h"
+#import "NSTextField+iTerm.h"
 #import "PasteboardHistory.h"
 #import "RegexKitLite.h"
 #import "WindowArrangements.h"
@@ -424,10 +425,18 @@ enum {
                     key:kPreferenceKeyTripleClickSelectsFullWrappedLines
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_doubleClickPerformsSmartSelection
-                    key:kPreferenceKeyDoubleClickPerformsSmartSelection
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_doubleClickPerformsSmartSelection
+                           key:kPreferenceKeyDoubleClickPerformsSmartSelection
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_wordChars.enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+        strongSelf->_wordCharsLabel.labelEnabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+    };
 
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement
