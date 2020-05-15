@@ -1677,6 +1677,11 @@ static const int kMaxScreenRows = 4096;
         case XTERMCC_ICON_TITLE:
             [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
+#else
+        case XTERMCC_WIN_TITLE:
+        case XTERMCC_WINICON_TITLE:
+        case XTERMCC_ICON_TITLE:
+            break;
 #endif
         case XTERMCC_PASTE64: {
             if (token.string) {
@@ -1715,24 +1720,26 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
             break;
         case XTERMCC_ICONIFY:
-            [delegate_ terminalMiniaturize:YES];
+            // [delegate_ terminalMiniaturize:YES];
             break;
         case XTERMCC_DEICONIFY:
-            [delegate_ terminalMiniaturize:NO];
+            // [delegate_ terminalMiniaturize:NO];
             break;
         case XTERMCC_RAISE:
-            [delegate_ terminalRaise:YES];
+            // [delegate_ terminalRaise:YES];
             break;
         case XTERMCC_LOWER:
-            [delegate_ terminalRaise:NO];
+            // [delegate_ terminalRaise:NO];
             break;
         case XTERMCC_SU:
-            [delegate_ terminalScrollUp:token.csi->p[0]];
+            // [delegate_ terminalScrollUp:token.csi->p[0]];
             break;
         case XTERMCC_SD:
+#if 0
             if (token.csi->count == 1) {
                 [delegate_ terminalScrollDown:token.csi->p[0]];
             }
+#endif
             break;
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
