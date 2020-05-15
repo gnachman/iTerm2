@@ -11470,6 +11470,7 @@ backgroundColor:(NSColor *)backgroundColor {
     } else if (self.tabs.count) {
         [self.tabView selectLastTabViewItem:nil];
     }
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
 @end
