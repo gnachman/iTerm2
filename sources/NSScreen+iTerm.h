@@ -20,5 +20,6 @@
 
 - (NSRect)frameExceptMenuBar;
 - (BOOL)hasDock;
+- (NSString *)it_description;
 
 @end

@@ -10,6 +10,12 @@
 
 @implementation NSScreen (iTerm)
 
+- (NSString *)it_description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ visibleFrame=%@ hasDock=%@>",
+            NSStringFromClass(self.class), self, NSStringFromRect(self.frame),
+            NSStringFromRect(self.visibleFrame), [self hasDock] ? @"YES" : @"NO"];
+}
+
 - (BOOL)containsCursor {
     NSRect frame = [self frame];
     NSPoint cursor = [NSEvent mouseLocation];
