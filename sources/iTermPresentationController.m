@@ -13,7 +13,9 @@
 #import "NSScreen+iTerm.h"
 
 
-@implementation iTermPresentationController
+@implementation iTermPresentationController {
+    NSScreen *_lastScreen;
+}
 
 + (instancetype)sharedInstance {
     static iTermPresentationController *instance;
@@ -22,6 +24,29 @@
         instance = [[self alloc] init];
     });
     return instance;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(screenParametersDidChange:)
+                                                     name:NSApplicationDidChangeScreenParametersNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    [self update];
+}
+
+- (void)dealloc {
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 }
 
 - (void)update {
@@ -50,7 +75,14 @@
     }
 
     const BOOL shouldHideMenuBar = [self anyScreenHasMenuBar:screensToHideMenu];
-    const BOOL shouldHideDock = [self anyScreenHasDock:screensToHideDock];
+    NSScreen *currentScreenWithDock = [self screenWithDockFromScreens:screensToHideDock];
+
+    const BOOL shouldHideDock = currentScreenWithDock != nil || [self haveFullScreenWindowOnSameScreenWhereDockWasLastHidden];
+    // If hiding the sock, set screenWithDock to the best guess of the screen that has the dock.
+    // It could be that currentScreenWithDock is nil because our presentation is hiding the dock.
+    // In that case, carry forward our best guess from _lastScreen.
+    // This value becomes the new _lastScreen, provided shouldHideDock is true.
+    NSScreen *screenWithDock = shouldHideDock ? (currentScreenWithDock ?: _lastScreen) : nil;
 
     if (sanityCheck &&
         !shouldHideDock &&
@@ -66,7 +98,8 @@
     }
 
     [self setApplicationPresentationFlagsWithHiddenDock:shouldHideDock
-                                                menuBar:shouldHideMenuBar];
+                                                menuBar:shouldHideMenuBar
+                                         screenWithDock:screenWithDock];
     DLog(@"END update");
 }
 
@@ -81,6 +114,40 @@
     }
 }
 
+// When the dock is hidden because we have set the auto-hide dock presentation option, we can't
+// figure out which screen *would* have the dock because their frames equal their visibleFrames.
+// Instead, try to figure out which of the current screens is like the last screen where we saw
+// the dock, just before hiding it. This can go wrong if the screen configuration changes. That is
+// mitigated by resetting everything when screen parameters change.
+- (BOOL)haveFullScreenWindowOnSameScreenWhereDockWasLastHidden {
+    DLog(@"Checking if there's still a full screen window on the same screen where we last saw the dock. The last such screen had frame %@",
+         NSStringFromRect(_lastScreen.frame));
+    if (!_lastScreen) {
+        DLog(@"  Don't have a lastScreen, so no");
+        return NO;
+    }
+    if (!self.dockIsCurrentlyHidden) {
+        DLog(@"  Dock isn't currently hidden, so no");
+        return NO;
+    }
+    NSArray<id<iTermPresentationControllerManagedWindowController>> *windowControllers =
+        [self.delegate presentationControllerManagedWindows];
+    for (id<iTermPresentationControllerManagedWindowController> windowController in windowControllers) {
+        NSScreen *screen = nil;
+        if (![self windowControllerIsWorthyOfConsideration:windowController screen:&screen]) {
+            continue;
+        }
+        NSWindow *window = [windowController presentationControllerManagedWindowControllerWindow];
+        DLog(@"  Considering fullscreen window controller %@ whose screen has frame %@", windowController,
+             NSStringFromRect(window.screen.frame));
+        if (window.screen && NSIntersectsRect(window.screen.frame, _lastScreen.frame)) {
+            DLog(@"  > Yup");
+            return YES;
+        }
+    }
+    DLog(@"  > Nope");
+    return NO;
+}
 - (BOOL)dockIsCurrentlyHidden {
     return (NSApp.presentationOptions & NSApplicationPresentationAutoHideDock) != 0;
 }
@@ -95,11 +162,12 @@
 }
 
 - (void)forceShowMenuBarAndDock {
-    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO];
+    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil];
 }
 
 - (void)setApplicationPresentationFlagsWithHiddenDock:(BOOL)shouldHideDock
-                                              menuBar:(BOOL)shouldHideMenuBar {
+                                              menuBar:(BOOL)shouldHideMenuBar
+                                       screenWithDock:(NSScreen *)screenWithDock {
     DLog(@"setting options: hide dock=%@ hide menu bar=%@", @(shouldHideDock), @(shouldHideMenuBar));
 
     const NSApplicationPresentationOptions mask = (NSApplicationPresentationAutoHideMenuBar |
@@ -107,6 +175,13 @@
     NSApplicationPresentationOptions presentationOptions = (NSApp.presentationOptions & ~mask);
     if (shouldHideDock) {
         presentationOptions |= NSApplicationPresentationAutoHideDock;
+        _lastScreen = screenWithDock;
+    } else {
+        // Forget _lastScreen. It records the screen that had the dock last
+        // time we were able to see it. Since we're hiding the dock now, we can
+        // expect to compute a more accurate version of it next time we go to
+        // hide the dock.
+        _lastScreen = nil;
     }
     if (shouldHideMenuBar) {
         presentationOptions |= NSApplicationPresentationAutoHideMenuBar;
@@ -183,9 +258,9 @@
     }];
 }
 
-- (BOOL)anyScreenHasDock:(NSArray<NSScreen *> *)screens {
+- (NSScreen *)screenWithDockFromScreens:(NSArray<NSScreen *> *)screens {
     DLog(@"Checking if any screen has dock in %@", screens);
-    const BOOL result = [screens anyWithBlock:^BOOL(NSScreen *screen) {
+    return [screens objectPassingTest:^BOOL(NSScreen *screen, NSUInteger index, BOOL *stop) {
         // We need to check both the screen we were given as well as the current "real" screen,
         // because they can have different visibleFrames. My theory is that NSScreen is immutable
         // and copies of it proliferate with different attributes.
@@ -195,9 +270,8 @@
              NSStringFromRect(screen.frame),
              NSStringFromRect(screen.visibleFrame),
              @(result));
-        return result;
+        return YES;
     }];
-    return result;
 }
 
 - (BOOL)shouldHideMenuForWindowController:(id<iTermPresentationControllerManagedWindowController>)windowController {
@@ -217,6 +291,12 @@
         return YES;
     }
     return currentScreen != nil && currentScreen == [[NSScreen screens] firstObject];
+}
+
+- (void)screenParametersDidChange:(NSNotification *)notification {
+    DLog(@"screen parameters did change. Nil out lastScreen and update. This could cause the dock to spuriously appear.");
+    _lastScreen = nil;
+    [self update];
 }
 
 @end
