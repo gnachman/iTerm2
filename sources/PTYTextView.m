@@ -500,7 +500,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         item.action == @selector(terminalStateToggleMouseReporting:) ||
         item.action == @selector(terminalStateTogglePasteBracketing:) ||
         item.action == @selector(terminalStateToggleApplicationCursor:) ||
-        item.action == @selector(terminalStateToggleApplicationKeypad:)) {
+        item.action == @selector(terminalStateToggleApplicationKeypad:) ||
+        item.action == @selector(terminalStateToggleCSIu:)) {
         item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSOnState : NSOffState;
         return YES;
     }
@@ -2792,6 +2793,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [self.delegate textViewToggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateToggleApplicationKeypad:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+
+- (IBAction)terminalStateToggleCSIu:(id)sender {
     [self.delegate textViewToggleTerminalStateForMenuItem:sender];
 }
 

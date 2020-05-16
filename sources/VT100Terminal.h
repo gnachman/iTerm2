@@ -64,6 +64,10 @@ typedef struct {
 @property(nonatomic, readonly) MouseMode previousMouseMode;  // will never equal NONE
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL reportKeyUp;
+// -1: not set (fall back to profile settings)
+// Only index 4 is used to control CSI u (1=on, 0=off, -1=use profile setting)
+// Will always have at least 5 values.
+@property(nonatomic, readonly) NSMutableArray<NSNumber *> *sendModifiers;
 
 // The current foreground/background color to display (they're swapped when reverseVideo is on).
 @property(nonatomic, readonly) screen_char_t foregroundColorCode;

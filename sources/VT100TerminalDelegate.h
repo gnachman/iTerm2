@@ -440,4 +440,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp;
 - (void)terminalAppendSixelData:(NSData *)sixelData;
 
+- (void)terminalDidChangeSendModifiers;
+
 @end

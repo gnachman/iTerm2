@@ -76,6 +76,7 @@ NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 NSString *const kTerminalStateURL = @"URL";
 NSString *const kTerminalStateURLParams = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
+NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -107,6 +108,10 @@ typedef struct {
     NSInteger unicodeVersion;
 } VT100SavedCursor;
 
+@interface VT100Terminal()
+@property (nonatomic, strong, readwrite) NSMutableArray<NSNumber *> *sendModifiers;
+@end
+
 @implementation VT100Terminal {
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
@@ -119,8 +124,6 @@ typedef struct {
     VT100SavedCursor mainSavedCursor_;
     VT100SavedCursor altSavedCursor_;
 
-    // TODO: Actually use this.
-    int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
     NSMutableArray *_unicodeVersionStack;
 
     // Code for the current hypertext link, or 0 if not in a hypertext link.
@@ -219,6 +222,7 @@ static const int kMaxScreenRows = 4096;
 
         _allowKeypadMode = YES;
         _allowPasteBracketing = YES;
+        _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
 
         numLock_ = YES;
         [self saveCursor];  // initialize save area
@@ -235,6 +239,7 @@ static const int kMaxScreenRows = 4096;
     [_unicodeVersionStack release];
     [_url release];
     [_urlParams release];
+    [_sendModifiers release];
 
     [super dealloc];
 }
@@ -356,6 +361,10 @@ static const int kMaxScreenRows = 4096;
     [self resetSavedCursorPositions];
     [delegate_ terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
+    for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
+        _sendModifiers[i] = @-1;
+    }
+    [self.delegate terminalDidChangeSendModifiers];
 }
 
 - (void)gentleReset {
@@ -2042,32 +2051,42 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_RESET_MODIFIERS:
             if (token.csi->count == 0) {
-                sendModifiers_[2] = -1;
-            } else {
-                int resource = token.csi->p[0];
-                if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
-                    sendModifiers_[resource] = -1;
+                for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
+                    _sendModifiers[i] = @-1;
                 }
+                [self.delegate terminalDidChangeSendModifiers];
+                break;
+            }
+            int resource = token.csi->p[0];
+            if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
+                _sendModifiers[resource] = @-1;
+                [self.delegate terminalDidChangeSendModifiers];
             }
             break;
 
         case VT100CSI_SET_MODIFIERS: {
             if (token.csi->count == 0) {
                 for (int j = 0; j < NUM_MODIFIABLE_RESOURCES; j++) {
-                    sendModifiers_[j] = 0;
+                    _sendModifiers[j] = @-1;
                 }
+                [self.delegate terminalDidChangeSendModifiers];
+                break;
+            }
+            const int resource = token.csi->p[0];
+            if (resource < 0 || resource >= NUM_MODIFIABLE_RESOURCES) {
+                break;
+            }
+            int value;
+            if (token.csi->count == 1) {
+                value = -1;
             } else {
-                int resource = token.csi->p[0];
-                int value;
-                if (token.csi->count == 1) {
-                    value = 0;
-                } else {
-                    value = token.csi->p[1];
-                }
-                if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES && value >= 0) {
-                    sendModifiers_[resource] = value;
+                value = token.csi->p[1];
+                if (value < 0) {
+                    break;
                 }
             }
+            _sendModifiers[resource] = @(value);
+            [self.delegate terminalDidChangeSendModifiers];
             break;
         }
 
@@ -3204,6 +3223,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateCursorModeKey: @(self.cursorMode),
            kTerminalStateKeypadModeKey: @(self.keypadMode),
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
+           kTerminalStateSendModifiers: _sendModifiers ?: @[],
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
@@ -3253,6 +3273,16 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
+    if ([dict[kTerminalStateSendModifiers] isKindOfClass:[NSArray class]]) {
+        self.sendModifiers = [[dict[kTerminalStateSendModifiers] mutableCopy] autorelease];
+    }
+    if (!_sendModifiers) {
+        self.sendModifiers = [[@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy] autorelease];
+    } else {
+        while (_sendModifiers.count < NUM_MODIFIABLE_RESOURCES) {
+            [_sendModifiers addObject:@-1];
+        }
+    }
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];
     self.url = [dict[kTerminalStateURL] nilIfNull];

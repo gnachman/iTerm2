@@ -4297,6 +4297,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                               isSixel:YES];
 }
 
+- (void)terminalDidChangeSendModifiers {
+    [delegate_ screenSetUseCSIu:terminal_.sendModifiers[4].intValue];
+}
+
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
         DLog(@"Inline file received");

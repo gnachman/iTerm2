@@ -568,6 +568,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
     iTermComposerManager *_composerManager;
+    NSNumber *_lastLibTickitProfileSetting;
 }
 
 @synthesize isDivorced = _divorced;
@@ -929,6 +930,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_cookie release];
     }
     [_composerManager release];
+    [_lastLibTickitProfileSetting release];
 
     [super dealloc];
 }
@@ -3937,7 +3939,22 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
 
-    [self setUseLibTickit:[iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:aDict]];
+    int terminalTickit = _terminal.sendModifiers[4].intValue;
+    const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
+                                                              inProfile:aDict];
+    if (_lastLibTickitProfileSetting &&                                   // I had a setting before
+        _lastLibTickitProfileSetting.boolValue != profileWantsTickit &&   // My setting has changed
+        terminalTickit >= 0 &&                                            // The terminal has an opinion
+        profileWantsTickit != !!terminalTickit) {                         // New setting differs from terminal
+        DLog(@"Reset terminal's setting because the user's CSI u choice takes priority.");
+        _terminal.sendModifiers[4] = @-1;
+        terminalTickit = -1;
+    }
+    [self setUseLibTickit:[self shouldUseLibTickitWithProfileSetting:profileWantsTickit
+                                                     terminalSetting:terminalTickit]];
+    [_lastLibTickitProfileSetting autorelease];
+    _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
+
     if (self.isTmuxClient) {
         NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
         if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {
@@ -3990,6 +4007,14 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               return newValue;
                                                           }];
 
+}
+
+- (BOOL)shouldUseLibTickitWithProfileSetting:(BOOL)profileSetting
+                             terminalSetting:(int)terminalSetting {
+    if (terminalSetting < 0) {
+        return profileSetting;
+    }
+    return (terminalSetting > 0);
 }
 
 - (void)setUseLibTickit:(BOOL)value {
@@ -8795,6 +8820,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
         case 6:
             return _terminal.keypadMode;
+
+        case 7:
+            return _useLibTickit;
     }
 
     return NO;
@@ -8830,6 +8858,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case 6:
             [_terminal forceSetKeypadMode:!_terminal.keypadMode];
             break;
+
+        case 7: {
+            _terminal.sendModifiers[4] = _useLibTickit ? @0 : @1;
+            [self screenSetUseCSIu:[_terminal.sendModifiers[4] intValue]];
+            break;
+        }
             
     }
 }
@@ -11204,6 +11238,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     return !*boolPtr;
+}
+
+- (void)screenSetUseCSIu:(int)terminalSetting {
+    const BOOL profileSetting =
+        [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile];
+    [self setUseLibTickit:[self shouldUseLibTickitWithProfileSetting:profileSetting
+                                                     terminalSetting:terminalSetting]];
 }
 
 - (VT100Screen *)popupVT100Screen {

@@ -281,5 +281,6 @@
                        displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL *)promptIfBig;
 - (BOOL)screenShouldClearScrollbackBuffer;
+- (void)screenSetUseCSIu:(int)terminalSetting;
 
 @end

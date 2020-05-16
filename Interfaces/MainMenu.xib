@@ -918,6 +918,12 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="vqM-de-PE3"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Report Modifiers with CSI u" tag="7" identifier="Application Keypad" id="NiW-ZC-qkW">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="dEu-4i-avK"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>
                                         <menuItem title="Reset" identifier="Reset Terminal State" id="Hb6-C9-aDf" userLabel="Application Cursor Keys">
                                             <modifierMask key="keyEquivalentModifierMask"/>
