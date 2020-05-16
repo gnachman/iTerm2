@@ -1,0 +1,7 @@
+#!/bin/bash
+echo -n '[3 q'
+echo Cursor is now a blinking underline
+sleep 2
+echo -n '[0 q'
+echo Should be back to normal
+
