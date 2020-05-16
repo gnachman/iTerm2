@@ -527,9 +527,11 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     }
 
     // Modified Unicode - option
-    if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagOption) {
+    if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagOption) {
         // Legacy code path: option-letter, for the "simplest form of these keys." Not sure what
         // he meant exactly, but anything that's not a function key seems simple to me. ¯\_(ツ)_/¯
+        // Update: based on his example of m-a -> esc a and m-A -> esc A, I interpret this to mean
+        // the shift key should not be considered.
         NSData *data = [self dataForOptionModifiedKeypress];
         if (data) {
             return [[NSString alloc] initWithData:data encoding:_configuration.encoding];
