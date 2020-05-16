@@ -701,6 +701,7 @@ static BOOL hasBecomeActive = NO;
             _disableTermination = NO;
         });
     });
+    [[iTermPresentationController sharedInstance] update];
 }
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
     DLog(@"applicationShouldTerminate:");
