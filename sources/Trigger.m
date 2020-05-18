@@ -36,6 +36,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
 @synthesize regex = regex_;
 @synthesize param = param_;
 
++ (NSSet<NSString *> *)synonyms {
+    return [NSSet set];
+}
+
 + (Trigger *)triggerFromDict:(NSDictionary *)dict
 {
     NSString *className = [dict objectForKey:kTriggerActionKey];

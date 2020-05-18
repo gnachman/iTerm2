@@ -22,6 +22,10 @@
 
 @implementation iTermUserNotificationTrigger
 
++ (NSSet<NSString *> *)synonyms {
+    return [NSSet setWithObject:@"GrowlTrigger"];
+}
+
 + (NSString *)title
 {
     return @"Post Notification…";

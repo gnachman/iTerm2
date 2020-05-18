@@ -154,6 +154,10 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
         if ([className isEqualToString:action]) {
             return i;
         }
+        Class theClass = NSClassFromString(className);
+        if ([[theClass synonyms] containsObject:action]) {
+            return i;
+        }
     }
     return -1;
 }
