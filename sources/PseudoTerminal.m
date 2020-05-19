@@ -7237,7 +7237,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return clamped;
 }
 
-- (BOOL)haveDimmedPaneAbuttingTabBar {
+- (BOOL)shouldTweakMinimalTabOutlineAlpha {
     if (![iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
         return NO;
     }
@@ -7245,6 +7245,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // Trickery isn't needed because this kind of dimming looks fine for the minimal tabbar outline.
         return NO;
     }
+    if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+        return NO;
+    }
+    // Does a dimmed pane abut the tabbar?
     NSArray<PTYSession *> *sessions = nil;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
@@ -7275,8 +7279,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {
         const CGFloat alpha = [iTermAdvancedSettingsModel minimalTabStyleOutlineStrength];
-        if ([self haveDimmedPaneAbuttingTabBar]) {
-            const CGFloat a = 0.15;
+        if ([self shouldTweakMinimalTabOutlineAlpha]) {
+            const CGFloat a = [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount] * 0.375;
             return @(1 * a + alpha * (1 - a));
         } else {
             return @(alpha);
