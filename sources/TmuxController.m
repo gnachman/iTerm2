@@ -939,6 +939,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)loadTitleFormat {
+    NSDecimalNumber *v2_9 = [NSDecimalNumber decimalNumberWithString:@"2.9"];
+    if ([gateway_.minimumServerVersion compare:v2_9] == NSOrderedAscending) {
+        DLog(@"tmux not new enough to use set-titles");
+        return;
+    }
+
     [gateway_ sendCommandList:@[ [gateway_ dictionaryForCommand:@"show-options -v -g set-titles"
                                                  responseTarget:self
                                                responseSelector:@selector(handleShowSetTitles:)
