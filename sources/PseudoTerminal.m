@@ -7237,6 +7237,35 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return clamped;
 }
 
+- (BOOL)haveDimmedPaneAbuttingTabBar {
+    if (![iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
+        return NO;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows] && !self.window.isKeyWindow) {
+        // Trickery isn't needed because this kind of dimming looks fine for the minimal tabbar outline.
+        return NO;
+    }
+    NSArray<PTYSession *> *sessions = nil;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            sessions = self.currentTab.sessionsAtLeft;
+            break;
+        case PSMTab_TopTab:
+            sessions = self.currentTab.sessionsAtTop;
+            break;
+        case PSMTab_BottomTab:
+            sessions = self.currentTab.sessionsAtBottom;
+            break;
+    }
+    for (PTYSession *session in sessions) {
+        if (session == self.currentTab.activeSession) {
+            continue;
+        }
+        return YES;
+    }
+    return NO;
+}
+
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
     if ([option isEqualToString:PSMTabBarControlOptionColoredSelectedTabOutlineStrength]) {
         return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
@@ -7245,7 +7274,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredUnselectedTabTextProminence]) {
         return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {
-        return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
+        const CGFloat alpha = [iTermAdvancedSettingsModel minimalTabStyleOutlineStrength];
+        if ([self haveDimmedPaneAbuttingTabBar]) {
+            const CGFloat a = 0.15;
+            return @(1 * a + alpha * (1 - a));
+        } else {
+            return @(alpha);
+        }
     } else if ([option isEqualToString:PSMTabBarControlOptionDimmingAmount]) {
         return @(iTermDimmingAmount(tabView));
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalStyleTreatLeftInsetAsPartOfFirstTab]) {

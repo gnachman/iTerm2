@@ -1072,6 +1072,39 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
+- (NSArray<PTYSession *> *)sessionsAtTop {
+    if (isMaximized_) {
+        return @[self.activeSession];
+    }
+    return [self.sessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+        const CGFloat y1 = round(NSMinY([root_ convertRect:session1.view.bounds fromView:session1.view]));
+        const CGFloat y2 = round(NSMinY([root_ convertRect:session2.view.bounds fromView:session2.view]));
+        return [@(y1) compare:@(y2)];
+    }];
+}
+
+- (NSArray<PTYSession *> *)sessionsAtLeft {
+    if (isMaximized_) {
+        return @[self.activeSession];
+    }
+    return [self.sessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+        const CGFloat y1 = round(NSMinX([root_ convertRect:session1.view.bounds fromView:session1.view]));
+        const CGFloat y2 = round(NSMinX([root_ convertRect:session2.view.bounds fromView:session2.view]));
+        return [@(y1) compare:@(y2)];
+    }];
+}
+
+- (NSArray<PTYSession *> *)sessionsAtBottom {
+    if (isMaximized_) {
+        return @[self.activeSession];
+    }
+    return [self.sessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+        const CGFloat y1 = round(NSMaxY([root_ convertRect:session1.view.bounds fromView:session1.view]));
+        const CGFloat y2 = round(NSMaxY([root_ convertRect:session2.view.bounds fromView:session2.view]));
+        return [@(y1) compare:@(y2)];
+    }];
+}
+
 // The following adjacency code works on this thesis:
 //
 // B is adjacent-right-of A if:

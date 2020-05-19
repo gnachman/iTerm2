@@ -144,7 +144,7 @@
     return max;
 }
 
-- (NSArray *)minimumsWithComparator:(NSComparisonResult (^)(id, id))comparator {
+- (NSArray *)minimumsWithComparator:(NSComparisonResult (^ NS_NOESCAPE)(id, id))comparator {
     id min = nil;
     for (id object in self) {
         if (min == nil || comparator(min, object) == NSOrderedDescending) {
@@ -162,6 +162,11 @@
     return result;
 }
 
+- (NSArray *)maximumsWithComparator:(NSComparisonResult (^ NS_NOESCAPE)(id, id))comparator {
+    return [self minimumsWithComparator:^NSComparisonResult(id lhs, id rhs) {
+        return comparator(rhs, lhs);
+    }];
+}
 - (BOOL)anyWithBlock:(BOOL (^)(id anObject))block {
     for (id object in self) {
         if (block(object)) {
