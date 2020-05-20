@@ -135,6 +135,7 @@ NSString *const kPreferenceKeyFocusOnRightOrMiddleClick = @"FocusOnRightOrMiddle
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
+NSString *const kPreferenceKeyOSVersion = @"NoSyncLastOSVersion";
 
 NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
 NSString *const kPreferenceKeyPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
@@ -186,6 +187,9 @@ static NSString *sPreviousVersion;
     [self appVersionBeforeThisLaunch];
     // Then overwrite it with the current version
     [[NSUserDefaults standardUserDefaults] setObject:thisVersion forKey:kPreferenceKeyAppVersion];
+    NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+    [[NSUserDefaults standardUserDefaults] setObject:processInfo.operatingSystemVersionString
+                                              forKey:kPreferenceKeyOSVersion];
 }
 
 + (void)initializeAllAppVersionsUsedOnThisMachine:(NSString *)thisVersion {
