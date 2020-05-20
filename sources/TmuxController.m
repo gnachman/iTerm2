@@ -1643,6 +1643,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
     }
     [windowPositions_ removeObjectsForKeys:panes];
+    if ([iTermAdvancedSettingsModel disableTmuxWindowPositionRestoration]) {
+        return nil;
+    }
     return pos ?: origins_[@(windowID)];
 }
 

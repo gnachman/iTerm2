@@ -86,6 +86,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
 + (BOOL)disableTabBarTooltips;
++ (BOOL)disableTmuxWindowPositionRestoration;
 + (BOOL)disableWindowShadowWhenTransparencyOnMojave;
 + (BOOL)disableWindowShadowWhenTransparencyPreMojave;
 + (BOOL)disableWindowSizeSnap;
