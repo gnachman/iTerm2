@@ -163,7 +163,7 @@ static BOOL gShowingWarning;
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p title=%@ heading=%@ actions=%@ identifier=%@>",
-            NSStringFromClass([self class]), self, _title, _heading, term_warningActions, _identifier];
+            NSStringFromClass([self class]), self, _title, _heading, _warningActions, _identifier];
 }
 
 - (void)setActionLabels:(NSArray<NSString *> *)actionLabels {
