@@ -245,6 +245,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)stopReceivingFile {
+    DLog(@"%@", [NSThread callStackSymbols]);
     receivingFile_ = NO;
 }
 
@@ -327,6 +328,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)commonReset {
+    DLog(@"TERMINAL RESET");
     self.cursorMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
@@ -1368,6 +1370,7 @@ static const int kMaxScreenRows = 4096;
             receivingFile_ = NO;
             return;
         } else {
+            DLog(@"Unexpected field receipt end");
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
@@ -2504,6 +2507,7 @@ static const int kMaxScreenRows = 4096;
             return;
         }
     }
+    DLog(@"Start file receipt");
     receivingFile_ = YES;
 }
 

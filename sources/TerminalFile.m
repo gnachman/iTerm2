@@ -102,6 +102,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 }
 
 - (void)stop {
+    DLog(@"Stop file download.\n%@", [NSThread callStackSymbols]);
     self.status = kTransferrableFileStatusCancelling;
     [[FileTransferManager sharedInstance] transferrableFileWillStop:self];
     self.data = nil;

@@ -11219,6 +11219,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                heading:heading
                                 window:_view.window];
     const BOOL allow = (selection == kiTermWarningSelection0);
+    DLog(@"allow=%@", @(allow));
     if (allow && wasSilenced) {
         if (size > VT100ScreenBigFileDownloadThreshold) {
             *promptIfBig = NO;

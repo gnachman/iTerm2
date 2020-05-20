@@ -4335,6 +4335,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                     name:(NSString *)name {
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
         if (![self.delegate screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
+            DLog(@"Aborting big download");
             [terminal_ stopReceivingFile];
             [self terminalFileReceiptEndedUnexpectedly];
             return NO;
