@@ -69,10 +69,13 @@
 
 @implementation MinimalFindView {
     NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+    IBOutlet NSButton *_closeButton;
 }
 
 - (void)awakeFromNib {
     if (@available(macOS 10.14, *)) {
+        _closeButton.image.template = YES;
+        _closeButton.alternateImage.template = YES;
         _vev = [[NSVisualEffectView alloc] initWithFrame:NSInsetRect(self.bounds, 9, 9)];
         _vev.wantsLayer = YES;
         _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;

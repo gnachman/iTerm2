@@ -16,6 +16,10 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
+@interface NSImage (External)
+- (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key;
+@end
+
 @interface PSMTabBarCell(PSMYosemiteTabStyle)
 
 @property(nonatomic) NSAttributedString *previousAttributedString;
@@ -76,8 +80,11 @@
     if ((self = [super init]))  {
         // Load close buttons 
         _closeButton = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front"] retain];
+        _closeButton.template = YES;
         _closeButtonDown = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Pressed"] retain];
+        _closeButtonDown.template = YES;
         _closeButtonOver = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Rollover"] retain];
+        _closeButtonOver.template = YES;
 
         // Load "new tab" buttons
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"YosemiteAddTab"]];
@@ -833,6 +840,17 @@
     if ([cell closeButtonPressed]) {
         closeButton = _closeButtonDown;
     }
+    NSColor *closeButtonTintColor;
+    const void *colorKey;
+    if ([self tabColorBrightness:cell] < 0.5) {
+        colorKey = "light";
+        closeButtonTintColor = [NSColor whiteColor];
+    } else {
+        colorKey = "dark";
+        closeButtonTintColor = [NSColor blackColor];
+    }
+    closeButton = [closeButton it_cachingImageWithTintColor:closeButtonTintColor
+                                                        key:colorKey];
 
     CGFloat reservedSpace = 0;
     closeButtonSize = [closeButton size];
@@ -858,6 +876,10 @@
             fraction = highlightAmount;
         } else {
             fraction = 1;
+        }
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (!keyMainAndActive) {
+            fraction /= 2;
         }
         [closeButton drawAtPoint:closeButtonRect.origin
                         fromRect:NSZeroRect

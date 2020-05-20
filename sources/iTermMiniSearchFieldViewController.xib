@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -24,7 +24,7 @@
                     <rect key="frame" x="0.0" y="0.0" width="149" height="19"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" focusRingType="none" placeholderString=" " usesSingleLineMode="YES" bezelStyle="round" sendsSearchStringImmediately="YES" sendsWholeSearchString="YES" maximumRecents="10" id="dfd-7C-O0k" customClass="iTermMiniSearchFieldCell">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </searchFieldCell>
@@ -37,7 +37,7 @@
                     <rect key="frame" x="156" y="0.0" width="33" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="roundRect" trackingMode="momentary" id="0qr-Oz-fS9">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="controlContent" size="11"/>
                         <segments>
                             <segment image="GoBack" width="14"/>
                             <segment image="GoForward" width="14" tag="1"/>
@@ -112,7 +112,7 @@ Gw
     <resources>
         <image name="GoBack" width="7" height="7"/>
         <image name="GoForward" width="7" height="7"/>
-        <image name="TabClose_Front" width="15" height="15"/>
-        <image name="TabClose_Front_Pressed" width="15" height="15"/>
+        <image name="TabClose_Front" width="16" height="16"/>
+        <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>
 </document>

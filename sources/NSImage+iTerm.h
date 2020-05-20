@@ -46,6 +46,7 @@
 - (void)saveAsPNGTo:(NSString *)filename;
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
+- (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key;
 - (NSImage *)it_verticallyFlippedImage;
 - (NSImage *)it_horizontallyFlippedImage;
 - (NSImage *)it_imageOfSize:(NSSize)size;

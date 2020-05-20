@@ -9,6 +9,7 @@
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @implementation NSImage (iTerm)
 
@@ -310,6 +311,17 @@
     }];
     return image;
 
+}
+
+- (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key {
+    NSImage *cached = [self it_associatedObjectForKey:key];
+    if (cached) {
+        return cached;
+    }
+
+    NSImage *image = [self it_imageWithTintColor:tintColor];
+    [self it_setAssociatedObject:image forKey:key];
+    return image;
 }
 
 - (NSImage *)it_verticallyFlippedImage {

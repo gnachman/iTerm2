@@ -181,21 +181,21 @@
     }
 }
 
-- (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key {
+- (void)it_setAssociatedObject:(id)associatedObject forKey:(const void *)key {
     objc_setAssociatedObject(self,
                              key,
                              associatedObject,
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(void *)key {
+- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(const void *)key {
     objc_setAssociatedObject(self,
                              key,
                              associatedObject,
                              OBJC_ASSOCIATION_ASSIGN);
 }
 
-- (id)it_associatedObjectForKey:(void *)key {
+- (id)it_associatedObjectForKey:(const void *)key {
     return objc_getAssociatedObject(self, key);
 }
 

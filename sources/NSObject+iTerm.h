@@ -82,9 +82,9 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 // Returns nil if this object is an instance of NSNull, otherwise returns self.
 - (instancetype)nilIfNull;
 
-- (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key;
-- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(void *)key;
-- (id)it_associatedObjectForKey:(void *)key;
+- (void)it_setAssociatedObject:(id)associatedObject forKey:(const void *)key;
+- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(const void *)key;
+- (id)it_associatedObjectForKey:(const void *)key;
 
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
 - (void)it_performNonObjectReturningSelector:(SEL)selector
