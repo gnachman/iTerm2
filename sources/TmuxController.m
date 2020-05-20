@@ -389,8 +389,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSMutableArray *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
-    BOOL newWindowsInTabs =
-        [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInNewWindow;
+    const iTermOpenTmuxWindowsMode openWindowsMode = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
+    const BOOL newWindowsInTabs = openWindowsMode == kOpenTmuxWindowsAsNativeTabsInNewWindow;
     DLog(@"Iterating records...");
     for (NSArray *record in doc.records) {
         DLog(@"Consider record %@", record);

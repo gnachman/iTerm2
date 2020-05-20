@@ -400,11 +400,12 @@ static int OctalValue(const char *bytes) {
             term = [tabToUpdate_ realParentWindow];
             DLog(@"Using window of tabToUpdate: %@", term);
         }
+        const BOOL useOriginalWindow = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInExistingWindow;
+        NSInteger initialTabs = term.tabs.count;
         if (!term) {
-            BOOL useOriginalWindow =
-                [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInExistingWindow;
             if (self.initial && useOriginalWindow) {
                 term = [gateway_ window];
+                initialTabs = term.tabs.count;
                 DLog(@"Use original window %@", term);
             }
             if (!term) {
@@ -475,10 +476,14 @@ static int OctalValue(const char *bytes) {
             [self.target performSelector:self.selector
                               withObject:self];
         }
+        DLog(@"useOriginalWindow=%@ initialTabs=%@ initial=%@ windowPos=%@",
+             @(useOriginalWindow), @(initialTabs), @(self.initial), windowPos);
         if (windowPos) {
-            // Do this after calling the completion selector because it may affect the window's
-            // frame (e.g., when burying a session and that causes the number of tabs to change).
-            [[term window] setFrameOrigin:[windowPos pointValue]];
+            if (!useOriginalWindow || initialTabs < 2 || !self.initial) {
+                // Do this after calling the completion selector because it may affect the window's
+                // frame (e.g., when burying a session and that causes the number of tabs to change).
+                [[term window] setFrameOrigin:[windowPos pointValue]];
+            }
         }
         if (isNewWindow) {
             [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];
