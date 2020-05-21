@@ -92,6 +92,7 @@ kitten=$(cat kitten.jpg | base64)
 # $5 preserveAspectRatio=<bool>
 # $6 expected width
 # $7 expected height
+
 function send() {
 
     print_osc
@@ -119,8 +120,58 @@ function send() {
 
 }
 
+function send_no_outline() {
+
+    print_osc
+    printf '1337;File='
+    if [[ -n "$1" ]]; then
+      printf "name=%s" $(printf "%s" "$1" | /usr/bin/base64)
+    fi
+    printf "%s" "$2" | b64_decode | wc -c | awk '{printf ";size=%d",$1}'
+    if [[ -n "$3" ]]; then
+        printf ";width=%s" "$3"
+    fi
+    if [[ -n "$4" ]]; then
+        printf ";height=%s" "$4"
+    fi
+    if [[ -n "$5" ]]; then
+        printf ";preserveAspectRatio=%s" "$5"
+    fi
+    printf ";inline=1"
+    printf ":"
+    printf "%s" "$2"
+    print_st
+
+}
+
 echo "Set terminal to 185 cells wide, 55 rows tall, using Menlo 11pt (7x13 cell size)"
 echo "-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+# These commented-out tests are for scroll regions. They need to be run by themselves after clearing the screen. Uncomment one and add "exit 0" after it.
+
+#echo "left-right margin from 10 to 50, image of width 60"
+#echo -n "[?69h[10;50s          "
+#echo ""
+#echo ""
+#echo ""
+#echo ""
+#send "test1" "$kitten" 60 auto 1 40 10
+#echo -n "[?69l"
+
+#echo "left-right margin from 10 to 50, image of width 60, cursor outside"
+#echo -n "[?69h[10;50s"
+#echo ""
+#echo ""
+#echo ""
+#echo ""
+#send "test1" "$kitten" 60 auto 1 40 10
+#echo -n "[?69l"
+
+# Note: no outline here. The result should be the lowest 21 rows of the image.
+#echo "top-bottom margin from 10 to 30, cursor inside"
+#echo -n "[?69h[10;30r[10;1H"
+#send_no_outline "test1" "$kitten" auto 40 1 100 20
+#echo -n "[?69l;[r"
 
 echo Test different width/height modes preserving aspect ratio
 

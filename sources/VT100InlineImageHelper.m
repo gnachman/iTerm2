@@ -216,7 +216,7 @@
                              grid:(VT100Grid *)grid
                        scaledSize:(NSSize)scaledSize
                          cellSize:(NSSize)cellSize {
-    const VT100GridSize gridSize = grid.size;
+    const VT100GridSize gridSize = grid.sizeRespectingRegionConditionally;
     switch (_widthUnits) {
         case kVT100TerminalUnitsPixels:
             *widthPtr = ceil((double)_width / cellSize.width);
@@ -261,8 +261,8 @@
 
         case kVT100TerminalUnitsPercentage: {
             const double fraction = (double)MAX(MIN(100, _height), 0) / 100.0;
-            *heightPtr = ceil((double)grid.size.height * fraction);
-            *requestedHeightInPointsPtr = grid.size.height * cellSize.height * fraction;
+            *heightPtr = ceil((double)grid.sizeRespectingRegionConditionally.height * fraction);
+            *requestedHeightInPointsPtr = grid.sizeRespectingRegionConditionally.height * cellSize.height * fraction;
             break;
         }
         case kVT100TerminalUnitsCells:
@@ -329,11 +329,11 @@
     *widthPtr = MAX(1, *widthPtr);
     *heightPtr = MAX(1, *heightPtr);
 
-    const CGFloat maxWidth = grid.size.width - grid.cursorX;
+    const CGFloat maxWidth = grid.sizeRespectingRegionConditionally.width - grid.cursorX;
     // If the requested size is too large, scale it down to fit.
     if (*widthPtr > maxWidth) {
         const CGFloat scale = maxWidth / (double)*widthPtr;
-        *widthPtr = grid.size.width;
+        *widthPtr = grid.sizeRespectingRegionConditionally.width;
         *heightPtr *= scale;
         *heightPtr = MAX(1, *heightPtr);
         *fullAutoPtr = NO;
@@ -440,7 +440,7 @@
     imageInfo.broken = decodedImage.isBroken;
     DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(screenChar.image));
     const int xOffset = grid.cursorX;
-    const int screenWidth = grid.size.width;
+    const int screenWidth = grid.sizeRespectingRegionConditionally.width;
     screen_char_t c = screenChar;
     for (int y = 0; y < height; y++) {
         if (y > 0) {

@@ -1671,6 +1671,17 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (VT100GridSize)sizeRespectingRegionConditionally {
+    if (self.cursor.x >= self.leftMargin &&
+        self.cursor.x <= self.rightMargin &&
+        self.cursor.y >= self.topMargin &&
+        self.cursor.y <= self.bottomMargin) {
+        return VT100GridSizeMake(self.rightMargin - self.leftMargin + 1,
+                                 self.bottomMargin - self.topMargin + 1);
+    }
+    return self.size;
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
