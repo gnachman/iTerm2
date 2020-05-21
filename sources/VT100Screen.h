@@ -162,17 +162,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)activateBell;
 
 // Show an inline image. image and data are mutually exclusive.
-- (void)appendImageAtCursorWithName:(NSString *)name
-                              width:(int)width
-                              units:(VT100TerminalUnits)widthUnits
-                             height:(int)height
-                              units:(VT100TerminalUnits)heightUnits
-                preserveAspectRatio:(BOOL)preserveAspectRatio
-                            roundUp:(BOOL)roundUp
-                              inset:(NSEdgeInsets)inset
-                              image:(NSImage *)image
-                               data:(NSData *)data
-                            isSixel:(BOOL)isSixel;
+- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
 
 - (void)resetAnimatedLines;
 

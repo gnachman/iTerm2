@@ -2983,33 +2983,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
     int width = (_screen.width - message.length) / 2;
-    const NSEdgeInsets zeroInset = { 0 };
     if (width > 0) {
-        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
-                                       width:width
-                                       units:kVT100TerminalUnitsCells
-                                      height:1
-                                       units:kVT100TerminalUnitsCells
-                         preserveAspectRatio:NO
-                                     roundUp:YES
-                                       inset:zeroInset
-                                       image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
-                                        data:nil
-                                     isSixel:NO];
+        [_screen appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                             width:width];
     }
     [_screen appendStringAtCursor:message];
     if (width > 0) {
-        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
-                                       width:(_screen.width - _screen.cursorX + 1)
-                                       units:kVT100TerminalUnitsCells
-                                      height:1
-                                       units:kVT100TerminalUnitsCells
-                         preserveAspectRatio:NO
-                                     roundUp:YES
-                                       inset:zeroInset
-                                       image:[NSImage it_imageNamed:@"BrokenPipeDivider" forClass:self.class]
-                                        data:nil
-                                     isSixel:NO];
+        [_screen appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                             width:(_screen.width - _screen.cursorX + 1)];
     }
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor

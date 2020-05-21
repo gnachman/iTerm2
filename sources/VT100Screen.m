@@ -31,6 +31,7 @@
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100InlineImageHelper.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
@@ -76,7 +77,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 @interface VT100Screen () <
     iTermTemporaryDoubleBufferedGridControllerDelegate,
     iTermLineBufferDelegate,
-    iTermMarkDelegate>
+    iTermMarkDelegate,
+    VT100InlineImageHelperDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @end
@@ -152,7 +154,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     BOOL _shellIntegrationInstalled;
 
-    NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
+    VT100InlineImageHelper *_inlineImageHelper;
     NSTimeInterval lastBell_;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
@@ -171,16 +173,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
     iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
 }
-
-static NSString *const kInlineFileName = @"name";  // NSString
-static NSString *const kInlineFileWidth = @"width";  // NSNumber
-static NSString *const kInlineFileWidthUnits = @"width units";  // NSNumber of VT100TerminalUnits
-static NSString *const kInlineFileHeight = @"height";  // NSNumber
-static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
-static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
-static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
-static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
-static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -250,7 +242,7 @@ static NSString *const kInlineFilePreconfirmed = @"preconfirmed";  // NSNumber
     [savedIntervalTree_ release];
     [intervalTree_ release];
     [markCache_ release];
-    [inlineFileInfo_ release];
+    [_inlineImageHelper release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
@@ -4056,217 +4048,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (![self preconfirmDownloadOfSize:size name:name displayInline:YES promptIfBig:&promptIfBig]) {
         return NO;
     }
-    [inlineFileInfo_ release];
-    inlineFileInfo_ = [@{ kInlineFileName: name,
-                          kInlineFileWidth: @(width),
-                          kInlineFileWidthUnits: @(widthUnits),
-                          kInlineFileHeight: @(height),
-                          kInlineFileHeightUnits: @(heightUnits),
-                          kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
-                          kInlineFileBase64String: [NSMutableString string],
-                          kInlineFileInset: [NSValue futureValueWithEdgeInsets:inset],
-                          kInlineFilePreconfirmed: @(!promptIfBig) } retain];
+    [_inlineImageHelper release];
+    _inlineImageHelper = [[VT100InlineImageHelper alloc] initWithName:name
+                                                                width:width
+                                                           widthUnits:widthUnits
+                                                               height:height
+                                                          heightUnits:heightUnits
+                                                  preserveAspectRatio:preserveAspectRatio
+                                                                inset:inset
+                                                         preconfirmed:!promptIfBig];
+    _inlineImageHelper.delegate = self;
     return YES;
 }
 
-- (void)appendImageAtCursorWithName:(NSString *)name
-                              width:(int)requestedWidth
-                              units:(VT100TerminalUnits)widthUnits
-                             height:(int)requestedHeight
-                              units:(VT100TerminalUnits)heightUnits
-                preserveAspectRatio:(BOOL)preserveAspectRatio
-                            roundUp:(BOOL)roundUp
-                              inset:(NSEdgeInsets)requestedInset
-                              image:(NSImage *)nativeImage
-                               data:(NSData *)data
-                            isSixel:(BOOL)isSixel {
-    iTermImage *image;
-    if (nativeImage) {
-        image = [iTermImage imageWithNativeImage:nativeImage];
-        DLog(@"Image is native");
-    } else if (isSixel) {
-        image = [iTermImage imageWithSixelData:data];
-    } else {
-        image = [iTermImage imageWithCompressedData:data];
-    }
-    const BOOL isBroken = !image;
-    if (isBroken) {
-        DLog(@"Image is broken");
-        image = [iTermImage imageWithNativeImage:[NSImage it_imageNamed:@"broken_image" forClass:self.class]];
-        assert(image);
-    }
-
-    NSSize scaledSize = image.size;
-    CGFloat scale;
-    if ([iTermAdvancedSettingsModel retinaInlineImages]) {
-        scale = MAX(1, [delegate_ screenBackingScaleFactor]);
-    } else {
-        scale = 1;
-    }
-    scaledSize.width /= scale;
-    scaledSize.height /= scale;
-
-    BOOL needsWidth = NO;
-    NSSize cellSize = [delegate_ screenCellSize];
-    CGFloat requestedWidthInPoints = 0;
-    int width = requestedWidth;
-    switch (widthUnits) {
-        case kVT100TerminalUnitsPixels:
-            width = ceil((double)requestedWidth / cellSize.width);
-            requestedWidthInPoints = requestedWidth;
-            break;
-
-        case kVT100TerminalUnitsPercentage: {
-            const double fraction = (double)MAX(MIN(100, requestedWidth), 0) / 100.0;
-            width = ceil((double)[self width] * fraction);
-            requestedWidthInPoints = self.width * cellSize.width * fraction;
-            break;
-        }
-
-        case kVT100TerminalUnitsCells:
-            width = requestedWidth;
-            requestedWidthInPoints = width * cellSize.width;
-            break;
-
-        case kVT100TerminalUnitsAuto:
-            if (heightUnits == kVT100TerminalUnitsAuto) {
-                width = ceil((double)scaledSize.width / cellSize.width);
-                requestedWidthInPoints = width * cellSize.width;
-            } else {
-                needsWidth = YES;
-            }
-            break;
-    }
-
-    int height = requestedHeight;
-    CGFloat requestedHeightInPoints = 0;
-    switch (heightUnits) {
-        case kVT100TerminalUnitsPixels:
-            height = ceil((double)requestedHeight / cellSize.height);
-            requestedHeightInPoints = requestedHeight;
-            break;
-
-        case kVT100TerminalUnitsPercentage: {
-            const double fraction = (double)MAX(MIN(100, requestedHeight), 0) / 100.0;
-            height = ceil((double)[self height] * fraction);
-            requestedHeightInPoints = self.height * cellSize.height * fraction;
-            break;
-        }
-        case kVT100TerminalUnitsCells:
-            height = requestedHeight;
-            requestedHeightInPoints = requestedHeight * cellSize.height;
-            break;
-
-        case kVT100TerminalUnitsAuto:
-            if (widthUnits == kVT100TerminalUnitsAuto) {
-                height = ceil((double)scaledSize.height / cellSize.height);
-            } else {
-                double aspectRatio = scaledSize.width / scaledSize.height;
-                height = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
-            }
-            requestedHeightInPoints = height * cellSize.height;
-            break;
-    }
-
-    if (needsWidth) {
-        double aspectRatio = scaledSize.width / scaledSize.height;
-        width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
-        requestedWidthInPoints = width * cellSize.width;
-    }
-
-    BOOL fullAuto = (widthUnits == kVT100TerminalUnitsAuto &&
-                     heightUnits == kVT100TerminalUnitsAuto &&
-                     width >= 1 &&
-                     height >= 1);
-
-    width = MAX(1, width);
-    height = MAX(1, height);
-
-    double maxWidth = self.width - currentGrid_.cursorX;
-    // If the requested size is too large, scale it down to fit.
-    if (width > maxWidth) {
-        double scale = maxWidth / (double)width;
-        width = self.width;
-        height *= scale;
-        height = MAX(1, height);
-        fullAuto = NO;
-        requestedWidthInPoints = width * cellSize.width;
-        requestedHeightInPoints = height * cellSize.height;
-    }
-
-    // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
-    // within the image.
-    double maxHeight = 255;
-    if (height > maxHeight) {
-        double scale = (double)height / maxHeight;
-        height = maxHeight;
-        width *= scale;
-        width = MAX(1, width);
-        fullAuto = NO;
-        requestedWidthInPoints = width * cellSize.width;
-        requestedHeightInPoints = height * cellSize.height;
-    }
-
-    // Allocate cells for the image.
-    // TODO: Support scroll regions.
-
-    NSEdgeInsets inset = requestedInset;
-    {
-        // Tweak the insets to get the exact size the user requested.
-        if (requestedWidthInPoints < width * cellSize.width) {
-            inset.right += (width * cellSize.width - requestedWidthInPoints);
-        }
-        if (requestedHeightInPoints < height * cellSize.height) {
-            inset.bottom += (height * cellSize.height - requestedHeightInPoints);
-        }
-    }
-    NSEdgeInsets fractionalInset = {
-        .left = MAX(inset.left / cellSize.width, 0),
-        .top = MAX(inset.top / cellSize.height, 0),
-        .right = MAX(inset.right / cellSize.width, 0),
-        .bottom = MAX(inset.bottom / cellSize.height, 0)
-    };
-    if (!roundUp && fullAuto) {
-        // Pick an inset that preserves the exact dimensions of the original image.
-        fractionalInset = [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:scaledSize
-                                                                                    forImageSize:image.size
-                                                                                        cellSize:cellSize
-                                                                                   numberOfCells:NSMakeSize(width, height)];
-    }
-    screen_char_t c = ImageCharForNewImage(name,
-                                           width,
-                                           height,
-                                           preserveAspectRatio,
-                                           fractionalInset);
-    iTermImageInfo *imageInfo = GetImageInfo(c.code);
-    imageInfo.broken = isBroken;
-    DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(c.image));
-    const int xOffset = self.cursorX - 1;
-    const int screenWidth = currentGrid_.size.width;
-    for (int y = 0; y < height; y++) {
-        if (y > 0) {
-            [self linefeed];
-        }
-        for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
-            SetPositionInImageChar(&c, x - xOffset, y);
-            // DLog(@"Set character at %@,%@: %@", @(x), @(currentGrid_.cursorY), DebugStringForScreenChar(c));
-            [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
-                                    to:VT100GridCoordMake(x, currentGrid_.cursorY)
-                                toChar:c];
-        }
-    }
-    currentGrid_.cursorX = currentGrid_.cursorX + width;
-
-    // Add a mark after the image. When the mark gets freed, it will release the image's memory.
-    SetDecodedImage(c.code, image, data);
-    long long absLine = (self.totalScrollbackOverflow +
-                         [self numberOfScrollbackLines] +
-                         currentGrid_.cursor.y + 1);
-    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                       oneLine:YES
-                                                       ofClass:[iTermImageMark class]];
-    mark.imageCode = @(c.code);
-    [delegate_ screenNeedsRedraw];
+- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
+    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithNativeImageNamed:name
+                                                                                 spanningWidth:width] autorelease];
+    helper.delegate = self;
+    [helper writeToGrid:currentGrid_];
 }
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned short)code {
@@ -4288,17 +4087,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendSixelData:(NSData *)data {
-    [self appendImageAtCursorWithName:@"Sixel Image"
-                                width:0
-                                units:kVT100TerminalUnitsAuto
-                               height:0
-                                units:kVT100TerminalUnitsAuto
-                  preserveAspectRatio:YES
-                              roundUp:NO
-                                inset:NSEdgeInsetsZero
-                                image:nil
-                                 data:data
-                              isSixel:YES];
+    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data] autorelease];
+    helper.delegate = self;
+    [helper writeToGrid:currentGrid_];
 }
 
 - (void)terminalDidChangeSendModifiers {
@@ -4306,23 +4097,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidFinishReceivingFile {
-    if (inlineFileInfo_) {
-        DLog(@"Inline file received");
+    if (_inlineImageHelper) {
+        [_inlineImageHelper writeToGrid:currentGrid_];
+        [_inlineImageHelper release];
+        _inlineImageHelper = nil;
         // TODO: Handle objects other than images.
-        NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-        [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
-                                    width:[inlineFileInfo_[kInlineFileWidth] intValue]
-                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
-                                   height:[inlineFileInfo_[kInlineFileHeight] intValue]
-                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
-                      preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                  roundUp:YES
-                                    inset:[inlineFileInfo_[kInlineFileInset] futureEdgeInsetsValue]
-                                    image:nil
-                                     data:data
-                                  isSixel:NO];
-        [inlineFileInfo_ release];
-        inlineFileInfo_ = nil;
         [delegate_ screenDidFinishReceivingInlineFile];
     } else {
         DLog(@"Download finished");
@@ -4345,22 +4124,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    if (inlineFileInfo_) {
-        const NSInteger lengthBefore = [inlineFileInfo_[kInlineFileBase64String] length];
-        [inlineFileInfo_[kInlineFileBase64String] appendString:data];
-        const NSInteger lengthAfter = [inlineFileInfo_[kInlineFileBase64String] length];
-
-        if (![inlineFileInfo_[kInlineFilePreconfirmed] boolValue]) {
-            [self confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter name:inlineFileInfo_[kInlineFileName] ?: @"Unnamed file"];
-        }
+    if (_inlineImageHelper) {
+        [_inlineImageHelper appendBase64EncodedData:data];
     } else {
         [delegate_ screenDidReceiveBase64FileData:data];
     }
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
-    [inlineFileInfo_ release];
-    inlineFileInfo_ = nil;
+    [_inlineImageHelper release];
+    _inlineImageHelper = nil;
     [delegate_ screenFileReceiptEndedUnexpectedly];
 }
 
@@ -6032,6 +5805,40 @@ static void SwapInt(int *a, int *b) {
     if (lineBuffer == linebuffer_) {
         [delegate_ screenRefreshFindOnPageView];
     }
+}
+
+#pragma mark - VT100InlineImageHelperDelegate
+
+- (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
+                                          afterSize:(NSInteger)lengthAfter
+                                               name:(NSString *)name {
+    [self confirmBigDownloadWithBeforeSize:lengthBefore
+                                 afterSize:lengthAfter
+                                      name:name];
+}
+
+- (CGFloat)inlineImageBackingScaleFactor {
+    return [delegate_ screenBackingScaleFactor];
+}
+
+- (NSSize)inlineImageCellSize {
+    return [delegate_ screenCellSize];
+}
+
+- (void)inlineImageAppendLinefeed {
+    [self linefeed];
+}
+
+- (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
+                                  code:(unichar)code {
+    long long absLine = (self.totalScrollbackOverflow +
+                         [self numberOfScrollbackLines] +
+                         line);
+    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                       oneLine:YES
+                                                       ofClass:[iTermImageMark class]];
+    mark.imageCode = @(code);
+    [delegate_ screenNeedsRedraw];
 }
 
 @end

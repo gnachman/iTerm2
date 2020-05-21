@@ -2954,6 +2954,8 @@
 		A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
+		A6BA7D24247637B700407C4D /* VT100InlineImageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */; };
+		A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */; };
 		A6BC8ACC21C6EC5000796BF3 /* iTermBoxDrawingBezierCurveFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */; };
 		A6BC8ACF21C7608B00796BF3 /* iTermImageCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BC8ACD21C7608B00796BF3 /* iTermImageCache.h */; };
 		A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8ACE21C7608B00796BF3 /* iTermImageCache.m */; };
@@ -6049,6 +6051,8 @@
 		A6B70FC019830F0D007A4284 /* NewOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutput@2x.png"; path = "images/NewOutput@2x.png"; sourceTree = "<group>"; };
 		A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Scripting.h"; sourceTree = "<group>"; };
 		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
+		A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100InlineImageHelper.h; sourceTree = "<group>"; };
+		A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100InlineImageHelper.m; sourceTree = "<group>"; };
 		A6BC8ACD21C7608B00796BF3 /* iTermImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermImageCache.h; sourceTree = "<group>"; };
 		A6BC8ACE21C7608B00796BF3 /* iTermImageCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermImageCache.m; sourceTree = "<group>"; };
 		A6BC9B1C214A2AE900F50C09 /* iTermVariableReference.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableReference.h; sourceTree = "<group>"; };
@@ -8506,6 +8510,8 @@
 				A6D463E92404482D005D073D /* iTermAlphaBlendingHelper.m */,
 				A6C3005D247117A9002BC672 /* iTermLocatedString.h */,
 				A6C3005E247117A9002BC672 /* iTermLocatedString.m */,
+				A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */,
+				A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11131,6 +11137,7 @@
 				A618FFC12243E91900B8FD88 /* iTermToolActions.h in Headers */,
 				5379C59723DBE9F100314F23 /* iTermFocusFollowsMouseController.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
+				A6BA7D24247637B700407C4D /* VT100InlineImageHelper.h in Headers */,
 				A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */,
 				531E71F72229A69C00915960 /* iTermExpressionParser+Private.h in Headers */,
 				A66719541DCE36C3000CE608 /* SetDirectoryTrigger.h in Headers */,
@@ -13453,6 +13460,7 @@
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
+				A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */,
 				530AB89720AFDF5000D2AA08 /* iTermScriptFunctionCall.m in Sources */,
 				A6A4867520B67B8500493302 /* PreferencePanel.m in Sources */,
 				A69CCB19211BC296008ADA71 /* NSData+GZIP.m in Sources */,

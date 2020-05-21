@@ -1,0 +1,497 @@
+//
+//  VT100InlineImageHelper.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 5/20/20.
+//
+
+#import "VT100InlineImageHelper.h"
+
+#import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermImage.h"
+#import "iTermImageInfo.h"
+#import "NSData+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "ScreenChar.h"
+#import "VT100Grid.h"
+
+@interface VT100DecodedImage: NSObject
+@property (nonatomic, strong, readonly) iTermImage *image;
+@property (nullable, nonatomic, copy, readonly) NSData *data;
+@property (nonatomic) BOOL isBroken;
+@end
+
+@implementation VT100DecodedImage
+
+- (instancetype)initWithBase64String:(NSString *)base64String {
+    self = [super init];
+    if (self) {
+        _data = [NSData dataWithBase64EncodedString:base64String];
+        _image = [iTermImage imageWithCompressedData:_data];
+        if (!_image) {
+            [self broke];
+        }
+    }
+    return self;
+}
+
+- (instancetype)initWithNativeImage:(NSImage *)nativeImage {
+    self = [super init];
+    if (self) {
+        DLog(@"Image is native");
+        _image = [iTermImage imageWithNativeImage:nativeImage];
+        if (!_image) {
+            [self broke];
+        }
+    }
+    return self;
+}
+
+- (instancetype)initWithSixelData:(NSData *)sixelData {
+    self = [super init];
+    if (self) {
+        _data = sixelData;
+        _image = [iTermImage imageWithSixelData:_data];
+        if (!_image) {
+            [self broke];
+        }
+    }
+    return self;
+}
+
+- (void)broke {
+    _isBroken = YES;
+    DLog(@"Image is broken");
+    _image = [iTermImage imageWithNativeImage:[NSImage it_imageNamed:@"broken_image" forClass:self.class]];
+    assert(_image);
+}
+
+@end
+
+@interface VT100InlineImageHelper()
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic) int width;
+@property (nonatomic) VT100TerminalUnits widthUnits;
+@property (nonatomic) int height;
+@property (nonatomic) VT100TerminalUnits heightUnits;
+@property (nonatomic) BOOL preserveAspectRatio;
+@property (nonatomic) NSEdgeInsets inset;
+@property (nonatomic) BOOL preconfirmed;
+@property (nullable, nonatomic, strong) NSMutableString *base64String;
+@property (nullable, nonatomic, strong) NSData *sixelData;
+@property (nullable, nonatomic, strong) NSImage *nativeImage;
+@end
+
+@implementation VT100InlineImageHelper
+
+- (instancetype)initWithName:(NSString *)name
+                       width:(int)width
+                  widthUnits:(VT100TerminalUnits)widthUnits
+                      height:(int)height
+                 heightUnits:(VT100TerminalUnits)heightUnits
+         preserveAspectRatio:(BOOL)preserveAspectRatio
+                       inset:(NSEdgeInsets)inset
+                preconfirmed:(BOOL)preconfirmed {
+    self = [super init];
+    if (self) {
+        _name = [name copy];
+        _width = width;
+        _widthUnits = widthUnits;
+        _height = height;
+        _heightUnits = heightUnits;
+        _preserveAspectRatio = preserveAspectRatio;
+        _inset = inset;
+        _base64String = [NSMutableString string];
+    }
+    return self;
+}
+
+- (instancetype)initWithSixelData:(NSData *)data {
+    self = [self initWithName:@"Sixel Image"
+                        width:0
+                   widthUnits:kVT100TerminalUnitsAuto
+                       height:0
+                  heightUnits:kVT100TerminalUnitsAuto
+          preserveAspectRatio:YES
+                        inset:NSEdgeInsetsZero
+                 preconfirmed:YES];
+    if (self) {
+        _sixelData = [data copy];
+    }
+    return self;
+}
+
+- (instancetype)initWithNativeImageNamed:(NSString *)name
+                           spanningWidth:(int)width {
+    self = [self initWithName:name
+                        width:width
+                   widthUnits:kVT100TerminalUnitsCells
+                       height:1
+                  heightUnits:kVT100TerminalUnitsCells
+          preserveAspectRatio:NO
+                        inset:NSEdgeInsetsZero
+                 preconfirmed:YES];
+    if (self) {
+        _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
+    }
+    return self;
+}
+
+#pragma mark - APIs
+
+- (void)appendBase64EncodedData:(NSString *)data {
+    const NSInteger lengthBefore = _base64String.length;
+    [_base64String appendString: data];
+    const NSInteger lengthAfter = _base64String.length;
+
+    if (!_preconfirmed) {
+        [self.delegate inlineImageConfirmBigDownloadWithBeforeSize:lengthBefore
+                                                         afterSize:lengthAfter
+                                                              name:_name ?: @"Unnamed file"];
+    }
+}
+
+- (void)writeToGrid:(VT100Grid *)grid {
+    DLog(@"Write image %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
+
+    VT100DecodedImage *decodedImage = [self decodedImage];
+
+    screen_char_t c;
+    int width;
+    int height;
+    [self getScreenCharacter:&c
+                       width:&width
+                      height:&height
+                        grid:grid
+                decodedImage:decodedImage];
+
+    [self writeBaseCharacter:c
+                      toGrid:grid
+                       width:width
+                      height:height
+                decodedImage:decodedImage];
+
+    // Add a mark after the image. When the mark gets freed, it will release the image's memory.
+    SetDecodedImage(c.code, decodedImage.image, decodedImage.data);
+    [self.delegate inlineImageSetMarkOnScreenLine:grid.cursor.y + 1
+                                             code:c.code];
+}
+
+#pragma mark - Decoding
+
+- (VT100DecodedImage *)decodedImage {
+    if (_nativeImage) {
+        DLog(@"Image is native");
+        assert(_base64String.length == 0);
+        assert(!_sixelData);
+        return [[VT100DecodedImage alloc] initWithNativeImage:_nativeImage];
+    }
+    if (_sixelData) {
+        DLog(@"Image is sixel");
+        assert(_base64String.length == 0);
+        return [[VT100DecodedImage alloc] initWithSixelData:_sixelData];
+    }
+    DLog(@"Image was base-64 encoded");
+    return [[VT100DecodedImage alloc] initWithBase64String:_base64String];
+}
+
+#pragma mark - Size Calculation
+
+- (NSSize)scaledSizeForDecodedImage:(VT100DecodedImage *)decodedImage {
+    NSSize scaledSize = decodedImage.image.size;
+    CGFloat scale;
+    if ([iTermAdvancedSettingsModel retinaInlineImages]) {
+        scale = MAX(1, [self.delegate inlineImageBackingScaleFactor]);
+    } else {
+        scale = 1;
+    }
+    scaledSize.width /= scale;
+    scaledSize.height /= scale;
+    return scaledSize;
+}
+
+- (BOOL)getRequestedWidthInPoints:(CGFloat *)requestedWidthInPointsPtr
+                            width:(int *)widthPtr
+                             grid:(VT100Grid *)grid
+                       scaledSize:(NSSize)scaledSize
+                         cellSize:(NSSize)cellSize {
+    const VT100GridSize gridSize = grid.size;
+    switch (_widthUnits) {
+        case kVT100TerminalUnitsPixels:
+            *widthPtr = ceil((double)_width / cellSize.width);
+            *requestedWidthInPointsPtr = _width;
+            return NO;
+
+        case kVT100TerminalUnitsPercentage: {
+            const double fraction = (double)MAX(MIN(100, _width), 0) / 100.0;
+            *widthPtr = ceil((double)gridSize.width * fraction);
+            *requestedWidthInPointsPtr = gridSize.width * cellSize.width * fraction;
+            return NO;
+        }
+
+        case kVT100TerminalUnitsCells:
+            *widthPtr = _width;
+            *requestedWidthInPointsPtr = _width * cellSize.width;
+            return NO;
+
+        case kVT100TerminalUnitsAuto:
+            if (_heightUnits == kVT100TerminalUnitsAuto) {
+                *widthPtr = ceil((double)scaledSize.width / cellSize.width);
+                *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+                return NO;
+            }
+            *requestedWidthInPointsPtr = 0;
+            *widthPtr = _width;
+            return YES;
+    }
+}
+
+- (void)getRequestedHeightInPoints:(CGFloat *)requestedHeightInPointsPtr
+                            height:(int *)heightPtr
+                             grid:(VT100Grid *)grid
+                             width:(int)width
+                        scaledSize:(NSSize)scaledSize
+                          cellSize:(NSSize)cellSize {
+    switch (_heightUnits) {
+        case kVT100TerminalUnitsPixels:
+            *heightPtr = ceil((double)_height / cellSize.height);
+            *requestedHeightInPointsPtr = _height;
+            break;
+
+        case kVT100TerminalUnitsPercentage: {
+            const double fraction = (double)MAX(MIN(100, _height), 0) / 100.0;
+            *heightPtr = ceil((double)grid.size.height * fraction);
+            *requestedHeightInPointsPtr = grid.size.height * cellSize.height * fraction;
+            break;
+        }
+        case kVT100TerminalUnitsCells:
+            *heightPtr = _height;
+            *requestedHeightInPointsPtr = _height * cellSize.height;
+            break;
+
+        case kVT100TerminalUnitsAuto:
+            if (_widthUnits == kVT100TerminalUnitsAuto) {
+                *heightPtr = ceil((double)scaledSize.height / cellSize.height);
+            } else {
+                double aspectRatio = scaledSize.width / scaledSize.height;
+                *heightPtr = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
+            }
+            *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
+            break;
+    }
+}
+
+- (void)getRequestedWidthInPoints:(CGFloat *)requestedWidthInPointsPtr
+                   automaticWidth:(int *)widthPtr
+                        forHeight:(int)height
+                       scaledSize:(NSSize)scaledSize
+                         cellSize:(NSSize)cellSize {
+    const CGFloat aspectRatio = scaledSize.width / scaledSize.height;
+    *widthPtr = ((CGFloat)(height * cellSize.height) * aspectRatio) / cellSize.width;
+    *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+}
+
+- (void)getRequestedWidthInPoints:(CGFloat *)requestedWidthInPointsPtr
+                            width:(int *)widthPtr
+          requestedHeightInPoints:(CGFloat *)requestedHeightInPointsPtr
+                           height:(int *)heightPtr
+                         fullAuto:(BOOL *)fullAutoPtr
+                             grid:(VT100Grid *)grid
+                       scaledSize:(NSSize)scaledSize
+                         cellSize:(NSSize)cellSize {
+    const BOOL needsWidth = [self getRequestedWidthInPoints:requestedWidthInPointsPtr
+                                                      width:widthPtr
+                                                       grid:grid
+                                                 scaledSize:scaledSize
+                                                   cellSize:cellSize];
+    [self getRequestedHeightInPoints:requestedHeightInPointsPtr
+                              height:heightPtr
+                                grid:grid
+                               width:*widthPtr
+                          scaledSize:scaledSize
+                            cellSize:cellSize];
+
+
+    if (needsWidth) {
+        [self getRequestedWidthInPoints:requestedWidthInPointsPtr
+                         automaticWidth:widthPtr
+                              forHeight:*heightPtr
+                             scaledSize:scaledSize
+                               cellSize:cellSize];
+    }
+
+    *fullAutoPtr = (_widthUnits == kVT100TerminalUnitsAuto &&
+                    _heightUnits == kVT100TerminalUnitsAuto &&
+                    *widthPtr >= 1 &&
+                    *heightPtr >= 1);
+
+    *widthPtr = MAX(1, *widthPtr);
+    *heightPtr = MAX(1, *heightPtr);
+
+    const CGFloat maxWidth = grid.size.width - grid.cursorX;
+    // If the requested size is too large, scale it down to fit.
+    if (*widthPtr > maxWidth) {
+        const CGFloat scale = maxWidth / (double)*widthPtr;
+        *widthPtr = grid.size.width;
+        *heightPtr *= scale;
+        *heightPtr = MAX(1, *heightPtr);
+        *fullAutoPtr = NO;
+        *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+        *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
+    }
+
+    // Height is capped at 255 because only 8 bits are used to represent the line number of a cell
+    // within the image.
+    CGFloat maxHeight = 255;
+    if (*heightPtr > maxHeight) {
+        const CGFloat scale = (double)*heightPtr / maxHeight;
+        *heightPtr = maxHeight;
+        *widthPtr *= scale;
+        *widthPtr = MAX(1, *widthPtr);
+        *fullAutoPtr = NO;
+        *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+        *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
+    }
+}
+
+#pragma mark - Insets
+
+- (NSEdgeInsets)insetsForWidthInPoints:(CGFloat)requestedWidthInPoints
+                          widthInCells:(int)width
+                        heightInPoints:(CGFloat)requestedHeightInPoints
+                         heightInCells:(int)height
+                              cellSize:(NSSize)cellSize {
+    NSEdgeInsets inset = _inset;
+
+    // Tweak the insets to get the exact size the user requested.
+    if (requestedWidthInPoints < width * cellSize.width) {
+        inset.right += (width * cellSize.width - requestedWidthInPoints);
+    }
+    if (requestedHeightInPoints < height * cellSize.height) {
+        inset.bottom += (height * cellSize.height - requestedHeightInPoints);
+    }
+
+    return inset;
+}
+
+- (NSEdgeInsets)fractionalInsetForInset:(NSEdgeInsets)inset
+                               scaledSize:(NSSize)scaledSize
+                               cellSize:(NSSize)cellSize
+                           decodedImage:(VT100DecodedImage *)decodedImage
+                               fullAuto:(BOOL)fullAuto
+                                  width:(int)width
+                                 height:(int)height {
+    if (self.shouldRoundUp || !fullAuto) {
+        NSEdgeInsets fractionalInset = {
+            .left = MAX(inset.left / cellSize.width, 0),
+            .top = MAX(inset.top / cellSize.height, 0),
+            .right = MAX(inset.right / cellSize.width, 0),
+            .bottom = MAX(inset.bottom / cellSize.height, 0)
+        };
+        return fractionalInset;
+    }
+    // Pick an inset that preserves the exact dimensions of the original image.
+    return [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:scaledSize
+                                                                                forImageSize:decodedImage.image.size
+                                                                                    cellSize:cellSize
+                                                                               numberOfCells:NSMakeSize(width, height)];
+}
+
+- (BOOL)shouldRoundUp {
+    return (_sixelData == nil);
+}
+
+#pragma mark - Grid Twiddling
+
+- (screen_char_t)screenCharacterForWidthInPoints:(CGFloat)requestedWidthInPoints
+                                    widthInCells:(int)width
+                                  heightInPoints:(CGFloat)requestedHeightInPoints
+                                   heightInCells:(int)height
+                                      scaledSize:(NSSize)scaledSize
+                                        cellSize:(NSSize)cellSize
+                                    decodedImage:(VT100DecodedImage *)decodedImage
+                                        fullAuto:(BOOL)fullAuto {
+    const NSEdgeInsets inset = [self insetsForWidthInPoints:requestedWidthInPoints
+                                               widthInCells:width
+                                             heightInPoints:requestedHeightInPoints
+                                              heightInCells:height
+                                                   cellSize:cellSize];
+    const NSEdgeInsets fractionalInset = [self fractionalInsetForInset:inset
+                                                            scaledSize:scaledSize
+                                                              cellSize:cellSize
+                                                          decodedImage:decodedImage
+                                                              fullAuto:fullAuto
+                                                                 width:width
+                                                                height:height];
+    return ImageCharForNewImage(_name,
+                                width,
+                                height,
+                                _preserveAspectRatio,
+                                fractionalInset);
+}
+
+- (void)writeBaseCharacter:(screen_char_t)screenChar
+                    toGrid:(VT100Grid *)grid
+                     width:(int)width
+                    height:(int)height
+              decodedImage:(VT100DecodedImage *)decodedImage {
+    iTermImageInfo *imageInfo = GetImageInfo(screenChar.code);
+    imageInfo.broken = decodedImage.isBroken;
+    DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(screenChar.image));
+    const int xOffset = grid.cursorX;
+    const int screenWidth = grid.size.width;
+    screen_char_t c = screenChar;
+    for (int y = 0; y < height; y++) {
+        if (y > 0) {
+            [self.delegate inlineImageAppendLinefeed];
+        }
+        for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
+            SetPositionInImageChar(&c, x - xOffset, y);
+            // DLog(@"Set character at %@,%@: %@", @(x), @(currentGrid_.cursorY), DebugStringForScreenChar(c));
+            [grid setCharsFrom:VT100GridCoordMake(x, grid.cursorY)
+                            to:VT100GridCoordMake(x, grid.cursorY)
+                        toChar:c];
+        }
+    }
+    grid.cursorX = grid.cursorX + width;
+}
+
+- (void)getScreenCharacter:(screen_char_t *)cPtr
+                     width:(int *)widthPtr
+                    height:(int *)heightPtr
+                      grid:(VT100Grid *)grid
+              decodedImage:(VT100DecodedImage *)decodedImage {
+    const NSSize scaledSize = [self scaledSizeForDecodedImage:decodedImage];
+    const NSSize cellSize = [self.delegate inlineImageCellSize];
+
+    CGFloat requestedWidthInPoints = 0;
+    int width = _width;
+    CGFloat requestedHeightInPoints = 0;
+    int height = _height;
+    BOOL fullAuto = NO;
+    [self getRequestedWidthInPoints:&requestedWidthInPoints
+                              width:&width
+            requestedHeightInPoints:&requestedHeightInPoints
+                             height:&height
+                           fullAuto:&fullAuto
+                               grid:grid
+                         scaledSize:scaledSize
+                           cellSize:cellSize];
+
+    // TODO: Support scroll regions.
+
+    screen_char_t c = [self screenCharacterForWidthInPoints:requestedWidthInPoints
+                                               widthInCells:width
+                                             heightInPoints:requestedHeightInPoints
+                                              heightInCells:height
+                                                 scaledSize:scaledSize
+                                                   cellSize:cellSize
+                                               decodedImage:decodedImage
+                                                   fullAuto:fullAuto];
+    *cPtr = c;
+    *widthPtr = width;
+    *heightPtr = height;
+}
+
+@end

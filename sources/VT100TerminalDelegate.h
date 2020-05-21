@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100InlineImageHelper.h"
 #import "VT100Token.h"
 
 typedef NS_ENUM(NSInteger, MouseMode) {
@@ -23,13 +24,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalSemanticTextType) {
     kVT100TerminalSemanticTextTypeProcessId = 3,
 
     kVT100TerminalSemanticTextTypeMax
-};
-
-typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
-    kVT100TerminalUnitsCells,
-    kVT100TerminalUnitsPixels,
-    kVT100TerminalUnitsPercentage,
-    kVT100TerminalUnitsAuto,
 };
 
 typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
