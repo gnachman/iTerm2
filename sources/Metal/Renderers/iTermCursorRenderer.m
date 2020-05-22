@@ -1,5 +1,6 @@
 #import "iTermCursorRenderer.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 
@@ -524,8 +525,13 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
+    ITAssertWithMessage(descriptionBuffer != nil, @"Nil description buffer of size %@", @(_descriptionPool.bufferSize));
+    ITAssertWithMessage(tState.vertexBuffer != nil, @"Nil vertex buffer");
+    ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
+
     if (!_texture) {
         _texture = [self.cellRenderer textureFromImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"] context:nil];
+        ITAssertWithMessage(_texture != nil, @"Failed to load key image");
     }
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:frameData.renderEncoder

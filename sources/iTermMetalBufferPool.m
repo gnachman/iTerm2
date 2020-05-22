@@ -257,6 +257,9 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = [_device newBufferWithBytes:bytes length:_bufferSize options:MTLResourceStorageModeShared];
         }
         [context addBuffer:buffer pool:self];
+        if (!buffer) {
+            DLog(@"Failed to allocate buffer of size %@", @(_bufferSize));
+        }
         return buffer;
     }
 }
