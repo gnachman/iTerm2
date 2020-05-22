@@ -1651,6 +1651,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
+    DLog(@"Finish drawing frameData %@", frameData);
 #if ENABLE_USE_TEMPORARY_TEXTURE
     BOOL shouldCopyToDrawable = YES;
 #else
@@ -1677,6 +1678,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     if (shouldCopyToDrawable) {
         // Copy to the drawable
+        DLog(@"  Copy to drawable %@", frameData);
         frameData.currentPass = 2;
         [frameData.renderEncoder endEncoding];
 
@@ -1686,15 +1688,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                       stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
+        DLog(@"  endEncoding %@", frameData);
         [frameData.renderEncoder endEncoding];
     }];
 
     if (frameData.debugInfo) {
+        DLog(@"  Copy offscreen texture to drawable %@", frameData);
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
 #if !ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
+            DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
         }
 #endif
@@ -1727,6 +1732,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
         }];
 
+        DLog(@"  commit %@", frameData);
         [commandBuffer commit];
 #if ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
@@ -1742,7 +1748,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
     if (!completed) {
+        DLog(@"first time completed %@", frameData);
         if (frameData.debugInfo) {
+            DLog(@"have debug info %@", frameData);
             NSData *archive = [frameData.debugInfo newArchive];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource metalDriverDidProduceDebugInfo:archive];
