@@ -3461,6 +3461,8 @@
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
 		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
+		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
+		A6DF91B62477B38700FB9F42 /* iTermMissionControlHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */; };
 		A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */; };
@@ -6223,6 +6225,8 @@
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
+		A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMissionControlHacks.h; sourceTree = "<group>"; };
+		A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMissionControlHacks.m; sourceTree = "<group>"; };
 		A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMouseReportingFrustrationDetector.h; sourceTree = "<group>"; };
 		A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMouseReportingFrustrationDetector.m; sourceTree = "<group>"; };
 		A6E180EC23D5375F003C4EB1 /* pidinfo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pidinfo.entitlements; sourceTree = "<group>"; };
@@ -9385,6 +9389,8 @@
 				A6F3DA8A24540A20001D50C9 /* iTermUntitledWindowStateMachine.m */,
 				A6758566245AA32400827C25 /* iTermGCDTimer.h */,
 				A6758567245AA32400827C25 /* iTermGCDTimer.m */,
+				A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */,
+				A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11068,6 +11074,7 @@
 				A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */,
 				A630116520E606F9008114B7 /* iTermStatusBarViewController.h in Headers */,
 				A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */,
+				A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */,
 				A6AFD69424497410007D0660 /* iTermFileDescriptorMultiClientState.h in Headers */,
 				A62EED9220DF5B2F00943DE3 /* iTermScriptChooser.h in Headers */,
 				A63011C820E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.h in Headers */,
@@ -13523,6 +13530,7 @@
 				A6232E77202832A900EC0F98 /* iTermData.m in Sources */,
 				A611272821D1B1E300E8C228 /* iTermCPUProfilerUI.m in Sources */,
 				A618FFBE22409DF900B8FD88 /* iTermTheme.m in Sources */,
+				A6DF91B62477B38700FB9F42 /* iTermMissionControlHacks.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */,
 				A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */,

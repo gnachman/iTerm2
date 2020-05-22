@@ -34,6 +34,7 @@
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
+#import "iTermMissionControlHacks.h"
 #import "iTermPresentationController.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermSessionFactory.h"
@@ -940,31 +941,14 @@ static iTermController *gSharedInstance;
 }
 
 + (void)switchToSpaceInBookmark:(Profile *)aDict {
-    if (aDict[KEY_SPACE]) {
-        int spaceNum = [aDict[KEY_SPACE] intValue];
-        if (spaceNum > 0 && spaceNum < 10) {
-            // keycodes for digits 1-9. Send control-n to switch spaces.
-            // TODO: This would get remapped by the event tap. It requires universal access to be on and
-            // spaces to be configured properly. But we don't tell the users this.
-            int codes[] = { 18, 19, 20, 21, 23, 22, 26, 28, 25 };
-            CGEventRef e = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)codes[spaceNum - 1], true);
-            CGEventSetFlags(e, kCGEventFlagMaskControl);
-            CGEventPost(kCGSessionEventTap, e);
-            CFRelease(e);
-
-            e = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)codes[spaceNum - 1], false);
-            CGEventSetFlags(e, kCGEventFlagMaskControl);
-            CGEventPost(kCGSessionEventTap, e);
-            CFRelease(e);
-
-            // Give the space-switching animation time to get started; otherwise a window opened
-            // subsequent to this will appear in the previous space. This is short enough of a
-            // delay that it's not annoying when you're already there.
-            [NSThread sleepForTimeInterval:0.3];
-
-            [NSApp activateIgnoringOtherApps:YES];
-        }
+    if (!aDict[KEY_SPACE]) {
+        return;
     }
+    const int spaceNum = [aDict[KEY_SPACE] intValue];
+    if (spaceNum <= 0 && spaceNum >= 10) {
+        return;
+    }
+    [iTermMissionControlHacks switchToSpace:spaceNum];
 }
 
 - (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
