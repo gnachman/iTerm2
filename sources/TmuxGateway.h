@@ -57,6 +57,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (NSString *)tmuxOwningSessionGUID;
 - (BOOL)tmuxGatewayShouldForceDetach;
 - (void)tmuxGatewayDidTimeOut;
+- (void)tmuxDidHandleOutputOfLength:(NSInteger)length fromPane:(int)wp;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {

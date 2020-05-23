@@ -3463,6 +3463,8 @@
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
 		A6DF91B62477B38700FB9F42 /* iTermMissionControlHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */; };
+		A6DF91B924790A8400FB9F42 /* iTermTmuxFlowControlManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B724790A8400FB9F42 /* iTermTmuxFlowControlManager.h */; };
+		A6DF91BA24790A8400FB9F42 /* iTermTmuxFlowControlManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF91B824790A8400FB9F42 /* iTermTmuxFlowControlManager.m */; };
 		A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */; };
@@ -6227,6 +6229,8 @@
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
 		A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMissionControlHacks.h; sourceTree = "<group>"; };
 		A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMissionControlHacks.m; sourceTree = "<group>"; };
+		A6DF91B724790A8400FB9F42 /* iTermTmuxFlowControlManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxFlowControlManager.h; sourceTree = "<group>"; };
+		A6DF91B824790A8400FB9F42 /* iTermTmuxFlowControlManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxFlowControlManager.m; sourceTree = "<group>"; };
 		A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMouseReportingFrustrationDetector.h; sourceTree = "<group>"; };
 		A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMouseReportingFrustrationDetector.m; sourceTree = "<group>"; };
 		A6E180EC23D5375F003C4EB1 /* pidinfo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pidinfo.entitlements; sourceTree = "<group>"; };
@@ -7562,6 +7566,8 @@
 				53E98E7A233C6B760094D8A9 /* iTermTmuxSessionObject.m */,
 				A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */,
 				A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */,
+				A6DF91B724790A8400FB9F42 /* iTermTmuxFlowControlManager.h */,
+				A6DF91B824790A8400FB9F42 /* iTermTmuxFlowControlManager.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -10772,6 +10778,7 @@
 				5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */,
 				A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */,
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
+				A6DF91B924790A8400FB9F42 /* iTermTmuxFlowControlManager.h in Headers */,
 				A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */,
 				530AB8A720B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.h in Headers */,
 				5370679521C9D2780088D0F3 /* SIGSigningAlgorithm.h in Headers */,
@@ -13586,6 +13593,7 @@
 				A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */,
 				A67F5DE723947A2700D18028 /* iTermMultiServerConnection.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
+				A6DF91BA24790A8400FB9F42 /* iTermTmuxFlowControlManager.m in Sources */,
 				53E9DFE4220D52EF0070C9C0 /* SendTextTrigger.m in Sources */,
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,

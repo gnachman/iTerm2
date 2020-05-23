@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 #import "iTermInitialDirectory.h"
+#import "iTermTmuxFlowControlManager.h"
 #import "iTermTmuxSessionObject.h"
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
@@ -65,6 +66,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
+@property(nonatomic, readonly) iTermTmuxFlowControlManager *flowControlManager;
+
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
                         profile:(Profile *)profile

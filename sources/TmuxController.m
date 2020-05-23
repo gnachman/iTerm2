@@ -208,6 +208,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_userVars release];
     [_when release];
     [_listWindowsQueue release];
+    [_flowControlManager release];
 
     [super dealloc];
 }
@@ -1100,6 +1101,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 // Actions to perform after the version number is known.
 - (void)didGuessVersion {
+    [self maybeEnableFlowControl];
     [self loadServerPID];
     [self loadTitleFormat];
 }
@@ -1110,6 +1112,27 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return NO;
     }
     return ([gateway_.minimumServerVersion compare:version] != NSOrderedAscending);
+}
+
+- (void)maybeEnableFlowControl {
+    if ([self versionAtLeastDecimalNumberWithString:@"3.2"]) {
+        __weak __typeof(self) weakSelf = self;
+        _flowControlManager = [[iTermTmuxFlowControlManager alloc] initWithAcker:^(NSDictionary<NSNumber *,NSNumber *> * _Nonnull dict) {
+            [weakSelf sendAcks:dict];
+        }];
+        [gateway_ sendCommand:@"refresh-client -f flow-control" responseTarget:nil responseSelector:nil];
+    }
+}
+
+- (void)sendAcks:(NSDictionary<NSNumber *, NSNumber *> *)dict {
+    // refresh-client -A '%0:100'
+    NSArray<NSString *> *parts = [dict.allKeys mapWithBlock:^id(NSNumber *pane) {
+        NSNumber *byteCount = dict[pane];
+        return [NSString stringWithFormat:@"'%%%@:%@'", pane, byteCount];
+    }];
+    NSString *command = [NSString stringWithFormat:@"refresh-client -A %@",
+                         [parts componentsJoinedByString:@" "]];
+    [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
 - (BOOL)recyclingSupported {

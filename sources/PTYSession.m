@@ -2844,6 +2844,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [self recycleQueuedTokens];
     }
 
+    const BOOL isGateway = (_tmuxMode == TMUX_GATEWAY && _tmuxController.flowControlManager != nil);
+    if (isGateway) {
+        [_tmuxController.flowControlManager push];
+    }
     for (int i = 0; i < n; i++) {
         if (![self shouldExecuteToken]) {
             break;
@@ -2852,6 +2856,9 @@ ITERM_WEAKLY_REFERENCEABLE
         VT100Token *token = CVectorGetObject(vector, i);
         DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
         [_terminal executeToken:token];
+    }
+    if (isGateway) {
+        [_tmuxController.flowControlManager pop];
     }
 
     [self finishedHandlingNewOutputOfLength:length];
@@ -6914,6 +6921,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self.delegate tmuxWindow] == [notification.object intValue]) {
         _tmuxWindowClosingByClientRequest = YES;
     }
+}
+
+- (void)tmuxDidHandleOutputOfLength:(NSInteger)length fromPane:(int)wp {
+    [_tmuxController.flowControlManager addBytes:length pane:wp];
 }
 
 - (NSString*)encodingName

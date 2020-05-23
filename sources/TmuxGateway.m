@@ -138,8 +138,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     return data;
 }
 
-- (void)parseOutputCommandData:(NSData *)input
-{
+- (void)parseOutputCommandData:(NSData *)input {
     // Null terminate so we can do some string parsing without too much pain.
     NSMutableData *data = [NSMutableData dataWithData:input];
     [data appendBytes:"" length:1];
@@ -165,15 +164,21 @@ static NSString *kCommandTimestamp = @"timestamp";
         goto error;
     }
     char *endptr = NULL;
-    int windowPane = strtol(paneId, &endptr, 10);
+    const int windowPane = strtol(paneId, &endptr, 10);
     if (windowPane < 0 || endptr != space) {
         goto error;
     }
 
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
-    TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s", windowPane, (int)[decodedData length], [decodedData bytes]);
-    [[[delegate_ tmuxController] sessionForWindowPane:windowPane] tmuxReadTask:decodedData];
+    if (acceptNotifications_) {
+        TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s", windowPane, (int)[decodedData length], [decodedData bytes]);
+        [[[delegate_ tmuxController] sessionForWindowPane:windowPane] tmuxReadTask:decodedData];
+    }
+    const NSInteger overhead = (endptr + 1) - command;
+
+    [self.delegate tmuxDidHandleOutputOfLength:input.length - overhead
+                                      fromPane:windowPane];
 
     return;
 error:
@@ -495,7 +500,7 @@ error:
         [currentCommandData_ appendData:data];
         [currentCommandData_ appendBytes:"\n" length:1];
     } else if ([command hasPrefix:@"%output "]) {
-        if (acceptNotifications_) [self parseOutputCommandData:data];
+        [self parseOutputCommandData:data];
     } else if ([command hasPrefix:@"%layout-change "]) {
         if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {
