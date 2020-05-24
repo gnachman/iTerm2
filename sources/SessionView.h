@@ -266,4 +266,8 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)tabColorDidChange;
 - (void)didBecomeVisible;
 
+#if DEBUG
+- (void)saveLastDebugMetalFrameWithIdentifier:(NSString *)identifier;
+#endif
+
 @end

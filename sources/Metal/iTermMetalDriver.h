@@ -118,6 +118,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (CGRect)relativeFrame;
 - (CGRect)containerRect;
+#if DEBUG
+- (NSString *)metalDebugContent;
+#endif
 
 @end
 
@@ -161,6 +164,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 // enableSetNeedsDisplay should be NO.
 // The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
+
+#if DEBUG
+- (void)writeLastDebugBufferAsPNGTo:(NSString *)filename;
+#endif
 
 @end
 

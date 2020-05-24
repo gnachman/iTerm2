@@ -144,7 +144,7 @@ static NSInteger gNextFrameDataNumber;
             self,
             now - _creation,
             @(_frameNumber),
-            @(gNextFrameDataNumber),
+            @(gNextFrameDataNumber - 1),
             self.status];
 }
 

@@ -26,7 +26,12 @@ NS_ASSUME_NONNULL_BEGIN
     NSRange _underlinedRange;  // Underline for semantic history
 }
 
+#if DEBUG
+@property (nonatomic, readonly) NSString *debugStringContent;
+#endif
+
 - (instancetype)init NS_UNAVAILABLE;
+
 @end
 
 

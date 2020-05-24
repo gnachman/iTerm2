@@ -203,4 +203,11 @@ BOOL TurnOffDebugLoggingSilently(void);
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
+
+#if DEBUG
+@protocol iTermExtraDebugLogDataSaving<NSObject>
+- (void)it_saveExtraDebugLogData;
+@end
+#endif
+
 #endif  // __OBJC__

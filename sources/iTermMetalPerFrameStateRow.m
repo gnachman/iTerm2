@@ -14,6 +14,7 @@
 #import "iTermSelection.h"
 #import "iTermTextDrawingHelper.h"
 #import "PTYTextView.h"
+#import "ScreenChar.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 
@@ -60,6 +61,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
     return self;
 }
+
+#if DEBUG
+- (NSString *)debugStringContent {
+    return ScreenCharArrayToStringDebug((screen_char_t *)_screenCharLine.bytes,
+                                        _screenCharLine.length / sizeof(screen_char_t));
+}
+#endif
 
 - (iTermMarkStyle)markStyleForLine:(int)i
                            enabled:(BOOL)enabled

@@ -35,6 +35,7 @@
 #import "iTermTextureArray.h"
 #import "MovingAverage.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import <stdatomic.h>
 
@@ -152,6 +153,12 @@ typedef struct {
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
     // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
+
+#if DEBUG
+    id<MTLBuffer> _lastDebugBuffer;
+    CGSize _lastDebugBufferSize;
+    NSString *_lastDebugContent;
+#endif
 }
 
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
@@ -441,7 +448,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (!frameData.deferCurrentDrawable) {
-        if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
+        if (frameData.destinationTexture == nil ||
+            frameData.destinationDrawable == nil ||
+            frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
             self.needsDraw = YES;
             return NO;
@@ -494,7 +503,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         // This is the slow part
         frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
-
+#if DEBUG
+        frameData.debugContentString = [frameData.perFrameState metalDebugContent];
+#endif
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
 
@@ -740,8 +751,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateBackgroundImageRendererTransientStateWithFrameData:frameData];
 }
 
-- (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
+- (BOOL)shouldRenderToOfscreenBufferBeforeDrawable:(iTermMetalFrameData *)frameData {
     if (frameData.debugInfo) {
+        return YES;
+    }
+#if DEBUG
+    return YES;
+#endif
+    return NO;
+}
+
+- (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
+    if ([self shouldRenderToOfscreenBufferBeforeDrawable:frameData]) {
         // Render to offscreen first
         MTLTextureDescriptor *textureDescriptor =
             [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
@@ -755,17 +776,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                      samplesPerPixel:4
                           forTexture:texture];
         return texture;
-    } else {
-        // Render directly to drawable
-        id<MTLTexture> texture = frameData.destinationDrawable.texture;
-        texture.label = @"Drawable destination";
-        return texture;
     }
+    // Render directly to drawable
+    id<MTLTexture> texture = frameData.destinationDrawable.texture;
+    texture.label = @"Drawable destination";
+    return texture;
 }
 
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
-    if (frameData.debugInfo) {
+    if ([self shouldRenderToOfscreenBufferBeforeDrawable:frameData]) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
                                                                                     fast:NO];
@@ -775,38 +795,37 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             frameData.destinationDrawable = view.currentDrawable;
             frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
         }];
-
-    } else {
+        return;
+    }
 #if ENABLE_DEFER_CURRENT_DRAWABLE
-        const BOOL synchronousDraw = (_context.group != nil);
-        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
-                                          !synchronousDraw);
+    const BOOL synchronousDraw = (_context.group != nil);
+    frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
+                                      !synchronousDraw);
 #else
-        frameData.deferCurrentDrawable = NO;
+    frameData.deferCurrentDrawable = NO;
 #endif
-        if (!frameData.deferCurrentDrawable) {
-            NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-                frameData.destinationDrawable = view.currentDrawable;
-                frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
-            }];
-            [_currentDrawableTime addValue:duration];
-            if (frameData.destinationDrawable == nil) {
-                DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
-                return;
-            }
-        }
-
-        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-            if (frameData.deferCurrentDrawable) {
-                frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
-            } else {
-                frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
-            }
+    if (!frameData.deferCurrentDrawable) {
+        NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+            frameData.destinationDrawable = view.currentDrawable;
+            frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
         }];
-        if (frameData.renderPassDescriptor == nil) {
-            DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
+        [_currentDrawableTime addValue:duration];
+        if (frameData.destinationDrawable == nil) {
+            DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
             return;
         }
+    }
+
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+        if (frameData.deferCurrentDrawable) {
+            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
+        } else {
+            frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+        }
+    }];
+    if (frameData.renderPassDescriptor == nil) {
+        DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
+        return;
     }
 }
 
@@ -1590,6 +1609,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+#if ENABLE_DEFER_CURRENT_DRAWABLE
 - (BOOL)deferredRequestCurrentDrawableWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                                               frameData:(iTermMetalFrameData *)frameData {
     __block BOOL shouldCopyToDrawable = NO;
@@ -1640,7 +1660,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             self.needsDraw = YES;
             [frameData.renderEncoder endEncoding];
             [commandBuffer commit];
-            [self didComplete:NO withFrameData:frameData];
+            [self didComplete:NO withFrameData:frameData debugString:@"DESTINATION TEXTURE IS NIL"];
         } else {
             DLog(@"Continuing on %@", frameData);
             shouldCopyToDrawable = YES;
@@ -1648,6 +1668,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
     return shouldCopyToDrawable;
 }
+#endif
 
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
@@ -1676,6 +1697,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 #endif
 
+    if (!frameData.debugInfo && [self shouldRenderToOfscreenBufferBeforeDrawable:frameData]) {
+        [frameData.renderEncoder endEncoding];
+        frameData.debugBuffer = [self bufferWithContentsOfDestinationTextureInFrameData:frameData
+                                                                                  label:@"Debug buffer"];
+        [self updateRenderEncoderForCurrentPass:frameData
+                                          label:@"Save debug buffer"];
+    }
+
     if (shouldCopyToDrawable) {
         // Copy to the drawable
         DLog(@"  Copy to drawable %@", frameData);
@@ -1686,21 +1715,24 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self drawRenderer:_copyToDrawableRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         DLog(@"  endEncoding %@", frameData);
         [frameData.renderEncoder endEncoding];
     }];
 
-    if (frameData.debugInfo) {
+    if ([self shouldRenderToOfscreenBufferBeforeDrawable:frameData]) {
         DLog(@"  Copy offscreen texture to drawable %@", frameData);
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
+        NSString *lastPresented = @"not presented";
 #if !ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
             DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
+            lastPresented = [frameData.destinationDrawable debugDescription];
         }
 #endif
 
@@ -1721,7 +1753,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
         __block BOOL completed = NO;
         void (^completedBlock)(void) = [^{
-            completed = [self didComplete:completed withFrameData:frameData];
+            completed = [self didComplete:completed withFrameData:frameData debugString:lastPresented];
         } copy];
 
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
@@ -1745,7 +1777,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }];
 }
 
-- (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
+- (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData debugString:(NSString *)debugString {
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
     if (!completed) {
         DLog(@"first time completed %@", frameData);
@@ -1755,6 +1787,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource metalDriverDidProduceDebugInfo:archive];
             });
+        } else if ([self shouldRenderToOfscreenBufferBeforeDrawable:frameData]) {
+            [self saveDestinationTextureInMemoryForDebugging:frameData debugString:debugString];
         }
 
         completed = YES;
@@ -1774,6 +1808,42 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     return completed;
 }
+
+- (void)saveDestinationTextureInMemoryForDebugging:(iTermMetalFrameData *)frameData debugString:(NSString *)debugString {
+    _lastDebugBuffer = frameData.debugBuffer;
+    _lastDebugBufferSize = CGSizeMake(frameData.viewportSize.x, frameData.viewportSize.y);
+    _lastDebugContent = [NSString stringWithFormat:
+                         @"framedata=%@\n"
+                         @"destinationDrawable=%@\n"
+                         @"presented drawable=%@\n"
+                         @"Content:\n"
+                         @"%@",
+                         frameData,
+                         frameData.destinationDrawable,
+                         debugString,
+                         frameData.debugContentString];
+}
+
+#if DEBUG
+- (void)writeLastDebugBufferAsPNGTo:(NSString *)filename {
+    if (!_lastDebugBuffer) {
+        return;
+    }
+    NSMutableData *data = [NSMutableData dataWithBytes:_lastDebugBuffer.contents
+                                                length:_lastDebugBuffer.length];
+    [self convertBGRAToRGBA:data];
+    NSImage *image = [NSImage imageWithRawData:data
+                                          size:_lastDebugBufferSize
+                                 bitsPerSample:8
+                               samplesPerPixel:4
+                                      hasAlpha:YES
+                                colorSpaceName:NSDeviceRGBColorSpace];
+    [image saveAsPNGTo:filename];
+
+    NSString *contentFilename = [[filename stringByDeletingPathExtension] stringByAppendingPathExtension:@".txt"];
+    [_lastDebugContent writeToFile:contentFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+}
+#endif
 
 #pragma mark - Drawing Helpers
 

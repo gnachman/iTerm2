@@ -568,6 +568,14 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }];
 }
 
+#if DEBUG
+- (NSString *)metalDebugContent {
+    return [[_rows mapWithBlock:^id(iTermMetalPerFrameStateRow *row) {
+        return [row debugStringContent];
+    }] componentsJoinedByString:@"\n"];
+}
+#endif
+
 - (void)metalEnumerateHighlightedRows:(void (^)(vector_float3, NSTimeInterval, int))block {
     for (iTermHighlightedRow *row in _highlightedRows) {
         long long line = row.absoluteLineNumber;

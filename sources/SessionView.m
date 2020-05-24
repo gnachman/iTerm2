@@ -810,6 +810,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
+#if DEBUG
+- (void)saveLastDebugMetalFrameWithIdentifier:(NSString *)identifier {
+    NSString *filename = [[@"/tmp" stringByAppendingPathComponent:identifier] stringByAppendingPathExtension:@"png"];
+    [_driver writeLastDebugBufferAsPNGTo:filename];
+}
+#endif
+
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {
     if (@available(macOS 10.14, *)) {
         return frame;

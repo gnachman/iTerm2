@@ -192,6 +192,9 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
+#if DEBUG
+    iTermExtraDebugLogDataSaving,
+#endif
     iTermObject,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
@@ -11504,5 +11507,13 @@ backgroundColor:(NSColor *)backgroundColor {
     [[self window] makeFirstResponder:[[self currentSession] textview]];
     [[self currentTab] recheckBlur];
 }
+
+#if DEBUG
+#pragma mark - iTermExtraDebugLogDataSaving
+
+- (void)it_saveExtraDebugLogData {
+    [self.currentSession.view saveLastDebugMetalFrameWithIdentifier:[@"metal-frame-" stringByAppendingString:self.currentSession.sessionId]];
+}
+#endif
 
 @end

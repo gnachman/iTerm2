@@ -35,6 +35,12 @@ static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) 
     [windows appendFormat:@"\nWindow %@\n%@\n",
      window,
      [window.contentView iterm_recursiveDescription]];
+#if DEBUG
+    if ([window.delegate conformsToProtocol:@protocol(iTermExtraDebugLogDataSaving)]) {
+        id<iTermExtraDebugLogDataSaving> saver = (id<iTermExtraDebugLogDataSaving>)window.delegate;
+        [saver it_saveExtraDebugLogData];
+    }
+#endif
 }
 
 static void WriteDebugLogHeader() {

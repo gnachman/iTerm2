@@ -135,6 +135,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;
     }
+#if DEBUG
+    if (altPressed && cmdPressed && shiftPressed) {
+        TurnOnDebugLoggingSilently();
+        TurnOffDebugLoggingSilently();
+        return NO;
+    }
+#endif
     const BOOL isFocused = [self.mouseDelegate mouseHandlerViewHasFocus:self];
     if (!isFocused &&
         !cmdPressed &&

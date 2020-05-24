@@ -144,11 +144,19 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL hasManyColorCombos;
 @property (nonatomic) BOOL deferCurrentDrawable;
 
+// Used in DEBUG builds only to diagnose dropped frame issues. Not related to frame capture feature,
+// which is available in release builds too.
+@property (nonatomic, strong) id<MTLBuffer> debugBuffer;
+
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;
 
 // For debugging. Gives an order to the log files.
 @property (nonatomic) int numberOfRenderersDrawn;
+
+#if DEBUG
+@property (nonatomic, copy) NSString *debugContentString;
+#endif
 
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
