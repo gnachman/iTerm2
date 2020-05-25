@@ -2260,6 +2260,7 @@ static const int kMaxScreenRows = 4096;
 
 - (NSSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     NSMutableSet<NSString *> *result = [NSMutableSet set];
+    [result addObject:@"0"];  // for xterm compatibility. Also makes esctest happy.
     switch (graphicRendition.fgColorMode) {
         case ColorModeNormal:
             if (graphicRendition.fgColorCode < 8) {
@@ -2274,6 +2275,7 @@ static const int kMaxScreenRows = 4096;
         case ColorModeAlternate:
             switch (graphicRendition.fgColorCode) {
                 case ALTSEM_DEFAULT:
+                    break;
                 case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
                     [result addObject:@"39"];
                     break;
@@ -2313,6 +2315,7 @@ static const int kMaxScreenRows = 4096;
         case ColorModeAlternate:
             switch (graphicRendition.bgColorCode) {
                 case ALTSEM_DEFAULT:
+                    break;
                 case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
                     [result addObject:@"49"];
                     break;

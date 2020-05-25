@@ -36,7 +36,7 @@ read_x10()
   [ $my -lt 0 ] && my=$(( 223 + $my )) || my=$(( $my - 32 ))
 
   ## Button pressed is in first 2 bytes; use bitwise AND
-  b=$(( ($mb & 3) + 1 ))
+  b=$(( ($mb & 67) + 1 ))
   output_mouse $mx $my $b
 }
 
@@ -92,7 +92,7 @@ read_utf8()
   button=$(read_bytes 1)
   button=$(printf "%d" "'$button'")
 
-  b=$(( ($button & 3) + 1 ))
+  b=$(( ($button & 67) + 1 ))
   cx=$(( $(read_utf8_codepoint) - 32 ))
   cy=$(( $(read_utf8_codepoint) - 32 ))
 
@@ -107,7 +107,7 @@ read_sgr()
   button=$(read_decimal)
   cx=$(read_decimal)
   cy=$(read_decimal)
-  b=$(( ($button & 3) + 1 ))
+  b=$(( ($button & 67) + 1 ))
 
   output_mouse $cx $cy $b
 }
@@ -118,7 +118,7 @@ read_urxvt()
   button=$(read_decimal)
   cx=$(read_decimal)
   cy=$(read_decimal)
-  b=$(( ($button & 3) + 1 ))
+  b=$(( ($button & 67) + 1 ))
 
   output_mouse $cx $cy $b
 }
