@@ -740,7 +740,7 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 #pragma mark - iTermMouseReportingFrustrationDetectorDelegate
 
 - (void)mouseReportingFrustrationDetectorDidDetectFrustration:(iTermMouseReportingFrustrationDetector *)sender {
-    if ([self.delegate xtermMouseReporting]) {
+    if ([self.delegate xtermMouseReporting] && !self.selection.hasSelection) {
         [self.delegate textViewDidDetectMouseReportingFrustration];
     }
 }

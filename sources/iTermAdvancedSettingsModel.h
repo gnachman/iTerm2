@@ -175,6 +175,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt;
 + (void)setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:(BOOL)value;
 + (NSString *)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey;
++ (BOOL)noSyncNeverAskAboutMouseReportingFrustration;
++ (void)setNoSyncNeverAskAboutMouseReportingFrustration:(BOOL)value;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForFile;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
 + (BOOL)noSyncReplaceProfileWarning;

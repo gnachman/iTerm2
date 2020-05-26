@@ -28,7 +28,6 @@ static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier =
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
-static NSString *const iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled = @"NoSyncNeverAskAboutMouseReportingFrustration";
 
 static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetBackgroundImageFile";
 static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
@@ -298,14 +297,14 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 }
 
 - (void)didDetectMouseReportingFrustration {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:iTermNaggingControllerUserDefaultMouseReportingFrustrationDetectionDisabled]) {
+    if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration]) {
         return;
     }
     [self.delegate naggingControllerShowMessage:@"Looks like you’re trying to copy to the pasteboard, but mouse reporting has prevented making a selection. Disable mouse reporting?"
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier
-                                        options:@[ @"_Temporarily", @"Permanently" ]
+                                        options:@[ @"_Temporarily", @"Permanently", @"Stop Asking" ]
                                      completion:^(int selection) {
         [self handleMouseReportingFrustration:selection];
     }];
@@ -320,6 +319,10 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         case 1: { // Never
             [self.delegate naggingControllerDisableMouseReportingPermanently:YES];
             break;
+        }
+
+        case 2: { // Stop asking
+            [iTermAdvancedSettingsModel setNoSyncNeverAskAboutMouseReportingFrustration:YES];
         }
     }
 }

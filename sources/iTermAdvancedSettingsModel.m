@@ -507,6 +507,7 @@ DEFINE_OPTIONAL_BOOL(noSyncTurnOffMouseReportingOnHostChange, nil, SECTION_WARNI
 DEFINE_OPTIONAL_BOOL(noSyncTurnOffBracketedPasteOnHostChange, nil, SECTION_WARNINGS @"Always turn off paste bracketing when host changes?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressClipboardAccessDeniedWarning, NoSyncSuppressClipboardAccessDeniedWarning, NO, SECTION_WARNINGS @"Suppress the notification that the terminal attempted to access the clipboard but it was denied?");
 DEFINE_SETTABLE_BOOL(noSyncSuppressMissingProfileInArrangementWarning, NoSyncSuppressMissingProfileInArrangementWarning, NO, SECTION_WARNINGS @"Suppress the notification that a restored session’s profile no longer exists?");
+DEFINE_SETTABLE_BOOL(noSyncNeverAskAboutMouseReportingFrustration, NoSyncNeverAskAboutMouseReportingFrustration, NO, SECTION_WARNINGS @"Suppress the notification asking if you want to disable mouse reporting that is shown after a drag followed by Cmd-C when mouse reporting is on?");
 
 #pragma mark Pasteboard
 
