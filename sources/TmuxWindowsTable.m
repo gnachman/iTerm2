@@ -187,9 +187,21 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (void)didDoubleClickTableView:(id)sender {
     NSInteger rowIndex = tableView_.clickedRow;
-    if (rowIndex >= 0) {
-        [delegate_ tmuxWindowsTableDidSelectWindowWithId:[[[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:1] intValue]];
+    if (rowIndex < 0) {
+        return;
     }
+    NSArray *const model = [self filteredModel];
+    NSString *const widString = model[rowIndex][1];
+
+    if ([delegate_ haveOpenWindowWithId:widString.intValue]) {
+        // Reveal
+        [delegate_ tmuxWindowsTableDidSelectWindowWithId:widString.intValue];
+        return;
+    }
+
+    // Open in window
+    [delegate_ showWindowsWithIds:@[ widString ] inTabs:NO];
+    [tableView_ reloadData];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
