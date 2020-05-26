@@ -43,3 +43,8 @@
 // https://openradar.appspot.com/radar?id=4996901569036288
 #define ENABLE_TRANSPARENT_METAL_WINDOWS 1
 
+// Sometimes when you ask MKTView for its currentDrawable, you get back a drawable with a texture
+// that you've never seen before. When you go to presentDrawable:, the completion handler is called
+// but it never becomes visible! This flag enables a workaround where we redraw any frame with a
+// never-before-seen texture. I have a question out to developer tech support on this one.
+#define ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND 1

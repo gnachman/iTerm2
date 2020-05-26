@@ -153,7 +153,7 @@ static NSInteger gNextFrameDataNumber;
     [_debugInfo setRenderPassDescriptor:renderPassDescriptor];
 }
 
-- (NSTimeInterval)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
+- (NSTimeInterval)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^ NS_NOESCAPE)(void))block {
     if (stat == iTermMetalFrameDataStatNA) {
         block();
         return 0;

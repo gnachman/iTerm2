@@ -81,6 +81,9 @@ typedef struct {
     CGSize glyphSize;
     CGSize asciiOffset;
     CGContextRef context;
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+    NSInteger unfamiliarTextureCount;
+#endif
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -151,6 +154,11 @@ typedef struct {
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
     // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+    // Used to work around a bug where presentDrawable: sometimes doesn't work. It only seems to
+    // happen with a never-before-seen texture. Holds weak refs to drawables' textures.
+    NSPointerArray *_familiarTextures;
+#endif
 }
 
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
@@ -194,6 +202,10 @@ typedef struct {
 #if ENABLE_PRIVATE_QUEUE
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
 #endif
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+        _familiarTextures = [NSPointerArray weakObjectsPointerArray];
+#endif
+
         _currentFrames = [NSMutableArray array];
         _currentDrawableTime = [[MovingAverage alloc] init];
         _currentDrawableTime.alpha = 0.75;
@@ -446,7 +458,20 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             return NO;
         }
     }
-#endif
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+    if (!frameData.textureIsFamiliar) {
+        if (_mainThreadState.unfamiliarTextureCount < _maxFramesInFlight) {
+            DLog(@"Texture is unfamiliar for %@", frameData);
+            self.needsDraw = YES;
+        } else {
+            DLog(@"Avoid redrawing unfamiliar texture to break loop");
+        }
+        _mainThreadState.unfamiliarTextureCount += 1;
+    } else {
+        _mainThreadState.unfamiliarTextureCount = 0;
+    }
+#endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+#endif  // ENABLE_PRIVATE_QUEUE
 
     @synchronized(self) {
         [_currentFrames addObject:frameData];
@@ -756,6 +781,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+- (BOOL)textureIsFamiliar:(id<MTLTexture>)texture {
+    // -compact only does its job if you manually insert a nil pointer!
+    // https://stackoverflow.com/questions/31322290/nspointerarray-weird-compaction/40274426
+    [_familiarTextures addPointer:nil];
+    [_familiarTextures compact];
+
+    for (id candidate in _familiarTextures) {
+        if (candidate == texture) {
+            return YES;
+        }
+    }
+    return NO;
+}
+#endif
+
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
@@ -781,6 +822,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
                 frameData.destinationDrawable = view.currentDrawable;
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+                frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
+                if (!frameData.textureIsFamiliar) {
+                    [_familiarTextures addPointer:(__bridge void *)frameData.destinationDrawable.texture];
+                }
+                while (_familiarTextures.count > _maxFramesInFlight) {
+                    [_familiarTextures removePointerAtIndex:0];
+                }
+#endif
             }];
             [_currentDrawableTime addValue:duration];
             if (frameData.destinationDrawable == nil) {
@@ -1846,6 +1896,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         void (^block)(void) = ^{
             if (self.needsDraw) {
                 self.needsDraw = NO;
+                DLog(@"Calling setNeedsDisplay because of needsDraw");
                 [view setNeedsDisplay:YES];
             }
         };
