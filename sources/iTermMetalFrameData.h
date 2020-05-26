@@ -143,6 +143,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL hasManyColorCombos;
 @property (nonatomic) BOOL deferCurrentDrawable;
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+@property (nonatomic) BOOL textureIsFamiliar;
+#endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;
@@ -162,7 +165,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
          fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSTimeInterval)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;
+- (NSTimeInterval)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^ NS_NOESCAPE)(void))block;
 #if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
