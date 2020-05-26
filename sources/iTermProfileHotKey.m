@@ -98,6 +98,10 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(windowDidBecomeKey:)
                                                      name:NSWindowDidBecomeKeyNotification
                                                    object:nil];
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
     }
     return self;
 }
@@ -198,6 +202,40 @@ static NSString *const kArrangement = @"Arrangement";
     if (before != after && after == NSNormalWindowLevel) {
         [[NSApp keyWindow] makeKeyAndOrderFront:nil];
     }
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    DLog(@"activeSpaceDidChangei %@", self.windowController);
+    if (!self.isHotKeyWindowOpen) {
+        DLog(@"Not open");
+        return;
+    }
+    if (self.autoHides) {
+        DLog(@"Autohides");
+        return;
+    }
+    if (self.windowController.spaceSetting != iTermProfileJoinsAllSpaces) {
+        DLog(@"Doesn't join all spaces");
+        return;
+    }
+    if (!self.windowController.window.isKeyWindow) {
+        DLog(@"Not key");
+        return;
+    }
+    // I'm not proud. One spin is enough when switching desktops when both have
+    // apps. When switching from a desktop with nothing to a desktop with
+    // another app, you resign key and get deactivated over two spins. Sigh.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Two spins after activeSpaceDidChange %@", self.windowController);
+            if (self.windowController.window.isKeyWindow) {
+                DLog(@"Hotkey window still key a spin after changing spaces. Inexplicable.");
+                return;
+            }
+            DLog(@"One spin after changing spaces with open non-autohiding joins-all-spaces key hotkey window that lost key status. Make key.");
+            [self.windowController.window makeKeyAndOrderFront:nil];
+        });
+    });
 }
 
 - (void)updateWindowLevel {
