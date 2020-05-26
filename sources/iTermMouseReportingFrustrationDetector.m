@@ -26,8 +26,8 @@ typedef NS_ENUM(NSUInteger, iTermMouseReportingFrustrationDetectorState) {
     if (state == _state) {
         return;
     }
-    NSLog(@"Enter state %@", @(state));
-    NSLog(@"%@", [NSThread callStackSymbols]);
+    DLog(@"Enter state %@", @(state));
+    DLog(@"%@", [NSThread callStackSymbols]);
     _state = state;
 }
 
