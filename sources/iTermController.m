@@ -945,7 +945,7 @@ static iTermController *gSharedInstance;
         return;
     }
     const int spaceNum = [aDict[KEY_SPACE] intValue];
-    if (spaceNum <= 0 && spaceNum >= 10) {
+    if (spaceNum <= 1 && spaceNum >= 10) {
         return;
     }
     [iTermMissionControlHacks switchToSpace:spaceNum];
