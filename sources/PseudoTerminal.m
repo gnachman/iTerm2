@@ -3534,6 +3534,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
     [_contentView updateDivisionViewAndWindowNumberLabel];
     [self.currentSession.view.findDriver owningViewDidBecomeFirstResponder];
+    if (@available(macOS 10.14, *)) {
+        [_contentView updateTitleAndBorderViews];
+    }
 }
 
 - (void)makeCurrentSessionFirstResponder {
@@ -3970,6 +3973,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self updateUseMetalInAllTabs];
     [_contentView updateDivisionViewAndWindowNumberLabel];
+    if (@available(macOS 10.14, *)) {
+        [_contentView updateTitleAndBorderViews];
+    }
 }
 
 - (void)windowDidBecomeMain:(NSNotification *)notification {
