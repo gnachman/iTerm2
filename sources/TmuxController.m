@@ -386,7 +386,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
         return;
     }
-    NSMutableArray *windowsToOpen = [NSMutableArray array];
+    NSMutableArray<NSArray *> *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
     const iTermOpenTmuxWindowsMode openWindowsMode = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
@@ -394,13 +394,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     DLog(@"Iterating records...");
     for (NSArray *record in doc.records) {
         DLog(@"Consider record %@", record);
-        int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+        const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
-            XLog(@"Don't open window %d because it was saved hidden.", wid);
+            DLog(@"Don't open window %d because it was saved hidden.", wid);
             haveHidden = YES;
             // Let the user know something is up.
             continue;
         }
+        DLog(@"Will open %d as it was not saved hidden", wid);
         NSNumber *n = [NSNumber numberWithInt:wid];
         if (![affinities_ valuesEqualTo:[n stringValue]] && newWindowsInTabs) {
             // Create an equivalence class of all unrecognied windows to each other.
@@ -419,6 +420,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (windowsToOpen.count > [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit]) {
         DLog(@"There are too many windows to open so just show the dashboard");
         tooMany = YES;
+        // Save that these windows are hidden so the UI will be consistent next time you attach.
+        NSArray<NSNumber *> *wids = [windowsToOpen mapWithBlock:^NSNumber *(NSArray *record) {
+            const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+            return @(wid);
+        }];
+        [self hideWindows:wids andCloseTabs:NO];
         [windowsToOpen removeAllObjects];
     }
     [[TmuxDashboardController sharedInstance] didAttachWithHiddenWindows:haveHidden tooManyWindows:tooMany];
@@ -1571,14 +1578,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return [hiddenWindows_ containsObject:@(windowId)];
 }
 
-- (void)hideWindow:(int)windowId
-{
-    DLog(@"hideWindow: Add these window IDS to hidden: %d", windowId);
-    [hiddenWindows_ addObject:[NSNumber numberWithInt:windowId]];
+- (void)hideWindow:(int)windowId {
+    [self hideWindows:@[ @(windowId) ] andCloseTabs:YES];
+}
+
+- (void)hideWindows:(NSArray<NSNumber *> *)windowIDs andCloseTabs:(BOOL)closeTabs {
+    DLog(@"hideWindow: Add these window IDs to hidden: %@", windowIDs);
+    [hiddenWindows_ addObjectsFromArray:windowIDs];
     [self saveHiddenWindows];
-    PTYTab *theTab = [self window:windowId];
-    if (theTab) {
-        [[theTab realParentWindow] closeTab:theTab soft:YES];
+    if (closeTabs) {
+        for (NSNumber *widNumber in windowIDs) {
+            const int windowId = widNumber.intValue;
+            PTYTab *theTab = [self window:windowId];
+            if (theTab) {
+                [[theTab realParentWindow] closeTab:theTab soft:YES];
+            }
+        }
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
 }
@@ -1588,7 +1603,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
              intentional:(BOOL)intentional
                  profile:(Profile *)profile {
     if (intentional) {
-        DLog(@"open intentional: Remove these window IDS to hidden: %d", windowId);
+        DLog(@"open intentional: Remove this window ID from hidden: %d", windowId);
         [hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
         [self saveHiddenWindows];
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
@@ -1735,6 +1750,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)saveHiddenWindows
 {
     NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
+    DLog(@"Save hidden windows: %@", hidden);
     NSString *command = [NSString stringWithFormat:
                          @"set -t $%d @hidden \"%@\"",
                          sessionId_,
@@ -2112,11 +2128,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [hiddenWindows_ removeAllObjects];
     if ([response length] > 0) {
         NSArray *windowIds = [response componentsSeparatedByString:@","];
-        DLog(@"getHiddenWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+        DLog(@"getHiddenWindowsResponse: Add these window IDs to hidden: %@", windowIds);
         for (NSString *wid in windowIds) {
             [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
         }
     }
+    DLog(@"Got hidden windows from server. they are: %@", hiddenWindows_);
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
 }
 
