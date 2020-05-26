@@ -3281,8 +3281,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return n;
 }
 
-- (BOOL)windowShouldClose:(NSNotification *)aNotification
-{
+- (BOOL)windowShouldClose:(NSNotification *)aNotification {
+    DLog(@"windowShouldClose %@", self);
     // This counts as an interaction because it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
@@ -3306,6 +3306,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (shouldClose) {
         [self killOrHideTmuxWindow];
     }
+
+    DLog(@"Return %@", @(shouldClose));
     return shouldClose;
 }
 
@@ -3366,6 +3368,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
+    DLog(@"windowWillClose %@", self);
     _closing = YES;
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
