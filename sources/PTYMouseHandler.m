@@ -809,25 +809,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             [self.mouseDelegate mouseHandlerRemoveSelection:self];
         }
-    } else if (![self reportMouseEvent:event]) {
-        if (self.selection.live) {
-            // Scroll via wheel while selecting. This is even possible with the trackpad by using
-            // three fingers as described in issue 8538.
-            if ([self.mouseDelegate mouseHandler:self moveSelectionToPointInEvent:event]) {
-                _committedToDrag = YES;
-            }
-        } else {
-            // Swipe between tabs.
-            if (@available(macOS 10.14, *)) {
-                // Limited to 10.14 because it requires proper view compositing.
-                if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
-                    return YES;
-                }
-            }
+        return NO;
+    }
+    CGFloat deltaY = NAN;
+    BOOL reportable = NO;
+    if ([self handleMouseEvent:event testOnly:NO deltaYOut:&deltaY reportableOut:&reportable]) {
+        return NO;
+    }
+    if (self.selection.live) {
+        // Scroll via wheel while selecting. This is even possible with the trackpad by using
+        // three fingers as described in issue 8538.
+        if ([self.mouseDelegate mouseHandler:self moveSelectionToPointInEvent:event]) {
+            _committedToDrag = YES ;
         }
         return YES;
     }
-    return NO;
+    // Swipe between tabs.
+    if (@available(macOS 10.14, *)) {
+        // Limited to 10.14 because it requires proper view compositing.
+        if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
+            return YES;
+        }
+    }
+    if (reportable && deltaY == 0) {
+        // Don't let horizontal scroll through when reporting mouse events.
+        return NO;
+    }
+    return YES;
 }
 
 // See issue 1350
@@ -938,23 +946,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Returns YES if the mouse event would be handled, ignoring trivialities like a drag that hasn't
 // changed coordinate since the last drag.
 - (BOOL)mouseEventIsReportable:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:YES];
+    return [self handleMouseEvent:event testOnly:YES deltaYOut:NULL reportableOut:NULL];
 }
 
 // Returns YES if the mouse event should not be handled natively.
 - (BOOL)reportMouseEvent:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:NO];
+    return [self handleMouseEvent:event testOnly:NO deltaYOut:NULL reportableOut:NULL];
 }
 
-- (BOOL)handleMouseEvent:(NSEvent *)event testOnly:(BOOL)testOnly {
+- (BOOL)handleMouseEvent:(NSEvent *)event
+                testOnly:(BOOL)testOnly
+               deltaYOut:(CGFloat *)deltaYOut
+           reportableOut:(BOOL *)reportableOut {
     const NSPoint point =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
 
     if (![self shouldReportMouseEvent:event at:point]) {
+        if (reportableOut) {
+            *reportableOut = NO;
+        }
         return NO;
+    }
+    if (reportableOut) {
+        *reportableOut = YES;
     }
 
     VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
+    const CGFloat deltaY = [self.mouseDelegate mouseHandlerAccumulatedDeltaY:self forEvent:event];
+
+    if (deltaYOut) {
+        *deltaYOut = deltaY;
+    }
 
     return [self.mouseDelegate mouseHandler:self
                            reportMouseEvent:event.type
@@ -962,6 +984,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      button:[self mouseReportingButtonNumberForEvent:event]
                                  coordinate:coord
                                       event:event
+                                     deltaY:deltaY
                    allowDragBeforeMouseDown:_makingThreeFingerSelection
                                    testOnly:testOnly];
 }

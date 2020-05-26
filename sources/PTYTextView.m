@@ -5580,10 +5580,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
               button:(MouseButtonNumber)button
           coordinate:(VT100GridCoord)coord
               event:(NSEvent *)event
+              deltaY:(CGFloat)deltaY
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly {
-    const CGFloat deltaY =
-    [_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll];
     return [_delegate textViewReportMouseEvent:eventType
                                      modifiers:modifiers
                                         button:button
@@ -5696,6 +5695,12 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender {
     return [self.delegate textViewSwipeHandler];
+}
+
+- (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender
+                                forEvent:(NSEvent *)event {
+    return [_scrollAccumulator deltaYForEvent:event
+                                   lineHeight:self.enclosingScrollView.verticalLineScroll];
 }
 
 @end

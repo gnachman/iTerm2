@@ -8505,7 +8505,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
                     if (testOnly) {
-                        return YES;
+                        return deltaY != 0;
                     }
                     if (deltaY != 0) {
                         int steps;
@@ -8529,11 +8529,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                                    at:coord]
                                         broadcastAllowed:NO];
                         }
+                        return YES;
                     }
-                    // If deltaY is 0 we still return YES because the
-                    // scrollview moves anyway (likely because our caller is
-                    // not using the high-precision wheel API).
-                    return YES;
+                    return NO;
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HIGHLIGHT:
