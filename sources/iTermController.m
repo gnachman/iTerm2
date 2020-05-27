@@ -1003,10 +1003,12 @@ static iTermController *gSharedInstance;
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
-    iTermProfileHotKey *profileHotKey =
+    if (term.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
+        iTermProfileHotKey *profileHotKey =
         [[iTermHotKeyController sharedInstance] didCreateWindowController:term
                                                               withProfile:profile];
-    [profileHotKey setAllowsStateRestoration:NO];
+        [profileHotKey setAllowsStateRestoration:NO];
+    }
 
     [self addTerminalWindow:term];
     return term;
