@@ -58,8 +58,6 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 cellOffset,
                                        float underlineOffset,
                                        float underlineThickness,
-                                       float strikethroughOffset,
-                                       float strikethroughThickness,
                                        float2 textureSize,
                                        float2 textureOffset,
                                        float2 textureCoordinate,

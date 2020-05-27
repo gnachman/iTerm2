@@ -2534,16 +2534,18 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             [path stroke];
             break;
 
-        case NSUnderlineStyleDouble: {
-            origin.y -= lineWidth;
+        case NSUnderlineStyleDouble: {  // Single underline with dash beneath
+            origin.y = rect.origin.y + _cellSize.height - 1;
+            origin.y -= self.isRetina ? 0.25 : 0.5;
             [path moveToPoint:origin];
             [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
             [path setLineWidth:lineWidth];
             [path stroke];
 
+            const CGFloat px = self.isRetina ? 0.5 : 1;
             path = [NSBezierPath bezierPath];
-            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + 1)];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + 1)];
+            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + px)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + px)];
             [path setLineWidth:lineWidth];
             [path setLineDash:dashPattern count:2 phase:phase];
             [path stroke];
