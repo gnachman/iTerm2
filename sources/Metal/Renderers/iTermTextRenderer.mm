@@ -462,7 +462,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
     __block id<MTLBuffer> subpixelModelsBuffer NS_DEPRECATED_MAC(10_12, 10_14);
-    if (iTermTextIsMonochrome()) {} {
+    if (!iTermTextIsMonochrome()) {
         [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
             subpixelModelsBuffer = [self subpixelModelsForState:tState];
         }];
