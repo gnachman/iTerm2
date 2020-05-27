@@ -373,7 +373,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                   in.clipSpacePosition.xy,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
-                                                                  dimensions->underlineOffset,
+                                                                  in.underlineStyle == iTermMetalGlyphAttributesUnderlineCurly ? dimensions->scale : dimensions->underlineOffset,
                                                                   dimensions->underlineThickness,
                                                                   dimensions->textureSize,
                                                                   in.textureOffset,

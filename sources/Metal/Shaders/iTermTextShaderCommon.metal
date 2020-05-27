@@ -222,12 +222,28 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        sampler textureSampler,
                                        float scale,
                                        bool solid) {
+    float thickness;
+    float offset;
+    switch (underlineStyle) {
+        case iTermMetalGlyphAttributesUnderlineStrikethrough:
+            thickness = strikethroughThickness;
+            offset = strikethroughOffset;
+            break;
+        case iTermMetalGlyphAttributesUnderlineCurly:
+            thickness = scale;
+            offset = scale;
+            break;
+        default:
+            thickness = underlineThickness;
+            offset = underlineOffset;
+            break;
+    }
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,
                                                                   cellOffset,
-                                                                  underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough ? strikethroughOffset : underlineOffset,
-                                                                  underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough ? strikethroughThickness : underlineThickness,
+                                                                  offset,
+                                                                  thickness,
                                                                   scale);
     if (weight == 0) {
         return 0;
@@ -261,7 +277,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 clipSpacePosition,
                                       float2 viewportSize,
                                       float2 cellOffset,
-                                      float offset,
+                                      float regularOffset,
                                       float thickness,
                                       float2 textureSize,
                                       float2 textureOffset,
@@ -272,12 +288,13 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       sampler textureSampler,
                                       float scale,
                                       bool solid) {
+    float offset = underlineStyle == iTermMetalGlyphAttributesUnderlineCurly ? scale : regularOffset;
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,
                                                                   cellOffset,
                                                                   offset,
-                                                                  thickness,
+                                                                  underlineStyle == iTermMetalGlyphAttributesUnderlineCurly ? scale : thickness,
                                                                   scale);
     if (weight == 0) {
         return 0;

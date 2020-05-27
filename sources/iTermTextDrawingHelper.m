@@ -2550,7 +2550,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             break;
         }
         case NSUnderlineStyleThick: {  // We use this for curly. Cocoa doesn't have curly underlines, so we reprupose thick.
-            origin.y -= lineWidth;
+            const CGFloat offset = 0;
+            origin.y = rect.origin.y + _cellSize.height - 1.5;
             CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
             CGContextSaveGState(cgContext);
             CGContextClipToRect(cgContext, NSMakeRect(origin.x, origin.y - 1, rect.size.width, 3));
@@ -2559,7 +2560,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             NSBezierPath *path = [NSBezierPath bezierPath];
             const CGFloat height = 1;
             const CGFloat width = 3;
-            const CGFloat offset = self.isRetina ? 0.25 : 0.5;
             const CGFloat lowY = origin.y + offset;
             const CGFloat highY = origin.y + height + offset;
             for (CGFloat x = origin.x - fmod(origin.x, width * 2); x < NSMaxX(rect); x += width * 2) {
