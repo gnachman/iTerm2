@@ -23,7 +23,7 @@
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;
 - (void)brokenPipe;  // Called in main thread
-- (void)writeForCoprocessOnlyTask:(NSData *)data;
+- (void)tmuxClientWrite:(NSData *)data;
 
 // Called on main thread from within launchWithPath:arguments:environment:customShell:gridSize:viewSize:isUTF8:.
 - (void)taskDiedImmediately;
@@ -55,7 +55,7 @@ typedef struct {
 
 typedef NS_ENUM(NSUInteger, iTermGeneralServerConnectionType) {
     iTermGeneralServerConnectionTypeMono,
-    iTermGeneralServerConnectionTypeMulti,
+    iTermGeneralServerConnectionTypeMulti
 };
 
 typedef struct {
@@ -77,6 +77,7 @@ typedef struct {
 @property (atomic, readonly) BOOL isSessionRestorationPossible;
 @property (atomic, readonly) BOOL ioAllowed;
 @property (atomic, readonly) dispatch_queue_t queue;
+@property (atomic, readonly) BOOL isReadOnly;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue;
 
@@ -120,11 +121,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) BOOL isSessionRestorationPossible;
 @property(nonatomic, readonly) id sessionRestorationIdentifier;
 
-// Tmux sessions are coprocess-only tasks. They have no file descriptor or pid,
-// but they may have a coprocess that needs TaskNotifier to read, write, and wait on.
-@property(atomic, assign) BOOL isCoprocessOnly;
-@property(atomic, readonly) BOOL coprocessOnlyTaskIsDead;
-
 @property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
 // Externally, only PTYSession should assign to this when reattaching to a server.
@@ -140,6 +136,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) BOOL passwordInput;
 @property(nonatomic) unichar pendingHighSurrogate;
 @property(nonatomic, copy) NSNumber *tmuxClientProcessID;
+// This is used by tmux clients as a way to route data from %output in to the taskNotifier. Like
+// the name says you can't write to it.
+@property(atomic) int readOnlyFileDescriptor;
 
 - (instancetype)init;
 
@@ -196,8 +195,8 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
-- (void)registerAsCoprocessOnlyTask;
-- (void)writeToCoprocessOnlyTask:(NSData *)data;
+- (void)registerTmuxTask;
+
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion;
 
 @end

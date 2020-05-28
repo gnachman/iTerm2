@@ -18,6 +18,7 @@
 #import "iTermMultiServerJobManager.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOrphanServerAdopter.h"
+#import "iTermTmuxJobManager.h"
 #import "NSDictionary+iTerm.h"
 
 #include "iTermFileDescriptorClient.h"
@@ -48,7 +49,6 @@ static void HandleSigChld(int n) {
 
 @interface PTYTask ()<iTermTask>
 @property(atomic, assign) BOOL hasMuteCoprocess;
-@property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
 @property(atomic, readwrite) int fd;
 @property(atomic, weak) iTermLoggingHelper *loggingHelper;
 @property(atomic, strong) id<iTermJobManager> jobManager;
@@ -74,6 +74,7 @@ static void HandleSigChld(int n) {
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
     dispatch_queue_t _jobManagerQueue;
+    BOOL _isTmuxTask;
 }
 
 - (instancetype)init {
@@ -296,6 +297,21 @@ static void HandleSigChld(int n) {
     _tmuxClientProcessID = tmuxClientProcessID;
 }
 
+- (void)setReadOnlyFileDescriptor:(int)readOnlyFileDescriptor {
+    iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:self->_jobManagerQueue];
+    jobManager.fd = readOnlyFileDescriptor;
+    DLog(@"Configure %@ as tmux task", self);
+    _jobManager = jobManager;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (int)readOnlyFileDescriptor {
+    if (![_jobManager isKindOfClass:[iTermTmuxJobManager class]]) {
+        return -1;
+    }
+    return _jobManager.fd;
+}
+
 - (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion {
     const pid_t pid = self.tmuxClientProcessID ? self.tmuxClientProcessID.intValue : self.pid;
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
@@ -340,20 +356,22 @@ static void HandleSigChld(int n) {
 }
 
 - (void)writeTask:(NSData *)data {
-    if (self.isCoprocessOnly) {
+    if (_isTmuxTask) {
         // Send keypresses to tmux.
         NSData *copyOfData = [data copy];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.delegate writeForCoprocessOnlyTask:copyOfData];
+            [self.delegate tmuxClientWrite:copyOfData];
         });
-    } else {
-        // Write as much as we can now through the non-blocking pipe
-        // Lock to protect the writeBuffer from the IO thread
-        [writeLock lock];
-        [writeBuffer appendData:data];
-        [[TaskNotifier sharedInstance] unblock];
-        [writeLock unlock];
+        return;
     }
+    // Write as much as we can now through the non-blocking pipe
+    // Lock to protect the writeBuffer from the IO thread
+    id<iTermJobManager> jobManager = self.jobManager;
+    assert(!jobManager || !self.jobManager.isReadOnly);
+    [writeLock lock];
+    [writeBuffer appendData:data];
+    [[TaskNotifier sharedInstance] unblock];
+    [writeLock unlock];
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
@@ -385,9 +403,6 @@ static void HandleSigChld(int n) {
     [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
 
     [self closeFileDescriptorAndDeregisterIfPossible];
-    if (self.isCoprocessOnly) {
-        self.coprocessOnlyTaskIsDead = YES;
-    }
 }
 
 - (void)brokenPipe {
@@ -577,25 +592,10 @@ static void HandleSigChld(int n) {
     return [self attachToServer:generalConnection];
 }
 
-- (void)registerAsCoprocessOnlyTask {
-    self.isCoprocessOnly = YES;
+- (void)registerTmuxTask {
+    _isTmuxTask = YES;
     DLog(@"Register pid %@ as coprocess-only task", @(self.pid));
     [[TaskNotifier sharedInstance] registerTask:self];
-}
-
-- (void)writeToCoprocessOnlyTask:(NSData *)data {
-    if (self.coprocess) {
-        TaskNotifier *taskNotifier = [TaskNotifier sharedInstance];
-        [taskNotifier lock];
-        @synchronized (self) {
-            [self.coprocess.outputBuffer appendData:data];
-        }
-        [taskNotifier unlock];
-
-        // Wake up the task notifier so the coprocess's output buffer will be sent to its file
-        // descriptor.
-        [taskNotifier unblock];
-    }
 }
 
 #pragma mark - Private
@@ -787,6 +787,9 @@ static void HandleSigChld(int n) {
 
 - (BOOL)wantsWrite {
     if (self.paused) {
+        return NO;
+    }
+    if (self.jobManager.isReadOnly) {
         return NO;
     }
     [writeLock lock];

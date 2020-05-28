@@ -408,7 +408,8 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _tmuxTitleOutOfSync;
     PTYSessionTmuxMode _tmuxMode;
     BOOL _tmuxWindowClosingByClientRequest;
-
+    // This is the write end of a pipe for tmux clients. The read end is in TaskNotifier.
+    NSFileHandle *_tmuxClientWritePipe;
     NSInteger _requestAttentionId;  // Last request-attention identifier
     iTermMark *_lastMark;
 
@@ -931,6 +932,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_composerManager release];
     [_lastLibTickitProfileSetting release];
+    [_tmuxClientWritePipe release];
 
     [super dealloc];
 }
@@ -3000,12 +3002,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // This is called in the main thread when coprocesses write to a tmux client.
-- (void)writeForCoprocessOnlyTask:(NSData *)data {
-    // The if statement is just a sanity check.
-    if (self.tmuxMode == TMUX_CLIENT) {
-        NSString *string = [[[NSString alloc] initWithData:data encoding:self.encoding] autorelease];
-        [self writeTask:string];
+- (void)tmuxClientWrite:(NSData *)data {
+    if (!self.isTmuxClient) {
+        return;
     }
+    NSString *string = [[[NSString alloc] initWithData:data encoding:self.encoding] autorelease];
+    [self writeTask:string];
 }
 
 - (void)threadedTaskBrokenPipe
@@ -6201,6 +6203,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     @synchronized ([TmuxGateway class]) {
         _tmuxMode = tmuxMode;
     }
+    if (tmuxMode == TMUX_CLIENT) {
+        [self setUpTmuxPipe];
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *name;
         switch (tmuxMode) {
@@ -6224,6 +6229,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
     });
+}
+
+- (void)setUpTmuxPipe {
+    assert(!_tmuxClientWritePipe);
+    int fds[2];
+    if (pipe(fds) < 0) {
+        NSString *message = [NSString stringWithFormat:@"Failed to create pipe: %s", strerror(errno)];
+        DLog(@"%@", message);
+        [_screen appendStringAtCursor:message];
+        _tmuxClientWritePipe = nil;
+        return;
+    }
+    for (int i = 0; i < 2; i++) {
+        const int flags = fcntl(fds[i], F_GETFL);
+        fcntl(fds[i], F_SETFL, flags | O_NONBLOCK);
+    }
+    _shell.readOnlyFileDescriptor = fds[0];
+    [_tmuxClientWritePipe release];
+    _tmuxClientWritePipe = [[NSFileHandle alloc] initWithFileDescriptor:fds[1]
+                                                         closeOnDealloc:YES];
 }
 
 - (void)loadTmuxProcessID {
@@ -6405,7 +6430,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)setTmuxPane:(int)windowPane {
     [self.variablesScope setValue:@(windowPane) forVariableNamed:iTermVariableKeySessionTmuxWindowPane];
     self.tmuxMode = TMUX_CLIENT;
-    [_shell registerAsCoprocessOnlyTask];
+    [_shell registerTmuxTask];
 }
 
 - (int)tmuxPane {
@@ -6812,27 +6837,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return tmuxQueue;
 }
 
-// This is called on the main thread.
-- (void)tmuxReadTask:(NSData *)data
-{
-    if (!_exited) {
-        if (!_logging.plainText) {
-            [_logging logData:data];
-        }
-        // Dispatch this in a background thread to keep threadedReadTask:
-        // simple. It always asynchronously dispatches to the main thread,
-        // which would deadlock if it were called on the main thread.
-        [data retain];
-        [self retain];
-        dispatch_async([[self class] tmuxQueue], ^{
-            [self threadedReadTask:(char *)[data bytes] length:[data length]];
-            [data release];
-            [self release];
-        });
-        if (_shell.coprocess) {
-            [_shell writeToCoprocessOnlyTask:data];
-        }
+// This is called on the main thread when %output is parsed.
+- (void)tmuxReadTask:(NSData *)data {
+    if (_exited) {
+        return;
     }
+    if (!_logging.plainText) {
+        [_logging logData:data];
+    }
+
+    // Send the bytes from %output in to the write end of a pipe. The data will come out
+    // iTermTmuxJobManager.fd, which TaskRegister selects on. The purpose of this pipe is to
+    // let tmux provide backpressure to the pty. In the old days, this would call -threadedReadTask:
+    // on the tmux queue. threadedReadTask: is meant to be called on the TaskNotifier queue and it
+    // will block if there are too many tokens outstanding. That is an effective mechanism to
+    // provide backpressure. By dispatching onto the tmuxQueue, infinite data could be buffered by
+    // GCD, breaking the backpressure mechanism. It is unfortunate that all tmux data must make
+    // two passes through TaskNotifier (once as `%output blah blah` and a second time as `blah blah`)
+    // but the alternative is unbounded latency. We still do the write on tmuxQueue because we
+    // don't want to block the main queue. GCD can still buffer here, but it's OK because
+    // TaskNotifier has a chance to get its queue blocked when it reads the data. That limits the
+    // rate that this can write, since it can only write after a %output is read.
+    __weak NSFileHandle *handle = _tmuxClientWritePipe;
+    dispatch_async([[self class] tmuxQueue], ^{
+        [handle writeData:data];
+    });
 }
 
 - (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId

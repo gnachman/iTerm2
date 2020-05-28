@@ -521,4 +521,8 @@ typedef struct {
     }
 }
 
+- (BOOL)isReadOnly {
+    return NO;
+}
+
 @end

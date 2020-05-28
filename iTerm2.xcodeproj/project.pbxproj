@@ -1725,6 +1725,8 @@
 		A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B3C1BD40DC900B5629D /* iTermCapturedOutputMark.h */; };
 		A62C3B3F1BD40DC900B5629D /* iTermCapturedOutputMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */; };
 		A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B401BD40E7C00B5629D /* iTermImageMark.h */; };
+		A62C8FC2248033C000E22E95 /* iTermTmuxJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C8FC0248033C000E22E95 /* iTermTmuxJobManager.h */; };
+		A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C8FC1248033C000E22E95 /* iTermTmuxJobManager.m */; };
 		A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
 		A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
@@ -5084,6 +5086,8 @@
 		A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCapturedOutputMark.m; sourceTree = "<group>"; };
 		A62C3B401BD40E7C00B5629D /* iTermImageMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageMark.h; sourceTree = "<group>"; };
 		A62C3B411BD40E7C00B5629D /* iTermImageMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageMark.m; sourceTree = "<group>"; };
+		A62C8FC0248033C000E22E95 /* iTermTmuxJobManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxJobManager.h; sourceTree = "<group>"; };
+		A62C8FC1248033C000E22E95 /* iTermTmuxJobManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxJobManager.m; sourceTree = "<group>"; };
 		A62DBB9520F47CF9008B63D1 /* GoBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoBack.png; path = images/GoBack.png; sourceTree = "<group>"; };
 		A62DBB9620F47CF9008B63D1 /* GoForward.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoForward.png; path = images/GoForward.png; sourceTree = "<group>"; };
 		A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoForward@2x.png"; path = "images/GoForward@2x.png"; sourceTree = "<group>"; };
@@ -7562,6 +7566,8 @@
 				53E98E7A233C6B760094D8A9 /* iTermTmuxSessionObject.m */,
 				A6FF4AEC246BBFDB00410BA2 /* iTermTmuxWindowCache.h */,
 				A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */,
+				A62C8FC0248033C000E22E95 /* iTermTmuxJobManager.h */,
+				A62C8FC1248033C000E22E95 /* iTermTmuxJobManager.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -10806,6 +10812,7 @@
 				A648DAB92427E73E00C2FF02 /* iTermFlagsChangedNotification.h in Headers */,
 				A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */,
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
+				A62C8FC2248033C000E22E95 /* iTermTmuxJobManager.h in Headers */,
 				A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
 				A66F52B12105ABCA00571168 /* iTermStatusBarAttributedTextComponent.h in Headers */,
@@ -13477,6 +13484,7 @@
 				53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
+				A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */,
 				A63011B220E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
 				A65660D52372A4A600DC6744 /* iTermCache.m in Sources */,

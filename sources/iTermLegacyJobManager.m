@@ -210,4 +210,8 @@
     return self.fd >= 0;
 }
 
+- (BOOL)isReadOnly {
+    return NO;
+}
+
 @end

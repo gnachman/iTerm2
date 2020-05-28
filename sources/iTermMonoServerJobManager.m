@@ -402,4 +402,8 @@
     return result;
 }
 
+- (BOOL)isReadOnly {
+    return NO;
+}
+
 @end
