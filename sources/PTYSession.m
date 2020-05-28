@@ -6725,6 +6725,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID {
+    [_tmuxController activeWindowPaneDidChangeInWindow:windowID toWindowPane:paneID];
+}
+
 - (BOOL)tmuxGatewayShouldForceDetach {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Force Detach?";
@@ -9572,6 +9576,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)screenHasView {
     return _textview != nil;
+}
+
+- (void)revealIfTabSelected {
+    if (![self.delegate sessionIsInSelectedTab:self]) {
+        return;
+    }
+    [_delegate setActiveSession:self];
 }
 
 - (void)reveal {

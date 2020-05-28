@@ -256,6 +256,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (CGFloat)sessionBlend;
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
 - (id<iTermSwipeHandler>)sessionSwipeHandler;
+- (BOOL)sessionIsInSelectedTab:(PTYSession *)session;
 @end
 
 @class SessionView;

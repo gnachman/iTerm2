@@ -5394,6 +5394,10 @@ typedef struct {
     return [self activeSession] == session;
 }
 
+- (BOOL)sessionIsInSelectedTab:(PTYSession *)session {
+    return [[tabViewItem_ tabView] selectedTabViewItem] == [self tabViewItem];
+}
+
 #pragma mark - Private
 
 - (void)setLabelAttributesForDeadSession {

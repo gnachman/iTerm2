@@ -131,6 +131,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
     NSMutableDictionary<NSNumber *, void (^)(PTYSession *)> *_when;
     NSMutableArray *_listWindowsQueue;
+    // If nonnegative, make this pane active after it comes in to being. If negative, invalid.
+    int _paneToActivateWhenCreated;
 }
 
 @synthesize gateway = gateway_;
@@ -176,6 +178,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _when = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
         _listWindowsQueue = [[NSMutableArray alloc] init];
+        _paneToActivateWhenCreated = -1;
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -322,6 +325,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
+    _paneToActivateWhenCreated = -1;
     _detaching = YES;
     [self closeAllPanes];
     _detaching = NO;
@@ -622,6 +626,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                 call(aSession);
             });
             [_when removeObjectForKey:@(windowPane)];
+        }
+        if (_paneToActivateWhenCreated == windowPane) {
+            [aSession revealIfTabSelected];
+            _paneToActivateWhenCreated = -1;
         }
     }
 }
@@ -2003,6 +2011,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (NSArray<PTYSession *> *)clientSessions {
     return windowPanes_.allValues;
+}
+
+- (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID {
+    if ([self sessionForWindowPane:paneID] == nil) {
+        // This must be a newly created session.
+        _paneToActivateWhenCreated = paneID;
+    }
 }
 
 #pragma mark - Private

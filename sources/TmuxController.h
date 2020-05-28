@@ -227,5 +227,6 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                          value:(NSString *)value
                           pane:(int)paneID;
 - (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID;
+- (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 
 @end

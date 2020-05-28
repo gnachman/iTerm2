@@ -264,6 +264,15 @@ error:
     [delegate_ tmuxSessionsChanged];
 }
 
+- (void)parseWindowPaneChangedCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%window-pane-changed @([0-9]+) %([0-9]+)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-pane-changed @window-id %%pane-id): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxActiveWindowPaneDidChangeInWindow:[components[1] intValue] toWindowPane:[components[2] intValue]];
+}
+
 - (void)forceDetach {
     [self hostDisconnected];
 }
@@ -516,6 +525,9 @@ error:
         if (acceptNotifications_) [self parseSessionsChangedCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         TmuxLog(@"tmux noop: %@", command);
+    } else if ([command hasPrefix:@"%window-pane-changed"]) {
+        // New in tmux 2.5
+        if (acceptNotifications_) [self parseWindowPaneChangedCommand:command];
     } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed
                [command hasPrefix:@"%session-window-changed"] ||  // active window changed
                [command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session
