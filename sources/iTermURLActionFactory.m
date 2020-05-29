@@ -584,8 +584,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
             DLog(@"i == suffixCoords.count");
             range.coordRange.end = [self.extractor successorOfCoord:[self.locatedSuffix.coords[i - 1] gridCoordValue]];
             DLog(@"range.coordRange.end=%@, successor of %@",
-                 VT100GridCoordDescription([self.locatedSuffix.coords[i - 1] gridCoordValue]),
-                 VT100GridCoordDescription([self.locatedSuffix.coords[i] gridCoordValue]));
+                 VT100GridCoordDescription(range.coordRange.end),
+                 VT100GridCoordDescription([self.locatedSuffix.coords[i - 1] gridCoordValue]));
         } else {
             DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.locatedSuffix.coords.count));
             return nil;
