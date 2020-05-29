@@ -6317,12 +6317,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                 target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
                                                           variableName:iTermVariableKeySessionTmuxPaneTitle
                                                                  block:^(NSString * _Nonnull title) {
-                                                                     if (title) {
-                                                                         [weakSelf setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""}];
-                                                                         [weakSelf.delegate sessionDidUpdatePaneTitle:self];
-                                                                     }
+        [weakSelf setTitleFromTmuxTitleMonitor:title];
                                                                  }];
     [_tmuxTitleMonitor updateOnce];
+}
+
+- (void)setTitleFromTmuxTitleMonitor:(NSString *)title {
+    if (title) {
+        [self setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""}];
+        [self.delegate sessionDidUpdatePaneTitle:self];
+    }
 }
 
 - (void)uninstallTmuxTitleMonitor {
