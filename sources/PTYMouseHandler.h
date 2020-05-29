@@ -100,7 +100,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (void)mouseHandler:(PTYMouseHandler *)mouseHandler
 dragSemanticHistoryWithEvent:(NSEvent *)event
                coord:(VT100GridCoord)coord;
-- (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:(PTYMouseHandler *)sender;
+- (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:(PTYMouseHandler *)sender;
 
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
 - (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender forEvent:(NSEvent *)event;

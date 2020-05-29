@@ -678,7 +678,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)rightMouseDown:(NSEvent *)event superCaller:(void (^)(void))superCaller {
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusOnRightOrMiddleClick]) {
-        [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:self];
+        [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:self];
     }
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
@@ -745,7 +745,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown:(NSEvent *)event {
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusOnRightOrMiddleClick]) {
-        [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:self];
+        [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:self];
     }
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];

@@ -5408,9 +5408,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [[iTermController sharedInstance] frontTextView] == self;
 }
 
-- (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponder:(PTYMouseHandler *)sender {
+- (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:(PTYMouseHandler *)sender {
     [[self window] makeKeyAndOrderFront:nil];
     [[self window] makeFirstResponder:self];
+    [NSApp activateIgnoringOtherApps:YES];
 }
 
 - (void)mouseHandlerMakeFirstResponder:(PTYMouseHandler *)handler {
