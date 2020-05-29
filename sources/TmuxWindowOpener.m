@@ -237,11 +237,16 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                                     flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
- - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
-                        alt:(BOOL)alternate {
+- (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
+                                                 alt:(BOOL)alternate {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t \"%%%d\" -S -%d",
+    NSString *maybeN = @"";
+    if ([self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.1"]] != NSOrderedAscending) {
+        maybeN = @"N";
+    }
+    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ%@ %@-t \"%%%d\" -S -%d",
+                         maybeN,
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
