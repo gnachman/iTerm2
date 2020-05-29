@@ -54,7 +54,7 @@
 + (void)complainThatCantSwitchToSpace:(int)spaceNum fix:(NSString *)fix {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        [[iTermNotificationController sharedInstance] notify:[NSString stringWithFormat:@"Can’t switch to desktop %d", spaceNum + 1]
+        [[iTermNotificationController sharedInstance] notify:[NSString stringWithFormat:@"Can’t switch to desktop %d", spaceNum]
                                              withDescription:fix];
     });
 }
