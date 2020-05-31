@@ -49,6 +49,8 @@
 - (long long)findOnPageOverflowAdjustment;
 - (NSRange)findOnPageRangeOfVisibleLines;
 - (void)findOnPageLocationsDidChange;
+- (void)findOnPageSelectedResultDidChange;
+
 @end
 
 @interface iTermFindOnPageHelper : NSObject<iTermSearchResultsMinimapViewDelegate>
@@ -113,5 +115,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint;
 
 - (NSRange)rangeOfSearchResultsInRangeOfLines:(NSRange)range;
+- (void)overflowAdjustmentDidChange;
 
 @end

@@ -8927,6 +8927,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)textViewFindOnPageSelectedResultDidChange {
+    [_view.findDriver.viewController countDidChange];
+}
+
 - (CGFloat)textViewBlend {
     return [self effectiveBlend];
 }

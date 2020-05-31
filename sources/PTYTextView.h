@@ -207,6 +207,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
 - (void)textViewFindOnPageLocationsDidChange;
+- (void)textViewFindOnPageSelectedResultDidChange;
 - (CGFloat)textViewBlend;
 - (NSEdgeInsets)textViewExtraMargins;
 - (id<iTermSwipeHandler>)textViewSwipeHandler;

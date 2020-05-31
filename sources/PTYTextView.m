@@ -1978,6 +1978,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Move subviews up
     [self updateNoteViewFrames];
 
+    // Update find on page
+    [_findOnPageHelper overflowAdjustmentDidChange];
+
     NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
 }
 
@@ -4459,6 +4462,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)findOnPageLocationsDidChange {
     [_delegate textViewFindOnPageLocationsDidChange];
+}
+
+- (void)findOnPageSelectedResultDidChange {
+    [_delegate textViewFindOnPageSelectedResultDidChange];
 }
 
 #pragma mark - Services

@@ -310,9 +310,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setSelectedResult:(SearchResult *)selectedResult {
+    _cachedCounts.valid = NO;
+    if (selectedResult == _selectedResult) {
+        return;
+    }
     [_selectedResult autorelease];
     _selectedResult = [selectedResult retain];
-    _cachedCounts.valid = NO;
+    [self.delegate findOnPageSelectedResultDidChange];
 }
 
 // Select the next highlighted result by searching findResults_ for a match just before/after the
@@ -531,7 +535,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _cachedCounts.count;
 }
 
+- (void)overflowAdjustmentDidChange {
+    if (self.selectedResult == nil) {
+        return;
+    }
+    [self updateCachedCountsIfNeeded];
+}
+
 - (void)updateCachedCountsIfNeeded {
+    const long long overflowAdjustment = [self.delegate findOnPageOverflowAdjustment];
+    if (self.selectedResult.absEndY < overflowAdjustment) {
+        self.selectedResult = nil;
+    }
     if (self.selectedResult == nil) {
         _cachedCounts.valid = YES;
         _cachedCounts.index = 0;
@@ -539,8 +554,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _cachedCounts.overflowAdjustment = 0;
         return;
     }
-
-    const long long overflowAdjustment = [self.delegate findOnPageOverflowAdjustment];
+    DLog(@"selected result ok vs %@: %@", @(overflowAdjustment), self.selectedResult);
     if (_cachedCounts.valid && _cachedCounts.overflowAdjustment == overflowAdjustment) {
         return;
     }
