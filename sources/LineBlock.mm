@@ -205,6 +205,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].timestamp = [components[j++] doubleValue];
             metadata_[i].number_of_wrapped_lines = 0;
             metadata_[i].generation = LineBlockNextGeneration--;
+            NSData *data = [NSData castFrom:components[j++]];
+            if (data) {
+                metadata_[i].attachments = [[iTermScreenCharAttachmentRunArray alloc] initWithSerialized:data];
+            } else {
+                metadata_[i].attachments = NULL;
+            }
             if (gEnableDoubleWidthCharacterLineCache) {
                 metadata_[i].double_width_characters = nil;
             }
@@ -231,6 +237,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                 [metadata_[i].double_width_characters release];
             }
         }
+        for (int i = 0; i < cll_capacity; i++) {
+            [metadata_[i].attachments release];
+        }
         free(metadata_);
     }
     [super dealloc];
@@ -256,6 +265,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         if (gEnableDoubleWidthCharacterLineCache) {
             theCopy->metadata_[i].double_width_characters = nil;
         }
+#if __has_feature(objc_arc)
+#error attachments is arc-managed but was memmoved to earlier and will be over-released.
+#endif
+        theCopy->metadata_[i].attachments = [metadata_[i].attachments copy];
     }
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
@@ -277,7 +290,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
                           timestamp:(NSTimeInterval)timestamp
                        continuation:(screen_char_t)continuation
-{
+                        attachments:(id<iTermScreenCharAttachmentRunArray>)attachments {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
@@ -294,6 +307,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     metadata_[cll_entries].continuation = continuation;
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     metadata_[cll_entries].generation = LineBlockNextGeneration--;
+    [metadata_[cll_entries].attachments autorelease];
+    metadata_[cll_entries].attachments = [[attachments makeRunArray] retain];
 
     ++cll_entries;
 }
@@ -418,12 +433,34 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 }
 #endif
 
+- (int)lengthOfLastLineAndGetCumulative:(int *)cllPtr {
+    if (cll_entries == 0) {
+        if (*cllPtr) {
+            *cllPtr = 0;
+        }
+        return 0;
+    }
+    int penultimateCLL;
+    if (cll_entries > first_entry + 1) {
+        penultimateCLL = cumulative_line_lengths[cll_entries - 2] - start_offset;
+    } else {
+        penultimateCLL = 0;
+    }
+    const int lastCLL = cumulative_line_lengths[cll_entries - 1] - start_offset;
+    const int result = lastCLL - penultimateCLL;
+    if (cllPtr) {
+        *cllPtr = penultimateCLL;
+    }
+    return result;
+}
+
 - (BOOL)appendLine:(screen_char_t*)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-      continuation:(screen_char_t)continuation {
+      continuation:(screen_char_t)continuation
+       attachments:(id<iTermScreenCharAttachmentRunArray>)attachments {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -451,12 +488,15 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         // append to an existing line
         ITAssertWithMessage(cll_entries > 0, @"is_partial but has no entries");
         // update the numlines cache with the new number of full lines that the updated line has.
+        int old_length = 0;
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
+            if (attachments) {
+                old_length = [self lengthOfLastLineAndGetCumulative:NULL];
+            }
         } else {
-            int prev_cll = cll_entries > first_entry + 1 ? cumulative_line_lengths[cll_entries - 2] - start_offset : 0;
-            int cll = cumulative_line_lengths[cll_entries - 1] - start_offset;
-            int old_length = cll - prev_cll;
+            int prev_cll = 0;
+            old_length = [self lengthOfLastLineAndGetCumulative:&prev_cll];
             int oldnum = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev_cll
                                                     length:old_length
                                                      width:width];
@@ -471,6 +511,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         metadata_[cll_entries - 1].continuation = continuation;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
         metadata_[cll_entries - 1].generation = LineBlockNextGeneration--;
+
+        if (metadata_[cll_entries - 1].attachments) {
+            [metadata_[cll_entries - 1].attachments append:attachments baseOffset:old_length];
+        } else {
+            iTermScreenCharAttachmentRunArray *runArray = [attachments makeRunArray];
+            [runArray setBaseOffset:old_length];
+            metadata_[cll_entries - 1].attachments = [runArray retain];
+        }
         if (gEnableDoubleWidthCharacterLineCache) {
             // TODO: Would be nice to add on to the index set instead of deleting it.
             [metadata_[cll_entries - 1].double_width_characters release];
@@ -483,7 +531,8 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         // add a new line
         [self _appendCumulativeLineLength:(space_used + length)
                                 timestamp:timestamp
-                             continuation:continuation];
+                             continuation:continuation
+                              attachments:attachments];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
@@ -517,7 +566,8 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
                                        includesEndOfLine:&eol
                                                  yOffset:yOffsetPtr
                                             continuation:NULL
-                                    isStartOfWrappedLine:&isStartOfWrappedLine];
+                                    isStartOfWrappedLine:&isStartOfWrappedLine
+                                             attachments:NULL];
     if (!p) {
         return -1;
     } else {
@@ -685,7 +735,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                            includesEndOfLine:includesEndOfLine
                                      yOffset:NULL
                                 continuation:continuationPtr
-                        isStartOfWrappedLine:NULL];
+                        isStartOfWrappedLine:NULL
+                                 attachments:NULL];
 }
 
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
@@ -694,7 +745,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                  attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
     ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
@@ -784,6 +836,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             if (isStartOfWrappedLine) {
                 *isStartOfWrappedLine = (offset == 0);
             }
+            if (attachments) {
+                *attachments = [metadata_[i].attachments sliceFrom:offset length:width];
+            }
             return buffer_start + prev + offset;
         }
         prev = cll;
@@ -830,7 +885,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-           continuation:(screen_char_t *)continuationPtr {
+           continuation:(screen_char_t *)continuationPtr
+            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
         return NO;
@@ -872,10 +928,16 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             [metadata_[cll_entries - 1].double_width_characters release];
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
-
+        if (attachments) {
+            *attachments = [metadata_[cll_entries - 1].attachments sliceFrom:offset_from_start length:width];
+        }
+        [metadata_[cll_entries - 1].attachments truncateFrom:offset_from_start];
         is_partial = YES;
     } else {
         // The last raw line is not longer than width. Return the whole thing.
+        if (attachments) {
+            *attachments = [metadata_[cll_entries - 1].attachments asSlice];
+        }
         *length = available_len;
         *ptr = buffer_start + start;
         --cll_entries;
@@ -1551,7 +1613,8 @@ static int Search(NSString* needle,
                                     @(metadata_[i].continuation.bgGreen),
                                     @(metadata_[i].continuation.bgBlue),
                                     @(metadata_[i].continuation.backgroundColorMode),
-                                    @(metadata_[i].timestamp) ]];
+                                    @(metadata_[i].timestamp),
+                                    metadata_[i].attachments.serialized ?: [NSNull null]]];
     }
     return metadataArray;
 }

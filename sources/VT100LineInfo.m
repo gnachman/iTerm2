@@ -8,11 +8,16 @@
 
 #import "VT100LineInfo.h"
 
+#import "iTermMalloc.h"
+#import "VT100ScreenCharAttachment.h"
+
 @implementation VT100LineInfo {
     int width_;
     NSTimeInterval timestamp_;
     int start_;
     int bound_;
+    iTermMutableScreenCharAttachmentsArray *_attachments;
+    iTermScreenCharAttachmentRunArray *_attachmentRunArray;
 }
 
 static NSInteger VT100LineInfoNextGeneration = 1;
@@ -30,8 +35,88 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     return self;
 }
 
-- (void)dealloc {
-    [super dealloc];
+- (iTermScreenCharAttachmentRunArray *)attachmentRunArray {
+    if (!_attachmentRunArray) {
+        [self runLengthEncode];
+    }
+    return _attachmentRunArray;
+}
+
+- (void)runLengthEncode {
+    if (!_attachments) {
+        return;
+    }
+    iTermScreenCharAttachmentRun *runs = iTermMalloc(sizeof(iTermScreenCharAttachmentRun) * width_);
+    runs = iTermMalloc(width_ * sizeof(*runs));
+    __block int count = 0;
+    __block int i = -1;
+    __block int lastIndex = -1;
+    const iTermScreenCharAttachment *attachments = _attachments.attachments;
+    [_attachments.validAttachments enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        const iTermScreenCharAttachment *attachment = &attachments[idx];
+        if (lastIndex == -1 ||  // Always start a run for the first index
+            lastIndex + 1 != idx ||  // Start a run if there was a cap
+            memcmp(attachment, &attachments[lastIndex], sizeof(*attachment))) {  // Start a run if the attachment is different than the last
+            i = count;
+            count += 1;
+            runs[i].offset = idx;
+            runs[i].length = 1;
+        } else {
+            runs[i].length += 1;
+        }
+        lastIndex = idx;
+    }];
+    _attachmentRunArray = [iTermScreenCharAttachmentRunArray runArrayWithRuns:runs count:count];
+}
+
+- (iTermScreenCharAttachment *)attachmentAt:(int)x createIfNeeded:(BOOL)createIfNeeded {
+    if (![_attachments.validAttachments containsIndex:x]) {
+        if (!createIfNeeded) {
+            return nil;
+        }
+        if (!_attachments) {
+            _attachments = [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:width_];
+        }
+    }
+    _attachmentRunArray = nil;
+    return &_attachments.mutableAttachments[x];
+}
+
+- (const iTermScreenCharAttachment *)constAttachmentAt:(int)x {
+    return &_attachments.attachments[x];
+}
+
+- (void)removeAttachmentAt:(int)x {
+    [_attachments.mutableValidAttachments removeIndex:x];
+    _attachmentRunArray = nil;
+}
+
+- (void)setAttachmentRuns:(id<iTermScreenCharAttachmentRunArray>)attachments {
+    if (!attachments) {
+        _attachments = nil;
+        return;
+    }
+    _attachments = [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:width_];
+
+    const iTermScreenCharAttachmentRun *runs = attachments.runs;
+    const NSUInteger count = attachments.count;
+    iTermScreenCharAttachment *outArray = _attachments.mutableAttachments;
+
+    // Foreach run
+    for (NSUInteger i = 0; i < count; i++) {
+        const iTermScreenCharAttachmentRun *run = &runs[i];
+        int offset = run->offset;
+        assert(offset + run->length < width_);
+        // Foreach cell affected by run
+        for (int j = 0; j < run->length; j++) {
+            memmove(&outArray[offset + j], &run->attachment, sizeof(run->attachment));
+            [_attachments.mutableValidAttachments addIndex:offset + j];
+        }
+    }
+}
+
+- (id<iTermScreenCharAttachmentsArray>)attachments {
+    return _attachments;
 }
 
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {

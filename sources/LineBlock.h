@@ -22,6 +22,7 @@ typedef struct {
     NSMutableIndexSet *double_width_characters;
     int width_for_double_width_characters_cache;
     NSInteger generation;
+    iTermScreenCharAttachmentRunArray *attachments;
 } LineBlockMetadata;
 
 @class LineBlock;
@@ -52,7 +53,8 @@ typedef struct {
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-      continuation:(screen_char_t)continuation;
+      continuation:(screen_char_t)continuation
+       attachments:(id<iTermScreenCharAttachmentRunArray>)attachments;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
@@ -71,7 +73,8 @@ typedef struct {
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine;
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                  attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
 
 
 // Get the number of lines in this block at a given screen width.
@@ -88,7 +91,8 @@ typedef struct {
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-           continuation:(screen_char_t *)continuationPtr;
+           continuation:(screen_char_t *)continuationPtr
+            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).

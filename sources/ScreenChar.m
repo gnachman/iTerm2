@@ -136,7 +136,10 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 @end
 
-@implementation ScreenCharArray
+@implementation ScreenCharArray {
+    BOOL _freeLine;
+}
+
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
@@ -154,6 +157,13 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return self;
 }
 
+- (void)dealloc {
+    if (_freeLine) {
+        free(_line);
+    }
+    [super dealloc];
+}
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
     if (!other) {
         return NO;
@@ -162,6 +172,14 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
             _length == other->_length &&
             _eol == other->_eol &&
             !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
+}
+
+- (void)makeCopyOfLine {
+    _freeLine = YES;
+    const size_t size = sizeof(screen_char_t) * _length;
+    screen_char_t *temp = iTermMalloc(size);
+    memmove(temp, _line, size);
+    _line = temp;
 }
 
 @end
@@ -556,12 +574,13 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ unused=%@>",
+    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ hasAttachment=%@ unused=%@>",
             @(c.code), @(c.complexChar), @(c.image), @(c.urlCode),
             @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue),
             @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue), modes[c.foregroundColorMode],
             modes[c.backgroundColorMode], @(c.bold), @(c.faint), @(c.italic), @(c.blink),
-            @(c.underline), @(c.strikethrough), @(c.underlineStyle), @(c.unused)];
+            @(c.underline), @(c.strikethrough), @(c.underlineStyle), @(c.hasAttachment),
+            @(c.unused)];
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -688,6 +707,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->underlineStyle = fg.underlineStyle;
     s->image = NO;
     s->urlCode = fg.urlCode;
+    s->hasAttachment = NO;
     s->unused = 0;
 }
 
@@ -824,6 +844,9 @@ NSString *ScreenCharDescription(screen_char_t c) {
     if (c.urlCode) {
         [attrs addObject:@"URL"];
     }
+    if (c.hasAttachment) {
+        [attrs addObject:@"Attachment"];
+    }
     NSString *style = [attrs componentsJoinedByString:@" "];
     if (style.length) {
         style = [@" " stringByAppendingString:style];
@@ -839,3 +862,4 @@ NSString *ScreenCharDescription(screen_char_t c) {
                                        c.backgroundColorMode),
             style];
 }
+

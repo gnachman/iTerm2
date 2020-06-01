@@ -32,6 +32,7 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100InlineImageHelper.h"
+#import "VT100LineInfo.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
@@ -1462,7 +1463,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                  partial:NO
                    width:currentGrid_.size.width
                timestamp:now
-            continuation:continuation];
+            continuation:continuation
+             attachments:nil];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
@@ -1470,7 +1472,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     for (int i = 0; i < n; i++) {
         ScreenCharArray *line = [temp wrappedLineAtIndex:i
                                                    width:currentGrid_.size.width
-                                            continuation:NULL];
+                                             attachments:NULL];
         if (line.eol == EOL_HARD) {
             [self stripTrailingSpaceFromLine:line];
             if (line.length == 0) {
@@ -1494,7 +1496,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
                       timestamp:now
-                   continuation:continuation];
+                   continuation:continuation
+                    attachments:nil];
     }
     if (!unlimitedScrollback_) {
         [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
@@ -1728,8 +1731,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
-{
+- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     if (theIndex >= numLinesInLineBuffer) {
@@ -1766,6 +1768,67 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (screen_char_t *)getLineAtScreenIndex:(int)theIndex
 {
     return [currentGrid_ screenCharsAtLineNumber:theIndex];
+}
+
+- (void)enumerateLinesFromIndex:(int)startIndex
+                          count:(int)count
+                          block:(void (^)(ScreenCharArray *,
+                                          id<iTermScreenCharAttachmentsArray>,
+                                          BOOL *stop))block {
+    screen_char_t *buffer = NULL;
+
+    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    for (int i = 0; i < count; i++) {
+        const int theIndex = startIndex + i;
+
+        if (theIndex >= numLinesInLineBuffer) {
+            if (!buffer) {
+                // TODO: This is probably in need of optimization.
+                buffer = [[NSMutableData dataWithLength:self.width + 1] mutableBytes];
+            }
+            // Get a line from the circular screen buffer
+            const int lineNumber = (theIndex - numLinesInLineBuffer);
+            screen_char_t *chars = [currentGrid_ screenCharsAtLineNumber:lineNumber];
+            ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:chars
+                                                                     length:self.width
+                                                               continuation:chars[self.width]] autorelease];
+            VT100LineInfo *lineInfo = [currentGrid_ lineInfoAtLineNumber:lineNumber];
+            BOOL stop = NO;
+            block(array, lineInfo.attachments, &stop);
+            if (stop) {
+                return;
+            }
+            continue;
+        }
+
+        // Get a line from the scrollback buffer.
+        screen_char_t continuation;
+        iTermScreenCharAttachmentRunArraySlice *slice = nil;
+        ScreenCharArray *array = [linebuffer_ wrappedLineAtIndex:theIndex
+                                                           width:currentGrid_.size.width
+                                                     attachments:&slice];
+        int cont = array ? continuation.code : EOL_HARD;
+        screen_char_t *line = array.line;
+        if (cont == EOL_SOFT &&
+            theIndex == numLinesInLineBuffer - 1 &&
+            [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
+            line[currentGrid_.size.width - 1].code == 0) {
+            // The last line in the scrollback buffer is actually a split DWC
+            // if the first char on the screen is double-width and the buffer is soft-wrapped without
+            // a last char.
+            cont = EOL_DWC;
+        }
+        if (cont == EOL_DWC) {
+            [array makeCopyOfLine];
+            line[currentGrid_.size.width - 1].code = DWC_SKIP;
+            line[currentGrid_.size.width - 1].complexChar = NO;
+        }
+        BOOL stop = NO;
+        block(array, slice.fullArray, &stop);
+        if (stop) {
+            return;
+        }
+    }
 }
 
 - (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {
@@ -5238,7 +5301,8 @@ static void SwapInt(int *a, int *b) {
                                           width:currentGrid_.size.width
                               includesEndOfLine:&cont
                                       timestamp:NULL
-                                   continuation:NULL];
+                                   continuation:NULL
+                                    attachments:NULL];
         ITAssertWithMessage(isOk, @"Pop shouldn't fail");
     }
     free(dummy);

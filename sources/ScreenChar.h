@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
+#import "VT100ScreenCharAttachment.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 
@@ -182,10 +183,12 @@ typedef struct screen_char_t
 
     unsigned int strikethrough : 1;
     VT100UnderlineStyle underlineStyle : 1;  // VT100UnderlineStyle
-
+#warning TODO: Reset this when erasing a character. Look at how complexChar gets written to and use that as a model.
+    unsigned int hasAttachment: 1;
+    
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 3;
+    unsigned int unused : 2;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
@@ -208,6 +211,7 @@ typedef struct screen_char_t
                       length:(int)length
                 continuation:(screen_char_t)continuation;
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
+- (void)makeCopyOfLine;
 @end
 
 // Standard unicode replacement string. Is a double-width character.
@@ -217,6 +221,7 @@ static inline NSString* ReplacementString()
     return [NSString stringWithCharacters:&kReplacementCharacter length:1];
 }
 
+// TODO: hasAttachment
 static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char_t *c2) {
     return (c1->foregroundColor == c2->foregroundColor &&
             c1->fgGreen == c2->fgGreen &&
@@ -238,6 +243,7 @@ static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char
 }
 
 // Copy foreground color from one char to another.
+// TODO: hasAttachment
 static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t from)
 {
     to->foregroundColor = from.foregroundColor;
@@ -285,6 +291,7 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
 }
 
 // Returns true iff two foreground colors are equal.
+// TODO: hasAttachment
 static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
                                              const screen_char_t b)
 {
@@ -314,6 +321,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
     }
 }
 
+// TODO: hasAttachment
 static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s) {
     return (s.backgroundColor == ALTSEM_DEFAULT &&
             s.foregroundColor == ALTSEM_DEFAULT &&

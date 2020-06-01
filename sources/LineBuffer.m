@@ -244,8 +244,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableString *s = [NSMutableString string];
     int n = [self numLinesWithWidth:width];
     for (int i = 0; i < n; i++) {
-        screen_char_t continuation;
-        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width attachments:nil];
         if (!line) {
             [s appendFormat:@"(nil)"];
             continue;
@@ -255,11 +254,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             [s appendString:@"."];
         }
         if (continuationMarks) {
-            if (continuation.code == EOL_HARD) {
+            if (line.continuation.code == EOL_HARD) {
                 [s appendString:@"!"];
-            } else if (continuation.code == EOL_SOFT) {
+            } else if (line.continuation.code == EOL_SOFT) {
                 [s appendString:@"+"];
-            } else if (continuation.code == EOL_DWC) {
+            } else if (line.continuation.code == EOL_DWC) {
                 [s appendString:@">"];
             } else {
                 [s appendString:@"?"];
@@ -277,17 +276,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int n = [self numLinesWithWidth:width];
     int k = 0;
     for (int i = 0; i < n; i++) {
-        screen_char_t continuation;
-        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width attachments:nil];
         [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
         }
-        if (continuation.code == EOL_HARD) {
+        if (line.continuation.code == EOL_HARD) {
             [s appendString:@"!"];
-        } else if (continuation.code == EOL_SOFT) {
+        } else if (line.continuation.code == EOL_SOFT) {
             [s appendString:@"+"];
-        } else if (continuation.code == EOL_DWC) {
+        } else if (line.continuation.code == EOL_DWC) {
             [s appendString:@">"];
         } else {
             [s appendString:@"?"];
@@ -311,7 +309,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
       continuation:(screen_char_t)continuation
-{
+       attachments:(id<iTermScreenCharAttachmentRunArray>)attachments {
+    id<iTermScreenCharAttachmentRunArray> attachmentsToAppend = attachments;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
 #endif
@@ -327,13 +326,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                    partial:partial
                      width:width
                  timestamp:timestamp
-              continuation:continuation]) {
+              continuation:continuation
+               attachments:attachments]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
         NSTimeInterval prefixTimestamp = 0;
         screen_char_t* prefix = NULL;
+        id<iTermScreenCharAttachmentRunArray> prefixAttachments = nil;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
             // Remove its prefix from the current block and later add the
@@ -343,7 +344,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                   withLength:&prefix_len
                                    upToWidth:[block rawBufferSize]+1
                                    timestamp:&prefixTimestamp
-                                continuation:NULL];
+                                continuation:NULL
+                                 attachments:&prefixAttachments];
             assert(ok);
             prefix = (screen_char_t*)iTermMalloc(MAX(1, prefix_len) * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
@@ -375,15 +377,20 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
         if (prefix) {
+            id<iTermScreenCharAttachmentRunArray> suffixAttachments = nil;
             BOOL ok __attribute__((unused)) =
                 [block appendLine:prefix
                            length:prefix_len
                           partial:YES
                             width:width
                         timestamp:prefixTimestamp
-                     continuation:continuation];
+                     continuation:continuation
+                      attachments:suffixAttachments];
             ITAssertWithMessage(ok, @"append can't fail here");
             free(prefix);
+            iTermScreenCharAttachmentRunArray *combined = [prefixAttachments makeRunArray];
+            [combined append:suffixAttachments baseOffset:prefix_len];
+            attachmentsToAppend = combined;
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
@@ -393,7 +400,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                       partial:partial
                         width:width
                     timestamp:timestamp
-                 continuation:continuation];
+                 continuation:continuation
+                  attachments:attachmentsToAppend];
         ITAssertWithMessage(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -466,6 +474,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             buffer[i].complexChar = NO;
             buffer[i].image = NO;
             buffer[i].urlCode = 0;
+            buffer[i].hasAttachment = NO;
         }
     }
     return eol;
@@ -490,7 +499,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
-                           continuation:(screen_char_t *)continuation {
+                            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     if (!block) {
@@ -500,14 +509,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     int length, eol;
     ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    screen_char_t cont = { 0 };
     result.line = [block getWrappedLineWithWrapWidth:width
                                              lineNum:&remainder
                                           lineLength:&length
                                    includesEndOfLine:&eol
-                                        continuation:continuation];
+                                             yOffset:NULL
+                                        continuation:&cont
+                                isStartOfWrappedLine:NULL
+                                         attachments:attachments];
     if (result.line) {
         result.length = length;
         result.eol = eol;
+        result.continuation = cont;
         ITAssertWithMessage(result.length <= width, @"Length too long");
         return result;
     }
@@ -549,7 +563,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
                   continuation:(screen_char_t *)continuationPtr
-{
+                   attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
     }
@@ -570,7 +584,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                     withLength:&length
                      upToWidth:width
                      timestamp:timestampPtr
-                  continuation:&continuation];
+                  continuation:&continuation
+                   attachments:attachments];
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
@@ -926,7 +941,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [_lineBlocks.lastBlock numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
-                                                continuation:NULL];
+                                                 attachments:NULL];
         result.x = lastLine.length;
         if (position.yOffset > 0) {
             result.x = 0;
@@ -1137,21 +1152,24 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
            timestamp:[NSDate timeIntervalSinceReferenceDate]
-        continuation:defaultBg];
+        continuation:defaultBg
+         attachments:nil];
 
     [self appendLine:buffer
               length:len
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
            timestamp:[NSDate timeIntervalSinceReferenceDate]
-        continuation:bg];
+        continuation:bg
+         attachments:nil];
 
     [self appendLine:buffer
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
            timestamp:[NSDate timeIntervalSinceReferenceDate]
-        continuation:defaultBg];
+        continuation:defaultBg
+         attachments:nil];
 }
 
 #pragma mark - NSCopying

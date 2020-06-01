@@ -7,6 +7,8 @@
 //
 
 #import "iTermFindOnPageHelper.h"
+
+#import "DebugLogging.h"
 #import "FindContext.h"
 #import "iTermSelection.h"
 #import "SearchResult.h"

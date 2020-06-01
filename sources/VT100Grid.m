@@ -274,12 +274,14 @@ static NSString *const kGridSizeKey = @"Size";
         // removed it. Unfortunately, I can't recall why it was added in the
         // first place.
         const BOOL isPartial = (continuation != EOL_HARD);
+        VT100LineInfo *info = [self lineInfoAtLineNumber:i];
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]
-                  continuation:line[size_.width]];
+                     timestamp:info.timestamp
+                  continuation:line[size_.width]
+                   attachments:info.attachmentRunArray];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -1358,12 +1360,16 @@ static NSString *const kGridSizeKey = @"Size";
         NSTimeInterval timestamp;
         screen_char_t continuation;
         ++numPopped;
+        iTermScreenCharAttachmentRunArraySlice *attachments = nil;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
                                         timestamp:&timestamp
-                                     continuation:&continuation]);
-        [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
+                                     continuation:&continuation
+                                      attachments:&attachments]);
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:destLineNumber];
+        [lineInfo setTimestamp:timestamp];
+        [lineInfo setAttachmentRuns:attachments];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1716,6 +1722,7 @@ static NSString *const kGridSizeKey = @"Size";
     c.underlineStyle = VT100UnderlineStyleSingle;
     c.urlCode = 0;
     c.image = 0;
+    c.hasAttachment = NO;
 
     return c;
 }
@@ -1794,6 +1801,7 @@ static NSString *const kGridSizeKey = @"Size";
         return 0;
     }
     screen_char_t *line = [self screenCharsAtLineNumber:0];
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:0];
     int len = [self lengthOfLine:line];
     int continuationMark = line[size_.width].code;
     if (continuationMark == EOL_DWC && len == size_.width) {
@@ -1804,7 +1812,8 @@ static NSString *const kGridSizeKey = @"Size";
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
                  timestamp:[[self lineInfoAtLineNumber:0] timestamp]
-              continuation:line[size_.width]];
+              continuation:line[size_.width]
+               attachments:lineInfo.attachmentRunArray];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

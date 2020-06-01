@@ -78,7 +78,8 @@
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-      continuation:(screen_char_t)continuation;
+      continuation:(screen_char_t)continuation
+       attachments:(id<iTermScreenCharAttachmentRunArray>)attachments;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen
@@ -109,7 +110,8 @@
 // mutate. |continuation| is optional and if set will be filled in with the continuation character.
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
-                           continuation:(screen_char_t *)continuation;
+                            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
+
 
 // This is the fast way to get a bunch of lines at once.
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum
@@ -123,7 +125,8 @@
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
-                  continuation:(screen_char_t *)continuationPtr;
+                  continuation:(screen_char_t *)continuationPtr
+                   attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
 
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;

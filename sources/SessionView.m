@@ -1269,7 +1269,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #pragma mark NSDraggingDestination protocol
 
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
-    return [_delegate sessionViewDraggingEntered:sender];
+    const NSDragOperation operation = [_delegate sessionViewDraggingEntered:sender];
+    NSLog(@"%@ %@", self.delegate, @(operation));
+    return operation;
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
