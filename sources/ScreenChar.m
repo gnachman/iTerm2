@@ -539,7 +539,7 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
     for (int i = 0; i < lineLength; ++i) {
         unichar c = screenChars[i].code;
         if (c != 0 && c != DWC_RIGHT) {
-            [result appendString:ScreenCharToStr(&screenChars[i])];
+            [result appendString:ScreenCharToStr(&screenChars[i]) ?: @"😮"];
         }
     }
     return result;
