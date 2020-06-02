@@ -1542,8 +1542,9 @@
 		A611272721D1B1E300E8C228 /* iTermCPUProfilerUI.h in Headers */ = {isa = PBXBuildFile; fileRef = A611272521D1B1E300E8C228 /* iTermCPUProfilerUI.h */; };
 		A611272821D1B1E300E8C228 /* iTermCPUProfilerUI.m in Sources */ = {isa = PBXBuildFile; fileRef = A611272621D1B1E300E8C228 /* iTermCPUProfilerUI.m */; };
 		A6132C1124847E4B00D0A52C /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
-		A6132C142484C8BB00D0A52C /* VT100ScreenCharAttachment.h in Headers */ = {isa = PBXBuildFile; fileRef = A6132C122484C8BB00D0A52C /* VT100ScreenCharAttachment.h */; };
-		A6132C152484C8BB00D0A52C /* VT100ScreenCharAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = A6132C132484C8BB00D0A52C /* VT100ScreenCharAttachment.m */; };
+		A6132C142484C8BB00D0A52C /* iTermScreenCharAttachment.h in Headers */ = {isa = PBXBuildFile; fileRef = A6132C122484C8BB00D0A52C /* iTermScreenCharAttachment.h */; };
+		A6132C152484C8BB00D0A52C /* iTermScreenCharAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = A6132C132484C8BB00D0A52C /* iTermScreenCharAttachment.m */; };
+		A6132C17248613A000D0A52C /* iTermScreenCharAttachmentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6132C16248613A000D0A52C /* iTermScreenCharAttachmentTests.m */; };
 		A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */; };
 		A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */; };
 		A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */; };
@@ -4942,8 +4943,9 @@
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		A611272521D1B1E300E8C228 /* iTermCPUProfilerUI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCPUProfilerUI.h; sourceTree = "<group>"; };
 		A611272621D1B1E300E8C228 /* iTermCPUProfilerUI.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCPUProfilerUI.m; sourceTree = "<group>"; };
-		A6132C122484C8BB00D0A52C /* VT100ScreenCharAttachment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenCharAttachment.h; sourceTree = "<group>"; };
-		A6132C132484C8BB00D0A52C /* VT100ScreenCharAttachment.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenCharAttachment.m; sourceTree = "<group>"; };
+		A6132C122484C8BB00D0A52C /* iTermScreenCharAttachment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScreenCharAttachment.h; sourceTree = "<group>"; };
+		A6132C132484C8BB00D0A52C /* iTermScreenCharAttachment.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScreenCharAttachment.m; sourceTree = "<group>"; };
+		A6132C16248613A000D0A52C /* iTermScreenCharAttachmentTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScreenCharAttachmentTests.m; sourceTree = "<group>"; };
 		A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterBitmap.h; path = Metal/Infrastructure/iTermCharacterBitmap.h; sourceTree = "<group>"; };
 		A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterBitmap.m; path = Metal/Infrastructure/iTermCharacterBitmap.m; sourceTree = "<group>"; };
 		A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterParts.h; path = Metal/Infrastructure/iTermCharacterParts.h; sourceTree = "<group>"; };
@@ -8526,8 +8528,8 @@
 				A6C3005E247117A9002BC672 /* iTermLocatedString.m */,
 				A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */,
 				A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */,
-				A6132C122484C8BB00D0A52C /* VT100ScreenCharAttachment.h */,
-				A6132C132484C8BB00D0A52C /* VT100ScreenCharAttachment.m */,
+				A6132C122484C8BB00D0A52C /* iTermScreenCharAttachment.h */,
+				A6132C132484C8BB00D0A52C /* iTermScreenCharAttachment.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9747,6 +9749,7 @@
 				A65660DC2372ADEA00DC6744 /* iTermCacheTests.m */,
 				A6F22AC12396374500C5D1A9 /* iTermSyntheticConfParserTests.m */,
 				A63493FA23F2741D0047C31B /* iTermPromiseTests.m */,
+				A6132C16248613A000D0A52C /* iTermScreenCharAttachmentTests.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -10944,7 +10947,7 @@
 				A611272721D1B1E300E8C228 /* iTermCPUProfilerUI.h in Headers */,
 				A68400BC1FF98101008D3EE2 /* iTermTimestampsRenderer.h in Headers */,
 				A6153D5C21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.h in Headers */,
-				A6132C142484C8BB00D0A52C /* VT100ScreenCharAttachment.h in Headers */,
+				A6132C142484C8BB00D0A52C /* iTermScreenCharAttachment.h in Headers */,
 				A666D5F4221A1F9200D6184A /* iTermVariableScope+Global.h in Headers */,
 				A630117120E60DBF008114B7 /* iTermStatusBarView.h in Headers */,
 				A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */,
@@ -13515,7 +13518,7 @@
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
-				A6132C152484C8BB00D0A52C /* VT100ScreenCharAttachment.m in Sources */,
+				A6132C152484C8BB00D0A52C /* iTermScreenCharAttachment.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
@@ -14208,6 +14211,7 @@
 			files = (
 				A608CCFF214DE7C1007A7B87 /* PTYSessionTest.m in Sources */,
 				A63493FE23F277020047C31B /* iTermPromiseTests.m in Sources */,
+				A6132C17248613A000D0A52C /* iTermScreenCharAttachmentTests.m in Sources */,
 				A608CCFA214DE7C1007A7B87 /* iTermIntervalTreeTest.m in Sources */,
 				A608CCF6214DE7C1007A7B87 /* iTermFindOnPageHelperTest.m in Sources */,
 				C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */,

@@ -1,5 +1,5 @@
 //
-//  VT100ScreenCharAttachment.h
+//  iTermScreenCharAttachment.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 5/31/20.
@@ -41,11 +41,14 @@ typedef struct {
 @property (nonatomic, readonly) NSIndexSet *validAttachments;
 @property (nonatomic, readonly) const iTermScreenCharAttachment *attachments;
 @property (nonatomic, readonly) NSUInteger count;
+@property (nonatomic, readonly) id<iTermScreenCharAttachmentRunArray> runArray;
 @end
+
+#pragma mark - iTermScreenCharAttachmentRunArray
 
 @interface iTermScreenCharAttachmentRunArray: NSObject<NSCopying, iTermScreenCharAttachmentRunArray>
 @property (nonatomic) int baseOffset;
-@property (nonatomic, strong) NSData *serialized;
+@property (nonatomic, readonly) NSData *serialized;
 
 + (instancetype)runArrayWithRuns:(iTermScreenCharAttachmentRun *)runs
                            count:(int)count;
@@ -59,6 +62,8 @@ typedef struct {
 - (void)truncateFrom:(int)offset;
 @end
 
+#pragma mark - iTermScreenCharAttachmentRunArraySlice
+
 @interface iTermScreenCharAttachmentRunArraySlice: NSObject<iTermScreenCharAttachmentRunArray>
 @property (nonatomic, strong, readonly) iTermScreenCharAttachmentRunArray *realArray;
 @property (nonatomic, readonly) int baseOffset;
@@ -69,7 +74,9 @@ typedef struct {
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
-@interface iTermScreenCharAttachmentsArray: NSObject<iTermScreenCharAttachmentsArray>
+#pragma mark - iTermScreenCharAttachmentsArray
+
+@interface iTermScreenCharAttachmentsArray: NSObject<iTermScreenCharAttachmentsArray, NSCopying>
 
 - (instancetype)initWithValidAttachmentIndexes:(NSIndexSet *)validAttachments
                                    attachments:(const iTermScreenCharAttachment *)attachments
@@ -77,6 +84,7 @@ typedef struct {
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
+#pragma mark - iTermMutableScreenCharAttachmentsArray
 
 @interface iTermMutableScreenCharAttachmentsArray: NSObject<iTermScreenCharAttachmentsArray, NSCopying>
 @property (nonatomic, readonly) NSMutableIndexSet *mutableValidAttachments;

@@ -30,7 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
-#import "VT100ScreenCharAttachment.h"
+#import "iTermScreenCharAttachment.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 

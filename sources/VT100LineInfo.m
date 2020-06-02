@@ -9,7 +9,7 @@
 #import "VT100LineInfo.h"
 
 #import "iTermMalloc.h"
-#import "VT100ScreenCharAttachment.h"
+#import "iTermScreenCharAttachment.h"
 
 @implementation VT100LineInfo {
     int width_;
