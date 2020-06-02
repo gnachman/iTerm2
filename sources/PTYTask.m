@@ -605,22 +605,17 @@ static void HandleSigChld(int n) {
 // Returns a NSMutableDictionary containing the key-value pairs defined in the
 // global "environ" variable.
 - (NSMutableDictionary *)mutableEnvironmentDictionary {
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    extern char **environ;
-    if (environ != NULL) {
-        for (int i = 0; environ[i]; i++) {
-            NSString *kvp = [NSString stringWithUTF8String:environ[i]];
-            NSRange equalsRange = [kvp rangeOfString:@"="];
-            if (equalsRange.location != NSNotFound) {
-                NSString *key = [kvp substringToIndex:equalsRange.location];
-                NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
-                result[key] = value;
-            } else {
-                result[kvp] = @"";
-            }
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSDictionary *environment = [[NSProcessInfo processInfo] environment];
+    NSArray *whitelist = @[ @"DISPLAY", @"TMPDIR", @"SSH_AUTH_SOCK", @"LaunchInstanceID",
+    @"SECURITYSESSIONID", @"XPC_FLAGS", @"XPC_SERVICE_NAME" ];
+    for (NSString *key in whitelist) {
+        NSString *value = environment[key];
+        if (value) {
+            dict[key] = value;
         }
     }
-    return result;
+    return dict;
 }
 
 - (NSArray<NSString *> *)environWithOverrides:(NSDictionary *)env {
